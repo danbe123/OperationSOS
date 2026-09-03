@@ -1,0 +1,19 @@
+# build outputs and local state
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+# large content never belongs in git
+*.zim
+*.pmtiles
+*.mbtils
+*.mbtiles
+*.gguf
+*.mwm
+*.pbf
+*.gpkg
+*.tif
+build-output/
