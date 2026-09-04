@@ -155,3 +155,10 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .suggestions li button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: var(--touch); padding: 8px 12px; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .suggestions li.active button, .suggestions li button:hover { background: var(--bg-3); }
 .home h2 { margin-bottom: 4px; }
+
+/* Playbook */
+.playbook [role="tabpanel"] { padding-top: 4px; }
+@media print {
+  .playbook .section[open] > summary::before { content: ''; }
+  .playbook .checklist-item { break-inside: avoid; }
+}
