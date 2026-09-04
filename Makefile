@@ -1,5 +1,5 @@
 .RECIPEPREFIX := >
-.PHONY: dev test e2e build fixtures deploy venv
+.PHONY: dev test e2e build fixtures deploy venv smoke
 HOST ?= sos.local
 VENV := api/.venv
 SOS := $(VENV)/bin/sos
@@ -15,10 +15,14 @@ venv: $(SOS)
 dev: venv
 > dev/run-dev.sh
 
+smoke:
+> dev/smoke.sh
+
 test: venv
 > cd api && .venv/bin/pytest -q
 > if [ -f web/package.json ]; then pnpm --dir web test -- --run; fi
 > SOS_PLAYBOOKS_DIR=playbooks SOS_MANIFEST_DIR=manifest $(SOS) validate-playbooks
+> bash dev/smoke-selftest.sh
 
 e2e: venv
 > pnpm --dir web exec playwright test
