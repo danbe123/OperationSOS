@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Search: water</title>
+    <link>/kiwix/search?pattern=water&amp;books.name=wikipedia_en_100_mini_2026-01&amp;format=xml&amp;start=0&amp;pageLength=3</link>
+    <description>Search result for water</description>
+    <opensearch:totalResults>18</opensearch:totalResults>
+    <opensearch:startIndex>0</opensearch:startIndex>
+    <opensearch:itemsPerPage>3</opensearch:itemsPerPage>
+    <atom:link rel="search" type="application/opensearchdescription+xml" href="/kiwix/search/searchdescription.xml"/>
+    <item>
+      <title>Precipitation</title>
+      <link>/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation</link>
+        <description>...In meteorology, precipitation is any product of the condensation of atmospheric <b>water</b> vapour that falls from clouds due to gravitational pull......</description>
+        <book>
+          <title>Wikipedia 100</title>
+        </book>
+        <wordCount>512</wordCount>
+    </item>
+    <item>
+      <title>Bivalvia</title>
+      <link>/kiwix/content/wikipedia_en_100_mini_2026-01/Bivalvia</link>
+        <description>...Marine bivalves (including brackish <b>water</b> and estuarine species) represent about 8,000 species......</description>
+        <book>
+          <title>Wikipedia 100</title>
+        </book>
+        <wordCount>525</wordCount>
+    </item>
+    <item>
+      <title>Insect</title>
+      <link>/kiwix/content/wikipedia_en_100_mini_2026-01/Insect</link>
+        <description>...<b>water</b> striders, can walk on the surface of <b>water</b>. Insects are mostly solitary......</description>
+        <book>
+          <title>Wikipedia 100</title>
+        </book>
+        <wordCount>594</wordCount>
+    </item>
+  </channel>
+</rss>
