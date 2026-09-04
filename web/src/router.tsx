@@ -14,6 +14,7 @@ import { Radio } from './screens/Radio';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
 import { Search } from './screens/Search';
+import { System } from './screens/System';
 import { Keyboard } from './kiosk/Keyboard';
 import { IdleOverlay } from './kiosk/IdleOverlay';
 
@@ -57,6 +58,7 @@ export const routes: RouteObject[] = [
       { path: 'read/:id/*', element: <Reader /> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },
+      { path: 'system', element: <System /> },
       { path: '*', element: <NotFound /> },
     ],
   },

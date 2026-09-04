@@ -195,3 +195,15 @@ input[type="checkbox"] { width: 28px; height: 28px; }
   .map-print img { width: 100%; }
 }
 .maplibregl-ctrl-group button { width: var(--touch); height: var(--touch); }
+
+/* System */
+.cards { display: grid; gap: 10px; padding: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.card-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; background: var(--bg-2); }
+.card-box h3 { margin: 0 0 6px; }
+.card-box p { margin: 2px 0; }
+.system section { border-top: 1px solid var(--border); }
+.log { max-height: 240px; overflow: auto; padding: 8px; background: var(--bg-3); font-size: 0.9rem; white-space: pre-wrap; }
+.ok { color: var(--ok); font-weight: 600; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); padding: 16px; }
+.modal { width: min(420px, 100%); padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
+.modal input { font-size: 1.5rem; letter-spacing: 0.3em; text-align: center; }
