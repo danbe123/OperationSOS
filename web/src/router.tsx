@@ -8,6 +8,8 @@ import { Library } from './screens/Library';
 import { MapScreen } from './screens/Map';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
+import { Page } from './screens/Page';
+import { Radio } from './screens/Radio';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
 import { Search } from './screens/Search';
@@ -47,6 +49,8 @@ export const routes: RouteObject[] = [
       { path: 'map', element: <MapScreen /> },
       { path: 'medical', element: <Medical /> },
       { path: 'medical/card/:slug', element: <Card /> },
+      { path: 'radio', element: <Radio /> },
+      { path: 'p/:slug', element: <Page /> },
       { path: 'doc/:id', element: <Doc /> },
       { path: 'read/:id/*', element: <Reader /> },
       { path: 's/:slug', element: <Scenario /> },
