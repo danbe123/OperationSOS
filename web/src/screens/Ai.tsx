@@ -103,16 +103,20 @@ export function Ai() {
     if (!q || busy) return;
     const id = nextId.current++;
     const patch = (fn: (t: Turn) => Turn) => setTurns((ts) => ts.map((t) => (t.id === id ? fn(t) : t)));
+    // Guarded variant for phase-carrying events (retrieving/token/done/error): once a turn has
+    // reached a terminal phase, further such events are no-ops. `verbatim` stays unguarded above
+    // since it's phase-independent per spec and may legitimately arrive at any point.
+    const patchIfActive = (fn: (t: Turn) => Turn) => setTurns((ts) => ts.map((t) => (t.id === id && t.phase !== 'done' && t.phase !== 'error' ? fn(t) : t)));
     setTurns((ts) => [...ts, { id, question: q, verbatim: null, passages: [], answer: '', phase: 'searching', done: null, error: null, startedAt: Date.now(), firstTokenAt: null }]);
     setQuestion('');
     try {
       for await (const ev of api.askAi({ question: q, history })) {
         switch (ev.event) {
           case 'verbatim': patch((t) => ({ ...t, verbatim: ev.data })); break;
-          case 'retrieving': patch((t) => ({ ...t, passages: ev.data.passages, phase: 'thinking' })); break;
-          case 'token': patch((t) => ({ ...t, answer: t.answer + ev.data.text, phase: 'answering', firstTokenAt: t.firstTokenAt ?? Date.now() })); break;
-          case 'done': patch((t) => ({ ...t, answer: ev.data.answer, done: ev.data, phase: 'done' })); break;
-          case 'error': patch((t) => ({ ...t, error: ev.data, phase: 'error' })); break;
+          case 'retrieving': patchIfActive((t) => ({ ...t, passages: ev.data.passages, phase: 'thinking' })); break;
+          case 'token': patchIfActive((t) => ({ ...t, answer: t.answer + ev.data.text, phase: 'answering', firstTokenAt: t.firstTokenAt ?? Date.now() })); break;
+          case 'done': patchIfActive((t) => ({ ...t, answer: ev.data.answer, done: ev.data, phase: 'done' })); break;
+          case 'error': patchIfActive((t) => ({ ...t, error: ev.data, phase: 'error' })); break;
         }
       }
       patch((t) => (t.phase === 'done' || t.phase === 'error' ? t : { ...t, phase: 'error', error: { code: 'internal', message: 'the stream ended early' } }));

@@ -65,6 +65,36 @@ describe('Ai screen', () => {
     expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/');
   });
 
+  it('ignores retrieving/token/done/error events that arrive after a turn is already done', async () => {
+    vi.spyOn(api, 'status').mockResolvedValue(ready);
+    const extraToken: AiEvent = { event: 'token', data: { text: 'should not appear' } };
+    const { step } = gatedAsk([...aiEvents, extraToken]);
+    const user = userEvent.setup();
+    renderRoute('/ai');
+    const input = await screen.findByLabelText('Your question');
+    await user.type(input, 'signs of dehydration{Enter}');
+    await step(); // verbatim
+    await step(); // retrieving
+    await step(); // token 1
+    await step(); // token 2
+    await step(); // done
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(screen.getByText('Signs include dark yellow urine and dizziness [1].')).toBeInTheDocument();
+    const citations = screen.getByRole('list', { name: 'Sources' });
+    expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/');
+    expect(input).not.toBeDisabled();
+
+    // A stray token event arrives after the turn already reached its terminal phase.
+    await step(); // extra token
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(screen.getByText('Signs include dark yellow urine and dizziness [1].')).toBeInTheDocument();
+    expect(screen.queryByText('should not appear')).toBeNull();
+    expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toBeInTheDocument();
+    expect(input).not.toBeDisabled();
+    await user.type(input, 'another question');
+    expect(screen.getByRole('button', { name: /Ask/ })).not.toBeDisabled();
+  });
+
   it('caps the history sent with a question at 4 turns', async () => {
     vi.spyOn(api, 'status').mockResolvedValue(ready);
     const requests: AiAskRequest[] = [];
