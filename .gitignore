@@ -17,3 +17,9 @@ __pycache__/
 *.gpkg
 *.tif
 build-output/
+
+# fixture ZIMs are tiny and committed on purpose (spec section 13)
+!api/tests/fixtures/library/*.zim
+# dev stack state
+.dev/
+*.part
