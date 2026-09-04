@@ -23,17 +23,17 @@ export default mergeConfig(
             name: 'jsdom',
             environment: 'jsdom',
             include: ['tests/**/*.test.{ts,tsx}'],
-            exclude: ['tests/theme/contrast.test.ts'],
+            exclude: ['tests/theme/contrast.test.ts', 'tests/shell/static.test.ts'],
           },
         }),
-        // contrast.test.ts only reads themes.css from disk via `new URL(..., import.meta.url)`; under
-        // jsdom, Vitest rewrites that pattern's import.meta.url to the fake `http://localhost:3000/`
-        // location, so it must run under the real (SSR) `node` environment to get a file:// URL.
+        // contrast.test.ts and static.test.ts only read files from disk via `new URL(..., import.meta.url)`;
+        // under jsdom, Vitest rewrites that pattern's import.meta.url to the fake `http://localhost:3000/`
+        // location, so they must run under the real (SSR) `node` environment to get a file:// URL.
         mergeConfig(base, {
           test: {
             name: 'node',
             environment: 'node',
-            include: ['tests/theme/contrast.test.ts'],
+            include: ['tests/theme/contrast.test.ts', 'tests/shell/static.test.ts'],
           },
         }),
       ],

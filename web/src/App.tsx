@@ -1,3 +1,24 @@
+import { useMemo } from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import { routes } from './router';
+import { StatusProvider, useStatus } from './api/status';
+import { ThemeProvider } from './theme/ThemeProvider';
+import './app.css';
+
+function Themed() {
+  const { status } = useStatus();
+  const router = useMemo(() => createBrowserRouter(routes), []);
+  return (
+    <ThemeProvider fallback={status?.default_theme}>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  );
+}
+
 export function App() {
-  return <h1>Operation SOS</h1>;
+  return (
+    <StatusProvider>
+      <Themed />
+    </StatusProvider>
+  );
 }
