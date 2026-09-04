@@ -33,6 +33,8 @@ INCLUDE_RE = re.compile(r"^\s*\{\{module:([a-z0-9-]+)\}\}\s*$")
 H2_RE = re.compile(r"^## (.+?)\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+# the `{#id}` marker is checklist-id syntax, not prose: it is stripped before rendering
+TASK_ID_MARKER_RE = re.compile(r"^(\s*[-*+] \[[ xX]\] .*?)\s*\{#[A-Za-z0-9][A-Za-z0-9_/-]*\}\s*$")
 _TASK_LI = '<li class="task-list-item">'
 
 
@@ -71,8 +73,17 @@ def make_renderer(resolver: Callable[[str], str] = resolve_link) -> MarkdownIt:
     return md
 
 
+def strip_task_id_markers(md_text: str) -> str:
+    """Remove the trailing `{#id}` checklist-id marker from task-list lines so it never reaches the reader."""
+    return "\n".join(TASK_ID_MARKER_RE.sub(r"\1", line) for line in (md_text or "").splitlines())
+
+
+def _render(md: MarkdownIt, md_text: str) -> str:
+    return md.render(strip_task_id_markers(md_text))
+
+
 def render_markdown(md_text: str, link_resolver: Callable[[str], str] = resolve_link) -> str:
-    return make_renderer(link_resolver).render(md_text or "")
+    return _render(make_renderer(link_resolver), md_text or "")
 
 
 @dataclass
@@ -207,7 +218,7 @@ def _inject_item_ids(html_text: str, ids: list[str]) -> str:
 
 def render_module(mod: Document, md: MarkdownIt) -> dict:
     tasks = [(f"{mod.id}/{i}", t) for i, t in module_tasks(mod.body)]
-    html_text = _inject_item_ids(md.render(mod.body), [i for i, _ in tasks])
+    html_text = _inject_item_ids(_render(md, mod.body), [i for i, _ in tasks])
     return {"slug": mod.id, "title": mod.title, "html": html_text, "checklist": tasks}
 
 
@@ -218,7 +229,7 @@ def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link
     common = dict(slug=doc.id, title=doc.title, icon=doc.icon, order=doc.order, summary=doc.summary, kind=doc.kind,
                   category=doc.category, reviewed=doc.reviewed, overlays=list(doc.overlays), sources=list(doc.sources))
     if doc.kind != "scenario":
-        html_text = render_module(doc, md)["html"] if doc.kind == "module" else md.render(doc.body)
+        html_text = render_module(doc, md)["html"] if doc.kind == "module" else _render(md, doc.body)
         return RenderedDocument(**common, sections=[], checklist=[], modules=[], html=html_text)
     sections: list[dict] = []
     included: list[dict] = []
@@ -234,7 +245,7 @@ def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link
                 chunk.append(line)
                 continue
             if chunk:
-                parts.append(md.render("\n".join(chunk)))
+                parts.append(_render(md, "\n".join(chunk)))
                 chunk = []
             slug = m.group(1)
             mod = modules.get(slug)
@@ -247,7 +258,7 @@ def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link
                 seen.add(slug)
             parts.append(f'<section class="module" data-module="{escape(slug)}"><h3>{escape(mod.title)}</h3>{rendered["html"]}</section>')
         if chunk:
-            parts.append(md.render("\n".join(chunk)))
+            parts.append(_render(md, "\n".join(chunk)))
         sections.append({"id": sid, "title": title, "html": "".join(parts)})
     checklist = [{"id": i, "text": t} for i, t in doc.checklist]
     for r in included:

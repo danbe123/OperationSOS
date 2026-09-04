@@ -57,6 +57,12 @@ def test_render_markdown_rewrites_links_and_escapes_html():
     assert "<table>" in html
 
 
+def test_render_markdown_strips_checklist_id_marker():
+    html = content.render_markdown("- [ ] Label treated water {#label-treated}\n- [ ] Plain item")
+    assert "{#label-treated}" not in html and "Label treated water" in html
+    assert content.strip_task_id_markers("- [ ] a {#x}\ntext {#not-a-task}") == "- [ ] a\ntext {#not-a-task}"
+
+
 def test_parse_scenario(tree):
     doc = content.parse_document(tree / "scenarios" / "grid-collapse.md")
     assert doc.kind == "scenario" and doc.id == "grid-collapse" and doc.order == 4
@@ -88,6 +94,7 @@ def test_render_document_includes_module_and_prefixes_module_checklist(tree):
     assert '<section class="module" data-module="water"><h3>Water</h3>' in s72["html"]
     assert 'data-item-id="water/fill-clean-containers"' in s72["html"]
     assert 'data-item-id="water/label-treated"' in s72["html"]
+    assert "{#label-treated}" not in s72["html"] and "{#" not in s72["html"]
     assert "{{module:water}}" not in s72["html"]
     assert [m["slug"] for m in r.modules] == ["water"]
     assert [c["id"] for c in r.checklist] == [
@@ -109,6 +116,7 @@ def test_render_standalone_module_and_card(tree):
     water = content.parse_document(tree / "modules" / "water.md")
     r = content.render_document(water, content.resolve_link, {})
     assert r.kind == "module" and 'data-item-id="water/label-treated"' in r.html and r.sections == []
+    assert "{#" not in r.html and "Label treated water</li>" in r.html
     card = content.parse_document(tree / "cards" / "bleeding.md")
     rc = content.render_document(card, content.resolve_link, {})
     assert "<ol>" in rc.html and "<blockquote>" in rc.html
