@@ -18,12 +18,23 @@ function PdfFrame({ url, theme, hash }: { url: string; theme: Theme; hash: strin
   const [initialSrc] = useState(() => pdfViewerUrl(url, theme, hash));
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  const prevUrlRef = useRef(url);
 
   const apply = useCallback(() => {
     const doc = frameRef.current?.contentDocument;
     if (doc) injectStyle(doc, READER_STYLE_ID, pdfViewerCss(themeRef.current));
   }, []);
   useEffect(() => { apply(); }, [theme, apply]);
+
+  // `url` changed to a different document while this PdfFrame instance stayed mounted (e.g. /doc/A -> /doc/B
+  // without an unmount): reload the same frame at the new document, matching the single-src-set navigation
+  // model used by the /read/:id reader (iframe.src set once, later moves done via replaceFrameLocation).
+  useEffect(() => {
+    if (prevUrlRef.current === url) return;
+    prevUrlRef.current = url;
+    const win = frameRef.current?.contentWindow;
+    if (win) replaceFrameLocation(win, pdfViewerUrl(url, themeRef.current, hash));
+  }, [url, hash]);
 
   // A later #page= link to the same document: change the viewer's hash in place (PDF.js listens for hashchange).
   useEffect(() => {

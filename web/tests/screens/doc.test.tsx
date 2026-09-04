@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, act, fireEvent } from '@testing-library/react';
+import { screen, act, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { pdfViewerUrl } from '../../src/screens/Doc';
+import { replaceFrameLocation } from '../../src/links';
 import { READER_STYLE_ID } from '../../src/theme/readerTheme';
 import { pdfItem, epubItem, extItem, wikiItem } from '../fixtures/api';
 
@@ -13,6 +14,11 @@ const mocks = vi.hoisted(() => {
   return { rendition, book, ePub: vi.fn(() => book) };
 });
 vi.mock('epubjs', () => ({ default: mocks.ePub }));
+vi.mock('../../src/links', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../src/links')>();
+  return { ...mod, replaceFrameLocation: vi.fn() };
+});
+const replaceMock = vi.mocked(replaceFrameLocation);
 
 describe('pdfViewerUrl', () => {
   it('encodes the file URL, adds the theme and passes the page fragment through', () => {
@@ -30,6 +36,25 @@ describe('Doc', () => {
     await act(async () => { fireEvent.load(frame); });
     expect(frame.contentDocument!.getElementById(READER_STYLE_ID)?.textContent).toContain('#toolbarContainer');
     expect(screen.getByRole('heading', { name: 'National Risk Register 2025' })).toBeInTheDocument();
+  });
+
+  it('reloads the same iframe (not the wrong document) when navigating to a different PDF without unmounting the Doc route', async () => {
+    const otherPdf = { ...pdfItem, id: 'other-pdf', title: 'Other PDF', url: '/docs/core/docs/other-pdf.pdf' };
+    vi.spyOn(api, 'libraryItem').mockImplementation(async (id: string) => (id === otherPdf.id ? otherPdf : pdfItem));
+    const { router } = renderRoute('/doc/nrr-2025');
+    const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault');
+    expect(replaceMock).not.toHaveBeenCalled();
+
+    await act(async () => { await router.navigate('/doc/other-pdf'); });
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Other PDF' })).toBeInTheDocument());
+
+    // Same iframe instance (Doc route never unmounted) reused for the new document, via replaceFrameLocation
+    // rather than a stale `src`.
+    expect(screen.getByTitle('Document')).toBe(frame);
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault');
+    expect(replaceMock).toHaveBeenCalledTimes(1);
+    expect(replaceMock).toHaveBeenCalledWith(frame.contentWindow, '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fother-pdf.pdf&theme=vault');
   });
 
   it('opens an EPUB with epubjs, with next/previous and text size controls', async () => {
