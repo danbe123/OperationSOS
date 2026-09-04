@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://operation-sos.invalid/playbooks.schema.json",
+  "title": "Operation SOS authored content front matter",
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["id", "title", "icon", "order", "summary"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "icon": { "type": "string", "minLength": 1 },
+        "order": { "type": "integer", "minimum": 0 },
+        "summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "doc": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+        "kiwix": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/.+$" },
+        "url": { "type": "string", "pattern": "^https?://" },
+        "as_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$" }
+      }
+    },
+    "scenario": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "required": ["modules", "overlays", "reviewed", "sources"],
+      "properties": {
+        "modules": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" } },
+        "overlays": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" } },
+        "reviewed": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } }
+      },
+      "unevaluatedProperties": false
+    },
+    "module": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } } },
+      "unevaluatedProperties": false
+    },
+    "card": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } } },
+      "unevaluatedProperties": false
+    },
+    "page": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "required": ["category"],
+      "properties": {
+        "category": { "enum": ["comms", "reference", "plan", "about"] },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}
