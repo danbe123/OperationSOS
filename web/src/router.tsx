@@ -1,7 +1,9 @@
 import { Outlet, type RouteObject } from 'react-router';
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
+import { Card } from './screens/Card';
 import { Home } from './screens/Home';
+import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
@@ -38,6 +40,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'search', element: <Search /> },
+      { path: 'medical', element: <Medical /> },
+      { path: 'medical/card/:slug', element: <Card /> },
       { path: 'read/:id/*', element: <Reader /> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },

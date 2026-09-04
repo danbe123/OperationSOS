@@ -162,3 +162,9 @@ input[type="checkbox"] { width: 28px; height: 28px; }
   .playbook .section[open] > summary::before { content: ''; }
   .playbook .checklist-item { break-inside: avoid; }
 }
+
+/* Library item cards */
+.items .item-card { display: flex; flex-direction: column; gap: 4px; padding: 10px 0; }
+.item-card.unavailable { opacity: 0.6; }
+.item-card p { margin: 0; }
+.tile-note { color: var(--warn); }
