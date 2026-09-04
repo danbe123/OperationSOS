@@ -3,6 +3,7 @@ import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
 import { Card } from './screens/Card';
 import { Home } from './screens/Home';
+import { Library } from './screens/Library';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Reader } from './screens/Reader';
@@ -40,6 +41,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Home /> },
       { path: 'search', element: <Search /> },
+      { path: 'library', element: <Library /> },
       { path: 'medical', element: <Medical /> },
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'read/:id/*', element: <Reader /> },
