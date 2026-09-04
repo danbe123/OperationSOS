@@ -41,6 +41,7 @@ Manual checks on the box (spec section 14). Close a row with the date, the commi
 
 | Milestone | Date | Commit | Result |
 |---|---|---|---|
+| 1 Skeleton | 2026-09-04 | 49db6fa | pass (shellcheck, dry-run golden, caddy validate, systemd-analyze verify, probe paths, fixture ZIM via /kiwix/, make dev + smoke) |
 
 ## Maps
 
