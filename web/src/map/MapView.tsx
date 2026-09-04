@@ -128,7 +128,9 @@ export function MapView(props: MapViewProps) {
     const map = mapRef.current;
     if (!map || !styleUrl || currentStyle.current === styleUrl) return;
     currentStyle.current = styleUrl;
-    map.setStyle(styleUrl, { transformStyle: carryStyleAcross });
+    // diff:false: a diffed setStyle keeps the previous stylesheet's top-level fields (e.g. name), which would
+    // make it look like the base never switched even though the layers underneath did.
+    map.setStyle(styleUrl, { transformStyle: carryStyleAcross, diff: false });
   }, [styleUrl]);
 
   useEffect(() => {

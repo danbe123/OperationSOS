@@ -140,6 +140,7 @@ export function Reader() {
     <div className="screen screen-fill">
       <AppBar
         title={title}
+        search={false}
         actions={
           <>
             <button type="button" className="btn btn-chrome" onClick={cycleSize}><Icon name="text-size" /><span>Text size {textSize}%</span></button>

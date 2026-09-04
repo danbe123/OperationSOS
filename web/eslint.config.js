@@ -20,4 +20,10 @@ export default tseslint.config(
     files: ['**/*.mjs'],
     languageOptions: { globals: { ...globals.node } },
   },
+  {
+    // Playwright fixtures take a parameter literally named `use`, which react-hooks/rules-of-hooks
+    // otherwise flags as a hook call outside a component; this is plain Node/Playwright code, not React.
+    files: ['e2e/**/*.ts'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
 );

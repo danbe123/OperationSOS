@@ -15,6 +15,7 @@ export default defineConfig({
     baseURL,
     viewport: { width: 853, height: 480 },
     trace: 'retain-on-failure',
+    launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 853, height: 480 } } }],
   webServer:

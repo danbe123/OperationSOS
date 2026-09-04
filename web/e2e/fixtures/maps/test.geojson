@@ -1,0 +1,5 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"kind":"land","name":"Southampton"},"geometry":{"type":"Polygon","coordinates":[[[-1.50,50.88],[-1.36,50.88],[-1.36,50.96],[-1.50,50.96],[-1.50,50.88]]]}},
+{"type":"Feature","properties":{"kind":"water","name":"Water"},"geometry":{"type":"Polygon","coordinates":[[[-1.46,50.88],[-1.40,50.88],[-1.42,50.91],[-1.46,50.90],[-1.46,50.88]]]}},
+{"type":"Feature","properties":{"kind":"road","name":"A33"},"geometry":{"type":"LineString","coordinates":[[-1.49,50.89],[-1.44,50.92],[-1.40,50.95]]}}
+]}

@@ -1,0 +1,4 @@
+{"type":"FeatureCollection","features":[
+{"type":"Feature","properties":{"name":"Southampton General Hospital","amenity":"hospital"},"geometry":{"type":"Point","coordinates":[-1.4353,50.9333]}},
+{"type":"Feature","properties":{"name":"Shirley Pharmacy","amenity":"pharmacy"},"geometry":{"type":"Point","coordinates":[-1.4340,50.9240]}}
+]}

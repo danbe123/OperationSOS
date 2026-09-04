@@ -25,7 +25,7 @@ img, canvas, video { max-width: 100%; }
 .appbar-title { flex: 1; min-width: 0; font-size: calc(1.3rem * var(--heading-scale)); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .appbar-actions { display: flex; gap: 6px; }
 .appbar-search { display: none; }
-@media (min-width: 700px) { .appbar-search { display: block; flex: 0 1 320px; } .appbar-search-link { display: none; } }
+@media (min-width: 700px) { .appbar-search { display: block; flex: 0 1 320px; } }
 
 /* Buttons and inputs: at least 48 px targets */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--touch); min-width: var(--touch); padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-decoration: none; box-shadow: var(--bevel); }
@@ -34,6 +34,8 @@ img, canvas, video { max-width: 100%; }
 .btn-chrome { background: transparent; color: var(--chrome-text); }
 .btn-danger { color: var(--danger); border-color: var(--danger); }
 .btn-big { min-height: 64px; font-size: 1.25rem; padding: 12px 24px; }
+/* Below .btn so this wins the cascade at the same specificity: the compact search bar replaces this link. */
+@media (min-width: 700px) { .appbar-search-link { display: none; } }
 .btn.active { outline: 3px solid var(--accent); }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-weight: 600; }
@@ -204,7 +206,7 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .system section { border-top: 1px solid var(--border); }
 .log { max-height: 240px; overflow: auto; padding: 8px; background: var(--bg-3); font-size: 0.9rem; white-space: pre-wrap; }
 .ok { color: var(--ok); font-weight: 600; }
-.modal-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); padding: 16px; }
+.modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: var(--kb-height); z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); padding: 16px; }
 .modal { width: min(420px, 100%); padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
 .modal input { font-size: 1.5rem; letter-spacing: 0.3em; text-align: center; }
 
