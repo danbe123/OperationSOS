@@ -38,3 +38,26 @@ def env(tmp_path, monkeypatch):
     get_settings.cache_clear()
     yield get_settings()
     get_settings.cache_clear()
+
+
+@pytest.fixture
+def app(env):
+    from sos.main import create_app
+
+    return create_app(env, background=False)
+
+
+@pytest.fixture
+def client(app):
+    from fastapi.testclient import TestClient
+
+    with TestClient(app, client=("127.0.0.1", 50000)) as c:
+        yield c
+
+
+@pytest.fixture
+def remote_client(app):
+    from fastapi.testclient import TestClient
+
+    with TestClient(app, client=("10.42.0.7", 50000)) as c:
+        yield c
