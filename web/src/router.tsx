@@ -5,6 +5,7 @@ import { Card } from './screens/Card';
 import { Doc } from './screens/Doc';
 import { Home } from './screens/Home';
 import { Library } from './screens/Library';
+import { MapScreen } from './screens/Map';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Reader } from './screens/Reader';
@@ -43,6 +44,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Home /> },
       { path: 'search', element: <Search /> },
       { path: 'library', element: <Library /> },
+      { path: 'map', element: <MapScreen /> },
       { path: 'medical', element: <Medical /> },
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'doc/:id', element: <Doc /> },

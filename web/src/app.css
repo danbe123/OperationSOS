@@ -173,3 +173,25 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .epub { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .epub-controls { padding: 8px 16px; }
 .epub-host { flex: 1; min-height: 0; background: var(--bg-2); }
+
+/* Map */
+.map-screen { display: flex; flex-direction: column; }
+.map-tools { display: flex; gap: 6px; padding: 6px 8px; overflow-x: auto; }
+.map-host { position: relative; flex: 1; min-height: 240px; }
+.map-canvas { position: absolute; inset: 0; }
+.map-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%); overflow: auto; z-index: 10; padding: 12px; background: var(--bg); border-left: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.map-panel h2 { flex: 1; margin: 0; }
+.map-readout { padding: 6px 12px; font-size: 0.95rem; }
+.map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
+.check-row { display: flex; align-items: center; gap: 10px; min-height: var(--touch); }
+.check-block { border-bottom: 1px solid var(--border); }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid #000; }
+.small { font-size: 0.9rem; margin: 0 0 6px 34px; }
+.place-search { display: flex; flex-direction: column; gap: 8px; }
+.map-print { display: none; }
+@media print {
+  .map-screen > *:not(.map-print) { display: none !important; }
+  .map-print { display: block; padding: 12px; }
+  .map-print img { width: 100%; }
+}
+.maplibregl-ctrl-group button { width: var(--touch); height: var(--touch); }

@@ -1,0 +1,40 @@
+export type LngLat = { lon: number; lat: number };
+const R = 6371.0088;
+const rad = (d: number) => (d * Math.PI) / 180;
+
+export function distanceKm(a: LngLat, b: LngLat): number {
+  const p1 = rad(a.lat);
+  const p2 = rad(b.lat);
+  const dp = rad(b.lat - a.lat);
+  const dl = rad(b.lon - a.lon);
+  const h = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+export function bearingDeg(a: LngLat, b: LngLat): number {
+  const p1 = rad(a.lat);
+  const p2 = rad(b.lat);
+  const dl = rad(b.lon - a.lon);
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+export function pathLengthKm(points: LngLat[]): number {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) total += distanceKm(points[i - 1], points[i]);
+  return total;
+}
+
+export function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  if (km < 10) return `${km.toFixed(2)} km`;
+  return `${km.toFixed(1)} km`;
+}
+
+const POINTS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+export function formatBearing(deg: number): string {
+  const whole = Math.round(deg);
+  const point = POINTS[Math.round((deg % 360) / 22.5) % 16];
+  return `${whole.toString().padStart(3, '0')}° ${point}`;
+}

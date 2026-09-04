@@ -9,6 +9,9 @@ import { JSDOM } from 'jsdom';
 if (typeof window !== 'undefined') {
   Element.prototype.scrollIntoView = () => {};
   window.scrollTo = () => {};
+  // maplibre-gl reads this at module load time (to spin up its worker) even in test files that never
+  // touch the map screen, since router.tsx imports it transitively; jsdom has no Blob URL registry.
+  window.URL.createObjectURL = window.URL.createObjectURL || (() => 'blob:stub');
   window.matchMedia =
     window.matchMedia ||
     ((query: string) =>
