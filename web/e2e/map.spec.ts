@@ -1,10 +1,14 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './test';
 
-type MapWindow = Window & { __sosMap?: { loaded(): boolean; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getStyle(): { name?: string }; getCenter(): { lng: number; lat: number } } };
+type MapWindow = Window & { __sosMap?: { loaded(): boolean; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; __styleVersion?: number } };
 
 async function waitForMap(page: Page) {
   await page.waitForFunction(() => Boolean((window as MapWindow).__sosMap?.loaded()));
+}
+const styleVersion = (page: Page) => page.evaluate(() => (window as MapWindow).__sosMap?.__styleVersion ?? 0);
+async function waitForStyleReload(page: Page, sinceVersion: number) {
+  await page.waitForFunction((v) => ((window as MapWindow).__sosMap?.__styleVersion ?? 0) > v, sinceVersion);
 }
 const layerVisible = (page: Page, id: string) =>
   page.evaluate((layerId) => {
@@ -27,8 +31,9 @@ test('renders from PMTiles over range requests, toggles an overlay and keeps it 
   await expect(page).toHaveURL(/overlay=health/);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
 
+  const versionBeforeBaseSwitch = await styleVersion(page);
   await panel.getByLabel('OS Open Zoomstack').check();
-  await page.waitForFunction(() => (window as MapWindow).__sosMap?.getStyle().name?.startsWith('os-'));
+  await waitForStyleReload(page, versionBeforeBaseSwitch);
   await waitForMap(page);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
   await panel.getByLabel('Hospitals, pharmacies, GP surgeries').uncheck();

@@ -7,6 +7,11 @@ import { addTerrain, carryStyleAcross, isEtagMismatch, recreateSource, registerP
 import { addOverlay, setOverlayVisible } from './overlays';
 import type { LngLat } from './measure';
 
+// e2e exposure: window.__sosMap is the live map instance; __styleVersion is bumped on every
+// completed style load (base switches included) so tests can observe a reload without relying on
+// a diffed-out setStyle (see the setStyle call below).
+type ExposedMap = MlMap & { __styleVersion?: number };
+
 export type MapViewProps = {
   config: MapConfig;
   theme: Theme;
@@ -92,7 +97,11 @@ export function MapView(props: MapViewProps) {
     });
     map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-    map.on('style.load', () => setStyleVersion((v) => v + 1));
+    map.on('style.load', () => {
+      const exposed = map as ExposedMap;
+      exposed.__styleVersion = (exposed.__styleVersion ?? 0) + 1;
+      setStyleVersion((v) => v + 1);
+    });
     map.on('moveend', () => {
       const c = map.getCenter();
       propsRef.current.onMoveEnd({ lon: c.lng, lat: c.lat, zoom: map.getZoom() });
@@ -114,7 +123,7 @@ export function MapView(props: MapViewProps) {
       if (ev.sourceId && isEtagMismatch(ev.error)) recreateSource(map, ev.sourceId);
     });
     mapRef.current = map;
-    (window as unknown as { __sosMap?: MlMap }).__sosMap = map;
+    (window as unknown as { __sosMap?: ExposedMap }).__sosMap = map as ExposedMap;
     propsRef.current.onReady(map);
     return () => {
       map.remove();
@@ -128,9 +137,7 @@ export function MapView(props: MapViewProps) {
     const map = mapRef.current;
     if (!map || !styleUrl || currentStyle.current === styleUrl) return;
     currentStyle.current = styleUrl;
-    // diff:false: a diffed setStyle keeps the previous stylesheet's top-level fields (e.g. name), which would
-    // make it look like the base never switched even though the layers underneath did.
-    map.setStyle(styleUrl, { transformStyle: carryStyleAcross, diff: false });
+    map.setStyle(styleUrl, { transformStyle: carryStyleAcross });
   }, [styleUrl]);
 
   useEffect(() => {

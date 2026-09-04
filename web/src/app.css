@@ -22,8 +22,12 @@ img, canvas, video { max-width: 100%; }
 
 /* App bar */
 .appbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--chrome-bg); color: var(--chrome-text); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 5; }
-.appbar-title { flex: 1; min-width: 0; font-size: calc(1.3rem * var(--heading-scale)); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.appbar-actions { display: flex; gap: 6px; }
+.appbar-title { flex: 1; min-width: 48px; font-size: calc(1.3rem * var(--heading-scale)); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Screens with several actions (e.g. Reader's text-size/library/print) plus the restored
+   .appbar-search-link can outgrow 853px kiosk width. Same overflow-x pattern as .tabs and
+   .map-tools: this row scrolls instead of squeezing the title down to nothing. */
+.appbar-actions { display: flex; gap: 6px; flex-shrink: 1; min-width: 0; overflow-x: auto; }
+.appbar-actions .btn { flex-shrink: 0; white-space: nowrap; }
 .appbar-search { display: none; }
 @media (min-width: 700px) { .appbar-search { display: block; flex: 0 1 320px; } }
 
@@ -34,8 +38,12 @@ img, canvas, video { max-width: 100%; }
 .btn-chrome { background: transparent; color: var(--chrome-text); }
 .btn-danger { color: var(--danger); border-color: var(--danger); }
 .btn-big { min-height: 64px; font-size: 1.25rem; padding: 12px 24px; }
-/* Below .btn so this wins the cascade at the same specificity: the compact search bar replaces this link. */
-@media (min-width: 700px) { .appbar-search-link { display: none; } }
+/* Only hide the standalone search link where AppBar also renders the compact inline search bar
+   (search=true screens) - it replaces this link there. Screens that pass search={false} (Reader,
+   Card, Map, Search) have no other on-page way to reach /search, so the link must stay reachable
+   at every width, kiosk included. Two classes give this more specificity than .btn regardless of
+   source order, so no !important is needed. */
+@media (min-width: 700px) { .appbar-search-link.appbar-search-link-replaced { display: none; } }
 .btn.active { outline: 3px solid var(--accent); }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-weight: 600; }

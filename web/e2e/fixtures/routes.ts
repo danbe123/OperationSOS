@@ -42,7 +42,20 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     if (style) {
       const name = style[1];
       const dark = !name.endsWith('-field');
-      const body = { ...styleJson, name, layers: styleJson.layers.map((l) => (l.id === 'background' ? { ...l, paint: { 'background-color': dark ? '#0a0f0a' : '#f4efe4' } } : l)) };
+      // The road colour also varies by base (not just theme) so a base switch is a genuine,
+      // diffable paint-property change - real base switches change far more than this, but the
+      // map spec's "keeps [state] across a base switch" test needs at least one diffable
+      // difference to observe a real style reload (see MapView's styleVersion / style.load).
+      const roadColor = name.startsWith('os-') ? '#0057b8' : '#ffb000';
+      const body = {
+        ...styleJson,
+        name,
+        layers: styleJson.layers.map((l) => {
+          if (l.id === 'background') return { ...l, paint: { 'background-color': dark ? '#0a0f0a' : '#f4efe4' } };
+          if (l.id === 'road') return { ...l, paint: { ...l.paint, 'line-color': roadColor } };
+          return l;
+        }),
+      };
       return json(route, body);
     }
     if (url.pathname.endsWith('.pmtiles')) return servePmtiles(route);

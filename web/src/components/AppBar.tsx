@@ -29,7 +29,11 @@ export function AppBar({ title, actions, back = true, search = true }: { title: 
           <SearchBar compact />
         </div>
       )}
-      <Link className="btn btn-chrome appbar-search-link" to="/search" aria-label="Search"><Icon name="search" /><span>Search</span></Link>
+      <Link
+        className={`btn btn-chrome appbar-search-link${search ? ' appbar-search-link-replaced' : ''}`}
+        to="/search"
+        aria-label="Search"
+      ><Icon name="search" /><span>Search</span></Link>
       <Link className="btn btn-chrome" to="/" aria-label="Home"><Icon name="home" /><span>Home</span></Link>
       <ThemeButton />
     </header>
