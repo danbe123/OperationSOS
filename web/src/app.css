@@ -149,8 +149,8 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 /* Search bar and suggestions (rendered between the field and the kiosk keyboard) */
 .searchbar { position: relative; display: flex; gap: 8px; }
 .searchbar input { flex: 1; font-size: 1.1rem; }
-.searchbar-compact input { min-height: 40px; font-size: 1rem; }
-.searchbar-compact .btn { min-height: 40px; padding: 4px 10px; }
+.searchbar-compact input { min-height: var(--touch); font-size: 1rem; padding: 4px 10px; }
+.searchbar-compact .btn { min-height: var(--touch); padding: 4px 10px; }
 .suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 0; list-style: none; background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); max-height: 320px; overflow: auto; }
 .suggestions li button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: var(--touch); padding: 8px 12px; border: 0; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .suggestions li.active button, .suggestions li button:hover { background: var(--bg-3); }
