@@ -76,11 +76,12 @@ function TurnView({ turn, now }: { turn: Turn; now: number }) {
 }
 
 export function Ai() {
-  const { status } = useStatus();
+  const { status, error } = useStatus();
   const [question, setQuestion] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [, tick] = useReducer((n: number) => n + 1, 0);
   const nextId = useRef(1);
+  const abortRef = useRef<AbortController | null>(null);
   const busy = turns.some((t) => t.phase !== 'done' && t.phase !== 'error');
 
   useEffect(() => {
@@ -88,6 +89,10 @@ export function Ai() {
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
   }, [busy]);
+
+  // Cancel any in-flight /ai/ask stream on unmount so navigating away doesn't leave the backend's
+  // single-inference-slot lock held by a request nobody is watching any more.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const history = useMemo<AiAskRequest['history']>(
     () => turns.filter((t) => t.phase === 'done' && t.done).slice(-MAX_TURNS).flatMap((t) => [
@@ -109,8 +114,10 @@ export function Ai() {
     const patchIfActive = (fn: (t: Turn) => Turn) => setTurns((ts) => ts.map((t) => (t.id === id && t.phase !== 'done' && t.phase !== 'error' ? fn(t) : t)));
     setTurns((ts) => [...ts, { id, question: q, verbatim: null, passages: [], answer: '', phase: 'searching', done: null, error: null, startedAt: Date.now(), firstTokenAt: null }]);
     setQuestion('');
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      for await (const ev of api.askAi({ question: q, history })) {
+      for await (const ev of api.askAi({ question: q, history }, controller.signal)) {
         switch (ev.event) {
           case 'verbatim': patch((t) => ({ ...t, verbatim: ev.data })); break;
           case 'retrieving': patchIfActive((t) => ({ ...t, passages: ev.data.passages, phase: 'thinking' })); break;
@@ -121,11 +128,22 @@ export function Ai() {
       }
       patch((t) => (t.phase === 'done' || t.phase === 'error' ? t : { ...t, phase: 'error', error: { code: 'internal', message: 'the stream ended early' } }));
     } catch (err) {
+      // The stream was cancelled (e.g. the screen unmounted, see the cleanup effect above) rather
+      // than actually failing: there's nothing to show, and on an unmounted component nothing to
+      // update either, so swallow it silently instead of patching the turn to an error state.
+      if (controller.signal.aborted) return;
       patch((t) => ({ ...t, phase: 'error', error: { code: 'unavailable', message: errorMessage(err) } }));
     }
   };
 
-  if (!status) return <div className="screen"><AppBar title="AI assistant" /><p className="pad muted">Checking the box…</p></div>;
+  if (!status) {
+    return (
+      <div className="screen">
+        <AppBar title="AI assistant" />
+        {error ? <p className="pad warning">Box status unavailable: {error}</p> : <p className="pad muted">Checking the box…</p>}
+      </div>
+    );
+  }
   const ai = status.ai;
   if (ai.state !== 'ready') {
     return (

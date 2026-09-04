@@ -25,6 +25,43 @@ function gatedAsk(events: AiEvent[]) {
 }
 
 describe('Ai screen', () => {
+  it('shows the status error in place of the loading message when /api/status fails', async () => {
+    vi.spyOn(api, 'status').mockRejectedValue(new Error('network down'));
+    renderRoute('/ai');
+    expect(await screen.findByText('Box status unavailable: network down')).toBeInTheDocument();
+    expect(screen.queryByText('Checking the box…')).toBeNull();
+  });
+
+  it('aborts the in-flight askAi stream when the screen unmounts, and does not patch turn state afterwards', async () => {
+    vi.spyOn(api, 'status').mockResolvedValue(ready);
+    let capturedSignal: AbortSignal | undefined;
+    const spy = vi.spyOn(api, 'askAi').mockImplementation(async function* (_req, signal) {
+      capturedSignal = signal;
+      // Waits until the signal aborts and rejects, mirroring a real fetch's body read once its
+      // AbortController fires, rather than resolving or yielding anything on its own.
+      await new Promise<void>((_resolve, reject) => {
+        signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      });
+      yield { event: 'retrieving', data: { query: 'q', passages: [] } };
+    });
+    const user = userEvent.setup();
+    const view = renderRoute('/ai');
+    const input = await screen.findByLabelText('Your question');
+    await user.type(input, 'signs of dehydration{Enter}');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(capturedSignal?.aborted).toBe(false);
+
+    view.unmount();
+    expect(capturedSignal?.aborted).toBe(true);
+
+    // Let the generator's rejection (triggered by the abort listener above) propagate through the
+    // component's catch block; this must not throw or touch an unmounted component's state.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  });
+
   it('shows an explanatory card when the AI is not ready', async () => {
     vi.spyOn(api, 'status').mockResolvedValue(status);
     const a = renderRoute('/ai');

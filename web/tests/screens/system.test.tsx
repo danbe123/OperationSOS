@@ -17,6 +17,13 @@ describe('formatUptime', () => {
 });
 
 describe('System', () => {
+  it('shows the status error in place of the loading message when /api/status fails', async () => {
+    vi.spyOn(api, 'status').mockRejectedValue(new Error('network down'));
+    renderRoute('/system');
+    expect(await screen.findByText('Box status unavailable: network down')).toBeInTheDocument();
+    expect(screen.queryByText('Reading the box status…')).toBeNull();
+  });
+
   it('shows status cards', async () => {
     vi.spyOn(api, 'status').mockResolvedValue(status);
     renderRoute('/system');

@@ -247,10 +247,17 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
 
 export function System() {
   const kiosk = useKiosk();
-  const { status, update, refresh } = useStatus();
+  const { status, error, update, refresh } = useStatus();
   const { run, dialog } = usePinGate();
 
-  if (!status) return <div className="screen"><AppBar title="System" /><p className="pad muted">Reading the box status…</p></div>;
+  if (!status) {
+    return (
+      <div className="screen">
+        <AppBar title="System" />
+        {error ? <p className="pad warning">Box status unavailable: {error}</p> : <p className="pad muted">Reading the box status…</p>}
+      </div>
+    );
+  }
 
   return <SystemBody status={status} kiosk={kiosk} run={run} dialog={dialog} update={update} refresh={refresh} />;
 }
