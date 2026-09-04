@@ -110,6 +110,10 @@ def pin_login(body: PinBody, request: Request, conn=Depends(get_db)):
 
 @router.post("/system/pin/change", dependencies=[Depends(require_pin)])
 def pin_change(body: PinBody, request: Request, conn=Depends(get_db)):
+    if not system.pin_required(conn):
+        # No PIN claimed yet: require_pin no-ops in this state, so the first claim must be restricted to
+        # the box itself -- the hotspot ships open, and anyone in range could otherwise claim the PIN first.
+        require_localhost(request)
     system.set_pin(conn, body.pin)
     request.app.state.tokens.revoke_all()
     return {"ok": True}

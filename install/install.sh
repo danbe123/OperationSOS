@@ -248,7 +248,7 @@ step_web() {
 step_units() {
   local unit changed=0
   if [ "$DRY_RUN" = 1 ]; then would units "write the systemd units and daemon-reload"; fi
-  for unit in caddy.service kiwix-serve.service sos-api.service sos-llama.service; do
+  for unit in caddy.service kiwix-serve.service sos-api.service sos-llama.service sos-kiosk.service; do
     if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
   done
   if [ "$DRY_RUN" = 1 ]; then return; fi

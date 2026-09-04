@@ -13,6 +13,7 @@ step units: would write the systemd units and daemon-reload
   write /etc/systemd/system/kiwix-serve.service (from install/systemd/kiwix-serve.service, mode 644, root:root)
   write /etc/systemd/system/sos-api.service (from install/systemd/sos-api.service, mode 644, root:root)
   write /etc/systemd/system/sos-llama.service (from install/systemd/sos-llama.service, mode 644, root:root)
+  write /etc/systemd/system/sos-kiosk.service (from install/systemd/sos-kiosk.service, mode 644, root:root)
 step caddy: would write the Caddyfile
   write /etc/caddy/Caddyfile (from install/caddy/Caddyfile, mode 644, root:root)
 step hotspot: would write the NetworkManager profiles and the dnsmasq name catch-all, then nmcli connection reload

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import shutil
 from contextlib import asynccontextmanager
 
@@ -17,6 +18,8 @@ from sos.routers import ai, cards, kiosk, notes, pages, places, playbooks, searc
 from sos.routers import library as library_router
 from sos.routers import map as map_router
 from sos.routers import system as system_router
+
+log = logging.getLogger(__name__)
 
 
 def _bootstrap(settings: Settings) -> None:
@@ -76,6 +79,11 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             loc = ".".join(str(p) for p in err.get("loc", []) if p != "body")
             parts.append(f"{loc}: {err.get('msg')}" if loc else str(err.get("msg")))
         return JSONResponse(status_code=422, content={"detail": "; ".join(parts) or "Invalid request"})
+
+    @app.exception_handler(Exception)
+    async def unhandled_error(request: Request, exc: Exception):
+        log.exception("unhandled error on %s %s", request.method, request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "Internal error"})
 
     return app
 

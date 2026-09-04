@@ -243,6 +243,37 @@ def test_pin_gating_suite(client, app):
     assert client.post("/api/system/pin", json={"pin": "5678"}).status_code == 200
 
 
+def test_first_pin_claim_is_localhost_only(client, remote_client):
+    # The hotspot ships open (no WPA2), so before any PIN is set, a remote client must not be able to
+    # claim it -- only the box itself (localhost) may.
+    r = remote_client.post("/api/system/pin/change", json={"pin": "1234"})
+    assert r.status_code == 403 and r.json() == {"detail": "Only allowed from the box itself"}
+    assert client.get("/api/status").json()["pin_required"] is False  # the rejected claim did not stick
+    assert client.post("/api/system/pin/change", json={"pin": "1234"}).json() == {"ok": True}
+    assert client.get("/api/status").json()["pin_required"] is True
+    # once a PIN exists, remote clients go back to the normal bearer-token path (401, not 403)
+    r = remote_client.post("/api/system/pin/change", json={"pin": "5678"})
+    assert r.status_code == 401 and r.json() == {"detail": "PIN required"}
+
+
+def test_unhandled_exception_returns_json_500(app, monkeypatch):
+    # Any exception the plan's error contract doesn't already name (ValueError -> 400, validation -> 422)
+    # must still come back as { "detail": string } JSON, not Starlette's default text/plain 500.
+    from fastapi.testclient import TestClient
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(system, "set_power_mode", boom)
+    # raise_server_exceptions=False: TestClient otherwise re-raises the original exception for debugging
+    # even when the app's own exception_handler already produced a response -- we want that response here.
+    with TestClient(app, client=("127.0.0.1", 50000), raise_server_exceptions=False) as c:
+        r = c.post("/api/system/power-mode", json={"mode": "low"})
+    assert r.status_code == 500
+    assert r.headers["content-type"].startswith("application/json")
+    assert r.json() == {"detail": "Internal error"}
+
+
 def test_system_settings_hotspot_eth_and_update(client, app):
     r = client.post("/api/system/settings", json={"default_theme": "field", "thermal_ai_off_c": 70})
     assert r.status_code == 200 and r.json()["default_theme"] == "field" and r.json()["thermal_ai_off_c"] == 70

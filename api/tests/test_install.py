@@ -95,12 +95,31 @@ def test_dry_run_flags_and_arch():
     dev = dry_run("--dev")
     for step in ("hotspot", "mount", "backlight", "kiosk", "boot"):
         assert f"step {step}: skipped (--dev)" in dev, step
-    assert "sos-kiosk.service" not in dev and "srv-sos-extended.mount" not in dev
+    # sos-kiosk.service is still installed unconditionally by step_units (harmless under --dev, since
+    # step_enable does not enable it there); the mount units are skipped entirely under --dev.
+    assert "write /etc/systemd/system/sos-kiosk.service" in dev
+    assert "srv-sos-extended.mount" not in dev
+    enable_line = next(line for line in dev.splitlines() if line.startswith("step enable:"))
+    assert "sos-kiosk.service" not in enable_line
     assert "step llama: skipped (--skip-llama)" in dry_run("--skip-llama")
     assert "step jellyfin: would add https://repo.jellyfin.org/debian" in dry_run("--with-jellyfin")
     assert "with dtparam=pciex1_gen=3 enabled (--pcie-gen3)" in dry_run("--pcie-gen3")
     x86 = dry_run(env={"SOS_ARCH": "x86_64"})
     assert "kiwix-tools_linux-x86_64-3.8.2.tar.gz" in x86 and "caddy_2.11.4_linux_amd64.tar.gz" in x86
+
+
+def test_dry_run_installs_every_unit_file():
+    """Every unit under install/systemd/ (UNIT_NAMES) must actually be copied into $UNIT_DIR by some step
+    before step_enable ever runs, in a real (non---dev) install -- a unit file that only exists in the repo
+    but is never installed makes `systemctl enable` fail non-zero under `set -euo pipefail`."""
+    out = dry_run()
+    units_line_index = out.index("step units:")
+    enable_line_index = out.index("step enable:")
+    for name in UNIT_NAMES:
+        assert f"write /etc/systemd/system/{name}" in out, f"{name} is never installed by install.sh"
+        # and it must be installed before step_enable tries to enable it
+        assert out.index(f"write /etc/systemd/system/{name}") < enable_line_index, name
+    assert units_line_index < enable_line_index
 
 
 def test_install_sh_rejects_bad_option_and_non_root():
