@@ -7237,3 +7237,2605 @@ git commit -m "feat(cli): sos sync/index/storage-event/validate-playbooks/pin/st
 ```
 
 ---
+
+### Task 13: Dev stack (`dev/run-dev.sh`, `dev/smoke.sh`, the smoke self-test, `make dev` and `make smoke`)
+
+**Files:**
+- Create: `dev/smoke-stub.py` (a stand-in stack for the self-test)
+- Create: `dev/smoke-selftest.sh` (the bash test)
+- Create: `dev/smoke.sh`
+- Create: `dev/run-dev.sh`
+- Modify: `Makefile` (add the `smoke` target and the self-test to `test`)
+- Test: `dev/smoke-selftest.sh`, run by `make test`
+
+**Interfaces:**
+- Consumes: `api/.venv/bin/uvicorn` and `sos.main:app` (Task 11); the `SOS_*` settings from Task 1 (`SOS_DEV`, `SOS_CORE`, `SOS_EXT`, `SOS_STATE`, `SOS_WEB`, `SOS_MANIFEST_DIR`, `SOS_PLAYBOOKS_DIR`, `SOS_KIWIX_URL`, `SOS_PORT`); `dev/manifest/core.json` (Task 2); `kiwix-serve`, `kiwix-manage`, `caddy` and `curl` on `PATH`; `install/caddy/Caddyfile` and `install/placeholder/` from Task 14 (see the contract below).
+- Produces: `dev/run-dev.sh` (`make dev`; overrides `SOS_CORE` default `/home/dan/sos-content`, `SOS_DEV_DIR` default `<repo>/.dev`, `SOS_MANIFEST_DIR` default `<repo>/dev/manifest`, `SOS_PLAYBOOKS_DIR` default `<repo>/playbooks`, `SOS_KIWIX_PORT` 8090, `SOS_PORT` 8000, `SOS_HTTP_PORT` 8080; `SOS_MODEL` passes through to sos-api; state in `.dev/state`, logs in `.dev/logs/{kiwix-serve,sos-api,caddy}.log`); `dev/smoke.sh` (`make smoke`; `SOS_SMOKE_URL` default `http://127.0.0.1:8080`, `SOS_SMOKE_BOOK` default `wikipedia_en_100_mini_2026-01`; one line per check, `PASS <label> (<status>)` or `FAIL <label> (...)`, then `smoke: N passed, M failed`; exit 1 on any FAIL); `dev/smoke-selftest.sh` printing `smoke-selftest: OK`.
+- **Caddyfile contract this task relies on and Task 14 implements exactly.** `install/caddy/Caddyfile` is the production file; every root and upstream in it is a Caddy environment placeholder `{$NAME:default}` whose default is the production value, so `caddy run --config install/caddy/Caddyfile --adapter caddyfile` with these variables exported is the whole dev override mechanism:
+
+  | Variable | Production default | Dev stack sets |
+  |---|---|---|
+  | `SOS_HTTP_PORT` | `80` | `8080` |
+  | `SOS_WEB_ROOT` | `/srv/sos/web` | `web/dist` when built, else `install/placeholder` |
+  | `SOS_MAPS_ROOT` | `/srv/sos/core/maps` | `$SOS_CORE/maps` |
+  | `SOS_DOCS_CORE` | `/srv/sos/core/docs` | `$SOS_CORE/docs` |
+  | `SOS_DOCS_EXT` | `/srv/sos/extended/docs` | `.dev/extended/docs` |
+  | `SOS_API_UPSTREAM` | `127.0.0.1:8000` | `127.0.0.1:$SOS_PORT` |
+  | `SOS_KIWIX_UPSTREAM` | `127.0.0.1:8090` | `127.0.0.1:$SOS_KIWIX_PORT` |
+
+  Behaviour the smoke test depends on: `/api/*` and `/kiwix/*` are proxied with their full paths (no prefix stripping); `/welcome` and `/starting` are served from `SOS_WEB_ROOT/welcome.html` and `starting.html`; the eight probe paths answer `302` with `Location: http://10.42.0.1/welcome`; `Host` passes through to kiwix-serve unchanged. Deviation from the header's file map: there is no `dev/caddy.d/dev.caddy`; environment placeholders make a separate dev snippet unnecessary.
+
+Verified facts the scripts rely on: `kiwix-manage LIB add ZIM` reads only the ZIM header, so adding the 3.5 GB iFixit sample takes under a second; `GET /kiwix/content/<book>/` answers `302` to `.../index` and then `200` (so the smoke check follows redirects); kiwix-serve builds that `Location` from the `Host` header, which is why Caddy must pass it through; `bash` ignores `SIGINT` in background jobs started from a non-interactive shell, so the stop path is exercised with `SIGTERM` in tests and with Ctrl-C from a terminal.
+
+- [ ] **Step 1: Write the stub and the failing self-test**
+
+`dev/smoke-stub.py`:
+
+```python
+"""Tiny stand-in for the dev stack used by dev/smoke-selftest.sh: `python3 dev/smoke-stub.py good|broken PORT`.
+In `broken` mode /api/search answers 500 and the captive-portal probe answers 204 instead of 302."""
+import http.server
+import sys
+
+MODE = sys.argv[1]
+PORT = int(sys.argv[2])
+BOOK = "wikipedia_en_100_mini_2026-01"
+ROUTES = {
+    "/api/status": (200, b'{"version":"0.1.0","dev":true}'),
+    "/api/library": (200, b'{"categories":[]}'),
+    "/api/search?q=water": (200, b'{"q":"water","results":[],"partial":false}'),
+    "/api/suggest?q=wat": (200, b"[]"),
+    f"/kiwix/content/{BOOK}/": (302, f"/kiwix/content/{BOOK}/index"),
+    f"/kiwix/content/{BOOK}/index": (200, b"<html><body>stub article</body></html>"),
+    "/welcome": (200, b"<html><body>Open http://10.42.0.1 in your browser (or http://sos.box)</body></html>"),
+}
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/generate_204":
+            if MODE == "broken":
+                self.send_response(204)
+                self.end_headers()
+                return
+            self.send_response(302)
+            self.send_header("Location", "http://10.42.0.1/welcome")
+            self.end_headers()
+            return
+        code, body = ROUTES.get(self.path, (404, b"not found"))
+        if MODE == "broken" and self.path == "/api/search?q=water":
+            code, body = 500, b"boom"
+        if code == 302:
+            self.send_response(302)
+            self.send_header("Location", body)
+            self.end_headers()
+            return
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+```
+
+`dev/smoke-selftest.sh`:
+
+```bash
+#!/usr/bin/env bash
+# Proves dev/smoke.sh's PASS/FAIL logic against dev/smoke-stub.py: every check passes on a good stub
+# (exit 0), and exactly the two broken checks fail on a stub that answers 500 for search and 204 for
+# the captive-portal probe (exit 1). Run by `make test`.
+set -euo pipefail
+
+HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+OUT=$(mktemp)
+trap 'rm -f "$OUT"' EXIT
+
+free_port() {
+  python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()'
+}
+
+# run_mode <good|broken>: start the stub, run smoke.sh into $OUT, stop the stub, return smoke.sh's exit code.
+run_mode() {
+  local mode=$1 port pid rc=0
+  port=$(free_port)
+  python3 "$HERE/smoke-stub.py" "$mode" "$port" &
+  pid=$!
+  for _ in $(seq 1 50); do
+    if curl -s -o /dev/null "http://127.0.0.1:$port/api/status"; then break; fi
+    sleep 0.1
+  done
+  SOS_SMOKE_URL="http://127.0.0.1:$port" bash "$HERE/smoke.sh" > "$OUT" || rc=$?
+  kill "$pid"
+  wait "$pid" 2>/dev/null || true
+  return "$rc"
+}
+
+expect() {  # expect <description> <condition...>
+  local what=$1
+  shift
+  if "$@"; then return 0; fi
+  echo "smoke-selftest: FAIL: $what" >&2
+  cat "$OUT" >&2
+  exit 1
+}
+
+rc=0
+run_mode good || rc=$?
+expect "good stub exits 0" [ "$rc" -eq 0 ]
+expect "good stub: 7 PASS lines" [ "$(grep -c '^PASS ' "$OUT")" -eq 7 ]
+expect "good stub: no FAIL lines" [ "$(grep -c '^FAIL ' "$OUT" || true)" -eq 0 ]
+expect "good stub: summary line" grep -qx 'smoke: 7 passed, 0 failed' "$OUT"
+
+rc=0
+run_mode broken || rc=$?
+expect "broken stub exits 1" [ "$rc" -eq 1 ]
+expect "broken stub: 5 PASS lines" [ "$(grep -c '^PASS ' "$OUT")" -eq 5 ]
+expect "broken stub: search fails" grep -q '^FAIL GET /api/search?q=water (got 500' "$OUT"
+expect "broken stub: probe fails" grep -q '^FAIL GET /generate_204 (got 204' "$OUT"
+expect "broken stub: summary line" grep -qx 'smoke: 5 passed, 2 failed' "$OUT"
+
+echo "smoke-selftest: OK"
+```
+
+- [ ] **Step 2: Run the self-test to verify it fails**
+
+Run: `chmod +x dev/smoke-selftest.sh && bash dev/smoke-selftest.sh; echo "exit=$?"`
+Expected: `bash: /home/dan/OperationSOS/dev/smoke.sh: No such file or directory`, then `smoke-selftest: FAIL: good stub exits 0` and `exit=1`.
+
+- [ ] **Step 3: Write `dev/smoke.sh`**
+
+```bash
+#!/usr/bin/env bash
+# Operation SOS smoke test: one PASS or FAIL line per check against a running stack, exit 1 on any FAIL.
+#   dev/smoke.sh                                  the dev stack from `make dev` (Caddy on 8080)
+#   SOS_SMOKE_URL=http://10.42.0.1 dev/smoke.sh   a box, from a laptop on the hotspot
+# SOS_SMOKE_BOOK names the ZIM whose reader root must answer (default: the sample Wikipedia ZIM).
+set -uo pipefail
+
+BASE=${SOS_SMOKE_URL:-http://127.0.0.1:8080}
+BOOK=${SOS_SMOKE_BOOK:-wikipedia_en_100_mini_2026-01}
+pass=0
+fail=0
+
+# check <label> <path> <expected-status> <body-regex> [follow]
+check() {
+  local label=$1 path=$2 want=$3 pattern=$4 follow=${5:-} tmp code
+  tmp=$(mktemp)
+  if [ -n "$follow" ]; then
+    code=$(curl -sS -L -o "$tmp" -w '%{http_code}' --max-time 20 "$BASE$path" 2>/dev/null || echo 000)
+  else
+    code=$(curl -sS -o "$tmp" -w '%{http_code}' --max-time 20 "$BASE$path" 2>/dev/null || echo 000)
+  fi
+  if [ "$code" = "$want" ] && grep -Eq -- "$pattern" "$tmp"; then
+    echo "PASS $label ($code)"
+    pass=$((pass + 1))
+  else
+    echo "FAIL $label (got $code, wanted $want matching '$pattern'; body: $(head -c 100 "$tmp" | tr '\n' ' '))"
+    fail=$((fail + 1))
+  fi
+  rm -f "$tmp"
+}
+
+# check_redirect <path> <location>: a 302 whose Location header is exactly <location>
+check_redirect() {
+  local path=$1 want=$2 headers code loc
+  headers=$(curl -sS -o /dev/null -D - --max-time 20 "$BASE$path" 2>/dev/null || true)
+  code=$(printf '%s\n' "$headers" | head -1 | awk '{ print $2 }')
+  loc=$(printf '%s\n' "$headers" | awk 'tolower($1) == "location:" { print $2 }' | tr -d '\r')
+  if [ "$code" = "302" ] && [ "$loc" = "$want" ]; then
+    echo "PASS GET $path -> 302 $loc"
+    pass=$((pass + 1))
+  else
+    echo "FAIL GET $path (got ${code:-nothing} ${loc:-without Location}; wanted 302 $want)"
+    fail=$((fail + 1))
+  fi
+}
+
+check "GET /api/status" /api/status 200 '"version"'
+check "GET /api/library" /api/library 200 '"categories"'
+check "GET /api/search?q=water" '/api/search?q=water' 200 '"results"'
+check "GET /api/suggest?q=wat" '/api/suggest?q=wat' 200 '^\['
+check "GET /kiwix/content/$BOOK/" "/kiwix/content/$BOOK/" 200 '<html' follow
+check "GET /welcome" /welcome 200 '10\.42\.0\.1'
+check_redirect /generate_204 http://10.42.0.1/welcome
+
+echo "smoke: $pass passed, $fail failed"
+[ "$fail" -eq 0 ]
+```
+
+- [ ] **Step 4: Run the self-test to verify it passes**
+
+Run: `chmod +x dev/smoke.sh && bash dev/smoke-selftest.sh`
+Expected: `smoke-selftest: OK`. To see the broken-mode output by hand: `python3 dev/smoke-stub.py broken 18999 & SOS_SMOKE_URL=http://127.0.0.1:18999 dev/smoke.sh; kill %1` prints five `PASS` lines, `FAIL GET /api/search?q=water (got 500, wanted 200 matching '"results"'; body: boom)`, `FAIL GET /generate_204 (got 204 without Location; wanted 302 http://10.42.0.1/welcome)` and `smoke: 5 passed, 2 failed`.
+
+- [ ] **Step 5: Write `dev/run-dev.sh`**
+
+```bash
+#!/usr/bin/env bash
+# Operation SOS dev stack on the PC (spec section 13, "Development"). Started by `make dev`.
+#   kiwix-serve  8090  over the sample ZIMs in $SOS_CORE/zim (library.xml built here with kiwix-manage)
+#   sos-api      8000  uvicorn with SOS_DEV=1, the dev manifest and the repo's playbooks
+#   caddy        8080  the production Caddyfile with its roots and upstreams overridden by environment
+#                      variables (see install/caddy/Caddyfile for the contract)
+# State and logs live under $SOS_DEV_DIR (default <repo>/.dev, ignored by git). Ctrl-C stops all three.
+#
+# Overrides: SOS_CORE (default /home/dan/sos-content), SOS_MANIFEST_DIR (default dev/manifest),
+# SOS_PLAYBOOKS_DIR (default playbooks), SOS_MODEL (passed through to sos-api), SOS_KIWIX_PORT,
+# SOS_PORT, SOS_HTTP_PORT, SOS_DEV_DIR.
+set -euo pipefail
+
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+CONTENT=${SOS_CORE:-/home/dan/sos-content}
+DEV_DIR=${SOS_DEV_DIR:-$REPO/.dev}
+STATE=$DEV_DIR/state
+EXT=$DEV_DIR/extended
+LOGS=$DEV_DIR/logs
+KIWIX_PORT=${SOS_KIWIX_PORT:-8090}
+API_PORT=${SOS_PORT:-8000}
+HTTP_PORT=${SOS_HTTP_PORT:-8080}
+MANIFEST_DIR=${SOS_MANIFEST_DIR:-$REPO/dev/manifest}
+PLAYBOOKS_DIR=${SOS_PLAYBOOKS_DIR:-$REPO/playbooks}
+UVICORN=$REPO/api/.venv/bin/uvicorn
+
+for tool in kiwix-serve kiwix-manage caddy curl; do
+  command -v "$tool" >/dev/null || { echo "run-dev: $tool is not on PATH" >&2; exit 1; }
+done
+[ -x "$UVICORN" ] || { echo "run-dev: $UVICORN is missing; run 'make venv' first" >&2; exit 1; }
+[ -d "$CONTENT/zim" ] || { echo "run-dev: no ZIM directory at $CONTENT/zim (set SOS_CORE)" >&2; exit 1; }
+
+mkdir -p "$STATE/config" "$EXT" "$LOGS" "$CONTENT/maps" "$CONTENT/docs" "$CONTENT/models"
+
+# 1. library.xml for kiwix-serve. sos-api regenerates it on boot and on every rescan; --monitorLibrary
+#    reloads it, so this only needs to exist before kiwix-serve starts.
+LIB=$STATE/library.xml
+rm -f "$LIB"
+shopt -s nullglob
+for zim in "$CONTENT"/zim/*.zim; do
+  kiwix-manage "$LIB" add "$zim" >/dev/null || echo "run-dev: kiwix-manage rejected $zim" >&2
+done
+shopt -u nullglob
+if [ ! -f "$LIB" ]; then
+  printf '<?xml version="1.0" encoding="UTF-8"?>\n<library version="20110515">\n</library>\n' > "$LIB"
+fi
+echo "run-dev: library.xml with $(grep -c '<book ' "$LIB" || true) books at $LIB"
+
+# 2. Web root: the built bundle when present, otherwise the install placeholder.
+if [ -f "$REPO/web/dist/index.html" ]; then
+  WEB_ROOT=$REPO/web/dist
+else
+  WEB_ROOT=$REPO/install/placeholder
+  echo "run-dev: web/dist is not built; serving install/placeholder (run 'make build' for the app)"
+fi
+
+PIDS=()
+# shellcheck disable=SC2329  # invoked through the traps below
+cleanup() {
+  trap - EXIT INT TERM
+  echo "run-dev: stopping"
+  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
+  wait 2>/dev/null || true
+}
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT TERM
+
+kiwix-serve --library "$LIB" --monitorLibrary --address all --port "$KIWIX_PORT" --urlRootLocation /kiwix \
+  --nosearchbar --nolibrarybutton --blockexternal > "$LOGS/kiwix-serve.log" 2>&1 &
+PIDS+=("$!")
+echo "run-dev: kiwix-serve  http://127.0.0.1:$KIWIX_PORT/kiwix"
+
+SOS_DEV=1 SOS_CORE=$CONTENT SOS_EXT=$EXT SOS_STATE=$STATE SOS_WEB=$WEB_ROOT \
+  SOS_MANIFEST_DIR=$MANIFEST_DIR SOS_PLAYBOOKS_DIR=$PLAYBOOKS_DIR \
+  SOS_KIWIX_URL="http://127.0.0.1:$KIWIX_PORT/kiwix" SOS_PORT=$API_PORT \
+  "$UVICORN" sos.main:app --host 127.0.0.1 --port "$API_PORT" --proxy-headers --forwarded-allow-ips 127.0.0.1 \
+  > "$LOGS/sos-api.log" 2>&1 &
+PIDS+=("$!")
+echo "run-dev: sos-api      http://127.0.0.1:$API_PORT/api/status  (SOS_DEV=1, manifest $MANIFEST_DIR, playbooks $PLAYBOOKS_DIR)"
+
+SOS_HTTP_PORT=$HTTP_PORT SOS_WEB_ROOT=$WEB_ROOT SOS_MAPS_ROOT=$CONTENT/maps \
+  SOS_DOCS_CORE=$CONTENT/docs SOS_DOCS_EXT=$EXT/docs \
+  SOS_API_UPSTREAM=127.0.0.1:$API_PORT SOS_KIWIX_UPSTREAM=127.0.0.1:$KIWIX_PORT \
+  XDG_DATA_HOME=$DEV_DIR/caddy XDG_CONFIG_HOME=$DEV_DIR/caddy \
+  caddy run --config "$REPO/install/caddy/Caddyfile" --adapter caddyfile > "$LOGS/caddy.log" 2>&1 &
+PIDS+=("$!")
+echo "run-dev: caddy        http://127.0.0.1:$HTTP_PORT  (web root $WEB_ROOT)"
+echo "run-dev: logs in $LOGS; Ctrl-C stops all three"
+
+for _ in $(seq 1 60); do
+  if curl -fsS --max-time 2 "http://127.0.0.1:$HTTP_PORT/api/status" >/dev/null 2>&1; then
+    echo "run-dev: ready (http://127.0.0.1:$HTTP_PORT/api/status answered); run dev/smoke.sh in another terminal"
+    break
+  fi
+  sleep 1
+done
+
+wait -n || true
+echo "run-dev: a service exited; see $LOGS" >&2
+exit 1
+```
+
+`--proxy-headers --forwarded-allow-ips 127.0.0.1` matters: Caddy (Task 14) rewrites `X-Forwarded-For` to the real client address, and uvicorn then reports that address as `request.client.host`, so the localhost-only endpoints from Task 11 (`/api/kiosk/*`, `/api/system/rescan`) reject phones and accept the kiosk browser exactly as on the box.
+
+- [ ] **Step 6: Add the Makefile targets**
+
+In `Makefile` (Task 1), change the `.PHONY` line and the `test` recipe and add `smoke` after `dev`:
+
+```make
+.PHONY: dev test e2e build fixtures deploy venv smoke
+```
+
+```make
+dev: venv
+> dev/run-dev.sh
+
+smoke:
+> dev/smoke.sh
+
+test: venv
+> cd api && .venv/bin/pytest -q
+> if [ -f web/package.json ]; then pnpm --dir web test -- --run; fi
+> SOS_PLAYBOOKS_DIR=playbooks SOS_MANIFEST_DIR=manifest $(SOS) validate-playbooks
+> bash dev/smoke-selftest.sh
+```
+
+- [ ] **Step 7: Lint the three scripts**
+
+Run: `chmod +x dev/run-dev.sh && bash -n dev/run-dev.sh && api/.venv/bin/shellcheck --shell=bash --severity=style dev/run-dev.sh dev/smoke.sh dev/smoke-selftest.sh; echo "exit=$?"`
+Expected: no findings, `exit=0` (`shellcheck-py` from the dev dependencies installs the binary as `api/.venv/bin/shellcheck`).
+
+- [ ] **Step 8: Run the stack (needs Task 14's Caddyfile and placeholder pages; if Task 14 is not done yet, do this step at the end of Task 14 and again in Task 16)**
+
+Run in one terminal: `make dev`
+Expected (paths abbreviated):
+
+```
+run-dev: library.xml with 6 books at /home/dan/OperationSOS/.dev/state/library.xml
+run-dev: web/dist is not built; serving install/placeholder (run 'make build' for the app)
+run-dev: kiwix-serve  http://127.0.0.1:8090/kiwix
+run-dev: sos-api      http://127.0.0.1:8000/api/status  (SOS_DEV=1, manifest /home/dan/OperationSOS/dev/manifest, playbooks /home/dan/OperationSOS/playbooks)
+run-dev: caddy        http://127.0.0.1:8080  (web root /home/dan/OperationSOS/install/placeholder)
+run-dev: logs in /home/dan/OperationSOS/.dev/logs; Ctrl-C stops all three
+run-dev: ready (http://127.0.0.1:8080/api/status answered); run dev/smoke.sh in another terminal
+```
+
+Run in another terminal: `make smoke`
+Expected:
+
+```
+PASS GET /api/status (200)
+PASS GET /api/library (200)
+PASS GET /api/search?q=water (200)
+PASS GET /api/suggest?q=wat (200)
+PASS GET /kiwix/content/wikipedia_en_100_mini_2026-01/ (200)
+PASS GET /welcome (200)
+PASS GET /generate_204 -> 302 http://10.42.0.1/welcome
+smoke: 7 passed, 0 failed
+```
+
+Ctrl-C in the first terminal prints `run-dev: stopping` and leaves no `kiwix-serve`, `uvicorn` or `caddy` process behind (`pgrep -af 'kiwix-serve|uvicorn|caddy run'` prints nothing).
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add Makefile dev/run-dev.sh dev/smoke.sh dev/smoke-selftest.sh dev/smoke-stub.py
+git commit -m "feat(dev): run-dev.sh dev stack, smoke.sh with PASS/FAIL lines, smoke self-test, make smoke"
+```
+
+---
+
+### Task 14: `install/` (installer, pinned versions, systemd units, Caddyfile, NetworkManager, udev, sudoers, kiosk, boot fragment, placeholder pages)
+
+**Files:**
+- Create: `install/versions.env`, `install/answers.env.example`
+- Create: `install/caddy/Caddyfile`
+- Create: `install/systemd/caddy.service`, `install/systemd/kiwix-serve.service`, `install/systemd/sos-api.service`, `install/systemd/sos-llama.service`, `install/systemd/sos-kiosk.service`, `install/systemd/srv-sos-extended.mount`, `install/systemd/sos-extended-rescan.service`
+- Create: `install/nm/sos-hotspot.nmconnection`, `install/nm/sos-eth-client.nmconnection`, `install/nm/sos-eth-direct.nmconnection`, `install/nm/dnsmasq-shared.d/sos.conf`
+- Create: `install/udev/90-sos-backlight.rules`, `install/sudoers/sos`, `install/kiosk/sos-kiosk-app`, `install/boot/config.txt.d/sos.txt`
+- Create: `install/placeholder/index.html`, `install/placeholder/welcome.html`, `install/placeholder/starting.html`
+- Create: `install/install.sh`
+- Create: `api/tests/golden/install-dry-run.txt`
+- Modify: `.gitignore` (add `install/answers.env`)
+- Test: `api/tests/test_install.py`
+
+**Interfaces:**
+- Consumes: the Caddyfile contract from Task 13 (the seven `SOS_*` placeholders with production defaults); the `sos` CLI from Task 12 (`sos index`, `sos pin set <pin>`, `sos storage-event add|remove`) and `sos.db.set_setting` / `sos.config.get_settings` (Tasks 1 and 3) for the answers step; the exact `sudo -n` command lines of Task 10 (`systemctl stop sos-llama.service`; `nmcli con modify sos-hotspot ...`; `nmcli con up sos-hotspot`; `nmcli con modify sos-eth-client|sos-eth-direct connection.autoconnect ...`; `nmcli con up sos-eth-client|sos-eth-direct`; `umount -l /srv/sos/extended`) and plan 05's `systemctl start sos-llama.service`; plan 05 writes `/srv/sos/state/config/ai.env` as `SOS_MODEL=<file>`, which `sos-llama.service` reads.
+- Produces: the installed tree (every destination path is in the golden file); `install.sh --dry-run|--dev|--skip-llama|--with-jellyfin|--pcie-gen3` with the test overrides `SOS_ARCH` and `SOS_WEB_DIST`; step names `apt downloads llama jellyfin user tree venv web units caddy hotspot mount backlight sudoers kiosk boot content answers enable`, each printed as `step <name>: <would ...|unchanged|updated|skipped (...)>`; the `sos` user (home `/home/sos`, groups `video input render`); `/srv/sos/state/config/{ai.env,kiosk.env,answers.done}`; `sos-kiosk-app --wait-for-api|--reset-prefs` and its `kiosk.env` keys `SOS_KIOSK_TRANSFORM` (90 or 270), `SOS_KIOSK_URL`, `SOS_KIOSK_API`.
+
+Deviations from the spec text, each with its reason: (1) the apt list is the spec's list plus `git curl rsync`, which the script itself needs (llama.cpp clone, downloads, copies). (2) `kiwix-serve.service` has an `ExecStartPre` that writes an empty `library.xml` when the file does not exist yet, so the unit does not crash-loop before the first `sos index`. (3) The kiosk unit's 60 s wait for `/api/status` is `sos-kiosk-app --wait-for-api`, a mode of the wrapper, rather than an inline shell loop, which keeps the unit free of `$` escaping. (4) Caddy runs as user `sos` with `AmbientCapabilities=CAP_NET_BIND_SERVICE` so it can read `/srv/sos` and still bind port 80. (5) Caddy replaces `X-Forwarded-For` with the real client address, so a phone cannot spoof its way past the localhost-only endpoints; `sos-api.service` runs uvicorn with `--proxy-headers --forwarded-allow-ips 127.0.0.1` to match. (6) `sos-llama.service` deliberately has no `[Install]` section: the assistant is off by default and only sos-api starts it. (7) `/boot/firmware` is vfat, so the boot fragment is copied with `cp` rather than `install -o root`.
+
+Verified facts: `systemd-escape -p --suffix=device /dev/disk/by-label/SOS-EXT` is `dev-disk-by\x2dlabel-SOS\x2dEXT.device`; `caddy validate --config install/caddy/Caddyfile --adapter caddyfile` accepts `{$VAR:default}` in the site address and in `root` and `reverse_proxy` arguments; the `CADDY_ADMIN` environment variable moves Caddy's admin listener, which is how the test runs a second Caddy beside `make dev`; `systemd-analyze verify` on the PC reports only `Command ... is not executable: No such file or directory` for binaries that live on the box; `visudo -cf` works unprivileged; `kiwix-serve --version` prints `kiwix-tools 3.8.2` on its first line and `caddy version` prints `v2.11.4 h1:...`; `shellcheck-py` installs the `shellcheck` binary beside the venv's `python`.
+
+- [ ] **Step 1: Write the failing tests**
+
+`api/tests/test_install.py`:
+
+```python
+"""install/ and dev/ stay valid (spec section 14, "Install"): shellcheck, the dry-run golden, the unit
+files against spec section 5, `systemd-analyze verify`, `caddy validate`, and a live Caddy on ephemeral
+ports answering the probe paths, range requests and the SPA fallback exactly as the spec says."""
+from __future__ import annotations
+
+import configparser
+import http.server
+import json
+import os
+import re
+import shutil
+import socket
+import subprocess
+import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[2]
+INSTALL = REPO / "install"
+DEV = REPO / "dev"
+SCRIPTS = [INSTALL / "install.sh", DEV / "run-dev.sh", DEV / "smoke.sh", DEV / "smoke-selftest.sh",
+           INSTALL / "kiosk" / "sos-kiosk-app"]
+UNIT_NAMES = ["caddy.service", "kiwix-serve.service", "sos-api.service", "sos-llama.service", "sos-kiosk.service",
+              "srv-sos-extended.mount", "sos-extended-rescan.service"]
+UNITS = [INSTALL / "systemd" / name for name in UNIT_NAMES]
+PROBES = ["/generate_204", "/gen_204", "/hotspot-detect.html", "/library/test/success.html", "/connecttest.txt",
+          "/ncsi.txt", "/canonical.html", "/success.txt"]
+GOLDEN = REPO / "api" / "tests" / "golden" / "install-dry-run.txt"
+GOLDEN_ENV = {"SOS_ARCH": "aarch64", "SOS_WEB_DIST": "/nonexistent/web/dist"}
+CADDYFILE = INSTALL / "caddy" / "Caddyfile"
+
+
+def shellcheck_bin() -> str | None:
+    """shellcheck-py (a dev dependency) drops the binary next to the venv's python."""
+    beside_python = Path(sys.executable).with_name("shellcheck")
+    return str(beside_python) if beside_python.exists() else shutil.which("shellcheck")
+
+
+def free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def dry_run(*flags: str, env: dict | None = None) -> str:
+    proc = subprocess.run(["bash", str(INSTALL / "install.sh"), "--dry-run", *flags], capture_output=True, text=True,
+                          env={**os.environ, **GOLDEN_ENV, **(env or {})}, cwd=REPO)
+    assert proc.returncode == 0, proc.stderr
+    return proc.stdout
+
+
+def unit(name: str) -> str:
+    return (INSTALL / "systemd" / name).read_text(encoding="utf-8")
+
+
+# --- scripts -----------------------------------------------------------------------------------------
+
+def test_scripts_have_bash_shebang_and_exec_bit():
+    for script in SCRIPTS:
+        assert script.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash\n"), script
+        assert os.access(script, os.X_OK), f"{script} is not executable (git update-index --chmod=+x)"
+
+
+@pytest.mark.skipif(shellcheck_bin() is None, reason="shellcheck not installed (pip install shellcheck-py)")
+def test_shellcheck_clean():
+    proc = subprocess.run([shellcheck_bin(), "--shell=bash", "--severity=style", *map(str, SCRIPTS)],
+                          capture_output=True, text=True, cwd=REPO)
+    assert proc.returncode == 0, proc.stdout
+
+
+# --- install.sh --------------------------------------------------------------------------------------
+
+def test_dry_run_matches_golden():
+    out = dry_run()
+    assert out == GOLDEN.read_text(encoding="utf-8"), (
+        "install.sh --dry-run output changed; if that is intended, refresh the golden with:\n"
+        "  SOS_ARCH=aarch64 SOS_WEB_DIST=/nonexistent/web/dist bash install/install.sh --dry-run "
+        "> api/tests/golden/install-dry-run.txt")
+
+
+def test_dry_run_flags_and_arch():
+    base = dry_run()
+    assert base.startswith("install.sh --dry-run: arch aarch64, dev 0, skip-llama 0, with-jellyfin 0, pcie-gen3 0\n")
+    assert "kiwix-tools_linux-aarch64-3.8.2.tar.gz" in base and "caddy_2.11.4_linux_arm64.tar.gz" in base
+    assert "step llama: would clone https://github.com/ggml-org/llama.cpp at v0.3.0" in base
+    assert "-DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF" in base
+    assert "install/placeholder -> /srv/sos/web (web/dist absent, placeholder used)" in base
+    assert "step jellyfin" not in base and "pciex1_gen=3" not in base
+    assert base.rstrip().endswith("dry run complete: nothing was written")
+    dev = dry_run("--dev")
+    for step in ("hotspot", "mount", "backlight", "kiosk", "boot"):
+        assert f"step {step}: skipped (--dev)" in dev, step
+    assert "sos-kiosk.service" not in dev and "srv-sos-extended.mount" not in dev
+    assert "step llama: skipped (--skip-llama)" in dry_run("--skip-llama")
+    assert "step jellyfin: would add https://repo.jellyfin.org/debian" in dry_run("--with-jellyfin")
+    assert "with dtparam=pciex1_gen=3 enabled (--pcie-gen3)" in dry_run("--pcie-gen3")
+    x86 = dry_run(env={"SOS_ARCH": "x86_64"})
+    assert "kiwix-tools_linux-x86_64-3.8.2.tar.gz" in x86 and "caddy_2.11.4_linux_amd64.tar.gz" in x86
+
+
+def test_install_sh_rejects_bad_option_and_non_root():
+    proc = subprocess.run(["bash", str(INSTALL / "install.sh"), "--dry-run", "--bogus"], capture_output=True,
+                          text=True, cwd=REPO, env={**os.environ, **GOLDEN_ENV})
+    assert proc.returncode == 2 and "unknown option" in proc.stderr
+    if os.geteuid() != 0:  # never attempt a real install from the test suite
+        proc = subprocess.run(["bash", str(INSTALL / "install.sh")], capture_output=True, text=True, cwd=REPO,
+                              env={**os.environ, **GOLDEN_ENV})
+        assert proc.returncode == 1 and "run as root" in proc.stderr
+
+
+def test_versions_env_pins():
+    pins = {}
+    for line in (INSTALL / "versions.env").read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            pins[key] = value
+    assert pins["KIWIX_TOOLS"] == "3.8.2" and pins["CADDY"] == "2.11.4"
+    assert pins["LLAMA_CPP_TAG"] == "v0.3.0" and pins["LLAMA_CPP_COMMIT"] == "c1d0e7a004015f23bc0233470b747b596f29b264"
+    assert pins["PROTOMAPS_BUILD"] == "20260902" and pins["JELLYFIN"] == "10.11.11"
+
+
+# --- systemd units -----------------------------------------------------------------------------------
+
+def test_units_match_spec_section_5():
+    assert sorted(p.name for p in (INSTALL / "systemd").iterdir()) == sorted(UNIT_NAMES)
+    kiwix = unit("kiwix-serve.service")
+    assert ("ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --monitorLibrary --address all "
+            "--port 8090 --urlRootLocation /kiwix --nosearchbar --nolibrarybutton --blockexternal") in kiwix
+    assert "Restart=on-failure" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
+    llama = unit("sos-llama.service")
+    assert ("ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 "
+            "-c 4096 -t 4 -ngl 0 -fa on -ctk q4_0 -ctv q4_0 -np 1 --no-webui --reasoning-budget 0") in llama
+    for line in ("EnvironmentFile=/srv/sos/state/config/ai.env", "Nice=10", "CPUWeight=30", "IOWeight=50",
+                 "MemoryMax=4500M", "OOMScoreAdjust=500", "User=sos"):
+        assert line in llama, line
+    assert "ExecStartPre=+" in llama and "performance" in llama
+    assert "ExecStopPost=+" in llama and "ondemand" in llama
+    assert not re.search(r"^\[Install\]$", llama, re.M)  # off by default: sos-api starts and stops it
+    kiosk = unit("sos-kiosk.service")
+    for line in ("ExecStart=/usr/bin/cage -- /usr/local/bin/sos-kiosk-app", "PAMName=login", "TTYPath=/dev/tty1",
+                 "Conflicts=getty@tty1.service", "User=sos", "Restart=always", "RestartSec=3",
+                 "WantedBy=graphical.target", "ExecStartPre=/usr/local/bin/sos-kiosk-app --wait-for-api"):
+        assert line in kiosk, line
+    assert "After=systemd-user-sessions.service" in kiosk
+    api = unit("sos-api.service")
+    assert "ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000" in api
+    assert "--proxy-headers --forwarded-allow-ips 127.0.0.1" in api and "User=sos" in api
+    caddy = unit("caddy.service")
+    assert "ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile" in caddy
+    assert "AmbientCapabilities=CAP_NET_BIND_SERVICE" in caddy and "User=sos" in caddy
+    mount = unit("srv-sos-extended.mount")
+    for line in ("What=/dev/disk/by-label/SOS-EXT", "Where=/srv/sos/extended", "Type=ext4", "Options=noatime",
+                 "BindsTo=dev-disk-by\\x2dlabel-SOS\\x2dEXT.device", "WantedBy=dev-disk-by\\x2dlabel-SOS\\x2dEXT.device"):
+        assert line in mount, line
+    rescan = unit("sos-extended-rescan.service")
+    for line in ("Type=oneshot", "RemainAfterExit=yes", "ExecStart=/srv/sos/api/.venv/bin/sos storage-event add",
+                 "ExecStop=/srv/sos/api/.venv/bin/sos storage-event remove", "BindsTo=srv-sos-extended.mount",
+                 "After=srv-sos-extended.mount sos-api.service", "WantedBy=srv-sos-extended.mount"):
+        assert line in rescan, line
+
+
+@pytest.mark.skipif(shutil.which("systemd-analyze") is None, reason="systemd-analyze not available")
+def test_systemd_analyze_verify():
+    proc = subprocess.run(["systemd-analyze", "verify", "--recursive-errors=no", *map(str, UNITS)],
+                          capture_output=True, text=True)
+    # The binaries the units start live on the box, not on the PC: only that message is tolerated.
+    problems = [line for line in (proc.stdout + proc.stderr).splitlines()
+                if line.strip() and "is not executable" not in line]
+    assert problems == [], problems
+
+
+# --- NetworkManager, udev, sudoers, kiosk, boot, placeholder --------------------------------------------
+
+def test_networkmanager_profiles_and_dnsmasq():
+    expectations = {
+        "sos-hotspot": {("connection", "type"): "wifi", ("connection", "interface-name"): "wlan0",
+                        ("connection", "autoconnect"): "true", ("wifi", "mode"): "ap", ("wifi", "ssid"): "SOS",
+                        ("ipv4", "method"): "shared", ("ipv4", "address1"): "10.42.0.1/24"},
+        "sos-eth-client": {("connection", "type"): "ethernet", ("connection", "interface-name"): "eth0",
+                           ("connection", "autoconnect"): "true", ("ipv4", "method"): "auto"},
+        "sos-eth-direct": {("connection", "type"): "ethernet", ("connection", "interface-name"): "eth0",
+                           ("connection", "autoconnect"): "false", ("ipv4", "method"): "shared",
+                           ("ipv4", "address1"): "10.43.0.1/24"},
+    }
+    uuids = set()
+    for name, expect in expectations.items():
+        cp = configparser.ConfigParser(interpolation=None)
+        cp.read(INSTALL / "nm" / f"{name}.nmconnection")
+        assert cp["connection"]["id"] == name
+        uuids.add(cp["connection"]["uuid"])
+        for (section, key), value in expect.items():
+            assert cp[section][key] == value, (name, section, key)
+    assert len(uuids) == 3
+    assert "[wifi-security]" not in (INSTALL / "nm" / "sos-hotspot.nmconnection").read_text(encoding="utf-8")
+    conf = (INSTALL / "nm" / "dnsmasq-shared.d" / "sos.conf").read_text(encoding="utf-8")
+    assert [line for line in conf.splitlines() if line and not line.startswith("#")] == ["address=/#/10.42.0.1"]
+
+
+def test_udev_sudoers_boot_and_placeholder_files():
+    rule = (INSTALL / "udev" / "90-sos-backlight.rules").read_text(encoding="utf-8")
+    assert 'SUBSYSTEM=="backlight"' in rule and 'ACTION=="add"' in rule
+    assert "chgrp video" in rule and "chmod g+w" in rule and "brightness" in rule
+    sudoers = (INSTALL / "sudoers" / "sos").read_text(encoding="utf-8")
+    for cmd in ("/usr/bin/systemctl start sos-llama.service", "/usr/bin/systemctl stop sos-llama.service",
+                "/usr/bin/nmcli con modify sos-hotspot *", "/usr/bin/nmcli con up sos-hotspot",
+                "/usr/bin/nmcli con modify sos-eth-client connection.autoconnect *",
+                "/usr/bin/nmcli con modify sos-eth-direct connection.autoconnect *",
+                "/usr/bin/nmcli con up sos-eth-client", "/usr/bin/nmcli con up sos-eth-direct",
+                "/usr/bin/umount -l /srv/sos/extended"):
+        assert cmd in sudoers, cmd
+    assert "sos ALL=(root) NOPASSWD:" in sudoers and "systemctl start sos-api" not in sudoers
+    if shutil.which("visudo"):
+        proc = subprocess.run(["visudo", "-cf", str(INSTALL / "sudoers" / "sos")], capture_output=True, text=True)
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+    boot = (INSTALL / "boot" / "config.txt.d" / "sos.txt").read_text(encoding="utf-8")
+    assert "\ndtparam=pciex1\n" in boot and "\n#dtparam=pciex1_gen=3\n" in boot
+    welcome = (INSTALL / "placeholder" / "welcome.html").read_text(encoding="utf-8")
+    assert len(welcome.encode("utf-8")) < 20 * 1024 and "<script" not in welcome
+    assert welcome.index("http://10.42.0.1") < welcome.index("http://sos.box")
+    assert "turn mobile data off" in welcome and "Tap Done or Cancel" in welcome
+    starting = (INSTALL / "placeholder" / "starting.html").read_text(encoding="utf-8")
+    assert "/api/status" in starting and "/?kiosk=1" in starting
+    assert "Operation SOS" in (INSTALL / "placeholder" / "index.html").read_text(encoding="utf-8")
+    example = (INSTALL / "answers.env.example").read_text(encoding="utf-8")
+    assert "SOS_PIN=" in example and "SOS_SSID=SOS" in example and "SOS_PASSPHRASE=" in example
+
+
+def test_kiosk_wrapper_text():
+    kiosk = (INSTALL / "kiosk" / "sos-kiosk-app").read_text(encoding="utf-8")
+    assert "wlr-randr --output" in kiosk and "--transform" in kiosk
+    assert "exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run" in kiosk
+    assert "--overscroll-history-navigation=0" in kiosk and "http://localhost/starting" in kiosk
+    assert '"exit_type": "Normal", "exited_cleanly": True' in kiosk and "python3 -c" in kiosk
+
+
+# --- live pieces: the kiosk wrapper's modes and Caddy ----------------------------------------------------
+
+class _Upstream(http.server.BaseHTTPRequestHandler):
+    """Echoes the request path and the two headers Caddy must handle correctly."""
+    seen: list[dict] = []
+
+    def do_GET(self):
+        _Upstream.seen.append({"path": self.path, "xff": self.headers.get("X-Forwarded-For"), "host": self.headers.get("Host")})
+        body = f"upstream saw {self.path}".encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def upstream():
+    _Upstream.seen = []
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _Upstream)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    yield f"127.0.0.1:{server.server_address[1]}"
+    server.shutdown()
+
+
+def test_kiosk_wrapper_modes(tmp_path, upstream):
+    prefs = tmp_path / "Preferences"
+    prefs.write_text('{"profile": {"exit_type": "Crashed", "exited_cleanly": false, "name": "x"}, "other": 1}')
+    env = {**os.environ, "SOS_KIOSK_PREFS": str(prefs), "SOS_KIOSK_CONFIG": str(tmp_path / "absent.env"),
+           "SOS_KIOSK_API": f"http://{upstream}/api/status"}
+    wrapper = str(INSTALL / "kiosk" / "sos-kiosk-app")
+    proc = subprocess.run(["bash", wrapper, "--reset-prefs"], env=env, capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+    data = json.loads(prefs.read_text())
+    assert data == {"profile": {"exit_type": "Normal", "exited_cleanly": True, "name": "x"}, "other": 1}
+    started = time.monotonic()
+    proc = subprocess.run(["bash", wrapper, "--wait-for-api"], env=env, capture_output=True, text=True)
+    assert proc.returncode == 0 and "sos-api ready after 1s" in proc.stdout and time.monotonic() - started < 10
+    assert subprocess.run(["bash", wrapper, "--bogus"], env=env, capture_output=True).returncode == 2
+
+
+def caddy_env(port: int, admin: int, roots: dict[str, Path], upstream: str) -> dict:
+    env = {k: v for k, v in os.environ.items() if not k.startswith("SOS_")}
+    env.update({"SOS_HTTP_PORT": str(port), "SOS_WEB_ROOT": str(roots["web"]), "SOS_MAPS_ROOT": str(roots["maps"]),
+                "SOS_DOCS_CORE": str(roots["docs_core"]), "SOS_DOCS_EXT": str(roots["docs_ext"]),
+                "SOS_API_UPSTREAM": upstream, "SOS_KIWIX_UPSTREAM": upstream, "CADDY_ADMIN": f"localhost:{admin}"})
+    return env
+
+
+@pytest.mark.skipif(shutil.which("caddy") is None, reason="caddy not installed")
+def test_caddy_validate_with_defaults_and_with_overrides(tmp_path):
+    cmd = ["caddy", "validate", "--config", str(CADDYFILE), "--adapter", "caddyfile"]
+    plain = {k: v for k, v in os.environ.items() if not k.startswith("SOS_")}
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=plain)
+    assert proc.returncode == 0, proc.stderr
+    roots = {"web": tmp_path, "maps": tmp_path, "docs_core": tmp_path, "docs_ext": tmp_path}
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=caddy_env(8080, 2019, roots, "127.0.0.1:8000"))
+    assert proc.returncode == 0, proc.stderr
+
+
+@pytest.fixture
+def caddy(tmp_path, upstream):
+    if shutil.which("caddy") is None:
+        pytest.skip("caddy not installed")
+    roots = {"web": tmp_path / "web", "maps": tmp_path / "maps", "docs_core": tmp_path / "core-docs",
+             "docs_ext": tmp_path / "ext-docs"}
+    (roots["web"] / "assets").mkdir(parents=True)
+    for r in ("maps", "docs_core", "docs_ext"):
+        roots[r].mkdir()
+    (roots["web"] / "index.html").write_text("<!doctype html><title>SOS app</title>")
+    shutil.copy(INSTALL / "placeholder" / "welcome.html", roots["web"] / "welcome.html")
+    shutil.copy(INSTALL / "placeholder" / "starting.html", roots["web"] / "starting.html")
+    (roots["web"] / "assets" / "index-abc123.js").write_text("console.log('sos')")
+    (roots["maps"] / "test.pmtiles").write_bytes(bytes(range(256)) * 4)
+    (roots["docs_core"] / "a.pdf").write_bytes(b"%PDF-1.4 core")
+    (roots["docs_ext"] / "b.pdf").write_bytes(b"%PDF-1.4 ext")
+    port = free_port()
+    proc = subprocess.Popen(["caddy", "run", "--config", str(CADDYFILE), "--adapter", "caddyfile"],
+                            env=caddy_env(port, free_port(), roots, upstream), stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+    base = f"http://127.0.0.1:{port}"
+    try:
+        for _ in range(50):
+            try:
+                urllib.request.urlopen(base + "/welcome", timeout=1)
+                break
+            except (urllib.error.URLError, ConnectionError):
+                time.sleep(0.1)
+        else:
+            proc.terminate()
+            pytest.fail("caddy did not start: " + proc.stderr.read())
+        yield base
+    finally:
+        proc.terminate()
+        proc.wait(5)
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+def get(url: str, headers: dict | None = None) -> tuple[int, dict, bytes]:
+    request = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.build_opener(_NoRedirect).open(request, timeout=5) as response:
+            return response.status, {k.lower(): v for k, v in response.headers.items()}, response.read()
+    except urllib.error.HTTPError as err:
+        return err.code, {k.lower(): v for k, v in err.headers.items()}, err.read()
+
+
+def test_caddy_probe_paths_redirect_to_welcome(caddy):
+    for path in PROBES:
+        status, headers, _ = get(caddy + path)
+        assert (status, headers.get("location")) == (302, "http://10.42.0.1/welcome"), path
+
+
+def test_caddy_welcome_and_starting_are_static(caddy):
+    status, headers, body = get(caddy + "/welcome")
+    assert status == 200 and "http://10.42.0.1" in body.decode() and headers["cache-control"] == "no-cache"
+    assert headers["content-type"].startswith("text/html")
+    status, _, body = get(caddy + "/starting")
+    assert status == 200 and b"/api/status" in body
+
+
+def test_caddy_spa_fallback_and_cache_headers(caddy):
+    status, headers, body = get(caddy + "/s/nuclear-war")
+    assert status == 200 and b"SOS app" in body and headers["cache-control"] == "no-cache"
+    status, headers, _ = get(caddy + "/index.html")
+    assert status == 200 and headers["cache-control"] == "no-cache"
+    status, headers, _ = get(caddy + "/assets/index-abc123.js")
+    assert status == 200 and headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert get(caddy + "/assets/missing.js")[0] == 404
+
+
+def test_caddy_maps_range_requests_without_compression(caddy):
+    status, headers, body = get(caddy + "/maps/test.pmtiles", {"Range": "bytes=10-19", "Accept-Encoding": "gzip"})
+    assert status == 206 and body == bytes(range(10, 20)) and headers["content-range"] == "bytes 10-19/1024"
+    assert "content-encoding" not in headers and headers["cache-control"] == "no-cache"
+    assert get(caddy + "/maps/nope.pmtiles")[0] == 404
+
+
+def test_caddy_docs_roots(caddy):
+    assert get(caddy + "/docs/core/a.pdf")[2] == b"%PDF-1.4 core"
+    assert get(caddy + "/docs/extended/b.pdf")[2] == b"%PDF-1.4 ext"
+    assert get(caddy + "/docs/core/b.pdf")[0] == 404
+
+
+def test_caddy_proxies_keep_paths_and_fix_forwarded_headers(caddy):
+    status, _, body = get(caddy + "/api/status", {"X-Forwarded-For": "1.2.3.4"})
+    assert status == 200 and body == b"upstream saw /api/status"
+    _, _, body = get(caddy + "/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation", {"Host": "sos.box"})
+    assert body == b"upstream saw /kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation"
+    api_hit = next(h for h in _Upstream.seen if h["path"] == "/api/status")
+    assert api_hit["xff"] == "127.0.0.1"  # a spoofed header is replaced, so require_localhost stays honest
+    kiwix_hit = next(h for h in _Upstream.seen if h["path"].startswith("/kiwix/"))
+    assert kiwix_hit["host"] == "sos.box"  # Host passes through, so kiwix-serve redirects to the typed address
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `cd api && .venv/bin/pytest tests/test_install.py -q`
+Expected: `19 failed` (`FileNotFoundError` for `install/install.sh`, `install/versions.env`, the units and the other files; the two Caddy skips do not apply on the PC because `caddy` is on `PATH`).
+
+- [ ] **Step 3: Write `install/versions.env` and ignore the answers file**
+
+```bash
+# Operation SOS pinned versions (spec sections 5 and 13). Sourced by install/install.sh and read as
+# KEY=VALUE lines by `sos build-maps`; blank lines and # comments are ignored. Plan 04 appends its
+# "maps pipeline" block below this one (it repeats PROTOMAPS_BUILD with the same value).
+# --- install (plan 01) ---
+KIWIX_TOOLS=3.8.2
+CADDY=2.11.4
+# First line of the PC build log /home/dan/sos-content/llama-build.log: "llama.cpp tag v0.3.0",
+# checked out at commit c1d0e7a004015f23bc0233470b747b596f29b264.
+LLAMA_CPP_TAG=v0.3.0
+LLAMA_CPP_COMMIT=c1d0e7a004015f23bc0233470b747b596f29b264
+PROTOMAPS_BUILD=20260902
+JELLYFIN=10.11.11
+KIWIX_TOOLS_BASE=https://download.kiwix.org/release/kiwix-tools
+CADDY_BASE=https://github.com/caddyserver/caddy/releases/download
+LLAMA_CPP_REPO=https://github.com/ggml-org/llama.cpp
+JELLYFIN_REPO=https://repo.jellyfin.org/debian
+```
+
+Append to `.gitignore`:
+
+```
+# per-box install answers (PIN, SSID, passphrase)
+install/answers.env
+```
+
+`install/answers.env.example`:
+
+```bash
+# Copy to install/answers.env (mode 600, never committed) so install.sh runs without prompting.
+# An empty SOS_PIN leaves the box without an admin PIN; an empty SOS_PASSPHRASE keeps the hotspot open.
+SOS_PIN=
+SOS_SSID=SOS
+SOS_PASSPHRASE=
+```
+
+- [ ] **Step 4: Write `install/caddy/Caddyfile` (Task 13's contract, exactly)**
+
+Indentation is tabs (`caddy fmt` style).
+
+```
+# Operation SOS web server (spec section 5). The same file serves the box and the PC dev stack:
+# every root and upstream is an environment placeholder whose default is the production value.
+#
+#   SOS_HTTP_PORT       80                       port to listen on (dev stack: 8080)
+#   SOS_WEB_ROOT        /srv/sos/web             built frontend: index.html, assets/, welcome.html, starting.html
+#   SOS_MAPS_ROOT       /srv/sos/core/maps       PMTiles, styles, sprites, glyphs, overlays, packs
+#   SOS_DOCS_CORE       /srv/sos/core/docs       core-tier PDFs and EPUBs (URL /docs/core/<file>)
+#   SOS_DOCS_EXT        /srv/sos/extended/docs   extended-tier PDFs and EPUBs (URL /docs/extended/<file>)
+#   SOS_API_UPSTREAM    127.0.0.1:8000           sos-api (uvicorn)
+#   SOS_KIWIX_UPSTREAM  127.0.0.1:8090           kiwix-serve started with --urlRootLocation /kiwix
+#
+# llama-server (127.0.0.1:8081) is never proxied.
+# Check: caddy validate --config install/caddy/Caddyfile --adapter caddyfile
+
+:{$SOS_HTTP_PORT:80} {
+	root * {$SOS_WEB_ROOT:/srv/sos/web}
+
+	# Captive-portal probes (spec section 4): every phone OS lands on the static welcome page, never on the app.
+	@probe path /generate_204 /gen_204 /hotspot-detect.html /library/test/success.html /connecttest.txt /ncsi.txt /canonical.html /success.txt
+	redir @probe http://10.42.0.1/welcome 302
+
+	# sos-api mounts everything under /api and kiwix-serve under /kiwix, so paths pass through untouched.
+	# X-Forwarded-For is replaced with the real client address so sos-api's localhost-only guard cannot be
+	# fooled by a phone; the Host header passes through so kiwix-serve's redirects use the address the
+	# phone typed.
+	handle /api/* {
+		reverse_proxy {$SOS_API_UPSTREAM:127.0.0.1:8000} {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+	handle /kiwix/* {
+		reverse_proxy {$SOS_KIWIX_UPSTREAM:127.0.0.1:8090}
+	}
+
+	# Map files: byte-range reads by the pmtiles protocol, so no compression; never served stale.
+	handle_path /maps/* {
+		root * {$SOS_MAPS_ROOT:/srv/sos/core/maps}
+		header Cache-Control no-cache
+		file_server
+	}
+
+	# Documents for the bundled PDF and EPUB readers.
+	handle_path /docs/core/* {
+		root * {$SOS_DOCS_CORE:/srv/sos/core/docs}
+		file_server
+	}
+	handle_path /docs/extended/* {
+		root * {$SOS_DOCS_EXT:/srv/sos/extended/docs}
+		file_server
+	}
+
+	# Static pages from the web root: the captive-portal landing page and the kiosk boot page.
+	handle /welcome {
+		rewrite * /welcome.html
+		header Cache-Control no-cache
+		file_server
+	}
+	handle /starting {
+		rewrite * /starting.html
+		header Cache-Control no-cache
+		file_server
+	}
+
+	# Vite writes hashed filenames under assets/, so those are immutable.
+	handle /assets/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		encode gzip
+		file_server
+	}
+
+	# Everything else is the single-page app: real files as they are, any other path falls back to
+	# index.html, and nothing here is cached without revalidation.
+	handle {
+		header Cache-Control no-cache
+		try_files {path} /index.html
+		encode gzip
+		file_server
+	}
+}
+```
+
+The document URL convention is therefore `/docs/<tier>/<file name under that tier's docs directory>`, e.g. the item with `dest: docs/nrr-2025.pdf` is fetched at `/docs/core/nrr-2025.pdf` (plan 02's `/doc/:id` screen strips the leading `docs/` of `dest`).
+
+- [ ] **Step 5: Write the seven systemd units (spec section 5)**
+
+`install/systemd/caddy.service`:
+
+```ini
+[Unit]
+Description=Operation SOS web server (Caddy)
+Documentation=https://caddyserver.com/docs/
+After=network-online.target kiwix-serve.service sos-api.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=sos
+Group=sos
+Environment=XDG_DATA_HOME=/srv/sos/state/config/caddy
+Environment=XDG_CONFIG_HOME=/srv/sos/state/config/caddy
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile --force
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`install/systemd/kiwix-serve.service`:
+
+```ini
+[Unit]
+Description=Operation SOS ZIM server (kiwix-serve)
+Documentation=https://kiwix-tools.readthedocs.io/en/latest/kiwix-serve.html
+After=network.target
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+# sos-api regenerates library.xml on boot and on every rescan; --monitorLibrary picks the changes up.
+# Start with an empty library rather than fail when the file does not exist yet.
+ExecStartPre=/usr/bin/python3 -c "import os; p = '/srv/sos/state/library.xml'; os.path.exists(p) or open(p, 'w').write('<library version=' + chr(34) + '20110515' + chr(34) + '></library>')"
+ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --monitorLibrary --address all --port 8090 --urlRootLocation /kiwix --nosearchbar --nolibrarybutton --blockexternal
+# A yanked USB drive can SIGBUS kiwix-serve (spec section 5).
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`install/systemd/sos-api.service`:
+
+```ini
+[Unit]
+Description=Operation SOS API (sos-api)
+After=network.target
+Wants=kiwix-serve.service
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+WorkingDirectory=/srv/sos/api
+Environment=SOS_CORE=/srv/sos/core
+Environment=SOS_EXT=/srv/sos/extended
+Environment=SOS_STATE=/srv/sos/state
+Environment=SOS_WEB=/srv/sos/web
+Environment=SOS_KIWIX_URL=http://127.0.0.1:8090/kiwix
+Environment=SOS_LLAMA_URL=http://127.0.0.1:8081
+Environment=SOS_PORT=8000
+# Caddy is the only client; it rewrites X-Forwarded-For to the real address, so the localhost-only
+# endpoints (kiosk backlight, idle, rescan) see the phone's IP rather than 127.0.0.1.
+ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`install/systemd/sos-llama.service`:
+
+```ini
+[Unit]
+Description=Operation SOS assistant model (llama-server)
+Documentation=https://github.com/ggml-org/llama.cpp/tree/master/tools/server
+After=sos-api.service
+# No [Install] section on purpose: the assistant is off by default and sos-api starts and stops this
+# unit with `sudo -n systemctl start|stop sos-llama.service` (install/sudoers/sos). Spec section 5.
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+# ai.env (written by sos-api when the assistant is enabled) selects the model file; this is the default.
+Environment=SOS_MODEL=gemma-4-E2B-it-Q4_K_M.gguf
+EnvironmentFile=/srv/sos/state/config/ai.env
+# The + prefix runs the governor switches as root even though the server runs as sos.
+ExecStartPre=+/bin/sh -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
+ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 -c 4096 -t 4 -ngl 0 -fa on -ctk q4_0 -ctv q4_0 -np 1 --no-webui --reasoning-budget 0
+ExecStopPost=+/bin/sh -c 'echo ondemand | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
+# Search, the kiosk and the hotspot pre-empt generation (spec section 3).
+Nice=10
+CPUWeight=30
+IOWeight=50
+MemoryMax=4500M
+OOMScoreAdjust=500
+TimeoutStopSec=20
+Restart=no
+```
+
+`install/systemd/sos-kiosk.service`:
+
+```ini
+[Unit]
+Description=Operation SOS kiosk (cage and Chromium on the touchscreen)
+After=systemd-user-sessions.service caddy.service sos-api.service getty@tty1.service
+Wants=caddy.service
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+# Owns tty1 itself: a PAM login session on the console, no getty autologin (spec section 5).
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+UtmpIdentifier=tty1
+UtmpMode=user
+Environment=XDG_SESSION_TYPE=wayland
+# Waits up to 60 s for http://localhost/api/status; the wrapper starts Chromium on /starting either way.
+ExecStartPre=/usr/local/bin/sos-kiosk-app --wait-for-api
+ExecStart=/usr/bin/cage -- /usr/local/bin/sos-kiosk-app
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target
+```
+
+`install/systemd/srv-sos-extended.mount`:
+
+```ini
+[Unit]
+Description=Operation SOS external drive (filesystem label SOS-EXT)
+# systemd mounts the drive when the labelled device appears and unmounts it when it goes; no udev RUN
+# scripts (spec section 5). The device unit name is `systemd-escape -p --suffix=device /dev/disk/by-label/SOS-EXT`.
+BindsTo=dev-disk-by\x2dlabel-SOS\x2dEXT.device
+After=dev-disk-by\x2dlabel-SOS\x2dEXT.device
+
+[Mount]
+What=/dev/disk/by-label/SOS-EXT
+Where=/srv/sos/extended
+Type=ext4
+Options=noatime
+
+[Install]
+WantedBy=dev-disk-by\x2dlabel-SOS\x2dEXT.device
+```
+
+`install/systemd/sos-extended-rescan.service`:
+
+```ini
+[Unit]
+Description=Operation SOS rescan when the external drive is plugged in or removed
+BindsTo=srv-sos-extended.mount
+After=srv-sos-extended.mount sos-api.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=sos
+Group=sos
+Environment=SOS_STATE=/srv/sos/state
+Environment=SOS_EXT=/srv/sos/extended
+Environment=SOS_PORT=8000
+# `storage-event` only calls POST /api/system/rescan; `remove` regenerates library.xml without the
+# extended books first so kiwix-serve drops them before the unmount, then falls back to umount -l.
+ExecStart=/srv/sos/api/.venv/bin/sos storage-event add
+ExecStop=/srv/sos/api/.venv/bin/sos storage-event remove
+
+[Install]
+WantedBy=srv-sos-extended.mount
+```
+
+- [ ] **Step 6: Write the NetworkManager profiles, the dnsmasq catch-all, the udev rule, the sudoers rule and the boot fragment**
+
+`install/nm/sos-hotspot.nmconnection` (installed with mode 600; the UUIDs are fixed so re-installs update the same profiles):
+
+```ini
+# Operation SOS hotspot (spec section 4): wlan0 as an open 2.4 GHz access point on 10.42.0.1/24 with
+# NetworkManager's shared-mode dnsmasq (see dnsmasq-shared.d/sos.conf). The SSID and an optional WPA2
+# passphrase are changed with nmcli by install.sh and by sos-api (install/sudoers/sos). Mode 600, root.
+[connection]
+id=sos-hotspot
+uuid=1277437f-5e12-424d-9ba4-11c194ce961e
+type=wifi
+interface-name=wlan0
+autoconnect=true
+autoconnect-priority=100
+
+[wifi]
+mode=ap
+ssid=SOS
+band=bg
+
+[ipv4]
+method=shared
+address1=10.42.0.1/24
+
+[ipv6]
+method=disabled
+```
+
+`install/nm/sos-eth-client.nmconnection`:
+
+```ini
+# Operation SOS ethernet, default mode (spec section 4): eth0 as a DHCP client on a home router, so the
+# box can fetch updates and is reachable as http://sos.local while the hotspot keeps running.
+[connection]
+id=sos-eth-client
+uuid=6bcf9ad6-b634-47a7-b9e5-a465b2130bf0
+type=ethernet
+interface-name=eth0
+autoconnect=true
+autoconnect-priority=50
+
+[ethernet]
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+```
+
+`install/nm/sos-eth-direct.nmconnection`:
+
+```ini
+# Operation SOS ethernet, "direct laptop link" (spec section 4): eth0 in shared mode on 10.43.0.1/24 so a
+# laptop plugs straight in with no router. Off by default; POST /api/system/eth-mode {"mode": "direct"}
+# flips the autoconnect flags of this profile and sos-eth-client, which is what survives a reboot.
+[connection]
+id=sos-eth-direct
+uuid=9961a1df-1eff-46df-8a2a-1dfa32dd5c3a
+type=ethernet
+interface-name=eth0
+autoconnect=false
+
+[ethernet]
+
+[ipv4]
+method=shared
+address1=10.43.0.1/24
+
+[ipv6]
+method=disabled
+```
+
+`install/nm/dnsmasq-shared.d/sos.conf`:
+
+```
+# Operation SOS: NetworkManager's shared-mode dnsmasq resolves every name to the box, so http://sos.box
+# works for phones that use the box's DNS (spec section 4).
+address=/#/10.42.0.1
+```
+
+`install/udev/90-sos-backlight.rules`:
+
+```
+# Operation SOS: let user sos (group video) write the panel brightness (spec section 5).
+# %p is the device path under /sys, e.g. /devices/platform/.../backlight/10-0045.
+SUBSYSTEM=="backlight", ACTION=="add", RUN+="/bin/chgrp video /sys%p/brightness", RUN+="/bin/chmod g+w /sys%p/brightness"
+```
+
+`install/sudoers/sos`:
+
+```
+# Operation SOS: the commands sos-api (user sos) may run as root. Installed as /etc/sudoers.d/sos, mode 0440.
+# Kept to exactly what api/sos/system.py, api/sos/cli.py and the AI runtime call with `sudo -n`.
+Defaults:sos !requiretty
+sos ALL=(root) NOPASSWD: /usr/bin/systemctl start sos-llama.service, /usr/bin/systemctl stop sos-llama.service, /usr/bin/systemctl restart sos-llama.service, /usr/bin/systemctl is-active sos-llama.service
+sos ALL=(root) NOPASSWD: /usr/bin/nmcli con modify sos-hotspot *, /usr/bin/nmcli con up sos-hotspot
+sos ALL=(root) NOPASSWD: /usr/bin/nmcli con modify sos-eth-client connection.autoconnect *, /usr/bin/nmcli con modify sos-eth-direct connection.autoconnect *, /usr/bin/nmcli con up sos-eth-client, /usr/bin/nmcli con up sos-eth-direct
+sos ALL=(root) NOPASSWD: /usr/bin/umount -l /srv/sos/extended
+```
+
+`install/boot/config.txt.d/sos.txt`:
+
+```
+# Operation SOS boot fragment. install.sh copies this file to /boot/firmware/sos.txt and adds
+# "include sos.txt" to /boot/firmware/config.txt (spec section 3).
+# Pi 5 with the NVMe on the PCIe connector (Pimoroni NVMe Base). Gen 2 is the carrier's rating.
+dtparam=pciex1
+# install.sh --pcie-gen3 uncomments the next line for owners who have tested their drive at Gen 3.
+#dtparam=pciex1_gen=3
+# Touch Display 2 is auto-detected on a Pi 5; the kiosk session rotates it with wlr-randr.
+display_auto_detect=1
+disable_splash=1
+```
+
+- [ ] **Step 7: Write the placeholder pages (served until plan 02's build replaces them)**
+
+`install/placeholder/index.html`:
+
+```html
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operation SOS</title>
+<style>
+html,body{margin:0;min-height:100%;background:#0a0f0a;color:#d7f2cf;font-family:system-ui,-apple-system,sans-serif}
+main{max-width:40rem;margin:0 auto;padding:2rem 1.25rem;font-size:18px;line-height:1.5}
+h1{color:#39ff7a;font-size:2.5rem;margin:0 0 1rem}
+code{background:#12200f;padding:.1em .3em;border-radius:4px}
+a{color:#39ff7a}
+</style>
+</head>
+<body>
+<main>
+<h1>Operation SOS</h1>
+<p>The box services are installed, but the web app has not been built yet. This placeholder is served by Caddy from <code>/srv/sos/web</code>.</p>
+<p>On the PC run <code>make build</code>, then <code>make deploy HOST=sos.local</code> (or copy <code>web/dist</code> to <code>/srv/sos/web</code>).</p>
+<p>The services already answer: <a href="/api/status">/api/status</a>, <a href="/api/library">/api/library</a>, <a href="/kiwix/">/kiwix/</a>, <a href="/welcome">/welcome</a>.</p>
+</main>
+</body>
+</html>
+```
+
+`install/placeholder/welcome.html` (under 20 KB, no JavaScript, IP first, `sos.box` second, the two help lines from spec section 4):
+
+```html
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to Operation SOS</title>
+<style>
+html,body{margin:0;min-height:100%;background:#0a0f0a;color:#d7f2cf;font-family:system-ui,-apple-system,sans-serif}
+main{max-width:34rem;margin:0 auto;padding:2rem 1.25rem;font-size:20px;line-height:1.5;text-align:center}
+h1{color:#39ff7a;font-size:2.5rem;margin:0 0 .5rem}
+.big{font-size:1.6rem;margin:1.5rem 0}
+.qr{border:2px dashed #39ff7a;padding:1rem;font-size:16px;color:#9cc79a}
+.help{font-size:17px;color:#9cc79a}
+</style>
+</head>
+<body>
+<main>
+<h1>Operation SOS</h1>
+<p>You are connected to the <strong>SOS</strong> WiFi network.</p>
+<p class="big">Open <strong>http://10.42.0.1</strong> in your browser<br>(or <strong>http://sos.box</strong>)</p>
+<p class="qr">The full web build replaces this page with one carrying a QR code of http://10.42.0.1.</p>
+<p class="help">If the page will not load, turn mobile data off.</p>
+<p class="help">Tap Done or Cancel to leave this screen; the WiFi stays connected.</p>
+</main>
+</body>
+</html>
+```
+
+`install/placeholder/starting.html` (the same polling page plan 02 ships in `web/public/starting.html`):
+
+```html
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operation SOS is starting</title>
+<style>
+html,body{margin:0;height:100%;background:#0a0f0a;color:#d7f2cf;font-family:system-ui,-apple-system,sans-serif}
+main{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;text-align:center}
+h1{color:#39ff7a;font-size:48px;margin:0;letter-spacing:.04em}
+p{font-size:22px;margin:0}
+#tries{color:#9cc79a;font-size:16px}
+</style>
+</head>
+<body>
+<main>
+<h1>Operation SOS</h1>
+<p id="msg">Starting…</p>
+<p id="tries"></p>
+</main>
+<script>
+(function () {
+  var n = 0;
+  function again() {
+    document.getElementById('tries').textContent = n > 5 ? 'Still waiting for the box services (attempt ' + n + ')' : '';
+    setTimeout(tick, 2000);
+  }
+  function tick() {
+    n++;
+    fetch('/api/status', { cache: 'no-store' }).then(function (r) {
+      if (r.ok) { location.replace('/?kiosk=1'); } else { again(); }
+    }).catch(again);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>
+```
+
+- [ ] **Step 8: Write the kiosk wrapper `install/kiosk/sos-kiosk-app`**
+
+```bash
+#!/usr/bin/env bash
+# Operation SOS kiosk session (spec section 5). sos-kiosk.service runs `cage -- sos-kiosk-app` on tty1 as
+# user sos after `sos-kiosk-app --wait-for-api` has waited for sos-api behind Caddy. Inside cage this
+# script rotates the panel, clears Chromium's crash-restore state so no "restore pages" bubble appears
+# after a power cut, and starts Chromium in kiosk mode on the static /starting page, which polls
+# /api/status and then loads the app with ?kiosk=1.
+#
+# /srv/sos/state/config/kiosk.env (written by install.sh) may set:
+#   SOS_KIOSK_TRANSFORM  90 (default) or 270: the wlr-randr transform for the case orientation
+#   SOS_KIOSK_URL        the first page, default http://localhost/starting
+#   SOS_KIOSK_API        the readiness URL, default http://localhost/api/status
+set -euo pipefail
+
+CONFIG=${SOS_KIOSK_CONFIG:-/srv/sos/state/config/kiosk.env}
+if [ -f "$CONFIG" ]; then
+  # shellcheck disable=SC1090
+  . "$CONFIG"
+fi
+TRANSFORM=${SOS_KIOSK_TRANSFORM:-90}
+URL=${SOS_KIOSK_URL:-http://localhost/starting}
+API=${SOS_KIOSK_API:-http://localhost/api/status}
+PREFS=${SOS_KIOSK_PREFS:-$HOME/.config/chromium/Default/Preferences}
+
+wait_for_api() {
+  local i
+  for i in $(seq 1 60); do
+    if curl -fsS --max-time 2 "$API" >/dev/null 2>&1; then
+      echo "sos-kiosk-app: sos-api ready after ${i}s"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "sos-kiosk-app: sos-api not answering after 60 s; starting the kiosk anyway" >&2
+  return 0
+}
+
+rotate_panel() {
+  local output
+  output=$(wlr-randr 2>/dev/null | awk '/^DSI-[0-9]/ { print $1; exit }') || true
+  if [ -z "$output" ]; then
+    echo "sos-kiosk-app: no DSI output found; panel left unrotated (an HDMI screen needs no transform)" >&2
+    return 0
+  fi
+  wlr-randr --output "$output" --transform "$TRANSFORM" || echo "sos-kiosk-app: wlr-randr failed on $output" >&2
+}
+
+reset_chromium_prefs() {
+  [ -f "$PREFS" ] || return 0
+  python3 -c 'import json, sys; p = sys.argv[1]; d = json.load(open(p, encoding="utf-8")); d.setdefault("profile", {}).update({"exit_type": "Normal", "exited_cleanly": True}); json.dump(d, open(p, "w", encoding="utf-8"))' "$PREFS" \
+    || echo "sos-kiosk-app: could not reset $PREFS" >&2
+}
+
+case "${1:-}" in
+  --wait-for-api) wait_for_api; exit 0 ;;
+  --reset-prefs) reset_chromium_prefs; exit 0 ;;
+  "") ;;
+  *) echo "usage: sos-kiosk-app [--wait-for-api | --reset-prefs]" >&2; exit 2 ;;
+esac
+
+rotate_panel
+reset_chromium_prefs
+exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run \
+  --overscroll-history-navigation=0 "$URL"
+```
+
+- [ ] **Step 9: Write `install/install.sh`**
+
+```bash
+#!/usr/bin/env bash
+# Operation SOS installer (spec section 13).
+#
+#   sudo install/install.sh [--dry-run] [--dev] [--skip-llama] [--with-jellyfin] [--pcie-gen3]
+#
+# Runs as root on a fresh 64-bit Raspberry Pi OS Lite (Trixie) booted from the NVMe. Idempotent: every
+# step is a function that reports "unchanged" when its result already exists, so a second run makes no
+# changes. --dry-run prints every step and the files it would write, touches nothing and needs no root.
+# --dev (on a PC) skips the hotspot, mount, backlight, kiosk and boot steps. --skip-llama skips the
+# llama.cpp build, --with-jellyfin installs Jellyfin, --pcie-gen3 enables PCIe Gen 3 in the boot fragment.
+# Overrides used by the tests: SOS_ARCH (default: uname -m), SOS_WEB_DIST (default: <repo>/web/dist).
+set -euo pipefail
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO=$(cd "$SCRIPT_DIR/.." && pwd)
+ARCH=${SOS_ARCH:-$(uname -m)}
+WEB_DIST=${SOS_WEB_DIST:-$REPO/web/dist}
+
+PREFIX=/srv/sos
+SOS_USER=sos
+SOS_HOME=/home/sos
+BUILD_DIR=$PREFIX/build
+BOOT_DIR=/boot/firmware
+UNIT_DIR=/etc/systemd/system
+NM_DIR=/etc/NetworkManager
+APT_PACKAGES="network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv aria2 cmake build-essential poppler-utils"
+# Not in the spec's list but needed by this script: git (llama.cpp clone), curl (downloads), rsync (copies).
+APT_EXTRA="git curl rsync"
+CMAKE_CONFIGURE=(cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF)
+CMAKE_BUILD=(cmake --build build --config Release -j4)
+CMAKE_INSTALL=(cmake --install build --prefix /usr/local)
+
+DRY_RUN=0
+DEV=0
+SKIP_LLAMA=0
+WITH_JELLYFIN=0
+PCIE_GEN3=0
+CHANGED=0
+
+# shellcheck disable=SC1091
+. "$SCRIPT_DIR/versions.env"
+
+usage() { sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN=1 ;;
+    --dev) DEV=1 ;;
+    --skip-llama) SKIP_LLAMA=1 ;;
+    --with-jellyfin) WITH_JELLYFIN=1 ;;
+    --pcie-gen3) PCIE_GEN3=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "install.sh: unknown option '$arg'" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+case "$ARCH" in
+  aarch64) KIWIX_ARCH=aarch64; CADDY_ARCH=arm64 ;;
+  x86_64) KIWIX_ARCH=x86_64; CADDY_ARCH=amd64 ;;
+  *) echo "install.sh: unsupported architecture '$ARCH' (aarch64 or x86_64)" >&2; exit 2 ;;
+esac
+KIWIX_URL="$KIWIX_TOOLS_BASE/kiwix-tools_linux-${KIWIX_ARCH}-${KIWIX_TOOLS}.tar.gz"
+CADDY_URL="$CADDY_BASE/v${CADDY}/caddy_${CADDY}_linux_${CADDY_ARCH}.tar.gz"
+
+if [ "$DRY_RUN" = 0 ] && [ "$(id -u)" != 0 ]; then
+  echo "install.sh: run as root (or use --dry-run)" >&2
+  exit 1
+fi
+
+# --- helpers ---------------------------------------------------------------------------------------
+
+say()    { printf 'step %s: %s\n' "$1" "$2"; }
+would()  { printf 'step %s: would %s\n' "$1" "$2"; }
+rel()    { printf '%s' "${1#"$REPO/"}"; }
+as_sos() { runuser -u "$SOS_USER" -- "$@"; }
+
+# install_file <src> <dest> <mode> [owner:group]: copy when different. Returns 0 when it wrote and 1 when
+# the destination already matched. In a dry run it only prints the destination and returns 0.
+install_file() {
+  local src=$1 dest=$2 mode=$3 owner=${4:-root:root}
+  if [ "$DRY_RUN" = 1 ]; then
+    printf '  write %s (from %s, mode %s, %s)\n' "$dest" "$(rel "$src")" "$mode" "$owner"
+    return 0
+  fi
+  if [ -f "$dest" ] && cmp -s "$src" "$dest"; then
+    return 1
+  fi
+  install -D -m "$mode" -o "${owner%%:*}" -g "${owner##*:}" "$src" "$dest"
+  CHANGED=1
+  return 0
+}
+
+# sync_tree <src-dir> <dest-dir>: rsync owned by sos; returns 0 when anything changed, 1 when identical.
+sync_tree() {
+  local out
+  out=$(rsync -ai --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache \
+    --chown="$SOS_USER:$SOS_USER" "$1/" "$2/")
+  [ -n "$out" ]
+}
+
+# --- steps (spec section 13, in order) -------------------------------------------------------------
+
+step_apt() {
+  local pkgs="$APT_PACKAGES $APT_EXTRA" missing="" p
+  if [ "$DRY_RUN" = 1 ]; then would apt "apt-get install $pkgs"; return; fi
+  for p in $pkgs; do
+    dpkg -s "$p" >/dev/null 2>&1 || missing="$missing $p"
+  done
+  if [ -z "$missing" ]; then say apt unchanged; return; fi
+  apt-get update -q
+  # shellcheck disable=SC2086
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -q $missing
+  CHANGED=1
+  say apt "installed$missing"
+}
+
+step_downloads() {
+  local tmp changed=0
+  if [ "$DRY_RUN" = 1 ]; then
+    would downloads "fetch $KIWIX_URL -> /usr/local/bin/kiwix-serve, /usr/local/bin/kiwix-manage, /usr/local/bin/kiwix-search"
+    would downloads "fetch $CADDY_URL -> /usr/local/bin/caddy"
+    return
+  fi
+  if ! /usr/local/bin/kiwix-serve --version 2>/dev/null | grep -q "^kiwix-tools $KIWIX_TOOLS\$"; then
+    tmp=$(mktemp -d)
+    curl -fsSL "$KIWIX_URL" | tar -xz -C "$tmp"
+    install -m 755 "$tmp"/kiwix-tools_*/kiwix-serve "$tmp"/kiwix-tools_*/kiwix-manage "$tmp"/kiwix-tools_*/kiwix-search /usr/local/bin/
+    rm -rf "$tmp"
+    changed=1
+  fi
+  if ! /usr/local/bin/caddy version 2>/dev/null | grep -q "^v$CADDY "; then
+    tmp=$(mktemp -d)
+    curl -fsSL "$CADDY_URL" | tar -xz -C "$tmp" caddy
+    install -m 755 "$tmp/caddy" /usr/local/bin/caddy
+    rm -rf "$tmp"
+    changed=1
+  fi
+  if [ "$changed" = 1 ]; then CHANGED=1; say downloads "installed kiwix-tools $KIWIX_TOOLS and caddy $CADDY"; else say downloads unchanged; fi
+}
+
+step_llama() {
+  local src=$BUILD_DIR/llama.cpp marker head
+  marker=$BUILD_DIR/llama.cpp/.sos-installed-$LLAMA_CPP_TAG
+  if [ "$SKIP_LLAMA" = 1 ]; then say llama "skipped (--skip-llama)"; return; fi
+  if [ "$DRY_RUN" = 1 ]; then
+    would llama "clone $LLAMA_CPP_REPO at $LLAMA_CPP_TAG into $src, run '${CMAKE_CONFIGURE[*]} && ${CMAKE_BUILD[*]}' then '${CMAKE_INSTALL[*]}' -> /usr/local/bin/llama-server"
+    return
+  fi
+  if [ -x /usr/local/bin/llama-server ] && [ -f "$marker" ]; then say llama unchanged; return; fi
+  if [ ! -d "$src/.git" ]; then
+    git clone --depth 1 --branch "$LLAMA_CPP_TAG" "$LLAMA_CPP_REPO" "$src"
+  fi
+  head=$(git -C "$src" rev-parse HEAD)
+  if [ "$head" != "$LLAMA_CPP_COMMIT" ]; then
+    echo "install.sh: warning: $LLAMA_CPP_TAG resolved to $head; versions.env expects $LLAMA_CPP_COMMIT" >&2
+  fi
+  (cd "$src" && "${CMAKE_CONFIGURE[@]}" && "${CMAKE_BUILD[@]}" && "${CMAKE_INSTALL[@]}")
+  ldconfig
+  touch "$marker"
+  CHANGED=1
+  say llama "built and installed llama-server ($LLAMA_CPP_TAG)"
+}
+
+step_jellyfin() {
+  local version codename
+  if [ "$DRY_RUN" = 1 ]; then
+    would jellyfin "add $JELLYFIN_REPO (keyring /etc/apt/keyrings/jellyfin.gpg, /etc/apt/sources.list.d/jellyfin.sources) and apt-get install jellyfin $JELLYFIN (library root $PREFIX/extended/media)"
+    return
+  fi
+  if dpkg-query -W -f '${Version}' jellyfin 2>/dev/null | grep -q "^$JELLYFIN"; then say jellyfin unchanged; return; fi
+  install -d -m 755 /etc/apt/keyrings
+  curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key | gpg --dearmor --yes -o /etc/apt/keyrings/jellyfin.gpg
+  # shellcheck disable=SC1091
+  codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+  cat > /etc/apt/sources.list.d/jellyfin.sources <<EOF
+Types: deb
+URIs: $JELLYFIN_REPO
+Suites: $codename
+Components: main
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/jellyfin.gpg
+EOF
+  apt-get update -q
+  version=$(apt-cache madison jellyfin | awk -v v="$JELLYFIN" '$3 ~ "^"v { print $3; exit }')
+  if [ -z "$version" ]; then echo "install.sh: jellyfin $JELLYFIN is not in $JELLYFIN_REPO for $codename" >&2; exit 1; fi
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -q "jellyfin=$version"
+  CHANGED=1
+  say jellyfin "installed jellyfin $version (point its library at $PREFIX/extended/media; not together with the AI on 8GB)"
+}
+
+step_user() {
+  local changed=0 g
+  if [ "$DRY_RUN" = 1 ]; then would user "create user $SOS_USER (home $SOS_HOME, groups video input render)"; return; fi
+  if ! id "$SOS_USER" >/dev/null 2>&1; then
+    useradd --create-home --home-dir "$SOS_HOME" --shell /bin/bash "$SOS_USER"
+    changed=1
+  fi
+  for g in video input render; do
+    if getent group "$g" >/dev/null && ! id -nG "$SOS_USER" | tr ' ' '\n' | grep -qx "$g"; then
+      usermod -aG "$g" "$SOS_USER"
+      changed=1
+    fi
+  done
+  if [ "$changed" = 1 ]; then CHANGED=1; say user "created or updated $SOS_USER"; else say user unchanged; fi
+}
+
+step_tree() {
+  local d changed=0
+  local dirs="core/zim core/maps core/docs core/models extended state/config state/playbooks state/manifest web api build"
+  if [ "$DRY_RUN" = 1 ]; then
+    would tree "create $PREFIX/{${dirs// /,}} owned by $SOS_USER"
+    printf '  write %s (SOS_MODEL default for sos-llama.service, if absent)\n' "$PREFIX/state/config/ai.env"
+    return
+  fi
+  for d in $dirs; do
+    if [ ! -d "$PREFIX/$d" ]; then install -d -o "$SOS_USER" -g "$SOS_USER" "$PREFIX/$d"; changed=1; fi
+  done
+  if [ ! -f "$PREFIX/state/config/ai.env" ]; then
+    echo "SOS_MODEL=gemma-4-E2B-it-Q4_K_M.gguf" > "$PREFIX/state/config/ai.env"
+    chown "$SOS_USER:$SOS_USER" "$PREFIX/state/config/ai.env"
+    changed=1
+  fi
+  if [ "$changed" = 1 ]; then CHANGED=1; say tree "created $PREFIX tree"; else say tree unchanged; fi
+}
+
+step_venv() {
+  local changed=0
+  if [ "$DRY_RUN" = 1 ]; then would venv "copy api/ -> $PREFIX/api and pip install the sos package into $PREFIX/api/.venv"; return; fi
+  if sync_tree "$REPO/api" "$PREFIX/api"; then changed=1; fi
+  if [ ! -x "$PREFIX/api/.venv/bin/python" ]; then
+    as_sos python3 -m venv "$PREFIX/api/.venv"
+    changed=1
+  fi
+  if [ "$changed" = 0 ]; then say venv unchanged; return; fi
+  as_sos "$PREFIX/api/.venv/bin/pip" install -q --upgrade pip
+  as_sos "$PREFIX/api/.venv/bin/pip" install -q -e "$PREFIX/api"
+  CHANGED=1
+  say venv "installed the sos package into $PREFIX/api/.venv"
+}
+
+step_web() {
+  local src note=""
+  if [ -f "$WEB_DIST/index.html" ]; then src=$WEB_DIST; else src=$SCRIPT_DIR/placeholder; note=" (web/dist absent, placeholder used)"; fi
+  if [ "$DRY_RUN" = 1 ]; then would web "copy $(rel "$src") -> $PREFIX/web$note"; return; fi
+  if sync_tree "$src" "$PREFIX/web"; then CHANGED=1; say web "installed $(rel "$src") -> $PREFIX/web$note"; else say web unchanged; fi
+}
+
+step_units() {
+  local unit changed=0
+  if [ "$DRY_RUN" = 1 ]; then would units "write the systemd units and daemon-reload"; fi
+  for unit in caddy.service kiwix-serve.service sos-api.service sos-llama.service; do
+    if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
+  done
+  if [ "$DRY_RUN" = 1 ]; then return; fi
+  if [ "$changed" = 1 ]; then systemctl daemon-reload; say units updated; else say units unchanged; fi
+}
+
+step_caddy() {
+  if [ "$DRY_RUN" = 1 ]; then would caddy "write the Caddyfile"; install_file "$SCRIPT_DIR/caddy/Caddyfile" /etc/caddy/Caddyfile 644; return; fi
+  if install_file "$SCRIPT_DIR/caddy/Caddyfile" /etc/caddy/Caddyfile 644; then
+    if systemctl is-active -q caddy.service; then systemctl reload caddy.service; fi
+    say caddy "updated /etc/caddy/Caddyfile"
+  else
+    say caddy unchanged
+  fi
+}
+
+step_hotspot() {
+  local f changed=0
+  if [ "$DEV" = 1 ]; then say hotspot "skipped (--dev)"; return; fi
+  if [ "$DRY_RUN" = 1 ]; then would hotspot "write the NetworkManager profiles and the dnsmasq name catch-all, then nmcli connection reload"; fi
+  for f in sos-hotspot sos-eth-client sos-eth-direct; do
+    if install_file "$SCRIPT_DIR/nm/$f.nmconnection" "$NM_DIR/system-connections/$f.nmconnection" 600; then changed=1; fi
+  done
+  if install_file "$SCRIPT_DIR/nm/dnsmasq-shared.d/sos.conf" "$NM_DIR/dnsmasq-shared.d/sos.conf" 644; then changed=1; fi
+  if [ "$DRY_RUN" = 1 ]; then return; fi
+  if [ "$changed" = 1 ]; then nmcli connection reload; say hotspot "updated NetworkManager profiles"; else say hotspot unchanged; fi
+}
+
+step_mount() {
+  local unit changed=0
+  if [ "$DEV" = 1 ]; then say mount "skipped (--dev)"; return; fi
+  if [ "$DRY_RUN" = 1 ]; then would mount "write the external-drive mount and rescan units and daemon-reload"; fi
+  for unit in srv-sos-extended.mount sos-extended-rescan.service; do
+    if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
+  done
+  if [ "$DRY_RUN" = 1 ]; then return; fi
+  if [ "$changed" = 1 ]; then systemctl daemon-reload; say mount updated; else say mount unchanged; fi
+}
+
+step_backlight() {
+  if [ "$DEV" = 1 ]; then say backlight "skipped (--dev)"; return; fi
+  if [ "$DRY_RUN" = 1 ]; then would backlight "write the udev rule and reload udev"; install_file "$SCRIPT_DIR/udev/90-sos-backlight.rules" /etc/udev/rules.d/90-sos-backlight.rules 644; return; fi
+  if install_file "$SCRIPT_DIR/udev/90-sos-backlight.rules" /etc/udev/rules.d/90-sos-backlight.rules 644; then
+    udevadm control --reload-rules
+    udevadm trigger --subsystem-match=backlight --action=add
+    say backlight updated
+  else
+    say backlight unchanged
+  fi
+}
+
+step_sudoers() {
+  if [ "$DRY_RUN" = 1 ]; then would sudoers "check with visudo -cf and write the sudoers rule"; install_file "$SCRIPT_DIR/sudoers/sos" /etc/sudoers.d/sos 440; return; fi
+  visudo -cf "$SCRIPT_DIR/sudoers/sos" >/dev/null
+  if install_file "$SCRIPT_DIR/sudoers/sos" /etc/sudoers.d/sos 440; then say sudoers updated; else say sudoers unchanged; fi
+}
+
+step_kiosk() {
+  local changed=0 env=$PREFIX/state/config/kiosk.env
+  if [ "$DEV" = 1 ]; then say kiosk "skipped (--dev)"; return; fi
+  if [ "$DRY_RUN" = 1 ]; then
+    would kiosk "install the kiosk wrapper, write $env (SOS_KIOSK_TRANSFORM=90) if absent, systemctl set-default graphical.target"
+    install_file "$SCRIPT_DIR/kiosk/sos-kiosk-app" /usr/local/bin/sos-kiosk-app 755
+    return
+  fi
+  if install_file "$SCRIPT_DIR/kiosk/sos-kiosk-app" /usr/local/bin/sos-kiosk-app 755; then changed=1; fi
+  if [ ! -f "$env" ]; then printf 'SOS_KIOSK_TRANSFORM=90\n' > "$env"; chown "$SOS_USER:$SOS_USER" "$env"; changed=1; fi
+  if [ "$(systemctl get-default)" != graphical.target ]; then systemctl set-default graphical.target; changed=1; fi
+  if [ "$changed" = 1 ]; then CHANGED=1; say kiosk updated; else say kiosk unchanged; fi
+}
+
+step_boot() {
+  local tmp gen3="" changed=0
+  if [ "$DEV" = 1 ]; then say boot "skipped (--dev)"; return; fi
+  if [ "$PCIE_GEN3" = 1 ]; then gen3=" with dtparam=pciex1_gen=3 enabled (--pcie-gen3)"; fi
+  if [ "$DRY_RUN" = 1 ]; then
+    would boot "write $BOOT_DIR/sos.txt from install/boot/config.txt.d/sos.txt$gen3 and add 'include sos.txt' to $BOOT_DIR/config.txt"
+    return
+  fi
+  tmp=$(mktemp)
+  if [ "$PCIE_GEN3" = 1 ]; then
+    sed 's/^#dtparam=pciex1_gen=3/dtparam=pciex1_gen=3/' "$SCRIPT_DIR/boot/config.txt.d/sos.txt" > "$tmp"
+  else
+    cp "$SCRIPT_DIR/boot/config.txt.d/sos.txt" "$tmp"
+  fi
+  # /boot/firmware is vfat, so plain cp instead of install (no ownership there).
+  if ! cmp -s "$tmp" "$BOOT_DIR/sos.txt"; then cp "$tmp" "$BOOT_DIR/sos.txt"; changed=1; fi
+  rm -f "$tmp"
+  if ! grep -qx 'include sos.txt' "$BOOT_DIR/config.txt"; then printf '\ninclude sos.txt\n' >> "$BOOT_DIR/config.txt"; changed=1; fi
+  if [ "$changed" = 1 ]; then CHANGED=1; say boot "updated $BOOT_DIR/sos.txt$gen3"; else say boot unchanged; fi
+}
+
+step_content() {
+  local changed=0
+  if [ "$DRY_RUN" = 1 ]; then would content "copy playbooks/ and manifest/ -> $PREFIX/state/ and run 'sos index' as $SOS_USER"; return; fi
+  if sync_tree "$REPO/playbooks" "$PREFIX/state/playbooks"; then changed=1; fi
+  if sync_tree "$REPO/manifest" "$PREFIX/state/manifest"; then changed=1; fi
+  if [ "$changed" = 1 ] || [ ! -f "$PREFIX/state/sos.db" ]; then
+    as_sos "$PREFIX/api/.venv/bin/sos" index
+    CHANGED=1
+    say content "copied playbooks and manifest, ran sos index"
+  else
+    say content unchanged
+  fi
+}
+
+step_answers() {
+  local marker=$PREFIX/state/config/answers.done pin ssid passphrase
+  if [ "$DRY_RUN" = 1 ]; then would answers "prompt for the admin PIN and SSID (or read install/answers.env), then 'sos pin set' and nmcli"; return; fi
+  if [ -f "$marker" ]; then say answers unchanged; return; fi
+  if [ -f "$SCRIPT_DIR/answers.env" ]; then
+    # shellcheck disable=SC1091
+    . "$SCRIPT_DIR/answers.env"
+    pin=${SOS_PIN:-}
+    ssid=${SOS_SSID:-SOS}
+    passphrase=${SOS_PASSPHRASE:-}
+  elif [ -t 0 ]; then
+    read -r -s -p "Admin PIN (4 to 12 digits, empty for none): " pin; echo
+    read -r -p "Hotspot SSID [SOS]: " ssid
+    ssid=${ssid:-SOS}
+    read -r -s -p "Hotspot passphrase (8 to 63 characters, empty for an open network): " passphrase; echo
+  else
+    say answers "skipped (no install/answers.env and no terminal); run again interactively or write answers.env"
+    return
+  fi
+  if [ -n "$pin" ]; then as_sos "$PREFIX/api/.venv/bin/sos" pin set "$pin"; fi
+  SOS_SSID_VALUE=$ssid SOS_PASSPHRASE_VALUE=$passphrase as_sos "$PREFIX/api/.venv/bin/python" -c \
+    'import os; from sos import db; from sos.config import get_settings; c = db.connect(get_settings().db_path); db.init_schema(c); db.set_setting(c, "ssid", os.environ["SOS_SSID_VALUE"]); db.set_setting(c, "passphrase", os.environ["SOS_PASSPHRASE_VALUE"])'
+  if [ "$DEV" = 0 ]; then
+    nmcli con modify sos-hotspot 802-11-wireless.ssid "$ssid"
+    if [ -n "$passphrase" ]; then
+      nmcli con modify sos-hotspot wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$passphrase"
+    else
+      nmcli con modify sos-hotspot remove wifi-sec || true
+    fi
+  fi
+  touch "$marker"
+  chown "$SOS_USER:$SOS_USER" "$marker"
+  CHANGED=1
+  say answers "set the admin PIN and hotspot settings"
+}
+
+step_enable() {
+  local u changed=0 units="caddy.service kiwix-serve.service sos-api.service avahi-daemon.service"
+  if [ "$DEV" = 0 ]; then units="$units sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service"; fi
+  if [ "$WITH_JELLYFIN" = 1 ]; then units="$units jellyfin.service"; fi
+  if [ "$DRY_RUN" = 1 ]; then would enable "systemctl enable $units and start caddy, kiwix-serve, sos-api and avahi-daemon"; return; fi
+  for u in $units; do
+    if ! systemctl is-enabled -q "$u" 2>/dev/null; then systemctl enable -q "$u"; changed=1; fi
+  done
+  for u in caddy.service kiwix-serve.service sos-api.service avahi-daemon.service; do
+    if ! systemctl is-active -q "$u"; then systemctl start "$u"; changed=1; fi
+  done
+  if [ "$changed" = 1 ]; then CHANGED=1; say enable "enabled and started services"; else say enable unchanged; fi
+}
+
+main() {
+  local mode=""
+  if [ "$DRY_RUN" = 1 ]; then mode=" --dry-run"; fi
+  printf 'install.sh%s: arch %s, dev %s, skip-llama %s, with-jellyfin %s, pcie-gen3 %s\n' \
+    "$mode" "$ARCH" "$DEV" "$SKIP_LLAMA" "$WITH_JELLYFIN" "$PCIE_GEN3"
+  step_apt
+  step_downloads
+  step_llama
+  if [ "$WITH_JELLYFIN" = 1 ]; then step_jellyfin; fi
+  step_user
+  step_tree
+  step_venv
+  step_web
+  step_units
+  step_caddy
+  step_hotspot
+  step_mount
+  step_backlight
+  step_sudoers
+  step_kiosk
+  step_boot
+  step_content
+  step_answers
+  step_enable
+  if [ "$DRY_RUN" = 1 ]; then echo "dry run complete: nothing was written"; return; fi
+  if [ "$CHANGED" = 1 ]; then echo "install complete: changes were made; a reboot is recommended"; else echo "install complete: no changes"; fi
+}
+
+main
+```
+
+- [ ] **Step 10: Set the executable bits and write the golden file**
+
+Run:
+
+```bash
+chmod +x install/install.sh install/kiosk/sos-kiosk-app
+SOS_ARCH=aarch64 SOS_WEB_DIST=/nonexistent/web/dist bash install/install.sh --dry-run > api/tests/golden/install-dry-run.txt
+cat api/tests/golden/install-dry-run.txt
+```
+
+Expected, and the exact content of `api/tests/golden/install-dry-run.txt` (`SOS_ARCH` pins the download names so the golden is the same on the x86_64 PC and the Pi; `SOS_WEB_DIST` pins the placeholder branch):
+
+```
+install.sh --dry-run: arch aarch64, dev 0, skip-llama 0, with-jellyfin 0, pcie-gen3 0
+step apt: would apt-get install network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv aria2 cmake build-essential poppler-utils git curl rsync
+step downloads: would fetch https://download.kiwix.org/release/kiwix-tools/kiwix-tools_linux-aarch64-3.8.2.tar.gz -> /usr/local/bin/kiwix-serve, /usr/local/bin/kiwix-manage, /usr/local/bin/kiwix-search
+step downloads: would fetch https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_arm64.tar.gz -> /usr/local/bin/caddy
+step llama: would clone https://github.com/ggml-org/llama.cpp at v0.3.0 into /srv/sos/build/llama.cpp, run 'cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF && cmake --build build --config Release -j4' then 'cmake --install build --prefix /usr/local' -> /usr/local/bin/llama-server
+step user: would create user sos (home /home/sos, groups video input render)
+step tree: would create /srv/sos/{core/zim,core/maps,core/docs,core/models,extended,state/config,state/playbooks,state/manifest,web,api,build} owned by sos
+  write /srv/sos/state/config/ai.env (SOS_MODEL default for sos-llama.service, if absent)
+step venv: would copy api/ -> /srv/sos/api and pip install the sos package into /srv/sos/api/.venv
+step web: would copy install/placeholder -> /srv/sos/web (web/dist absent, placeholder used)
+step units: would write the systemd units and daemon-reload
+  write /etc/systemd/system/caddy.service (from install/systemd/caddy.service, mode 644, root:root)
+  write /etc/systemd/system/kiwix-serve.service (from install/systemd/kiwix-serve.service, mode 644, root:root)
+  write /etc/systemd/system/sos-api.service (from install/systemd/sos-api.service, mode 644, root:root)
+  write /etc/systemd/system/sos-llama.service (from install/systemd/sos-llama.service, mode 644, root:root)
+step caddy: would write the Caddyfile
+  write /etc/caddy/Caddyfile (from install/caddy/Caddyfile, mode 644, root:root)
+step hotspot: would write the NetworkManager profiles and the dnsmasq name catch-all, then nmcli connection reload
+  write /etc/NetworkManager/system-connections/sos-hotspot.nmconnection (from install/nm/sos-hotspot.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/system-connections/sos-eth-client.nmconnection (from install/nm/sos-eth-client.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/system-connections/sos-eth-direct.nmconnection (from install/nm/sos-eth-direct.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/dnsmasq-shared.d/sos.conf (from install/nm/dnsmasq-shared.d/sos.conf, mode 644, root:root)
+step mount: would write the external-drive mount and rescan units and daemon-reload
+  write /etc/systemd/system/srv-sos-extended.mount (from install/systemd/srv-sos-extended.mount, mode 644, root:root)
+  write /etc/systemd/system/sos-extended-rescan.service (from install/systemd/sos-extended-rescan.service, mode 644, root:root)
+step backlight: would write the udev rule and reload udev
+  write /etc/udev/rules.d/90-sos-backlight.rules (from install/udev/90-sos-backlight.rules, mode 644, root:root)
+step sudoers: would check with visudo -cf and write the sudoers rule
+  write /etc/sudoers.d/sos (from install/sudoers/sos, mode 440, root:root)
+step kiosk: would install the kiosk wrapper, write /srv/sos/state/config/kiosk.env (SOS_KIOSK_TRANSFORM=90) if absent, systemctl set-default graphical.target
+  write /usr/local/bin/sos-kiosk-app (from install/kiosk/sos-kiosk-app, mode 755, root:root)
+step boot: would write /boot/firmware/sos.txt from install/boot/config.txt.d/sos.txt and add 'include sos.txt' to /boot/firmware/config.txt
+step content: would copy playbooks/ and manifest/ -> /srv/sos/state/ and run 'sos index' as sos
+step answers: would prompt for the admin PIN and SSID (or read install/answers.env), then 'sos pin set' and nmcli
+step enable: would systemctl enable caddy.service kiwix-serve.service sos-api.service avahi-daemon.service sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service and start caddy, kiwix-serve, sos-api and avahi-daemon
+dry run complete: nothing was written
+```
+
+- [ ] **Step 11: Run the tests**
+
+Run: `cd api && .venv/bin/pytest tests/test_install.py -v`
+Expected: `19 passed` in about 5 s. On the PC nothing is skipped: `shellcheck` comes from `shellcheck-py`, `systemd-analyze` from systemd 255 and `caddy` from `~/.local/bin`. The skip conditions (`shellcheck_bin() is None`, `shutil.which("systemd-analyze") is None`, `shutil.which("caddy") is None`) only apply on a machine without them. Then `cd api && .venv/bin/pytest -q` for the whole suite.
+
+Also run the three checks by hand once, so their raw output is familiar:
+
+```bash
+api/.venv/bin/shellcheck --shell=bash --severity=style install/install.sh dev/run-dev.sh dev/smoke.sh dev/smoke-selftest.sh install/kiosk/sos-kiosk-app; echo "shellcheck exit=$?"
+caddy validate --config install/caddy/Caddyfile --adapter caddyfile
+systemd-analyze verify --recursive-errors=no install/systemd/*; echo "verify exit=$?"
+```
+
+Expected: `shellcheck exit=0` with no findings; `Valid configuration` (after one JSON log line); nine `Command /usr/local/bin/... is not executable: No such file or directory` lines (the binaries live on the box) and `verify exit=1` because of them, nothing else.
+
+- [ ] **Step 12: Run the dev stack end to end (Task 13 Step 8)**
+
+Run: `make dev` in one terminal, `make smoke` in another.
+Expected: the seven `PASS` lines and `smoke: 7 passed, 0 failed` from Task 13 Step 8; `curl -sI http://127.0.0.1:8080/kiwix/content/wikipedia_en_100_mini_2026-01/ | grep -i location` prints `Location: http://127.0.0.1:8080/kiwix/content/wikipedia_en_100_mini_2026-01/index` (the Host header reached kiwix-serve).
+
+- [ ] **Step 13: Commit**
+
+```bash
+git add .gitignore install api/tests/test_install.py api/tests/golden/install-dry-run.txt
+git commit -m "feat(install): idempotent install.sh, pinned versions, systemd units, Caddyfile, NetworkManager, udev, sudoers, kiosk, boot fragment, placeholder pages"
+```
+
+---
+
+### Task 15: README, hardware checklist, authoring guide and the annotated front-matter schema
+
+**Files:**
+- Create: `README.md` (replaces the empty file Task 1 created so `pip install -e` could find its `readme`)
+- Create: `docs/hardware-checklist.md`
+- Create: `playbooks/README.md`
+- Modify: `playbooks/schema.json` (created in Task 7 Step 1; this task adds a `description` to every definition and property so the schema doubles as documentation, and leaves every constraint unchanged so `tests/test_content.py` keeps passing)
+- Test: `api/tests/test_repo_docs.py`
+
+**Interfaces:**
+- Consumes: `sos.content.LINK_ROUTES`, `SCENARIO_HEADINGS`, `KIND_BY_DIR` (Task 7) so the authoring guide is checked against the code that enforces it; the `make` targets from Tasks 1 and 13; the install flags from Task 14; the checklist items from spec section 14 and the milestone box criteria from spec section 15.
+- Produces: `docs/hardware-checklist.md` with the 20-row table (`| # | Item | Date | Commit | Result |`), a `## CI runs` table (Task 16 adds the milestone 1 row) and a `## Maps` heading (plan 04 appends its line there); `playbooks/README.md` ending in a newline with no "Conventions" section (plan 03 appends `## Conventions (sub-plan 03)` with `cat >>`); every `$defs` entry and property in `playbooks/schema.json` carries a `description`.
+
+- [ ] **Step 1: Write the failing tests**
+
+`api/tests/test_repo_docs.py`:
+
+```python
+"""The repository's documentation stays in step with the code and the spec it describes."""
+from __future__ import annotations
+
+import json
+import re
+from pathlib import Path
+
+from sos import content
+
+REPO = Path(__file__).resolve().parents[2]
+
+HARDWARE_ITEMS = [
+    "captive portal on an iphone and an android", "fallback urls and qr", "sos.local", "direct laptop link",
+    "update over ethernet", "hot-plug", "landscape", "backlight device", "low power mode", "idle dim",
+    "keyboard usable", "300-page pdf", "nvme boot", "pull the power", "10-minute ai session", "thermal auto-off",
+    "zero swap", "five phones", "power-bank", "run twice",
+]
+
+
+def test_readme_covers_the_workflow():
+    text = (REPO / "README.md").read_text(encoding="utf-8")
+    for heading in ("## What it is", "## Hardware", "## Install on the Pi", "## Develop on the PC", "## Content sync",
+                    "## Repository structure", "## Plans"):
+        assert heading in text, heading
+    assert "LD_LIBRARY_PATH=$HOME/.local/chromium-deps/usr/lib/x86_64-linux-gnu" in text
+    for command in ("make venv", "make test", "make dev", "dev/smoke.sh", "make build", "make e2e",
+                    "make deploy HOST=sos.local", "sudo install/install.sh", "sos sync --tier core",
+                    "sos validate-playbooks --deep", "python3 -m venv --without-pip api/.venv"):
+        assert command in text, command
+    assert "http://10.42.0.1" in text and "http://sos.box" in text and "http://sos.local" in text
+    assert "NOMAD" not in text
+    for plan in ("00-overview", "01-backend-and-install", "02-frontend", "03-content", "04-maps-pipeline", "05-ai"):
+        assert f"2026-09-03-{plan}.md" in text, plan
+
+
+def test_hardware_checklist_has_every_spec_item_with_date_commit_result():
+    text = (REPO / "docs" / "hardware-checklist.md").read_text(encoding="utf-8")
+    assert "| # | Item | Date | Commit | Result |" in text
+    rows = [line for line in text.splitlines() if re.match(r"^\| \d+ \|", line)]
+    assert len(rows) == 20 and [int(r.split("|")[1]) for r in rows] == list(range(1, 21))
+    assert all(row.count("|") == 6 for row in rows)
+    lowered = text.lower()
+    for item in HARDWARE_ITEMS:
+        assert item in lowered, item
+    for section in ("## Milestone box criteria", "## CI runs", "## Maps"):
+        assert section in text, section
+
+
+def test_playbooks_readme_matches_the_content_rules():
+    text = (REPO / "playbooks" / "README.md").read_text(encoding="utf-8")
+    for scheme in list(content.LINK_ROUTES) + ["map"]:
+        assert f"`{scheme}:" in text, scheme
+    for _, heading in content.SCENARIO_HEADINGS:
+        assert f"## {heading}" in text, heading
+    assert "{{module:<slug>}}" in text and "{#id}" in text
+    assert "Rewording a checklist item without an explicit id changes its id and resets its state" in text
+    schema = json.loads((REPO / "playbooks" / "schema.json").read_text(encoding="utf-8"))
+    for field in schema["$defs"]["base"]["required"] + schema["$defs"]["scenario"]["required"] + ["category"]:
+        assert f"`{field}`" in text, field
+    for kind in content.KIND_BY_DIR.values():
+        assert f"| {kind} |" in text, kind
+    for value in schema["$defs"]["page"]["properties"]["category"]["enum"]:
+        assert f"`{value}`" in text, value
+    assert "999" in text and "111" in text and "105" in text and "0345 988 1188" in text
+
+
+def test_playbooks_schema_documents_every_property():
+    schema = json.loads((REPO / "playbooks" / "schema.json").read_text(encoding="utf-8"))
+    assert set(schema["$defs"]) == {"base", "source", "scenario", "module", "card", "page"}
+    assert set(content.KIND_BY_DIR.values()) <= set(schema["$defs"])
+    for name, definition in schema["$defs"].items():
+        assert definition.get("description"), f"$defs.{name} lacks a description"
+        for prop, spec in definition.get("properties", {}).items():
+            assert spec.get("description"), f"$defs.{name}.{prop} lacks a description"
+    assert schema["$defs"]["base"]["required"] == ["id", "title", "icon", "order", "summary"]
+    assert schema["$defs"]["scenario"]["required"] == ["modules", "overlays", "reviewed", "sources"]
+    assert schema["$defs"]["page"]["required"] == ["category"]
+```
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `cd api && .venv/bin/pytest tests/test_repo_docs.py -q`
+Expected: `4 failed`: an `AssertionError` on `## What it is` (the README is empty), `FileNotFoundError` for `docs/hardware-checklist.md` and `playbooks/README.md`, and `$defs.base lacks a description`.
+
+- [ ] **Step 3: Write `README.md`**
+
+````markdown
+# Operation SOS
+
+Operation SOS is an offline, UK-focused knowledge box. It runs on a Raspberry Pi 5 with a 7" touchscreen and an NVMe drive, broadcasts its own WiFi hotspot so phones and laptops can use it with no internet, no grid and no mobile network, and shows the same interface on its own screen so it still works when every phone is dead.
+
+The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs/superpowers/specs/2026-09-03-operation-sos-design.md); this file is the practical guide.
+
+## What it is
+
+- **Twenty scenario playbooks** (nuclear war, grid collapse, pandemic, flooding, the long rebuild and more) that say what to do right now, over 72 hours, over a month and over years, with UK-specific detail, a shared checklist and citations into the library.
+- **One search** across Wikipedia, the NHS, repair manuals, survival libraries, maps and the playbooks.
+- **Maps** of the UK, the Republic of Ireland, the Isle of Man and the Channel Islands with footpaths, contours, hillshade and scenario overlays (hospitals, fuel, water, nuclear sites, flood zones), served from the box to any phone.
+- **Medical quick cards** plus comms, legal and household-plan reference pages.
+- **An optional AI assistant** that only answers from the library and cites its sources; off by default.
+- Plain HTTP on the hotspot at `http://10.42.0.1` (or `http://sos.box`), no accounts, no internet dependency at runtime.
+
+## Hardware
+
+| Part | Reference choice |
+|---|---|
+| Computer | Raspberry Pi 5, 8 GB |
+| Storage | 500 GB NVMe (2280) on a Pimoroni NVMe Base; boot and core drive; PCIe Gen 2 (`install.sh --pcie-gen3` opts in) |
+| Screen | Raspberry Pi Touch Display 2 (7", DSI), rotated to landscape by the kiosk session; any HDMI touchscreen also works |
+| Cooling | Official Active Cooler; the printed case needs an intake and an exhaust path |
+| Power | Official 27 W USB-C PSU; optional 20,000 mAh USB-C PD power bank (roughly 8 to 15 hours) |
+| External drive | Optional self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, 2 TB or more for the extended library |
+
+Storage layout on the box: `/srv/sos/core/{zim,maps,docs,models}` (NVMe), `/srv/sos/extended/{zim,docs,media,video,books}` (USB), `/srv/sos/state` (database, `library.xml`, playbooks, manifest, config), `/srv/sos/web` (built frontend), `/srv/sos/api` (the `sos` package and its venv).
+
+## Install on the Pi
+
+1. Flash 64-bit Raspberry Pi OS Lite (Trixie) to the NVMe, boot it, and set the boot order once with `sudo raspi-config` (Advanced Options, Boot Order, NVMe/USB).
+2. Get the repository onto the Pi over ethernet on the home LAN: `git clone <this repository> ~/OperationSOS`.
+3. Optionally copy `install/answers.env.example` to `install/answers.env` and fill in the admin PIN, SSID and passphrase; without it the installer prompts.
+4. Run the installer as root:
+
+   ```bash
+   cd ~/OperationSOS
+   sudo install/install.sh --dry-run   # prints every step and file, writes nothing
+   sudo install/install.sh             # the llama.cpp build is most of the time (about 10 minutes)
+   sudo reboot
+   ```
+
+   Flags: `--skip-llama` (no AI build), `--with-jellyfin` (media server; not together with the AI on 8 GB), `--pcie-gen3` (NVMe at Gen 3 once you have tested your drive), `--dev` (PC profile: no hotspot, mount, backlight, kiosk or boot steps).
+
+5. After the reboot the screen shows the app, the hotspot `SOS` is up, and a phone on it opens `http://10.42.0.1` (or `http://sos.box`). Plug ethernet into a home router and the box is also at `http://sos.local`.
+
+The installer is idempotent: run it again after pulling changes and every step that is already done reports `unchanged`, ending in `install complete: no changes`. From the PC, `make deploy HOST=sos.local` rsyncs the API, the built frontend, the playbooks and the manifest to a box on the LAN, runs `sos index` and restarts `sos-api`. Pinned versions live in `install/versions.env`; the systemd units, Caddyfile, NetworkManager profiles, udev rule, sudoers rule, kiosk wrapper and boot fragment are the files under `install/`.
+
+## Develop on the PC
+
+Prerequisites: Python 3.12 or newer, Node 22 or newer with pnpm, and on `PATH` `kiwix-serve`, `kiwix-manage` and `kiwix-search` 3.8.2 and `caddy` 2.11.4 (on the reference PC they live in `~/.local/bin`). Sample content lives in `~/sos-content` (`zim/` with six sample ZIMs, `models/` with two GGUF files); `dev/manifest/core.json` describes it.
+
+```bash
+make venv      # api/.venv with the sos package and the dev tools (pytest, respx, ruff, shellcheck)
+make test      # pytest, vitest (when web/ exists), sos validate-playbooks, the smoke self-test
+make dev       # kiwix-serve :8090, sos-api :8000 (SOS_DEV=1), caddy :8080 with the production Caddyfile
+dev/smoke.sh   # in another terminal: one PASS or FAIL line per check against http://127.0.0.1:8080
+make build     # vite build into web/dist; make dev then serves the real app instead of the placeholder
+make e2e       # Playwright against the dev stack
+```
+
+If `make venv` fails with `ensurepip is not available` (an Ubuntu without `python3-venv`), create the venv once by hand and `make` takes over from there:
+
+```bash
+python3 -m venv --without-pip api/.venv
+python3 -m pip --python api/.venv/bin/python install pip
+api/.venv/bin/pip install -e './api[dev]'
+```
+
+Playwright's Chromium on this PC needs the vendored system libraries, so run the browser tests as `LD_LIBRARY_PATH=$HOME/.local/chromium-deps/usr/lib/x86_64-linux-gnu make e2e` (the same variable in front of `pnpm --dir web exec playwright test`).
+
+The dev stack keeps its state and logs under `.dev/` (ignored by git). Overrides: `SOS_CORE` (content root, default `/home/dan/sos-content`), `SOS_MANIFEST_DIR` (default `dev/manifest`), `SOS_PLAYBOOKS_DIR` (default `playbooks`; use `api/tests/fixtures/playbooks` for a populated tree before the content plan lands), `SOS_MODEL` (which GGUF the AI dev spawn uses), `SOS_HTTP_PORT`, `SOS_PORT`, `SOS_KIWIX_PORT`. `pnpm --dir web dev` serves the frontend with hot reload on 5173 and proxies `/api`, `/kiwix`, `/maps` and `/docs` to the Caddy on 8080.
+
+`SOS_DEV=1` makes `sos-api` return fake values for the hotspot, temperature, backlight and NetworkManager instead of touching the system, and makes the AI spawn `llama-server` directly instead of through systemd.
+
+## Content sync
+
+Content is described by `manifest/*.json` (`core.json`, `extended.json`, `maps.json`, `overlays.json`) and validated against `manifest/schema.json`. On the box:
+
+```bash
+sudo -u sos /srv/sos/api/.venv/bin/sos sync --tier core --dry-run   # resolve every source, print what would be fetched
+sudo -u sos /srv/sos/api/.venv/bin/sos sync --tier core             # download (aria2c, resumable, sha256-checked), then sos index
+sudo -u sos /srv/sos/api/.venv/bin/sos sync --tier extended         # with the SOS-EXT drive plugged in
+sudo -u sos /srv/sos/api/.venv/bin/sos validate-playbooks --deep    # every kiwix: and doc: target really exists
+```
+
+`kiwix` sources resolve to the newest file in the Kiwix catalogue; `url` sources download directly; `build` items (the NHS ZIM, the maps, the phone packs) are produced on the PC with `sos build-nhs` and `sos build-maps` and copied to the path the dry run prints. `sos index` (also run by the installer and at the end of `sync`) regenerates `library.xml`, rebuilds the search index for playbooks and documents, and imports `places.csv.gz` when it changes. The System screen's Update button runs the same sync over ethernet.
+
+On the PC the same commands run against the dev manifest: `SOS_MANIFEST_DIR=dev/manifest SOS_CORE=$HOME/sos-content api/.venv/bin/sos sync --tier core --dry-run` reports every sample file as present.
+
+## Repository structure
+
+```
+Makefile          dev, test, e2e, build, fixtures, deploy, venv, smoke
+api/              the sos Python package (FastAPI API, CLI, sync, search, content) and its tests
+web/              the React frontend (Vite), its unit tests and Playwright specs
+playbooks/        authored Markdown: scenarios/, modules/, cards/, pages/, schema.json, README.md
+manifest/         content manifests and their JSON schema
+install/          install.sh, versions.env, systemd units, Caddyfile, NetworkManager, udev, sudoers, kiosk, boot
+dev/              run-dev.sh, smoke.sh, the smoke self-test and the dev manifest
+tools/            map style build and AI evaluation questions
+docs/             the design spec, research, the implementation plans and the hardware checklist
+```
+
+## Plans
+
+The build is an overview plus five sub-plans in `docs/superpowers/plans/`:
+
+| Plan | Delivers |
+|---|---|
+| `2026-09-03-00-overview.md` | locked contracts: paths, environment, JSON shapes, endpoints, CLI |
+| `2026-09-03-01-backend-and-install.md` | the `sos` package, the dev stack, the installer, this README |
+| `2026-09-03-02-frontend.md` | the web app, themes, kiosk mode, map viewer |
+| `2026-09-03-03-content.md` | the twenty playbooks, modules, cards, pages and the manifests |
+| `2026-09-03-04-maps-pipeline.md` | `sos build-maps`: base map, contours, hillshade, overlays, phone packs |
+| `2026-09-03-05-ai.md` | the grounded assistant and its evaluation |
+
+Milestones and their exit criteria are in spec section 15; hardware results are recorded in `docs/hardware-checklist.md`.
+````
+
+- [ ] **Step 4: Write `docs/hardware-checklist.md`**
+
+```markdown
+# Hardware checklist
+
+Manual checks on the box (spec section 14). Close a row with the date, the commit tested and the result (`pass`, `fail` plus a note, or `n/a`). The milestone "Box" criteria from spec section 15 follow the table; a milestone closes only when its CI list (recorded under "CI runs") and its Box list both pass.
+
+## Checklist
+
+| # | Item | Date | Commit | Result |
+|---|---|---|---|---|
+| 1 | Hotspot join and captive portal on an iPhone and an Android, including a Samsung with mobile data on | | | |
+| 2 | Fallback URLs and QR codes: `http://10.42.0.1` and `http://sos.box` from the welcome page and the Connect a phone panel | | | |
+| 3 | `sos.local` from the home LAN while the hotspot keeps running | | | |
+| 4 | Direct laptop link (eth0 shared, 10.43.0.1) survives a reboot | | | |
+| 5 | Update over ethernet downloads one item | | | |
+| 6 | External drive hot-plug and removal while browsing (items grey out within 10 seconds and come back) | | | |
+| 7 | Display is landscape and touch lands where the finger is | | | |
+| 8 | Backlight device present and controllable (or the 501 fallback overlay) | | | |
+| 9 | Low power mode dims and stops AI | | | |
+| 10 | Idle dim, wake without a click passing through, return to Home after 30 minutes | | | |
+| 11 | Keyboard usable on the panel | | | |
+| 12 | Open a 300-page PDF on iPhone and Android and jump to page 200 | | | |
+| 13 | NVMe boot | | | |
+| 14 | Pull the power during use and reboot to Home with no dialog | | | |
+| 15 | Thermal under a 10-minute AI session in the printed case | | | |
+| 16 | Thermal auto-off at a lowered threshold | | | |
+| 17 | RAM with AI ready and two phones browsing (zero swap) | | | |
+| 18 | Load with five phones browsing, one panning the map at z14 and one AI question in flight (search p95 under 3 seconds, no OOM kills, under 80°C for 10 minutes) | | | |
+| 19 | Power-bank runtime with the screen lit | | | |
+| 20 | `install.sh` run twice with no changes the second time | | | |
+
+## Milestone box criteria (spec section 15)
+
+- **1 Skeleton**: a phone joins `SOS`; the portal pops on one iPhone and one Android; both addresses load; the kiosk shows the app; `install.sh` a second time reports no changes (rows 1, 2, 7, 20).
+- **2 App shell, library, reader, search**: the Playwright suite passes against `http://10.42.0.1` from a laptop on the hotspot.
+- **3 Maps**: full outputs installed, sizes recorded in `manifest/maps.json`, pan and zoom at z15 on the kiosk and one phone with zero 4xx/5xx for `/maps/*`.
+- **4 Playbooks**: print view of one playbook from a phone.
+- **5 Full content**: `sos sync --tier core` completes; every core item available; core size within 10% of the manifest sum; unplugging the drive greys its items within 10 seconds and replugging restores them; `sos validate-playbooks --deep` passes (row 6).
+- **6 AI**: `sos eval` full run with median time to first token at most 90 seconds, generation at least 7 tokens per second, zero swap, CPU under 80°C; results file committed (rows 15, 17).
+- **7 Polish and hardware**: the full checklist above in the printed case.
+
+## CI runs
+
+| Milestone | Date | Commit | Result |
+|---|---|---|---|
+
+## Maps
+
+Recorded by the maps pipeline plan after its fixture build.
+```
+
+- [ ] **Step 5: Write `playbooks/README.md`**
+
+````markdown
+# Authoring guide
+
+Playbooks, modules, quick cards and reference pages are Markdown files with YAML front matter. `sos validate-playbooks` checks them (`make test` runs it), `sos index` puts them into search, and the API renders them on request, so a saved file shows up on the next page load.
+
+## Where files live
+
+| Kind | Path | Route |
+|---|---|---|
+| scenario | `playbooks/scenarios/<slug>.md` | `/s/<slug>` |
+| module | `playbooks/modules/<slug>.md` | `/m/<slug>`, and inline wherever a scenario includes it |
+| card | `playbooks/cards/<slug>.md` | `/medical/card/<slug>` |
+| page | `playbooks/pages/<slug>.md` | `/p/<slug>` |
+
+The file name is the slug: lower-case letters, digits and hyphens. It must equal the `id` in the front matter.
+
+## Front matter
+
+`playbooks/schema.json` is the schema, one `$defs` entry per kind. Every document has these five fields:
+
+| Field | Meaning |
+|---|---|
+| `id` | the slug, equal to the file name |
+| `title` | the heading, also shown in search results |
+| `icon` | an icon name from the frontend's vocabulary; unknown names render as a book |
+| `order` | sort position within its kind (scenarios use the numbers from spec section 2) |
+| `summary` | one sentence for tiles and lists |
+
+Scenarios add `modules` (slugs of the modules the body includes), `overlays` (map overlay ids from `manifest/overlays.json` that switch on when the map opens from the playbook), `reviewed` (the owner's sign-off date `YYYY-MM-DD`, or `null` until reviewed) and `sources`. Modules, cards and pages may carry `sources`; pages must carry `category`: `comms`, `reference`, `plan` or `about`, which picks the list the page appears in.
+
+```yaml
+---
+id: nuclear-war
+title: Nuclear war
+icon: radiation
+order: 1
+summary: A nuclear strike on the UK. Fallout, shelter, water, radiation sickness.
+modules: [radiation, water, shelter-heat, medical, sanitation, comms, evacuation]
+overlays: [nuclear-sites, health, water]
+reviewed: 2026-09-10
+sources:
+  - title: National Risk Register 2025
+    doc: nrr-2025
+    url: https://assets.publishing.service.gov.uk/media/67b5f85732b2aab18314bbe4/National_Risk_Register_2025.pdf
+    as_at: 2025-01-16
+  - title: Nuclear War Survival Skills
+    doc: nwss
+---
+```
+
+A `sources` entry has a `title` and, when the source is in the library, `doc: <manifest id>` (a PDF or EPUB item) or `kiwix: <zim item id>/<article path>`; the validator checks that the id exists. `url` records where the source came from and is never rendered as a link; a `url`-only source is a warning, not an error. `as_at` is `YYYY-MM-DD`, or `YYYY-MM` when only the month is known, and is shown next to the citation.
+
+## Scenario body
+
+A scenario body contains exactly these seven headings, in this order, each non-empty:
+
+```markdown
+## Right now
+## First 72 hours
+## First month
+## Long term
+## UK specifics
+## Checklist
+## Go deeper
+```
+
+Modules are declared in `modules:` and inserted where a line `{{module:<slug>}}` appears (any section except Checklist). The validator errors when a declared module is never included or an include names an undeclared or missing module. Sections are rendered as tabs; keep "Right now" short enough to read on a phone without scrolling much.
+
+## Checklist ids
+
+`## Checklist` contains only task-list lines, `- [ ] text` or `- [ ] text {#id}`. Ticks are shared by everyone on the box (`PUT /api/playbooks/<slug>/checklist/<id>`) and stored by playbook and item id. The id is the explicit `{#id}` when given, otherwise the slug of the text (lower-case, hyphens, at most 60 characters). **Rewording a checklist item without an explicit id changes its id and resets its state**, so give every item an explicit id and keep it when the wording changes. Ids must be unique within a playbook. Task lists inside an included module get the id `<module-slug>/<item-id>` and are stored under the including playbook, so the same module ticked in two playbooks has two states.
+
+## Link scheme
+
+Markdown links use these schemes; `sos validate-playbooks` checks every target exists and the frontend resolves them to routes.
+
+| Link | Opens |
+|---|---|
+| `kiwix:<id>/<path>` | the reader at that article, e.g. `kiwix:wikipedia_en_all_maxi/A/Potassium_iodide` |
+| `doc:<id>` | the PDF or EPUB viewer for a manifest item |
+| `doc:<id>#page=<n>` | the same document at page n |
+| `map:?overlay=<id>&overlay=<id>` | the map with those overlays switched on |
+| `playbook:<slug>` | a scenario playbook |
+| `module:<slug>` | a module on its own |
+| `card:<slug>` | a medical quick card |
+| `page:<slug>` | a reference page |
+
+The box is offline: do not link to the internet from a body. Put the origin of a fact in `sources[].url` instead and cite the library copy inline: every dose, distance, time or law carries a citation such as `([NRR 2025, p. 45](doc:nrr-2025#page=45))` so the reader can check it.
+
+## Modules, cards and pages
+
+- **Modules** are written once and included by playbooks. Headings are free (`##`), task lists are allowed and become part of the including playbook's checklist.
+- **Cards** are one screen each: the title and the first three steps fit without scrolling on the kiosk (853x480) and on a 360 px phone; later steps scroll. Numbered steps, `> **Warning:**` blockquotes for red warnings, when to stop or escalate, and the source.
+- **Pages** carry `category`; tables render as tables (the PMR446 channel list, UK numbers, band plans).
+
+## Validation
+
+`sos validate-playbooks` (run by `make test`) checks: front matter against the schema; the seven scenario headings present, in order and non-empty; that every `kiwix:`, `doc:`, `module:`, `card:`, `page:` and `playbook:` target exists in the manifest or the playbook set; that `map:` overlays and `overlays:` entries exist in `manifest/overlays.json`; that module declarations and includes agree; that checklist ids are unique; and that every `sources[].doc` or `kiwix:` resolves (warning for `url`-only). `--deep` (on the box after `sos sync`) also requests every `kiwix:` path from kiwix-serve and checks every `doc:` file on disk. `--all-scenarios` fails unless all twenty scenario slugs from spec section 2 exist. Output is one line per problem, then `FAILED <n> errors` (exit 1) or `OK <n> documents`.
+
+## Style
+
+British English. Emergency numbers are 999, 111 (NHS), 105 (power cut) and 0345 988 1188 (Floodline). Drug names are the UK names (paracetamol, adrenaline). Every icon has a word next to it in the app, so `icon` is decoration, not meaning. The product is "Operation SOS", "SOS" for short.
+````
+
+- [ ] **Step 6: Replace `playbooks/schema.json` with the annotated version (same constraints as Task 7)**
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://operation-sos.invalid/playbooks.schema.json",
+  "title": "Operation SOS authored content front matter",
+  "description": "Front matter of playbooks/scenarios/*.md (scenario), modules/*.md (module), cards/*.md (card) and pages/*.md (page). sos validate-playbooks validates each file against the $defs entry for its directory; the rules are explained in playbooks/README.md.",
+  "$defs": {
+    "base": {
+      "type": "object",
+      "description": "Fields every document carries.",
+      "required": ["id", "title", "icon", "order", "summary"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "The slug; must equal the file name without .md." },
+        "title": { "type": "string", "minLength": 1, "description": "The heading, also shown in search results." },
+        "icon": { "type": "string", "minLength": 1, "description": "An icon name from the frontend's vocabulary; unknown names render as a book." },
+        "order": { "type": "integer", "minimum": 0, "description": "Sort position within its kind (scenarios use the numbers from spec section 2)." },
+        "summary": { "type": "string", "minLength": 1, "description": "One sentence for tiles and lists." }
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "A cited source. doc or kiwix names the library copy; url is provenance only and is never rendered as a link.",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "description": "How the source is listed under the document." },
+        "doc": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$", "description": "Manifest id of a pdf or epub item." },
+        "kiwix": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/.+$", "description": "<zim item id>/<article path>." },
+        "url": { "type": "string", "pattern": "^https?://", "description": "Where the source came from; provenance only." },
+        "as_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$", "description": "Date of the cited edition: YYYY-MM-DD, or YYYY-MM when only the month is known." }
+      }
+    },
+    "scenario": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/scenarios/<slug>.md: one of the twenty scenario playbooks.",
+      "required": ["modules", "overlays", "reviewed", "sources"],
+      "properties": {
+        "modules": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "description": "Module slugs; each must be included in the body with {{module:<slug>}}." },
+        "overlays": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "description": "Overlay ids from manifest/overlays.json switched on when the map opens from this playbook." },
+        "reviewed": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "The owner's sign-off date (YYYY-MM-DD), or null until reviewed." },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the playbook was written from." }
+      },
+      "unevaluatedProperties": false
+    },
+    "module": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/modules/<slug>.md: shared content included by playbooks and readable on its own.",
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the module was written from." } },
+      "unevaluatedProperties": false
+    },
+    "card": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/cards/<slug>.md: a one-screen medical quick card.",
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the card was written from." } },
+      "unevaluatedProperties": false
+    },
+    "page": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/pages/<slug>.md: a comms, reference, plan or about page.",
+      "required": ["category"],
+      "properties": {
+        "category": { "enum": ["comms", "reference", "plan", "about"], "description": "Which list the page appears in: comms (the Phone and radio screen), reference, plan (the Plan screen) or about." },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the page was written from." }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}
+```
+
+- [ ] **Step 7: Run the tests**
+
+Run: `cd api && .venv/bin/pytest tests/test_repo_docs.py tests/test_content.py -q`
+Expected: all PASS (`4 passed` for the docs; `test_content.py` is unchanged by the annotations, including the sixteen broken-example cases whose messages such as `'summary' is a required property` come from the schema). Then `make test` as a whole passes and ends with `OK 0 documents` and `smoke-selftest: OK`.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add README.md docs/hardware-checklist.md playbooks/README.md playbooks/schema.json api/tests/test_repo_docs.py
+git commit -m "docs: README, hardware checklist, playbook authoring guide, annotated front-matter schema"
+```
+
+---
+
+### Task 16: Acceptance (sub-plan 01 exit criteria and the milestone 1 CI list)
+
+**Files:**
+- Modify: `docs/hardware-checklist.md` (one row in `## CI runs`)
+- Test: none new; this task runs everything the previous tasks built and records the result
+
+**Interfaces:**
+- Consumes: every deliverable of Tasks 1 to 15.
+- Produces: a `1 Skeleton` row in the `## CI runs` table of `docs/hardware-checklist.md`, and a tree in which `make test`, `make dev` plus `make smoke`, `sos validate-playbooks` and `sos sync --dry-run` behave exactly as below. The box half of milestone 1 (rows 1, 2, 7 and 20 of the checklist) waits for the Pi.
+
+- [ ] **Step 1: `make test` on a clean checkout**
+
+Run:
+
+```bash
+cd /home/dan/OperationSOS
+rm -rf api/.venv
+make test
+```
+
+If `make venv` stops with `The virtual environment was not created successfully because ensurepip is not available` (this PC has no `python3-venv` package), create the venv once by hand and run `make test` again:
+
+```bash
+python3 -m venv --without-pip api/.venv
+python3 -m pip --python api/.venv/bin/python install pip
+api/.venv/bin/pip install -e './api[dev]'
+make test
+```
+
+Expected, in order: pytest ends with a summary line of the form `N passed, M skipped in Ss` with no `failed` and no `error` (on this PC the only skip is `pdftotext not installed` from Task 8 unless `poppler-utils` is present; the shellcheck, `systemd-analyze` and Caddy tests all run), then `OK 0 documents` from `sos validate-playbooks` (the repository has no authored documents until plan 03), then `smoke-selftest: OK`. `make test` exits 0.
+
+- [ ] **Step 2: `make dev` then the smoke test**
+
+Run in one terminal: `make dev`
+Expected (paths abbreviated):
+
+```
+run-dev: library.xml with 6 books at /home/dan/OperationSOS/.dev/state/library.xml
+run-dev: web/dist is not built; serving install/placeholder (run 'make build' for the app)
+run-dev: kiwix-serve  http://127.0.0.1:8090/kiwix
+run-dev: sos-api      http://127.0.0.1:8000/api/status  (SOS_DEV=1, manifest /home/dan/OperationSOS/dev/manifest, playbooks /home/dan/OperationSOS/playbooks)
+run-dev: caddy        http://127.0.0.1:8080  (web root /home/dan/OperationSOS/install/placeholder)
+run-dev: logs in /home/dan/OperationSOS/.dev/logs; Ctrl-C stops all three
+run-dev: ready (http://127.0.0.1:8080/api/status answered); run dev/smoke.sh in another terminal
+```
+
+Run in a second terminal: `dev/smoke.sh; echo "exit=$?"`
+Expected:
+
+```
+PASS GET /api/status (200)
+PASS GET /api/library (200)
+PASS GET /api/search?q=water (200)
+PASS GET /api/suggest?q=wat (200)
+PASS GET /kiwix/content/wikipedia_en_100_mini_2026-01/ (200)
+PASS GET /welcome (200)
+PASS GET /generate_204 -> 302 http://10.42.0.1/welcome
+smoke: 7 passed, 0 failed
+exit=0
+```
+
+Also in the second terminal: `curl -s 'http://127.0.0.1:8080/api/library' | python3 -c "import json,sys; d=json.load(sys.stdin); print([(i['id'], i['available']) for c in d['categories'] for i in c['items']])"`
+Expected: the six sample ZIMs and both models, every one `True` (the dev manifest's `dest` paths all exist under `/home/dan/sos-content`).
+
+Leave the stack running for Step 3, then stop it with Ctrl-C in the first terminal: `run-dev: stopping`, and `pgrep -af 'kiwix-serve|uvicorn|caddy run'` prints nothing.
+
+- [ ] **Step 3: `sos validate-playbooks` on the fixture tree**
+
+The fixture tree has no `schema.json` of its own (the tests copy it in), so build the same tree in `/tmp`:
+
+```bash
+rm -rf /tmp/sos-pb && cp -r api/tests/fixtures/playbooks /tmp/sos-pb && cp playbooks/schema.json /tmp/sos-pb/schema.json
+SOS_PLAYBOOKS_DIR=/tmp/sos-pb SOS_MANIFEST_DIR=api/tests/fixtures/manifest api/.venv/bin/sos validate-playbooks; echo "exit=$?"
+```
+
+Expected: `OK 4 documents` and `exit=0`.
+
+One broken example (the validator's output format):
+
+```bash
+cp api/tests/fixtures/playbooks-broken/unknown-overlay.md /tmp/sos-pb/scenarios/grid-collapse.md
+SOS_PLAYBOOKS_DIR=/tmp/sos-pb SOS_MANIFEST_DIR=api/tests/fixtures/manifest api/.venv/bin/sos validate-playbooks; echo "exit=$?"
+```
+
+Expected:
+
+```
+scenarios/grid-collapse.md: overlay 'dragons' not in manifest/overlays.json
+FAILED 1 error
+exit=1
+```
+
+With `make dev` still running, the deep check against the real kiwix-serve and a core tree that holds the fixture PDF:
+
+```bash
+cp api/tests/fixtures/playbooks/scenarios/grid-collapse.md /tmp/sos-pb/scenarios/grid-collapse.md
+mkdir -p /tmp/sos-core/docs && cp api/tests/fixtures/docs/sos-test.pdf /tmp/sos-core/docs/sos-test.pdf
+SOS_PLAYBOOKS_DIR=/tmp/sos-pb SOS_MANIFEST_DIR=api/tests/fixtures/manifest SOS_CORE=/tmp/sos-core api/.venv/bin/sos validate-playbooks --deep; echo "exit=$?"
+```
+
+Expected: `OK 4 documents` and `exit=0` (every `kiwix:wikipedia_en_100_mini_2026-01/...` path is fetched from `http://127.0.0.1:8090/kiwix/raw/...` and answers 200; `doc:sos-test-pdf` is found at `/tmp/sos-core/docs/sos-test.pdf`). Remove the PDF and run the same command again: `scenarios/grid-collapse.md: doc 'sos-test-pdf' file missing (docs/sos-test.pdf)`, `FAILED 1 error`, `exit=1`.
+
+- [ ] **Step 4: `sos sync --dry-run --tier core` against the dev manifest**
+
+Run: `SOS_MANIFEST_DIR=dev/manifest SOS_CORE=/home/dan/sos-content api/.venv/bin/sos sync --tier core --dry-run; echo "exit=$?"`
+Expected (priority order; every sample file exists with the manifest's `size_bytes`, so nothing would be fetched and no database is touched):
+
+```
+OK   wikipedia_en_100_mini_2026-01: present at /home/dan/sos-content/zim/wikipedia_en_100_mini_2026-01.zim
+OK   nhs.uk_en_medicines_2025-12: present at /home/dan/sos-content/zim/nhs.uk_en_medicines_2025-12.zim
+OK   zimgit-medicine_en_2024-08: present at /home/dan/sos-content/zim/zimgit-medicine_en_2024-08.zim
+OK   zimgit-water_en_2024-08: present at /home/dan/sos-content/zim/zimgit-water_en_2024-08.zim
+OK   zimgit-post-disaster_en_2024-05: present at /home/dan/sos-content/zim/zimgit-post-disaster_en_2024-05.zim
+OK   ifixit_en_all_2025-12: present at /home/dan/sos-content/zim/ifixit_en_all_2025-12.zim
+OK   gemma-4-E2B-it-Q4_K_M: present at /home/dan/sos-content/models/gemma-4-E2B-it-Q4_K_M.gguf
+OK   Qwen3.5-2B-Q4_K_M: present at /home/dan/sos-content/models/Qwen3.5-2B-Q4_K_M.gguf
+exit=0
+```
+
+The same command against the fixture manifest and an empty core tree shows the `GET` and `BUILD` forms (the milestone 5 CI check runs this against plan 03's real manifest):
+
+Run: `mkdir -p /tmp/sos-empty && SOS_MANIFEST_DIR=api/tests/fixtures/manifest SOS_CORE=/tmp/sos-empty api/.venv/bin/sos sync --tier core --dry-run; echo "exit=$?"`
+Expected:
+
+```
+GET  wikipedia_en_100_mini_2026-01: https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_mini_2026-01.zim (0.00 GB) -> /tmp/sos-empty/zim/wikipedia_en_100_mini_2026-01.zim
+BUILD sos-test-noindex: run `sos zimwriterfs` on the PC and copy sos-test-noindex.zim to /tmp/sos-empty/zim/sos-test-noindex.zim
+GET  sos-test-pdf: https://example.invalid/sos-test.pdf (0.00 GB) -> /tmp/sos-empty/docs/sos-test.pdf
+GET  nrr-2025: https://assets.publishing.service.gov.uk/media/67b5f85732b2aab18314bbe4/National_Risk_Register_2025.pdf (0.01 GB) -> /tmp/sos-empty/docs/nrr-2025.pdf
+BUILD uk-ie: run `sos pmtiles` on the PC and copy uk-ie.pmtiles to /tmp/sos-empty/maps/uk-ie.pmtiles
+BUILD contours: run `sos pmtiles` on the PC and copy contours.pmtiles to /tmp/sos-empty/maps/contours.pmtiles
+BUILD hillshade: run `sos pmtiles` on the PC and copy hillshade.pmtiles to /tmp/sos-empty/maps/hillshade.pmtiles
+BUILD places: run `sos build-maps` on the PC and copy places.csv.gz to /tmp/sos-empty/maps/places.csv.gz
+BUILD packs: run `sos build-maps` on the PC and copy packs/ to /tmp/sos-empty/maps/packs
+BUILD health: run `sos build-maps` on the PC and copy overlays/health.geojson to /tmp/sos-empty/maps/overlays/health.geojson
+BUILD nuclear-sites: run `sos build-maps` on the PC and copy overlays/nuclear-sites.geojson to /tmp/sos-empty/maps/overlays/nuclear-sites.geojson
+BUILD water: run `sos build-maps` on the PC and copy overlays/water.pmtiles to /tmp/sos-empty/maps/overlays/water.pmtiles
+GET  gemma-4-E2B-it-Q4_K_M: https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf (3.11 GB) -> /tmp/sos-empty/models/gemma-4-E2B-it-Q4_K_M.gguf
+exit=0
+```
+
+(`url` items report the manifest's `size_bytes`; `kiwix` items would first be resolved against `https://opds.library.kiwix.org`, which the fixture manifest avoids so this runs offline.)
+
+- [ ] **Step 5: The milestone 1 CI list (spec section 15) and where each item is proven**
+
+| CI item | Command | Expected |
+|---|---|---|
+| shellcheck | `api/.venv/bin/shellcheck --shell=bash --severity=style install/install.sh install/kiosk/sos-kiosk-app dev/run-dev.sh dev/smoke.sh dev/smoke-selftest.sh; echo "exit=$?"` | no findings, `exit=0` (also `tests/test_install.py::test_shellcheck_clean`) |
+| dry-run golden | `cd api && .venv/bin/pytest tests/test_install.py::test_dry_run_matches_golden -q` | `1 passed`; by hand, `SOS_ARCH=aarch64 SOS_WEB_DIST=/nonexistent/web/dist bash install/install.sh --dry-run \| diff - api/tests/golden/install-dry-run.txt` prints nothing |
+| `caddy validate` | `caddy validate --config install/caddy/Caddyfile --adapter caddyfile` | `Valid configuration` |
+| `systemd-analyze verify` | `systemd-analyze verify --recursive-errors=no install/systemd/*` | only `Command ... is not executable: No such file or directory` lines for `/usr/local/bin/caddy`, `/usr/local/bin/kiwix-serve`, `/srv/sos/api/.venv/bin/uvicorn`, `/srv/sos/api/.venv/bin/sos`, `/usr/local/bin/sos-kiosk-app`, `/usr/bin/cage` and `/usr/local/bin/llama-server`; nothing about the unit syntax (also `tests/test_install.py::test_systemd_analyze_verify`) |
+| Caddy on the PC answers each probe path with 302 to `/welcome` | `cd api && .venv/bin/pytest tests/test_install.py -k caddy -q` | `7 passed`; by hand with `make dev` running, `for p in /generate_204 /gen_204 /hotspot-detect.html /library/test/success.html /connecttest.txt /ncsi.txt /canonical.html /success.txt; do curl -s -o /dev/null -w "$p %{http_code} %{redirect_url}\n" http://127.0.0.1:8080$p; done` prints `302 http://10.42.0.1/welcome` after each of the eight paths |
+| Caddy serves the fixture ZIM through `/kiwix/` | with `make dev` running: `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation` and `curl -s http://127.0.0.1:8080/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation \| grep -c Precipitation` | `200`, then a count of at least 1 |
+| `make dev` then `dev/smoke.sh` all PASS | Step 2 above | seven `PASS` lines and `smoke: 7 passed, 0 failed` |
+
+- [ ] **Step 6: Record the CI half of milestone 1 and commit**
+
+Append to the `## CI runs` table in `docs/hardware-checklist.md` (fill in today's date and `git rev-parse --short HEAD`):
+
+```markdown
+| 1 Skeleton | 2026-09-04 | <short sha> | pass (shellcheck, dry-run golden, caddy validate, systemd-analyze verify, probe paths, fixture ZIM via /kiwix/, make dev + smoke) |
+```
+
+The box half (a phone joins `SOS`, the portal pops on an iPhone and an Android, both addresses load, the kiosk shows the app, `install.sh` a second time reports no changes) is recorded in rows 1, 2, 7 and 20 of the checklist when the Pi is built.
+
+```bash
+git add docs/hardware-checklist.md
+git commit -m "chore: record the milestone 1 CI acceptance for sub-plan 01"
+```
+
+---
