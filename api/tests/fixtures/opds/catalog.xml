@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:dc="http://purl.org/dc/terms/"
+      xmlns:opds="https://specs.opds.io/opds-1.2"
+      xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+  <id>3cdfeea0-c663-4f6e-9bf1-555eca66ce98</id>
+  <link rel="self" href="/catalog/v2/entries?name=zimgit-water_en&amp;count=1" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+  <link rel="start" href="/catalog/v2/root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+  <link rel="up" href="/catalog/v2/root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+  <title>Filtered Entries (name=zimgit-water_en&amp;count=1)</title>
+  <updated>2026-09-03T20:54:16Z</updated>
+  <totalResults>1</totalResults>
+  <startIndex>0</startIndex>
+  <itemsPerPage>1</itemsPerPage>
+  <entry>
+    <id>urn:uuid:2e17beb8-4d08-4734-75d4-6f56f73f3610</id>
+    <title>Water Treatment Library</title>
+    <updated>2024-08-29T00:00:00Z</updated>
+    <summary>A library of water treatment and purification resources</summary>
+    <language>eng</language>
+    <name>zimgit-water_en</name>
+    <flavour></flavour>
+    <category>other</category>
+    <tags>preppers;_ftindex:no;_pictures:yes;_videos:yes;_details:yes</tags>
+    <articleCount>1</articleCount>
+    <mediaCount>50</mediaCount>
+    <link rel="http://opds-spec.org/image/thumbnail" href="/catalog/v2/illustration/2e17beb8-4d08-4734-75d4-6f56f73f3610/?size=48" type="image/png;width=48;height=48;scale=1"/>
+    <link type="text/html" href="/content/zimgit-water_en_2024-08" />
+    <link rel="http://opds-spec.org/acquisition/open-access" type="application/x-zim" href="https://lb.download.kiwix.org/zim/other/zimgit-water_en_2024-08.zim.meta4" length="20925440" />
+    <author><name>Various</name></author>
+    <publisher><name>openZIM</name></publisher>
+    <dc:issued>2024-08-29T00:00:00Z</dc:issued>
+  </entry>
+</feed>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metalink xmlns="urn:ietf:params:xml:ns:metalink">
+  <generator>MirrorBrain/2.19.0</generator>
+  <origin dynamic="true">https://lb.download.kiwix.org/zim/other/zimgit-water_en_2024-08.zim.meta4</origin>
+  <published>2026-09-03T20:55:28Z</published>
+  <publisher>
+    <name>Kiwix project</name>
+    <url>https://kiwix.org</url>
+  </publisher>
+  <file name="zimgit-water_en_2024-08.zim">
+    <size>20924451</size>
+    <hash type="md5">282e1687696db936fda14568b52d9b19</hash>
+    <hash type="sha-1">cebef900d5c004d10d05b765734a1d5ab5c750be</hash>
+    <hash type="sha-256">392c7bc970a44fddd61dd17f6eabf1f4e21936f2d5c27c83093e1dc475cb56b6</hash>
+    <pieces length="4194304" type="sha-1">
+      <hash>f4435a5e8d4b38285b3d544512f24b44709c9997</hash>
+      <hash>3c77fd0cc60cecfede5b2e60ca88b9293743afef</hash>
+      <hash>69f4ef92bfb043fc562211f811d7cfb775d2ca51</hash>
+      <hash>82e32d2396bbdb8f0d3b117fb332c9d031193454</hash>
+      <hash>1151818469ae21d0113b1803769844b81f155101</hash>
+    </pieces>
+    <url location="nl" priority="1">https://ftp.nluug.nl/pub/kiwix/zim/other/zimgit-water_en_2024-08.zim</url>
+    <url location="fr" priority="2">https://mirror.download.kiwix.org/zim/other/zimgit-water_en_2024-08.zim</url>
+  </file>
+</metalink>

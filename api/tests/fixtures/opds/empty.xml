@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">
+  <id>3cdfeea0-c663-4f6e-9bf1-555eca66ce98</id>
+  <title>Filtered Entries (name=nope&amp;count=1)</title>
+  <updated>2026-09-03T20:54:16Z</updated>
+  <totalResults>0</totalResults>
+  <startIndex>0</startIndex>
+  <itemsPerPage>0</itemsPerPage>
+</feed>
