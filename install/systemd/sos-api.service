@@ -1,0 +1,27 @@
+[Unit]
+Description=Operation SOS API (sos-api)
+After=network.target
+Wants=kiwix-serve.service
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+WorkingDirectory=/srv/sos/api
+Environment=SOS_CORE=/srv/sos/core
+Environment=SOS_EXT=/srv/sos/extended
+Environment=SOS_STATE=/srv/sos/state
+Environment=SOS_WEB=/srv/sos/web
+Environment=SOS_KIWIX_URL=http://127.0.0.1:8090/kiwix
+Environment=SOS_LLAMA_URL=http://127.0.0.1:8081
+Environment=SOS_PORT=8000
+# Caddy is the only client; it rewrites X-Forwarded-For to the real address, so the localhost-only
+# endpoints (kiosk backlight, idle, rescan) see the phone's IP rather than 127.0.0.1.
+ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

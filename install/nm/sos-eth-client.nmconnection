@@ -1,0 +1,17 @@
+# Operation SOS ethernet, default mode (spec section 4): eth0 as a DHCP client on a home router, so the
+# box can fetch updates and is reachable as http://sos.local while the hotspot keeps running.
+[connection]
+id=sos-eth-client
+uuid=6bcf9ad6-b634-47a7-b9e5-a465b2130bf0
+type=ethernet
+interface-name=eth0
+autoconnect=true
+autoconnect-priority=50
+
+[ethernet]
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto

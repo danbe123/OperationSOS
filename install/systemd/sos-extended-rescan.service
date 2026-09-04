@@ -1,0 +1,20 @@
+[Unit]
+Description=Operation SOS rescan when the external drive is plugged in or removed
+BindsTo=srv-sos-extended.mount
+After=srv-sos-extended.mount sos-api.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=sos
+Group=sos
+Environment=SOS_STATE=/srv/sos/state
+Environment=SOS_EXT=/srv/sos/extended
+Environment=SOS_PORT=8000
+# `storage-event` only calls POST /api/system/rescan; `remove` regenerates library.xml without the
+# extended books first so kiwix-serve drops them before the unmount, then falls back to umount -l.
+ExecStart=/srv/sos/api/.venv/bin/sos storage-event add
+ExecStop=/srv/sos/api/.venv/bin/sos storage-event remove
+
+[Install]
+WantedBy=srv-sos-extended.mount

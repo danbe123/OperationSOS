@@ -1,0 +1,79 @@
+# Operation SOS web server (spec section 5). The same file serves the box and the PC dev stack:
+# every root and upstream is an environment placeholder whose default is the production value.
+#
+#   SOS_HTTP_PORT       80                       port to listen on (dev stack: 8080)
+#   SOS_WEB_ROOT        /srv/sos/web             built frontend: index.html, assets/, welcome.html, starting.html
+#   SOS_MAPS_ROOT       /srv/sos/core/maps       PMTiles, styles, sprites, glyphs, overlays, packs
+#   SOS_DOCS_CORE       /srv/sos/core/docs       core-tier PDFs and EPUBs (URL /docs/core/<file>)
+#   SOS_DOCS_EXT        /srv/sos/extended/docs   extended-tier PDFs and EPUBs (URL /docs/extended/<file>)
+#   SOS_API_UPSTREAM    127.0.0.1:8000           sos-api (uvicorn)
+#   SOS_KIWIX_UPSTREAM  127.0.0.1:8090           kiwix-serve started with --urlRootLocation /kiwix
+#
+# llama-server (127.0.0.1:8081) is never proxied.
+# Check: caddy validate --config install/caddy/Caddyfile --adapter caddyfile
+
+:{$SOS_HTTP_PORT:80} {
+	root * {$SOS_WEB_ROOT:/srv/sos/web}
+
+	# Captive-portal probes (spec section 4): every phone OS lands on the static welcome page, never on the app.
+	@probe path /generate_204 /gen_204 /hotspot-detect.html /library/test/success.html /connecttest.txt /ncsi.txt /canonical.html /success.txt
+	redir @probe http://10.42.0.1/welcome 302
+
+	# sos-api mounts everything under /api and kiwix-serve under /kiwix, so paths pass through untouched.
+	# X-Forwarded-For is replaced with the real client address so sos-api's localhost-only guard cannot be
+	# fooled by a phone; the Host header passes through so kiwix-serve's redirects use the address the
+	# phone typed.
+	handle /api/* {
+		reverse_proxy {$SOS_API_UPSTREAM:127.0.0.1:8000} {
+			header_up X-Forwarded-For {remote_host}
+		}
+	}
+	handle /kiwix/* {
+		reverse_proxy {$SOS_KIWIX_UPSTREAM:127.0.0.1:8090}
+	}
+
+	# Map files: byte-range reads by the pmtiles protocol, so no compression; never served stale.
+	handle_path /maps/* {
+		root * {$SOS_MAPS_ROOT:/srv/sos/core/maps}
+		header Cache-Control no-cache
+		file_server
+	}
+
+	# Documents for the bundled PDF and EPUB readers.
+	handle_path /docs/core/* {
+		root * {$SOS_DOCS_CORE:/srv/sos/core/docs}
+		file_server
+	}
+	handle_path /docs/extended/* {
+		root * {$SOS_DOCS_EXT:/srv/sos/extended/docs}
+		file_server
+	}
+
+	# Static pages from the web root: the captive-portal landing page and the kiosk boot page.
+	handle /welcome {
+		rewrite * /welcome.html
+		header Cache-Control no-cache
+		file_server
+	}
+	handle /starting {
+		rewrite * /starting.html
+		header Cache-Control no-cache
+		file_server
+	}
+
+	# Vite writes hashed filenames under assets/, so those are immutable.
+	handle /assets/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		encode gzip
+		file_server
+	}
+
+	# Everything else is the single-page app: real files as they are, any other path falls back to
+	# index.html, and nothing here is cached without revalidation.
+	handle {
+		header Cache-Control no-cache
+		try_files {path} /index.html
+		encode gzip
+		file_server
+	}
+}

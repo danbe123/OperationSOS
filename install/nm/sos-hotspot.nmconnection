@@ -1,0 +1,22 @@
+# Operation SOS hotspot (spec section 4): wlan0 as an open 2.4 GHz access point on 10.42.0.1/24 with
+# NetworkManager's shared-mode dnsmasq (see dnsmasq-shared.d/sos.conf). The SSID and an optional WPA2
+# passphrase are changed with nmcli by install.sh and by sos-api (install/sudoers/sos). Mode 600, root.
+[connection]
+id=sos-hotspot
+uuid=1277437f-5e12-424d-9ba4-11c194ce961e
+type=wifi
+interface-name=wlan0
+autoconnect=true
+autoconnect-priority=100
+
+[wifi]
+mode=ap
+ssid=SOS
+band=bg
+
+[ipv4]
+method=shared
+address1=10.42.0.1/24
+
+[ipv6]
+method=disabled

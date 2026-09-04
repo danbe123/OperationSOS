@@ -1,0 +1,7 @@
+# Operation SOS: the commands sos-api (user sos) may run as root. Installed as /etc/sudoers.d/sos, mode 0440.
+# Kept to exactly what api/sos/system.py, api/sos/cli.py and the AI runtime call with `sudo -n`.
+Defaults:sos !requiretty
+sos ALL=(root) NOPASSWD: /usr/bin/systemctl start sos-llama.service, /usr/bin/systemctl stop sos-llama.service, /usr/bin/systemctl restart sos-llama.service, /usr/bin/systemctl is-active sos-llama.service
+sos ALL=(root) NOPASSWD: /usr/bin/nmcli con modify sos-hotspot *, /usr/bin/nmcli con up sos-hotspot
+sos ALL=(root) NOPASSWD: /usr/bin/nmcli con modify sos-eth-client connection.autoconnect *, /usr/bin/nmcli con modify sos-eth-direct connection.autoconnect *, /usr/bin/nmcli con up sos-eth-client, /usr/bin/nmcli con up sos-eth-direct
+sos ALL=(root) NOPASSWD: /usr/bin/umount -l /srv/sos/extended

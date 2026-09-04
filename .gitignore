@@ -23,3 +23,6 @@ build-output/
 # dev stack state
 .dev/
 *.part
+
+# per-box install answers (PIN, SSID, passphrase)
+install/answers.env
