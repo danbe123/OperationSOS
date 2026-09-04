@@ -1,0 +1,11 @@
+{
+  "version": 8,
+  "name": "fixture",
+  "sources": { "base": { "type": "vector", "url": "pmtiles:///maps/test.pmtiles" } },
+  "layers": [
+    { "id": "background", "type": "background", "paint": { "background-color": "#0a0f0a" } },
+    { "id": "land", "type": "fill", "source": "base", "source-layer": "test", "filter": ["==", ["get", "kind"], "land"], "paint": { "fill-color": "#1f3a1f" } },
+    { "id": "water", "type": "fill", "source": "base", "source-layer": "test", "filter": ["==", ["get", "kind"], "water"], "paint": { "fill-color": "#123a5a" } },
+    { "id": "road", "type": "line", "source": "base", "source-layer": "test", "filter": ["==", ["get", "kind"], "road"], "paint": { "line-color": "#ffb000", "line-width": 3 } }
+  ]
+}

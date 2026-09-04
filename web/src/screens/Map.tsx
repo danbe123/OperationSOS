@@ -1,0 +1,204 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
+import type { Map as MlMap } from 'maplibre-gl';
+import { api } from '../api/client';
+import { useStatus } from '../api/status';
+import type { Place } from '../api/types';
+import { errorMessage, useQuery } from '../api/useQuery';
+import { AppBar } from '../components/AppBar';
+import { notify } from '../components/Notice';
+import { QrCode } from '../components/QrCode';
+import { Icon } from '../icons';
+import { useKiosk } from '../kiosk/KioskProvider';
+import { useTheme } from '../theme/ThemeProvider';
+import { gridRef } from '../map/grid';
+import { LayerPanel } from '../map/LayerPanel';
+import { MapView } from '../map/MapView';
+import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
+import { PlaceSearch } from '../map/PlaceSearch';
+import { mapQueryString, parseMapQuery } from '../map/query';
+
+const BASE_KEY = 'sos.mapBase';
+type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'locate';
+const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
+
+export function MapScreen() {
+  const { theme } = useTheme();
+  const kiosk = useKiosk();
+  const { status } = useStatus();
+  const [params, setParams] = useSearchParams();
+  const query = useMemo(() => parseMapQuery(`?${params.toString()}`), [params]);
+  const { data: config, error, loading } = useQuery(() => api.mapConfig(), []);
+  const pinsQ = useQuery(() => api.notes('pin'), [], { refetchOnFocus: true });
+  const mapRef = useRef<MlMap | null>(null);
+
+  const [baseId, setBaseId] = useState<'osm' | 'os'>(() => (localStorage.getItem(BASE_KEY) === 'os' ? 'os' : 'osm'));
+  // The default set of overlays depends on config (async) plus the initial ?overlay= query, so it can only be
+  // computed once config has loaded; overlayOverride holds the user's own toggles from then on. Deriving this
+  // with useMemo (rather than a useEffect + setState) lets the map render in the same commit config arrives in.
+  const [overlayOverride, setOverlayOverride] = useState<string[] | null>(null);
+  const overlaysOn = useMemo(() => {
+    if (overlayOverride) return overlayOverride;
+    if (!config) return null;
+    const wanted = query.overlays.length ? query.overlays : config.overlays.filter((o) => o.default_on).map((o) => o.id);
+    return wanted.filter((id) => config.overlays.some((o) => o.id === id && o.available));
+  }, [overlayOverride, config, query.overlays]);
+  const [terrainOn, setTerrainOn] = useState(true);
+  const [panel, setPanel] = useState<Panel>('none');
+  const [view, setView] = useState({ lat: query.lat ?? DEFAULT_VIEW.lat, lon: query.lon ?? DEFAULT_VIEW.lon, zoom: query.z ?? DEFAULT_VIEW.zoom });
+  const [tapped, setTapped] = useState<LngLat | null>(null);
+  const [measuring, setMeasuring] = useState(false);
+  const [measure, setMeasure] = useState<LngLat[]>([]);
+  const [pendingPin, setPendingPin] = useState<LngLat | null>(null);
+  const [pinTitle, setPinTitle] = useState('');
+  const [printImage, setPrintImage] = useState<string | null>(null);
+  const labelPoint = useMemo(() => (query.label && query.lat !== null && query.lon !== null ? { lat: query.lat, lon: query.lon, label: query.label } : null), [query]);
+
+  useEffect(() => {
+    if (!overlaysOn) return;
+    const next = mapQueryString({ lat: view.lat, lon: view.lon, z: view.zoom, overlays: overlaysOn, label: query.label });
+    if (next !== `?${params.toString()}`) setParams(new URLSearchParams(next), { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, overlaysOn]);
+
+  useEffect(() => { localStorage.setItem(BASE_KEY, baseId); }, [baseId]);
+
+  const flyTo = useCallback((lon: number, lat: number, zoom = 13) => mapRef.current?.flyTo({ center: [lon, lat], zoom }), []);
+  const onPick = (p: Place) => { flyTo(p.lon, p.lat, p.kind === 'Postcode' ? 15 : 13); setPanel('none'); };
+  const onGrid = (point: { lat: number; lon: number }) => { flyTo(point.lon, point.lat, 15); setPanel('none'); };
+  const onMapClick = (p: LngLat) => { if (measuring) setMeasure((m) => [...m, p]); else setTapped(p); };
+
+  const savePin = async () => {
+    const at = pendingPin ?? { lat: view.lat, lon: view.lon };
+    try {
+      await api.createNote({ kind: 'pin', title: pinTitle.trim() || 'Pin', body: '', lat: at.lat, lon: at.lon });
+      setPendingPin(null);
+      setPinTitle('');
+      await pinsQ.refetch();
+    } catch (e) {
+      notify(`Could not save the pin: ${errorMessage(e)}`);
+    }
+  };
+  const deletePin = async (id: number) => {
+    try {
+      await api.deleteNote(id);
+      await pinsQ.refetch();
+    } catch (e) {
+      notify(`Could not delete the pin: ${errorMessage(e)}`);
+    }
+  };
+
+  const locate = () => {
+    if (window.isSecureContext && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => flyTo(pos.coords.longitude, pos.coords.latitude, 14),
+        () => notify('No position available on this device.'),
+        { timeout: 10_000 },
+      );
+      return;
+    }
+    setPanel('locate');
+  };
+
+  const print = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    setPrintImage(map.getCanvas().toDataURL('image/png'));
+  };
+
+  const centreRef = gridRef(view.lat, view.lon);
+  const tappedRef = tapped ? gridRef(tapped.lat, tapped.lon) : null;
+  const measureText = measure.length >= 2
+    ? `${formatDistance(pathLengthKm(measure))}, bearing ${formatBearing(bearingDeg(measure[measure.length - 2], measure[measure.length - 1]))}`
+    : measuring ? 'Tap two or more points' : null;
+  const shareUrl = `http://${status?.hotspot.ip ?? window.location.host}/map${mapQueryString({ lat: view.lat, lon: view.lon, z: view.zoom, overlays: overlaysOn ?? [], label: query.label })}`;
+  const legend = (config?.overlays ?? []).filter((o) => overlaysOn?.includes(o.id));
+
+  return (
+    <div className="screen screen-fill map-screen">
+      <AppBar title="Map" search={false} actions={!kiosk ? <button type="button" className="btn btn-chrome" onClick={print}><Icon name="print" /><span>Print</span></button> : undefined} />
+      <div className="map-tools no-print">
+        <button type="button" className={panel === 'layers' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'layers' ? 'none' : 'layers')}><Icon name="layers" /><span>Layers</span></button>
+        <button type="button" className={panel === 'search' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" /><span>Find place</span></button>
+        <button type="button" className={panel === 'pins' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" /><span>Pins</span></button>
+        <button type="button" className={measuring ? 'btn active' : 'btn'} onClick={() => { setMeasuring(!measuring); if (measuring) setMeasure([]); }}><Icon name="measure" /><span>Measure</span></button>
+        <button type="button" className="btn" onClick={locate}><Icon name="locate" /><span>Locate me</span></button>
+        <button type="button" className={panel === 'share' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" /><span>Share</span></button>
+      </div>
+      <div className="map-host">
+        {loading && <p className="pad muted">Loading map…</p>}
+        {error && <p className="pad warning">Map unavailable: {error}</p>}
+        {config && overlaysOn && (
+          <MapView
+            config={config} theme={theme} baseId={baseId} overlaysOn={overlaysOn} terrainOn={terrainOn}
+            center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
+            onMoveEnd={setView} onClick={onMapClick} onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
+          />
+        )}
+        {labelPoint && <div className="map-label">{labelPoint.label}</div>}
+        {panel === 'layers' && config && overlaysOn && (
+          <LayerPanel config={config} baseId={baseId} onBase={setBaseId} overlaysOn={overlaysOn} onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))} terrainOn={terrainOn} onTerrain={setTerrainOn} onClose={() => setPanel('none')} />
+        )}
+        {panel === 'search' && (
+          <div className="map-panel" role="dialog" aria-label="Find place">
+            <div className="row"><h2>Find a place</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            <PlaceSearch onPick={onPick} onGrid={onGrid} />
+          </div>
+        )}
+        {panel === 'locate' && (
+          <div className="map-panel" role="dialog" aria-label="Locate me">
+            <div className="row"><h2>Where am I?</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            <p>⚠ GPS is blocked over HTTP on phones, so the box cannot read your position. Type a place, a postcode or a grid reference instead.</p>
+            <PlaceSearch onPick={onPick} onGrid={onGrid} />
+            {config?.packs_index_url && <p>For GPS on your phone, install the offline <a href={config.packs_index_url}>Phone map packs</a>.</p>}
+          </div>
+        )}
+        {panel === 'pins' && (
+          <div className="map-panel" role="dialog" aria-label="Pins">
+            <div className="row"><h2>Pins</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            {pendingPin || pinTitle ? (
+              <form className="stack" onSubmit={(e) => { e.preventDefault(); void savePin(); }}>
+                <label className="field"><span>Pin name</span><input type="text" aria-label="Pin name" value={pinTitle} onChange={(e) => setPinTitle(e.target.value)} maxLength={80} /></label>
+                <p className="muted">{gridRef((pendingPin ?? view).lat, (pendingPin ?? view).lon).text}</p>
+                <div className="row"><button type="submit" className="btn btn-primary">Save pin</button><button type="button" className="btn" onClick={() => { setPendingPin(null); setPinTitle(''); }}>Cancel</button></div>
+              </form>
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={() => setPendingPin({ lat: view.lat, lon: view.lon })}>Drop a pin at the centre</button>
+            )}
+            <p className="muted">Long-press the map to drop a pin there.</p>
+            <ul className="list">
+              {(pinsQ.data ?? []).map((p) => (
+                <li key={p.id} className="row">
+                  <button type="button" className="btn" onClick={() => p.lat !== null && p.lon !== null && flyTo(p.lon, p.lat, 15)}>{p.title}</button>
+                  <span className="muted">{p.lat !== null && p.lon !== null ? gridRef(p.lat, p.lon, 6).text : ''}</span>
+                  <button type="button" className="btn btn-danger" onClick={() => void deletePin(p.id)} aria-label={`Delete ${p.title}`}>Delete</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {panel === 'share' && (
+          <div className="map-panel" role="dialog" aria-label="Share">
+            <div className="row"><h2>Share this place</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            <textarea aria-label="Link to this place" readOnly rows={3} value={shareUrl} onFocus={(e) => e.target.select()} />
+            <QrCode text={shareUrl} size={220} label="Scan to open this place" />
+            <p className="muted">Centre: {centreRef.text} ({centreRef.system})</p>
+          </div>
+        )}
+      </div>
+      <div className="map-readout chrome" data-testid="map-readout">
+        <span>Centre: {centreRef.text}</span>
+        {tappedRef && <span> · Tapped: {tappedRef.text}</span>}
+        {measureText && <span> · {measureText}</span>}
+      </div>
+      {printImage && (
+        <div className="map-print">
+          <img src={printImage} alt="Map" onLoad={() => { window.print(); setPrintImage(null); }} />
+          <p>Centre {centreRef.text} ({centreRef.system}) · zoom {view.zoom.toFixed(1)}</p>
+          <ul>{legend.map((o) => <li key={o.id}><span className="swatch" style={{ background: o.color }} /> {o.title}</li>)}</ul>
+          <p>Printed from Operation SOS. Scale bar as shown on screen at this zoom.</p>
+        </div>
+      )}
+    </div>
+  );
+}

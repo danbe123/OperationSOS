@@ -1,0 +1,57 @@
+export type DiskInfo = { mounted: boolean; path: string; total_gb: number; free_gb: number };
+export type AiState = 'off' | 'starting' | 'ready' | 'error' | 'off-thermal' | 'busy';
+export type Status = {
+  version: string; uptime_s: number; cpu_temp_c: number | null; load: number[];
+  mem: { total_mb: number; used_mb: number };
+  disks: { core: DiskInfo; extended: DiskInfo };
+  hotspot: { ssid: string; ip: string; clients: number; enabled: boolean };
+  eth_mode: 'client' | 'direct'; power_mode: 'normal' | 'low';
+  ai: { state: AiState; model: string | null; message: string | null };
+  thermal_ai_off_c: number; idle_minutes: number; home_minutes: number;
+  pin_required: boolean; dev: boolean; default_theme: 'vault' | 'field' | 'blackout';
+};
+export type LibraryItem = {
+  id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
+  scenarios: string[]; size_bytes: number; as_at: string | null; licence: string | null;
+  available: boolean; url: string | null; description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
+};
+export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
+export type SearchResult = {
+  source: string; badge: string; title: string; snippet: string; url: string; score: number;
+  kind: 'article' | 'playbook' | 'module' | 'card' | 'page' | 'doc' | 'place' | 'item';
+  lat?: number; lon?: number; page?: number;
+};
+export type SearchResponse = { q: string; query: string; results: SearchResult[]; groups: { source: string; badge: string; count: number }[]; took_ms: number; partial: boolean };
+export type Suggestion = { value: string; label: string; url: string | null; source: string };
+export type PlaybookSummary = { slug: string; title: string; icon: string; summary: string; order: number };
+export type Section = { id: 'right-now' | 'first-72-hours' | 'first-month' | 'long-term' | 'uk-specifics' | 'go-deeper'; title: string; html: string };
+export type ChecklistItem = { id: string; text: string; checked: boolean; updated_at: string | null };
+export type Playbook = PlaybookSummary & {
+  sections: Section[]; checklist: ChecklistItem[];
+  modules: { slug: string; title: string; html: string }[];
+  overlays: string[]; sources: { title: string; doc?: string; kiwix?: string; url?: string; as_at?: string }[];
+  reviewed: string | null;
+};
+export type Card = { slug: string; title: string; icon: string; order: number; html: string };
+export type Page = { slug: string; title: string; icon: string; order: number; html: string; category: string };
+export type Overlay = {
+  id: string; title: string; kind: 'geojson' | 'pmtiles' | 'style-layer'; layer_id: string | null; url: string | null;
+  default_on: boolean; scenarios_on: string[]; coverage: string[]; color: string; icon: string | null; available: boolean;
+};
+export type MapConfig = {
+  bases: { id: 'osm' | 'os'; title: string; styles: { vault: string; field: string; blackout: string }; available: boolean }[];
+  terrain: { contours: string | null; hillshade: string | null };
+  overlays: Overlay[];
+  packs: { title: string; url: string; size_bytes: number }[]; packs_index_url: string | null;
+};
+export type Place = { name: string; kind: string; lat: number; lon: number; region: string; postcode: string | null };
+export type Note = { id: number; kind: 'note' | 'pin'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
+export type Passage = { n: number; title: string; url: string; source: string; text: string };
+export type AiEvent =
+  | { event: 'verbatim'; data: { title: string; url: string; paragraphs: string[]; as_at: string | null } }
+  | { event: 'retrieving'; data: { query: string; passages: Passage[] } }
+  | { event: 'token'; data: { text: string } }
+  | { event: 'done'; data: { answer: string; grounded: boolean; citations: { n: number; title: string; url: string; source: string }[] } }
+  | { event: 'error'; data: { code: 'busy' | 'timeout' | 'unavailable' | 'internal'; message: string; retry_after?: number } };
+export type AiAskRequest = { question: string; history: { role: 'user' | 'assistant'; content: string }[] };
+export type UpdateProgress = { running: boolean; lines: string[]; done: boolean; ok: boolean | null };
