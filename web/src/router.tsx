@@ -2,6 +2,7 @@ import { Outlet, type RouteObject } from 'react-router';
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
 import { Home } from './screens/Home';
+import { Search } from './screens/Search';
 import { Keyboard } from './kiosk/Keyboard';
 import { IdleOverlay } from './kiosk/IdleOverlay';
 
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
     element: <Layout />,
     children: [
       { index: true, element: <Home /> },
+      { path: 'search', element: <Search /> },
       { path: '*', element: <NotFound /> },
     ],
   },
