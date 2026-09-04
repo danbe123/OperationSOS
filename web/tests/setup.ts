@@ -3,12 +3,16 @@ import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 // jsdom has no layout engine and no canvas; stub the DOM APIs components call.
-Element.prototype.scrollIntoView = () => {};
-window.scrollTo = () => {};
-window.matchMedia =
-  window.matchMedia ||
-  ((query: string) =>
-    ({ matches: false, media: query, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false }) as MediaQueryList);
+// Guarded because some test files (e.g. tests/theme/contrast.test.ts) run under the plain `node`
+// environment, which has no DOM globals at all.
+if (typeof window !== 'undefined') {
+  Element.prototype.scrollIntoView = () => {};
+  window.scrollTo = () => {};
+  window.matchMedia =
+    window.matchMedia ||
+    ((query: string) =>
+      ({ matches: false, media: query, onchange: null, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false }) as MediaQueryList);
+}
 
 // qrcode draws on a canvas; unit tests only check that an image is rendered with the right payload.
 vi.mock('qrcode', () => ({
@@ -19,6 +23,7 @@ vi.mock('qrcode', () => ({
 }));
 
 afterEach(() => {
+  if (typeof document === 'undefined') return;
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
