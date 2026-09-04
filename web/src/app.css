@@ -207,3 +207,13 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); padding: 16px; }
 .modal { width: min(420px, 100%); padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
 .modal input { font-size: 1.5rem; letter-spacing: 0.3em; text-align: center; }
+
+/* AI */
+.turns { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+.turn { border-top: 1px solid var(--border); padding-top: 8px; }
+.verbatim { border-left: 4px solid var(--accent); background: var(--bg-2); padding: 8px 12px; margin: 8px 0; }
+.verbatim-head { font-weight: 600; margin: 0 0 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.answer { white-space: pre-wrap; }
+.ask { display: flex; gap: 8px; align-items: center; position: sticky; bottom: 0; background: var(--bg); }
+.ask input { flex: 1; }
+.count { font-size: 0.85rem; }

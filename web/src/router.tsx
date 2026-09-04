@@ -1,6 +1,7 @@
 import { Outlet, type RouteObject } from 'react-router';
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
+import { Ai } from './screens/Ai';
 import { Card } from './screens/Card';
 import { Doc } from './screens/Doc';
 import { Home } from './screens/Home';
@@ -59,6 +60,7 @@ export const routes: RouteObject[] = [
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },
       { path: 'system', element: <System /> },
+      { path: 'ai', element: <Ai /> },
       { path: '*', element: <NotFound /> },
     ],
   },
