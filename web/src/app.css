@@ -137,7 +137,7 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 210px; z-index: 40; background: var(--chrome-bg); border-top: 1px solid var(--border); padding: 5px; }
 .sos-kb.hg-theme-default { background: transparent; padding: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
 .sos-kb .hg-row { display: flex; gap: 5px; justify-content: center; }
-.sos-kb .hg-button { height: 44px; min-width: 64px; flex: 0 0 auto; font: inherit; font-size: 20px; border-radius: var(--radius); background: var(--bg-2); color: var(--text); border-bottom: 2px solid var(--border); box-shadow: var(--bevel); }
+.sos-kb .hg-button { height: var(--touch); min-width: 64px; flex: 0 0 auto; font: inherit; font-size: 20px; border-radius: var(--radius); background: var(--bg-2); color: var(--text); border-bottom: 2px solid var(--border); box-shadow: var(--bevel); }
 .sos-kb .hg-button.hg-activeButton { background: var(--primary); color: var(--on-primary); }
 .sos-kb .hg-button[data-skbtn="{space}"] { min-width: 320px; }
 .sos-kb .hg-button[data-skbtn="{enter}"], .sos-kb .hg-button[data-skbtn="{bksp}"], .sos-kb .hg-button[data-skbtn="{shift}"], .sos-kb .hg-button[data-skbtn="{done}"] { min-width: 96px; }
