@@ -2,8 +2,9 @@ import { useEffect, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Icon } from '../icons';
 import { ThemeButton } from '../theme/ThemeButton';
+import { SearchBar } from './SearchBar';
 
-export function AppBar({ title, actions, back = true }: { title: string; actions?: ReactNode; back?: boolean }) {
+export function AppBar({ title, actions, back = true, search = true }: { title: string; actions?: ReactNode; back?: boolean; search?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
@@ -23,7 +24,11 @@ export function AppBar({ title, actions, back = true }: { title: string; actions
       )}
       <h1 className="appbar-title">{title}</h1>
       <div className="appbar-actions">{actions}</div>
-      <div className="appbar-search" />
+      {search && (
+        <div className="appbar-search">
+          <SearchBar compact />
+        </div>
+      )}
       <Link className="btn btn-chrome appbar-search-link" to="/search" aria-label="Search"><Icon name="search" /><span>Search</span></Link>
       <Link className="btn btn-chrome" to="/" aria-label="Home"><Icon name="home" /><span>Home</span></Link>
       <ThemeButton />
