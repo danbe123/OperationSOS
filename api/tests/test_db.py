@@ -1,0 +1,84 @@
+import sqlite3
+
+from sos import db
+
+
+def _tables(conn):
+    return {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type IN ('table','view')")}
+
+
+def test_schema_creates_every_table(tmp_path):
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    names = _tables(conn)
+    for t in ("library_items", "fts_docs", "fts_places", "checklist_state", "notes", "settings", "search_cache", "places_meta"):
+        assert t in names, t
+    assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert isinstance(conn.execute("SELECT 1 AS one").fetchone(), sqlite3.Row)
+
+
+def test_init_schema_is_idempotent(tmp_path):
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    db.init_schema(conn)
+    db.set_setting(conn, "ssid", "SOS")
+    db.init_schema(conn)
+    assert db.get_setting(conn, "ssid") == "SOS"
+
+
+def test_fts5_available():
+    conn = db.connect(":memory:")
+    assert db.fts5_available(conn) is True
+
+
+def test_bm25_title_weight_ranks_title_hit_first():
+    conn = db.connect(":memory:")
+    db.init_schema(conn)
+    conn.execute(
+        "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
+        ("Heating without power", "keep warm water bottles blankets water water", "m1", "module", "playbooks", "", None, "/m/heat"),
+    )
+    conn.execute(
+        "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
+        ("Water", "finding and treating it", "m2", "module", "playbooks", "", None, "/m/water"),
+    )
+    rows = conn.execute(
+        "SELECT doc_id FROM fts_docs WHERE fts_docs MATCH ? ORDER BY bm25(fts_docs, 5.0, 1.0)", ('"water"',)
+    ).fetchall()
+    assert [r["doc_id"] for r in rows] == ["m2", "m1"]
+
+
+def test_porter_stemming_and_diacritics():
+    conn = db.connect(":memory:")
+    db.init_schema(conn)
+    conn.execute(
+        "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
+        ("Éowyn storm outages", "restoring power", "p1", "playbook", "playbooks", "", None, "/s/grid"),
+    )
+    assert conn.execute("SELECT count(*) FROM fts_docs WHERE fts_docs MATCH '\"outage\"'").fetchone()[0] == 1
+    assert conn.execute("SELECT count(*) FROM fts_docs WHERE fts_docs MATCH '\"eowyn\"'").fetchone()[0] == 1
+
+
+def test_places_prefix_index():
+    conn = db.connect(":memory:")
+    db.init_schema(conn)
+    conn.execute("INSERT INTO fts_places(name, kind, lat, lon, region, postcode) VALUES (?,?,?,?,?,?)",
+                 ("Oxford", "city", 51.752, -1.258, "England", None))
+    conn.execute("INSERT INTO fts_places(name, kind, lat, lon, region, postcode) VALUES (?,?,?,?,?,?)",
+                 ("Oxted", "town", 51.257, 0.006, "England", None))
+    rows = conn.execute("SELECT name FROM fts_places WHERE fts_places MATCH '\"oxf\"*'").fetchall()
+    assert [r["name"] for r in rows] == ["Oxford"]
+    rows = conn.execute("SELECT name FROM fts_places WHERE fts_places MATCH '\"ox\"*' ORDER BY name").fetchall()
+    assert [r["name"] for r in rows] == ["Oxford", "Oxted"]
+
+
+def test_settings_helpers():
+    conn = db.connect(":memory:")
+    db.init_schema(conn)
+    assert db.get_setting(conn, "missing") is None
+    assert db.get_setting(conn, "missing", "x") == "x"
+    db.set_setting(conn, "k", "v")
+    db.set_setting(conn, "k", "w")
+    assert db.get_setting(conn, "k") == "w"
+    db.set_setting(conn, "k", None)
+    assert db.get_setting(conn, "k") is None
