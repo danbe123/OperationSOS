@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { routes } from './router';
 import { StatusProvider, useStatus } from './api/status';
 import { ThemeProvider } from './theme/ThemeProvider';
+import { KioskProvider } from './kiosk/KioskProvider';
 import './app.css';
 
 function Themed() {
@@ -10,7 +11,9 @@ function Themed() {
   const router = useMemo(() => createBrowserRouter(routes), []);
   return (
     <ThemeProvider fallback={status?.default_theme}>
-      <RouterProvider router={router} />
+      <KioskProvider>
+        <RouterProvider router={router} />
+      </KioskProvider>
     </ThemeProvider>
   );
 }

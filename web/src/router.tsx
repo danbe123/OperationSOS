@@ -2,6 +2,8 @@ import { Outlet, type RouteObject } from 'react-router';
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
 import { Home } from './screens/Home';
+import { Keyboard } from './kiosk/Keyboard';
+import { IdleOverlay } from './kiosk/IdleOverlay';
 
 export function Layout() {
   return (
@@ -10,6 +12,8 @@ export function Layout() {
         <Outlet />
       </main>
       <Notices />
+      <Keyboard />
+      <IdleOverlay />
     </div>
   );
 }
