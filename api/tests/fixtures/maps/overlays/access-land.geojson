@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"Descrip": "Open Country", "source": "fixture sample", "region": "england"}, "geometry": {"type": "MultiPolygon", "coordinates": [[[[-1.55, 50.9], [-1.52, 50.9], [-1.52, 50.93], [-1.55, 50.93], [-1.55, 50.9]]]]}}]}

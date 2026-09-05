@@ -1,0 +1,26 @@
+{
+  "output": "styles",
+  "built_at": "2026-09-05T16:45:45+00:00",
+  "size_bytes": 705997,
+  "step": "styles",
+  "base": "test.pmtiles",
+  "height_field": "property_value",
+  "glyph_faces": [
+    "Noto Sans Devanagari Regular v1",
+    "Noto Sans Italic",
+    "Noto Sans Medium",
+    "Noto Sans Regular",
+    "Open Sans Regular",
+    "Source Sans Pro Bold",
+    "Source Sans Pro Italic",
+    "Source Sans Pro Regular",
+    "Source Sans Pro SemiBold"
+  ],
+  "glyph_files": 18,
+  "fixture_ranges": [
+    "0-255",
+    "256-511"
+  ],
+  "basemaps_assets": "028c18f713baecad011301ff7a69acc39bcc2ae7",
+  "os_stylesheets": "d23143b4a36435680eda99b4febb3187398f594f"
+}

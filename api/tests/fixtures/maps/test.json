@@ -1,0 +1,31 @@
+{
+  "output": "test.pmtiles",
+  "built_at": "2026-09-05T16:45:16+00:00",
+  "size_bytes": 4935818,
+  "step": "base",
+  "source": "https://build.protomaps.com/20260902.pmtiles",
+  "build": "20260902",
+  "bbox": [
+    -1.56,
+    50.87,
+    -1.46,
+    50.97
+  ],
+  "header": {
+    "tile_compression": "gzip",
+    "tile_type": "mvt",
+    "minzoom": 0,
+    "maxzoom": 15,
+    "bounds": [
+      -1.56,
+      50.87,
+      -1.46,
+      50.97
+    ],
+    "center": [
+      -1.51,
+      50.92,
+      0
+    ]
+  }
+}

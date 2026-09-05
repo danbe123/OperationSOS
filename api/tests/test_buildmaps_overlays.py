@@ -116,7 +116,7 @@ def test_build_osm_overlay_points_use_point_on_surface_and_polygons_do_not(tmp_p
     export = runner.find("osmium", "export")[0]
     assert "--add-unique-id=type_id" in export and export[export.index("-c") + 1].endswith("export/pois.json")
     ogr = runner.find("ogr2ogr")[0]
-    assert ogr[-1] == "SELECT ST_PointOnSurface(geometry) AS geometry, * FROM health_raw" and ogr[ogr.index("-dialect") + 1] == "sqlite"
+    assert ogr[-1] == 'SELECT ST_PointOnSurface(geometry) AS geometry, * FROM "health_raw"' and ogr[ogr.index("-dialect") + 1] == "sqlite"
     water = next(o for o in overlays.OSM_OVERLAYS if o.id == "water")
     out = overlays.build_osm_overlay(ctx, water, ctx.src / "in.pbf", work)
     assert out == work / "water_raw.geojson"

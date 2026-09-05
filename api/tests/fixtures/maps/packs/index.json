@@ -1,0 +1,15 @@
+{
+  "version": "260826",
+  "apk": null,
+  "packs": [
+    {
+      "id": "Jersey",
+      "title": "Jersey",
+      "file": "Jersey.mwm",
+      "url": "/maps/packs/Jersey.mwm",
+      "size_bytes": 2590086,
+      "expected_size_bytes": 2590086
+    }
+  ],
+  "index_url": "/maps/packs/index.html"
+}

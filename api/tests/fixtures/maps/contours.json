@@ -1,0 +1,32 @@
+{
+  "output": "contours.pmtiles",
+  "built_at": "2026-09-05T16:45:16+00:00",
+  "size_bytes": 835057,
+  "step": "contours",
+  "height_field": "property_value",
+  "layers": [
+    "contour_line",
+    "land_water_boundary",
+    "spot_height"
+  ],
+  "interval_m": 10,
+  "gb_source": "OS Terrain 50 vector tiles (terr50_mbtiles_gb.zip)",
+  "non_gb_source": "gdal_contour over Copernicus GLO-30 (OSNI on top where configured)",
+  "header": {
+    "tile_compression": "gzip",
+    "tile_type": "mvt",
+    "minzoom": 9,
+    "maxzoom": 14,
+    "bounds": [
+      -2.109375,
+      50.736455,
+      -1.40625,
+      51.179343
+    ],
+    "center": [
+      -1.51,
+      50.92,
+      14
+    ]
+  }
+}

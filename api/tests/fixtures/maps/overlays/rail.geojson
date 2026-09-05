@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "SELECT",
+"features": [
+{"type":"Feature","id":"n21379085","properties":{"name":"Totton","network":"National Rail","operator":"South Western Railway","railway":"station"},"geometry":{"type":"Point","coordinates":[-1.4830687,50.9176659]}},
+{"type":"Feature","id":"n1241413252","properties":{"name":"Ashurst New Forest","network":"National Rail","operator":"South Western Railway","railway":"station"},"geometry":{"type":"Point","coordinates":[-1.5264572,50.8898464]}},
+{"type":"Feature","id":"n1500631262","properties":{"name":"Rio Grande Train Station","network":null,"operator":null,"railway":"station"},"geometry":{"type":"Point","coordinates":[-1.5504551,50.9493579]}},
+{"type":"Feature","id":"n7170492253","properties":{"name":"Redbridge","network":"National Rail","operator":"South Western Railway","railway":"station"},"geometry":{"type":"Point","coordinates":[-1.469603,50.9195374]}}
+]
+}

@@ -1,0 +1,71 @@
+{
+  "footpaths": {
+    "kind": "pmtiles",
+    "file": "overlays/footpaths.pmtiles",
+    "layers": [
+      "footpaths"
+    ],
+    "size_bytes": 287553
+  },
+  "health": {
+    "kind": "geojson",
+    "file": "overlays/health.geojson",
+    "features": 16,
+    "size_bytes": 3054
+  },
+  "fuel": {
+    "kind": "geojson",
+    "file": "overlays/fuel.geojson",
+    "features": 8,
+    "size_bytes": 2027
+  },
+  "water": {
+    "kind": "geojson",
+    "file": "overlays/water.geojson",
+    "features": 42,
+    "size_bytes": 20440
+  },
+  "rail": {
+    "kind": "geojson",
+    "file": "overlays/rail.geojson",
+    "features": 4,
+    "size_bytes": 934
+  },
+  "chemical-sites": {
+    "kind": "geojson",
+    "file": "overlays/chemical-sites.geojson",
+    "features": 10,
+    "size_bytes": 1964
+  },
+  "airports-military": {
+    "kind": "geojson",
+    "file": "overlays/airports-military.geojson",
+    "features": 0,
+    "size_bytes": 45
+  },
+  "flood-zones": {
+    "kind": "pmtiles",
+    "file": "overlays/flood-zones.pmtiles",
+    "layers": [
+      "flood_england"
+    ],
+    "coverage": [
+      "england"
+    ],
+    "size_bytes": 3797
+  },
+  "access-land": {
+    "kind": "geojson",
+    "file": "overlays/access-land.geojson",
+    "coverage": [
+      "england"
+    ],
+    "size_bytes": 292
+  },
+  "nuclear-sites": {
+    "kind": "geojson",
+    "file": "overlays/nuclear-sites.geojson",
+    "features": 37,
+    "size_bytes": 8310
+  }
+}

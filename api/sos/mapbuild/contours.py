@@ -63,9 +63,10 @@ class ContoursStep:
         layers = sorted(vector_layer_ids(pmtiles_metadata(ctx, staged)))
         if "contour_line" not in layers:
             raise BuildError(f"merged contours have no contour_line layer: {layers}")
+        header = pmtiles_header(ctx, staged)
         ctx.commit("contours.pmtiles")
         ctx.write_sidecar("contours.pmtiles", {
             "step": self.id, "height_field": height, "layers": layers, "interval_m": 10,
             "gb_source": "OS Terrain 50 vector tiles (terr50_mbtiles_gb.zip)",
             "non_gb_source": "gdal_contour over Copernicus GLO-30 (OSNI on top where configured)",
-            "header": pmtiles_header(ctx, staged)})
+            "header": header})

@@ -116,7 +116,7 @@ def build_osm_overlay(ctx: Context, overlay: OsmOverlay, pbf: Path, work: Path) 
     out = work / f"{overlay.id}.geojson"
     out.unlink(missing_ok=True)
     ctx.run(["ogr2ogr", "-f", "GeoJSON", str(out), str(raw), "-dialect", "sqlite",
-             "-sql", f"SELECT ST_PointOnSurface(geometry) AS geometry, * FROM {raw.stem}"])
+             "-sql", f'SELECT ST_PointOnSurface(geometry) AS geometry, * FROM "{raw.stem}"'])
     return out
 
 

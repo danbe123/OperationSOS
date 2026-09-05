@@ -33,6 +33,7 @@ build:
 
 fixtures: venv
 > $(VENV)/bin/python api/tests/fixtures/gen_fixtures.py
+> $(SOS) build-maps --fixture
 
 deploy: build
 > rsync -az --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache api/ $(HOST):/srv/sos/api/

@@ -1,0 +1,20 @@
+{
+ "sources": {
+  "hillshade": {
+   "type": "raster",
+   "url": "pmtiles:///maps/hillshade.pmtiles",
+   "tileSize": 256
+  }
+ },
+ "layers": [
+  {
+   "id": "hillshade",
+   "type": "raster",
+   "source": "hillshade",
+   "paint": {
+    "raster-opacity": 0.35,
+    "raster-resampling": "linear"
+   }
+  }
+ ]
+}

@@ -1,0 +1,22 @@
+{
+"type": "FeatureCollection",
+"name": "SELECT",
+"features": [
+{"type":"Feature","id":"n1965732606","properties":{"amenity":"pharmacy","name":"Pharmacy Direct","phone":null},"geometry":{"type":"Point","coordinates":[-1.5003812,50.9266713]}},
+{"type":"Feature","id":"n8040252122","properties":{"amenity":"pharmacy","name":"A R Pharmacy","phone":null},"geometry":{"type":"Point","coordinates":[-1.5135056,50.9164192]}},
+{"type":"Feature","id":"w23134490","properties":{"amenity":"doctors","name":"Totton Health Centre","phone":null},"geometry":{"type":"Point","coordinates":[-1.4887101,50.9205403]}},
+{"type":"Feature","id":"w117104808","properties":{"amenity":"pharmacy","name":"A R Pharmacy","phone":null},"geometry":{"type":"Point","coordinates":[-1.4901536,50.9196742]}},
+{"type":"Feature","id":"w207101482","properties":{"amenity":"pharmacy","name":"AR Pharmacy Testwood","phone":null},"geometry":{"type":"Point","coordinates":[-1.4889021,50.9184732]}},
+{"type":"Feature","id":"w208555931","properties":{"amenity":"hospital","name":"Tatchbury Mount Hospital","phone":null},"geometry":{"type":"Point","coordinates":[-1.5275944,50.932101]}},
+{"type":"Feature","id":"w357002602","properties":{"amenity":"doctors","name":"Forest Gate Surgery","phone":"+44 2380663839"},"geometry":{"type":"Point","coordinates":[-1.5130233,50.9166341]}},
+{"type":"Feature","id":"w517399960","properties":{"amenity":"doctors","name":"Testvale Surgery","phone":null},"geometry":{"type":"Point","coordinates":[-1.4904047,50.9197493]}},
+{"type":"Feature","id":"w1221045496","properties":{"amenity":"hospital","name":"New Forest Birthing Centre","phone":null},"geometry":{"type":"Point","coordinates":[-1.5231835,50.8913384]}},
+{"type":"Feature","id":"a46268980","properties":{"amenity":"doctors","name":"Totton Health Centre","phone":null},"geometry":{"type":"Point","coordinates":[-1.488834288877831,50.9205181]}},
+{"type":"Feature","id":"a234209616","properties":{"amenity":"pharmacy","name":"A R Pharmacy","phone":null},"geometry":{"type":"Point","coordinates":[-1.490210469688342,50.9195914]}},
+{"type":"Feature","id":"a414202964","properties":{"amenity":"pharmacy","name":"AR Pharmacy Testwood","phone":null},"geometry":{"type":"Point","coordinates":[-1.488873587991971,50.9185492]}},
+{"type":"Feature","id":"a417111862","properties":{"amenity":"hospital","name":"Tatchbury Mount Hospital","phone":null},"geometry":{"type":"Point","coordinates":[-1.528437522728884,50.93066485]}},
+{"type":"Feature","id":"a714005204","properties":{"amenity":"doctors","name":"Forest Gate Surgery","phone":"+44 2380663839"},"geometry":{"type":"Point","coordinates":[-1.513040007831595,50.91659385]}},
+{"type":"Feature","id":"a1034799920","properties":{"amenity":"doctors","name":"Testvale Surgery","phone":null},"geometry":{"type":"Point","coordinates":[-1.490446813556773,50.9196908]}},
+{"type":"Feature","id":"a2442090992","properties":{"amenity":"hospital","name":"New Forest Birthing Centre","phone":null},"geometry":{"type":"Point","coordinates":[-1.523338032260655,50.89095635]}}
+]
+}

@@ -1,0 +1,19 @@
+{
+  "output": "overlays",
+  "built_at": "2026-09-05T16:45:22+00:00",
+  "size_bytes": 329831,
+  "step": "overlays",
+  "osm_input": "fixture.osm.pbf",
+  "overlays": [
+    "access-land",
+    "airports-military",
+    "chemical-sites",
+    "flood-zones",
+    "footpaths",
+    "fuel",
+    "health",
+    "nuclear-sites",
+    "rail",
+    "water"
+  ]
+}

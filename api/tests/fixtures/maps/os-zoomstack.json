@@ -1,0 +1,45 @@
+{
+  "output": "os-zoomstack.pmtiles",
+  "built_at": "2026-09-05T16:45:16+00:00",
+  "size_bytes": 3952325,
+  "step": "os",
+  "source": "OS Open Zoomstack (OS Downloads API, MBTiles)",
+  "input": "OS_Open_Zoomstack.mbtiles",
+  "header": {
+    "tile_compression": "gzip",
+    "tile_type": "mvt",
+    "minzoom": 0,
+    "maxzoom": 14,
+    "bounds": [
+      -1.56,
+      50.87,
+      -1.46,
+      50.97
+    ],
+    "center": [
+      -1.51,
+      50.92,
+      10
+    ]
+  },
+  "layers": [
+    "airports",
+    "boundaries",
+    "buildings",
+    "contours",
+    "etl",
+    "foreshore",
+    "greenspaces",
+    "names",
+    "national_parks",
+    "rail",
+    "railwaystations",
+    "roads",
+    "sea",
+    "sites",
+    "surfacewater",
+    "urban_areas",
+    "waterlines",
+    "woodland"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "osm": {
+    "vault": "/maps/styles/osm-vault.json",
+    "field": "/maps/styles/osm-field.json",
+    "blackout": "/maps/styles/osm-blackout.json",
+    "tiles": "/maps/test.pmtiles"
+  },
+  "os": {
+    "vault": "/maps/styles/os-vault.json",
+    "field": "/maps/styles/os-field.json",
+    "blackout": "/maps/styles/os-blackout.json",
+    "tiles": "/maps/os-zoomstack.pmtiles"
+  },
+  "layers": {
+    "contours": "/maps/styles/layers/contours.json",
+    "hillshade": "/maps/styles/layers/hillshade.json",
+    "footpaths": "/maps/styles/layers/footpaths.json",
+    "flood-zones": "/maps/styles/layers/flood-zones.json",
+    "overlays": "/maps/styles/layers/overlays.json"
+  }
+}

@@ -1,7 +1,6 @@
 """Shared plumbing for `sos build-maps`: context, staging, downloads, tool checks, PMTiles helpers."""
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import math
@@ -99,14 +98,6 @@ def sidecar_path(final: Path) -> Path:
     return final.with_name(final.name.split(".", 1)[0] + ".json")
 
 
-def sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def real_runner(cmd: list[str], *, cwd: Path | None = None, capture: bool = False,
                 binary: bool = False) -> subprocess.CompletedProcess:
     log.info("$ %s", shlex.join(cmd))
@@ -195,7 +186,10 @@ class Context:
 
     def download(self, url: str, name: str, *, sha256: str | None = None, md5: str | None = None) -> Path:
         dest = self.src / name
-        if dest.exists():
+        # aria2c leaves a <file>.aria2 control file next to its target while a download is in progress,
+        # and removes it only on successful completion. If one is present, a prior download was
+        # interrupted and dest is incomplete -- fall through to aria2c so its own -c flag resumes it.
+        if dest.exists() and not dest.with_name(dest.name + ".aria2").exists():
             return dest
         dest.parent.mkdir(parents=True, exist_ok=True)
         cmd = ["aria2c", "-x", "8", "-s", "8", "-c", "--auto-file-renaming=false", "--allow-overwrite=true",
