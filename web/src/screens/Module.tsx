@@ -4,6 +4,7 @@ import { useQuery } from '../api/useQuery';
 import { AppBar } from '../components/AppBar';
 import { CallsNotice } from '../situation/CallsNotice';
 import { Html } from '../components/Html';
+import { ReadAloudBlock } from '../situation/ReadAloud';
 
 export function Module() {
   const { slug = '' } = useParams();
@@ -14,7 +15,7 @@ export function Module() {
       <CallsNotice />
       {loading && <p className="pad muted">Loading…</p>}
       {error && <p className="pad warning">Could not load this module: {error}</p>}
-      {data && <Html html={data.html} />}
+      {data && <ReadAloudBlock id={`module:${slug}`} label="Read this module aloud"><Html html={data.html} /></ReadAloudBlock>}
     </div>
   );
 }

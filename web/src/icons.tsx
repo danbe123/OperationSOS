@@ -52,6 +52,7 @@ const P = {
   wifi: <><path d="M2 9c6-5 14-5 20 0M5 13c4-3.5 10-3.5 14 0M8.5 16.5c2-1.7 5-1.7 7 0" /><path d="M12 20h.01" /></>,
   help: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7M12 17h.01" /></>,
   heart: <path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z" />,
+  speaker: <><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5" /><path d="M19 6.5a7 7 0 0 1 0 11" /></>,
   drop: <path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z" />,
   'text-size': <path d="M3 7h10M8 7v12M14 12h7M17.5 12v7" />,
 } satisfies Record<string, ReactNode>;

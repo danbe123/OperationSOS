@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
@@ -6,6 +6,7 @@ import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { clockTime, CONDITION_INFO, countdown, secondsUntil, SEVERITY_SYMBOL, SEVERITY_TONE, STATE_LABEL } from './conditions';
 import { briefingHref, contentHref } from './links';
+import { ReadAloud } from './ReadAloud';
 import { useSituation } from './SituationProvider';
 import { TaskRow } from './TaskRow';
 import { withCondition, withTask } from './apply';
@@ -15,6 +16,7 @@ const DAY_S = 86_400;
 /** Home's second block: what the box is guessing, what is about to happen, what to do now, and what to read. */
 export function Briefing() {
   const { view, apply } = useSituation();
+  const block = useRef<HTMLElement>(null);
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   if (!view) return null;
@@ -38,7 +40,8 @@ export function Briefing() {
   };
 
   return (
-    <section className="briefing" aria-label="Briefing">
+    <section className="briefing" aria-label="Briefing" ref={block}>
+      <div className="pad read-aloud-row no-print"><ReadAloud id="briefing" target={block} label="Read the briefing aloud" /></div>
       {inferred.length > 0 && (
         <section className="briefing-block" aria-label="The box thinks">
           <h2>The box thinks</h2>

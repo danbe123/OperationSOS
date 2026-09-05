@@ -10,6 +10,7 @@ import { Html } from '../components/Html';
 import { Section } from '../components/Section';
 import { SituationClock } from '../components/SituationClock';
 import { CallsNotice } from '../situation/CallsNotice';
+import { ReadAloudBlock } from '../situation/ReadAloud';
 import { elapsedSince, phaseFor } from '../tools/situation';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
@@ -130,7 +131,9 @@ export function Scenario() {
         <section className={s.id === 'right-now' ? 'response-panel response-now' : 'response-panel'} key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
           {!printing && <div className="response-heading"><p className="eyebrow">{s.id === 'right-now' ? 'Start here' : 'Plan ahead'}</p><h2>{s.id === 'right-now' ? 'Do this first' : s.title}</h2></div>}
           {printing && <h2 className="pad">{s.title}</h2>}
-          <SectionBody section={s} playbook={data} open={printing} />
+          <ReadAloudBlock id={`section:${data.slug}#${s.id}`} label="Read this section aloud">
+            <SectionBody section={s} playbook={data} open={printing} />
+          </ReadAloudBlock>
         </section>
       ))}
       {unreferenced.length > 0 && (
