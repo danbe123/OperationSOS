@@ -9,6 +9,7 @@ export type Status = {
   ai: { state: AiState; model: string | null; message: string | null };
   thermal_ai_off_c: number; idle_minutes: number; home_minutes: number;
   pin_required: boolean; dev: boolean; default_theme: 'vault' | 'field' | 'blackout';
+  situation?: { slug: string; started_at: string } | null;
 };
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
@@ -45,7 +46,16 @@ export type MapConfig = {
   packs: { title: string; url: string; size_bytes: number }[]; packs_index_url: string | null;
 };
 export type Place = { name: string; kind: string; lat: number; lon: number; region: string; postcode: string | null };
-export type Note = { id: number; kind: 'note' | 'pin'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
+export type Note = { id: number; kind: 'note' | 'pin' | 'event'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
+export type Person = { id: number; name: string; age: number | null; needs: string; medications: string; contacts: string; updated_at: string };
+export type StockCategory = 'water' | 'food' | 'fuel' | 'medicine' | 'other';
+export type StockItem = {
+  id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
+  expires: string | null; notes: string; updated_at: string; days_left: number | null;
+};
+export type StockResponse = { people: number; items: StockItem[] };
+export type SituationPhase = 'right-now' | 'first-72-hours' | 'first-month' | 'long-term';
+export type Situation = { slug: string; title: string | null; started_at: string; elapsed_s: number; phase: SituationPhase } | { slug: null };
 export type Passage = { n: number; title: string; url: string; source: string; text: string };
 export type AiEvent =
   | { event: 'verbatim'; data: { title: string; url: string; paragraphs: string[]; as_at: string | null } }

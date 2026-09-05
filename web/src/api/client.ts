@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, LibraryItem, LibraryResponse, MapConfig, Note, Overlay, Page,
-  Place, Playbook, PlaybookSummary, SearchResponse, Status, Suggestion, UpdateProgress,
+  Person, Place, Playbook, PlaybookSummary, SearchResponse, Situation, Status, StockItem, StockResponse, Suggestion, UpdateProgress,
 } from './types';
 
 export class ApiError extends Error {
@@ -130,7 +130,18 @@ export const api = {
   mapConfig: () => request<MapConfig>('GET', '/map/config'),
   mapOverlays: () => request<Overlay[]>('GET', '/map/overlays'),
   places: (q: string, limit?: number, signal?: AbortSignal) => request<Place[]>('GET', `/places${qs({ q, limit })}`, undefined, signal),
-  notes: (kind?: 'note' | 'pin') => request<Note[]>('GET', `/notes${qs({ kind })}`),
+  notes: (kind?: 'note' | 'pin' | 'event') => request<Note[]>('GET', `/notes${qs({ kind })}`),
+  household: () => request<Person[]>('GET', '/household'),
+  addPerson: (p: Partial<Person>) => request<Person>('POST', '/household', p),
+  updatePerson: (id: number, p: Partial<Person>) => request<Person>('PUT', `/household/${id}`, p),
+  deletePerson: (id: number) => request<{ ok: true }>('DELETE', `/household/${id}`),
+  stock: () => request<StockResponse>('GET', '/stock'),
+  addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
+  updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
+  deleteStock: (id: number) => request<{ ok: true }>('DELETE', `/stock/${id}`),
+  situation: () => request<Situation>('GET', '/situation'),
+  startSituation: (slug: string) => request<Situation>('POST', '/situation', { slug }),
+  endSituation: () => request<Situation>('DELETE', '/situation'),
   createNote: (note: Partial<Note>) => request<Note>('POST', '/notes', note),
   updateNote: (id: number, note: Partial<Note>) => request<Note>('PUT', `/notes/${id}`, note),
   deleteNote: (id: number) => request<{ ok: true }>('DELETE', `/notes/${id}`),
