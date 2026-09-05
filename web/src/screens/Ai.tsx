@@ -145,14 +145,15 @@ export function Ai() {
     );
   }
   const ai = status.ai;
-  if (ai.state !== 'ready') {
+  // 'busy' means the single inference slot is taken, usually by this very screen's question: keep the conversation on screen
+  const othersBusy = ai.state === 'busy' && !busy;
+  if (ai.state !== 'ready' && ai.state !== 'busy') {
     return (
       <div className="screen">
         <AppBar title="AI assistant" />
         <div className="pad stack ai-off">
           {ai.state === 'off' && <p>The assistant is off. It answers only from the library and needs about 3.5 GB of memory while on.</p>}
           {ai.state === 'starting' && <p>The assistant is starting (about a minute).</p>}
-          {ai.state === 'busy' && <p>The assistant is answering another question. Try again shortly.</p>}
           {ai.state === 'off-thermal' && <p className="warning">The assistant switched off because the box got too hot. Let it cool, then turn it on again.</p>}
           {ai.state === 'error' && <p className="warning">The assistant failed to start.</p>}
           {ai.message && <p className="muted">{ai.message}</p>}
@@ -169,9 +170,10 @@ export function Ai() {
       <div className="turns">
         {turns.map((t) => <TurnView key={t.id} turn={t} now={Date.now()} />)}
       </div>
+      {othersBusy && <p className="pad notice" role="status">Another phone is asking the assistant a question. It frees up in a moment.</p>}
       <form className="ask pad no-print" onSubmit={(e) => void ask(e)}>
-        <input type="text" aria-label="Your question" placeholder="Ask about anything in the library" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION} disabled={busy} enterKeyHint="send" autoComplete="off" />
-        <button type="submit" className="btn btn-primary" disabled={busy || !question.trim()}><Icon name="ai" /><span>Ask</span></button>
+        <input type="text" aria-label="Your question" placeholder="Ask about anything in the library" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION} disabled={busy || othersBusy} enterKeyHint="send" autoComplete="off" />
+        <button type="submit" className="btn btn-primary" disabled={busy || othersBusy || !question.trim()}><Icon name="ai" /><span>Ask</span></button>
         <span className="muted count">{question.length}/{MAX_QUESTION}</span>
       </form>
     </div>

@@ -8,6 +8,7 @@ import { SearchBar } from '../components/SearchBar';
 import { StatusStrip } from '../components/StatusStrip';
 import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
+import './home.css';
 import { situationLine } from '../components/SituationClock';
 
 export const HOME_TILES = [

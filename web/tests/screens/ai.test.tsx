@@ -182,4 +182,15 @@ describe('Ai screen', () => {
     await user.type(input, 'c{Enter}');
     expect(await screen.findByText('The AI is not available: network down')).toBeInTheDocument();
   });
+
+  it('keeps the conversation on screen while the slot is busy instead of switching to the off layout', async () => {
+    const { vi: v } = await import('vitest');
+    const { api: client } = await import('../../src/api/client');
+    const { status: base } = await import('../fixtures/api');
+    v.spyOn(client, 'status').mockResolvedValue({ ...base, ai: { state: 'busy', model: 'gemma-4-E2B-it-Q4_K_M', message: null } });
+    renderRoute('/ai');
+    expect(await screen.findByRole('status')).toHaveTextContent('Another phone is asking');
+    expect(screen.getByRole('textbox', { name: 'Your question' })).toBeDisabled();
+    expect(screen.queryByText(/answering another question/)).not.toBeInTheDocument();
+  });
 });
