@@ -39,7 +39,7 @@
         "expect": { "type": "object", "required": ["condition", "state", "after"], "additionalProperties": false,
           "properties": { "condition": { "type": "string" }, "state": { "$ref": "#/$defs/state" }, "after": { "$ref": "#/$defs/duration" }, "where": { "type": "string" } } },
         "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-        "title": { "type": "string" },
+        "title": { "type": "string", "description": "The consequence's or task's line, with {name}, {address} and {at_address} filled in per person; on a reading rule with `skills` it is the sentence template, where {article} and {skill} are also available (the default is '{name} is {article} {skill}')" },
         "after": { "$ref": "#/$defs/duration" },
         "severity": { "enum": ["info", "warn", "danger"] },
         "link": { "$ref": "#/$defs/link" },
