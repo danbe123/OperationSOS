@@ -155,3 +155,84 @@ def test_pmr446_page_has_all_16_channels_and_38_tones():
     assert body.count("| 446.") == 16
     for tone in ("67.0", "100.0", "250.3"):
         assert tone in body, tone
+
+
+SCENARIOS = [
+    "nuclear-war", "nuclear-accident", "pandemic", "grid-collapse", "solar-storm", "emp",
+    "cyber-attack", "invasion", "civil-unrest", "economic-collapse", "supply-chain",
+    "storms-flooding", "severe-winter", "heat-drought", "volcanic", "chemical", "famine",
+    "impact-winter", "terrorism", "long-rebuild",
+]
+SCENARIO_ICONS = dict(zip(SCENARIOS, [
+    "radiation", "atom", "virus", "bolt", "sun", "zap", "laptop", "flag", "fire", "coins",
+    "truck", "waves", "snowflake", "thermometer", "mountain", "flask", "wheat", "cloud", "alert", "hammer",
+]))
+SCENARIO_HEADINGS = [
+    "## Right now", "## First 72 hours", "## First month", "## Long term", "## UK specifics",
+    "## Checklist", "## Go deeper",
+]
+TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)\}$")
+INCLUDE = re.compile(r"^\{\{module:([a-z0-9-]+)\}\}$", re.M)
+DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+WRITTEN = SCENARIOS[:10]  # Task 7 changes this line to `WRITTEN = SCENARIOS`
+
+
+def checklist_ids(slug: str) -> list[str]:
+    lines = sections(load("scenarios", slug).content)["Checklist"].splitlines()
+    return [m.group(1) for m in (TASK_LINE.match(l) for l in lines) if m]
+
+
+@pytest.mark.parametrize("slug", WRITTEN)
+def test_scenario_front_matter(slug):
+    post = load("scenarios", slug)
+    assert set(post.keys()) == {"id", "title", "icon", "order", "summary", "modules", "overlays", "reviewed", "sources"}
+    assert post["id"] == slug
+    assert post["order"] == SCENARIOS.index(slug) + 1
+    assert post["icon"] == SCENARIO_ICONS[slug]
+    assert 30 <= len(post["summary"]) <= 160, slug
+    assert post["reviewed"] is None or DATE.match(str(post["reviewed"])), slug
+    assert len(post["modules"]) >= 4 and len(set(post["modules"])) == len(post["modules"]), slug
+    assert set(post["modules"]) <= set(MODULES), slug
+    assert post["overlays"] and set(post["overlays"]) <= set(overlay_ids()), slug
+    assert len(post["sources"]) >= 4, slug
+    for s in post["sources"]:
+        assert "title" in s and ("doc" in s or "kiwix" in s), (slug, s)
+        assert AS_AT.match(str(s["as_at"])), (slug, s)
+
+
+@pytest.mark.parametrize("slug", WRITTEN)
+def test_scenario_sections_citations_checklist_and_includes(slug):
+    post = load("scenarios", slug)
+    assert h2(post.content) == SCENARIO_HEADINGS, slug
+    body = sections(post.content)
+    for name in ("Right now", "First 72 hours", "First month", "Long term", "UK specifics"):
+        assert len(CITE.findall(body[name])) >= 1, (slug, name)
+    assert len(ANY_LINK.findall(body["Go deeper"])) >= 5, slug
+    tasks = [l for l in body["Checklist"].splitlines() if l.strip()]
+    assert 6 <= len(tasks) <= 20, slug
+    ids = []
+    for line in tasks:
+        m = TASK_LINE.match(line)
+        assert m, (slug, line)
+        assert 3 <= len(m.group(1)) <= 40, (slug, line)
+        ids.append(m.group(1))
+    assert len(ids) == len(set(ids)), slug
+    assert "- [ ]" not in post.content.replace(body["Checklist"], ""), slug
+    includes = INCLUDE.findall(post.content)
+    assert includes == list(dict.fromkeys(includes)), (slug, "a module is included twice")
+    assert set(includes) == set(post["modules"]), (slug, set(includes) ^ set(post["modules"]))
+    for name in ("Checklist", "Go deeper"):
+        assert "{{module:" not in body[name], (slug, name)
+    assert "NOMAD" not in post.content
+
+
+@pytest.mark.parametrize("slug", WRITTEN)
+def test_scenario_parses_and_validates(slug):
+    doc = parse_document(PB / "scenarios" / f"{slug}.md")
+    assert doc.kind == "scenario" and doc.id == slug
+    assert [t for _, t, _ in doc.sections if t] == [h[3:] for h in SCENARIO_HEADINGS]
+    assert [i for i, _ in doc.checklist] == checklist_ids(slug)
+    errors = validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids())
+    mine = [e for e in errors if e.startswith(f"scenarios/{slug}.md")]
+    pending = re.compile(r"playbook '(" + "|".join(SCENARIOS) + r")' does not exist")
+    assert [e for e in mine if not pending.search(e)] == [], mine
