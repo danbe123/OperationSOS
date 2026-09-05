@@ -5,7 +5,8 @@ import { useStatus } from '../api/status';
 import type { Condition, ConditionId, ConditionState } from '../api/types';
 import { CONDITION_IDS } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
+import { Screen, Body } from '../shell/Screen';
+import { SituationExport } from '../situation/SituationExport';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { ConditionRow } from '../situation/ConditionRow';
@@ -14,6 +15,7 @@ import { CONDITION_INFO, HOME_CONDITION_IDS } from '../situation/conditions';
 import { withCondition } from '../situation/apply';
 import { useSituation } from '../situation/SituationProvider';
 import { describeElapsed, phaseFor } from '../tools/situation';
+import './situation.css';
 
 /** The situation sheet: everything the engine reads, in one place, editable from any phone. */
 export function Situation() {
@@ -46,25 +48,24 @@ export function Situation() {
   const playbooks = playbooksQ.data ?? [];
 
   return (
-    <div className="screen situation-screen">
-      <AppBar
-        title="Situation"
-        search={false}
-        actions={
-          <>
-            <Link className="btn btn-chrome" to="/board"><Icon name="plan" /><span>Board</span></Link>
-            <a className="btn btn-chrome" href="/api/situation/report" target="_blank" rel="noreferrer"><Icon name="print" /><span>Print report</span></a>
-          </>
-        }
-      />
-      {error && <p className="pad warning">The situation is unavailable: {error}</p>}
-      {loading && !view && <p className="pad muted">Reading the situation…</p>}
+    <Screen
+      title="Situation"
+      search={false}
+      className="situation-screen"
+      actions={
+        <>
+          <Link className="btn btn-small" to="/board"><Icon name="plan" size={18} /><span>Board</span></Link>
+          <a className="btn btn-small" href="/api/situation/report" target="_blank" rel="noreferrer"><Icon name="print" size={18} /><span>Print report</span></a>
+        </>
+      }
+    >
+      <Body>
+      {error && <p className="warning">The situation is unavailable: {error}</p>}
+      {loading && !view && <p className="muted">Reading the situation…</p>}
 
-      <section aria-label="Conditions">
-        <div className="pad">
-          <h2>What is working</h2>
-          <p className="muted">Tap a state. Everyone on the box sees the change, and the advice follows it.</p>
-        </div>
+      <section className="panel" aria-label="Conditions">
+        <div className="panel-head"><h2>What is working</h2></div>
+        <p className="muted">Tap a state. Everyone on the box sees the change, and the advice follows it.</p>
         <ul className="list cond-rows">
           {view && CONDITION_IDS.map((id) => view.conditions[id] && <ConditionRow key={id} condition={view.conditions[id]} onSaved={saved} />)}
         </ul>
@@ -72,8 +73,8 @@ export function Situation() {
 
       <SensorsPanel />
 
-      <section aria-label="Situation clock" id="clock">
-        <div className="pad">
+      <section className="panel" aria-label="Situation clock" id="clock">
+        <div className="stack">
           <h2>Clock</h2>
           {scenario ? (
             <>
@@ -95,9 +96,11 @@ export function Situation() {
         </div>
       </section>
 
+      <SituationExport />
+
       {!view?.meta.drill && (
-        <section aria-label="Drill" id="drill">
-          <div className="pad stack">
+        <section className="panel" aria-label="Drill" id="drill">
+          <div className="stack">
             <h2>Practice a drill</h2>
             <p className="muted">Pretend a situation is running, without touching the real conditions. Everything says DRILL.</p>
             <div className="row">
@@ -146,6 +149,7 @@ export function Situation() {
           </div>
         </section>
       )}
-    </div>
+      </Body>
+    </Screen>
   );
 }

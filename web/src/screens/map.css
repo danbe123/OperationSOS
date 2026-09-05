@@ -1,0 +1,60 @@
+/* The map: one toolbar, one panel at a time, and a readout that never moves. */
+.map-screen { display: flex; flex-direction: column; }
+.map-tools { display: flex; gap: 6px; padding: 0 var(--gutter) 6px; overflow-x: auto; flex: 0 0 auto; }
+.map-tools .btn { flex-shrink: 0; }
+.map-host { position: relative; flex: 1; min-height: 200px; }
+.map-canvas { position: absolute; inset: 0; }
+.map-panel {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(380px, 100%);
+  overflow: auto; z-index: 10; padding: 12px;
+  background: var(--ground); border-left: 1px solid var(--line-strong);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.map-panel h2 { flex: 1; margin: 0; font-size: var(--t-lead); }
+.map-panel h3 { margin: 8px 0 4px; }
+.map-readout { flex: 0 0 auto; padding: 6px var(--gutter); font-size: var(--t-meta); color: var(--ink-muted); background: var(--panel); border-top: 1px solid var(--line); }
+.map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid var(--line-strong); }
+.small { font-size: var(--t-meta); margin: 0 0 6px 36px; color: var(--ink-muted); }
+.place-search { display: flex; flex-direction: column; gap: 8px; }
+.map-print { display: none; }
+@media print {
+  .map-screen > *:not(.map-print) { display: none !important; }
+  .map-print { display: block; padding: 12px; }
+  .map-print img { width: 100%; }
+}
+.maplibregl-ctrl-group button { width: var(--touch); height: var(--touch); }
+
+/* Nearby: one block per kind of facility, the nearest first and the runners-up under it. */
+.nearby-list { padding: 0; }
+.nearby-facility { display: flex; flex-direction: column; gap: 4px; }
+.nearby-kind { display: flex; align-items: center; gap: 6px; margin: 0; }
+.nearby-item { display: flex; align-items: stretch; gap: 6px; }
+.nearby-go { flex: 1; justify-content: flex-start; text-align: left; }
+.nearby-go span { display: flex; flex-direction: column; min-width: 0; }
+.nearby-go small { font-weight: 400; color: var(--ink-muted); }
+.nearby-also { padding-left: 12px; border-left: 1px solid var(--line); }
+.nearby-also > li { border-bottom: 0; padding: 2px 0; }
+.nearby-note { font-size: var(--t-meta); }
+.nearby-route { border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* The feature tooltip: one popup that follows the pointer (or is pinned by a tap). It never takes
+   pointer events, so the map underneath keeps hovering and a tap "through" it still counts. */
+.maplibregl-popup.map-tip-popup { pointer-events: none; z-index: 8; max-width: min(340px, calc(100vw - 24px)); }
+.map-tip-popup .maplibregl-popup-content { padding: 10px 12px; background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius); font: 400 var(--t-body)/1.4 var(--font-body); text-shadow: none; }
+.map-tip-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--line-strong); }
+.map-tip { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.map-tip-title { font-weight: 700; overflow-wrap: anywhere; }
+.map-tip-overlay { color: var(--ink-muted); font-size: var(--t-meta); }
+.map-tip-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 4px 0 0; }
+.map-tip-rows > div { display: contents; }
+.map-tip-rows dt { color: var(--ink-muted); white-space: nowrap; }
+.map-tip-rows dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .map-tip-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .map-tip-rows dt { margin-top: 4px; } }

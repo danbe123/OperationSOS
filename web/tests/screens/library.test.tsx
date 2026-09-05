@@ -10,7 +10,7 @@ describe('Library', () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     const user = userEvent.setup();
     renderRoute('/library');
-    expect(await screen.findByText('7 items, 6 available')).toBeInTheDocument();
+    expect(await screen.findByText('7 items, 6 available on this box.')).toBeInTheDocument();
     const chips = screen.getByRole('group', { name: 'Categories' });
     expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Medical (3)', 'UK official (1)', 'Reference (1)', 'Maps (1)', 'Books (1)']);
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5);

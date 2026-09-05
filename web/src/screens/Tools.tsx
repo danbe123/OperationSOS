@@ -1,5 +1,5 @@
-import { AppBar } from '../components/AppBar';
 import { Tile } from '../components/Tile';
+import { Screen, Body } from '../shell/Screen';
 
 export const TOOL_TILES = [
   { to: '/fieldcraft', icon: 'fire', title: 'Field craft', subtitle: 'Shelter, fire, water, wild food, moving' },
@@ -13,12 +13,13 @@ export const TOOL_TILES = [
 
 export function Tools() {
   return (
-    <div className="screen">
-      <AppBar title="Tools" />
-      <p className="pad muted">Small offline tools. Nothing here needs the internet.</p>
-      <nav className="tiles" aria-label="Tools">
-        {TOOL_TILES.map((t) => <Tile key={t.to} to={t.to} icon={t.icon} title={t.title} subtitle={t.subtitle} />)}
-      </nav>
-    </div>
+    <Screen title="Tools">
+      <Body>
+        <p className="muted measure">Small offline tools. Nothing here needs the internet.</p>
+        <nav className="tiles tiles-wide" aria-label="Tools">
+          {TOOL_TILES.map((t) => <Tile key={t.to} to={t.to} icon={t.icon} title={t.title} subtitle={t.subtitle} />)}
+        </nav>
+      </Body>
+    </Screen>
   );
 }

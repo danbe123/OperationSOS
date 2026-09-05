@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  Home, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, LibraryItem, LibraryResponse, MapConfig, Neighbour, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -136,6 +136,10 @@ export const api = {
   addPerson: (p: Partial<Person>) => request<Person>('POST', '/household', p),
   updatePerson: (id: number, p: Partial<Person>) => request<Person>('PUT', `/household/${id}`, p),
   deletePerson: (id: number) => request<{ ok: true }>('DELETE', `/household/${id}`),
+  neighbours: () => request<Neighbour[]>('GET', '/neighbours'),
+  addNeighbour: (n: Partial<Neighbour>) => request<Neighbour>('POST', '/neighbours', n),
+  updateNeighbour: (id: number, n: Partial<Neighbour>) => request<Neighbour>('PUT', `/neighbours/${id}`, n),
+  deleteNeighbour: (id: number) => request<{ ok: true }>('DELETE', `/neighbours/${id}`),
   stock: () => request<StockResponse>('GET', '/stock'),
   addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
   updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
@@ -153,6 +157,10 @@ export const api = {
   setTask: (id: string, body: TaskPatch) => request<Task>('PUT', `/tasks/${enc(id)}`, body),
   home: () => request<Home | null>('GET', '/home'),
   setHome: (body: Partial<Home> & { lat: number; lon: number }) => request<Home>('PUT', '/home', body),
+  /** The household's situation as scannable chunks, and the way back in from another box's chunks. */
+  exportChunks: () => request<ExportChunks>('GET', '/situation/export/qr'),
+  /** The box takes the export document itself, or the chunk strings in any order. */
+  importSituation: (payload: unknown) => request<ImportSummary>('POST', '/situation/import', payload),
   startDrill: (body: DrillRequest) => request<SituationView>('POST', '/drill', body),
   endDrill: () => request<SituationView>('DELETE', '/drill'),
   // Phase 2 and 3: the ground around the home, the box's senses, its voice and its recordings.

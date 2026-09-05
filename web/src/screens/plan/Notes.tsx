@@ -72,15 +72,15 @@ export function Notes() {
     }
   };
   return (
-    <section id="notes">
-      <h2 className="pad">Shared notes</h2>
-      <p className="pad muted">Everyone on the hotspot sees these notes.</p>
-      <form className="stack pad no-print" onSubmit={(e) => void add(e)}>
+    <section className="panel" id="notes">
+      <h2>Shared notes</h2>
+      <p className="muted">Everyone on the hotspot sees these notes.</p>
+      <form className="stack no-print" onSubmit={(e) => void add(e)}>
         <label className="field"><span>Title</span><input type="text" aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} /></label>
         <label className="field"><span>Note</span><textarea aria-label="Note" rows={3} value={body} onChange={(e) => setBody(e.target.value)} /></label>
         <button type="submit" className="btn btn-primary">Add note</button>
       </form>
-      {notesQ.error && <p className="pad warning">Notes unavailable: {notesQ.error}</p>}
+      {notesQ.error && <p className="warning">Notes unavailable: {notesQ.error}</p>}
       <ul className="list" aria-label="Notes">
         {(notesQ.data ?? []).map((n) => (
           <NoteRow key={n.id} note={n} onChanged={notesQ.refetch} />

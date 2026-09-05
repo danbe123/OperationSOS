@@ -10,7 +10,7 @@ export function ReadAloud({ id, target, label = 'Read aloud' }: { id: string; ta
   const reading = speaking === id;
   if (reading) {
     return (
-      <button type="button" className="btn btn-danger read-aloud no-print" onClick={() => stopSpeaking()}>
+      <button type="button" className="btn btn-small btn-danger read-aloud no-print" onClick={() => stopSpeaking()}>
         <Icon name="close" /><span>Stop reading</span>
       </button>
     );
@@ -18,7 +18,7 @@ export function ReadAloud({ id, target, label = 'Read aloud' }: { id: string; ta
   return (
     <button
       type="button"
-      className="btn read-aloud no-print"
+      className="btn btn-small read-aloud no-print"
       disabled={speaking !== null}
       onClick={() => {
         const el = target.current;
@@ -35,7 +35,7 @@ export function ReadAloudBlock({ id, label, className, children }: { id: string;
   const ref = useRef<HTMLDivElement>(null);
   return (
     <div className={className} ref={ref}>
-      <div className="pad read-aloud-row no-print"><ReadAloud id={id} target={ref} label={label} /></div>
+      <div className="read-aloud-row no-print"><ReadAloud id={id} target={ref} label={label} /></div>
       {children}
     </div>
   );

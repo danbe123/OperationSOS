@@ -1,7 +1,0 @@
-/* Home "Your tools": six narrower tiles on one row from tablet width up; phones keep two columns */
-@media (min-width: 700px) {
-  .tiles.home-tools { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
-  .home-tools .tile { padding: 10px; min-height: 76px; }
-  .home-tools .tile-title { font-size: 0.95rem; }
-  .home-tools .tile-sub { font-size: 0.7rem; }
-}

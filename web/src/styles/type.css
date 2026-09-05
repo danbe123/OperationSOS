@@ -1,0 +1,64 @@
+/* The type scale and the reading rules. One scale: 16, 18, 22, 28, 40, 64. Sentence case throughout;
+   the only eyebrow in the app is the situation band's own label. */
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 var(--t-body)/1.5 var(--font-body);
+}
+img, canvas, video { max-width: 100%; }
+
+h1, h2, h3, h4 { font-family: var(--font-heading); line-height: 1.2; font-weight: 700; }
+h1 { font-size: var(--t-title); margin: 0 0 8px; }
+h2 { font-size: var(--t-lead); margin: 24px 0 8px; }
+h3 { font-size: var(--t-body); margin: 16px 0 4px; }
+h4 { font-size: var(--t-body); margin: 12px 0 4px; font-weight: 600; }
+p, ul, ol, dl, blockquote { margin: 0 0 12px; }
+p:last-child, ul:last-child, ol:last-child { margin-bottom: 0; }
+a { color: var(--link); }
+strong, b { font-weight: 700; }
+small { font-size: var(--t-meta); }
+
+/* Vault's display face is the box's voice, and only in the two places that are its voice: the app
+   name in the rail and the board's clocks. Headings glow in vault; body text never does. */
+:root[data-theme="vault"] h1,
+:root[data-theme="vault"] h2 { text-shadow: var(--glow); }
+
+.muted { color: var(--ink-muted); }
+.meta { color: var(--ink-muted); font-size: var(--t-meta); }
+.lead { font-size: var(--t-lead); line-height: 1.35; }
+.measure { max-width: var(--measure); }
+.warning { color: var(--danger); font-weight: 600; }
+.warning::before { content: '⚠ '; }
+.eyebrow { margin: 0 0 4px; font-size: var(--t-meta); font-weight: 600; color: var(--ink-muted); }
+.print-only { display: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Rendered content (playbooks, cards, pages, modules) reads at the body size on a 72-character
+   measure, with no overlay and no text shadow in any theme. */
+.html { min-width: 0; }
+.html > :is(p, ul, ol, blockquote, dl, h2, h3, h4) { max-width: var(--measure); }
+.html :is(ul, ol) { padding-left: 1.4em; }
+.html li { margin: 0 0 6px; }
+.html img { height: auto; }
+.html, .html p, .html li, .html td, .html th, label, input, textarea, select, button {
+  font-family: var(--font-body);
+  text-shadow: none;
+}
+
+/* Quick cards are read at arm's length in bad light: the one place the display size is used for prose. */
+.card-html { font-size: var(--t-lead); line-height: 1.45; }
+.card-html li { margin: 0.4em 0; }
+.card-html .warning { display: block; margin: 0.6em 0; }
+
+@media print {
+  body { font-size: 11pt; }
+  h1 { font-size: 20pt; }
+  h2 { font-size: 15pt; }
+  h3 { font-size: 12pt; }
+  a { color: inherit; text-decoration: none; }
+  .print-only { display: block; }
+}

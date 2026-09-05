@@ -33,7 +33,7 @@ describe('the DRILL banner', () => {
     const end = vi.spyOn(api, 'endDrill').mockResolvedValue(view);
     const user = userEvent.setup();
     renderRoute('/radio');
-    const banner = await screen.findByText(/DRILL in progress/);
+    const banner = await screen.findByText(/Drill in progress/);
     expect(banner).toHaveTextContent('National grid collapse');
     await user.click(screen.getByRole('button', { name: 'End drill' }));
     expect(end).toHaveBeenCalled();
@@ -49,6 +49,6 @@ describe('the DRILL banner', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
     await screen.findByRole('region', { name: 'Situation' });
-    expect(screen.queryByText(/DRILL in progress/)).toBeNull();
+    expect(screen.queryByText(/Drill in progress/)).toBeNull();
   });
 });

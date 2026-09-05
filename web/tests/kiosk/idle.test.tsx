@@ -3,7 +3,7 @@ import { screen, act, fireEvent } from '@testing-library/react';
 import { useLocation } from 'react-router';
 import { renderRoute } from '../render';
 import { api, ApiError } from '../../src/api/client';
-import { Layout } from '../../src/router';
+import { Shell as Layout } from '../../src/shell/Shell';
 import { isProtectedRoute, IDLE_LEVEL, ACTIVE_LEVEL } from '../../src/kiosk/IdleOverlay';
 import { events, powerOffView, stockResponse } from '../fixtures/api';
 

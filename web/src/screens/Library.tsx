@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
 import { LibraryItemCard } from '../components/LibraryItemCard';
+import { Screen, Body } from '../shell/Screen';
 
 export function Library() {
   const { data, error, loading } = useQuery(() => api.library(), []);
@@ -19,32 +19,31 @@ export function Library() {
   const shown = data?.categories.filter((c) => !filter || c.id === filter) ?? [];
 
   return (
-    <div className="screen">
-      <AppBar title="Library" />
-      {loading && <p className="pad muted">Loading…</p>}
-      {error && <p className="pad warning">Library unavailable: {error}</p>}
-      {data && (
-        <>
-          <p className="pad muted">{all.length} items, {all.filter((i) => i.available).length} available</p>
-          <div className="chips" role="group" aria-label="Categories">
-            {data.categories.map((c) => (
-              <button key={c.id} type="button" className={filter === c.id ? 'chip active' : 'chip'} aria-pressed={filter === c.id} onClick={() => setFilter(filter === c.id ? null : c.id)}>
-                {c.title} ({c.items.length})
-              </button>
+    <Screen title="Library">
+      <Body>
+        {loading && <p className="muted">Loading the library…</p>}
+        {error && <p className="warning">Library unavailable: {error}</p>}
+        {data && (
+          <>
+            <p className="muted">{all.length} items, {all.filter((i) => i.available).length} available on this box.</p>
+            <div className="chips" role="group" aria-label="Categories">
+              {data.categories.map((c) => (
+                <button key={c.id} type="button" className={filter === c.id ? 'chip active' : 'chip'} aria-pressed={filter === c.id} onClick={() => setFilter(filter === c.id ? null : c.id)}>
+                  {c.title} ({c.items.length})
+                </button>
+              ))}
+            </div>
+            {shown.map((c) => (
+              <section key={c.id} aria-label={c.title}>
+                <h2 id={`cat-${c.id}`}>{c.title}</h2>
+                <ul className="list items" aria-label={c.title}>
+                  {c.items.map((item) => <LibraryItemCard key={item.id} item={item} />)}
+                </ul>
+              </section>
             ))}
-          </div>
-          {shown.map((c) => (
-            <section key={c.id}>
-              <h2 className="pad" id={`cat-${c.id}`}>{c.title}</h2>
-              <ul className="list items" aria-label={c.title}>
-                {c.items.map((item) => (
-                  <LibraryItemCard key={item.id} item={item} />
-                ))}
-              </ul>
-            </section>
-          ))}
-        </>
-      )}
-    </div>
+          </>
+        )}
+      </Body>
+    </Screen>
   );
 }

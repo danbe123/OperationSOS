@@ -45,9 +45,9 @@ describe('/board', () => {
     renderRoute('/board');
     expect(await screen.findByRole('heading', { name: 'National grid collapse' })).toBeInTheDocument();
     // the board flies its own flag, and the chrome's drill bar flies one on every screen
-    expect(screen.getAllByText('⚑ DRILL').length).toBeGreaterThanOrEqual(1);
-    expect(document.querySelector('.board-drill')).toHaveTextContent('⚑ DRILL');
-    expect(screen.getByText(/2 h in/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Drill/).length).toBeGreaterThanOrEqual(1);
+    expect(document.querySelector('.board-drill')).toHaveTextContent('Drill');
+    expect(document.querySelector('.board-elapsed')).toHaveTextContent('2 h in');
   });
 
   it('returns Home on a tap anywhere', async () => {
@@ -55,7 +55,7 @@ describe('/board', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue([]);
     const user = userEvent.setup();
     const { router } = renderRoute('/board');
-    await user.click(await screen.findByRole('button', { name: /Board: tap to return Home/ }));
+    await user.click(await screen.findByRole('button', { name: /Board: tap to go back to Now/ }));
     expect(router.state.location.pathname).toBe('/');
   });
 });

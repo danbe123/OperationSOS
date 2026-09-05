@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
-import { AppBar } from '../components/AppBar';
+import { Screen } from '../shell/Screen';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
@@ -44,10 +44,9 @@ export function Reader() {
   if (/\.pdf$/i.test(path)) {
     let title = path.split('/').pop() ?? 'PDF';
     try { title = decodeURIComponent(title); } catch { /* Keep malformed names readable. */ }
-    return <div className="screen screen-fill">
-      <AppBar title={title} search={false} actions={<Link className="btn btn-chrome" to={`/library#item-${id}`}><Icon name="library" /><span>Open in library</span></Link>} />
+    return <Screen title={title} search={false} fill actions={<Link className="btn btn-small" to={`/library#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>}>
       <PdfFrame url={kiwixContentUrl(id, path) + location.search} theme={theme} hash={location.hash} />
-    </div>;
+    </Screen>;
   }
   return <ArticleReader key={id} />;
 }
@@ -173,21 +172,21 @@ function ArticleReader() {
   const print = () => frameRef.current?.contentWindow?.print();
 
   return (
-    <div className="screen screen-fill">
-      <AppBar
-        title={title}
-        search={false}
-        actions={
-          <>
-            <button type="button" className="btn btn-chrome" onClick={cycleSize}><Icon name="text-size" /><span>Text size {textSize}%</span></button>
-            <Link className="btn btn-chrome" to={`/library#item-${id}`}><Icon name="library" /><span>Open in library</span></Link>
-            {!kiosk && <button type="button" className="btn btn-chrome" onClick={print}><Icon name="print" /><span>Print</span></button>}
-          </>
-        }
-      />
+    <Screen
+      title={title}
+      search={false}
+      fill
+      actions={
+        <>
+          <button type="button" className="btn btn-small" onClick={cycleSize}><Icon name="text-size" size={18} /><span>Text size {textSize}%</span></button>
+          <Link className="btn btn-small" to={`/library#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>
+          {!kiosk && <button type="button" className="btn btn-small" onClick={print}><Icon name="print" size={18} /><span>Print</span></button>}
+        </>
+      }
+    >
       <div className="frame-wrap">
         <iframe ref={frameRef} title="Article" src={initialSrc} sandbox="allow-same-origin allow-scripts allow-forms allow-modals" onLoad={onLoad} />
       </div>
-    </div>
+    </Screen>
   );
 }

@@ -80,6 +80,6 @@ describe('Scenario', () => {
   it('shows an error when the playbook is missing', async () => {
     vi.spyOn(api, 'playbook').mockRejectedValue(new Error('not found'));
     renderRoute('/s/nope');
-    expect(await screen.findByText('Could not load this playbook: not found')).toBeInTheDocument();
+    expect(await screen.findByText('Could not load this guide: not found')).toBeInTheDocument();
   });
 });

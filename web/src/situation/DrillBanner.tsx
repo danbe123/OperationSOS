@@ -39,9 +39,9 @@ export function DrillBanner() {
   if (view?.meta.drill) {
     return (
       <div className="drill-bar no-print" role="status">
-        <span className="badge badge-warn">⚑ DRILL</span>
-        <span>DRILL in progress{view.scenario ? `: ${view.scenario.title}` : ''}. Nothing here is real; the log says drill.</span>
-        <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void end()}>End drill</button>
+        <span className="badge badge-warn"><span aria-hidden="true">⚑</span> Drill</span>
+        <span>Drill in progress{view.scenario ? `: ${view.scenario.title}` : ''}. Nothing here is real; the log says drill.</span>
+        <button type="button" className="btn btn-small btn-danger" disabled={busy} onClick={() => void end()}>End drill</button>
       </div>
     );
   }
@@ -57,7 +57,7 @@ export function DrillBanner() {
           {summary.events.map((e) => <li key={e.id}><strong>{clockTime(e.updated_at)}</strong> {e.title}</li>)}
         </ul>
       )}
-      <button type="button" className="btn" onClick={() => setSummary(null)}>Close</button>
+      <button type="button" className="btn btn-small" onClick={() => setSummary(null)}>Close</button>
     </div>
   );
 }

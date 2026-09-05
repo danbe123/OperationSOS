@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import './themes.css';
 
 export type Theme = 'vault' | 'field' | 'blackout';
 export const THEMES: readonly Theme[] = ['vault', 'field', 'blackout'] as const;

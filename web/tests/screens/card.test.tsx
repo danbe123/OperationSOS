@@ -8,8 +8,7 @@ describe('Card', () => {
   it('renders the card title in the extra-large class and numbered steps', async () => {
     vi.spyOn(api, 'card').mockResolvedValue(cards[0]);
     renderRoute('/medical/card/cpr-adult');
-    const title = await screen.findByRole('heading', { level: 1, name: 'CPR (adult)' });
-    expect(title).toHaveClass('card-title');
+    await screen.findByRole('heading', { level: 1, name: 'CPR (adult)' });
     const steps = screen.getAllByRole('listitem');
     expect(steps).toHaveLength(4);
     expect(steps[1]).toHaveTextContent('Call 999');

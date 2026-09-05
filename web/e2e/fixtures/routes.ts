@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyItem, Note, Person, StockItem } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Neighbour, Note, Person, StockItem } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
 import { aiEvents, cards, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
-import { PIN, TOKEN, type FixtureState } from './state';
+import { PIN, TOKEN, type FixturePlace, type FixtureState } from './state';
 
 const here = (rel: string) => new URL(rel, import.meta.url);
 const styleJson = JSON.parse(readFileSync(here('./maps/style.json'), 'utf8')) as { name: string; layers: { id: string; paint: Record<string, string> }[] };
@@ -59,20 +59,49 @@ function silentWav(): Buffer {
   return buf;
 }
 
-/** What `GET /nearby` answers for a point: the fixture places with distance, bearing and a Naismith walk. */
-export function nearbyFrom(places: Pick<NearbyItem, 'kind' | 'title' | 'lat' | 'lon'>[], lat: number, lon: number): NearbyItem[] {
-  return places
-    .map((pl) => {
-      const km = distanceKm({ lat, lon }, { lat: pl.lat, lon: pl.lon });
-      return {
-        ...pl,
-        distance_m: Math.round(km * 1000),
-        bearing_deg: Math.round(bearingDeg({ lat, lon }, { lat: pl.lat, lon: pl.lon })),
-        walk_min: naismithMinutes(km),
-        link: `/map?lat=${pl.lat}&lon=${pl.lon}&z=15&label=${encodeURIComponent(pl.title)}`,
-      };
-    })
-    .sort((a, b) => a.distance_m - b.distance_m);
+const FACILITY_TITLES: Record<string, string> = {
+  'emergency-department': 'Emergency department', pharmacy: 'Pharmacy', gp: 'GP surgery', fuel: 'Fuel station',
+  'water-works': 'Water treatment works', 'fire-station': 'Fire station', 'rest-centre': 'Rest centre',
+};
+const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+/** What `GET /nearby?lat&lon` answers: one block per facility, nearest first, with the ones the box
+ * has no searchable data for saying plainly why. Matches sos.nearby.nearest(). */
+export function nearbyFrom(places: FixturePlace[], missing: string[], lat: number, lon: number): NearbyFacility[] {
+  const ids = [...new Set([...places.map((p) => p.facility), ...missing])];
+  return ids.map((id) => {
+    const found = places
+      .filter((pl) => pl.facility === id)
+      .map((pl) => {
+        const km = distanceKm({ lat, lon }, { lat: pl.lat, lon: pl.lon });
+        const bearing = bearingDeg({ lat, lon }, { lat: pl.lat, lon: pl.lon });
+        return {
+          name: pl.name, lat: pl.lat, lon: pl.lon,
+          distance_m: Math.round(km * 1000),
+          bearing_deg: Math.round(bearing),
+          compass: COMPASS[Math.round((bearing % 360) / 22.5) % 16],
+          walk_minutes: naismithMinutes(km),
+          source: 'overlay:health',
+          properties: {},
+        };
+      })
+      .sort((a, b) => a.distance_m - b.distance_m);
+    const facility: NearbyFacility = {
+      id, title: FACILITY_TITLES[id] ?? id, found: found.length > 0,
+      nearest: found[0] ?? null, also: found.slice(1, 3), searched: found.length ? ['health'] : [], note: null,
+    };
+    if (!found.length) facility.why = `No searchable copy of the ${id} data on this box.`;
+    return facility;
+  });
+}
+
+/** What `GET /api/situation/export` answers: one document, checksummed, that another box can take in. */
+function exportDocument(state: FixtureState) {
+  const view = computeView(state);
+  return {
+    kind: 'sos-situation-export', version: 1, exported_at: new Date().toISOString(), checksum: 'fixture',
+    data: { conditions: view.conditions, household: state.household, neighbours: state.neighbours, stock: state.stock, notes: state.notes },
+  };
 }
 
 /** The box writes an event for every change worth remembering; the board and the drill debrief read them. */
@@ -209,6 +238,50 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (method === 'DELETE') { state.household.splice(idx, 1); return json(route, { ok: true }); }
     }
     const withDays = (i: StockItem): StockItem => ({ ...i, days_left: i.per_person_day ? Math.round((i.quantity / (i.per_person_day * Math.max(1, state.household.length))) * 10) / 10 : null });
+    if (p === '/neighbours' && method === 'GET') return json(route, state.neighbours);
+    if (p === '/neighbours' && method === 'POST') {
+      const b = body();
+      const n: Neighbour = { id: state.nextId++, name: String(b.name ?? ''), address: String(b.address ?? ''), needs: String(b.needs ?? ''), skills: String(b.skills ?? ''), contacts: String(b.contacts ?? ''), notes: String(b.notes ?? ''), updated_at: new Date().toISOString() };
+      state.neighbours.push(n);
+      return json(route, n);
+    }
+    const neighbour = /^\/neighbours\/(\d+)$/.exec(p);
+    if (neighbour) {
+      const idx = state.neighbours.findIndex((x) => x.id === Number(neighbour[1]));
+      if (idx === -1) return detail(route, 404, 'Neighbour not found');
+      if (method === 'PUT') { state.neighbours[idx] = { ...state.neighbours[idx], ...body(), updated_at: new Date().toISOString() } as Neighbour; return json(route, state.neighbours[idx]); }
+      if (method === 'DELETE') { state.neighbours.splice(idx, 1); return json(route, { ok: true }); }
+    }
+    if (p === '/street-list' && method === 'GET') {
+      const rows = state.neighbours.map((n) => `| ${n.name} | ${n.address} | ${n.needs} | ${n.skills} | ${n.contacts} |`).join('\n');
+      return route.fulfill({ status: 200, contentType: 'text/markdown; charset=utf-8', body: `# Street list\n\n| Name | Address | Needs | Can do | Reach on |\n|---|---|---|---|---|\n${rows}\n` });
+    }
+    if (p === '/situation/export' && method === 'GET') {
+      return json(route, exportDocument(state));
+    }
+    if (p === '/situation/export/qr' && method === 'GET') {
+      const payload = JSON.stringify(exportDocument(state));
+      const size = 700;
+      const parts: string[] = [];
+      for (let i = 0; i < payload.length; i += size) parts.push(payload.slice(i, i + size));
+      return json(route, { chunks: parts.map((d, i) => JSON.stringify({ i, n: parts.length, d })) });
+    }
+    if (p === '/situation/import' && method === 'POST') {
+      const raw = req.postData();
+      if (!raw) return detail(route, 422, 'Nothing to bring in');
+      return json(route, {
+        ok: true, version: 1, exported_at: new Date().toISOString(),
+        counts: {
+          conditions: { updated: 2, kept: 8 },
+          household: { added: 1, updated: 0, kept: state.household.length },
+          neighbours: { added: state.neighbours.length, updated: 0, kept: 0 },
+          events: { added: 3, skipped: 0 },
+        },
+        home: state.home ? 'kept' : 'set',
+        scenario: state.situation.slug ? 'kept' : 'started: grid-collapse',
+        changes: ['Mains power set to off', 'One person added to the household'],
+      });
+    }
     if (p === '/stock' && method === 'GET') return json(route, { people: Math.max(1, state.household.length), items: state.stock.map(withDays) });
     if (p === '/stock' && method === 'POST') {
       const b = body();
@@ -276,9 +349,13 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       return json(route, computeView(state).tasks.find((t) => t.id === id));
     }
     if (method === 'GET' && p === '/nearby') {
-      const lat = Number(url.searchParams.get('lat') ?? 0);
-      const lon = Number(url.searchParams.get('lon') ?? 0);
-      return json(route, { items: nearbyFrom(state.places, lat, lon), missing: state.missingNearby });
+      const lat = Number(url.searchParams.get('lat') ?? state.home?.lat ?? 0);
+      const lon = Number(url.searchParams.get('lon') ?? state.home?.lon ?? 0);
+      return json(route, {
+        lat, lon,
+        method: "Straight-line distance and bearing; walking time by Naismith's rule (5 km/h). Roads and paths will be longer.",
+        facilities: nearbyFrom(state.places, state.missingNearby, lat, lon),
+      });
     }
     if (method === 'GET' && p === '/sensors') return json(route, state.sensors);
     if (method === 'GET' && p === '/recordings') return json(route, state.recordings);

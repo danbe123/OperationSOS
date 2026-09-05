@@ -96,12 +96,18 @@ describe('Map: nearby', () => {
     await act(async () => {});
     expect(api.nearby).toHaveBeenCalledWith(50.93, -1.43);
     const list = await screen.findByRole('list', { name: 'Nearby facilities' });
-    const items = within(list).getAllByRole('listitem');
+    const items = [...list.querySelectorAll<HTMLElement>(':scope > li')];
+    expect(items[0]).toHaveTextContent('Pharmacy');
     expect(items[0]).toHaveTextContent('Boots, High Street');
-    expect(items[0]).toHaveTextContent('Pharmacy · 620 m · 8 min on foot · 092° E');
-    expect(items[1]).toHaveTextContent('A&E');
-    expect(screen.getByRole('dialog', { name: 'Nearby' })).toHaveTextContent('No data on this box for: Rest centre');
-    await user.click(within(items[0]).getByRole('button', { name: /Boots/ }));
+    expect(items[0]).toHaveTextContent('620 m · 8 min on foot · 092° E');
+    // the runners-up ride under the nearest, not as separate blocks
+    expect(within(items[0]).getByRole('list', { name: /Other pharmacy nearby/i })).toHaveTextContent('Shirley Pharmacy');
+    expect(items[1]).toHaveTextContent('Emergency department');
+    const panel = screen.getByRole('dialog', { name: 'Nearby' });
+    expect(panel).toHaveTextContent('Rest centre');
+    expect(panel).toHaveTextContent('No searchable copy of the emergency-services overlay on this box.');
+    expect(panel).toHaveTextContent(/Naismith/);
+    await user.click(within(items[0]).getByRole('button', { name: /^Boots, High Street/ }));
     expect(lastMap().flyTo).toHaveBeenCalledWith({ center: [-1.4331, 50.9345], zoom: 15 });
   });
 
@@ -112,7 +118,8 @@ describe('Map: nearby', () => {
     await user.click(await screen.findByRole('button', { name: /Nearby/ }));
     await act(async () => {});
     const list = await screen.findByRole('list', { name: 'Nearby facilities' });
-    await user.click(within(within(list).getAllByRole('listitem')[1]).getByRole('button', { name: 'Route to' }));
+    const items = [...list.querySelectorAll<HTMLElement>(':scope > li')];
+    await user.click(within(items[1]).getByRole('button', { name: /Line to Southampton General Hospital/ }));
     const readout = screen.getByTestId('map-readout');
     expect(readout).toHaveTextContent('Southampton General Hospital');
     expect(readout).toHaveTextContent('from home');

@@ -4,6 +4,7 @@ import type { ConditionId } from '../api/types';
 import { useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
 import { describeElapsed, phaseFor } from '../tools/situation';
+import '../screens/board.css';
 import { boardSunset, nextTasks, stockDays } from './board';
 import { ago, chipDuration, clockTime, CONDITION_INFO, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
 import { useSituation } from './SituationProvider';
@@ -42,7 +43,7 @@ export function BoardView() {
   return (
     <div className="board">
       <header className="board-head">
-        {view.meta.drill && <span className="badge badge-warn board-drill">⚑ DRILL</span>}
+        {view.meta.drill && <span className="badge badge-warn board-drill"><span aria-hidden="true">⚑</span> Drill</span>}
         <h1 className="board-title">
           {scenario ? scenario.title : shown.some((id) => view.conditions[id]?.state !== 'working') ? 'Something is off' : 'Everything is working'}
         </h1>

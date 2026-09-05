@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { Layout } from '../../src/router';
+import { Shell as Layout } from '../../src/shell/Shell';
 import { SearchBar, SUGGEST_DEBOUNCE_MS } from '../../src/components/SearchBar';
 import { suggestions } from '../fixtures/api';
 

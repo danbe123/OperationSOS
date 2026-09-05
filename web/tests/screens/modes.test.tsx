@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import { renderRoute } from '../render';
-import { Layout } from '../../src/router';
+import { Shell as Layout } from '../../src/shell/Shell';
 import { Html } from '../../src/components/Html';
 import { api } from '../../src/api/client';
-import { homeTiles } from '../../src/screens/Home';
+import { scenarioMapHref } from '../../src/situation/mapLink';
 import { condition, makeView, pages, playbooks, view } from '../fixtures/api';
 
 const phonesDown = makeView({
@@ -17,18 +17,18 @@ describe('modes: calls hidden', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(phonesDown);
     renderRoute('/');
-    const strip = await screen.findByTestId('status-strip');
-    expect(within(strip).queryByRole('button', { name: /Connect a phone/ })).toBeNull();
-    expect(within(strip).getByRole('link', { name: /Phones down: what to do/ })).toHaveAttribute('href', '/p/no-phones');
-    expect(strip).toHaveTextContent('http://10.42.0.1');
+    const box = await screen.findByTestId('status-strip');
+    expect(within(box).queryByRole('button', { name: /Connect a phone/ })).toBeNull();
+    expect(within(box).getByRole('link', { name: /Phones down: what to do/ })).toHaveAttribute('href', '/p/no-phones');
+    expect(box).toHaveTextContent('http://10.42.0.1');
   });
 
   it('keeps Connect-a-phone while the networks are up', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    const strip = await screen.findByTestId('status-strip');
-    expect(within(strip).getByRole('button', { name: /Connect a phone/ })).toBeInTheDocument();
+    const box = await screen.findByTestId('status-strip');
+    expect(within(box).getByRole('button', { name: /Connect a phone/ })).toBeInTheDocument();
   });
 
   it('drops the numbers line on the phone and radio screen for the no-phones route', async () => {
@@ -59,23 +59,27 @@ describe('modes: calls hidden', () => {
 });
 
 describe('modes: map first', () => {
-  it('leads with the map and opens the flood zones for a flood', () => {
-    expect(homeTiles(false).map((t) => t.to)[0]).toBe('/medical');
-    expect(homeTiles(true).map((t) => t.to)[0]).toBe('/map');
-    const flood = homeTiles(true, 'storms-flooding');
-    expect(flood[0].to).toBe('/map?overlay=flood-zones');
-    expect(flood[0].subtitle).toContain('flood zones');
-    expect(homeTiles(false, 'grid-collapse')[1].to).toBe('/map');
+  it('sends a flood to the map with its flood zones already on', () => {
+    expect(scenarioMapHref(null)).toBe('/map');
+    expect(scenarioMapHref('grid-collapse')).toBe('/map');
+    expect(scenarioMapHref('storms-flooding')).toBe('/map?overlay=flood-zones');
   });
 
-  it('carries the flood overlay onto Home', async () => {
+  it('puts an Open the map button at the top of Now, carrying the flood overlay', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       scenario: { slug: 'storms-flooding', title: 'Storms and flooding', started_at: '2026-09-06T12:00:00.000Z', elapsed_s: 7200, phase: 'right-now' },
       modes: { ...view.modes, map_first: true },
     }));
     renderRoute('/');
-    const tools = await screen.findByRole('navigation', { name: 'Main sections' });
-    expect(within(tools).getAllByRole('link')[0]).toHaveAttribute('href', '/map?overlay=flood-zones');
+    expect(await screen.findByRole('link', { name: /Open the map/ })).toHaveAttribute('href', '/map?overlay=flood-zones');
+  });
+
+  it('leaves the map button off Now when the modes do not ask for it', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    renderRoute('/');
+    await screen.findByRole('region', { name: 'Situation' });
+    expect(screen.queryByRole('link', { name: /Open the map/ })).toBeNull();
   });
 });

@@ -5,9 +5,10 @@ import { StatusProvider, useStatus } from './api/status';
 import { SituationProvider, useSituation } from './situation/SituationProvider';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { KioskProvider } from './kiosk/KioskProvider';
-import './app.css';
-import './screens/home.css';
-import './situation/situation.css';
+import './styles/tokens.css';
+import './styles/type.css';
+import './styles/shell.css';
+import './styles/components.css';
 
 function Themed() {
   const { status } = useStatus();

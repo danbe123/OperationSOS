@@ -1,11 +1,10 @@
-import { AppBar } from '../../components/AppBar';
+import { Screen, Body } from '../../shell/Screen';
 import { EventLog } from '../plan/EventLog';
 
 export function Log() {
   return (
-    <div className="screen">
-      <AppBar title="Event log" />
-      <EventLog compact />
-    </div>
+    <Screen title="Event log">
+      <Body><EventLog compact /></Body>
+    </Screen>
   );
 }

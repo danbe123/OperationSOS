@@ -3,7 +3,7 @@ import { useLocation, useParams } from 'react-router';
 import ePub, { type Rendition } from 'epubjs';
 import { api } from '../api/client';
 import { errorMessage, useQuery } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
+import { Screen } from '../shell/Screen';
 import { Icon } from '../icons';
 import { replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, pdfViewerCss, READER_STYLE_ID } from '../theme/readerTheme';
@@ -82,12 +82,12 @@ function EpubReader({ url, theme }: { url: string; theme: Theme }) {
 
   return (
     <div className="epub">
-      <div className="row epub-controls no-print">
+      <div className="row epub-controls no-print screen-body">
         <button type="button" className="btn" onClick={() => void renditionRef.current?.prev()}><Icon name="back" /><span>Previous</span></button>
         <button type="button" className="btn" onClick={() => void renditionRef.current?.next()}><span>Next</span><Icon name="forward" /></button>
         <button type="button" className="btn" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])}><Icon name="text-size" /><span>Text size {size}%</span></button>
       </div>
-      {error && <p className="pad warning">Could not open this book: {error}</p>}
+      {error && <p className="screen-body warning">Could not open this book: {error}</p>}
       <div ref={hostRef} className="epub-host" />
     </div>
   );
@@ -99,14 +99,13 @@ export function Doc() {
   const { theme } = useTheme();
   const { data: item, error, loading } = useQuery(() => api.libraryItem(id), [id]);
   return (
-    <div className="screen screen-fill">
-      <AppBar title={item?.title ?? 'Document'} />
-      {loading && <p className="pad muted">Loading…</p>}
-      {error && <p className="pad warning">Could not load this document: {error}</p>}
-      {item && !item.available && <p className="pad warning">{item.title} is not available: {item.drive_label}.</p>}
+    <Screen title={item?.title ?? 'Document'} fill search={false}>
+      {loading && <p className="screen-body muted">Loading…</p>}
+      {error && <p className="screen-body warning">Could not load this document: {error}</p>}
+      {item && !item.available && <p className="screen-body warning">{item.title} is not available: {item.drive_label}.</p>}
       {item && item.available && item.url && item.kind === 'pdf' && <PdfFrame url={item.url} theme={theme} hash={location.hash} />}
       {item && item.available && item.url && item.kind === 'epub' && <EpubReader url={item.url} theme={theme} />}
-      {item && item.available && item.kind !== 'pdf' && item.kind !== 'epub' && <p className="pad warning">{item.title} is not a PDF or EPUB.</p>}
-    </div>
+      {item && item.available && item.kind !== 'pdf' && item.kind !== 'epub' && <p className="screen-body warning">{item.title} is not a PDF or EPUB.</p>}
+    </Screen>
   );
 }

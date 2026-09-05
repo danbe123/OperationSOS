@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { screen, act, fireEvent } from '@testing-library/react';
 import { useLocation } from 'react-router';
 import { renderRoute } from '../render';
-import { Layout } from '../../src/router';
+import { Shell as Layout } from '../../src/shell/Shell';
 import { Html } from '../../src/components/Html';
 import { NOT_IN_LIBRARY } from '../../src/links';
 

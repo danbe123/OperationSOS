@@ -1,12 +1,10 @@
-import { useLayoutEffect, useRef, type RefObject } from 'react';
-import { Outlet, useLocation, useNavigationType, type RouteObject } from 'react-router';
-import { AppBar } from './components/AppBar';
-import { Notices } from './components/Notice';
+import type { RouteObject } from 'react-router';
 import { Ai } from './screens/Ai';
 import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Doc } from './screens/Doc';
-import { Home } from './screens/Home';
+import { Now } from './screens/Now';
+import { Guides } from './screens/Guides';
 import { Library } from './screens/Library';
 import { MapScreen } from './screens/Map';
 import { Medical } from './screens/Medical';
@@ -23,79 +21,51 @@ import { Dose } from './screens/tools/Dose';
 import { Radio } from './screens/Radio';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
-import { Search } from './screens/Search';
+import { Find } from './screens/Find';
 import { Situation } from './screens/Situation';
 import { Tasks } from './screens/Tasks';
 import { System } from './screens/System';
-import { DrillBanner } from './situation/DrillBanner';
-import { ForecastReminders } from './situation/ForecastReminders';
-import { Keyboard } from './kiosk/Keyboard';
-import { IdleOverlay } from './kiosk/IdleOverlay';
+import { Screen, Body } from './shell/Screen';
+import { Shell } from './shell/Shell';
 
-/** Start each new screen at the top: the app scrolls inside .layout-main, so the browser never resets it for us.
- * Back and forward keep their position; a hash link scrolls to its anchor instead. */
-export function useScrollToTop(main: RefObject<HTMLElement | null>) {
-  const { pathname, hash } = useLocation();
-  const type = useNavigationType();
-  useLayoutEffect(() => {
-    if (type === 'POP') return;
-    if (hash) {
-      const target = document.getElementById(hash.slice(1));
-      if (target) { target.scrollIntoView(); return; }
-    }
-    if (main.current) main.current.scrollTop = 0;
-    window.scrollTo(0, 0);
-  }, [pathname, hash, type, main]);
-}
-
-export function Layout() {
-  const main = useRef<HTMLElement>(null);
-  useScrollToTop(main);
-  return (
-    <div className="layout">
-      <DrillBanner />
-      <main className="layout-main" ref={main}>
-        <Outlet />
-      </main>
-      <Notices />
-      <ForecastReminders />
-      <Keyboard />
-      <IdleOverlay />
-    </div>
-  );
-}
+export { useScrollToTop } from './shell/Shell';
 
 export function NotFound() {
   return (
-    <div className="screen">
-      <AppBar title="Not found" />
-      <p className="pad">There is nothing at this address. Use Home or Search.</p>
-    </div>
+    <Screen title="Not found">
+      <Body>
+        <p>There is nothing at this address.</p>
+        <div className="row"><a className="btn btn-primary" href="/">Go to Now</a><a className="btn" href="/search">Search the box</a></div>
+      </Body>
+    </Screen>
   );
 }
 
 export function RouteError() {
   return (
-    <div className="screen">
-      <AppBar title="Unable to open this page" back={false} search={false} />
-      <section className="pad">
-        <h2>Something went wrong</h2>
-        <p>Try loading this page again, or return to Home to open another resource.</p>
-        <button className="btn" type="button" onClick={() => window.location.reload()}>Reload page</button>
-        {' '}<a className="btn" href="/">Return to Home</a>
-      </section>
-    </div>
+    <Screen title="Unable to open this page" back={false} search={false}>
+      <Body>
+        <p>Try loading this page again, or go back to Now and open something else.</p>
+        <div className="row">
+          <button className="btn btn-primary" type="button" onClick={() => window.location.reload()}>Reload the page</button>
+          <a className="btn" href="/">Go to Now</a>
+        </div>
+      </Body>
+    </Screen>
   );
 }
 
 export const routes: RouteObject[] = [
   {
     path: '/',
-    element: <Layout />,
+    element: <Shell />,
     errorElement: <RouteError />,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'search', element: <Search /> },
+      { index: true, element: <Now /> },
+      { path: 'now', element: <Now /> },
+      { path: 'guides', element: <Guides /> },
+      { path: 'search', element: <Find /> },
+      { path: 'find', element: <Find /> },
       { path: 'library', element: <Library /> },
       { path: 'map', element: <MapScreen /> },
       { path: 'medical', element: <Medical /> },

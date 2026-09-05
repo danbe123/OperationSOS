@@ -108,20 +108,20 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
     return { title: c.title, days: Math.min(...inCat.map((i) => i.days_left as number)) };
   }).filter((x): x is { title: string; days: number } => x !== null);
   return (
-    <section id="stock">
-      <h2 className="pad">Stock</h2>
-      <p className="pad muted">Days left are for {people} {people === 1 ? 'person' : 'people'} at the rates you set. Water: 3 litres per person a day covers drinking and basic hygiene.</p>
-      {q.error && <p className="pad warning">Stock unavailable: {q.error}</p>}
+    <section className="panel" id="stock">
+      <h2>Stock</h2>
+      <p className="muted">Days left are for {people} {people === 1 ? 'person' : 'people'} at the rates you set. Water: 3 litres per person a day covers drinking and basic hygiene.</p>
+      {q.error && <p className="warning">Stock unavailable: {q.error}</p>}
       {summary.length > 0 && (
-        <ul className="row pad stock-summary" aria-label="Stock summary">
-          {summary.map((s) => <li key={s.title} className="card-box"><strong>{s.title}</strong> <span className={s.days < 3 ? 'warning' : ''}>{s.days} days</span></li>)}
+        <ul className="row stock-summary" aria-label="Stock summary">
+          {summary.map((s) => <li key={s.title} className="badge"><strong>{s.title}</strong> <span className={s.days < 3 ? 'warning' : ''}>{s.days} days</span></li>)}
         </ul>
       )}
       <ul className="list" aria-label="Stock items">
         {items.map((i) => <StockRow key={i.id} item={i} onChanged={q.refetch} />)}
         {q.data && items.length === 0 && <li className="muted">Nothing tracked yet.</li>}
       </ul>
-      <form className="stack pad no-print" onSubmit={(e) => void add(e)} aria-label="Add stock">
+      <form className="stack no-print" onSubmit={(e) => void add(e)} aria-label="Add stock">
         <div className="row">
           <label className="field"><span>Type</span>
             <select aria-label="Type" value={category} onChange={(e) => pick(e.target.value as StockCategory)}>

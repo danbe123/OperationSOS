@@ -1,18 +1,11 @@
-// The nearest facilities panel: what each kind is called, and what a straight line to one comes to.
-import type { NearbyKind } from '../api/types';
+// The nearest facilities panel: what each kind looks like, and what one place comes to in words.
+// The shapes here are `GET /api/nearby?lat&lon` exactly as the box answers it.
+import type { NearbyFacility, NearbyPlace } from '../api/types';
+import type { IconName } from '../icons';
 import { bearingDeg, distanceKm, formatBearing, formatDistance, formatWalk, naismithMinutes, type LngLat } from './measure';
 
-export const NEARBY_TITLE: Record<NearbyKind, string> = {
-  'emergency-department': 'A&E',
-  pharmacy: 'Pharmacy',
-  gp: 'GP surgery',
-  fuel: 'Fuel station',
-  'water-works': 'Water works',
-  'fire-station': 'Fire station',
-  'rest-centre': 'Rest centre',
-};
-
-export const NEARBY_ICON: Record<NearbyKind, string> = {
+/** An icon per facility id. The box names the facilities, so an unknown id still draws something. */
+export const NEARBY_ICON: Record<string, IconName> = {
   'emergency-department': 'medical',
   pharmacy: 'medical',
   gp: 'heart',
@@ -21,6 +14,10 @@ export const NEARBY_ICON: Record<NearbyKind, string> = {
   'fire-station': 'fire',
   'rest-centre': 'home',
 };
+
+export function nearbyIcon(id: string): IconName {
+  return NEARBY_ICON[id] ?? 'pin';
+}
 
 export type Route = { km: number; bearing: number; minutes: number; text: string };
 
@@ -38,7 +35,14 @@ export function describeRoute(from: LngLat, to: LngLat, title: string, fromLabel
   };
 }
 
-/** How one facility reads in the list: how far, how long on foot, and which way. */
-export function describeNearby(item: { distance_m: number; walk_min: number; bearing_deg: number }): string {
-  return `${formatDistance(item.distance_m / 1000)} · ${formatWalk(item.walk_min)} on foot · ${formatBearing(item.bearing_deg)}`;
+/** How one place reads in the list: how far, how long on foot, and which way, in the box's own words.
+ * The compass point comes from the box so the screen and the printed report agree. */
+export function describeNearby(place: Pick<NearbyPlace, 'distance_m' | 'walk_minutes' | 'bearing_deg' | 'compass'>): string {
+  const bearing = `${Math.round(place.bearing_deg).toString().padStart(3, '0')}° ${place.compass}`;
+  return `${formatDistance(place.distance_m / 1000)} · ${formatWalk(place.walk_minutes)} on foot · ${bearing}`;
+}
+
+/** What a facility with nothing found should say, in one line. */
+export function nearbyGap(f: NearbyFacility): string {
+  return f.why ?? `Nothing matching on this box.`;
 }

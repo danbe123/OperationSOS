@@ -66,7 +66,7 @@ describe('Ai screen', () => {
     vi.spyOn(api, 'status').mockResolvedValue(status);
     const a = renderRoute('/ai');
     expect(await screen.findByText(/The assistant is off/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /System/ })).toHaveAttribute('href', '/system');
+    expect(screen.getByRole('link', { name: /Turn it on in System/ })).toHaveAttribute('href', '/system');
     a.unmount();
     vi.spyOn(api, 'status').mockResolvedValue({ ...status, ai: { state: 'off-thermal', model: null, message: 'Stopped at 81°C' } });
     renderRoute('/ai');

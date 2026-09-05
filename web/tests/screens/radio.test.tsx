@@ -11,7 +11,8 @@ describe('Radio', () => {
     const nav = await screen.findByRole('navigation', { name: 'Comms pages' });
     const links = within(nav).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/p/pmr446', '/p/uk-numbers', '/p/what-still-works']);
-    expect(screen.getByText(/999 .* 111 .* 105 .* 0345 988 1188/)).toBeInTheDocument();
+    const numbers = screen.getByText(/Emergency/).closest('p') as HTMLElement;
+    expect(numbers.textContent).toMatch(/999.*111.*105.*0345 988 1188/);
   });
   it('shows an error state', async () => {
     vi.spyOn(api, 'pages').mockRejectedValue(new Error('nope'));

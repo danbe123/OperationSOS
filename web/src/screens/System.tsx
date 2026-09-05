@@ -3,7 +3,7 @@ import { api, ApiError } from '../api/client';
 import { useStatus } from '../api/status';
 import type { AiState, Status, UpdateProgress } from '../api/types';
 import { errorMessage } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
+import { Screen, Body } from '../shell/Screen';
 import { Badge } from '../components/Badge';
 import { notify } from '../components/Notice';
 import { usePinGate } from '../components/PinModal';
@@ -24,12 +24,12 @@ const AI_LABEL: Record<AiState, string> = { off: 'off', starting: 'starting', re
 
 function StatusCards({ s }: { s: Status }) {
   return (
-    <div className="cards">
-      <div className="card-box"><h3>Box</h3><p>Version <strong>{s.version}</strong></p><p>Up {formatUptime(s.uptime_s)}</p><p>Load {s.load.map((l) => l.toFixed(2)).join(' / ')}</p></div>
-      <div className="card-box"><h3>Heat and memory</h3><p>CPU <strong>{s.cpu_temp_c === null ? 'n/a' : `${Math.round(s.cpu_temp_c)}°C`}</strong></p><p>Memory <strong>{s.mem.used_mb} of {s.mem.total_mb} MB</strong></p></div>
-      <div className="card-box"><h3>Storage</h3><p>Core: <strong>{s.disks.core.free_gb} of {s.disks.core.total_gb} GB free</strong></p><p>External: <strong>{s.disks.extended.mounted ? `${s.disks.extended.free_gb} of ${s.disks.extended.total_gb} GB free` : 'Not connected'}</strong></p></div>
-      <div className="card-box"><h3>Hotspot</h3><p>WiFi <strong>{s.hotspot.ssid}</strong> {s.hotspot.enabled ? '' : '(off)'}</p><p>http://{s.hotspot.ip} · http://sos.box</p><p><strong>{s.hotspot.clients} {s.hotspot.clients === 1 ? 'device' : 'devices'}</strong> connected</p></div>
-      <div className="card-box"><h3>Security</h3><p>{s.pin_required ? 'PIN protection on' : 'PIN protection off'}</p><p className="muted">{s.dev ? 'Development profile' : 'Production profile'}</p></div>
+    <div className="panels">
+      <div className="panel"><h3>Box</h3><p>Version <strong>{s.version}</strong></p><p>Up {formatUptime(s.uptime_s)}</p><p>Load {s.load.map((l) => l.toFixed(2)).join(' / ')}</p></div>
+      <div className="panel"><h3>Heat and memory</h3><p>CPU <strong>{s.cpu_temp_c === null ? 'n/a' : `${Math.round(s.cpu_temp_c)}°C`}</strong></p><p>Memory <strong>{s.mem.used_mb} of {s.mem.total_mb} MB</strong></p></div>
+      <div className="panel"><h3>Storage</h3><p>Core: <strong>{s.disks.core.free_gb} of {s.disks.core.total_gb} GB free</strong></p><p>External: <strong>{s.disks.extended.mounted ? `${s.disks.extended.free_gb} of ${s.disks.extended.total_gb} GB free` : 'Not connected'}</strong></p></div>
+      <div className="panel"><h3>Hotspot</h3><p>WiFi <strong>{s.hotspot.ssid}</strong> {s.hotspot.enabled ? '' : '(off)'}</p><p>http://{s.hotspot.ip} · http://sos.box</p><p><strong>{s.hotspot.clients} {s.hotspot.clients === 1 ? 'device' : 'devices'}</strong> connected</p></div>
+      <div className="panel"><h3>Security</h3><p>{s.pin_required ? 'PIN protection on' : 'PIN protection off'}</p><p className="muted">{s.dev ? 'Development profile' : 'Production profile'}</p></div>
     </div>
   );
 }
@@ -162,12 +162,12 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
   const ai = aiState ?? status.ai.state;
 
   return (
-    <div className="screen system">
-      <AppBar title="System" />
+    <Screen title="System" className="system">
+      <Body>
       {dialog}
       <StatusCards s={status} />
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Hotspot</h2>
         <form className="stack" onSubmit={saveHotspot}>
           <label className="field"><span>Network name (SSID)</span><input type="text" aria-label="Network name (SSID)" value={ssid} onChange={(e) => setSsid(e.target.value)} maxLength={32} /></label>
@@ -176,7 +176,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         </form>
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Ethernet</h2>
         <p className="muted">Home router: plug into your router for updates and http://sos.local. Direct: plug a laptop straight in (10.43.0.1).</p>
         <div className="row">
@@ -185,7 +185,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         </div>
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Power</h2>
         <p className="muted">Low power dims the screen and stops the AI.</p>
         <div className="row">
@@ -196,7 +196,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         {backlightNote && <p className="warning">{backlightNote}</p>}
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>AI assistant</h2>
         <p>State: <Badge tone={ai === 'ready' ? 'ok' : ai === 'off-thermal' || ai === 'error' ? 'danger' : 'default'}>{AI_LABEL[ai]}</Badge>{status.ai.model && <span className="muted"> · {status.ai.model}</span>}</p>
         {ai === 'off-thermal' && <p className="warning">The AI switched off because the box got too hot. Let it cool, then turn it on again.</p>}
@@ -211,7 +211,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         {status.power_mode === 'low' && <p className="muted">Leave low power mode to use the AI.</p>}
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Settings</h2>
         <form className="stack" onSubmit={saveSettings}>
           <label className="field"><span>Stop the AI above (°C)</span><input type="number" aria-label="Stop the AI above (°C)" min={60} max={95} value={thermal} onChange={(e) => setThermal(e.target.value)} inputMode="numeric" /></label>
@@ -226,7 +226,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         </form>
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Admin PIN</h2>
         <form className="row" onSubmit={(e) => void changePin(e)}>
           <input type="password" inputMode="numeric" pattern="[0-9]*" aria-label="New PIN" placeholder="New PIN" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} maxLength={8} />
@@ -235,7 +235,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
         <p className="muted">Forgotten PIN: run <code>sos pin reset</code> on the box.</p>
       </section>
 
-      <section className="pad stack">
+      <section className="panel stack">
         <h2>Update content</h2>
         <p className="muted">Needs the box on a router with internet (ethernet).</p>
         <div className="row">
@@ -252,7 +252,8 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
           </>
         )}
       </section>
-    </div>
+      </Body>
+    </Screen>
   );
 }
 
@@ -263,10 +264,9 @@ export function System() {
 
   if (!status) {
     return (
-      <div className="screen">
-        <AppBar title="System" />
-        {error ? <p className="pad warning">Box status unavailable: {error}</p> : <p className="pad muted">Reading the box status…</p>}
-      </div>
+      <Screen title="System">
+        <Body>{error ? <p className="warning">Box status unavailable: {error}</p> : <p className="muted">Reading the box status…</p>}</Body>
+      </Screen>
     );
   }
 

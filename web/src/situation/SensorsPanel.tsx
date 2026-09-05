@@ -40,13 +40,11 @@ export function SensorsPanel() {
   if (missing) return null;
   if (sensors && entries.length === 0 && !error) return null;
   return (
-    <section aria-label="Detected" id="sensors">
-      <div className="pad">
-        <h2>Detected by the box</h2>
-        <p className="muted">What the box can sense for itself. It proposes; you decide.</p>
-      </div>
-      {!sensors && !error && <p className="pad muted">Reading the sensors…</p>}
-      {error && <p className="pad muted">No sensor readings: {error}</p>}
+    <section className="panel" aria-label="Detected" id="sensors">
+      <h2>Detected by the box</h2>
+      <p className="muted">What the box can sense for itself. It proposes; you decide.</p>
+      {!sensors && !error && <p className="muted">Reading the sensors…</p>}
+      {error && <p className="muted">No sensor readings: {error}</p>}
       {entries.length > 0 && (
         <ul className="list sensor-list" aria-label="Sensor readings">
           {entries.map(([id, reading]) => {

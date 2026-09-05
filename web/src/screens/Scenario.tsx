@@ -4,16 +4,20 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import type { Playbook, Section as SectionData, Situation } from '../api/types';
 import { useQuery } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
 import { Checklist } from '../components/Checklist';
 import { Html } from '../components/Html';
+import { PrintButton } from '../components/PrintButton';
 import { Section } from '../components/Section';
 import { SituationClock } from '../components/SituationClock';
+import { Icon } from '../icons';
+import { Screen } from '../shell/Screen';
+import { withTask } from '../situation/apply';
 import { CallsNotice } from '../situation/CallsNotice';
 import { ReadAloudBlock } from '../situation/ReadAloud';
+import { useSituation } from '../situation/SituationProvider';
+import { TaskRow } from '../situation/TaskRow';
 import { elapsedSince, phaseFor } from '../tools/situation';
-import { Icon } from '../icons';
-import { useKiosk } from '../kiosk/KioskProvider';
+import './scenario.css';
 
 const MODULE_MARK = /(?:<p>\s*)?(?:<div[^>]*data-module="([\w-]+)"[^>]*>\s*<\/div>|\{\{module:([\w-]+)\}\})(?:\s*<\/p>)?/g;
 
@@ -37,11 +41,11 @@ function SectionBody({ section, playbook, open }: { section: SectionData; playbo
       {splitModules(section.html).map((part, i) => {
         if (typeof part === 'string') return <Html key={i} html={part} />;
         const mod = playbook.modules.find((m) => m.slug === part.module);
-        if (!mod) return <p key={i} className="pad warning">Module "{part.module}" is missing from this playbook.</p>;
+        if (!mod) return <p key={i} className="warning">The “{part.module}” module is missing from this guide.</p>;
         return (
           <Section key={i} title={mod.title} open={open}>
             <Html html={mod.html} />
-            <p className="pad no-print"><Link to={`/m/${mod.slug}`}>Open "{mod.title}" on its own</Link></p>
+            <p className="no-print"><Link to={`/m/${mod.slug}`}>Open “{mod.title}” on its own</Link></p>
           </Section>
         );
       })}
@@ -49,10 +53,35 @@ function SectionBody({ section, playbook, open }: { section: SectionData; playbo
   );
 }
 
+/** The scenario's jobs: the box's own task list when this scenario is the one that is running, and
+ * the guide's shared checklist otherwise. Both tick the same rows on the box. */
+function ScenarioTasks({ playbook, onItems }: { playbook: Playbook; onItems: (items: Playbook['checklist']) => void }) {
+  const { view, apply } = useSituation();
+  const live = (view?.tasks ?? []).filter((t) => t.source === `checklist:${playbook.slug}`);
+  const total = live.length > 0 ? live.length : playbook.checklist.length;
+  const done = live.length > 0 ? live.filter((t) => t.done).length : playbook.checklist.filter((i) => i.checked).length;
+  return (
+    <aside className="panel scenario-tasks" id="response-checklist" aria-labelledby="checklist-heading">
+      <div className="panel-head">
+        <h2 id="checklist-heading">Checklist</h2>
+        <span className="badge">{done} of {total} done</span>
+      </div>
+      <progress className="progress-line" aria-label="Checklist completion" value={done} max={Math.max(1, total)} />
+      <p className="muted">Shared with everyone on this box.</p>
+      {live.length > 0 ? (
+        <ul className="list task-list">
+          {live.map((t) => <TaskRow key={t.id} task={t} onChanged={(saved) => view && apply(withTask(view, saved))} />)}
+        </ul>
+      ) : (
+        <Checklist slug={playbook.slug} items={playbook.checklist} onItems={onItems} />
+      )}
+    </aside>
+  );
+}
+
 export function Scenario() {
   const { slug = '' } = useParams();
   const [params, setParams] = useSearchParams();
-  const kiosk = useKiosk();
   const { data, error, loading, setData } = useQuery(() => api.playbook(slug), [slug], { intervalMs: 15_000, refetchOnFocus: true });
   const [printing, setPrinting] = useState(false);
   const situationQ = useQuery<Situation>(() => api.situation(), [slug], { intervalMs: 30_000, refetchOnFocus: true });
@@ -88,8 +117,8 @@ export function Scenario() {
     return set;
   }, [data]);
 
-  if (error) return <div className="screen"><AppBar title="Playbook" /><p className="pad warning">Could not load this playbook: {error}</p></div>;
-  if (loading || !data) return <div className="screen"><AppBar title="Playbook" /><p className="pad muted">Loading…</p></div>;
+  if (error) return <Screen title="Guide" search={false}><div className="screen-body"><p className="warning">Could not load this guide: {error}</p></div></Screen>;
+  if (loading || !data) return <Screen title="Guide" search={false}><div className="screen-body"><p className="muted">Loading…</p></div></Screen>;
 
   const current = data.sections.find((s) => s.id === tab) ?? data.sections[0];
   const unreferenced = data.modules.filter((m) => !referenced.has(m.slug));
@@ -101,72 +130,67 @@ export function Scenario() {
   };
 
   return (
-    <div className="screen playbook">
-      <AppBar
-        title={data.title}
-        search={false}
-        actions={
-          <>
-            {data.overlays.length > 0 && (
-              <Link className="btn btn-chrome" to={`/map?${data.overlays.map((o) => `overlay=${encodeURIComponent(o)}`).join('&')}`}><Icon name="map" /><span>Map</span></Link>
-            )}
-            {!kiosk && <button type="button" className="btn btn-chrome" onClick={print}><Icon name="print" /><span>Print</span></button>}
-          </>
-        }
-      />
-      <CallsNotice />
-      <div className="scenario-intro"><p className="eyebrow">Your response guide</p><p>{data.summary}</p><a className="btn" href="#response-checklist"><Icon name="plan" /> Household checklist</a>
-        {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
-      </div>
-      <div className="tabs" role="tablist" aria-label="Sections">
-        {data.sections.map((s) => (
-          <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
-            {s.title}{s.id === nowPhase && <span className="badge badge-warn tab-now">now</span>}
-          </button>
-        ))}
-      </div>
-      <div className="scenario-workspace">
-      <div className="scenario-guidance">
-      {sections.map((s) => (
-        <section className={s.id === 'right-now' ? 'response-panel response-now' : 'response-panel'} key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
-          {!printing && <div className="response-heading"><p className="eyebrow">{s.id === 'right-now' ? 'Start here' : 'Plan ahead'}</p><h2>{s.id === 'right-now' ? 'Do this first' : s.title}</h2></div>}
-          {printing && <h2 className="pad">{s.title}</h2>}
-          <ReadAloudBlock id={`section:${data.slug}#${s.id}`} label="Read this section aloud">
-            <SectionBody section={s} playbook={data} open={printing} />
-          </ReadAloudBlock>
-        </section>
-      ))}
-      {unreferenced.length > 0 && (
+    <Screen
+      title={data.title}
+      search={false}
+      className="playbook"
+      actions={
         <>
-          <h2 className="pad">Modules</h2>
-          {unreferenced.map((m) => (
-            <Section key={m.slug} title={m.title} open={printing}>
-              <Html html={m.html} />
-              <p className="pad no-print"><Link to={`/m/${m.slug}`}>Open "{m.title}" on its own</Link></p>
-            </Section>
-          ))}
+          {data.overlays.length > 0 && (
+            <Link className="btn btn-small" to={`/map?${data.overlays.map((o) => `overlay=${encodeURIComponent(o)}`).join('&')}`}><Icon name="map" size={18} /><span>Map</span></Link>
+          )}
+          <PrintButton onPrint={print} />
         </>
-      )}
+      }
+    >
+      <div className="screen-body">
+        <CallsNotice />
+        <p className="muted measure">{data.summary}</p>
+        {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
+        <div className="tabs" role="tablist" aria-label="Sections">
+          {data.sections.map((s) => (
+            <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
+              {s.title}{s.id === nowPhase && <span className="badge badge-warn tab-now">now</span>}
+            </button>
+          ))}
+        </div>
+        <div className="scenario-workspace">
+          <div className="scenario-guidance">
+            {sections.map((s) => (
+              <section className="scenario-panel" key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
+                <h2>{s.id === 'right-now' ? 'Do this first' : s.title}</h2>
+                <ReadAloudBlock id={`section:${data.slug}#${s.id}`} label="Read this section aloud">
+                  <SectionBody section={s} playbook={data} open={printing} />
+                </ReadAloudBlock>
+              </section>
+            ))}
+            {unreferenced.length > 0 && (
+              <section aria-label="More modules">
+                <h2>More modules</h2>
+                {unreferenced.map((m) => (
+                  <Section key={m.slug} title={m.title} open={printing}>
+                    <Html html={m.html} />
+                    <p className="no-print"><Link to={`/m/${m.slug}`}>Open “{m.title}” on its own</Link></p>
+                  </Section>
+                ))}
+              </section>
+            )}
+            <footer className="scenario-sources">
+              <h2>Sources</h2>
+              <ul className="list">
+                {data.sources.map((s, i) => (
+                  <li key={i}>
+                    {s.doc ? <Link to={`/doc/${s.doc}`}>{s.title}</Link> : s.kiwix ? <Link to={`/read/${s.kiwix}`}>{s.title}</Link> : <span>{s.title}</span>}
+                    {s.as_at && <span className="muted"> (as at {s.as_at})</span>}
+                  </li>
+                ))}
+              </ul>
+              <p className="muted">{data.reviewed ? `Reviewed ${data.reviewed}` : 'Not yet reviewed by the owner'}</p>
+            </footer>
+          </div>
+          <ScenarioTasks playbook={data} onItems={(items) => setData({ ...data, checklist: items })} />
+        </div>
       </div>
-      <aside className="scenario-checklist" id="response-checklist" aria-labelledby="checklist-heading">
-        <div className="checklist-heading"><p className="eyebrow">Work through it together</p><h2 id="checklist-heading">Checklist</h2><p className="muted">Shared with everyone on this box.</p></div>
-        <progress className="checklist-progress" aria-label="Checklist completion" value={data.checklist.filter((item) => item.checked).length} max={Math.max(1, data.checklist.length)} />
-        <Checklist slug={data.slug} items={data.checklist} onItems={(items) => setData({ ...data, checklist: items })} />
-        <a className="btn checklist-return no-print" href={`#panel-${current.id}`}>Back to guidance <Icon name="forward" /></a>
-      </aside>
-      <footer className="scenario-sources">
-      <h2 className="pad">Sources</h2>
-      <ul className="list">
-        {data.sources.map((s, i) => (
-          <li key={i}>
-            {s.doc ? <Link to={`/doc/${s.doc}`}>{s.title}</Link> : s.kiwix ? <Link to={`/read/${s.kiwix}`}>{s.title}</Link> : <span>{s.title}</span>}
-            {s.as_at && <span className="muted"> (as at {s.as_at})</span>}
-          </li>
-        ))}
-      </ul>
-      <p className="pad muted">{data.reviewed ? `Reviewed ${data.reviewed}` : 'Not yet reviewed by the owner'}</p>
-      </footer>
-      </div>
-    </div>
+    </Screen>
   );
 }

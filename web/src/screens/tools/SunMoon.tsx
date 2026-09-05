@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { useQuery } from '../../api/useQuery';
-import { AppBar } from '../../components/AppBar';
+import { Screen, Body } from '../../shell/Screen';
 import { gridRef } from '../../map/grid';
 import { PlaceSearch } from '../../map/PlaceSearch';
 import { moonPhase } from '../../tools/moon';
@@ -31,10 +31,9 @@ export function SunMoon() {
   const moon = valid ? moonPhase(date) : null;
   const shift = (days: number) => { const d = new Date(date); d.setDate(d.getDate() + days); setDay(isoDate(d)); };
   return (
-    <div className="screen">
-      <AppBar title="Sun and moon" />
-      <div className="stack pad">
-        <section className="card-box pad-inner">
+    <Screen title="Sun and moon">
+      <Body>
+        <section className="panel">
           <h3>Where and when</h3>
           <p><strong>{where.label}</strong> <span className="muted">{gridRef(where.lat, where.lon, 6).text || `${where.lat.toFixed(3)}, ${where.lon.toFixed(3)}`}</span></p>
           <PlaceSearch onPick={(p) => setPicked({ lat: p.lat, lon: p.lon, label: p.name })} onGrid={(pt, text) => setPicked({ lat: pt.lat, lon: pt.lon, label: text })} />
@@ -46,7 +45,7 @@ export function SunMoon() {
           </div>
         </section>
         {sun && (
-          <section className="card-box pad-inner" aria-label="Sun">
+          <section className="panel" aria-label="Sun">
             <h3>Sun</h3>
             {sun.polar === 'day' && <p>The sun does not set here on this date.</p>}
             {sun.polar === 'night' && <p>The sun does not rise here on this date.</p>}
@@ -66,13 +65,13 @@ export function SunMoon() {
           </section>
         )}
         {moon && (
-          <section className="card-box pad-inner" aria-label="Moon">
+          <section className="panel" aria-label="Moon">
             <h3>Moon</h3>
             <p><strong>{moon.name}</strong>, {Math.round(moon.illumination * 100)}% lit, {moon.ageDays} days old{moon.waxing ? ', waxing' : ', waning'}.</p>
             <p className="muted">A full moon gives enough light to move about outside; a new moon means true darkness.</p>
           </section>
         )}
-      </div>
-    </div>
+      </Body>
+    </Screen>
   );
 }

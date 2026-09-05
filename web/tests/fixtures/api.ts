@@ -278,11 +278,26 @@ export const stockResponse: StockResponse = {
 };
 
 export const nearby: NearbyResponse = {
-  items: [
-    { kind: 'pharmacy', title: 'Boots, High Street', lat: 50.9345, lon: -1.4331, distance_m: 620, bearing_deg: 92, walk_min: 8, link: '/map?lat=50.9345&lon=-1.4331&z=15&label=Boots%2C%20High%20Street' },
-    { kind: 'emergency-department', title: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342, distance_m: 4300, bearing_deg: 270, walk_min: 52, link: '/map?lat=50.9331&lon=-1.4342&z=15&label=Southampton%20General%20Hospital' },
+  lat: 50.9379, lon: -1.4708,
+  method: "Straight-line distance and bearing; walking time by Naismith's rule (5 km/h). Roads and paths will be longer.",
+  facilities: [
+    {
+      id: 'pharmacy', title: 'Pharmacy', found: true, searched: ['health'], note: null,
+      nearest: { name: 'Boots, High Street', lat: 50.9345, lon: -1.4331, distance_m: 620, bearing_deg: 92, compass: 'E', walk_minutes: 8, source: 'overlay:health', properties: { amenity: 'pharmacy', opening_hours: 'Mo-Sa 09:00-17:30' } },
+      also: [{ name: 'Shirley Pharmacy', lat: 50.9290, lon: -1.4460, distance_m: 1400, bearing_deg: 200, compass: 'SSW', walk_minutes: 17, source: 'overlay:health', properties: {} }],
+    },
+    {
+      id: 'emergency-department', title: 'Emergency department', found: true, searched: ['health'],
+      note: 'Hospitals from OpenStreetMap. The overlay does not carry the emergency=yes tag, so a small hospital without an A&E can appear: ring ahead if the phones are up.',
+      nearest: { name: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342, distance_m: 4300, bearing_deg: 270, compass: 'W', walk_minutes: 52, source: 'overlay:health', properties: { amenity: 'hospital' } },
+      also: [],
+    },
+    {
+      id: 'rest-centre', title: 'Rest centre', found: false, searched: [], nearest: null, also: [],
+      note: 'Rest centres are opened by the council on the day and are not mapped in advance.',
+      why: 'No searchable copy of the emergency-services overlay on this box.',
+    },
   ],
-  missing: ['rest-centre'],
 };
 
 export const sensors: Sensors = {

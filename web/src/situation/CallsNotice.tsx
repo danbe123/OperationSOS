@@ -8,7 +8,7 @@ export function CallsNotice() {
   const { view } = useSituation();
   if (!view || view.modes.calls !== 'hidden') return null;
   return (
-    <p className="pad notice calls-notice" role="status">
+    <p className="notice calls-notice" role="status">
       <Icon name="alert" size={18} /> <span aria-hidden="true">⚠</span> Phone numbers on this page will not connect while the phones are down.
       {' '}<Link to="/p/no-phones">Getting help without phones</Link>
     </p>

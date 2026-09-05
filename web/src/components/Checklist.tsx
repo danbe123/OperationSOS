@@ -23,7 +23,8 @@ export function checklistSummary(items: ChecklistItem[], now: number = Date.now(
   return `${done} of ${items.length} done${latest ? `, last change ${relativeTime(latest, now)}` : ''}`;
 }
 
-/** Shared checklist. The parent owns the items (it refetches them); this component applies optimistic ticks and server responses through `onItems`. */
+/** The guide's shared checklist, drawn as the same task row as everything else the box asks for.
+ * The parent owns the items (it refetches them); this applies optimistic ticks through `onItems`. */
 export function Checklist({ slug, items, onItems }: { slug: string; items: ChecklistItem[]; onItems: (items: ChecklistItem[]) => void }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -60,16 +61,20 @@ export function Checklist({ slug, items, onItems }: { slug: string; items: Check
 
   return (
     <section className="checklist" aria-label="Checklist">
-      <p className="checklist-summary" data-testid="checklist-summary">{checklistSummary(items)}</p>
-      {items.map((item) => (
-        <div className="checklist-item" key={item.id}>
-          <input type="checkbox" id={`chk-${item.id}`} checked={item.checked} disabled={busy === item.id} onChange={() => void toggle(item)} />
-          <label htmlFor={`chk-${item.id}`}>
-            {item.text}
-            {item.checked && item.updated_at && <span className="checklist-time"> · ticked {relativeTime(item.updated_at)}</span>}
-          </label>
-        </div>
-      ))}
+      <p className="muted checklist-summary" data-testid="checklist-summary">{checklistSummary(items)}</p>
+      <ul className="list task-list">
+        {items.map((item) => (
+          <li className={item.checked ? 'task-row task-done' : 'task-row'} key={item.id}>
+            <label className="task-tick" htmlFor={`chk-${item.id}`}>
+              <input type="checkbox" id={`chk-${item.id}`} checked={item.checked} disabled={busy === item.id} onChange={() => void toggle(item)} />
+              <span className="task-title">
+                {item.text}
+                {item.checked && item.updated_at && <span className="task-time"> · ticked {relativeTime(item.updated_at)}</span>}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
       {confirming ? (
         <div className="row no-print">
           <span>Clear all ticks on this list?</span>
@@ -77,7 +82,7 @@ export function Checklist({ slug, items, onItems }: { slug: string; items: Check
           <button type="button" className="btn" onClick={() => setConfirming(false)}>Cancel</button>
         </div>
       ) : (
-        <button type="button" className="btn no-print" onClick={() => setConfirming(true)}>Reset list</button>
+        <button type="button" className="btn btn-small no-print" onClick={() => setConfirming(true)}>Reset list</button>
       )}
     </section>
   );

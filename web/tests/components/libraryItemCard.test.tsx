@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import { renderRoute } from '../render';
-import { Layout } from '../../src/router';
+import { Shell as Layout } from '../../src/shell/Shell';
 import { LibraryItemCard, formatBytes, itemOpenPath } from '../../src/components/LibraryItemCard';
 import { wikiItem, pdfItem, epubItem, extItem, mapsItem } from '../fixtures/api';
 

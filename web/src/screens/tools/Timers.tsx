@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useState } from 'react';
 import { Link } from 'react-router';
-import { AppBar } from '../../components/AppBar';
+import { Screen, Body } from '../../shell/Screen';
 import './tools.css';
 import { Icon } from '../../icons';
 import { click } from '../../tools/audio';
@@ -21,7 +21,7 @@ function Countdowns() {
   const now = useNow(500);
   const [custom, setCustom] = useState('10');
   return (
-    <section className="card-box pad-inner">
+    <section className="panel">
       <h3>Countdowns</h3>
       <ul className="list" aria-label="Running timers">
         {timers.map((t) => (
@@ -61,7 +61,7 @@ function Cpr() {
   }, [startedAt]);
   const count = startedAt === null ? 0 : beatsSince(startedAt, now);
   return (
-    <section className="card-box pad-inner">
+    <section className="panel">
       <h3>CPR beat</h3>
       <p>{CPR_BPM} compressions a minute, 5 to 6 cm deep. 30 compressions then 2 breaths. <Link to="/medical/card/cpr-adult">Adult CPR card</Link> · <Link to="/medical/card/cpr-child">Child CPR card</Link></p>
       <div className="row">
@@ -92,7 +92,7 @@ function Fallout() {
   const detonation = Date.parse(when);
   const marks = Number.isNaN(detonation) ? [] : falloutMarks(detonation, now);
   return (
-    <section className="card-box pad-inner">
+    <section className="panel">
       <h3>Fallout 7:10 rule</h3>
       <p>After a nuclear detonation the radiation dose rate falls to about a tenth every time the elapsed time multiplies by seven. Stay sheltered; the first two days matter most. <Link to="/m/radiation">Radiation module</Link> · <Link to="/s/nuclear-war">Nuclear war playbook</Link></p>
       <label className="field"><span>Time of the detonation</span><input type="datetime-local" aria-label="Time of the detonation" value={when} onChange={(e) => setWhen(e.target.value)} /></label>
@@ -114,14 +114,13 @@ function Fallout() {
 
 export function Timers() {
   return (
-    <div className="screen">
-      <AppBar title="Timers" />
-      <p className="pad warning">Someone not breathing normally: call 999 and start CPR. <Icon name="phone" size={18} /> 999</p>
-      <div className="stack pad">
+    <Screen title="Timers">
+      <Body>
+        <p className="warning">Someone not breathing normally: call 999 and start CPR. <Icon name="phone" size={18} /> 999</p>
         <Countdowns />
         <Cpr />
         <Fallout />
-      </div>
-    </div>
+      </Body>
+    </Screen>
   );
 }

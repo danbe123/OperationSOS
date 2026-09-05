@@ -1,0 +1,29 @@
+/* The board: the kiosk's standing screen at 853x480, read from across the room. */
+.board-screen { height: 100%; overflow: hidden; cursor: pointer; }
+.board { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow: hidden; padding: 10px 14px; background: var(--ground); }
+.board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.board-title { margin: 0; font-size: var(--t-display); line-height: 1.05; }
+.board-elapsed { margin: 0; font-size: var(--t-lead); color: var(--ink-muted); }
+.board-now { margin: 0 0 0 auto; font-size: var(--t-display); font-weight: 700; font-variant-numeric: tabular-nums; }
+:root[data-theme="vault"] .board-now { font-family: var(--font-display); font-size: var(--t-board); line-height: 0.9; }
+.board-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
+.board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.board-cond { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius); border: 2px solid var(--line-strong); background: var(--panel); font-weight: 600; }
+.board-cond-name { display: flex; align-items: center; gap: 6px; font-size: var(--t-lead); }
+.board-cond .cond-state, .board-cond .cond-for { font-size: var(--t-body); }
+.board-tasks h2, .board-facts h2 { margin: 0 0 6px; font-size: var(--t-lead); }
+.board-task-list { margin: 0; padding-left: 1.2em; }
+.board-task-list li { margin-bottom: 6px; }
+.board-task-title { font-weight: 600; }
+.board-task-who { display: block; font-size: var(--t-meta); color: var(--ink-muted); }
+.board-facts p { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: var(--t-lead); }
+.board-stock { list-style: none; margin: 0; padding: 0; font-size: var(--t-lead); font-weight: 600; }
+.board-stock li { margin-bottom: 4px; }
+.board-events { flex: 0 0 auto; border-top: 1px solid var(--line); padding-top: 6px; max-height: 5.5em; overflow: hidden; }
+.board-events ul { list-style: none; margin: 0; padding: 0; font-size: var(--t-meta); }
+.board-hint { flex: 0 0 auto; margin: 0; padding: 2px 16px 6px; text-align: center; font-size: var(--t-meta); color: var(--ink-muted); }
+.board-waiting { align-items: center; justify-content: center; font-size: var(--t-lead); }
+@media (max-width: 699px) {
+  .board-cols { grid-template-columns: minmax(0, 1fr); overflow: auto; }
+  .board-title, .board-now { font-size: var(--t-title); }
+}

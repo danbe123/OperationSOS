@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { AiAskRequest, AiEvent, Passage } from '../api/types';
 import { errorMessage } from '../api/useQuery';
-import { AppBar } from '../components/AppBar';
+import { Screen, Body } from '../shell/Screen';
 import { Progress } from '../components/Progress';
 import { Icon } from '../icons';
 import { useAppLink } from '../links';
@@ -138,10 +138,9 @@ export function Ai() {
 
   if (!status) {
     return (
-      <div className="screen">
-        <AppBar title="AI assistant" />
-        {error ? <p className="pad warning">Box status unavailable: {error}</p> : <p className="pad muted">Checking the box…</p>}
-      </div>
+      <Screen title="Assistant">
+        <Body>{error ? <p className="warning">Box status unavailable: {error}</p> : <p className="muted">Checking the box…</p>}</Body>
+      </Screen>
     );
   }
   const ai = status.ai;
@@ -149,9 +148,9 @@ export function Ai() {
   const othersBusy = ai.state === 'busy' && !busy;
   if (ai.state !== 'ready' && ai.state !== 'busy') {
     return (
-      <div className="screen">
-        <AppBar title="AI assistant" />
-        <div className="pad stack ai-off">
+      <Screen title="Assistant">
+        <Body>
+        <div className="panel stack ai-off">
           {ai.state === 'off' && <p>The assistant is off. It answers only from the library and needs about 3.5 GB of memory while on.</p>}
           {ai.state === 'starting' && <p>The assistant is starting (about a minute).</p>}
           {ai.state === 'off-thermal' && <p className="warning">The assistant switched off because the box got too hot. Let it cool, then turn it on again.</p>}
@@ -159,23 +158,25 @@ export function Ai() {
           {ai.message && <p className="muted">{ai.message}</p>}
           <Link className="btn btn-primary" to="/system"><Icon name="settings" /><span>Turn it on in System</span></Link>
         </div>
-      </div>
+        </Body>
+      </Screen>
     );
   }
 
   return (
-    <div className="screen ai">
-      <AppBar title="AI assistant" />
-      <p className="pad warning">{WARNING_LINE}</p>
+    <Screen title="Assistant" className="ai">
+      <Body>
+      <p className="warning">{WARNING_LINE}</p>
       <div className="turns">
         {turns.map((t) => <TurnView key={t.id} turn={t} now={Date.now()} />)}
       </div>
-      {othersBusy && <p className="pad notice" role="status">Another phone is asking the assistant a question. It frees up in a moment.</p>}
-      <form className="ask pad no-print" onSubmit={(e) => void ask(e)}>
+      {othersBusy && <p className="notice" role="status">Another phone is asking the assistant a question. It frees up in a moment.</p>}
+      <form className="ask no-print" onSubmit={(e) => void ask(e)}>
         <input type="text" aria-label="Your question" placeholder="Ask about anything in the library" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION} disabled={busy || othersBusy} enterKeyHint="send" autoComplete="off" />
         <button type="submit" className="btn btn-primary" disabled={busy || othersBusy || !question.trim()}><Icon name="ai" /><span>Ask</span></button>
         <span className="muted count">{question.length}/{MAX_QUESTION}</span>
       </form>
-    </div>
+      </Body>
+    </Screen>
   );
 }

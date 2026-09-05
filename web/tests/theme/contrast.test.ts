@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-const css = readFileSync(new URL('../../src/theme/themes.css', import.meta.url), 'utf8');
+const css = readFileSync(new URL('../../src/styles/tokens.css', import.meta.url), 'utf8');
+const type = readFileSync(new URL('../../src/styles/type.css', import.meta.url), 'utf8');
 
 function block(selector: string): Record<string, string> {
   const start = css.indexOf(selector);
@@ -29,8 +30,9 @@ const themes: Record<string, Record<string, string>> = {
 
 describe('theme contrast', () => {
   for (const [name, vars] of Object.entries(themes)) {
-    for (const token of ['--text', '--text-muted', '--link', '--danger']) {
-      for (const bg of ['--bg', '--bg-2']) {
+    // Every colour a reader has to read a word in, on both the page and a raised surface.
+    for (const token of ['--ink', '--ink-muted', '--link', '--signal', '--danger', '--warn', '--ok']) {
+      for (const bg of ['--ground', '--panel']) {
         it(`${name}: ${token} on ${bg} is at least 7:1`, () => {
           expect(vars[token], `${token} defined`).toMatch(/^#[0-9a-f]{6}$/);
           expect(vars[bg], `${bg} defined`).toMatch(/^#[0-9a-f]{6}$/);
@@ -38,15 +40,26 @@ describe('theme contrast', () => {
         });
       }
     }
+    it(`${name}: text on the primary action is at least 7:1`, () => {
+      expect(contrast(vars['--on-signal'], vars['--signal'])).toBeGreaterThanOrEqual(7);
+    });
   }
+
+  it('blackout separates its three states by luminance, since it has one hue', () => {
+    const { '--danger': off, '--warn': patchy, '--ok': working } = themes.blackout;
+    expect(luminance(off)).toBeLessThan(luminance(patchy));
+    expect(luminance(patchy)).toBeLessThan(luminance(working));
+  });
+
   it('print forces the field palette', () => {
     const printAt = css.indexOf('@media print');
     expect(printAt).toBeGreaterThan(-1);
     const printBlock = css.slice(printAt, css.indexOf('/* end print */', printAt));
-    expect(printBlock).toContain('--bg: #f4efe4');
-    expect(printBlock).toContain('--text: #1a1a1a');
+    expect(printBlock).toContain('--ground: #f3efe4');
+    expect(printBlock).toContain('--ink: #1b1b1b');
   });
+
   it('body text never carries the display face or a text shadow', () => {
-    expect(css).toMatch(/\.html,\s*\.checklist,\s*\.card-html[^{]*\{[^}]*font-family:\s*var\(--font-body\)[^}]*text-shadow:\s*none/);
+    expect(type).toMatch(/\.html,[^{]*\{[^}]*font-family:\s*var\(--font-body\)[^}]*text-shadow:\s*none/);
   });
 });

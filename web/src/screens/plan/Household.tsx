@@ -16,7 +16,7 @@ function PersonForm({ initial, onSave, onCancel, label }: { initial: typeof EMPT
     if (!onCancel) setForm(EMPTY);
   };
   return (
-    <form className="stack pad no-print person-form" onSubmit={(e) => void submit(e)} aria-label={label}>
+    <form className="stack no-print person-form" onSubmit={(e) => void submit(e)} aria-label={label}>
       <div className="row">
         <label className="field"><span>Name</span><input type="text" aria-label="Name" value={form.name} onChange={set('name')} maxLength={80} required /></label>
         <label className="field"><span>Age</span><input type="number" aria-label="Age" inputMode="numeric" min={0} max={120} value={form.age} onChange={set('age')} /></label>
@@ -85,10 +85,10 @@ export function Household({ onChanged }: { onChanged?: () => void } = {}) {
     }
   };
   return (
-    <section id="household">
-      <h2 className="pad">Household</h2>
-      <p className="pad muted">Who lives here, what they need and who to call. Medical needs also show on the Medical screen.</p>
-      {q.error && <p className="pad warning">Household unavailable: {q.error}</p>}
+    <section className="panel" id="household">
+      <h2>Household</h2>
+      <p className="muted">Who lives here, what they need and who to call. Medical needs also show on the Medical screen.</p>
+      {q.error && <p className="warning">Household unavailable: {q.error}</p>}
       <ul className="list" aria-label="Household">
         {(q.data ?? []).map((p) => <PersonRow key={p.id} person={p} onChanged={refetch} />)}
         {q.data && q.data.length === 0 && <li className="muted">Nobody registered yet. Stock figures assume one person until you add people.</li>}

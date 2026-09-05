@@ -67,14 +67,14 @@ export function EventLog({ compact = false }: { compact?: boolean }) {
     }
   };
   return (
-    <section id="log">
-      {!compact && <h2 className="pad">Event log</h2>}
-      <p className="pad muted">What happened and when: "water off", "heard sirens", "gave Sam 5ml paracetamol". The time is stamped for you.</p>
-      <form className="row pad no-print" onSubmit={(e) => void add(e)} aria-label="Log an event">
+    <section className="panel" id="log">
+      {!compact && <h2>Event log</h2>}
+      <p className="muted">What happened and when: "water off", "heard sirens", "gave Sam 5ml paracetamol". The time is stamped for you.</p>
+      <form className="row no-print" onSubmit={(e) => void add(e)} aria-label="Log an event">
         <input type="text" aria-label="What happened" className="event-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="What happened?" />
         <button type="submit" className="btn btn-primary">Log it</button>
       </form>
-      {q.error && <p className="pad warning">Log unavailable: {q.error}</p>}
+      {q.error && <p className="warning">Log unavailable: {q.error}</p>}
       <ul className="list" aria-label="Event log">
         {(q.data ?? []).map((ev) => <EventRow key={ev.id} event={ev} onChanged={q.refetch} />)}
         {q.data && q.data.length === 0 && <li className="muted">Nothing logged yet.</li>}

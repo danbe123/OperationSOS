@@ -8,8 +8,8 @@ import { mapQueryString } from '../../map/query';
 export function Pins() {
   const pinsQ = useQuery(() => api.notes('pin'), [], { refetchOnFocus: true });
   return (
-    <section id="pins">
-      <h2 className="pad">Pins on the map</h2>
+    <section className="panel" id="pins">
+      <h2>Pins on the map</h2>
       <ul className="list" aria-label="Pins">
         {(pinsQ.data ?? []).filter((p) => p.lat !== null && p.lon !== null).map((p) => (
           <li key={p.id} className="row">

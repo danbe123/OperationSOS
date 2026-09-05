@@ -85,6 +85,24 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
       tasks.push({ id, title: item.text, bucket: 'today', why: 'From this situation’s checklist.', link: `playbook:${state.situation.slug}`, person: state.taskState.get(id)?.person ?? null, done: item.checked, done_at: item.updated_at, source: `checklist:${state.situation.slug}` });
     }
   }
+  // Phase 4: a neighbour who needs checking on is a job like any other, with the same id on both sides.
+  const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const checkOn = (off('power') || off('water') || off('mobile'))
+    ? state.neighbours.filter((n) => n.needs.trim()).map((n) => ({
+        id: `neighbour:${slug(n.name)}`, name: n.name, address: n.address, needs: n.needs, contacts: n.contacts,
+        title: `Knock on ${n.name}${n.address ? `, ${n.address}` : ''}`, why: n.needs,
+        rule: `neighbour-check-${slug(n.name)}`, link: null, bucket: 'today' as const,
+        done: state.taskState.get(`neighbour:${slug(n.name)}`)?.done ?? false,
+      }))
+    : [];
+  const skills = state.neighbours.filter((n) => n.skills.trim()).map((n) => ({
+    name: n.name, address: n.address, skill: n.skills, text: n.skills, contacts: n.contacts,
+    why: 'On the street list.', rule: `neighbour-skill-${slug(n.name)}`, link: null,
+  }));
+  for (const c of checkOn) {
+    tasks.push({ id: c.id, title: c.title, bucket: c.bucket, why: c.why, link: c.link, person: state.taskState.get(c.id)?.person ?? null, done: c.done, done_at: null, source: 'rule:neighbours' });
+  }
+
   const order = { now: 0, hour: 1, today: 2, week: 3 };
   tasks.sort((a, b) => order[a.bucket] - order[b.bucket] || a.title.localeCompare(b.title));
 
@@ -122,6 +140,7 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
     },
     readiness: { score: 62, gaps: [{ title: 'Water: 1.5 days for 3 people', link: '/plan#stock', points: 12 }] },
     bulletins: { next: { station: 'BBC Radio 4', frequency: '198 kHz LW', at: '2026-09-06T18:00:00.000Z' } },
+    neighbours: { check_on: checkOn, skills },
   };
 }
 

@@ -52,6 +52,8 @@ export type MapConfig = {
 export type Place = { name: string; kind: string; lat: number; lon: number; region: string; postcode: string | null };
 export type Note = { id: number; kind: 'note' | 'pin' | 'event'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
 export type Person = { id: number; name: string; age: number | null; needs: string; medications: string; contacts: string; updated_at: string };
+/** Phase 4: the street. Who lives near, what they need, what they can do and how to reach them. */
+export type Neighbour = { id: number; name: string; address: string; needs: string; skills: string; contacts: string; notes: string; updated_at: string };
 export type StockCategory = 'water' | 'food' | 'fuel' | 'medicine' | 'other';
 export type StockItem = {
   id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
@@ -93,18 +95,30 @@ export type TaskPatch = { done?: boolean; person?: string };
 export type BriefingKind = 'playbook' | 'playbook-section' | 'module' | 'page' | 'card' | 'doc' | 'map' | 'kiwix';
 export type BriefingItem = { title: string; kind: BriefingKind; ref: string; html?: string };
 export type Modes = { theme: 'vault' | 'field' | 'blackout' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
-export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null; nearby?: NearbyItem[] };
+export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null; nearby?: NearbySummary[] };
 
 /* Phase 2 and 3: the nearest facilities, the box's own senses, and reading aloud. */
 export const NEARBY_KINDS = ['emergency-department', 'pharmacy', 'gp', 'fuel', 'water-works', 'fire-station', 'rest-centre'] as const;
 export type NearbyKind = (typeof NEARBY_KINDS)[number];
-/** One facility near a point: how far, which way, and how long it takes to walk there (Naismith). */
-export type NearbyItem = {
-  kind: NearbyKind; title: string; lat: number; lon: number;
-  distance_m: number; bearing_deg: number; walk_min: number; link: string;
+/** One place the box found, as `GET /api/nearby` returns it: how far, which way, how long on foot,
+ * where the answer came from, and whatever OpenStreetMap tags were worth keeping. */
+export type NearbyPlace = {
+  name: string; lat: number; lon: number;
+  distance_m: number; bearing_deg: number; compass: string; walk_minutes: number;
+  source: string; properties: Record<string, string>;
 };
-/** `missing` names the kinds with no data at all here, so the panel can say so rather than stay silent. */
-export type NearbyResponse = { items: NearbyItem[]; missing: NearbyKind[] };
+/** One kind of facility. `found` is false when the box has no data for it here, and `why` says so. */
+export type NearbyFacility = {
+  id: string; title: string; found: boolean;
+  nearest: NearbyPlace | null; also: NearbyPlace[];
+  searched?: string[]; note?: string | null; why?: string;
+};
+export type NearbyResponse = { lat: number; lon: number; method: string; facilities: NearbyFacility[] };
+/** The short form the View carries in `meta.home.nearby`: one line per facility that was found. */
+export type NearbySummary = {
+  id: string; title: string; name: string; lat: number; lon: number;
+  distance_m: number; bearing_deg: number; compass: string; walk_minutes: number;
+};
 export type SensorReading = { value: number; unit: string; at: string };
 /** Whatever the box can sense, by sensor id (`internet`, `mains`, `temp_in`, `co_ppm`, `broadcast`, ...). */
 export type Sensors = Record<string, SensorReading | null>;
@@ -124,5 +138,23 @@ export type SituationView = {
   modes: Modes;
   readiness: Readiness;
   bulletins: { next: Bulletin | null };
+  /** Phase 4: who on the street to check on, and who can do what. Absent on a box built before it. */
+  neighbours?: { check_on: NeighbourCheck[]; skills: NeighbourSkill[] };
+};
+/** A "knock on their door" job. Its `id` is also a task id, so it is ticked like any other job and
+ * rendered once, on the task list, rather than twice. */
+export type NeighbourCheck = {
+  id: string; name: string; address: string; needs: string; contacts: string;
+  title: string; why: string; rule: string; link: string | null; bucket: TaskBucket; done: boolean;
+};
+/** Something a neighbour can do that the household cannot. */
+export type NeighbourSkill = { name: string; address: string; skill: string; text: string; contacts: string; why: string; rule: string; link: string | null };
+/** `GET /api/situation/export/qr`: the situation split into chunks of at most 800 characters. */
+export type ExportChunks = { chunks: string[]; total?: number };
+/** What `POST /api/situation/import` brought in, per kind of row. */
+export type ImportCounts = Record<string, Record<string, number>>;
+export type ImportSummary = {
+  ok: boolean; version?: number; exported_at?: string;
+  counts?: ImportCounts; home?: string; scenario?: string; changes?: string[];
 };
 export type DrillRequest = { scenario: string; conditions: Partial<Record<ConditionId, ConditionState>>; hours_ago?: number };

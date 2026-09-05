@@ -1,0 +1,130 @@
+/* The one token system. Every theme carries the same role names; nothing outside this file states a
+   colour. Body text sits at 7:1 or better on --ground and on --panel in all three themes (checked by
+   tests/theme/contrast.test.ts), and every state carries a symbol as well as a colour so the
+   single-hue blackout theme still reads. */
+
+/* Bundled faces (OFL). Fetched into public/fonts by the commands in the plan; no network fonts. */
+@font-face { font-family: 'VT323'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/vt323-v18-latin-regular.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-v20-latin-regular.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-v20-latin-600.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/inter-v20-latin-700.woff2') format('woff2'); }
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/source-serif-4-v14-latin-600.woff2') format('woff2'); }
+@font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/source-serif-4-v14-latin-700.woff2') format('woff2'); }
+
+/* Structure: the same in every theme. */
+:root {
+  --radius: 6px;
+  --touch: 48px;
+  --rail: 96px;
+  --bar: 64px;
+  --measure: 72ch;
+  --gutter: 16px;
+  --kb-height: 0px;
+
+  --t-meta: 16px;
+  --t-body: 16px;
+  --t-lead: 22px;
+  --t-title: 28px;
+  --t-display: 40px;
+  --t-board: 64px;
+
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'VT323', 'Courier New', monospace;
+  --font-heading: var(--font-body);
+}
+
+/* 18 px body on the kiosk, 16 on phones (design spec section 11). */
+:root.kiosk { --t-body: 18px; --gutter: 24px; }
+
+/* Vault (default): phosphor green on near-black, one green accent, amber focus. Original artwork only. */
+:root,
+:root[data-theme="vault"] {
+  color-scheme: dark;
+  --ground: #0b120c;
+  --panel: #121b14;
+  --sunken: #18251a;
+  --ink: #dcefdd;
+  --ink-muted: #96b69a;
+  --link: #6cf08c;
+  --signal: #6cf08c;
+  --on-signal: #0b120c;
+  --ok: #6cf08c;
+  --warn: #f2c14e;
+  --danger: #ff8a76;
+  --line: #2c4a30;
+  --line-strong: #47764d;
+  --focus: #ffb000;
+  --font-heading: var(--font-body);
+  --glow: 0 0 6px rgba(108, 240, 140, 0.45);
+}
+
+/* Field manual: paper and ink, serif headings, dark ochre warnings. Also the print palette. */
+:root[data-theme="field"] {
+  color-scheme: light;
+  --ground: #f3efe4;
+  --panel: #ffffff;
+  --sunken: #ebe5d6;
+  --ink: #1b1b1b;
+  --ink-muted: #474740;
+  --link: #1a3f8a;
+  --signal: #15532e;
+  --on-signal: #ffffff;
+  --ok: #15532e;
+  --warn: #6b4400;
+  --danger: #94170f;
+  --line: #c3b9a2;
+  --line-strong: #8d846f;
+  --focus: #1a3f8a;
+  --font-heading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --glow: none;
+}
+
+/* Blackout: one red hue on black for night vision. The three states are separated by luminance, and
+   the symbol carries the meaning; the dim mode does the dimming, not unreadable text. */
+:root[data-theme="blackout"] {
+  color-scheme: dark;
+  --ground: #000000;
+  --panel: #0a0000;
+  --sunken: #150505;
+  --ink: #ff9d93;
+  --ink-muted: #ff7a6e;
+  --link: #ffc4bc;
+  --signal: #ffc4bc;
+  --on-signal: #000000;
+  --ok: #ffc4bc;
+  --warn: #ffa79c;
+  --danger: #ff8074;
+  --line: #5a1c17;
+  --line-strong: #8a2b23;
+  --focus: #ffc4bc;
+  --font-heading: var(--font-body);
+  --glow: none;
+}
+
+/* Dim mode: half brightness for a dark room, without changing any colour's meaning. */
+:root[data-dim="on"] body { filter: brightness(0.55); }
+
+/* Printing always uses the field palette on white paper. */
+@media print {
+  :root,
+  :root[data-theme] {
+    --ground: #f3efe4;
+    --panel: #ffffff;
+    --sunken: #ebe5d6;
+    --ink: #1b1b1b;
+    --ink-muted: #474740;
+    --link: #1a3f8a;
+    --signal: #15532e;
+    --on-signal: #ffffff;
+    --ok: #15532e;
+    --warn: #6b4400;
+    --danger: #94170f;
+    --line: #c3b9a2;
+    --line-strong: #8d846f;
+    --focus: #1a3f8a;
+    --font-heading: 'Source Serif 4', Georgia, serif;
+    --glow: none;
+  }
+  body { background: #ffffff; }
+}
+/* end print */

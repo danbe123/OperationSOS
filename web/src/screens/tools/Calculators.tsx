@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { AppBar } from '../../components/AppBar';
+import { Screen, Body } from '../../shell/Screen';
 import { batteryHours, formatHours, generatorHours, rationDays, solarDailyWh } from '../../tools/calc';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -20,7 +20,7 @@ function Generator() {
   const [rate, setRate] = useState('1.2');
   const h = generatorHours(Number(tank), Number(rate));
   return (
-    <section className="card-box pad-inner" aria-label="Generator runtime">
+    <section className="panel" aria-label="Generator runtime">
       <h3>Generator runtime</h3>
       <div className="row"><Num label="Fuel in the tank and cans" unit="litres" value={tank} onChange={setTank} /><Num label="Consumption at your load" unit="litres an hour" value={rate} onChange={setRate} /></div>
       <p className="result">{h === null ? INVALID : `About ${formatHours(h)} of running.`}</p>
@@ -34,7 +34,7 @@ function Battery() {
   const [load, setLoad] = useState('60');
   const h = batteryHours(Number(wh), Number(load));
   return (
-    <section className="card-box pad-inner" aria-label="Battery hours">
+    <section className="panel" aria-label="Battery hours">
       <h3>Battery hours</h3>
       <div className="row"><Num label="Battery capacity" unit="watt-hours" value={wh} onChange={setWh} /><Num label="Load" unit="watts" value={load} onChange={setLoad} /></div>
       <p className="result">{h === null ? INVALID : `About ${formatHours(h)} through an inverter (85% efficient).`}</p>
@@ -48,7 +48,7 @@ function Solar() {
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const r = solarDailyWh(Number(watts), Number(month));
   return (
-    <section className="card-box pad-inner" aria-label="Solar yield">
+    <section className="panel" aria-label="Solar yield">
       <h3>Solar yield</h3>
       <div className="row">
         <Num label="Panel rating" unit="watts" value={watts} onChange={setWatts} />
@@ -66,7 +66,7 @@ function Rations() {
   const [rate, setRate] = useState('3');
   const d = rationDays(Number(qty), Number(people), Number(rate));
   return (
-    <section className="card-box pad-inner" aria-label="Rationing">
+    <section className="panel" aria-label="Rationing">
       <h3>Rationing</h3>
       <div className="row"><Num label="Stock" value={qty} onChange={setQty} /><Num label="People" value={people} onChange={setPeople} /><Num label="Per person a day" value={rate} onChange={setRate} /></div>
       <p className="result">{d === null ? INVALID : `${d.toFixed(1)} days.`}</p>
@@ -77,14 +77,13 @@ function Rations() {
 
 export function Calculators() {
   return (
-    <div className="screen">
-      <AppBar title="Calculators" />
-      <div className="stack pad">
+    <Screen title="Calculators">
+      <Body>
         <Generator />
         <Battery />
         <Solar />
         <Rations />
-      </div>
-    </div>
+      </Body>
+    </Screen>
   );
 }

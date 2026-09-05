@@ -76,6 +76,6 @@ describe('Medical household panel', () => {
     expect(panel).toHaveTextContent('Sam');
     expect(panel).toHaveTextContent('asthma');
     expect(panel).not.toHaveTextContent('Ali');
-    expect(within(panel).getByRole('link', { name: /household register/ })).toHaveAttribute('href', '/plan#household');
+    expect(within(panel).getByRole('link', { name: /Edit the register/ })).toHaveAttribute('href', '/plan#household');
   });
 });
