@@ -173,3 +173,92 @@ def test_reader_home_only_where_verified():
 def test_core_size_near_target():
     total = sum(it["size_bytes"] for it in items("core.json"))
     assert 150e9 < total < 230e9, total
+
+
+OVERLAY_IDS = [
+    "footpaths", "access-land", "flood-zones", "health", "fuel", "water", "rail",
+    "nuclear-sites", "chemical-sites", "airports-military",
+]
+REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
+EXTENDED_REQUIRED = {
+    "gutenberg_en_all", "stackoverflow.com_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
+    "wikipedia_cy_all_maxi", "libretexts.org_en_med", "libretexts.org_en_bio", "openstax-biology-2e",
+    "openstax-anatomy-physiology-2e", "s2underground_en_all", "canadian-prepper_en_winterprepping",
+    "media-films", "media-music", "media-audiobooks", "owner-books",
+}
+
+
+def test_extended_tier_and_required_ids():
+    ext = by_id("extended.json")
+    assert sorted(EXTENDED_REQUIRED - ext.keys()) == []
+    for it in ext.values():
+        assert it["tier"] == "extended", it["id"]
+        assert it["category"] in {"practical", "education", "books", "media", "reference"}, it["id"]
+        assert AS_AT.match(it["as_at"]), it["id"]
+        if it["kind"] == "zim":
+            assert it["dest"] == f"zim/{it['id']}.zim", it["id"]
+        if it["kind"] == "dir":
+            assert it["source"] == {"type": "build", "tool": "manual", "artifact": it["dest"]}, it["id"]
+        if it["source"]["type"] == "url":
+            assert it["source"]["url"].startswith("https://") and it["size_bytes"] > 0, it["id"]
+
+
+def test_extended_holds_every_stack_exchange_site_not_in_core():
+    core = by_id("core.json")
+    ext = by_id("extended.json")
+    se_ext = [i for i in ext if i.endswith(".stackexchange.com_en_all")]
+    assert len(se_ext) == 140
+    assert not (set(se_ext) & set(core))
+    for i in se_ext:
+        assert ext[i]["reader_home"] == "questions"
+
+
+def test_overlay_ids_and_objects():
+    rows = items("overlays.json")
+    assert [r["id"] for r in rows] == OVERLAY_IDS
+    for r in rows:
+        assert r["tier"] == "core" and r["category"] == "maps", r["id"]
+        assert r["kind"] in {"pmtiles", "geojson"}, r["id"]
+        assert r["dest"] == f"maps/overlays/{r['id']}.{r['kind']}", r["id"]
+        assert r["source"] == {"type": "build", "tool": "build-maps", "artifact": f"overlays/{r['id']}.{r['kind']}"}, r["id"]
+        ov = r["overlay"]
+        assert ov["id"] == r["id"] and ov["kind"] == r["kind"], r["id"]
+        assert isinstance(ov["default_on"], bool), r["id"]
+        assert ov["coverage"] and set(ov["coverage"]) <= set(REGIONS), r["id"]
+        assert re.fullmatch(r"#[0-9a-f]{6}", ov["color"]), r["id"]
+        assert ov["icon"] is None or isinstance(ov["icon"], str), r["id"]
+        assert "layer_id" not in ov, r["id"]
+    ov = {r["id"]: r["overlay"] for r in rows}
+    assert [i for i in OVERLAY_IDS if ov[i]["default_on"]] == ["footpaths"]
+    assert ov["footpaths"]["coverage"] == REGIONS
+    assert ov["access-land"]["coverage"] == ["england", "wales"]
+    assert ov["flood-zones"]["coverage"] == ["england", "wales", "scotland", "ni"]
+    for i in ("health", "fuel", "water", "rail", "nuclear-sites", "chemical-sites", "airports-military"):
+        assert ov[i]["coverage"] == REGIONS, i
+
+
+def test_nuclear_sites_geojson():
+    path = REPO / "tools" / "map-styles" / "data" / "nuclear-sites.geojson"
+    g = json.loads(path.read_text(encoding="utf-8"))
+    assert g["type"] == "FeatureCollection"
+    feats = g["features"]
+    assert len(feats) >= 20
+    names: set[str] = set()
+    for f in feats:
+        assert f["type"] == "Feature"
+        assert f["geometry"]["type"] == "Point"
+        lon, lat = f["geometry"]["coordinates"]
+        pr = f["properties"]
+        assert -8.7 <= lon <= 2.0 and 49.8 <= lat <= 60.9, pr["name"]
+        assert pr["type"] in {"power-station", "reprocessing", "fuel", "weapons", "naval", "research"}, pr["name"]
+        assert pr["status"] in {"operating", "construction", "defuelling", "decommissioning"}, pr["name"]
+        assert isinstance(pr["note"], str) and pr["note"], pr["name"]
+        assert pr["name"] not in names, pr["name"]
+        names.add(pr["name"])
+    must = {
+        "Sellafield", "AWE Aldermaston", "AWE Burghfield", "HMNB Clyde (Faslane)", "RNAD Coulport",
+        "HMNB Devonport", "Barrow-in-Furness shipyard", "Rosyth dockyard", "Dounreay", "Harwell",
+        "Winfrith", "Springfields", "Capenhurst", "Hinkley Point C", "Sizewell B", "Heysham 1",
+        "Heysham 2", "Hartlepool", "Torness",
+    }
+    assert sorted(must - names) == []
