@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from sos import conditions as cond
-from sos import engine, nearby, readiness, rules as rules_mod, sensors, situation
+from sos import engine, nearby, neighbours as nb, readiness, rules as rules_mod, sensors, situation, transfer
 from sos.db import get_setting, now_iso, set_setting
 from sos.routers import LOCALHOSTS, get_db
 
@@ -132,7 +132,8 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
     meeting = conn.execute("SELECT 1 FROM notes WHERE kind IN ('note','pin') AND "
                            "(lower(title) LIKE '%meeting point%' OR lower(body) LIKE '%meeting point%') LIMIT 1").fetchone()
     return engine.Model(
-        now=now, conditions=cond.load(conn), scenario=scenario, household=household, stock=_stock(conn), home=home,
+        now=now, conditions=cond.load(conn), scenario=scenario, household=household, neighbours=tuple(nb.listing(conn)),
+        stock=_stock(conn), home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
         titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
         last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),
@@ -240,6 +241,37 @@ def get_report(request: Request, conn=Depends(get_db)):
         rows = conn.execute("SELECT * FROM notes WHERE kind='event' ORDER BY updated_at DESC, id DESC LIMIT 50")
     events = [{"updated_at": r["updated_at"], "title": r["title"]} for r in rows]
     return PlainTextResponse(engine.report(view, events), media_type="text/markdown; charset=utf-8")
+
+
+# --- export and import (spec section 8) -------------------------------------------------------------------------
+
+@router.get("/situation/export")
+def get_export(conn=Depends(get_db)):
+    """The whole situation as one JSON document, with a version and a checksum."""
+    return transfer.export(conn)
+
+
+@router.get("/situation/export/qr")
+def get_export_qr(conn=Depends(get_db)):
+    """The same document as a sequence of QR-sized chunks, to be shown one after another on a phone."""
+    return {"chunks": transfer.chunks(transfer.export(conn))}
+
+
+@router.post("/situation/import")
+async def post_import(request: Request, conn=Depends(get_db)):
+    """Merge another box's export: the newer of each condition, people and stock by name, events appended."""
+    try:
+        body = await request.json()
+    except ValueError:
+        raise HTTPException(status_code=422, detail="The import is not JSON") from None
+    try:
+        summary = transfer.merge(conn, body)
+    except transfer.TransferError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    event(conn, f"Situation imported from {summary['exported_at']} ({actor(request, conn)})",
+          transfer.summary_line(summary))
+    readiness.refresh(request, conn)
+    return summary
 
 
 # --- conditions -----------------------------------------------------------------------------------------------

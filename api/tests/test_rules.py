@@ -175,3 +175,54 @@ def test_the_fixture_rules_use_the_committed_schema():
     """The API tests load their own small rule set; it must be validated by the same schema as the real one."""
     fixture = Path(__file__).parent / "fixtures" / "playbooks" / "rules" / "schema.json"
     assert fixture.read_text(encoding="utf-8") == (RULES_DIR / "schema.json").read_text(encoding="utf-8")
+
+
+# --- the street list: `who` and `skills` (spec section 8) ----------------------------------------------
+
+def test_neighbour_rules_read_the_street_list(loaded):
+    rule = loaded.get("neighbours-power-off")
+    assert rule.who == "neighbours" and rule.kind == "task"
+    assert set(rule.need_terms) == {"oxygen", "dialysis", "stairlift", "insulin", "over 75"}
+    assert "{name}" in rule.title and "{at_address}" in rule.title
+    assert loaded.get("neighbours-scenario").need_terms == ("any",)
+    assert loaded.get("neighbour-skills-medical").skill_terms[:2] == ("nurse", "doctor")
+    assert loaded.get("fill-bath").who == "household" and loaded.get("fill-bath").need_terms == ()
+
+
+def test_needs_takes_one_term_or_a_list(rules_dir):
+    write(rules_dir, "needs.yaml",
+          'rules:\n  - id: one\n    kind: task\n    when: {power: "off"}\n    needs: oxygen\n'
+          "    title: T\n    bucket: now\n    why: W\n    source: module:water\n"
+          '  - id: many\n    kind: task\n    when: {power: "off"}\n    needs: [oxygen, "over 75"]\n'
+          "    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
+    loaded = rules.load(rules_dir)
+    assert loaded.get("one").need_terms == ("oxygen",) and loaded.get("many").need_terms == ("oxygen", "over 75")
+
+
+def test_an_unknown_who_is_refused(rules_dir):
+    write(rules_dir, "who.yaml", 'rules:\n  - id: martians\n    kind: task\n    when: {power: "off"}\n'
+                                 "    who: martians\n    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
+    with pytest.raises(rules.RulesError) as exc:
+        rules.load(rules_dir)
+    assert "martians" in str(exc.value) and "who" in str(exc.value)
+
+
+def test_skills_belong_to_a_neighbour_reading_rule(rules_dir):
+    write(rules_dir, "skills.yaml", "rules:\n  - id: skilled\n    kind: task\n    when: {}\n    skills: nurse\n"
+                                    "    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
+    with pytest.raises(rules.RulesError) as exc:
+        rules.load(rules_dir)
+    assert "skilled" in str(exc.value)
+
+
+def test_a_reading_rule_may_list_skills_instead_of_opening_anything(rules_dir):
+    write(rules_dir, "skills.yaml", "rules:\n  - id: skilled\n    kind: reading\n    when: {}\n"
+                                    "    who: neighbours\n    skills: [nurse]\n    why: W\n    source: module:water\n")
+    assert rules.load(rules_dir).get("skilled").open == ()
+
+
+def test_a_reading_rule_with_neither_open_nor_skills_is_refused(rules_dir):
+    write(rules_dir, "silent.yaml", "rules:\n  - id: silent\n    kind: reading\n    when: {}\n"
+                                    "    why: W\n    source: module:water\n")
+    with pytest.raises(rules.RulesError):
+        rules.load(rules_dir)

@@ -24,6 +24,7 @@
       }
     },
     "stateOrList": { "oneOf": [{ "$ref": "#/$defs/state" }, { "type": "array", "items": { "$ref": "#/$defs/state" }, "minItems": 1 }] },
+    "terms": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }] },
     "duration": { "type": "string", "pattern": "^\\d+(\\.\\d+)?[mhd]$", "description": "Minutes, hours or days: 30m, 4h, 2d" },
     "link": { "type": "string", "pattern": "^(playbook|module|page|card|doc|map|kiwix):" },
     "rule": {
@@ -42,7 +43,9 @@
         "after": { "$ref": "#/$defs/duration" },
         "severity": { "enum": ["info", "warn", "danger"] },
         "link": { "$ref": "#/$defs/link" },
-        "needs": { "type": "string", "description": "Match against household needs and medications (case-insensitive substring); one item per matching person, {name} in the title" },
+        "needs": { "$ref": "#/$defs/terms", "description": "One term or a list of them, matched against the needs and medications of whoever `who` names (case-insensitive substring); one item per matching person, with {name}, {address} and {at_address} available in the title. '*' means anyone with something recorded, 'any' means everyone on the list" },
+        "skills": { "$ref": "#/$defs/terms", "description": "Reading rules only: one term or a list of them, matched against a neighbour's skills; each match is listed as '<name> is a nurse'" },
+        "who": { "enum": ["household", "neighbours"], "description": "Which register `needs` and `skills` read: the household register (the default) or the street list" },
         "stock": { "type": "object", "additionalProperties": false, "required": ["category"],
           "properties": { "category": { "enum": ["water", "food", "fuel", "medicine", "other"] }, "days_lt": { "type": "number" }, "missing": { "type": "boolean" } } },
         "bucket": { "enum": ["now", "hour", "today", "week"] },
@@ -56,7 +59,10 @@
         { "if": { "properties": { "kind": { "const": "consequence" } } }, "then": { "required": ["title", "after", "severity"] } },
         { "if": { "properties": { "kind": { "const": "task" } } }, "then": { "required": ["title", "bucket"] } },
         { "if": { "properties": { "kind": { "const": "mode" } } }, "then": { "required": ["set"] } },
-        { "if": { "properties": { "kind": { "const": "reading" } } }, "then": { "required": ["open"] } }
+        { "if": { "properties": { "kind": { "const": "reading" } } },
+          "then": { "anyOf": [{ "required": ["open"] }, { "required": ["skills"] }] } },
+        { "if": { "properties": { "skills": true }, "required": ["skills"] },
+          "then": { "properties": { "kind": { "const": "reading" }, "who": { "const": "neighbours" } }, "required": ["who"] } }
       ]
     },
     "bulletin": {

@@ -320,3 +320,72 @@ def test_an_unknown_timezone_falls_back_to_utc(blackout, ruleset):
 def test_no_bulletins_configured(blackout):
     empty = rules.Rules(by_kind={}, bulletins=())
     assert engine.compute(blackout, empty)["bulletins"] == {"next": None}
+
+
+# --- the street list (spec section 8) ------------------------------------------------------------------------
+
+def neighbour(**kwargs) -> dict:
+    return {"name": "?", "address": "", "needs": "", "skills": "", "contacts": "", "notes": "", **kwargs}
+
+
+@pytest.fixture
+def street(blackout) -> engine.Model:
+    blackout.neighbours = (
+        neighbour(name="Mrs Khan", address="12 Elm Road", needs="oxygen concentrator", skills="retired nurse",
+                  contacts="07700 900123"),
+        neighbour(name="Mr Ali", address="9 Elm Road", skills="electrician, generator"),
+        neighbour(name="Joan", needs="over 75"),
+    )
+    return blackout
+
+
+def test_a_blackout_says_who_on_the_street_to_check_on(street, ruleset):
+    view = engine.compute(street, ruleset)
+    check_on = view["neighbours"]["check_on"]
+    assert [(c["id"], c["title"]) for c in check_on] == [
+        ("neighbour:joan", "Check on Joan"),
+        ("neighbour:mrs-khan", "Check on Mrs Khan at 12 Elm Road")]
+    assert check_on[1]["needs"] == "oxygen concentrator" and check_on[1]["contacts"] == "07700 900123"
+    assert check_on[1]["rule"] == "neighbours-power-off" and check_on[1]["bucket"] == "now"
+    assert [t["id"] for t in view["tasks"] if t["id"].startswith("neighbour:")] == ["neighbour:joan", "neighbour:mrs-khan"]
+
+
+def test_a_neighbour_is_only_on_the_list_once_however_many_rules_point_at_them(street, ruleset):
+    street.scenario = {"slug": "grid-collapse", "title": "National grid collapse",
+                       "started_at": "2026-09-06T09:00:00+00:00", "elapsed_s": 18000, "phase": "first-72-hours"}
+    view = engine.compute(street, ruleset)
+    ids = [c["id"] for c in view["neighbours"]["check_on"]]
+    assert ids == ["neighbour:joan", "neighbour:mrs-khan", "neighbour:mr-ali"]   # now, now, then today
+    assert len(ids) == len(set(ids))
+    khan = next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mrs-khan")
+    assert khan["rule"] == "neighbours-power-off"             # the more urgent rule keeps the door
+    ali = next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mr-ali")
+    assert ali["rule"] == "neighbours-scenario" and ali["bucket"] == "today"
+
+
+def test_a_ticked_neighbour_shows_as_done_on_both_lists(street, ruleset):
+    street.task_state = {"neighbour:mrs-khan": {"done": True, "done_at": "2026-09-06T14:05:00+00:00", "person": "Sam"}}
+    view = engine.compute(street, ruleset)
+    assert next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mrs-khan")["done"] is True
+    assert next(t for t in view["tasks"] if t["id"] == "neighbour:mrs-khan")["person"] == "Sam"
+
+
+def test_the_street_s_skills_are_listed_with_the_right_article(street, ruleset):
+    view = engine.compute(street, ruleset)
+    assert [(s["name"], s["skill"], s["text"]) for s in view["neighbours"]["skills"]] == [
+        ("Mrs Khan", "nurse", "Mrs Khan is a nurse"),
+        ("Mr Ali", "generator", "Mr Ali is a generator"),
+        ("Mr Ali", "electrician", "Mr Ali is an electrician")]
+
+
+def test_the_report_carries_the_street(street, ruleset):
+    text = engine.report(engine.compute(street, ruleset))
+    assert "## Neighbours" in text
+    assert "- [ ] Check on Mrs Khan at 12 Elm Road (oxygen concentrator) — 07700 900123" in text
+    assert "- Mrs Khan is a nurse at 12 Elm Road — 07700 900123" in text
+
+
+def test_no_neighbours_no_section(blackout, ruleset):
+    view = engine.compute(blackout, ruleset)
+    assert view["neighbours"] == {"check_on": [], "skills": []}
+    assert "## Neighbours" not in engine.report(view)

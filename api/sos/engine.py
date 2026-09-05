@@ -43,6 +43,7 @@ class Model:
     conditions: dict[str, cond.Condition] = field(default_factory=dict)
     scenario: Optional[dict] = None                       # {slug, title, started_at, elapsed_s, phase}
     household: tuple[dict, ...] = ()
+    neighbours: tuple[dict, ...] = ()                     # the street list: name, address, needs, skills, contacts
     stock: tuple[dict, ...] = ()                          # rows with category and days_left
     home: dict = field(default_factory=lambda: dict(DEFAULT_HOME))
     drill: bool = False
@@ -136,17 +137,38 @@ def need_words(person: dict) -> list[str]:
     return [w.strip().lower() for w in _SPLIT_NEEDS.split(text) if w.strip()]
 
 
+def matches_needs(terms: tuple[str, ...], words: list[str]) -> bool:
+    """`any` is everyone on the list, `*` is anyone with something recorded, otherwise a substring of a need."""
+    if not terms:
+        return False
+    if "any" in terms:
+        return True
+    if "*" in terms and words:
+        return True
+    return any(term in word for term in terms if term not in ("*", "any") for word in words)
+
+
+def register(rule: Rule, model: Model) -> tuple[dict, ...]:
+    return model.neighbours if rule.who == "neighbours" else model.household
+
+
 def people_for(rule: Rule, model: Model) -> list[dict]:
-    """The household members a `needs:` rule is about. `*` means anyone with a need or a medication at all."""
-    if not rule.needs:
-        return []
-    wanted = rule.needs.strip().lower()
-    out = []
-    for person in model.household:
-        words = need_words(person)
-        if (wanted == "*" and words) or (wanted != "*" and any(wanted in w for w in words)):
-            out.append(person)
-    return out
+    """The people a `needs:` rule is about, from the household register or the street list (`who: neighbours`)."""
+    return [person for person in register(rule, model) if matches_needs(rule.need_terms, need_words(person))]
+
+
+class _Fields(dict):
+    """Whatever a rule's title asks for; anything the register has not got is simply left out."""
+
+    def __missing__(self, key: str) -> str:
+        return ""
+
+
+def fill(text: str, person: dict) -> str:
+    """`{name}`, `{address}` and `{at_address}` (which disappears when nobody wrote the address down)."""
+    address = str(person.get("address") or "").strip()
+    return str(text).format_map(_Fields({"name": person.get("name", ""), "address": address,
+                                         "at_address": f" at {address}" if address else ""}))
 
 
 def stock_matches(rule: Rule, model: Model) -> bool:
@@ -248,10 +270,10 @@ def forecast(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> 
         due_at = since + rule.after_td
         base = {"due_at": due_at.isoformat(), "severity": rule.severity, "why": rule.why, "link": rule.link,
                 "passed": due_at <= model.now, "rule": rule.id}
-        if rule.needs:
+        if rule.need_terms:
             for person in people_for(rule, model):
                 items.append({"id": f"{rule.id}:{_slug(person['name'])}",
-                              "title": rule.title.format(name=person["name"]), **base})
+                              "title": fill(rule.title, person), **base})
         else:
             items.append({"id": rule.id, "title": rule.title, **base})
     items.sort(key=lambda i: (i["due_at"], i["title"]))
@@ -266,28 +288,85 @@ def _task(model: Model, task_id: str, title: str, bucket: str, why: str, link: O
             "person": state.get("person") or None, "done": done, "done_at": state.get("done_at"), "source": source}
 
 
+def task_rule_applies(rule: Rule, model: Model, states: dict[str, str], dark: bool) -> bool:
+    if not matches(rule.when, states, model, dark) or not stock_matches(rule, model):
+        return False
+    if rule.until and matches(rule.until, states, model, dark):
+        return False
+    return not (rule.after and trigger_since(rule.when, model, states) + rule.after_td > model.now)
+
+
+def check_on(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
+    """Who on the street to knock on, once each however many rules point at them, most urgent first."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for rule in rules.tasks:
+        if rule.who != "neighbours" or not task_rule_applies(rule, model, states, dark):
+            continue
+        for person in people_for(rule, model):
+            task_id = f"neighbour:{_slug(person.get('name', ''))}"
+            if task_id in seen:
+                continue
+            seen.add(task_id)
+            state = model.task_state.get(task_id) or {}
+            out.append({"id": task_id, "name": person.get("name", ""), "address": person.get("address") or "",
+                        "needs": person.get("needs") or "", "contacts": person.get("contacts") or "",
+                        "title": fill(rule.title, person), "why": rule.why, "rule": rule.id, "link": rule.link,
+                        "bucket": rule.bucket, "done": bool(state.get("done"))})
+    out.sort(key=lambda c: (BUCKETS.index(c["bucket"]) if c["bucket"] in BUCKETS else len(BUCKETS), c["name"]))
+    return out
+
+
+def neighbour_skills(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
+    """"Mrs Khan is a nurse": what the street can do, from the reading rules that ask for a skill."""
+    out: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for rule in rules.readings:
+        if not rule.skill_terms or not matches(rule.when, states, model, dark):
+            continue
+        for person in model.neighbours:
+            words = [w.strip().lower() for w in _SPLIT_NEEDS.split(person.get("skills") or "") if w.strip()]
+            for term in rule.skill_terms:
+                key = (person.get("name", ""), term)
+                if key in seen or not any(term in word for word in words):
+                    continue
+                seen.add(key)
+                article = "an" if term[:1] in "aeiou" else "a"
+                out.append({"name": person.get("name", ""), "address": person.get("address") or "", "skill": term,
+                            "text": f"{person.get('name', '')} is {article} {term}",
+                            "contacts": person.get("contacts") or "", "why": rule.why, "rule": rule.id,
+                            "link": rule.link})
+    return out
+
+
 def tasks(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
     out: list[dict] = []
+    seen: set[str] = set()
+
+    def add(task: dict) -> None:
+        if task["id"] not in seen:
+            seen.add(task["id"])
+            out.append(task)
+
     for rule in rules.tasks:
-        if not matches(rule.when, states, model, dark) or not stock_matches(rule, model):
+        if rule.who == "neighbours" or not task_rule_applies(rule, model, states, dark):
             continue
-        if rule.until and matches(rule.until, states, model, dark):
-            continue
-        if rule.after and trigger_since(rule.when, model, states) + rule.after_td > model.now:
-            continue
-        if rule.needs:
+        if rule.need_terms:
             for person in people_for(rule, model):
-                out.append(_task(model, f"{rule.id}:{_slug(person['name'])}", rule.title.format(name=person["name"]),
-                                 rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
+                add(_task(model, f"{rule.id}:{_slug(person['name'])}", fill(rule.title, person),
+                          rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
         else:
-            out.append(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
+            add(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
+    for entry in check_on(model, rules, states, dark):
+        add(_task(model, entry["id"], entry["title"], entry["bucket"], entry["why"], entry["link"],
+                  f"rule:{entry['rule']}"))
     if model.scenario:
         slug = model.scenario["slug"]
         title = model.scenario.get("title") or slug
         for item in model.checklist:
-            out.append(_task(model, f"checklist:{slug}/{item['id']}", item["text"], "today",
-                             f"On the {title} checklist.", f"playbook:{slug}#checklist", f"checklist:{slug}",
-                             done_from_checklist=bool(model.checklist_state.get(item["id"]))))
+            add(_task(model, f"checklist:{slug}/{item['id']}", item["text"], "today",
+                      f"On the {title} checklist.", f"playbook:{slug}#checklist", f"checklist:{slug}",
+                      done_from_checklist=bool(model.checklist_state.get(item["id"]))))
     out.sort(key=lambda t: (BUCKETS.index(t["bucket"]) if t["bucket"] in BUCKETS else len(BUCKETS), t["title"]))
     return out
 
@@ -347,7 +426,7 @@ def readiness(model: Model, rules: Rules) -> dict:
         if got < points:
             people = "1 person" if model.people == 1 else f"{model.people} people"
             gaps.append({"title": f"{label}: {days:g} days for {people}", "link": "/plan#stock", "points": points - got})
-    watched = [r for r in rules.all if r.needs and r.needs.strip() != "*"]
+    watched = [t for r in rules.all if r.who == "household" for t in r.need_terms if t not in ("*", "any")]
     with_needs = [p for p in model.household if need_words(p)]
     if not with_needs:
         score += 30
@@ -355,7 +434,7 @@ def readiness(model: Model, rules: Rules) -> dict:
         rule_points = stock_points = 0.0
         for person in with_needs:
             words = need_words(person)
-            covered_by_rule = any(any(r.needs.strip().lower() in w for w in words) for r in watched)
+            covered_by_rule = any(term in word for term in watched for word in words)
             covered_by_stock = any(any(word in f"{i.get('name', '')} {i.get('notes', '')}".lower() for word in words)
                                    for i in model.stock)
             rule_points += 15 / len(with_needs) if covered_by_rule else 0
@@ -431,6 +510,8 @@ def compute(model: Model, rules: Rules) -> dict:
         "inferred": inferred(model, rules, states, dark),
         "forecast": forecast(model, rules, states, dark),
         "tasks": tasks(model, rules, states, dark),
+        "neighbours": {"check_on": check_on(model, rules, states, dark),
+                       "skills": neighbour_skills(model, rules, states, dark)},
         "briefing": briefing(model, rules, states, dark),
         "modes": modes(model, rules, states, dark),
         "readiness": readiness(model, rules),
@@ -492,6 +573,18 @@ def report(view: dict, events: Iterable[dict] = ()) -> str:
         for task in rows:
             who = f" — {task['person']}" if task.get("person") else ""
             lines.append(f"- [{'x' if task['done'] else ' '}] {task['title']}{who}")
+        lines.append("")
+    neighbours = view.get("neighbours") or {}
+    if neighbours.get("check_on") or neighbours.get("skills"):
+        lines += ["## Neighbours", ""]
+        for item in neighbours.get("check_on") or []:
+            contacts = f" — {item['contacts']}" if item.get("contacts") else ""
+            lines.append(f"- [{'x' if item['done'] else ' '}] {item['title']}"
+                         + (f" ({item['needs']})" if item.get("needs") else "") + contacts)
+        for item in neighbours.get("skills") or []:
+            where = f" at {item['address']}" if item.get("address") else ""
+            contacts = f" — {item['contacts']}" if item.get("contacts") else ""
+            lines.append(f"- {item['text']}{where}{contacts}")
         lines.append("")
     if view["briefing"]:
         lines += ["## Read", ""] + [f"- {b['title']} ({b['kind']} {b['ref']})" for b in view["briefing"]] + [""]

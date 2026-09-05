@@ -97,6 +97,25 @@ rules:
     why: What still works, then water.
     source: page:pmr446
 
+  - id: neighbours-power-off
+    kind: task
+    when: {power: "off"}
+    who: neighbours
+    needs: [oxygen, "over 75"]
+    title: Check on {name}{at_address}
+    bucket: now
+    why: A concentrator needs mains power.
+    link: module:water
+    source: module:water
+
+  - id: neighbour-skills
+    kind: reading
+    when: {power: "off"}
+    who: neighbours
+    skills: [nurse, generator]
+    why: Who on the street can help.
+    source: page:pmr446
+
 bulletins:
   - station: BBC Radio 4
     frequency: 198 kHz long wave

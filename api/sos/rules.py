@@ -17,7 +17,9 @@ import yaml
 KINDS = ("implication", "consequence", "task", "mode", "reading")
 BUCKETS = ("now", "hour", "today", "week")
 _DURATION_UNITS = {"m": 60, "h": 3600, "d": 86400}
-_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "needs", "stock", "bucket", "until", "set", "open")
+_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "needs", "skills", "who", "stock", "bucket",
+           "until", "set", "open")
+WHO = ("household", "neighbours")
 
 
 class RulesError(ValueError):
@@ -52,7 +54,9 @@ class Rule:
     after: str | None = None
     severity: str = "info"
     link: str | None = None
-    needs: str | None = None
+    needs: str | tuple[str, ...] | None = None
+    skills: str | tuple[str, ...] | None = None
+    who: str = "household"
     stock: dict | None = None
     bucket: str | None = None
     until: dict | None = None
@@ -62,6 +66,15 @@ class Rule:
     @property
     def after_td(self) -> timedelta:
         return parse_duration(self.after) if self.after else timedelta(0)
+
+    @property
+    def need_terms(self) -> tuple[str, ...]:
+        """The `needs:` terms, always a tuple: `*` means anyone with something recorded, `any` means everybody."""
+        return _terms(self.needs)
+
+    @property
+    def skill_terms(self) -> tuple[str, ...]:
+        return _terms(self.skills)
 
     @property
     def where(self) -> str:
@@ -106,10 +119,19 @@ class Rules:
         return next((r for r in self.all if r.id == rule_id), None)
 
 
+def _terms(value) -> tuple[str, ...]:
+    """`needs` and `skills` take one term or a list of them; either way the engine sees a tuple of lower-case words."""
+    if value is None:
+        return ()
+    items = value if isinstance(value, (list, tuple)) else [value]
+    return tuple(str(x).strip().lower() for x in items if str(x).strip())
+
+
 def _rule_from(raw: dict, filename: str) -> Rule:
     kwargs: dict[str, Any] = {k: raw[k] for k in _FIELDS if k in raw}
-    if "open" in kwargs:
-        kwargs["open"] = tuple(kwargs["open"])
+    for key in ("open", "needs", "skills"):
+        if isinstance(kwargs.get(key), list):
+            kwargs[key] = tuple(kwargs[key])
     return Rule(id=raw["id"], kind=raw["kind"], when=dict(raw.get("when") or {}), source=raw["source"],
                 why=str(raw.get("why", "")), file=filename, **kwargs)
 

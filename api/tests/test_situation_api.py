@@ -32,8 +32,8 @@ def power_off(client, n: float = 5):
 
 def test_view_in_peacetime(client):
     view = client.get("/api/situation/view").json()
-    assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "briefing", "modes",
-                         "readiness", "bulletins"}
+    assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "neighbours", "briefing",
+                         "modes", "readiness", "bulletins"}
     assert view["scenario"] is None and view["meta"]["drill"] is False
     assert set(view["conditions"]) == {"power", "water", "mobile", "landline", "internet", "gas", "heating", "roads",
                                        "shops", "sewage"}
@@ -41,6 +41,7 @@ def test_view_in_peacetime(client):
                                            "source": "manual", "confidence": 1.0, "note": "", "set_by": "",
                                            "updated_at": None, "confirmed_at": None, "for_s": 0, "stale": False}
     assert view["inferred"] == [] and view["forecast"] == [] and view["briefing"] == []
+    assert view["neighbours"] == {"check_on": [], "skills": []}
     assert view["modes"] == {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
     assert 0 <= view["readiness"]["score"] <= 100 and view["readiness"]["gaps"]
     assert view["bulletins"]["next"]["station"] == "BBC Radio 4"

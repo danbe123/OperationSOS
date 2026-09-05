@@ -152,3 +152,50 @@ rules:
     why: Two weeks of every repeat prescription, plus painkillers and dressings, is what the box counts as covered.
     link: module:medical
     source: module:medical
+
+# The street list (spec section 8). `who: neighbours` reads the neighbours register instead of the household one,
+# and `{at_address}` disappears when nobody wrote an address down. One task per neighbour however many rules
+# point at them, so a long emergency does not turn into a list of the same door four times over.
+  - id: neighbours-power-off
+    kind: task
+    when: {power: "off"}
+    who: neighbours
+    needs: [oxygen, dialysis, stairlift, insulin, "over 75"]
+    title: Check on {name}{at_address}
+    bucket: now
+    why: Powered medical equipment, a stairlift and refrigerated medicine all stop with the mains, and the people who depend on them are the ones nobody else will notice.
+    link: module:community
+    source: module:community
+
+  - id: neighbours-water-off
+    kind: task
+    when: {water: "off"}
+    who: neighbours
+    needs: [dialysis, stairlift, oxygen, "over 75"]
+    title: Take water to {name}{at_address}
+    bucket: hour
+    why: Anyone who cannot carry a full container up a flight of stairs is cut off by a standpipe, and home dialysis needs water as well as power.
+    link: module:water
+    source: module:community
+
+  - id: neighbours-heating-off-winter
+    kind: task
+    when: {heating: "off", season: winter}
+    who: neighbours
+    needs: ["over 75", baby, oxygen, copd]
+    title: Check {name}{at_address} is warm enough
+    bucket: hour
+    why: Cold indoors kills the very old and the very young first, and it does it quietly over a night rather than in an hour.
+    link: card:hypothermia
+    source: module:community
+
+  - id: neighbours-scenario
+    kind: task
+    when: {scenario: any}
+    who: neighbours
+    needs: any
+    title: Knock on {name}{at_address} and say what is happening
+    bucket: today
+    why: A street that has been round its own doors once knows who is away, who is alone and who has what, which is the whole of a community emergency plan on the first day.
+    link: module:community
+    source: module:community
