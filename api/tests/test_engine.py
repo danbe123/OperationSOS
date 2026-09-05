@@ -371,11 +371,12 @@ def test_a_ticked_neighbour_shows_as_done_on_both_lists(street, ruleset):
 
 
 def test_the_street_s_skills_are_listed_with_the_right_article(street, ruleset):
+    """A trade is something you are, a generator is something you have, and only one of them takes "an"."""
     view = engine.compute(street, ruleset)
     assert [(s["name"], s["skill"], s["text"]) for s in view["neighbours"]["skills"]] == [
         ("Mrs Khan", "nurse", "Mrs Khan is a nurse"),
-        ("Mr Ali", "generator", "Mr Ali is a generator"),
-        ("Mr Ali", "electrician", "Mr Ali is an electrician")]
+        ("Mr Ali", "electrician", "Mr Ali is an electrician"),
+        ("Mr Ali", "generator", "Mr Ali has a generator")]
 
 
 def test_the_report_carries_the_street(street, ruleset):

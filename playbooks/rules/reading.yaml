@@ -109,11 +109,21 @@ rules:
     why: Anyone medically trained on the street is worth knowing about before you need them, not after.
     source: module:community
 
-  - id: neighbour-skills-practical
+  - id: neighbour-skills-trades
     kind: reading
     when: {}
     who: neighbours
-    skills: [generator, chainsaw, 4x4, tractor, electrician, plumber, engineer, mechanic, farmer, radio]
+    skills: [electrician, plumber, engineer, mechanic, builder, farmer, gas fitter]
+    link: module:tools-repair
+    why: A trade on the street is the difference between a repair and a wait, and most of these people would rather be asked than watch it be done badly.
+    source: module:community
+
+  - id: neighbour-skills-kit
+    kind: reading
+    when: {}
+    who: neighbours
+    skills: [generator, chainsaw, 4x4, tractor, log burner, well, radio, boat]
+    title: "{name} has {article} {skill}"
     link: module:community
     why: "A community emergency plan is an asset register as much as a contact list: generators, chainsaws, 4x4s and the people who can use them."
     source: module:community

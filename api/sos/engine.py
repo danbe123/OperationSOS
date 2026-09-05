@@ -167,7 +167,7 @@ class _Fields(dict):
 def fill(text: str, person: dict) -> str:
     """`{name}`, `{address}` and `{at_address}` (which disappears when nobody wrote the address down)."""
     address = str(person.get("address") or "").strip()
-    return str(text).format_map(_Fields({"name": person.get("name", ""), "address": address,
+    return str(text).format_map(_Fields({**person, "name": person.get("name", ""), "address": address,
                                          "at_address": f" at {address}" if address else ""}))
 
 
@@ -332,8 +332,9 @@ def neighbour_skills(model: Model, rules: Rules, states: dict[str, str], dark: b
                     continue
                 seen.add(key)
                 article = "an" if term[:1] in "aeiou" else "a"
+                template = rule.title or "{name} is {article} {skill}"
                 out.append({"name": person.get("name", ""), "address": person.get("address") or "", "skill": term,
-                            "text": f"{person.get('name', '')} is {article} {term}",
+                            "text": fill(template, {**person, "skill": term, "article": article}),
                             "contacts": person.get("contacts") or "", "why": rule.why, "rule": rule.id,
                             "link": rule.link})
     return out
