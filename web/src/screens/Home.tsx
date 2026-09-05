@@ -14,20 +14,27 @@ import { Briefing } from '../situation/Briefing';
 import { SituationStrip } from '../situation/SituationStrip';
 import { useSituation } from '../situation/SituationProvider';
 
-export const HOME_TILES = [
+export type HomeTile = { to: string; icon: string; title: string; subtitle: string };
+
+export const HOME_TILES: HomeTile[] = [
   { to: '/medical', icon: 'medical', title: 'Medical', subtitle: 'Quick cards, NHS' },
   { to: '/map', icon: 'map', title: 'Maps', subtitle: 'UK and Ireland, offline' },
   { to: '/library', icon: 'library', title: 'Library', subtitle: 'Wikipedia, manuals, books' },
   { to: '/radio', icon: 'radio', title: 'Phone and radio', subtitle: 'Numbers, PMR446, what works' },
   { to: '/plan', icon: 'plan', title: 'Plan', subtitle: 'Household, stock, notes, pins' },
   { to: '/tools', icon: 'hammer', title: 'Tools', subtitle: 'Timers, sun, sums, log' },
-] as const;
+];
 
-/** With `map_first` set (a flood, say) the map leads the tile row; otherwise the order is fixed. */
-export function homeTiles(mapFirst: boolean): typeof HOME_TILES[number][] {
-  const tiles = [...HOME_TILES];
+/** The overlays a scenario wants open the moment the map is reached for. */
+export const SCENARIO_OVERLAYS: Record<string, string> = { 'storms-flooding': 'flood-zones' };
+
+/** With `map_first` set (a flood, say) the map leads the tile row, carrying the scenario's own
+ * overlay so the flood zones are already drawn; otherwise the order is fixed. */
+export function homeTiles(mapFirst: boolean, scenario?: string | null): HomeTile[] {
+  const overlay = scenario ? SCENARIO_OVERLAYS[scenario] : undefined;
+  const tiles = HOME_TILES.map((t) => (overlay && t.to === '/map' ? { ...t, to: `/map?overlay=${overlay}`, subtitle: 'UK and Ireland, flood zones on' } : { ...t }));
   if (!mapFirst) return tiles;
-  const map = tiles.find((t) => t.to === '/map');
+  const map = tiles.find((t) => t.to.startsWith('/map'));
   return map ? [map, ...tiles.filter((t) => t !== map)] : tiles;
 }
 
@@ -36,7 +43,7 @@ export function Home() {
   const { status } = useStatus();
   const { view } = useSituation();
   const situation = status?.situation ?? null;
-  const tiles = homeTiles(view?.modes.map_first ?? false);
+  const tiles = homeTiles(view?.modes.map_first ?? false, view?.scenario?.slug ?? null);
   const sorted = useMemo(() => (data ?? []).slice().sort((a, b) => a.order - b.order), [data]);
   const [lastSlug] = useState(() => {
     try { return localStorage.getItem('sos.lastPlaybook'); } catch { return null; }

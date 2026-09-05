@@ -1,13 +1,25 @@
 import { useCallback, useMemo, type MouseEvent } from 'react';
 import { useAppLink } from '../links';
+import { useCallsHidden } from '../situation/SituationProvider';
 
-/** Render server-rendered HTML (playbooks, cards, pages) with delegated link handling. */
+/** Render server-rendered HTML (playbooks, cards, pages) with delegated link handling.
+ * While both phone networks are down every `tel:` link becomes the no-phones page instead:
+ * a number that cannot connect must not look like one that can. */
 export function Html({ html, className }: { html: string; className?: string }) {
   const follow = useAppLink();
+  const callsHidden = useCallsHidden();
   const content = useMemo(() => {
-    if (!/<table[\s>]/i.test(html)) return html;
+    const hasTel = callsHidden && /href="tel:/i.test(html);
+    if (!/<table[\s>]/i.test(html) && !hasTel) return html;
     const template = document.createElement('template');
     template.innerHTML = html;
+    if (hasTel) {
+      for (const anchor of template.content.querySelectorAll('a[href^="tel:"]')) {
+        const number = (anchor.getAttribute('href') ?? '').slice('tel:'.length);
+        anchor.setAttribute('href', '/p/no-phones');
+        anchor.textContent = `${anchor.textContent?.trim() || number} will not connect: get help without phones`;
+      }
+    }
     for (const table of template.content.querySelectorAll('table')) {
       const wrapper = document.createElement('div');
       wrapper.className = 'table-scroll';
@@ -21,7 +33,7 @@ export function Html({ html, className }: { html: string; className?: string }) 
       wrapper.append(table);
     }
     return template.innerHTML;
-  }, [html]);
+  }, [html, callsHidden]);
   const onClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

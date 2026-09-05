@@ -65,6 +65,13 @@ export function useSituation(): SituationContextValue {
   return ctx;
 }
 
+/** The calls mode, without insisting on a provider: chrome rendered outside the tree still works.
+ * `hidden` means both phone networks are down, so nothing in the app should invite a call. */
+export function useCallsHidden(): boolean {
+  const ctx = useContext(SituationContext);
+  return ctx?.view?.modes.calls === 'hidden';
+}
+
 /** True when the box has something to say: a scenario is running or a condition is not working. */
 export function isEventful(view: SituationView | null): boolean {
   if (!view) return false;
