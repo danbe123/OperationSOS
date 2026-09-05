@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import { Link } from 'react-router';
 import { AppBar } from '../../components/AppBar';
+import './tools.css';
 import { Icon } from '../../icons';
 import { click } from '../../tools/audio';
 import { cancelTimer, startTimer, useTimers } from '../../tools/timerStore';
@@ -44,23 +45,31 @@ function Countdowns() {
 
 function Cpr() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
-  const [beat, setBeat] = useState(0);
+  const now = useNow(250);
   useEffect(() => {
     if (startedAt === null) return;
-    const id = window.setInterval(() => { click(); setBeat((b) => b + 1); }, 60_000 / CPR_BPM);
-    return () => window.clearInterval(id);
+    // drift-corrected click schedule: each click is timed from the start, not from the previous click
+    const interval = 60_000 / CPR_BPM;
+    let n = 0;
+    let handle = 0;
+    const schedule = () => {
+      const due = startedAt + n * interval;
+      handle = window.setTimeout(() => { click(); n += 1; schedule(); }, Math.max(0, due - Date.now()));
+    };
+    schedule();
+    return () => window.clearTimeout(handle);
   }, [startedAt]);
-  const count = startedAt === null ? 0 : beatsSince(startedAt, Date.now());
+  const count = startedAt === null ? 0 : beatsSince(startedAt, now);
   return (
     <section className="card-box pad-inner">
       <h3>CPR beat</h3>
       <p>{CPR_BPM} compressions a minute, 5 to 6 cm deep. 30 compressions then 2 breaths. <Link to="/medical/card/cpr-adult">Adult CPR card</Link> · <Link to="/medical/card/cpr-child">Child CPR card</Link></p>
       <div className="row">
         {startedAt === null ? (
-          <button type="button" className="btn btn-primary btn-big" onClick={() => { setStartedAt(Date.now()); setBeat(0); }}>Start the beat</button>
+          <button type="button" className="btn btn-primary btn-big" onClick={() => setStartedAt(Date.now())}>Start the beat</button>
         ) : (
           <>
-            <span className={`cpr-pulse ${beat % 2 ? 'on' : ''}`} aria-hidden="true" />
+            <span className="cpr-pulse on" style={{ animationDuration: `${60 / CPR_BPM}s` }} aria-hidden="true" />
             <span className="timer-big" aria-label="Compressions so far">{count}</span>
             <span className="muted">compressions · cycle {Math.floor(count / 30) + 1}</span>
             <button type="button" className="btn btn-danger" onClick={() => setStartedAt(null)}>Stop</button>
