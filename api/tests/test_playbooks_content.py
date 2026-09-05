@@ -80,3 +80,41 @@ def test_module_parses_with_sos_content(slug):
     doc = parse_document(PB / "modules" / f"{slug}.md")
     assert doc.id == slug
     assert doc.kind == "module"
+
+
+CARDS = [
+    "cpr-adult", "cpr-child", "severe-bleeding", "choking", "burns", "hypothermia", "heat-stroke",
+    "broken-bones", "radiation-sickness", "chemical-exposure", "childbirth", "dehydration",
+    "wound-cleaning", "shock", "drowning", "seizures", "anaphylaxis", "carbon-monoxide", "stroke",
+    "heart-attack", "recovery-position", "low-blood-sugar", "asthma-attack",
+]
+CARD_HEADINGS = ["## When to use", "## Steps", "## Warnings", "## Stop or escalate", "## Source"]
+STEP = re.compile(r"^\d+\. (.*)$")
+
+
+@pytest.mark.parametrize("slug", CARDS)
+def test_card_front_matter(slug):
+    post = load("cards", slug)
+    assert set(post.keys()) == {"id", "title", "icon", "order", "summary"}
+    assert post["id"] == slug
+    assert post["order"] == CARDS.index(slug) + 1
+    assert len(post["title"]) <= 40
+    assert parse_document(PB / "cards" / f"{slug}.md").kind == "card"
+
+
+@pytest.mark.parametrize("slug", CARDS)
+def test_card_structure_and_screen_rule(slug):
+    post = load("cards", slug)
+    assert h2(post.content) == CARD_HEADINGS
+    body = sections(post.content)
+    when = body["When to use"].strip()
+    assert 0 < len(when) <= 110, (slug, len(when))
+    steps = [STEP.match(l).group(1) for l in body["Steps"].splitlines() if STEP.match(l)]
+    assert len(steps) >= 4, slug
+    for s in steps[:3]:
+        assert len(s) <= 70, (slug, s)
+    warnings = [l for l in body["Warnings"].splitlines() if l.strip()]
+    assert warnings and all(l.startswith("**Warning:**") for l in warnings), slug
+    assert "999" in body["Stop or escalate"], slug
+    assert len(CITE.findall(body["Source"])) >= 1, slug
+    assert "NOMAD" not in post.content

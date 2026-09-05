@@ -1,0 +1,34 @@
+---
+id: broken-bones
+title: Broken bones
+icon: bone
+order: 8
+summary: Supporting a suspected fracture and knowing which need an ambulance.
+---
+
+## When to use
+
+Pain, swelling, a limb bent the wrong way, grating, or unable to move or bear weight after an injury.
+
+## Steps
+
+1. Keep the injured part still in the position you found it.
+2. Do not try to straighten it or push bone back in.
+3. Support it with padding: cushions, rolled clothes, a sling for an arm.
+4. Splint a leg to the other leg or to a board with padding between, tying above and below the break, not over it.
+5. Cover any open wound with a clean dressing and control bleeding with pressure around, not on, the bone.
+6. Wrapped ice or a cold pack for 20 minutes eases swelling.
+7. Check colour, warmth and feeling below the injury every few minutes; loosen ties if fingers or toes go white or numb.
+
+## Warnings
+
+**Warning:** Do not move someone with a suspected neck, back or pelvis injury unless they are in danger.
+**Warning:** Do not give food or drink; they may need an anaesthetic.
+
+## Stop or escalate
+
+999 for an open fracture, a thigh, hip, pelvis, spine or skull injury, an obvious deformity, numbness or a white cold limb below the injury, or heavy bleeding.
+
+## Source
+
+[Ship Captain's Medical Guide ch. 1, p. 8](doc:scmg-ch01#page=8); [FM 4-25.11, p. 51](doc:fm-4-25-11-first-aid#page=51); [Broken arm or wrist (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/broken-arm-or-wrist/).
