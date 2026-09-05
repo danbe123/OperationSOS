@@ -118,3 +118,40 @@ def test_card_structure_and_screen_rule(slug):
     assert "999" in body["Stop or escalate"], slug
     assert len(CITE.findall(body["Source"])) >= 1, slug
     assert "NOMAD" not in post.content
+
+
+PAGES = {
+    "pmr446": "comms", "amateur-bands": "comms", "uk-numbers": "reference", "what-still-works": "comms",
+    "household-plan": "plan", "water-disinfection": "reference", "mains-electricity": "reference",
+    "solar-islanding": "reference", "knife-firearms-law": "reference", "foraging-law": "reference",
+    "ticks-adders": "reference", "about-sos": "about",
+}
+
+
+@pytest.mark.parametrize("slug", sorted(PAGES))
+def test_page_front_matter_and_body(slug):
+    post = load("pages", slug)
+    assert set(post.keys()) == {"id", "title", "icon", "order", "summary", "category"}
+    assert post["id"] == slug
+    assert post["category"] == PAGES[slug]
+    assert post["order"] == list(PAGES).index(slug) + 1
+    assert len(h2(post.content)) >= 2, slug
+    assert len(CITE.findall(post.content)) >= 2, slug
+    assert "NOMAD" not in post.content
+    doc = parse_document(PB / "pages" / f"{slug}.md")
+    assert doc.kind == "page" and doc.category == PAGES[slug]
+
+
+def test_uk_numbers_page_has_the_mandatory_numbers():
+    body = load("pages", "uk-numbers").content
+    for n in ("999", "111", "105", "0345 988 1188", "0800 111 999", "116 123", "0300 2000 100", "03457 643 643"):
+        assert n in body, n
+
+
+def test_pmr446_page_has_all_16_channels_and_38_tones():
+    body = load("pages", "pmr446").content
+    for ch in ("446.00625", "446.09375", "446.19375"):
+        assert ch in body, ch
+    assert body.count("| 446.") == 16
+    for tone in ("67.0", "100.0", "250.3"):
+        assert tone in body, tone
