@@ -1,0 +1,4 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"Descrip": "Open Country", "source": "fixture sample"},
+  "geometry": {"type": "Polygon", "coordinates": [[[-1.55, 50.90], [-1.52, 50.90], [-1.52, 50.93], [-1.55, 50.93], [-1.55, 50.90]]]}}
+]}

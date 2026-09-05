@@ -1,0 +1,8 @@
+{
+  "attributes": {"type": false, "id": false, "version": false, "changeset": false, "timestamp": false, "uid": false, "user": false, "way_nodes": false},
+  "format_options": {},
+  "linear_tags": true,
+  "area_tags": false,
+  "exclude_tags": [],
+  "include_tags": ["highway", "designation", "name", "prow_ref", "sac_scale", "trail_visibility", "foot", "access", "surface"]
+}

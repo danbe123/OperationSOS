@@ -1,0 +1,6 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "properties": {"zone": "3", "source": "fixture sample"},
+  "geometry": {"type": "Polygon", "coordinates": [[[-1.49, 50.90], [-1.47, 50.90], [-1.47, 50.93], [-1.49, 50.93], [-1.49, 50.90]]]}},
+ {"type": "Feature", "properties": {"zone": "2", "source": "fixture sample"},
+  "geometry": {"type": "Polygon", "coordinates": [[[-1.50, 50.895], [-1.465, 50.895], [-1.465, 50.935], [-1.50, 50.935], [-1.50, 50.895]]]}}
+]}

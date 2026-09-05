@@ -20,8 +20,9 @@ def all_steps() -> list:
     from sos.mapbuild.contours import ContoursStep
     from sos.mapbuild.hillshade import HillshadeStep
     from sos.mapbuild.osdata import OsZoomstackStep
+    from sos.mapbuild.overlays import OverlaysStep
     from sos.mapbuild.styles import StylesStep
-    return [BaseStep(), OsZoomstackStep(), ContoursStep(), HillshadeStep(), StylesStep()]
+    return [BaseStep(), OsZoomstackStep(), ContoursStep(), HillshadeStep(), OverlaysStep(), StylesStep()]
 
 
 def select_steps(ids: list[str] | None) -> list:
