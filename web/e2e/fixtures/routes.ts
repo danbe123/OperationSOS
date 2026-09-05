@@ -171,6 +171,13 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (method === 'PUT') { state.stock[idx] = { ...state.stock[idx], ...body() } as StockItem; return json(route, withDays(state.stock[idx])); }
       if (method === 'DELETE') { state.stock.splice(idx, 1); return json(route, { ok: true }); }
     }
+    if (p === '/services' && method === 'GET') return json(route, state.services);
+    const svc = /^\/services\/(\w+)$/.exec(p);
+    if (svc && method === 'PUT') {
+      state.services = { ...state.services, [svc[1]]: Boolean(body().on) };
+      state.status = { ...state.status, services: state.services };
+      return json(route, state.services);
+    }
     if (p === '/situation' && method === 'GET') return json(route, state.situation);
     if (p === '/situation' && method === 'POST') {
       const slug = String(body().slug ?? '');

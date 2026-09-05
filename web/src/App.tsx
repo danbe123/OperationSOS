@@ -5,6 +5,7 @@ import { StatusProvider, useStatus } from './api/status';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { KioskProvider } from './kiosk/KioskProvider';
 import './app.css';
+import './screens/home.css';
 
 function Themed() {
   const { status } = useStatus();

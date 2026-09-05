@@ -125,7 +125,7 @@ PAGES = {
     "household-plan": "plan", "water-disinfection": "reference", "mains-electricity": "reference",
     "solar-islanding": "reference", "knife-firearms-law": "reference", "foraging-law": "reference",
     "ticks-adders": "reference", "about-sos": "about",
-    "fieldcraft-basics": "fieldcraft", "fieldcraft-shelter": "fieldcraft", "fieldcraft-fire": "fieldcraft", "fieldcraft-water": "fieldcraft", "fieldcraft-food": "fieldcraft", "fieldcraft-moving": "fieldcraft", "fieldcraft-weather": "fieldcraft", "fieldcraft-rescue": "fieldcraft", "fieldcraft-hygiene": "fieldcraft", "fieldcraft-rope-tools": "fieldcraft",
+    "fieldcraft-basics": "fieldcraft", "fieldcraft-shelter": "fieldcraft", "fieldcraft-fire": "fieldcraft", "fieldcraft-water": "fieldcraft", "fieldcraft-food": "fieldcraft", "fieldcraft-moving": "fieldcraft", "fieldcraft-weather": "fieldcraft", "fieldcraft-rescue": "fieldcraft", "fieldcraft-hygiene": "fieldcraft", "fieldcraft-rope-tools": "fieldcraft", "no-phones": "comms",
 }
 
 

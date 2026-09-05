@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, LibraryItem, LibraryResponse, MapConfig, Note, Overlay, Page,
-  Person, Place, Playbook, PlaybookSummary, SearchResponse, Situation, Status, StockItem, StockResponse, Suggestion, UpdateProgress,
+  Person, Place, Playbook, PlaybookSummary, SearchResponse, ServiceId, Services, Situation, Status, StockItem, StockResponse, Suggestion, UpdateProgress,
 } from './types';
 
 export class ApiError extends Error {
@@ -139,6 +139,8 @@ export const api = {
   addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
   updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
   deleteStock: (id: number) => request<{ ok: true }>('DELETE', `/stock/${id}`),
+  services: () => request<Services>('GET', '/services'),
+  setService: (id: ServiceId, on: boolean) => request<Services>('PUT', `/services/${id}`, { on }),
   situation: () => request<Situation>('GET', '/situation'),
   startSituation: (slug: string) => request<Situation>('POST', '/situation', { slug }),
   endSituation: () => request<Situation>('DELETE', '/situation'),

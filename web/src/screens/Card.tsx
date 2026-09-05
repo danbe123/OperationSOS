@@ -2,6 +2,7 @@ import { useParams } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
 import { AppBar } from '../components/AppBar';
+import { OutageNotice } from '../components/ServiceToggles';
 import { Html } from '../components/Html';
 
 export function Card() {
@@ -10,6 +11,7 @@ export function Card() {
   return (
     <div className="screen card">
       <AppBar title="Quick card" search={false} />
+      <OutageNotice />
       {loading && <p className="pad muted">Loading…</p>}
       {error && <p className="pad warning">Could not load this card: {error}</p>}
       {data && (

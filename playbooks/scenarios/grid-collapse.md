@@ -125,3 +125,4 @@ A grid does not simply switch back on: it is rebuilt by black start, islands of 
 - [Canadian Prepper: winter prepping](kiwix:canadian-prepper_en_winterprepping/index.html)
 - [Water outdoors](page:fieldcraft-water)
 - [Living in the field: hygiene](page:fieldcraft-hygiene)
+- [Getting help without phones](page:no-phones)

@@ -10,6 +10,7 @@ export type Status = {
   thermal_ai_off_c: number; idle_minutes: number; home_minutes: number;
   pin_required: boolean; dev: boolean; default_theme: 'vault' | 'field' | 'blackout';
   situation?: { slug: string; started_at: string } | null;
+  services?: Services;
 };
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
@@ -65,3 +66,6 @@ export type AiEvent =
   | { event: 'error'; data: { code: 'busy' | 'timeout' | 'unavailable' | 'internal'; message: string; retry_after?: number } };
 export type AiAskRequest = { question: string; history: { role: 'user' | 'assistant'; content: string }[] };
 export type UpdateProgress = { running: boolean; lines: string[]; done: boolean; ok: boolean | null };
+
+export type ServiceId = 'power' | 'water' | 'gas' | 'internet' | 'phones';
+export type Services = Record<ServiceId, boolean>;

@@ -15,6 +15,7 @@ from sos.config import Settings, get_settings
 from sos.content import ContentCache
 from sos.kiwix import KiwixClient
 from sos.routers import ai, cards, household, kiosk, notes, pages, places, playbooks, search, status
+from sos.routers import services as services_router
 from sos.routers import situation as situation_router
 from sos.routers import library as library_router
 from sos.routers import map as map_router
@@ -76,7 +77,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app = FastAPI(title="Operation SOS", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)
     for router in (status.router, library_router.router, search.router, playbooks.router, cards.router, pages.router,
                    map_router.router, places.router, notes.router, ai.router, kiosk.router, system_router.router,
-                   household.router, situation_router.router):
+                   household.router, situation_router.router, services_router.router):
         app.include_router(router, prefix="/api")
 
     @app.exception_handler(ValueError)

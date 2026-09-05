@@ -54,3 +54,4 @@ sources:
 - [Emergency Alerts (Wikipedia)](kiwix:wikipedia_en_all_maxi/Emergency_Alerts_(United_Kingdom))
 - [RAYNET (Wikipedia)](kiwix:wikipedia_en_all_maxi/RAYNET)
 - [Getting found](page:fieldcraft-rescue)
+- [Getting help without phones](page:no-phones)

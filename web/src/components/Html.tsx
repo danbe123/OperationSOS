@@ -1,9 +1,14 @@
-import { useCallback, useMemo, type MouseEvent } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, type MouseEvent } from 'react';
+import { useStatus } from '../api/status';
 import { useAppLink } from '../links';
+import { tagPhoneNumbers } from '../services';
 
 /** Render server-rendered HTML (playbooks, cards, pages) with delegated link handling. */
 export function Html({ html, className }: { html: string; className?: string }) {
   const follow = useAppLink();
+  const { status } = useStatus();
+  const phonesDown = status?.services?.phones === false;
+  const ref = useRef<HTMLDivElement>(null);
   const content = useMemo(() => {
     if (!/<table[\s>]/i.test(html)) return html;
     const template = document.createElement('template');
@@ -31,5 +36,9 @@ export function Html({ html, className }: { html: string; className?: string }) 
     },
     [follow],
   );
-  return <div className={className ? `html ${className}` : 'html'} onClick={onClick} dangerouslySetInnerHTML={{ __html: content }} />;
+  // key forces a fresh render of the raw HTML when the phones state flips, so tags are added or removed cleanly
+  useLayoutEffect(() => {
+    if (phonesDown && ref.current) tagPhoneNumbers(ref.current);
+  }, [content, phonesDown]);
+  return <div key={phonesDown ? 'phones-down' : 'phones-up'} ref={ref} className={className ? `html ${className}` : 'html'} onClick={onClick} dangerouslySetInnerHTML={{ __html: content }} />;
 }

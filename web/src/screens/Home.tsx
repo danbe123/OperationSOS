@@ -10,6 +10,7 @@ import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import './home.css';
 import { situationLine } from '../components/SituationClock';
+import { OutagePanel, ServiceToggles } from '../components/ServiceToggles';
 
 export const HOME_TILES = [
   { to: '/medical', icon: 'medical', title: 'Medical', subtitle: 'Quick cards, NHS' },
@@ -42,6 +43,8 @@ export function Home() {
           </>
         }
       />
+      <ServiceToggles />
+      <OutagePanel />
       <div className="home-intro">
         <div><p className="eyebrow">Your offline field manual</p><h2>Find your next step.</h2><p className="muted">Practical guidance for you and your household.</p></div>
         <div className="home-search">

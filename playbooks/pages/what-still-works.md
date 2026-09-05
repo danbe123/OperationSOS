@@ -51,3 +51,4 @@ category: comms
 - [Communications module](module:comms)
 - [Grid collapse](playbook:grid-collapse)
 - [Public switched telephone network](kiwix:wikipedia_en_all_maxi/Public_switched_telephone_network)
+- [Getting help without phones](page:no-phones)

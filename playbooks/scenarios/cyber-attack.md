@@ -102,3 +102,4 @@ Attacks on power systems are real: the December 2015 attack on Ukraine's grid cu
 - [Cybersecurity (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/cybersecurity)
 - [Grid collapse playbook](playbook:grid-collapse)
 - [Economic collapse playbook](playbook:economic-collapse)
+- [Getting help without phones](page:no-phones)
