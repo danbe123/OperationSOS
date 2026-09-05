@@ -75,7 +75,7 @@ export function OutageNotice() {
   return (
     <p className="pad notice outage-notice" role="status">
       <Icon name="alert" size={18} /> Off right now: {off.map((id) => SERVICE_INFO[id].title.toLowerCase()).join(', ')}.
-      {off.includes('phones') && <> Phone numbers on this page will not connect: <Link to="/p/no-phones">getting help without phones</Link>.</>}
+      {off.includes('phones') && <> Phone numbers on this page will not connect. <Link to="/p/no-phones">Getting help without phones</Link>.</>}
       {' '}<Link to="/">Change on Home</Link>
     </p>
   );
