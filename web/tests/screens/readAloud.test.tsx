@@ -38,9 +38,9 @@ describe('Read aloud', () => {
     expect(await screen.findByRole('button', { name: 'Read this page aloud' })).toBeInTheDocument();
   });
 
-  it('takes every read-aloud button away when the box answers 503', async () => {
+  it.each([[503, 'Piper is not installed'], [404, 'Not Found']])('takes every read-aloud button away when the box answers %i', async (status, detail) => {
     mockPage();
-    vi.spyOn(api, 'speak').mockRejectedValue(new ApiError(503, 'Piper is not installed'));
+    vi.spyOn(api, 'speak').mockRejectedValue(new ApiError(status, detail));
     const user = userEvent.setup();
     renderRoute('/p/pmr446');
     await user.click(await screen.findByRole('button', { name: 'Read this page aloud' }));

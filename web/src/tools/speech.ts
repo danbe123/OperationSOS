@@ -122,7 +122,8 @@ export async function speak(id: string, text: string): Promise<void> {
       await play(blob);
     }
   } catch (e) {
-    if (e instanceof ApiError && e.status === 503) {
+    // 503: no voice installed. 404: a box built before it had one. Either way, stop offering it.
+    if (e instanceof ApiError && (e.status === 503 || e.status === 404)) {
       available = false;
       try { sessionStorage.setItem(AVAILABLE_KEY, 'off'); } catch { /* storage is optional */ }
       notify('This box has no voice installed, so it cannot read pages aloud.');
