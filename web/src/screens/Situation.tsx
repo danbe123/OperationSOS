@@ -9,6 +9,7 @@ import { AppBar } from '../components/AppBar';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { ConditionRow } from '../situation/ConditionRow';
+import { SensorsPanel } from '../situation/SensorsPanel';
 import { CONDITION_INFO, HOME_CONDITION_IDS } from '../situation/conditions';
 import { withCondition } from '../situation/apply';
 import { useSituation } from '../situation/SituationProvider';
@@ -68,6 +69,8 @@ export function Situation() {
           {view && CONDITION_IDS.map((id) => view.conditions[id] && <ConditionRow key={id} condition={view.conditions[id]} onSaved={saved} />)}
         </ul>
       </section>
+
+      <SensorsPanel />
 
       <section aria-label="Situation clock" id="clock">
         <div className="pad">

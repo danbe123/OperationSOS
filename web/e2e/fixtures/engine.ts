@@ -46,6 +46,16 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
     });
   }
 
+  // A reading never overrides what somebody said; it proposes, flagged as the box's own detection.
+  const internet = state.sensors.internet;
+  if (internet && internet.value === 0 && conditions.internet.state === 'working') {
+    inferred.push({
+      condition: 'internet', state: 'off', confidence: 0.8, due_at: internet.at, detected: true,
+      why: 'The box has not reached the internet since ' + internet.at.slice(11, 16) + '.',
+      rule: 'sensor:internet', source: 'page:what-still-works',
+    });
+  }
+
   const forecast: Forecast[] = [];
   if (off('power')) {
     const from = sinceOf(power);

@@ -60,7 +60,7 @@ export function createFixtureState(overrides: Partial<Status> = {}): FixtureStat
     places: FIXTURE_PLACES.map((x) => ({ ...x })),
     missingNearby: ['rest-centre', 'fire-station', 'fuel'],
     sensors: {
-      internet: { value: 0, unit: 'up', at: new Date(Date.now() - 120_000).toISOString() },
+      internet: { value: 1, unit: 'up', at: new Date(Date.now() - 120_000).toISOString() },
       mains: { value: 1, unit: 'on', at: new Date(Date.now() - 60_000).toISOString() },
       temp_in: { value: 14.5, unit: '\u00b0C', at: new Date(Date.now() - 300_000).toISOString() },
     },

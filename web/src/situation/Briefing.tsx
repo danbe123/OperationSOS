@@ -48,7 +48,10 @@ export function Briefing() {
           <ul className="list briefing-list">
             {inferred.map((i) => (
               <li key={i.rule}>
-                <p className="briefing-title">{CONDITION_INFO[i.condition].title} is probably {STATE_LABEL[i.state]}</p>
+                <p className="briefing-title">
+                  {CONDITION_INFO[i.condition].title} is probably {STATE_LABEL[i.state]}
+                  {i.detected && <> <span className="badge badge-warn">▲ detected by the box</span></>}
+                </p>
                 <p className="muted">{i.why}</p>
                 <div className="row">
                   <button type="button" className="btn btn-primary" disabled={busy === i.rule} onClick={() => void accept(i)}>Accept</button>

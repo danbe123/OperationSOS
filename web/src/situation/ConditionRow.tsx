@@ -105,7 +105,7 @@ export function ConditionRow({ condition, onSaved }: { condition: Condition; onS
       </div>
       <p className="muted cond-meta">
         {condition.source === 'inferred' && <span className="badge badge-warn">worked out by the box</span>}
-        {condition.source === 'detected' && <span className="badge">detected</span>}
+        {condition.source === 'detected' && <span className="badge">detected by the box</span>}
         {' '}Set from {condition.set_by} at {clockTime(condition.updated_at)}.
         {condition.note && ` Note: ${condition.note}`}
       </p>
