@@ -50,7 +50,7 @@
     "places",
     "packs"
   ],
-  "overlays_manifest": "manifest/overlays.json",
+  "overlays_manifest": "api/tests/fixtures/manifest/overlays.json",
   "updated_overlays": [
     "footpaths",
     "access-land",

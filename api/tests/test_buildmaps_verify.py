@@ -71,7 +71,7 @@ def test_manifest_maps_json_has_the_ten_items_with_valid_shapes():
     assert [i["id"] for i in items] == MANIFEST_IDS
     for item in items:
         assert item["kind"] in ALLOWED_KINDS and item["tier"] == "core" and item["category"] == "maps"
-        assert item["source"]["type"] == "build" and item["source"]["tool"] == "sos build-maps" and item["source"]["artifact"]
+        assert item["source"]["type"] == "build" and item["source"]["tool"] == "build-maps" and item["source"]["artifact"]
         assert item["dest"].startswith("maps/") and item["size_bytes"] > 0 and item["as_at"] and item["licence"]
         assert isinstance(item["priority"], int) and item["description"]
         assert not item.get("overlay"), "footpaths and flood-zones carry the overlay object; both live only in overlays.json"

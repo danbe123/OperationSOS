@@ -97,6 +97,19 @@ def test_download_uses_aria2c_and_caches(tmp_path):
     assert len(runner.calls) == 1, "second download must be served from the cache"
 
 
+def test_download_resumes_when_an_aria2_control_file_is_present(tmp_path):
+    # A prior interrupted download leaves dest partially written plus a sibling <name>.aria2 control
+    # file (removed by aria2c only on success). The cache-hit short-circuit must not treat that as done.
+    runner = FakeRunner(files={"b.zip": b"zipbytes"})
+    ctx = make_ctx(tmp_path, runner=runner)
+    dest = ctx.src / "b.zip"
+    dest.write_bytes(b"partial")
+    dest.with_name("b.zip.aria2").write_bytes(b"")
+    path = ctx.download("https://example.test/b.zip", "b.zip")
+    assert len(runner.calls) == 1 and runner.calls[0][0] == "aria2c", "an .aria2 control file must force a re-run"
+    assert path == dest and path.read_bytes() == b"zipbytes"
+
+
 def test_download_into_subdirectory(tmp_path):
     runner = FakeRunner()
     ctx = make_ctx(tmp_path, runner=runner)

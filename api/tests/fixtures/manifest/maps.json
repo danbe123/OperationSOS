@@ -9,7 +9,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "test.pmtiles"
       },
       "dest": "maps/test.pmtiles",
@@ -28,7 +28,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "os-zoomstack.pmtiles"
       },
       "dest": "maps/os-zoomstack.pmtiles",
@@ -47,13 +47,13 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "contours.pmtiles"
       },
       "dest": "maps/contours.pmtiles",
       "size_bytes": 835057,
       "as_at": "2026-07",
-      "licence": "OGL v3 (OS Terrain 50); Copernicus DEM licence (ESA)",
+      "licence": "OGL v3 (OS Terrain 50, OSNI); Copernicus DEM licence (ESA)",
       "priority": 52,
       "description": "10 m contours: OS Terrain 50 for Great Britain, Copernicus and OSNI derived elsewhere."
     },
@@ -66,7 +66,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "hillshade.pmtiles"
       },
       "dest": "maps/hillshade.pmtiles",
@@ -85,7 +85,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "styles"
       },
       "dest": "maps/styles",
@@ -104,7 +104,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "sprites"
       },
       "dest": "maps/sprites",
@@ -123,7 +123,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "fonts"
       },
       "dest": "maps/fonts",
@@ -142,7 +142,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "places.csv.gz"
       },
       "dest": "maps/places.csv.gz",
@@ -161,7 +161,7 @@
       "scenarios": [],
       "source": {
         "type": "build",
-        "tool": "sos build-maps",
+        "tool": "build-maps",
         "artifact": "packs"
       },
       "dest": "maps/packs",

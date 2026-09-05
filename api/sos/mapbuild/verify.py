@@ -284,6 +284,7 @@ class VerifyStep:
             updated_overlays = update_manifest_sizes(overlays_target, overlay_size_map)
         else:
             target = manifest
+            overlays_target = overlays_manifest
             updated = update_manifest_sizes(target, sizes)
             updated_overlays = update_manifest_sizes(overlays_manifest, overlay_size_map) if overlays_manifest.exists() else []
 
@@ -294,6 +295,6 @@ class VerifyStep:
                   "verified_archives": [str(a.relative_to(ctx.out)) for a in found],
                   "sizes": sizes, "overlay_sizes": overlay_size_map,
                   "manifest": str(target.relative_to(ctx.repo)), "updated": updated,
-                  "overlays_manifest": str(overlays_manifest.relative_to(ctx.repo)), "updated_overlays": updated_overlays}
+                  "overlays_manifest": str(overlays_target.relative_to(ctx.repo)), "updated_overlays": updated_overlays}
         (ctx.out / "build.json").write_text(json.dumps(report, indent=2) + "\n")
         log.info("[verify] OK: %d archives verified; sizes written to %s", len(found), target.relative_to(ctx.repo))

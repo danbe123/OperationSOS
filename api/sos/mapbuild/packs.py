@@ -39,6 +39,11 @@ def leaves(node: dict) -> list[dict]:
 def pack_ids(countries: dict) -> list[str]:
     ids = sorted(leaf["id"] for leaf in leaves(countries)
                  if leaf["id"].startswith("UK_") or leaf["id"].startswith("Ireland_") or leaf["id"] in SINGLE_IDS)
+    for pack_id in ids:
+        # countries.json is fetched over a mutable git tag; guard against a pack id that could escape
+        # the packs/ directory once spliced into a filesystem path (ctx.download's dest, staged / name).
+        if "/" in pack_id or "\\" in pack_id or pack_id in (".", ".."):
+            raise BuildError(f"unsafe pack id: {pack_id!r}")
     if len(ids) != EXPECTED_PACKS:
         raise BuildError(f"expected {EXPECTED_PACKS} Organic Maps pack ids, found {len(ids)}: {ids}")
     return ids
