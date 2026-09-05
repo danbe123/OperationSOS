@@ -21,9 +21,10 @@ def all_steps() -> list:
     from sos.mapbuild.hillshade import HillshadeStep
     from sos.mapbuild.osdata import OsZoomstackStep
     from sos.mapbuild.overlays import OverlaysStep
+    from sos.mapbuild.packs import PacksStep
     from sos.mapbuild.places import PlacesStep
     from sos.mapbuild.styles import StylesStep
-    return [BaseStep(), OsZoomstackStep(), ContoursStep(), HillshadeStep(), OverlaysStep(), PlacesStep(), StylesStep()]
+    return [BaseStep(), OsZoomstackStep(), ContoursStep(), HillshadeStep(), OverlaysStep(), PlacesStep(), PacksStep(), StylesStep()]
 
 
 def select_steps(ids: list[str] | None) -> list:
