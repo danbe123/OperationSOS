@@ -86,7 +86,7 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 - **Emergency powers.** The Civil Contingencies Act 2004 lets ministers make regulations restricting movement, assembly and requisitioning property, enforced by the police; there is no "martial law" in UK law and the armed forces act in support of the civil authorities ([Civil Contingencies Act 2004](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2004/36/contents); [Security and the law module](module:security-law)).
 - **Weapons.** The knife, firearm and offensive-weapon laws do not change with a war; carrying a weapon "for defence" remains an offence ([Knife and firearms law](page:knife-firearms-law)). Possessing material useful to terrorism is an offence under the Terrorism Act 2000 s58, which is why this library carries medical and survival manuals and nothing tactical ([Terrorism Act 2000 s58](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2000/11/section/58)).
 - **Targets in Britain:** the naval bases at Faslane, Coulport and Devonport, the submarine yard at Barrow, the airfields used by the RAF and the USAF, the fuel depots, ports and grid supply points ([military and airfield overlay](map:?overlay=airports-military&overlay=fuel)).
-- **Routes:** footpaths, bridleways and byways off the main roads ([Footpaths overlay](map:?overlay=footpaths)), Scotland's right of responsible access, and the town-by-town detail of the travel guide ([Wikivoyage, United Kingdom](kiwix:wikivoyage_en_all_maxi/United_Kingdom)).
+- **Routes:** footpaths, bridleways and byways off the main roads ([Footpaths overlay](map:?overlay=footpaths)), and Scotland's right of responsible access on foot ([Scottish Outdoor Access Code](kiwix:wikipedia_en_all_maxi/Scottish_Outdoor_Access_Code); [Rights of way in England and Wales](kiwix:wikipedia_en_all_maxi/Rights_of_way_in_England_and_Wales)).
 - **Numbers**: 999 while it answers; the LRF list for who runs the local response ([LRF contacts](kiwix:govuk_resilience/www.gov.uk/guidance/local-resilience-forums-contact-details)).
 
 ## Checklist
@@ -112,7 +112,7 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 - [Fourth Geneva Convention (Wikipedia)](kiwix:wikipedia_en_all_maxi/Fourth_Geneva_Convention)
 - [German occupation of the Channel Islands (Wikipedia)](kiwix:wikipedia_en_all_maxi/German_occupation_of_the_Channel_Islands)
 - [Refugee (Wikipedia)](kiwix:wikipedia_en_all_maxi/Refugee)
-- [Wikivoyage, United Kingdom](kiwix:wikivoyage_en_all_maxi/United_Kingdom)
+- [Rights of way in England and Wales (Wikipedia)](kiwix:wikipedia_en_all_maxi/Rights_of_way_in_England_and_Wales)
 - [The Great Outdoors Q&A](kiwix:outdoors.stackexchange.com_en_all/questions)
 - [Military and airfield overlay](map:?overlay=airports-military&overlay=rail&overlay=fuel)
 - [Nuclear war playbook](playbook:nuclear-war)
