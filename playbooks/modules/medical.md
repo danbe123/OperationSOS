@@ -61,3 +61,7 @@ sources:
 - [Survival and Austere Medicine, p. 10](doc:survival-austere-medicine-2017#page=10)
 - [Sepsis (Wikipedia)](kiwix:wikipedia_en_medicine_maxi/Sepsis)
 - [Health facilities on the map](map:?overlay=health)
+- [Where There Is No Doctor (Hesperian)](doc:where-there-is-no-doctor)
+- [Where There Is No Dentist (Hesperian)](doc:where-there-is-no-dentist)
+- [Special Forces Medical Handbook, ST 31-91B](doc:st-31-91b-sf-medical-handbook)
+- [Quick guides for medicine](kiwix:quickguidesformedicine_en_all/index.html)

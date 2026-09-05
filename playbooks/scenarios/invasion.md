@@ -116,3 +116,7 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 - [The Great Outdoors Q&A](kiwix:outdoors.stackexchange.com_en_all/questions)
 - [Military and airfield overlay](map:?overlay=airports-military&overlay=rail&overlay=fuel)
 - [Nuclear war playbook](playbook:nuclear-war)
+- [Ranger Handbook, TC 3-21.76 (small-group field craft)](doc:tc-3-21-76-ranger-handbook)
+- [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)
+- [Map Reading and Land Navigation, FM 3-25.26](doc:fm-3-25-26-map-reading)
+- [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)

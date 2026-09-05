@@ -53,3 +53,6 @@ sources:
 - [Land Reform (Scotland) Act 2003 (Wikipedia)](kiwix:wikipedia_en_all_maxi/Land_Reform_(Scotland)_Act_2003)
 - [Evacuation module](module:evacuation)
 - [FM 3-05.70 Survival](doc:fm-3-05-70-survival)
+- [Map Reading and Land Navigation, FM 3-25.26](doc:fm-3-25-26-map-reading)
+- [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)
+- [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)

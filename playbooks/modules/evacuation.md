@@ -49,3 +49,6 @@ sources:
 - [Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)
 - [Emergency management (Wikipedia)](kiwix:wikipedia_en_all_maxi/Emergency_management)
 - [Rail and fuel on the map](map:?overlay=rail&overlay=fuel)
+- [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)
+- [Canadian Prepper: bug-out bag](kiwix:canadian-prepper_en_bugoutroll/index.html)
+- [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)

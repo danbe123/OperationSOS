@@ -111,3 +111,5 @@ Currency failures end with a new currency, a peg or a foreign one: Germany's 192
 - [Supply chain playbook](playbook:supply-chain)
 - [Famine playbook](playbook:famine)
 - [Civil unrest playbook](playbook:civil-unrest)
+- [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
+- [Restarters: how things work and how to fix them](kiwix:restarters_en_all/Main_Page)

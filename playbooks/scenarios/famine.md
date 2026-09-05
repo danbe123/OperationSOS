@@ -110,3 +110,7 @@ Ireland lost a million people to hunger and a million to emigration between 1845
 - [NRR 2025, foot and mouth disease](doc:nrr-2025#page=160)
 - [Access land and footpaths on the map](map:?overlay=access-land&overlay=footpaths)
 - [Supply chain playbook](playbook:supply-chain)
+- [Where There Is No Doctor (Hesperian)](doc:where-there-is-no-doctor)
+- [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
+- [WikiVet: veterinary encyclopedia](kiwix:wikivet.net_en_all/New_Front_Page)
+- [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)

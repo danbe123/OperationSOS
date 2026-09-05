@@ -54,3 +54,4 @@ sources:
 - [Livestock module](module:livestock)
 - [Food module](module:food)
 - [USDA Complete Guide to Home Canning](kiwix:usda-2015_en/home)
+- [WikiCiv: building civilisation from scratch](kiwix:wikiciv_en_all/Main_Page)

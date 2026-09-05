@@ -53,3 +53,4 @@ sources:
 - [Pets Q&A](kiwix:pets.stackexchange.com_en_all/questions)
 - [Growing food module](module:growing-food)
 - [Food module](module:food)
+- [WikiVet: veterinary encyclopedia](kiwix:wikivet.net_en_all/New_Front_Page)

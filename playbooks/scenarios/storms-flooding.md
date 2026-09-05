@@ -119,3 +119,6 @@ The 1953 North Sea surge killed 307 people on the English coast in one night and
 - [Flood zones on the map](map:?overlay=flood-zones&overlay=health)
 - [Drowning card](card:drowning)
 - [Grid collapse playbook](playbook:grid-collapse)
+- [Military Mountaineering, TC 3-97.61 (ropes, anchors, river crossings)](doc:tc-3-97-61-military-mountaineering)
+- [Rigging Techniques, FM 5-125 (moving heavy loads by rope and tackle)](doc:fm-5-125-rigging)
+- [Canadian Prepper: bug-out bag](kiwix:canadian-prepper_en_bugoutroll/index.html)

@@ -53,3 +53,6 @@ sources:
 - [Wood-burning stove (Wikipedia)](kiwix:wikipedia_en_all_maxi/Wood-burning_stove)
 - [Layered clothing (Wikipedia)](kiwix:wikipedia_en_all_maxi/Layered_clothing)
 - [Power module](module:power)
+- [Basic Cold Weather Manual, FM 31-70](doc:fm-31-70-cold-weather)
+- [Camping and Woodcraft (Kephart, 1917)](doc:kephart-camping-and-woodcraft)
+- [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)

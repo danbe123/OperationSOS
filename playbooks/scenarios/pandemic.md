@@ -110,3 +110,6 @@ An emerging disease with a 25% case fatality rate is planned for as an outbreak 
 - [Quarantine (Wikipedia)](kiwix:wikipedia_en_all_maxi/Quarantine)
 - [Pandemic (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/pandemic)
 - [Hospitals and pharmacies on the map](map:?overlay=health)
+- [Where There Is No Doctor (Hesperian)](doc:where-there-is-no-doctor)
+- [Quick guides for medicine](kiwix:quickguidesformedicine_en_all/index.html)
+- [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)

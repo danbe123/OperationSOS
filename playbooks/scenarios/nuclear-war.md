@@ -131,3 +131,5 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 - [UK target overlay](map:?overlay=nuclear-sites&overlay=airports-military)
 - [Nuclear accident playbook](playbook:nuclear-accident)
 - [Impact winter playbook](playbook:impact-winter)
+- [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)
+- [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)

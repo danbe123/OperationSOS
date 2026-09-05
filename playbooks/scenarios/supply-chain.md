@@ -113,3 +113,5 @@ Global supply chains failed for two years after 2020 and the container ship stuc
 - [Fuel stations and stations on the map](map:?overlay=fuel&overlay=rail)
 - [Economic collapse playbook](playbook:economic-collapse)
 - [Famine playbook](playbook:famine)
+- [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
+- [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)

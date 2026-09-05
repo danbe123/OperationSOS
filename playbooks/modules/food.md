@@ -54,3 +54,5 @@ sources:
 - [Food preservation (Wikipedia)](kiwix:wikipedia_en_all_maxi/Food_preservation)
 - [Canning (Wikipedia)](kiwix:wikipedia_en_all_maxi/Canning)
 - [Dehydration and rehydration card](card:dehydration)
+- [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
+- [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)

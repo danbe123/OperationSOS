@@ -50,3 +50,5 @@ sources:
 - [Knots Library](kiwix:zimgit-knots_en/home)
 - [Approved Document H, p. 31](doc:ad-h#page=31)
 - [Power module](module:power)
+- [Restarters: how things work and how to fix them](kiwix:restarters_en_all/Main_Page)
+- [Rigging Techniques, FM 5-125 (moving heavy loads by rope and tackle)](doc:fm-5-125-rigging)

@@ -53,3 +53,5 @@ sources:
 - [Natural burial (Wikipedia)](kiwix:wikipedia_en_all_maxi/Natural_burial)
 - [Ship Captain's Medical Guide ch. 5](doc:scmg-ch05)
 - [Water disinfection table](page:water-disinfection)
+- [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)
+- [Unit Field Sanitation Team, FM 4-25.12](doc:fm-4-25-12-field-sanitation)

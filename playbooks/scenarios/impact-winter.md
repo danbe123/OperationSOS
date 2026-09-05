@@ -117,3 +117,7 @@ The Little Ice Age, centuries of cold summers, was survived in Britain with hard
 - [NWSS on nuclear winter](doc:nwss#page=23)
 - [Famine playbook](playbook:famine)
 - [Long rebuild playbook](playbook:long-rebuild)
+- [Basic Cold Weather Manual, FM 31-70](doc:fm-31-70-cold-weather)
+- [Canadian Prepper: winter prepping](kiwix:canadian-prepper_en_winterprepping/index.html)
+- [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
+- [WikiCiv: building civilisation from scratch](kiwix:wikiciv_en_all/Main_Page)

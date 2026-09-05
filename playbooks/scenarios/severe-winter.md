@@ -118,3 +118,7 @@ The winter of 1962 to 1963 froze Britain from Boxing Day to March, the sea iced 
 - [Hospitals and fuel on the map](map:?overlay=health&overlay=fuel)
 - [Grid collapse playbook](playbook:grid-collapse)
 - [Impact winter playbook](playbook:impact-winter)
+- [Basic Cold Weather Manual, FM 31-70](doc:fm-31-70-cold-weather)
+- [Canadian Prepper: winter prepping](kiwix:canadian-prepper_en_winterprepping/index.html)
+- [Camping and Woodcraft (Kephart, 1917)](doc:kephart-camping-and-woodcraft)
+- [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)

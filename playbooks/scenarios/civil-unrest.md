@@ -111,3 +111,6 @@ Order in Britain has broken locally and briefly, never nationally for long: the 
 - [NRR 2025, public disorder](doc:nrr-2025#page=173)
 - [Stations and fuel on the map](map:?overlay=rail&overlay=fuel&overlay=health)
 - [Economic collapse playbook](playbook:economic-collapse)
+- [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)
+- [Canadian Prepper: bug-out bag](kiwix:canadian-prepper_en_bugoutroll/index.html)
+- [Ranger Handbook, TC 3-21.76 (small-group field craft)](doc:tc-3-21-76-ranger-handbook)
