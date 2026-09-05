@@ -23,6 +23,8 @@ import { Radio } from './screens/Radio';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
 import { Search } from './screens/Search';
+import { Situation } from './screens/Situation';
+import { Tasks } from './screens/Tasks';
 import { System } from './screens/System';
 import { Keyboard } from './kiosk/Keyboard';
 import { IdleOverlay } from './kiosk/IdleOverlay';
@@ -107,6 +109,8 @@ export const routes: RouteObject[] = [
       { path: 'read/:id/*', element: <Reader /> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },
+      { path: 'situation', element: <Situation /> },
+      { path: 'tasks', element: <Tasks /> },
       { path: 'system', element: <System /> },
       { path: 'ai', element: <Ai /> },
       { path: '*', element: <NotFound /> },

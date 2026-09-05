@@ -9,7 +9,7 @@ import { Checklist } from '../components/Checklist';
 import { Html } from '../components/Html';
 import { Section } from '../components/Section';
 import { SituationClock } from '../components/SituationClock';
-import { OutageNotice } from '../components/ServiceToggles';
+import { CallsNotice } from '../situation/CallsNotice';
 import { elapsedSince, phaseFor } from '../tools/situation';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
@@ -113,7 +113,7 @@ export function Scenario() {
           </>
         }
       />
-      <OutageNotice />
+      <CallsNotice />
       <div className="scenario-intro"><p className="eyebrow">Your response guide</p><p>{data.summary}</p><a className="btn" href="#response-checklist"><Icon name="plan" /> Household checklist</a>
         {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
       </div>

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { Icon } from '../icons';
 import { ThemeButton } from '../theme/ThemeButton';
 import { SearchBar } from './SearchBar';
+import { ChipStrip } from '../situation/ChipStrip';
 
 export function AppBar({ title, actions, back = true, search = true }: { title: string; actions?: ReactNode; back?: boolean; search?: boolean }) {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export function AppBar({ title, actions, back = true, search = true }: { title: 
     else navigate(-1);
   };
   return (
+    <>
     <header className="appbar chrome">
       {back && (
         <button type="button" className="btn btn-chrome" onClick={goBack} aria-label="Back">
@@ -37,5 +39,7 @@ export function AppBar({ title, actions, back = true, search = true }: { title: 
       <Link className="btn btn-chrome" to="/" aria-label="Home"><Icon name="home" /><span>Home</span></Link>
       <ThemeButton />
     </header>
+    <ChipStrip />
+    </>
   );
 }

@@ -21,13 +21,21 @@ export function readStoredTheme(storage: Storage): Theme | null {
 type ThemeContextValue = { theme: Theme; setTheme: (t: Theme) => void };
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ fallback, children }: { fallback?: Theme; children: ReactNode }) {
+/** `mode` and `dim` come from the engine's modes (blackout in a night-time power cut, say). A mode
+ * outranks the stored preference while it lasts, but a deliberate tap on the theme button outranks it. */
+export function ThemeProvider({ fallback, mode = null, dim = false, children }: { fallback?: Theme; mode?: Theme | null; dim?: boolean; children: ReactNode }) {
   const [stored, setStored] = useState<Theme | null>(() => readStoredTheme(localStorage));
-  const theme: Theme = stored ?? fallback ?? 'vault';
+  const [chosen, setChosen] = useState<Theme | null>(null);
+  const theme: Theme = chosen ?? mode ?? stored ?? fallback ?? 'vault';
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (dim) document.documentElement.dataset.dim = 'on';
+    else delete document.documentElement.dataset.dim;
+  }, [dim]);
 
   const setTheme = useCallback((t: Theme) => {
     try {
@@ -36,6 +44,7 @@ export function ThemeProvider({ fallback, children }: { fallback?: Theme; childr
       // storage may be unavailable (private mode); the in-memory value still applies
     }
     setStored(t);
+    setChosen(t);
   }, []);
 
   const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
