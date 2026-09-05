@@ -1,0 +1,37 @@
+install.sh --dry-run: arch aarch64, dev 0, skip-llama 0, with-jellyfin 0, pcie-gen3 0
+step apt: would apt-get install network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv aria2 cmake build-essential poppler-utils git curl rsync
+step downloads: would fetch https://download.kiwix.org/release/kiwix-tools/kiwix-tools_linux-aarch64-3.8.2.tar.gz -> /usr/local/bin/kiwix-serve, /usr/local/bin/kiwix-manage, /usr/local/bin/kiwix-search
+step downloads: would fetch https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_arm64.tar.gz -> /usr/local/bin/caddy
+step llama: would clone https://github.com/ggml-org/llama.cpp at v0.3.0 into /srv/sos/build/llama.cpp, run 'cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF && cmake --build build --config Release -j4' then 'cmake --install build --prefix /usr/local' -> /usr/local/bin/llama-server
+step user: would create user sos (home /home/sos, groups video input render)
+step tree: would create /srv/sos/{core/zim,core/maps,core/docs,core/models,extended,state/config,state/playbooks,state/manifest,web,api,build} owned by sos
+  write /srv/sos/state/config/ai.env (SOS_MODEL default for sos-llama.service, if absent)
+step venv: would copy api/ -> /srv/sos/api and pip install the sos package into /srv/sos/api/.venv
+step web: would copy install/placeholder -> /srv/sos/web (web/dist absent, placeholder used)
+step units: would write the systemd units and daemon-reload
+  write /etc/systemd/system/caddy.service (from install/systemd/caddy.service, mode 644, root:root)
+  write /etc/systemd/system/kiwix-serve.service (from install/systemd/kiwix-serve.service, mode 644, root:root)
+  write /etc/systemd/system/sos-api.service (from install/systemd/sos-api.service, mode 644, root:root)
+  write /etc/systemd/system/sos-llama.service (from install/systemd/sos-llama.service, mode 644, root:root)
+  write /etc/systemd/system/sos-kiosk.service (from install/systemd/sos-kiosk.service, mode 644, root:root)
+step caddy: would write the Caddyfile
+  write /etc/caddy/Caddyfile (from install/caddy/Caddyfile, mode 644, root:root)
+step hotspot: would write the NetworkManager profiles and the dnsmasq name catch-all, then nmcli connection reload
+  write /etc/NetworkManager/system-connections/sos-hotspot.nmconnection (from install/nm/sos-hotspot.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/system-connections/sos-eth-client.nmconnection (from install/nm/sos-eth-client.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/system-connections/sos-eth-direct.nmconnection (from install/nm/sos-eth-direct.nmconnection, mode 600, root:root)
+  write /etc/NetworkManager/dnsmasq-shared.d/sos.conf (from install/nm/dnsmasq-shared.d/sos.conf, mode 644, root:root)
+step mount: would write the external-drive mount and rescan units and daemon-reload
+  write /etc/systemd/system/srv-sos-extended.mount (from install/systemd/srv-sos-extended.mount, mode 644, root:root)
+  write /etc/systemd/system/sos-extended-rescan.service (from install/systemd/sos-extended-rescan.service, mode 644, root:root)
+step backlight: would write the udev rule and reload udev
+  write /etc/udev/rules.d/90-sos-backlight.rules (from install/udev/90-sos-backlight.rules, mode 644, root:root)
+step sudoers: would check with visudo -cf and write the sudoers rule
+  write /etc/sudoers.d/sos (from install/sudoers/sos, mode 440, root:root)
+step kiosk: would install the kiosk wrapper, write /srv/sos/state/config/kiosk.env (SOS_KIOSK_TRANSFORM=90) if absent, systemctl set-default graphical.target
+  write /usr/local/bin/sos-kiosk-app (from install/kiosk/sos-kiosk-app, mode 755, root:root)
+step boot: would write /boot/firmware/sos.txt from install/boot/config.txt.d/sos.txt and add 'include sos.txt' to /boot/firmware/config.txt
+step content: would copy playbooks/ and manifest/ -> /srv/sos/state/ and run 'sos index' as sos
+step answers: would prompt for the admin PIN and SSID (or read install/answers.env), then 'sos pin set' and nmcli
+step enable: would systemctl enable caddy.service kiwix-serve.service sos-api.service avahi-daemon.service sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service and start caddy, kiwix-serve, sos-api and avahi-daemon
+dry run complete: nothing was written

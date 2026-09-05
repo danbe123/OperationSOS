@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://operation-sos.invalid/manifest.schema.json",
+  "title": "Operation SOS content manifest",
+  "type": "object",
+  "required": ["items"],
+  "additionalProperties": false,
+  "properties": {
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+  },
+  "$defs": {
+    "item": {
+      "type": "object",
+      "required": ["id", "title", "kind", "tier", "category", "source", "dest"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+        "title": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["zim", "pmtiles", "geojson", "pdf", "epub", "dir", "model", "mwm", "apk", "style", "glyphs", "sprites", "places"] },
+        "tier": { "enum": ["core", "extended"] },
+        "category": { "enum": ["playbooks", "uk-official", "medical", "survival", "reference", "practical", "maps", "education", "books", "media", "ai"] },
+        "scenarios": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "default": [] },
+        "source": { "$ref": "#/$defs/source" },
+        "dest": { "type": "string", "pattern": "^[A-Za-z0-9._-]+(/[A-Za-z0-9._ -]+)*$" },
+        "size_bytes": { "type": "integer", "minimum": 0, "default": 0 },
+        "as_at": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$" },
+        "licence": { "type": ["string", "null"] },
+        "priority": { "type": "integer", "default": 100 },
+        "reader_home": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "search_weight": { "type": "number", "minimum": 0, "default": 1.0 },
+        "suggest": { "type": "boolean", "default": false },
+        "overlay": { "oneOf": [ { "type": "null" }, { "$ref": "#/$defs/overlay" } ] }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["kiwix", "url", "build"] },
+        "name": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "pattern": "^https?://" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "mirrors": { "type": "array", "items": { "type": "string", "pattern": "^https?://" } },
+        "tool": { "type": "string", "minLength": 1 },
+        "artifact": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "kiwix" } } }, "then": { "required": ["name"] } },
+        { "if": { "properties": { "type": { "const": "url" } } }, "then": { "required": ["url"] } },
+        { "if": { "properties": { "type": { "const": "build" } } }, "then": { "required": ["tool", "artifact"] } }
+      ]
+    },
+    "overlay": {
+      "type": "object",
+      "required": ["id", "kind", "default_on", "coverage", "color"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "kind": { "enum": ["geojson", "pmtiles", "style-layer"] },
+        "layer_id": { "type": ["string", "null"] },
+        "default_on": { "type": "boolean" },
+        "coverage": { "type": "array", "items": { "enum": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"] } },
+        "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "icon": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

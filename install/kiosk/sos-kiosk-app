@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Operation SOS kiosk session (spec section 5). sos-kiosk.service runs `cage -- sos-kiosk-app` on tty1 as
+# user sos after `sos-kiosk-app --wait-for-api` has waited for sos-api behind Caddy. Inside cage this
+# script rotates the panel, clears Chromium's crash-restore state so no "restore pages" bubble appears
+# after a power cut, and starts Chromium in kiosk mode on the static /starting page, which polls
+# /api/status and then loads the app with ?kiosk=1.
+#
+# /srv/sos/state/config/kiosk.env (written by install.sh) may set:
+#   SOS_KIOSK_TRANSFORM  90 (default) or 270: the wlr-randr transform for the case orientation
+#   SOS_KIOSK_URL        the first page, default http://localhost/starting
+#   SOS_KIOSK_API        the readiness URL, default http://localhost/api/status
+set -euo pipefail
+
+CONFIG=${SOS_KIOSK_CONFIG:-/srv/sos/state/config/kiosk.env}
+if [ -f "$CONFIG" ]; then
+  # shellcheck disable=SC1090
+  . "$CONFIG"
+fi
+TRANSFORM=${SOS_KIOSK_TRANSFORM:-90}
+URL=${SOS_KIOSK_URL:-http://localhost/starting}
+API=${SOS_KIOSK_API:-http://localhost/api/status}
+PREFS=${SOS_KIOSK_PREFS:-$HOME/.config/chromium/Default/Preferences}
+
+wait_for_api() {
+  local i
+  for i in $(seq 1 60); do
+    if curl -fsS --max-time 2 "$API" >/dev/null 2>&1; then
+      echo "sos-kiosk-app: sos-api ready after ${i}s"
+      return 0
+    fi
+    sleep 1
+  done
+  echo "sos-kiosk-app: sos-api not answering after 60 s; starting the kiosk anyway" >&2
+  return 0
+}
+
+rotate_panel() {
+  local output
+  output=$(wlr-randr 2>/dev/null | awk '/^DSI-[0-9]/ { print $1; exit }') || true
+  if [ -z "$output" ]; then
+    echo "sos-kiosk-app: no DSI output found; panel left unrotated (an HDMI screen needs no transform)" >&2
+    return 0
+  fi
+  wlr-randr --output "$output" --transform "$TRANSFORM" || echo "sos-kiosk-app: wlr-randr failed on $output" >&2
+}
+
+reset_chromium_prefs() {
+  [ -f "$PREFS" ] || return 0
+  python3 -c 'import json, sys; p = sys.argv[1]; d = json.load(open(p, encoding="utf-8")); d.setdefault("profile", {}).update({"exit_type": "Normal", "exited_cleanly": True}); json.dump(d, open(p, "w", encoding="utf-8"))' "$PREFS" \
+    || echo "sos-kiosk-app: could not reset $PREFS" >&2
+}
+
+case "${1:-}" in
+  --wait-for-api) wait_for_api; exit 0 ;;
+  --reset-prefs) reset_chromium_prefs; exit 0 ;;
+  "") ;;
+  *) echo "usage: sos-kiosk-app [--wait-for-api | --reset-prefs]" >&2; exit 2 ;;
+esac
+
+rotate_panel
+reset_chromium_prefs
+exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run \
+  --overscroll-history-navigation=0 "$URL"

@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "id": "sos-ext-missing",
+      "title": "Extended tier test ZIM",
+      "kind": "zim", "tier": "extended", "category": "education", "scenarios": [],
+      "source": { "type": "kiwix", "name": "sos-ext-missing" },
+      "dest": "zim/sos-ext-missing.zim",
+      "size_bytes": 1, "as_at": "2026-01", "priority": 200,
+      "description": "Lives on the external drive, which the tests leave unplugged."
+    }
+  ]
+}

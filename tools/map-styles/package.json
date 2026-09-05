@@ -1,0 +1,16 @@
+{
+  "name": "sos-map-styles",
+  "private": true,
+  "type": "module",
+  "description": "Operation SOS map styles: Protomaps flavours, MapLibre layer fragments, osmium export configs and site lists",
+  "scripts": {
+    "build": "node build-styles.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@protomaps/basemaps": "5.7.2"
+  },
+  "devDependencies": {
+    "@maplibre/maplibre-gl-style-spec": "26.4.1"
+  }
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Search: medicine</title>
+    <link>/kiwix/search?pattern=medicine&amp;books.name=wikipedia_en_100_mini_2026-01&amp;books.name=nhs.uk_en_medicines_2025-12&amp;format=xml&amp;start=0&amp;pageLength=2</link>
+    <description>Search result for medicine</description>
+    <opensearch:totalResults>2,010</opensearch:totalResults>
+    <opensearch:startIndex>0</opensearch:startIndex>
+    <opensearch:itemsPerPage>2</opensearch:itemsPerPage>
+    <item>
+      <title>Taking bendroflumethiazide with other medicines and herbal remedies - NHS</title>
+      <link>/kiwix/content/nhs.uk_en_medicines_2025-12/www.nhs.uk/medicines/bendroflumethiazide/taking-bendroflumethiazide-with-other-medicines-and-herbal-remedies/</link>
+        <description>...Tell your doctor if you take any other <b>medicine</b>......</description>
+        <book>
+          <title>NHS&apos; Medicines A to Z</title>
+        </book>
+        <wordCount>300</wordCount>
+    </item>
+    <item>
+      <title>Medicine</title>
+      <link>/kiwix/content/wikipedia_en_100_mini_2026-01/Medicine</link>
+        <description>...<b>Medicine</b> is the science and practice of caring for patients......</description>
+        <book>
+          <title>Wikipedia 100</title>
+        </book>
+        <wordCount>700</wordCount>
+    </item>
+  </channel>
+</rss>

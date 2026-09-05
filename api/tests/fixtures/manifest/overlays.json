@@ -1,0 +1,16 @@
+{
+  "items": [
+    { "id": "health", "title": "Hospitals, pharmacies, GP surgeries", "kind": "geojson", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/health.geojson" }, "dest": "maps/overlays/health.geojson",
+      "size_bytes": 4000000, "as_at": "2026-09", "licence": "ODbL", "priority": 70,
+      "overlay": { "id": "health", "kind": "geojson", "layer_id": null, "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#e03131", "icon": "cross" } },
+    { "id": "nuclear-sites", "title": "Nuclear sites", "kind": "geojson", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/nuclear-sites.geojson" }, "dest": "maps/overlays/nuclear-sites.geojson",
+      "size_bytes": 20000, "as_at": "2026-09", "licence": "CC0", "priority": 71,
+      "overlay": { "id": "nuclear-sites", "kind": "geojson", "layer_id": null, "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#f59f00", "icon": "radiation" } },
+    { "id": "water", "title": "Reservoirs and water works", "kind": "pmtiles", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/water.pmtiles" }, "dest": "maps/overlays/water.pmtiles",
+      "size_bytes": 9000000, "as_at": "2026-09", "licence": "ODbL", "priority": 72,
+      "overlay": { "id": "water", "kind": "pmtiles", "layer_id": "water", "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#1c7ed6", "icon": "droplet" } }
+  ]
+}

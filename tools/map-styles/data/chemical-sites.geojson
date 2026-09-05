@@ -1,0 +1,12 @@
+{"type": "FeatureCollection", "name": "chemical-sites", "features": [
+ {"type": "Feature", "properties": {"name": "Fawley refinery and petrochemicals", "industrial": "refinery", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-1.345, 50.830]}},
+ {"type": "Feature", "properties": {"name": "Stanlow refinery", "industrial": "refinery", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-2.850, 53.280]}},
+ {"type": "Feature", "properties": {"name": "Grangemouth refinery and chemicals", "industrial": "refinery", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-3.700, 56.020]}},
+ {"type": "Feature", "properties": {"name": "Pembroke refinery", "industrial": "refinery", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-5.020, 51.685]}},
+ {"type": "Feature", "properties": {"name": "Humber refineries (Immingham)", "industrial": "refinery", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-0.250, 53.640]}},
+ {"type": "Feature", "properties": {"name": "Runcorn chlor-alkali works", "industrial": "chemical", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-2.700, 53.335]}},
+ {"type": "Feature", "properties": {"name": "Billingham chemical works", "industrial": "chemical", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-1.280, 54.600]}},
+ {"type": "Feature", "properties": {"name": "Wilton International (Teesside)", "industrial": "chemical", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-1.130, 54.580]}},
+ {"type": "Feature", "properties": {"name": "Mossmorran NGL and ethylene plants", "industrial": "chemical", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-3.280, 56.100]}},
+ {"type": "Feature", "properties": {"name": "Avonmouth chemical and fuel terminals", "industrial": "chemical", "source": "hand-authored"}, "geometry": {"type": "Point", "coordinates": [-2.700, 51.510]}}
+]}

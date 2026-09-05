@@ -1,0 +1,15 @@
+[Unit]
+Description=Operation SOS external drive (filesystem label SOS-EXT)
+# systemd mounts the drive when the labelled device appears and unmounts it when it goes; no udev RUN
+# scripts (spec section 5). The device unit name is `systemd-escape -p --suffix=device /dev/disk/by-label/SOS-EXT`.
+BindsTo=dev-disk-by\x2dlabel-SOS\x2dEXT.device
+After=dev-disk-by\x2dlabel-SOS\x2dEXT.device
+
+[Mount]
+What=/dev/disk/by-label/SOS-EXT
+Where=/srv/sos/extended
+Type=ext4
+Options=noatime
+
+[Install]
+WantedBy=dev-disk-by\x2dlabel-SOS\x2dEXT.device

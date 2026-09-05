@@ -1,0 +1,26 @@
+[Unit]
+Description=Operation SOS assistant model (llama-server)
+Documentation=https://github.com/ggml-org/llama.cpp/tree/master/tools/server
+After=sos-api.service
+# No [Install] section on purpose: the assistant is off by default and sos-api starts and stops this
+# unit with `sudo -n systemctl start|stop sos-llama.service` (install/sudoers/sos). Spec section 5.
+
+[Service]
+Type=simple
+User=sos
+Group=sos
+# ai.env (written by sos-api when the assistant is enabled) selects the model file; this is the default.
+Environment=SOS_MODEL=gemma-4-E2B-it-Q4_K_M.gguf
+EnvironmentFile=/srv/sos/state/config/ai.env
+# The + prefix runs the governor switches as root even though the server runs as sos.
+ExecStartPre=+/bin/sh -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
+ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 -c 4096 -t 4 -ngl 0 -fa on -ctk q4_0 -ctv q4_0 -np 1 --no-webui --reasoning-budget 0
+ExecStopPost=+/bin/sh -c 'echo ondemand | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
+# Search, the kiosk and the hotspot pre-empt generation (spec section 3).
+Nice=10
+CPUWeight=30
+IOWeight=50
+MemoryMax=4500M
+OOMScoreAdjust=500
+TimeoutStopSec=20
+Restart=no

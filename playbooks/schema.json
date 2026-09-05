@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://operation-sos.invalid/playbooks.schema.json",
+  "title": "Operation SOS authored content front matter",
+  "description": "Front matter of playbooks/scenarios/*.md (scenario), modules/*.md (module), cards/*.md (card) and pages/*.md (page). sos validate-playbooks validates each file against the $defs entry for its directory; the rules are explained in playbooks/README.md.",
+  "$defs": {
+    "base": {
+      "type": "object",
+      "description": "Fields every document carries.",
+      "required": ["id", "title", "icon", "order", "summary"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "description": "The slug; must equal the file name without .md." },
+        "title": { "type": "string", "minLength": 1, "description": "The heading, also shown in search results." },
+        "icon": { "type": "string", "minLength": 1, "description": "An icon name from the frontend's vocabulary; unknown names render as a book." },
+        "order": { "type": "integer", "minimum": 0, "description": "Sort position within its kind (scenarios use the numbers from spec section 2)." },
+        "summary": { "type": "string", "minLength": 1, "description": "One sentence for tiles and lists." }
+      }
+    },
+    "source": {
+      "type": "object",
+      "description": "A cited source. doc or kiwix names the library copy; url is provenance only and is never rendered as a link.",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "description": "How the source is listed under the document." },
+        "doc": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$", "description": "Manifest id of a pdf or epub item." },
+        "kiwix": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/.+$", "description": "<zim item id>/<article path>." },
+        "url": { "type": "string", "pattern": "^https?://", "description": "Where the source came from; provenance only." },
+        "as_at": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$", "description": "Date of the cited edition: YYYY-MM-DD, or YYYY-MM when only the month is known." }
+      }
+    },
+    "scenario": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/scenarios/<slug>.md: one of the twenty scenario playbooks.",
+      "required": ["modules", "overlays", "reviewed", "sources"],
+      "properties": {
+        "modules": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "description": "Module slugs; each must be included in the body with {{module:<slug>}}." },
+        "overlays": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }, "description": "Overlay ids from manifest/overlays.json switched on when the map opens from this playbook." },
+        "reviewed": { "type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "The owner's sign-off date (YYYY-MM-DD), or null until reviewed." },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the playbook was written from." }
+      },
+      "unevaluatedProperties": false
+    },
+    "module": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/modules/<slug>.md: shared content included by playbooks and readable on its own.",
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the module was written from." } },
+      "unevaluatedProperties": false
+    },
+    "card": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/cards/<slug>.md: a one-screen medical quick card.",
+      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the card was written from." } },
+      "unevaluatedProperties": false
+    },
+    "page": {
+      "allOf": [{ "$ref": "#/$defs/base" }],
+      "description": "playbooks/pages/<slug>.md: a comms, reference, plan or about page.",
+      "required": ["category"],
+      "properties": {
+        "category": { "enum": ["comms", "reference", "plan", "about"], "description": "Which list the page appears in: comms (the Phone and radio screen), reference, plan (the Plan screen) or about." },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the page was written from." }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

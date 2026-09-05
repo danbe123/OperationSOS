@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sos"
+version = "0.1.0"
+description = "Operation SOS backend, CLI and sync tools"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-frontmatter>=1.1",
+  "markdown-it-py>=3.0",
+  "mdit-py-plugins>=0.4",
+  "pyyaml>=6.0",
+  "jsonschema>=4.22",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "respx>=0.21", "ruff>=0.5", "shellcheck-py>=0.10"]
+maps = ["pyproj>=3.6"]
+
+[project.scripts]
+sos = "sos.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sos*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"

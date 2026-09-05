@@ -1,0 +1,50 @@
+{
+  "items": [
+    {
+      "id": "wikipedia_en_100_mini_2026-01",
+      "title": "Wikipedia 100 (mini)",
+      "kind": "zim", "tier": "core", "category": "reference", "scenarios": [],
+      "source": { "type": "url", "url": "https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_mini_2026-01.zim" },
+      "dest": "zim/wikipedia_en_100_mini_2026-01.zim",
+      "size_bytes": 4537782, "as_at": "2026-01", "licence": "CC BY-SA 4.0", "priority": 10,
+      "reader_home": null, "description": "Top hundred Wikipedia articles, text only.",
+      "search_weight": 1.0, "suggest": true, "overlay": null
+    },
+    {
+      "id": "sos-test-noindex",
+      "title": "SOS test (no index)",
+      "kind": "zim", "tier": "core", "category": "survival",
+      "source": { "type": "build", "tool": "zimwriterfs", "artifact": "sos-test-noindex.zim" },
+      "dest": "zim/sos-test-noindex.zim",
+      "size_bytes": 36105, "as_at": "2026-09-03", "licence": "CC0",
+      "description": "Two-page fixture ZIM built without a full-text index.",
+      "search_weight": 1.0
+    },
+    {
+      "id": "sos-test-pdf",
+      "title": "SOS test document",
+      "kind": "pdf", "tier": "core", "category": "uk-official", "scenarios": ["grid-collapse"],
+      "source": { "type": "url", "url": "https://example.invalid/sos-test.pdf" },
+      "dest": "docs/sos-test.pdf",
+      "size_bytes": 900, "as_at": "2026-09", "licence": "OGL v3", "priority": 30,
+      "description": "Two-page fixture PDF.", "search_weight": 1.4
+    },
+    {
+      "id": "nrr-2025",
+      "title": "National Risk Register 2025",
+      "kind": "pdf", "tier": "core", "category": "uk-official", "scenarios": [],
+      "source": { "type": "url", "url": "https://assets.publishing.service.gov.uk/media/67b5f85732b2aab18314bbe4/National_Risk_Register_2025.pdf" },
+      "dest": "docs/nrr-2025.pdf",
+      "size_bytes": 5000000, "as_at": "2025-01-16", "licence": "OGL v3", "priority": 40,
+      "description": "Not present in the fixture tree; exercises the unavailable path.", "search_weight": 1.4
+    },
+    {
+      "id": "gemma-4-E2B-it-Q4_K_M",
+      "title": "Gemma 4 E2B (Q4_K_M)",
+      "kind": "model", "tier": "core", "category": "ai", "scenarios": [],
+      "source": { "type": "url", "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf" },
+      "dest": "models/gemma-4-E2B-it-Q4_K_M.gguf",
+      "size_bytes": 3106738272, "as_at": "2026-04", "licence": "Gemma Terms of Use", "priority": 90
+    }
+  ]
+}

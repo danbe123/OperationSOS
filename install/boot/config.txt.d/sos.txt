@@ -1,0 +1,9 @@
+# Operation SOS boot fragment. install.sh copies this file to /boot/firmware/sos.txt and adds
+# "include sos.txt" to /boot/firmware/config.txt (spec section 3).
+# Pi 5 with the NVMe on the PCIe connector (Pimoroni NVMe Base). Gen 2 is the carrier's rating.
+dtparam=pciex1
+# install.sh --pcie-gen3 uncomments the next line for owners who have tested their drive at Gen 3.
+#dtparam=pciex1_gen=3
+# Touch Display 2 is auto-detected on a Pi 5; the kiosk session rotates it with wlr-randr.
+display_auto_detect=1
+disable_splash=1

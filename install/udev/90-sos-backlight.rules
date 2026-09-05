@@ -1,0 +1,3 @@
+# Operation SOS: let user sos (group video) write the panel brightness (spec section 5).
+# %p is the device path under /sys, e.g. /devices/platform/.../backlight/10-0045.
+SUBSYSTEM=="backlight", ACTION=="add", RUN+="/bin/chgrp video /sys%p/brightness", RUN+="/bin/chmod g+w /sys%p/brightness"

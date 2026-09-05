@@ -1,0 +1,19 @@
+{
+  "items": [
+    { "id": "uk-ie", "title": "Base map (OpenStreetMap)", "kind": "pmtiles", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "pmtiles", "artifact": "uk-ie.pmtiles" }, "dest": "maps/uk-ie.pmtiles",
+      "size_bytes": 3200000000, "as_at": "2026-09-02", "licence": "ODbL", "priority": 50 },
+    { "id": "contours", "title": "Contours", "kind": "pmtiles", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "pmtiles", "artifact": "contours.pmtiles" }, "dest": "maps/contours.pmtiles",
+      "size_bytes": 1000000000, "as_at": "2026-09", "licence": "OGL v3", "priority": 51 },
+    { "id": "hillshade", "title": "Hillshade", "kind": "pmtiles", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "pmtiles", "artifact": "hillshade.pmtiles" }, "dest": "maps/hillshade.pmtiles",
+      "size_bytes": 800000000, "as_at": "2026-09", "licence": "OGL v3", "priority": 52 },
+    { "id": "places", "title": "Place names", "kind": "places", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "build-maps", "artifact": "places.csv.gz" }, "dest": "maps/places.csv.gz",
+      "size_bytes": 500000000, "as_at": "2026-09", "licence": "OGL v3", "priority": 53 },
+    { "id": "packs", "title": "Phone map packs", "kind": "dir", "tier": "core", "category": "maps",
+      "source": { "type": "build", "tool": "build-maps", "artifact": "packs/" }, "dest": "maps/packs",
+      "size_bytes": 2600000000, "as_at": "2026-07", "licence": "ODbL", "priority": 60 }
+  ]
+}

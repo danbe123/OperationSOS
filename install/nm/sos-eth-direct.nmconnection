@@ -1,0 +1,18 @@
+# Operation SOS ethernet, "direct laptop link" (spec section 4): eth0 in shared mode on 10.43.0.1/24 so a
+# laptop plugs straight in with no router. Off by default; POST /api/system/eth-mode {"mode": "direct"}
+# flips the autoconnect flags of this profile and sos-eth-client, which is what survives a reboot.
+[connection]
+id=sos-eth-direct
+uuid=9961a1df-1eff-46df-8a2a-1dfa32dd5c3a
+type=ethernet
+interface-name=eth0
+autoconnect=false
+
+[ethernet]
+
+[ipv4]
+method=shared
+address1=10.43.0.1/24
+
+[ipv6]
+method=disabled

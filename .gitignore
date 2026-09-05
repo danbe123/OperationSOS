@@ -17,3 +17,23 @@ __pycache__/
 *.gpkg
 *.tif
 build-output/
+
+# fixture ZIMs are tiny and committed on purpose (spec section 13)
+!api/tests/fixtures/library/*.zim
+# dev stack state
+.dev/
+*.part
+
+# per-box install answers (PIN, SSID, passphrase)
+install/answers.env
+
+# maps pipeline (plan 04): scratch, and exceptions so the committed fixture outputs survive the *.pmtiles / *.pbf rules
+.incoming/
+*.apk
+*.fgb
+*.vrt
+*.asc
+*.osm.pbf
+!api/tests/fixtures/maps/*.pmtiles
+!api/tests/fixtures/maps/overlays/*.pmtiles
+!api/tests/fixtures/maps/fonts/**/*.pbf
