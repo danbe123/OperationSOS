@@ -23,6 +23,14 @@ CREATE TABLE IF NOT EXISTS household (id INTEGER PRIMARY KEY AUTOINCREMENT, name
   medications TEXT, contacts TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL,
   quantity REAL NOT NULL, unit TEXT NOT NULL, per_person_day REAL, expires TEXT, notes TEXT, updated_at TEXT);
+CREATE TABLE IF NOT EXISTS conditions (id TEXT PRIMARY KEY, state TEXT NOT NULL, since TEXT, source TEXT NOT NULL DEFAULT 'manual',
+  confidence REAL NOT NULL DEFAULT 1.0, note TEXT, set_by TEXT, updated_at TEXT, confirmed_at TEXT);
+CREATE TABLE IF NOT EXISTS task_state (task_id TEXT PRIMARY KEY, done INTEGER NOT NULL DEFAULT 0, done_at TEXT, person TEXT,
+  updated_at TEXT, drill INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS sensor_readings (id INTEGER PRIMARY KEY AUTOINCREMENT, sensor TEXT NOT NULL, value REAL, unit TEXT, at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS sensor_readings_at ON sensor_readings(sensor, at);
+CREATE TABLE IF NOT EXISTS neighbours (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, address TEXT, needs TEXT, skills TEXT,
+  contacts TEXT, notes TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS search_cache (q TEXT PRIMARY KEY, results_json TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS places_meta (key TEXT PRIMARY KEY, value TEXT);
