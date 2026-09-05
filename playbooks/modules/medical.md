@@ -54,6 +54,8 @@ sources:
 - [Severe bleeding card](card:severe-bleeding)
 - [Wound cleaning card](card:wound-cleaning)
 - [CPR for adults card](card:cpr-adult)
+- [Choking card](card:choking)
+- [Seizures card](card:seizures)
 - [Where There Is No Doctor](doc:where-there-is-no-doctor)
 - [Survival and Austere Medicine, p. 10](doc:survival-austere-medicine-2017#page=10)
 - [Sepsis (Wikipedia)](kiwix:wikipedia_en_medicine_maxi/Sepsis)

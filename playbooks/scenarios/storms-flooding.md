@@ -40,7 +40,7 @@ sources:
 
 **Never walk or drive through floodwater:** 15 cm of moving water knocks an adult over, 30 cm floats a car, 60 cm carries it away, and the water hides open manholes and sewage ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
 
-**In a storm, stay in.** The register's storm scenario is mean winds over 55 mph and gusts over 85 mph across several regions for six hours, with deaths "mainly due to falling trees, structures or other debris" ([NRR 2025, p. 139](doc:nrr-2025#page=139)). Park away from trees, stay off the coast and sea walls, and keep away from windows.
+**In a storm, stay in.** The register's storm scenario is mean winds over 55 mph and gusts over 85 mph across several regions for six hours, with deaths "mainly due to falling trees, structures or other debris" ([NRR 2025, p. 139](doc:nrr-2025#page=139)); the same debris breaks bones as well as killing outright ([Broken bones card](card:broken-bones)). Park away from trees, stay off the coast and sea walls, and keep away from windows.
 
 **Power off?** 105 in Great Britain, NIE Networks 03457 643 643 in Northern Ireland ([UK numbers](page:uk-numbers)).
 

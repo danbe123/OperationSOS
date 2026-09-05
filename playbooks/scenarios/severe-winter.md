@@ -67,7 +67,7 @@ sources:
 - **Vehicles.** Winter kit in the boot: blanket, shovel, grit, torch, food, water, charger, snow socks or chains; do not set out in a red warning; a stuck car is a shelter, so stay with it and run the engine ten minutes an hour with the exhaust clear of snow ([Vehicles and fuel module](module:vehicles-fuel); [Snow chains](kiwix:wikipedia_en_all_maxi/Snow_chains)).
 - **Money.** Cold Weather Payments are paid automatically to eligible households for each seven-day period of mean temperature at or below 0 °C between 1 November and 31 March ([Cold Weather Payment](kiwix:govuk_resilience/www.gov.uk/cold-weather-payment)); Winter Fuel Payments and the Priority Services Register cover the rest ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
 - **Neighbours.** The people who die in a cold spell are older, alone and indoors; a daily knock is the intervention ([Community module](module:community); [AWHP, p. 22](doc:awhp-2026#page=22)).
-- **Illness.** Flu, pneumonia and heart attacks rise in cold weather; the cards and the NHS pages are in the box ([Flu (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/flu/); [Heart attack card](card:heart-attack)).
+- **Illness.** Flu, pneumonia, heart attacks and strokes all rise in cold weather; the cards and the NHS pages are in the box ([Flu (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/flu/); [Heart attack card](card:heart-attack); [Stroke card](card:stroke)).
 
 {{module:water}}
 

@@ -236,3 +236,52 @@ def test_scenario_parses_and_validates(slug):
     mine = [e for e in errors if e.startswith(f"scenarios/{slug}.md")]
     pending = re.compile(r"playbook '(" + "|".join(SCENARIOS) + r")' does not exist")
     assert [e for e in mine if not pending.search(e)] == [], mine
+
+
+def all_scenarios() -> dict[str, frontmatter.Post]:
+    return {s: load("scenarios", s) for s in SCENARIOS}
+
+
+PLAYBOOK_LINK = re.compile(r"\]\(playbook:([a-z0-9-]+)\)")
+
+
+def test_every_scenario_present_and_tree_validates():
+    assert sorted(p.stem for p in (PB / "scenarios").glob("*.md")) == sorted(SCENARIOS)
+    assert validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids(), require_all_scenarios=True) == []
+
+
+def test_every_module_used_by_at_least_two_scenarios():
+    use = {m: [s for s, p in all_scenarios().items() if m in p["modules"]] for m in MODULES}
+    thin = {m: s for m, s in use.items() if len(s) < 2}
+    assert thin == {}, thin
+
+
+def test_every_overlay_used_by_a_scenario():
+    used = {o for p in all_scenarios().values() for o in p["overlays"]}
+    assert set(overlay_ids()) <= used, set(overlay_ids()) - used
+
+
+def test_scenario_cross_links():
+    inbound = {s: 0 for s in SCENARIOS}
+    for slug, post in all_scenarios().items():
+        targets = set(PLAYBOOK_LINK.findall(post.content))
+        assert targets, (slug, "no playbook: links")
+        assert targets <= set(SCENARIOS), (slug, targets - set(SCENARIOS))
+        assert slug not in targets, (slug, "links to itself")
+        for t in targets:
+            inbound[t] += 1
+    assert [s for s, n in inbound.items() if n == 0] == []
+
+
+def test_every_card_and_page_is_linked():
+    link_re = re.compile(r"\]\((card|page):([a-z0-9-]+)\)")
+    linked = {kind: set() for kind in ("card", "page")}
+    for kind in ("modules", "scenarios", "cards", "pages"):
+        for path in (PB / kind).glob("*.md"):
+            body = path.read_text(encoding="utf-8")
+            for target_kind, slug in link_re.findall(body):
+                linked[target_kind].add(slug)
+    unlinked_cards = set(CARDS) - linked["card"]
+    unlinked_pages = set(PAGES) - linked["page"]
+    assert unlinked_cards == set(), unlinked_cards
+    assert unlinked_pages == set(), unlinked_pages
