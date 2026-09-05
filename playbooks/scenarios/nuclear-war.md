@@ -40,7 +40,7 @@ sources:
 
 **Then get inside and stay inside.** Within ten minutes fallout begins to come down where the wind carries it. Go into the nearest solid building, to a basement or the middle of the ground floor, away from windows and outside walls, and stay there. Cars are not shelters ([FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)). The 1980 British instruction was the same: send the children to the fall-out room, turn off the gas and electricity at the mains, close stoves, shut windows, draw curtains, go to the room ([Protect and Survive, p. 11](doc:protect-and-survive-1980#page=11)).
 
-**If you were outside when fallout fell:** take off your outer clothes at the door, bag them, wash hair and skin with soap and plenty of water, no conditioner, no scrubbing; this removes most of the contamination ([UKHSA decontamination sheet, p. 1](doc:ukhsa-radiation-decontamination#page=1)).
+**If you were outside when fallout fell:** take off your outer clothes at the door, bag them, then {{#if water}}wash hair and skin with soap and plenty of water, no conditioner, no scrubbing{{else}}wash hair and skin with soap and stored water poured from a jug, no conditioner, no scrubbing, because water that was in pipes and covered tanks before the fallout is still clean{{/if}}; this removes most of the contamination ([UKHSA decontamination sheet, p. 1](doc:ukhsa-radiation-decontamination#page=1)).
 
 **Do not take iodine tablets unless told to.** They protect the thyroid only, against radioactive iodine only, and only if taken at the right time ([NRPB, p. 8](doc:nrpb-stable-iodine#page=8)); see UK specifics.
 

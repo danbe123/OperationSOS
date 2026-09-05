@@ -37,7 +37,7 @@ sources:
 
 **Assume a war has started.** A high-altitude burst is usually described as the opening move; go to the [nuclear war playbook](playbook:nuclear-war) for shelter and fallout (there is no fallout from a burst in space, but there may be from what follows) and treat the next hours as an attack warning.
 
-**Then treat it as a blackout with no restoration date:** torch, battery radio (if it still works), water filled, fridge shut, cooker off, cash ([Grid collapse playbook](playbook:grid-collapse)). The register's grid-failure planning assumptions apply, without the "up to 7 days" ([NRR 2025, p. 90](doc:nrr-2025#page=90)).
+**Then treat it as a blackout with no restoration date:** torch, battery radio (if it still works), {{#if water}}every container filled while the mains still runs{{else}}the stored water rationed, because the pumps are electric{{/if}}, fridge shut, cooker off, cash ([Grid collapse playbook](playbook:grid-collapse)). The register's grid-failure planning assumptions apply, without the "up to 7 days" ([NRR 2025, p. 90](doc:nrr-2025#page=90)).
 
 {{module:power}}
 

@@ -38,9 +38,9 @@ sources:
 
 **Cut contact.** The planning assumption is a respiratory pathogen that spreads by close proximity, with 4% of the sick needing hospital and 2.5% dying, for at least nine months ([NRR 2025, p. 156](doc:nrr-2025#page=156)). Every day of distance you buy before the peak is a day the household is not sick at once. Stop non-essential trips now, not when told.
 
-**If someone is already ill:** one room, one carer, door shut, window open; the carer wears a mask (FFP2 or FFP3 if you have them, a surgical or cloth mask if not) and washes hands for 20 seconds after every contact ([Hand washing](kiwix:wikipedia_en_all_maxi/Hand_washing); [European respirator standards](kiwix:wikipedia_en_all_maxi/European_respirator_standards)). Separate cup, plate, towel and bedding ([Ship Captain's Medical Guide ch. 6](doc:scmg-ch06)).
+**If someone is already ill:** one room, one carer, door shut, window open; the carer wears a mask (FFP2 or FFP3 if you have them, a surgical or cloth mask if not) and {{#if water}}washes hands for 20 seconds after every contact{{else}}washes hands for 20 seconds after every contact, poured from a jug over a bowl now the mains is off, with alcohol gel only as a stopgap{{/if}} ([Hand washing](kiwix:wikipedia_en_all_maxi/Hand_washing); [European respirator standards](kiwix:wikipedia_en_all_maxi/European_respirator_standards)). Separate cup, plate, towel and bedding ([Ship Captain's Medical Guide ch. 6](doc:scmg-ch06)).
 
-**Know the emergency signs** that still justify 999 or a hospital even when they are overwhelmed: breathing so hard they cannot finish a sentence, blue or grey lips, confusion, a rash that does not fade under a glass, no urine for a day, or a child who is floppy or will not wake ([Sepsis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/)).
+**Know the emergency signs** that still justify a hospital even when the wards are overwhelmed: breathing so hard they cannot finish a sentence, blue or grey lips, confusion, a rash that does not fade under a glass, no urine for a day, or a child who is floppy or will not wake — [[call 999]] ([Sepsis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/)).
 
 {{module:medical}}
 
@@ -79,7 +79,7 @@ An emerging disease with a 25% case fatality rate is planned for as an outbreak 
 
 ## UK specifics
 
-- **Numbers:** 999 for the emergency signs; 111 for advice and antivirals while it answers; Pharmacy First in England for minor illness; the NHS pages in this box are a dated snapshot ([About](page:about-sos)). Northern Ireland uses GP out-of-hours numbers ([UK numbers](page:uk-numbers)).
+- **Numbers:** {{#if phones}}[[call 999]] for the emergency signs, and [[call 111]] for advice and antivirals; Pharmacy First in England covers minor illness, and Northern Ireland uses GP out-of-hours numbers ([UK numbers](page:uk-numbers)).{{else}}No number answers while the phones are down: take the emergency signs to a hospital in person, ask a pharmacy at the counter for the rest, and read [getting help without phones](page:no-phones); the numbers for later are on [UK numbers](page:uk-numbers).{{/if}} The NHS pages in this box are a dated snapshot ([About](page:about-sos)).
 - **Powers.** The Civil Contingencies Act 2004 lets ministers make emergency regulations and names the Category 1 responders who run local response ([Civil Contingencies Act 2004](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2004/36/contents)); lockdowns, school closures and travel limits are lawful orders, not advice.
 - **Precedent.** The 1918 flu killed about 228,000 people in Britain in three waves ([Spanish flu](kiwix:wikipedia_en_all_maxi/Spanish_flu)); COVID-19 killed over 200,000 in the UK by 2023 ([COVID-19 pandemic in the United Kingdom](kiwix:wikipedia_en_all_maxi/COVID-19_pandemic_in_the_United_Kingdom)).
 - **UK drug names.** American sources in this library say acetaminophen for paracetamol and albuterol for salbutamol ([Medical module](module:medical)).

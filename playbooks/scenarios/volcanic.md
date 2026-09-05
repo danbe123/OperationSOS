@@ -40,7 +40,7 @@ sources:
 
 **A gas-rich eruption is the dangerous one.** Laki in 1783 sent a sulphurous haze over Britain for months; the summer of 1783 killed an estimated 23,000 people in England, mostly from breathing it ([Laki](kiwix:wikipedia_en_all_maxi/Laki)). The register's air-quality scenario, 30 days of elevated ozone or fine particulates with deaths from respiratory and heart disease, is the planning frame ([NRR 2025, p. 153](doc:nrr-2025#page=153)).
 
-**On a bad-air day:** stay in, windows shut, exertion off, inhalers close; anyone with asthma or COPD who cannot speak in sentences is 999 ([Asthma (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/); [Asthma attack card](card:asthma-attack)). Sulphur dioxide stings eyes and throat and is worse for children and the old ([Sulfur dioxide](kiwix:wikipedia_en_all_maxi/Sulfur_dioxide)).
+**On a bad-air day:** stay in, windows shut, exertion off, inhalers close; anyone with asthma or COPD who cannot speak in sentences needs an ambulance — [[call 999]] ([Asthma (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/); [Asthma attack card](card:asthma-attack)). Sulphur dioxide stings eyes and throat and is worse for children and the old ([Sulfur dioxide](kiwix:wikipedia_en_all_maxi/Sulfur_dioxide)).
 
 **Cover the water.** Ash and its fluoride settle on butts, troughs and open tanks; lids on now ([Volcanic ash](kiwix:wikipedia_en_all_maxi/Volcanic_ash)).
 
@@ -65,7 +65,7 @@ sources:
 
 - **Weeks of it.** A three-month eruption means episodes of ashfall and haze whenever the wind is from the north-west; keep the mask routine and the covered-water routine for the duration ([NRR 2025, p. 129](doc:nrr-2025#page=129)).
 - **Supplies.** No flights means no air freight: some medicines, some fresh produce and mail order stop; the [supply chain playbook](playbook:supply-chain) applies to those things.
-- **Water.** Tap water from treated mains is safe; private supplies, butts and troughs need the ash settled out and filtered before disinfection ([Water module](module:water); [DWI private supplies](kiwix:govuk_resilience/www.dwi.gov.uk/private-water-supplies/)). Acid rain from sulphur dioxide is a garden and pond problem, not a drinking one ([Acid rain](kiwix:wikipedia_en_all_maxi/Acid_rain)).
+- **Water.** {{#if water}}Tap water from treated mains is safe{{else}}The mains has stopped, so covered stored water comes first{{/if}}; private supplies, butts and troughs need the ash settled out and filtered before disinfection ([Water module](module:water); [DWI private supplies](kiwix:govuk_resilience/www.dwi.gov.uk/private-water-supplies/)). Acid rain from sulphur dioxide is a garden and pond problem, not a drinking one ([Acid rain](kiwix:wikipedia_en_all_maxi/Acid_rain)).
 - **Growing.** A dusting of ash is fertiliser once washed in; a thick fall smothers; rinse leafy crops before eating and cover cold frames ([Growing food module](module:growing-food)).
 - **Health.** Chest infections follow weeks of bad air; pneumonia signs and the sepsis rule are on the NHS pages ([Pneumonia (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/pneumonia/); [Sepsis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/)).
 
@@ -84,7 +84,7 @@ A large enough eruption cools the world for a year or two: Tambora in 1815 gave 
 - **The register** lists volcanic eruption among natural hazards with Iceland as the main source and aviation as the main impact ([NRR 2025, p. 129](doc:nrr-2025#page=129)); the GOV.UK hazards guidance covers volcanic ash ([Extreme weather and natural hazards](kiwix:govuk_resilience/www.gov.uk/guidance/extreme-weather-and-natural-hazards)).
 - **Which volcanoes:** Bárðarbunga (whose Holuhraun fissure poured sulphur dioxide in 2014 to 2015), Eyjafjallajökull, Grímsvötn, Katla and Hekla are the frequent ones; Laki and Eldgjá are the historic gas eruptions ([Bárðarbunga](kiwix:wikipedia_en_all_maxi/Bárðarbunga); [Grímsvötn](kiwix:wikipedia_en_all_maxi/Grímsvötn); [Katla (volcano)](kiwix:wikipedia_en_all_maxi/Katla_(volcano)); [Eldgjá](kiwix:wikipedia_en_all_maxi/Eldgjá)).
 - **Airports** on the map close first and open last ([airports overlay](map:?overlay=airports-military)); ferries and the tunnel keep running.
-- **Health warnings** come through the Weather-Health Alert system and the air quality index ([Weather-health alerting system](kiwix:govuk_resilience/www.gov.uk/guidance/weather-health-alerting-system)); 111 for breathing problems that are not an emergency, 999 when they are ([UK numbers](page:uk-numbers)).
+- **Health warnings** come through the Weather-Health Alert system and the air quality index ([Weather-health alerting system](kiwix:govuk_resilience/www.gov.uk/guidance/weather-health-alerting-system)); {{#if phones}}[[call 111]] for breathing problems that are not an emergency, and [[call 999]] when they are ([UK numbers](page:uk-numbers)).{{else}}with the phones down, work from the [asthma card](card:asthma-attack) and take anyone who cannot speak in sentences to hospital yourself ([UK numbers](page:uk-numbers)).{{/if}}
 - **Scotland and the north** are downwind first and most; the Northern Isles and the Hebrides got the worst of Laki's haze ([Laki](kiwix:wikipedia_en_all_maxi/Laki)).
 
 ## Checklist

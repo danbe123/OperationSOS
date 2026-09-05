@@ -38,7 +38,7 @@ sources:
 
 **Go in, stay in, tune in.** Get indoors, shut doors and windows, turn off fans, extractor fans and the boiler flue's air supply if you can, and listen to the radio or wait for the Emergency Alert ([UKHSA radiation emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public)). This is the government's standing instruction for any release ([NRR 2025, p. 22](doc:nrr-2025#page=22)).
 
-**If you were outside in the plume or near an explosion:** outer clothing off at the door into a bag, then shower or wash with soap and warm water, hair too, no conditioner and no scrubbing; this removes most contamination ([UKHSA decontamination sheet, p. 1](doc:ukhsa-radiation-decontamination#page=1)). A person who has washed is not radioactive and is safe to be with.
+**If you were outside in the plume or near an explosion:** outer clothing off at the door into a bag, then {{#if water}}shower or wash with soap and warm water, hair too, no conditioner and no scrubbing{{else}}wash with soap and stored water, hair too, no conditioner and no scrubbing, because water that was in pipes and covered tanks before the release is still clean{{/if}}; this removes most contamination ([UKHSA decontamination sheet, p. 1](doc:ukhsa-radiation-decontamination#page=1)). A person who has washed is not radioactive and is safe to be with.
 
 **A dirty bomb is a bomb first.** Treat the casualties for blast and bleeding ([Severe bleeding card](card:severe-bleeding)); the radiation is a localised, secondary problem. Move upwind and uphill, do not touch debris or dust, and get people inside ([NRR 2025, p. 40](doc:nrr-2025#page=40)).
 
@@ -67,7 +67,7 @@ An accident at a UK civil site is planned for as a release that crosses the site
 - Expect a **milk and produce ban** in the affected area: after the 1957 Windscale fire milk from 500 km² was poured away for a month ([Windscale fire](kiwix:wikipedia_en_all_maxi/Windscale_fire)). Discard leafy vegetables and fruit that were outside; wash and peel roots; sealed and stored food is fine.
 - **Do not eat game, wild mushrooms or foraged food** from the area; fungi and moss concentrate caesium ([Chernobyl disaster](kiwix:wikipedia_en_all_maxi/Chernobyl_disaster)).
 - **Monitoring and screening.** UKHSA runs monitoring units for people who may have been contaminated; go if asked, take the bag of clothes with you ([UKHSA nuclear emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/nuclear-emergencies-information-for-the-public)).
-- **Lost or stolen sources** are the other route to exposure: a heavy metal cylinder or a scrap-metal find with a radiation trefoil is not to be opened or kept; call 999 and keep people metres away ([NRR 2025, p. 100](doc:nrr-2025#page=100)).
+- **Lost or stolen sources** are the other route to exposure: a heavy metal cylinder or a scrap-metal find with a radiation trefoil is not to be opened or kept; keep people metres away and report it — [[call 999]] ([NRR 2025, p. 100](doc:nrr-2025#page=100)).
 
 {{module:medical}}
 
@@ -85,7 +85,7 @@ Restrictions on upland sheep in Wales and Cumbria after Chernobyl in 1986 lasted
 - **Nearby foreign sites.** French stations on the Channel coast (Flamanville, Gravelines, Paluel, Penly) are closer to Kent, Sussex and the Channel Islands than most British ones; Fukushima in 2011 produced detectable iodine in the UK at harmless levels ([NRR 2025, p. 98](doc:nrr-2025#page=98)).
 - **Who does what.** The site operator and the council run the off-site plan; UKHSA gives health advice; the Food Standards Agency imposes food restrictions ([REPPIR 2019](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2019/703/contents)). Warnings come by Emergency Alert, local radio and, near sites, sirens and loudhailers ([Prepare, alerts](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/alerts/)).
 - **The UK's only deliberate radiological attack** was the 2006 polonium poisoning of Alexander Litvinenko; it contaminated dozens of London sites but harmed only those in direct contact ([NRR 2025, p. 40](doc:nrr-2025#page=40); [Poisoning of Alexander Litvinenko](kiwix:wikipedia_en_all_maxi/Poisoning_of_Alexander_Litvinenko)).
-- **Numbers**: 999 for the explosion, 111 for health advice while it answers; the rest on [UK numbers](page:uk-numbers).
+- **Numbers**: {{#if phones}}[[call 999]] for the explosion and [[call 111]] for health advice; the rest are on [UK numbers](page:uk-numbers).{{else}}nothing answers while the phones are down, so take an emergency to the nearest fire or ambulance station in person ([getting help without phones](page:no-phones)); the numbers for when the lines return are on [UK numbers](page:uk-numbers).{{/if}}
 
 ## Checklist
 

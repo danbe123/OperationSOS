@@ -48,7 +48,7 @@ sources:
 
 - **Fuel.** A winter that lasts years is heated with wood, and wood is cut a year ahead to dry; start coppice and stacks now ([Coppicing](kiwix:wikipedia_en_all_maxi/Coppicing); [Wood fuel](kiwix:wikipedia_en_all_maxi/Wood_fuel)). Coal and peat where they exist ([Peat](kiwix:wikipedia_en_all_maxi/Peat)). A stove with a safe flue and a carbon monoxide alarm ([Approved Document J, p. 43](doc:ad-j#page=43)).
 - **Insulation.** One warm room now; then the whole house to the current standard as materials allow: loft, walls, floors, windows ([Approved Document L volume 1](doc:ad-l1); [Building insulation](kiwix:wikipedia_en_all_maxi/Building_insulation)).
-- **Water** freezes: bury pipes, keep a trickle, store indoors, and melt snow ([Water module](module:water)).
+- **Water** freezes: {{#if water}}bury pipes, keep a trickle running, and store water indoors while the mains still runs{{else}}the mains has gone, so melt snow and ice indoors and boil it before drinking{{/if}} ([Water module](module:water)).
 - **Power.** Solar panels give a fraction of their output under a dimmed sky; wind and micro-hydro do not care about the light ([Micro hydro](kiwix:wikipedia_en_all_maxi/Micro_hydro); [Wind turbine](kiwix:wikipedia_en_all_maxi/Wind_turbine); [Power module](module:power)).
 - **Animals** eat what people cannot: hay, tops, scraps; rabbits and hens are the efficient ones; goats give milk on rough grazing ([Livestock module](module:livestock)).
 - **The register's** nearest scenarios are a nuclear war elsewhere with global economic and migration effects ([NRR 2025, p. 185](doc:nrr-2025#page=185)) and a week of deep snow ([NRR 2025, p. 143](doc:nrr-2025#page=143)); a years-long winter is beyond it.

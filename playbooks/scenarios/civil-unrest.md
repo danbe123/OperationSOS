@@ -37,7 +37,7 @@ sources:
 
 **Do not go to watch, and do not go to help unless asked.** The register's own words: turning up at the scene "could be dangerous and overwhelm the emergency services" ([NRR 2025, p. 23](doc:nrr-2025#page=23)). Five people died in the 2011 riots, three of them protecting shops ([2011 England riots](kiwix:wikipedia_en_all_maxi/2011_England_riots)).
 
-**Fire is the killer in a riot.** Test the smoke alarms, keep the stairs clear, know the way out of the back, and keep buckets of water where an arson attack on the front door would need them ([Shelter and heat module](module:shelter-heat)). Call 999 for fire; fires in riots get answered even when burglaries do not.
+**Fire is the killer in a riot.** Test the smoke alarms, keep the stairs clear, know the way out of the back, and keep buckets of water where an arson attack on the front door would need them ([Shelter and heat module](module:shelter-heat)). Fire is what still gets answered in a riot, even when burglaries do not — [[call 999]].
 
 **Rumours.** Every riot runs on messages that are half true; check with the SHARE checklist before believing or forwarding ([NRR 2025, p. 22](doc:nrr-2025#page=22)). Emergency Alerts and BBC local radio are the official sources ([How alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
 
@@ -50,7 +50,7 @@ sources:
 - **Looting is theft and burglary** whatever the crowd is doing ([Theft Act 1968 s1](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1968/60/section/1)); over 1,000 people were charged within weeks of the 2024 riots ([2024 United Kingdom riots](kiwix:wikipedia_en_all_maxi/2024_United_Kingdom_riots)).
 - **Supplies out of sight.** Nothing visible from the street: no generator noise, no full shelves in the window, bins put out late ([Security and the law module](module:security-law)).
 - **The street.** Neighbours who know each other, share numbers and a PMR446 channel and check on the vulnerable are the only security that scales ([Community module](module:community)); patrols and "defence groups" are how residents end up arrested or hurt.
-- **Medical:** A&E will be full; treat cuts, burns and smoke inhalation at home with the cards, and call 999 only for life-threatening cases ([Burns card](card:burns); [Severe bleeding card](card:severe-bleeding)).
+- **Medical:** A&E will be full; treat cuts, burns and smoke inhalation at home with the cards, and keep the ambulance for life-threatening cases — [[call 999]] ([Burns card](card:burns); [Severe bleeding card](card:severe-bleeding)).
 
 {{module:community}}
 
@@ -78,7 +78,7 @@ Order in Britain has broken locally and briefly, never nationally for long: the 
 
 ## UK specifics
 
-- **Numbers:** 999 for danger to life and fire; 101 for everything else, which will not answer; Samaritans 116 123 ([UK numbers](page:uk-numbers)).
+- {{#if phones}}**Numbers:** [[call 999]] for danger to life and fire; for everything else, [[call 101]], which will not answer quickly; Samaritans 116 123 ([UK numbers](page:uk-numbers)).{{else}}**Numbers:** none of them connect while the phones are down: take danger to life to the nearest fire or police station in person ([getting help without phones](page:no-phones)), and keep [UK numbers](page:uk-numbers) for when the lines return.{{/if}}
 - **Offences you can commit by accident:** riot, violent disorder and affray under the Public Order Act 1986 apply to anyone who joins in, including to "have a look" ([Public Order Act 1986](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1986/64/contents)); aggravated trespass and obstruction of the highway are the protest offences ([CJPOA 1994 s68](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1994/33/section/68)); assaulting a police officer is a separate offence under the Police Act 1996 ([Police Act 1996](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1996/16/contents)).
 - **Weapons:** carrying a knife, a bat or a pepper spray "for protection" is an offence; the penknife rule is 3 inches, non-locking ([CJA 1988 s139](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1988/33/section/139); [Knife and firearms law](page:knife-firearms-law)).
 - **Prevention of Crime Act 1953** makes carrying an offensive weapon in public an offence in its own right ([Prevention of Crime Act 1953](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/Eliz2/1-2/14)).

@@ -38,9 +38,9 @@ sources:
 
 **Do not join the queue.** The September 2021 fuel crisis was a shortage of lorry drivers turned into empty forecourts by panic buying within two days ([2021 United Kingdom fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)); the September 2000 refinery blockades had supermarkets warning of empty shelves within days ([Fuel protests in the United Kingdom](kiwix:wikipedia_en_all_maxi/Fuel_protests_in_the_United_Kingdom)). If your tank is above half and your cupboard holds two weeks, you have already done the useful thing ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
 
-**Take stock tonight:** food by days, medicines by days, fuel by miles, cash by weeks, nappies, formula, pet food, gas bottles, wood. Write it on the fridge and buy only the gaps, in ordinary quantities, from ordinary shops ([Food module](module:food)).
+**Take stock tonight:** food by days, medicines by days, fuel by miles, cash by weeks, nappies, formula, pet food, gas bottles, wood. {{#if shops}}Write it on the fridge and buy only the gaps, in ordinary quantities, from ordinary shops{{else}}Write it on the fridge; with the shops shut there is nothing to buy, so the list becomes the ration{{/if}} ([Food module](module:food)).
 
-**Medicines first.** Order repeat prescriptions early, ask the pharmacist about alternatives now rather than when the shelf is empty, and keep two weeks in hand ([Medical module](module:medical)).
+**Medicines first.** {{#if phones}}Order repeat prescriptions early, ask the pharmacist about alternatives now rather than when the shelf is empty, and keep two weeks in hand ([Medical module](module:medical)).{{else}}With the surgery's line and its app both down, take the repeat slip or the labelled box to the pharmacy counter in person, ask about alternatives while you are there, and keep two weeks in hand ([Medical module](module:medical)).{{/if}}
 
 {{module:food}}
 
@@ -48,7 +48,7 @@ sources:
 
 - **Fuel.** The register's fuel scenarios are regional: a refinery or terminal lost, replenishment taking "several days", the National Emergency Plan for Fuel and Operation ESCALIN's military tanker drivers keeping priority users supplied ([NRR 2025, p. 49](doc:nrr-2025#page=49); [NRR 2025, p. 69](doc:nrr-2025#page=69)). Petrol at home is limited to 30 litres in approved containers of up to 10 litres plastic or 20 litres metal, stored outside the house ([Petroleum regulations 2014](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents); [HSE INDG370, p. 1](doc:hse-indg370#page=1)). Cycle, walk, share cars ([Vehicles and fuel module](module:vehicles-fuel)).
 - **Food.** Britain imports a large share of what it eats and runs shops on daily deliveries ([Food security](kiwix:wikipedia_en_all_maxi/Food_security); [Supply chain](kiwix:wikipedia_en_all_maxi/Supply_chain)); fresh produce goes first, then bread and milk, then tins. Cook the fridge and freezer contents first if power is also uncertain ([FSA chill and freeze](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)).
-- **Water** is usually the last thing to stop, but bottled water vanishes with the first rumour; fill containers from the tap now ([Water module](module:water)).
+- **Water** is usually the last thing to stop, but bottled water vanishes with the first rumour; {{#if water}}fill containers from the tap now{{else}}the tap has stopped too, so ration the store and treat whatever you gather{{/if}} ([Water module](module:water)).
 - **Gas bottles, heating oil, wood:** heating oil deliveries fail in the same scenarios as diesel ([NRR 2025, p. 69](doc:nrr-2025#page=69)); order early, share deliveries with neighbours.
 - **Share, do not hoard.** Panic buying is the mechanism of the shortage, not a response to it ([Panic buying](kiwix:wikipedia_en_all_maxi/Panic_buying)).
 
@@ -83,7 +83,7 @@ Global supply chains failed for two years after 2020 and the container ship stuc
 - **Gas** comes by pipeline from Norway and as LNG; the UK does not use Russian gas but pays European prices, and the heating season is October to May ([NRR 2025, p. 62](doc:nrr-2025#page=62)).
 - **Fuel at home:** 30 litres of petrol without notifying anyone, 30 to 275 litres only after notifying the Petroleum Enforcement Authority; diesel is not covered ([Petroleum regulations 2014](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)).
 - **Food safety** when shops and fridges fail: the FSA rules on chilling and the 8 °C limit ([FSA chill and freeze](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)); foraging is lawful for your own use ([Foraging law](page:foraging-law)).
-- **Pharmacy First** in England, 111, and the GP's repeat system are the routes to medicines; hoarding prescription drugs is not ([UK numbers](page:uk-numbers)).
+- **Routes to medicines:** Pharmacy First in England, the GP's repeat system, and NHS advice — [[call 111]]. Hoarding prescription drugs is not one of them ([UK numbers](page:uk-numbers)).
 - **Where the fuel is:** every forecourt is on the map ([fuel overlay](map:?overlay=fuel)); stations near motorway junctions and depots are resupplied first.
 
 ## Checklist
