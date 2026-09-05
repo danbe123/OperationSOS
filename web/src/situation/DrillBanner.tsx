@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import { errorMessage } from '../api/useQuery';
@@ -12,6 +13,7 @@ import { useSituation } from './SituationProvider';
  * a practice must never be mistaken for the real thing, on any phone in the house. */
 export function DrillBanner() {
   const { view, apply } = useSituation();
+  const { pathname } = useLocation();
   const { refresh: refreshStatus } = useStatus();
   const [summary, setSummary] = useState<DrillSummary | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,11 +34,13 @@ export function DrillBanner() {
     }
   };
 
+  // The board flies its own flag in type twice this size; a second bar would only cost it a line.
+  if (view?.meta.drill && pathname === '/board') return null;
   if (view?.meta.drill) {
     return (
       <div className="drill-bar no-print" role="status">
         <span className="badge badge-warn">⚑ DRILL</span>
-        <span>DRILL in progress{view.scenario ? `: ${view.scenario.title}` : ''}. Nothing here is real; tasks still tick and the log says drill.</span>
+        <span>DRILL in progress{view.scenario ? `: ${view.scenario.title}` : ''}. Nothing here is real; the log says drill.</span>
         <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void end()}>End drill</button>
       </div>
     );

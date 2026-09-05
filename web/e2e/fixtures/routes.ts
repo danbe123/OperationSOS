@@ -75,6 +75,11 @@ export function nearbyFrom(places: Pick<NearbyItem, 'kind' | 'title' | 'lat' | '
     .sort((a, b) => a.distance_m - b.distance_m);
 }
 
+/** The box writes an event for every change worth remembering; the board and the drill debrief read them. */
+function logEvent(state: FixtureState, title: string): void {
+  state.notes.push({ id: state.nextNoteId++, kind: 'event', title, body: '', lat: null, lon: null, updated_at: new Date().toISOString() });
+}
+
 export async function installFixtureRoutes(context: BrowserContext, state: FixtureState): Promise<void> {
   await context.route('**/maps/**', async (route) => {
     const url = new URL(route.request().url());
@@ -237,6 +242,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
           ...current, state: next as ConditionState, since: String(b.since ?? now), note: String(b.note ?? ''),
           source: 'manual', confidence: 1, set_by: 'phone', updated_at: now, confirmed_at: now,
         } };
+        logEvent(state, `${current.title} ${next}${state.drill ? ' (drill)' : ' (phone)'}`);
         return json(route, computeView(state).conditions[id]);
       }
       if (method === 'POST' && cond[2] === 'confirm') {
@@ -260,6 +266,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       const done = b.done === undefined ? existing.done : Boolean(b.done);
       const person = b.person === undefined ? existing.person : (String(b.person) || null);
       state.taskState.set(id, { done, person, done_at: done ? new Date().toISOString() : null });
+      if (done !== existing.done) logEvent(state, `${existing.title} ${done ? 'ticked' : 'unticked'}${person ? ` by ${person}` : ''}`);
       const checklist = /^checklist:([\w-]+)\/(.+)$/.exec(id);
       if (checklist) {
         const list = state.checklists.get(checklist[1]) ?? [];
@@ -299,6 +306,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       state.conditions = conditions;
       state.situation = { slug, title: summary.title, started_at: at, elapsed_s: 0, phase: phaseFor(0).id };
       state.drill = true;
+      logEvent(state, `Drill started: ${summary.title}`);
       return json(route, computeView(state));
     }
     if (p === '/drill' && method === 'DELETE') {
@@ -306,6 +314,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       state.savedConditions = null;
       state.drill = false;
       state.situation = { slug: null };
+      logEvent(state, 'Drill ended');
       return json(route, computeView(state));
     }
     if (p === '/situation' && method === 'GET') return json(route, state.situation);

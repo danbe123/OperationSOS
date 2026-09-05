@@ -41,7 +41,10 @@ export function Briefing() {
 
   return (
     <section className="briefing" aria-label="Briefing" ref={block}>
-      <div className="pad read-aloud-row no-print"><ReadAloud id="briefing" target={block} label="Read the briefing aloud" /></div>
+      {/* Nothing but the next bulletin is not a briefing worth reading out. */}
+      {(inferred.length > 0 || soon.length > 0 || doing.length > 0 || view.briefing.length > 0) && (
+        <div className="pad read-aloud-row no-print"><ReadAloud id="briefing" target={block} label="Read the briefing aloud" /></div>
+      )}
       {inferred.length > 0 && (
         <section className="briefing-block" aria-label="The box thinks">
           <h2>The box thinks</h2>

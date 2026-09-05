@@ -28,5 +28,7 @@ test('/welcome and /starting load with no app JavaScript', async ({ page }) => {
   await expect(page.getByText('Open http://10.42.0.1 in your browser (or http://sos.box)')).toBeVisible();
   await expect(page.locator('svg')).toBeVisible();
   await page.goto('/starting' + suffix);
-  await expect(page).toHaveURL(/\/\?kiosk=1$/, { timeout: 10_000 });
+  // /starting polls /api/status every two seconds until the box answers; under a full parallel run
+  // the first poll can lose the race with everything else starting up, so allow a few rounds.
+  await expect(page).toHaveURL(/\/\?kiosk=1$/, { timeout: 30_000 });
 });

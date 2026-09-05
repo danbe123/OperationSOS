@@ -1,0 +1,45 @@
+import { test, expect } from './test';
+
+test('a drill puts the board on the kiosk screen, and a tap brings Home back', async ({ page }) => {
+  await page.goto('/situation');
+  await page.getByLabel('Drill scenario').selectOption('grid-collapse');
+  await page.getByLabel('Drill started').selectOption('2');
+  await page.getByRole('button', { name: 'Start drill' }).click();
+  await expect(page.getByText('DRILL in progress')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Board' }).click();
+  await expect(page).toHaveURL(/\/board$/);
+  await expect(page.getByRole('heading', { name: 'National grid collapse' })).toBeVisible();
+  const conditions = page.getByRole('region', { name: 'What is working' });
+  await expect(conditions).toContainText('Power');
+  await expect(conditions).toContainText('✕ off');
+  await expect(conditions).toContainText('for 2 h');
+  const jobs = page.getByRole('region', { name: 'Next jobs' });
+  await expect(jobs).toContainText('Fill the bath and every container');
+  const today = page.getByRole('region', { name: 'Today' });
+  await expect(today).toContainText('Sunset');
+  await expect(today).toContainText('BBC Radio 4');
+  await expect(page.getByRole('region', { name: 'Last events' })).toContainText('Drill started: National grid collapse');
+  await page.screenshot({ path: '/tmp/sos-board-853.png' });
+
+  await page.getByRole('region', { name: 'Next jobs' }).click();
+  await expect(page).toHaveURL(/\/$/);
+
+  // and the drill ends with what happened in it
+  await page.getByRole('button', { name: 'End drill' }).click();
+  await expect(page.getByText(/jobs ticked/)).toContainText('Drill ended: National grid collapse.');
+  await expect(page.getByRole('list', { name: 'What happened in the drill' })).toContainText('Drill started');
+  await expect(page.getByRole('region', { name: 'Situation' })).toContainText('Everything is working');
+});
+
+test('Home in peacetime leads with how ready the household is', async ({ page }) => {
+  await page.goto('/');
+  const strip = page.getByRole('region', { name: 'Situation' });
+  await expect(strip).toContainText('62');
+  const gaps = strip.getByLabel('Gaps to close');
+  await expect(gaps).toContainText('Water: 1.5 days for 3 people');
+  await expect(gaps).toContainText('worth 12 points');
+  await page.screenshot({ path: '/tmp/sos-home-readiness-853.png' });
+  await gaps.getByRole('link', { name: 'Water: 1.5 days for 3 people' }).click();
+  await expect(page).toHaveURL(/\/plan#stock$/);
+});
