@@ -94,13 +94,13 @@ A grid does not simply switch back on: it is rebuilt by black start, islands of 
 
 ## Checklist
 
-- [ ] Call 105 (GB) or NIE 03457 643 643 (NI); note what they say and when {#call-105}
+- [ ] {{#if phones}}Call 105 (GB) or NIE 03457 643 643 (NI); note what they say and when{{else}}Note the time the power went and how far the dark street runs; nobody can be told until a phone works{{/if}} {#call-105}
 - [ ] Torch, radio on BBC local FM, phone brightness down, power bank found {#torch-radio-powerbank}
 - [ ] Cooker and hob off at the knobs; computers and TV unplugged against the return surge {#appliances-off}
 - [ ] Kettle, pans, bottles and bath filled while the water still runs {#fill-water}
 - [ ] Fridge and freezer doors shut; note the time they lost power {#fridge-freezer-shut}
 - [ ] One warm room chosen; curtains shut at dusk; everyone sleeps there {#one-warm-room}
-- [ ] Anyone medically dependent on power identified; PSR status checked; 105 told {#medical-dependents}
+- [ ] {{#if phones}}Anyone medically dependent on power identified; PSR status checked; 105 told{{else}}Anyone medically dependent on power identified and checked on in person, hour by hour{{/if}} {#medical-dependents}
 - [ ] Generator, barbecue and stove outdoors only; CO alarm working {#no-co-indoors}
 - [ ] Cash counted; card-free shopping list; tank above half {#cash-and-fuel}
 - [ ] Neighbours checked, especially older people living alone {#check-neighbours}

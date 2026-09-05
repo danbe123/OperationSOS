@@ -102,7 +102,7 @@ The 1953 North Sea surge killed 307 people on the English coast in one night and
 - [ ] Rest centre location and evacuation route written down {#rest-centre-route}
 - [ ] Hands washed after any floodwater contact; food it touched thrown away {#floodwater-hygiene}
 - [ ] Pumps and generators outdoors only; CO alarm on {#pumps-outdoors}
-- [ ] Every damaged item photographed before disposal; insurer called {#photograph-damage}
+- [ ] Every damaged item photographed before disposal; {{#if phones}}insurer called{{else}}the claim written up on paper for the insurer{{/if}} {#photograph-damage}
 - [ ] Electrics and gas checked by a professional before reconnection {#check-before-reconnect}
 - [ ] Chainsaw kit complete or the job left to someone with it {#chainsaw-safety}
 
