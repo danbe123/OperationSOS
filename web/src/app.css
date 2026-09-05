@@ -402,3 +402,11 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .stock-summary li { border: 1px solid var(--border); }
 .person-form .row .field { flex: 1 1 160px; }
 .household-needs li { padding: 6px 0; }
+
+/* Nearby facilities: a whole-row target with the name over its distance, and the straight-line readout. */
+.nearby-list { list-style: none; padding: 0; }
+.nearby-item { display: flex; align-items: stretch; gap: 6px; }
+.nearby-go { flex: 1; justify-content: flex-start; text-align: left; gap: 8px; }
+.nearby-go span { display: flex; flex-direction: column; min-width: 0; }
+.nearby-go small { font-weight: 400; color: var(--text-muted); }
+.nearby-route { border-top: 1px solid var(--border); padding-top: 8px; }

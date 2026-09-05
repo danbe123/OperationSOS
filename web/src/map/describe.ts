@@ -287,7 +287,8 @@ function describeAccessLand(props: FeatureProperties, sourceLayer?: string): { t
   return { title: name ?? 'Open access land', rows };
 }
 
-function floodZone(props: FeatureProperties): string | null {
+/** The flood zone ("1", "2" or "3") a feature's properties name, whatever the source called the field. */
+export function floodZoneOf(props: FeatureProperties): string | null {
   const raw = first(props, 'zone', 'Zone', 'ZONE', 'flood_zone', 'FLOOD_ZONE', 'fz', 'layer', 'type', 'TYPE');
   if (!raw) return null;
   const m = /([123])\b/.exec(raw);
@@ -295,7 +296,7 @@ function floodZone(props: FeatureProperties): string | null {
 }
 
 function describeFloodZone(props: FeatureProperties, sourceLayer?: string): { title: string; rows: [string, string][] } {
-  const zone = floodZone(props);
+  const zone = floodZoneOf(props);
   const known = zone ? FLOOD_ZONES[zone] : undefined;
   const rows: [string, string][] = [];
   if (known) {

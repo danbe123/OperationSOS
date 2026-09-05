@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import type { Map as MlMap } from 'maplibre-gl';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
-import type { Place } from '../api/types';
+import type { NearbyItem, Place } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
 import { AppBar } from '../components/AppBar';
 import { notify } from '../components/Notice';
@@ -12,14 +12,16 @@ import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { gridRef } from '../map/grid';
+import { floodZoneAt } from '../map/home';
 import { LayerPanel } from '../map/LayerPanel';
 import { MapView } from '../map/MapView';
 import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
+import { describeNearby, describeRoute, NEARBY_ICON, NEARBY_TITLE } from '../map/nearby';
 import { PlaceSearch } from '../map/PlaceSearch';
 import { mapQueryString, parseMapQuery } from '../map/query';
 
 const BASE_KEY = 'sos.mapBase';
-type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'locate';
+type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'locate' | 'home' | 'nearby';
 const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 
 export function MapScreen() {
@@ -30,6 +32,7 @@ export function MapScreen() {
   const query = useMemo(() => parseMapQuery(`?${params.toString()}`), [params]);
   const { data: config, error, loading } = useQuery(() => api.mapConfig(), []);
   const pinsQ = useQuery(() => api.notes('pin'), [], { refetchOnFocus: true });
+  const homeQ = useQuery(() => api.home(), [], { refetchOnFocus: true });
   const mapRef = useRef<MlMap | null>(null);
 
   const [baseId, setBaseId] = useState<'osm' | 'os'>(() => (localStorage.getItem(BASE_KEY) === 'os' ? 'os' : 'osm'));
@@ -52,6 +55,12 @@ export function MapScreen() {
   const [pendingPin, setPendingPin] = useState<LngLat | null>(null);
   const [pinTitle, setPinTitle] = useState('');
   const [printImage, setPrintImage] = useState<string | null>(null);
+  const [homeLabel, setHomeLabel] = useState('Home');
+  const [savingHome, setSavingHome] = useState(false);
+  // The facilities list is for one point, captured when the panel opens, so it does not chase the map.
+  const [nearbyAt, setNearbyAt] = useState<LngLat | null>(null);
+  const nearbyQ = useQuery(() => (nearbyAt ? api.nearby(nearbyAt.lat, nearbyAt.lon) : Promise.resolve(null)), [nearbyAt]);
+  const [routeTo, setRouteTo] = useState<NearbyItem | null>(null);
   const labelPoint = useMemo(() => (query.label && query.lat !== null && query.lon !== null ? { lat: query.lat, lon: query.lon, label: query.label } : null), [query]);
 
   useEffect(() => {
@@ -86,6 +95,41 @@ export function MapScreen() {
     } catch (e) {
       notify(`Could not delete the pin: ${errorMessage(e)}`);
     }
+  };
+
+  const home = homeQ.data ?? null;
+  const homePoint = home && home.lat !== null && home.lon !== null ? { lat: home.lat, lon: home.lon, label: home.label || 'Home' } : null;
+  // A route runs from home when there is one, and from the centre of the screen when there is not.
+  const routeFrom = homePoint ?? { lat: view.lat, lon: view.lon, label: 'the centre' };
+  const route = routeTo ? describeRoute(routeFrom, { lat: routeTo.lat, lon: routeTo.lon }, routeTo.title, homePoint ? 'home' : 'the centre') : null;
+  const routePoints: LngLat[] = routeTo ? [{ lat: routeFrom.lat, lon: routeFrom.lon }, { lat: routeTo.lat, lon: routeTo.lon }] : [];
+
+  const saveHome = async () => {
+    const at = { lat: view.lat, lon: view.lon };
+    const map = mapRef.current;
+    // The flood zone is read from the overlay as drawn; with the overlay off the box records nothing
+    // rather than guessing, and the panel says so.
+    let flood: string | null = null;
+    try {
+      if (map) flood = floodZoneAt(map, map.project([at.lon, at.lat]));
+    } catch {
+      flood = null; // no flood overlay in this style
+    }
+    setSavingHome(true);
+    try {
+      const saved = await api.setHome({ lat: at.lat, lon: at.lon, label: homeLabel.trim() || 'Home', flood_zone: flood });
+      homeQ.setData(saved);
+      notify(`Home set${saved.flood_zone ? `, flood zone ${saved.flood_zone}` : ''}.`);
+    } catch (e) {
+      notify(`Could not set home: ${errorMessage(e)}`);
+    } finally {
+      setSavingHome(false);
+    }
+  };
+
+  const openNearby = () => {
+    setPanel('nearby');
+    setNearbyAt({ lat: view.lat, lon: view.lon });
   };
 
   const locate = () => {
@@ -123,6 +167,8 @@ export function MapScreen() {
         <button type="button" className={panel === 'pins' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" /><span>Pins</span></button>
         <button type="button" className={measuring ? 'btn active' : 'btn'} onClick={() => { setMeasuring(!measuring); if (measuring) setMeasure([]); }}><Icon name="measure" /><span>Measure</span></button>
         <button type="button" className="btn" onClick={locate}><Icon name="locate" /><span>Locate me</span></button>
+        <button type="button" className={panel === 'home' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'home' ? 'none' : 'home')}><Icon name="home" /><span>Home</span></button>
+        <button type="button" className={panel === 'nearby' ? 'btn active' : 'btn'} onClick={() => (panel === 'nearby' ? setPanel('none') : openNearby())}><Icon name="locate" /><span>Nearby</span></button>
         <button type="button" className={panel === 'share' ? 'btn active' : 'btn'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" /><span>Share</span></button>
       </div>
       <div className="map-host">
@@ -132,6 +178,7 @@ export function MapScreen() {
           <MapView
             config={config} theme={theme} baseId={baseId} overlaysOn={overlaysOn} terrainOn={terrainOn}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
+            home={homePoint} routePoints={routePoints}
             onMoveEnd={setView} onClick={onMapClick} onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
           />
         )}
@@ -177,6 +224,55 @@ export function MapScreen() {
             </ul>
           </div>
         )}
+        {panel === 'home' && (
+          <div className="map-panel" role="dialog" aria-label="Home">
+            <div className="row"><h2>Home</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            {homePoint ? (
+              <>
+                <p><strong>{homePoint.label}</strong><br /><span className="muted">{gridRef(homePoint.lat, homePoint.lon).text}</span></p>
+                <p>{home?.flood_zone ? <span className="badge badge-warn">▲ Flood zone {home.flood_zone}</span> : <span className="muted">No flood zone recorded.</span>}</p>
+                <button type="button" className="btn" onClick={() => flyTo(homePoint.lon, homePoint.lat, 15)}>Go to home</button>
+              </>
+            ) : (
+              <p className="muted">No home set. Centre the map on where you live, then set it: the box uses it for the sun times, the facilities near you and every distance it quotes.</p>
+            )}
+            <label className="field"><span>Name</span><input type="text" aria-label="Home name" value={homeLabel} maxLength={60} onChange={(e) => setHomeLabel(e.target.value)} /></label>
+            <p className="muted">Centre: {centreRef.text}</p>
+            <button type="button" className="btn btn-primary" disabled={savingHome} onClick={() => void saveHome()}>Set as home</button>
+            <p className="muted">{overlaysOn?.includes('flood-zones') ? 'The flood zone under the centre is saved with it.' : 'Turn the flood zones layer on first to record the flood zone too.'}</p>
+            {homeQ.error && <p className="warning">Home unavailable: {homeQ.error}</p>}
+          </div>
+        )}
+        {panel === 'nearby' && (
+          <div className="map-panel" role="dialog" aria-label="Nearby">
+            <div className="row"><h2>Nearby</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
+            <p className="muted">Nearest facilities to the centre of the map. Straight-line distance and a walking time; no route.</p>
+            <button type="button" className="btn" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>
+            {nearbyQ.loading && <p className="muted">Looking…</p>}
+            {nearbyQ.error && <p className="warning">Nearby facilities unavailable: {nearbyQ.error}</p>}
+            <ul className="list nearby-list" aria-label="Nearby facilities">
+              {(nearbyQ.data?.items ?? []).map((item) => (
+                <li key={`${item.kind}:${item.title}`} className="nearby-item">
+                  <button type="button" className="btn nearby-go" onClick={() => flyTo(item.lon, item.lat, 15)}>
+                    <Icon name={NEARBY_ICON[item.kind]} size={20} />
+                    <span><strong>{item.title}</strong><small>{NEARBY_TITLE[item.kind]} · {describeNearby(item)}</small></span>
+                  </button>
+                  <button type="button" className="btn" onClick={() => setRouteTo(item)}>Route to</button>
+                </li>
+              ))}
+            </ul>
+            {nearbyQ.data && nearbyQ.data.items.length === 0 && <p className="muted">Nothing found near here.</p>}
+            {nearbyQ.data && nearbyQ.data.missing.length > 0 && (
+              <p className="muted">No data on this box for: {nearbyQ.data.missing.map((k) => NEARBY_TITLE[k]).join(', ')}.</p>
+            )}
+            {route && (
+              <div className="nearby-route" role="status">
+                <p><strong>{route.text}</strong></p>
+                <button type="button" className="btn" onClick={() => setRouteTo(null)}>Clear the line</button>
+              </div>
+            )}
+          </div>
+        )}
         {panel === 'share' && (
           <div className="map-panel" role="dialog" aria-label="Share">
             <div className="row"><h2>Share this place</h2><button type="button" className="btn" onClick={() => setPanel('none')}>Close</button></div>
@@ -190,6 +286,7 @@ export function MapScreen() {
         <span>Centre: {centreRef.text}</span>
         {tappedRef && <span> · Tapped: {tappedRef.text}</span>}
         {measureText && <span> · {measureText}</span>}
+        {route && <span> · {route.text}</span>}
       </div>
       {printImage && (
         <div className="map-print">

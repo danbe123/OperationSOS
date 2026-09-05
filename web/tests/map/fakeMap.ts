@@ -16,6 +16,9 @@ export class FakeMap {
   canvas = document.createElement('canvas');
   private handlers = new Map<string, Set<(e: unknown) => void>>();
   queryRenderedFeatures = vi.fn((_box?: unknown, opts?: { layers?: string[] }) => this.renderedFeatures.filter((f) => !opts?.layers || opts.layers.includes(f.layer.id)));
+  /** jsdom has no layout: every projection lands at the canvas origin, which is enough to query "the centre". */
+  project = vi.fn((lngLat: [number, number]) => ({ x: 0, y: 0, lngLat }));
+  unproject = vi.fn(() => ({ lng: this.center.lng, lat: this.center.lat }));
   addControl = vi.fn();
   remove = vi.fn();
   resize = vi.fn();
