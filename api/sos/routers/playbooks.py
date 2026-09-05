@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from sos.db import now_iso
 from sos.routers import get_db
+from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["playbooks"])
 
@@ -12,8 +13,10 @@ class ChecklistBody(BaseModel):
     checked: bool
 
 
-def _rendered(request: Request, slug: str):
-    doc = request.app.state.content.rendered("scenario", slug)
+def _rendered(request: Request, slug: str, conn=None):
+    """Rendered for the situation the box is in: the directives pick the branch that applies right now."""
+    flags = current_flags(request, conn) if conn is not None else None
+    doc = request.app.state.content.rendered("scenario", slug, flags)
     if doc is None:
         raise HTTPException(status_code=404, detail="Playbook not found")
     return doc
@@ -41,7 +44,7 @@ def list_playbooks(request: Request):
 
 @router.get("/playbooks/{slug}")
 def get_playbook(slug: str, request: Request, conn=Depends(get_db)):
-    r = _rendered(request, slug)
+    r = _rendered(request, slug, conn)
     return {"slug": r.slug, "title": r.title, "icon": r.icon, "summary": r.summary, "order": r.order,
             "sections": r.sections, "checklist": _checklist(conn, slug, r), "modules": r.modules,
             "overlays": r.overlays, "sources": r.sources, "reviewed": r.reviewed}
@@ -49,7 +52,7 @@ def get_playbook(slug: str, request: Request, conn=Depends(get_db)):
 
 @router.put("/playbooks/{slug}/checklist/{item_id:path}")
 def set_checklist_item(slug: str, item_id: str, body: ChecklistBody, request: Request, conn=Depends(get_db)):
-    r = _rendered(request, slug)
+    r = _rendered(request, slug, conn)
     if item_id not in {c["id"] for c in r.checklist}:
         raise HTTPException(status_code=404, detail="Checklist item not found")
     conn.execute(
@@ -63,15 +66,15 @@ def set_checklist_item(slug: str, item_id: str, body: ChecklistBody, request: Re
 
 @router.delete("/playbooks/{slug}/checklist")
 def reset_checklist(slug: str, request: Request, conn=Depends(get_db)):
-    r = _rendered(request, slug)
+    r = _rendered(request, slug, conn)
     conn.execute("DELETE FROM checklist_state WHERE playbook=?", (slug,))
     conn.commit()
     return _checklist(conn, slug, r)
 
 
 @router.get("/modules/{slug}")
-def get_module(slug: str, request: Request):
-    doc = request.app.state.content.rendered("module", slug)
+def get_module(slug: str, request: Request, conn=Depends(get_db)):
+    doc = request.app.state.content.rendered("module", slug, current_flags(request, conn))
     if doc is None:
         raise HTTPException(status_code=404, detail="Module not found")
     return {"slug": doc.slug, "title": doc.title, "html": doc.html}

@@ -438,16 +438,20 @@ def compute(model: Model, rules: Rules) -> dict:
     }
 
 
-def flags(view: dict) -> dict[str, bool]:
+def flags_for(states: dict[str, str], scenario: Optional[str], dark: bool) -> dict[str, bool]:
     """The content directives' flag set: a service counts as working while it is not off."""
-    states = {cid: item["state"] for cid, item in view["conditions"].items()}
     out = {cid: states.get(cid, "working") != "off" for cid in cond.IDS}
     out["phones"] = out["mobile"] or out["landline"]
-    out["dark"] = bool(view["meta"]["dark"])
-    scenario = (view.get("scenario") or {}).get("slug")
+    out["dark"] = bool(dark)
     if scenario:
         out[f"scenario:{scenario}"] = True
     return out
+
+
+def flags(view: dict) -> dict[str, bool]:
+    """The flag set for a computed View."""
+    return flags_for({cid: item["state"] for cid, item in view["conditions"].items()},
+                     (view.get("scenario") or {}).get("slug"), view["meta"]["dark"])
 
 
 def summary_line(view: dict) -> str:

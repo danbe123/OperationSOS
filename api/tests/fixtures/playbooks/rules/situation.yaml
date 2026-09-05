@@ -1,0 +1,104 @@
+# A small rule set for the API tests: the same shapes as the real files, citing only the fixture content.
+rules:
+  - id: power-off-internet-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: internet, state: "off", after: 0h}
+    confidence: 0.95
+    why: The router needs mains electricity.
+    source: page:pmr446
+
+  - id: power-off-mobile-degraded
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: mobile, state: degraded, after: 4h}
+    confidence: 0.7
+    why: Masts hold about an hour on battery.
+    source: page:pmr446
+
+  - id: freezer
+    kind: consequence
+    when: {power: "off"}
+    title: Freezer food unsafe
+    after: 48h
+    severity: danger
+    why: A full freezer holds about 48 hours with the door shut.
+    link: module:water
+    source: module:water
+
+  - id: fridge
+    kind: consequence
+    when: {power: "off"}
+    title: Fridge food unsafe
+    after: 4h
+    severity: warn
+    why: A shut fridge holds about four hours.
+    link: module:water
+    source: module:water
+
+  - id: oxygen
+    kind: consequence
+    when: {power: "off"}
+    needs: oxygen
+    title: "{name}'s oxygen: back-up cylinders running low"
+    after: 6h
+    severity: danger
+    why: A concentrator needs mains power.
+    link: card:bleeding
+    source: card:bleeding
+
+  - id: fill-bath
+    kind: task
+    when: {power: "off", water: working}
+    title: Fill the bath while the water is still on
+    bucket: now
+    why: Pumped supplies fail first.
+    link: module:water
+    until: {water: [degraded, "off"]}
+    source: module:water
+
+  - id: boil-water
+    kind: task
+    when: {water: [degraded, "off"]}
+    title: Boil or treat every drop
+    bucket: now
+    why: A rolling boil for one minute kills what matters.
+    link: module:water
+    source: module:water
+
+  - id: water-stock-low
+    kind: task
+    when: {}
+    stock: {category: water, days_lt: 3}
+    title: "Top up the stored water"
+    bucket: week
+    why: Three days is the standard to hold.
+    link: module:water
+    source: module:water
+
+  - id: calls-hidden
+    kind: mode
+    when: {phones: "off"}
+    set: {calls: hidden}
+    why: No number will connect.
+    source: page:pmr446
+
+  - id: board-while-a-scenario-runs
+    kind: mode
+    when: {scenario: any}
+    set: {board: true}
+    why: The kiosk shows the board.
+    source: page:pmr446
+
+  - id: read-power-off
+    kind: reading
+    when: {power: "off"}
+    open: [page:pmr446, module:water]
+    why: What still works, then water.
+    source: page:pmr446
+
+bulletins:
+  - station: BBC Radio 4
+    frequency: 198 kHz long wave
+    times: ["06:00", "18:00"]
+    note: The main news bulletins.

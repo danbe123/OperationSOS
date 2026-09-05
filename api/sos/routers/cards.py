@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from sos.routers import get_db
+from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["cards"])
 
@@ -8,14 +11,15 @@ def _card(doc) -> dict:
 
 
 @router.get("/cards")
-def list_cards(request: Request):
+def list_cards(request: Request, conn=Depends(get_db)):
     content = request.app.state.content
-    return [_card(content.rendered("card", d.id)) for d in content.list("card")]
+    flags = current_flags(request, conn)
+    return [_card(content.rendered("card", d.id, flags)) for d in content.list("card")]
 
 
 @router.get("/cards/{slug}")
-def get_card(slug: str, request: Request):
-    doc = request.app.state.content.rendered("card", slug)
+def get_card(slug: str, request: Request, conn=Depends(get_db)):
+    doc = request.app.state.content.rendered("card", slug, current_flags(request, conn))
     if doc is None:
         raise HTTPException(status_code=404, detail="Card not found")
     return _card(doc)

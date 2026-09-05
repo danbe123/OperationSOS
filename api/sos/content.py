@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from html import escape
 from pathlib import Path
 from typing import Callable
@@ -14,6 +14,8 @@ import frontmatter
 import jsonschema
 from markdown_it import MarkdownIt
 from mdit_py_plugins.tasklists import tasklists_plugin
+
+from sos import directives
 
 KIND_BY_DIR = {"scenarios": "scenario", "modules": "module", "cards": "card", "pages": "page"}
 DIR_BY_KIND = {v: k for k, v in KIND_BY_DIR.items()}
@@ -216,20 +218,51 @@ def _inject_item_ids(html_text: str, ids: list[str]) -> str:
     return "".join(out)
 
 
-def render_module(mod: Document, md: MarkdownIt) -> dict:
+def apply_directives(doc: Document, flags: dict[str, bool] | None) -> Document:
+    """Resolve `{{#if …}}` and `[[call 999]]` against the situation before anything is parsed or rendered."""
+    body = directives.resolve(doc.body, directives.default_flags() if flags is None else flags)
+    if body == doc.body:
+        return doc
+    sections = split_sections(body)
+    checklist = doc.checklist
+    if doc.kind == "scenario":
+        checklist = []
+        for sid, _, md_text in sections:
+            if sid == "checklist":
+                checklist, _ = parse_checklist(md_text)
+    return replace(doc, body=body, sections=sections, checklist=checklist)
+
+
+def directive_signature(doc: Document, modules: dict[str, Document] | None, flags: dict[str, bool] | None) -> str:
+    """A cache key covering only the flags this document (and anything it includes) actually reads."""
+    bodies = [doc.body] + [m.body for m in (modules or {}).values()]
+    used: set[str] = set()
+    for body in bodies:
+        used |= directives.flag_names(body)
+        if directives.has_inline_calls(body):
+            used.add("phones")
+    if not used:
+        return ""
+    return directives.signature(directives.default_flags() if flags is None else flags, used)
+
+
+def render_module(mod: Document, md: MarkdownIt, flags: dict[str, bool] | None = None) -> dict:
+    mod = apply_directives(mod, flags)
     tasks = [(f"{mod.id}/{i}", t) for i, t in module_tasks(mod.body)]
     html_text = _inject_item_ids(_render(md, mod.body), [i for i, _ in tasks])
     return {"slug": mod.id, "title": mod.title, "html": html_text, "checklist": tasks}
 
 
 def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link,
-                    modules: dict[str, Document] | None = None) -> RenderedDocument:
+                    modules: dict[str, Document] | None = None,
+                    flags: dict[str, bool] | None = None) -> RenderedDocument:
     modules = modules or {}
+    doc = apply_directives(doc, flags)
     md = make_renderer(resolver)
     common = dict(slug=doc.id, title=doc.title, icon=doc.icon, order=doc.order, summary=doc.summary, kind=doc.kind,
                   category=doc.category, reviewed=doc.reviewed, overlays=list(doc.overlays), sources=list(doc.sources))
     if doc.kind != "scenario":
-        html_text = render_module(doc, md)["html"] if doc.kind == "module" else _render(md, doc.body)
+        html_text = render_module(doc, md, flags)["html"] if doc.kind == "module" else _render(md, doc.body)
         return RenderedDocument(**common, sections=[], checklist=[], modules=[], html=html_text)
     sections: list[dict] = []
     included: list[dict] = []
@@ -252,7 +285,7 @@ def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link
             if mod is None:
                 parts.append(f'<p class="module-missing">Module "{escape(slug)}" is missing.</p>')
                 continue
-            rendered = render_module(mod, md)
+            rendered = render_module(mod, md, flags)
             if slug not in seen:
                 included.append(rendered)
                 seen.add(slug)
@@ -330,10 +363,10 @@ def _check_scenario(rel: str, doc: Document, module_slugs: set[str], overlay_ids
     return errors
 
 
-def _check_links(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str],
+def _check_links(rel: str, body: str, zim_ids: set[str], doc_ids: set[str],
                  slugs: dict[str, set[str]], overlay_ids: set[str]) -> list[str]:
     errors: list[str] = []
-    for href in _links(doc.body):
+    for href in _links(body):
         scheme, sep, rest = href.partition(":")
         if not sep:
             continue
@@ -356,6 +389,32 @@ def _check_links(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str],
             if rest not in slugs[kind]:
                 errors.append(f"{rel}: link {href}: {scheme} '{rest}' does not exist")
     return errors
+
+
+def _check_branches(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str],
+                    slugs: dict[str, set[str]], overlay_ids: set[str]) -> list[str]:
+    """Render the document for every combination of the condition flags it uses and check the links in each,
+    so advice that only appears when the water is off is checked as hard as the advice that is always there."""
+    errors: list[str] = []
+    for name in sorted(directives.check_flags(directives.flag_names(doc.body))):
+        errors.append(f"{rel}: unknown condition flag '{name}' in a {{{{#if}}}} directive")
+    for name in sorted(directives.flag_names(doc.body)):
+        if name.startswith("scenario:") and name[len("scenario:"):] not in slugs["scenario"]:
+            errors.append(f"{rel}: {{{{#if {name}}}}}: scenario '{name[len('scenario:'):]}' does not exist")
+    if errors:
+        return errors
+    try:
+        flag_sets = directives.branch_flag_sets(doc.body)
+    except directives.DirectiveError as exc:
+        return [f"{rel}: {exc}"]
+    for flags in flag_sets:
+        try:
+            body = directives.resolve(doc.body, flags)
+        except directives.DirectiveError as exc:
+            errors.append(f"{rel}: {exc}")
+            break
+        errors += _check_links(rel, body, zim_ids, doc_ids, slugs, overlay_ids)
+    return list(dict.fromkeys(errors))
 
 
 def _check_sources(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str]) -> list[str]:
@@ -440,7 +499,7 @@ def validate_tree(playbooks_dir: Path, manifest_items: list, overlay_ids: set[st
             rel = f"{DIR_BY_KIND[kind]}/{slug}.md"
             if kind == "scenario":
                 errors += _check_scenario(rel, doc, slugs["module"], overlay_ids, tree["module"])
-            errors += _check_links(rel, doc, zim_ids, doc_ids, slugs, overlay_ids)
+            errors += _check_branches(rel, doc, zim_ids, doc_ids, slugs, overlay_ids)
             errors += _check_sources(rel, doc, zim_ids, doc_ids)
             if kiwix_check or doc_check:
                 errors += _deep_checks(rel, doc, items_by_id, kiwix_check, doc_check)
@@ -484,17 +543,20 @@ class ContentCache:
         docs = [self.document(kind, p.stem) for p in sorted(folder.glob("*.md"))] if folder.is_dir() else []
         return sorted([d for d in docs if d is not None], key=lambda d: (d.order, d.title))
 
-    def rendered(self, kind: str, slug: str) -> RenderedDocument | None:
+    def rendered(self, kind: str, slug: str, flags: dict[str, bool] | None = None) -> RenderedDocument | None:
+        """The rendered document for one situation. The cache key carries the mtimes and the flags it reads."""
         doc = self.document(kind, slug)
         if doc is None:
             return None
         modules = {m: self.document("module", m) for m in doc.modules}
         modules = {k: v for k, v in modules.items() if v is not None}
-        key = (kind, slug, doc.mtime, tuple(sorted((m, d.mtime) for m, d in modules.items())))
+        mtimes = (doc.mtime, tuple(sorted((m, d.mtime) for m, d in modules.items())))
+        key = (kind, slug, *mtimes, directive_signature(doc, modules, flags))
         hit = self._rendered.get(key)
         if hit is not None:
             return hit
-        rendered = render_document(doc, self.resolver, modules)
-        self._rendered = {k: v for k, v in self._rendered.items() if k[:2] != (kind, slug)}
+        rendered = render_document(doc, self.resolver, modules, flags)
+        # keep the other flag variants of this document, drop anything rendered from older files
+        self._rendered = {k: v for k, v in self._rendered.items() if k[:2] != (kind, slug) or k[2:4] == mtimes}
         self._rendered[key] = rendered
         return rendered

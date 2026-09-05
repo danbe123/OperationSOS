@@ -1,4 +1,7 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from sos.routers import get_db
+from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["pages"])
 
@@ -10,8 +13,8 @@ def list_pages(request: Request):
 
 
 @router.get("/pages/{slug}")
-def get_page(slug: str, request: Request):
-    doc = request.app.state.content.rendered("page", slug)
+def get_page(slug: str, request: Request, conn=Depends(get_db)):
+    doc = request.app.state.content.rendered("page", slug, current_flags(request, conn))
     if doc is None:
         raise HTTPException(status_code=404, detail="Page not found")
     return {"slug": doc.slug, "title": doc.title, "icon": doc.icon, "order": doc.order, "html": doc.html, "category": doc.category}

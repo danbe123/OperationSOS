@@ -86,3 +86,8 @@ def branch_flag_sets(md_text: str) -> list[dict[str, bool]]:
 def default_flags() -> dict[str, bool]:
     """Everything working, daylight, no scenario: what a document shows with no situation set."""
     return {n: True for n in FLAG_IDS if n != "dark"} | {"dark": False}
+
+
+def has_inline_calls(md_text: str) -> bool:
+    """Whether a document contains `[[call 999]]`, which makes its rendering depend on the `phones` flag."""
+    return bool(_INLINE_CALL.search(md_text or ""))
