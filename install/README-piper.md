@@ -75,3 +75,8 @@ after a fortnight; `GET /api/sensors` shows the latest of each and what the box 
 PMTiles, which cannot be searched by point: set `SOS_MAPS_SRC` to the map build workspace (the directory holding
 `overlays-work/`) so the API can read the GeoJSON the build kept. Without it those facilities answer with the
 reason rather than a guess.
+
+The first call parses the three overlays and keeps the points in memory: about a second and a 130 MB spike while
+parsing, settling to roughly 25 MB held for the life of the process. Every later call, and the home's answer in
+the situation View, is a cache read. Nothing carries fire stations or rest centres yet; the endpoint says so
+rather than pointing you at the wrong building.

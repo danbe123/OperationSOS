@@ -58,6 +58,7 @@ MOBILE_QUIET_DROP_DB = 10.0   # a mobile band this much below its own recent bes
 MOBILE_MIN_HISTORY = 3        # and only after that many readings, so a cold start never fires
 DETECT_WINDOW = timedelta(hours=24)
 RECORD_RATE = 22050
+PRUNE_INTERVAL_S = 3600.0      # a reading a minute is 20 000 rows a fortnight; tidy up once an hour
 _SLUG = re.compile(r"[^a-z0-9]+")
 
 
@@ -424,13 +425,16 @@ async def run(settings: Settings, db_path: Path, tz: str = "Europe/London") -> N
     from sos.rules import RulesError, load as load_rules
 
     conn = connect(db_path)
-    last_rtl = 0.0
+    last_rtl = last_prune = 0.0
     try:
         while True:
             loop = asyncio.get_running_loop()
             try:
                 await asyncio.to_thread(poll_cheap, conn, settings)
                 now = loop.time()
+                if now - last_prune >= PRUNE_INTERVAL_S:
+                    last_prune = now
+                    await asyncio.to_thread(prune, conn)
                 if have(settings.rtl_power_bin) and (last_rtl == 0.0 or now - last_rtl >= settings.rtl_interval_s):
                     last_rtl = now
                     await asyncio.to_thread(poll_rtl_power, conn, settings)

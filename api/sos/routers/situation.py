@@ -287,8 +287,11 @@ def accept_condition(cid: str, body: AcceptBody, request: Request, conn=Depends(
     if proposal is None:
         raise HTTPException(status_code=404, detail="No such proposal")
     who = actor(request, conn)
+    # A proposal the box sensed for itself is recorded as `detected`, so a later reading may move it again;
+    # one worked out from the implication rules stays `inferred`.
+    source = "detected" if proposal["rule"].startswith("sensor:") else "inferred"
     cond.set_state(conn, cid, proposal["state"], since=proposal["due_at"], note=proposal["why"],
-                   source="inferred", confidence=float(proposal["confidence"]), set_by=who)
+                   source=source, confidence=float(proposal["confidence"]), set_by=who)
     updated = view_for(request, conn)["conditions"][cid]
     event(conn, f"{cond.TITLES[cid]} {proposal['state']} taken from {proposal['rule']} ({who})", proposal["why"])
     return updated

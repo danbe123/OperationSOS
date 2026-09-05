@@ -294,3 +294,42 @@ def test_a_detected_state_proposes_and_never_overrides_a_later_manual_one(client
     after = client.get("/api/situation/view").json()
     assert after["conditions"]["internet"]["state"] == "working"
     assert [i for i in after["inferred"] if i["rule"] == "sensor:internet"] == []
+
+
+def test_accepting_a_sensor_proposal_records_it_as_detected(client, env):
+    c = db.connect(env.db_path)
+    for minutes in (3, 2, 1):
+        sensors.record(c, "internet", 0.0, "up", ago(minutes))
+    c.close()
+    accepted = client.post("/api/conditions/internet/accept", json={"rule": "sensor:internet"}).json()
+    assert accepted["state"] == "off" and accepted["source"] == "detected"
+    assert "The box has detected this itself" in accepted["note"]
+
+
+# --- the background task -----------------------------------------------------------------------------------
+
+@pytest.mark.anyio
+async def test_the_background_loop_polls_and_survives_a_broken_driver(conn, env, monkeypatch):
+    """A driver that throws must never take the loop, or the API, down with it."""
+    import asyncio
+
+    env.sensor_interval_s = 0.01
+    monkeypatch.setattr(sensors, "have", lambda binary: False)          # no dongle on this machine
+    calls = []
+
+    def flaky(settings, *a, **k):
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("the probe blew up")
+        return 1.0
+
+    monkeypatch.setattr(sensors, "probe_internet", flaky)
+    task = asyncio.create_task(sensors.run(env, env.db_path))
+    for _ in range(200):
+        await asyncio.sleep(0.01)
+        if sensors.history(conn, "internet"):
+            break
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert len(calls) > 1 and sensors.history(conn, "internet")[0]["value"] == 1.0
