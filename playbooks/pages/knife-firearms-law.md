@@ -13,7 +13,7 @@ category: reference
 
 ## Prohibited weapons
 
-**What can I not own even at home?** A list of weapons is banned outright under section 141 of the 1988 Act and the Offensive Weapons Act 2019, including zombie-style knives and machetes (banned from 24 September 2024), ninja swords (banned from 1 August 2025), knuckledusters, batons and disguised knives such as those hidden in a belt or a phone case ([Offensive Weapons Act 2019](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2019/17/contents)). **Pepper spray or a stun gun?** Both count as prohibited firearms under section 5 of the Firearms Act 1968, regardless of intent, and carrying one can mean up to five years in prison ([Firearms Act 1968 s5](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1968/27/section/5)).
+**What can I not own even at home?** A list of weapons is banned outright under section 141 of the 1988 Act and the Offensive Weapons Act 2019, including zombie-style knives and machetes (banned from 24 September 2024), ninja swords (banned from 1 August 2025), knuckledusters, batons and disguised knives such as those hidden in a belt or a phone case ([Offensive Weapons Act 2019](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2019/17/contents)). **Pepper spray or a stun gun?** Both count as prohibited firearms under section 5 of the Firearms Act 1968, regardless of intent, and carrying one can mean up to 10 years in prison, with a mandatory minimum of 5 years for an adult unless the court finds exceptional circumstances ([Firearms Act 1968 s5](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1968/27/section/5)).
 
 ## Air weapons, shotguns and rifles
 
