@@ -73,3 +73,12 @@ export function clockTime(iso: string): string {
   if (Number.isNaN(t)) return '';
   return new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
+
+/** How long ago something was read or written, in words: the age on a sensor row or an event. */
+export function ago(iso: string, now: number = Date.now()): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '';
+  const seconds = Math.round((now - t) / 1000);
+  if (seconds < MINUTE) return 'just now';
+  return `${describeDuration(seconds)} ago`;
+}

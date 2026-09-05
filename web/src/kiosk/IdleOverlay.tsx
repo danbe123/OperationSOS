@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'r
 import { useLocation, useNavigate } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
+import { BoardView } from '../situation/BoardView';
+import { wantsBoard } from '../situation/board';
+import { useSituation } from '../situation/SituationProvider';
 import { useKiosk } from './KioskProvider';
 import { watchActivity } from './activity';
 
@@ -21,6 +24,7 @@ export function isProtectedRoute(pathname: string, search: string): boolean {
 export function IdleOverlay() {
   const kiosk = useKiosk();
   const { status } = useStatus();
+  const { view } = useSituation();
   const navigate = useNavigate();
   const location = useLocation();
   const idleMs = (status?.idle_minutes ?? 5) * 60_000;
@@ -29,6 +33,11 @@ export function IdleOverlay() {
   const [fallback, setFallback] = useState(false);
   const dimmedRef = useRef(false);
   dimmedRef.current = dimmed;
+  // While something is off (or the engine asks for the board) the idle screen becomes the board:
+  // a household mid-outage needs the kiosk to say something, not to go dark.
+  const board = wantsBoard(view);
+  const boardRef = useRef(board);
+  boardRef.current = board;
   const locRef = useRef(location);
   locRef.current = location;
   const idleTimer = useRef<number | undefined>(undefined);
@@ -36,6 +45,11 @@ export function IdleOverlay() {
 
   const dim = useCallback(async () => {
     setDimmed(true);
+    if (boardRef.current) {
+      // the board is meant to be read from across the room: leave the backlight where it is
+      await api.kioskIdle('idle').catch(() => undefined);
+      return;
+    }
     try {
       await api.kioskBacklight(IDLE_LEVEL);
       setFallback(false);
@@ -82,6 +96,21 @@ export function IdleOverlay() {
   };
 
   if (!kiosk || !dimmed) return null;
+  if (board) {
+    return (
+      <div
+        className="idle-board"
+        role="button"
+        tabIndex={0}
+        aria-label="Board: touch to wake"
+        onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        onClick={wake}
+        onKeyDown={wake}
+      >
+        <BoardView />
+      </div>
+    );
+  }
   return (
     <div
       className={fallback ? 'idle-overlay idle-overlay-dark' : 'idle-overlay'}

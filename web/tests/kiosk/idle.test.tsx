@@ -5,6 +5,7 @@ import { renderRoute } from '../render';
 import { api, ApiError } from '../../src/api/client';
 import { Layout } from '../../src/router';
 import { isProtectedRoute, IDLE_LEVEL, ACTIVE_LEVEL } from '../../src/kiosk/IdleOverlay';
+import { events, powerOffView, stockResponse } from '../fixtures/api';
 
 function Where() {
   const loc = useLocation();
@@ -93,6 +94,27 @@ describe('IdleOverlay', () => {
     await act(async () => {});
     await act(async () => { vi.advanceTimersByTime(30 * MIN + 1); });
     expect(screen.getByTestId('where')).toHaveTextContent('/s/grid-collapse');
+  });
+
+  it('shows the board instead of a dim screen while something is off, and keeps the backlight up', async () => {
+    vi.useFakeTimers();
+    const backlight = vi.spyOn(api, 'kioskBacklight').mockResolvedValue({ level: 10 });
+    const idle = vi.spyOn(api, 'kioskIdle').mockResolvedValue({ ok: true });
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
+    vi.spyOn(api, 'notes').mockResolvedValue(events);
+    renderRoute('/search', { routes, kiosk: true });
+    await act(async () => {});
+    await act(async () => { vi.advanceTimersByTime(5 * MIN + 1); });
+    const board = screen.getByRole('button', { name: 'Board: touch to wake' });
+    expect(board).toBeInTheDocument();
+    expect(screen.queryByText('Touch to wake')).toBeNull();
+    expect(board).toHaveTextContent('Fill the bath and every container');
+    expect(backlight).not.toHaveBeenCalled();
+    expect(idle).toHaveBeenCalledWith('idle');
+    await act(async () => { fireEvent.click(board); });
+    expect(screen.queryByRole('button', { name: 'Board: touch to wake' })).toBeNull();
+    expect(backlight).toHaveBeenLastCalledWith(ACTIVE_LEVEL);
   });
 
   it('does nothing outside kiosk mode', async () => {

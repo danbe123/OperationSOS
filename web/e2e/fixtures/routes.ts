@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, ConditionId, ConditionState, Note, Person, StockItem } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyItem, Note, Person, StockItem } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
 import { aiEvents, cards, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
 import { PIN, TOKEN, type FixtureState } from './state';
@@ -36,6 +37,42 @@ function servePmtiles(route: Route) {
     headers: { 'Content-Type': 'application/octet-stream', 'Accept-Ranges': 'bytes', 'Content-Range': `bytes ${start}-${end}/${pmtiles.length}`, 'Content-Length': String(end - start + 1) },
     body: pmtiles.subarray(start, end + 1),
   });
+}
+
+/** A quarter-second of silence: enough for the player to load, play and fire `ended`. */
+function silentWav(): Buffer {
+  const rate = 8000;
+  const samples = rate / 4;
+  const buf = Buffer.alloc(44 + samples * 2);
+  buf.write('RIFF', 0);
+  buf.writeUInt32LE(36 + samples * 2, 4);
+  buf.write('WAVEfmt ', 8);
+  buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20);
+  buf.writeUInt16LE(1, 22);
+  buf.writeUInt32LE(rate, 24);
+  buf.writeUInt32LE(rate * 2, 28);
+  buf.writeUInt16LE(2, 32);
+  buf.writeUInt16LE(16, 34);
+  buf.write('data', 36);
+  buf.writeUInt32LE(samples * 2, 40);
+  return buf;
+}
+
+/** What `GET /nearby` answers for a point: the fixture places with distance, bearing and a Naismith walk. */
+export function nearbyFrom(places: Pick<NearbyItem, 'kind' | 'title' | 'lat' | 'lon'>[], lat: number, lon: number): NearbyItem[] {
+  return places
+    .map((pl) => {
+      const km = distanceKm({ lat, lon }, { lat: pl.lat, lon: pl.lon });
+      return {
+        ...pl,
+        distance_m: Math.round(km * 1000),
+        bearing_deg: Math.round(bearingDeg({ lat, lon }, { lat: pl.lat, lon: pl.lon })),
+        walk_min: naismithMinutes(km),
+        link: `/map?lat=${pl.lat}&lon=${pl.lon}&z=15&label=${encodeURIComponent(pl.title)}`,
+      };
+    })
+    .sort((a, b) => a.distance_m - b.distance_m);
 }
 
 export async function installFixtureRoutes(context: BrowserContext, state: FixtureState): Promise<void> {
@@ -230,6 +267,17 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
         if (item) { item.checked = done; item.updated_at = new Date().toISOString(); }
       }
       return json(route, computeView(state).tasks.find((t) => t.id === id));
+    }
+    if (method === 'GET' && p === '/nearby') {
+      const lat = Number(url.searchParams.get('lat') ?? 0);
+      const lon = Number(url.searchParams.get('lon') ?? 0);
+      return json(route, { items: nearbyFrom(state.places, lat, lon), missing: state.missingNearby });
+    }
+    if (method === 'GET' && p === '/sensors') return json(route, state.sensors);
+    if (method === 'GET' && p === '/recordings') return json(route, state.recordings);
+    if (method === 'POST' && p === '/speak') {
+      if (!state.speaks) return detail(route, 503, 'Reading aloud is not installed on this box');
+      return route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav() });
     }
     if (p === '/home' && method === 'GET') return json(route, state.home);
     if (p === '/home' && method === 'PUT') {

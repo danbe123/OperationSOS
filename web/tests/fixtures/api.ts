@@ -1,6 +1,6 @@
 import type {
-  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, LibraryItem, LibraryResponse, MapConfig, Note,
-  Page, Place, Playbook, PlaybookSummary, SearchResponse, SituationView, Status, Suggestion, UpdateProgress,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
+  Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, StockResponse, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 
@@ -261,3 +261,33 @@ export const powerOffView: SituationView = makeView({
     { title: 'What still works in an outage', kind: 'page', ref: 'what-still-works' },
   ],
 });
+
+/* Phase 2 and 3 fixtures: the event log, the stock, the facilities round the home and the box's senses. */
+export const events: Note[] = [
+  { id: 44, kind: 'event', title: 'Mains power off since 13:00 (phone)', body: '', lat: null, lon: null, updated_at: '2026-09-06T13:02:00.000Z' },
+  { id: 43, kind: 'event', title: 'Fill the bath ticked by Sam', body: '', lat: null, lon: null, updated_at: '2026-09-06T13:20:00.000Z' },
+  { id: 42, kind: 'event', title: 'Drill started: National grid collapse', body: '', lat: null, lon: null, updated_at: '2026-09-06T12:00:00.000Z' },
+];
+
+export const stockResponse: StockResponse = {
+  people: 3,
+  items: [
+    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5 },
+    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6 },
+  ],
+};
+
+export const nearby: NearbyResponse = {
+  items: [
+    { kind: 'pharmacy', title: 'Boots, High Street', lat: 50.9345, lon: -1.4331, distance_m: 620, bearing_deg: 92, walk_min: 8, link: '/map?lat=50.9345&lon=-1.4331&z=15&label=Boots%2C%20High%20Street' },
+    { kind: 'emergency-department', title: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342, distance_m: 4300, bearing_deg: 270, walk_min: 52, link: '/map?lat=50.9331&lon=-1.4342&z=15&label=Southampton%20General%20Hospital' },
+  ],
+  missing: ['rest-centre'],
+};
+
+export const sensors: Sensors = {
+  internet: { value: 0, unit: 'up', at: '2026-09-06T13:58:00.000Z' },
+  mains: { value: 0, unit: 'on', at: '2026-09-06T13:59:00.000Z' },
+  temp_in: { value: 14.5, unit: '°C', at: '2026-09-06T13:57:00.000Z' },
+  co_ppm: { value: 3, unit: 'ppm', at: '2026-09-06T13:30:00.000Z' },
+};

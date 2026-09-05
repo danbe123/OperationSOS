@@ -99,3 +99,42 @@
   .cond-since { flex-direction: column; align-items: stretch; }
   .cond-since .field, .cond-since select, .cond-since input { width: 100%; }
 }
+
+/* The board: the kiosk's standing screen at 853x480, read from across the room. */
+.board-screen { height: 100%; cursor: pointer; }
+.board { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; padding: 12px 16px; background: var(--bg); }
+.board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.board-title { margin: 0; font-size: 1.9rem; line-height: 1.1; }
+.board-elapsed { margin: 0; font-size: 1.1rem; color: var(--text-muted); }
+.board-now { margin-left: auto; font-size: 2.1rem; font-weight: 700; margin-top: 0; margin-bottom: 0; font-variant-numeric: tabular-nums; }
+.board-drill { font-size: 1rem; letter-spacing: 0.08em; }
+.board-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
+.board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.board-cond {
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px;
+  border: 2px solid var(--border); background: var(--bg-2); font-weight: 600;
+}
+.board-cond-name { display: flex; align-items: center; gap: 6px; font-size: 1.15rem; }
+.board-cond .cond-state { font-size: 1rem; }
+.board-cond .cond-for { font-size: 0.9rem; }
+.board-tasks h2, .board-facts h2 { margin: 0 0 6px; font-size: 1.25rem; }
+.board-task-list { margin: 0; padding-left: 1.2em; font-size: 1.15rem; }
+.board-task-list li { margin-bottom: 6px; }
+.board-task-title { font-weight: 600; }
+.board-task-who { display: block; font-size: 0.95rem; color: var(--text-muted); }
+.board-facts p { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 1.15rem; }
+.board-stock { list-style: none; margin: 0; padding: 0; font-size: 1.15rem; font-weight: 600; }
+.board-stock li { margin-bottom: 4px; }
+.board-events { margin-top: auto; border-top: 1px solid var(--border); padding-top: 6px; }
+.board-events ul { list-style: none; margin: 0; padding: 0; font-size: 1rem; }
+.board-events li { margin-bottom: 2px; }
+.board-hint { margin: 0; padding: 4px 16px 10px; text-align: center; color: var(--text-muted); }
+.board-waiting { align-items: center; justify-content: center; font-size: 1.4rem; }
+/* The idle kiosk shows the board instead of a dim screen while anything is off. */
+.idle-board { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: var(--bg); cursor: pointer; overflow: hidden; }
+
+@media (max-width: 700px) {
+  .board-cols { grid-template-columns: minmax(0, 1fr); }
+  .board-title { font-size: 1.5rem; }
+  .board-now { font-size: 1.5rem; }
+}

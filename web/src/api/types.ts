@@ -82,7 +82,8 @@ export type Condition = {
 };
 export type Conditions = Record<ConditionId, Condition>;
 export type ConditionPatch = { state: ConditionState; since?: string; note?: string; expected_updated_at?: string };
-export type Inferred = { condition: ConditionId; state: ConditionState; confidence: number; due_at: string; why: string; rule: string; source: string };
+/** `detected` marks a proposal the box's own sensors raised, rather than one worked out from a rule. */
+export type Inferred = { condition: ConditionId; state: ConditionState; confidence: number; due_at: string; why: string; rule: string; source: string; detected?: boolean };
 export type Severity = 'info' | 'warn' | 'danger' | 'passed';
 export type Forecast = { id: string; title: string; due_at: string; severity: Severity; why: string; link: string | null; passed: boolean; rule?: string };
 export type TaskBucket = 'now' | 'hour' | 'today' | 'week';
@@ -92,7 +93,22 @@ export type TaskPatch = { done?: boolean; person?: string };
 export type BriefingKind = 'playbook' | 'playbook-section' | 'module' | 'page' | 'card' | 'doc' | 'map' | 'kiwix';
 export type BriefingItem = { title: string; kind: BriefingKind; ref: string; html?: string };
 export type Modes = { theme: 'vault' | 'field' | 'blackout' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
-export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null };
+export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null; nearby?: NearbyItem[] };
+
+/* Phase 2 and 3: the nearest facilities, the box's own senses, and reading aloud. */
+export const NEARBY_KINDS = ['emergency-department', 'pharmacy', 'gp', 'fuel', 'water-works', 'fire-station', 'rest-centre'] as const;
+export type NearbyKind = (typeof NEARBY_KINDS)[number];
+/** One facility near a point: how far, which way, and how long it takes to walk there (Naismith). */
+export type NearbyItem = {
+  kind: NearbyKind; title: string; lat: number; lon: number;
+  distance_m: number; bearing_deg: number; walk_min: number; link: string;
+};
+/** `missing` names the kinds with no data at all here, so the panel can say so rather than stay silent. */
+export type NearbyResponse = { items: NearbyItem[]; missing: NearbyKind[] };
+export type SensorReading = { value: number; unit: string; at: string };
+/** Whatever the box can sense, by sensor id (`internet`, `mains`, `temp_in`, `co_ppm`, `broadcast`, ...). */
+export type Sensors = Record<string, SensorReading | null>;
+export type Recording = { file: string; station: string; at: string; url: string };
 export type ReadinessGap = { title: string; link: string; points: number };
 export type Readiness = { score: number; gaps: ReadinessGap[] };
 export type Bulletin = { station: string; frequency: string; at: string; note?: string };

@@ -1,4 +1,4 @@
-import type { ChecklistItem, Conditions, Home, Note, Person, Situation, Status, StockItem } from '../../src/api/types';
+import type { ChecklistItem, Conditions, Home, NearbyItem, NearbyKind, Note, Person, Recording, Sensors, Situation, Status, StockItem } from '../../src/api/types';
 import { notes, playbook, status } from '../../tests/fixtures/api';
 import { freshConditions } from './engine';
 
@@ -22,7 +22,22 @@ export type FixtureState = {
   dark: boolean;
   nextId: number;
   ethMode: 'client' | 'direct';
+  /** Facilities round the box; the /nearby route works out distance, bearing and walking time per request. */
+  places: Pick<NearbyItem, 'kind' | 'title' | 'lat' | 'lon'>[];
+  missingNearby: NearbyKind[];
+  sensors: Sensors;
+  /** Piper installed? When false /speak answers 503 and the read-aloud buttons take themselves away. */
+  speaks: boolean;
+  recordings: Recording[];
 };
+
+/** Around the fixture map's postcode (SO16 0AS), close enough to walk to in the panel's terms. */
+export const FIXTURE_PLACES: Pick<NearbyItem, 'kind' | 'title' | 'lat' | 'lon'>[] = [
+  { kind: 'pharmacy', title: 'Boots, High Street', lat: 50.9400, lon: -1.4680 },
+  { kind: 'emergency-department', title: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342 },
+  { kind: 'gp', title: 'Shirley Health Centre', lat: 50.9290, lon: -1.4460 },
+  { kind: 'water-works', title: 'Testwood water works', lat: 50.9310, lon: -1.4930 },
+];
 
 /** One state object per test; share it between browser contexts to model "another phone". */
 export function createFixtureState(overrides: Partial<Status> = {}): FixtureState {
@@ -42,5 +57,14 @@ export function createFixtureState(overrides: Partial<Status> = {}): FixtureStat
     dark: false,
     nextId: 1,
     ethMode: 'client',
+    places: FIXTURE_PLACES.map((x) => ({ ...x })),
+    missingNearby: ['rest-centre', 'fire-station', 'fuel'],
+    sensors: {
+      internet: { value: 0, unit: 'up', at: new Date(Date.now() - 120_000).toISOString() },
+      mains: { value: 1, unit: 'on', at: new Date(Date.now() - 60_000).toISOString() },
+      temp_in: { value: 14.5, unit: '\u00b0C', at: new Date(Date.now() - 300_000).toISOString() },
+    },
+    speaks: true,
+    recordings: [],
   };
 }

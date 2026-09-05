@@ -38,3 +38,16 @@ export function formatBearing(deg: number): string {
   const point = POINTS[Math.round((deg % 360) / 22.5) % 16];
   return `${whole.toString().padStart(3, '0')}° ${point}`;
 }
+
+/** Naismith's rule: an hour for every 5 km on the flat, plus a minute for every 10 m of climb.
+ * The box has no elevation data, so `ascentM` is usually zero and the answer is a floor, not a promise. */
+export function naismithMinutes(km: number, ascentM = 0): number {
+  return Math.round(km * 12 + ascentM / 10);
+}
+
+/** "18 min", "1 h 25 min": a walking time a household can plan around. */
+export function formatWalk(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes));
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)} h ${(m % 60).toString().padStart(2, '0')} min`;
+}

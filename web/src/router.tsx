@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigationType, type RouteObject } from 'react-
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
 import { Ai } from './screens/Ai';
+import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Doc } from './screens/Doc';
 import { Home } from './screens/Home';
@@ -111,6 +112,7 @@ export const routes: RouteObject[] = [
       { path: 'm/:slug', element: <Module /> },
       { path: 'situation', element: <Situation /> },
       { path: 'tasks', element: <Tasks /> },
+      { path: 'board', element: <Board /> },
       { path: 'system', element: <System /> },
       { path: 'ai', element: <Ai /> },
       { path: '*', element: <NotFound /> },

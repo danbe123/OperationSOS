@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { Condition, ConditionId, ConditionState } from '../api/types';
@@ -48,7 +49,12 @@ export function Situation() {
       <AppBar
         title="Situation"
         search={false}
-        actions={<a className="btn btn-chrome" href="/api/situation/report" target="_blank" rel="noreferrer"><Icon name="print" /><span>Print report</span></a>}
+        actions={
+          <>
+            <Link className="btn btn-chrome" to="/board"><Icon name="plan" /><span>Board</span></Link>
+            <a className="btn btn-chrome" href="/api/situation/report" target="_blank" rel="noreferrer"><Icon name="print" /><span>Print report</span></a>
+          </>
+        }
       />
       {view?.meta.drill && (
         <p className="pad notice drill-banner" role="status">

@@ -1,7 +1,7 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  Home, LibraryItem, LibraryResponse, MapConfig, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
-  SearchResponse, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
+  Home, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
+  Recording, SearchResponse, Sensors, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
 export class ApiError extends Error {
@@ -155,6 +155,16 @@ export const api = {
   setHome: (body: Partial<Home> & { lat: number; lon: number }) => request<Home>('PUT', '/home', body),
   startDrill: (body: DrillRequest) => request<SituationView>('POST', '/drill', body),
   endDrill: () => request<SituationView>('DELETE', '/drill'),
+  // Phase 2 and 3: the ground around the home, the box's senses, its voice and its recordings.
+  nearby: (lat: number, lon: number, signal?: AbortSignal) => request<NearbyResponse>('GET', `/nearby${qs({ lat, lon })}`, undefined, signal),
+  sensors: (signal?: AbortSignal) => request<Sensors>('GET', '/sensors', undefined, signal),
+  recordings: () => request<Recording[]>('GET', '/recordings'),
+  /** One chunk of speech as a WAV. 503 means Piper is not installed on this box: hide the button. */
+  async speak(text: string, signal?: AbortSignal): Promise<Blob> {
+    const res = await fetch('/api/speak', { method: 'POST', headers: headers(true, 'audio/wav'), body: JSON.stringify({ text }), signal });
+    if (!res.ok) throw new ApiError(res.status, await readDetail(res));
+    return await res.blob();
+  },
   createNote: (note: Partial<Note>) => request<Note>('POST', '/notes', note),
   updateNote: (id: number, note: Partial<Note>) => request<Note>('PUT', `/notes/${id}`, note),
   deleteNote: (id: number) => request<{ ok: true }>('DELETE', `/notes/${id}`),
