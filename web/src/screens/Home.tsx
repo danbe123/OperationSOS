@@ -44,7 +44,7 @@ export function Home() {
         </div>
       </div>
       {last && <Link className="resume-card" to={`/s/${last.slug}`}><Icon name="plan" /><span><small>Recently opened on this device</small><strong>Continue: {last.title}</strong></span><Icon name="forward" /></Link>}
-      <div className="home-section-heading"><p className="eyebrow">Start here</p><h2>What is happening?</h2></div>
+      <div className="home-section-heading"><h2>What is happening?</h2></div>
       <nav className="situation-grid" aria-label="Quick help">
         <Link className="situation medical-entry" to="/medical"><Icon name="medical" /><span><strong>Someone is hurt</strong><small>First aid and medical guidance</small></span><Icon name="forward" /></Link>
         <Link className="situation" to="/s/grid-collapse"><Icon name="power" /><span><strong>Power is out</strong><small>Blackouts and essential supplies</small></span><Icon name="forward" /></Link>
