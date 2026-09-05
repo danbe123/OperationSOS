@@ -1,5 +1,5 @@
 """The engine: three golden models at a fixed clock, plus the pieces they do not reach."""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest

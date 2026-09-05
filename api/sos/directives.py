@@ -11,9 +11,9 @@ from itertools import product
 from typing import Iterable
 
 FLAG_IDS = ("power", "water", "mobile", "landline", "internet", "gas", "heating", "roads", "shops", "sewage", "phones", "dark")
-_BLOCK = re.compile(r"\{\{#(if|unless)\s+([\w:-]+)\s*\}\}(.*?)(?:\{\{else\}\}(.*?))?\{\{/\1\}\}", re.S)
+# one token at a time, so blocks may nest to any depth: an open tag, an {{else}}, or a close tag
+_TOKEN = re.compile(r"\{\{#(if|unless)\s+([\w:-]+)\s*\}\}|\{\{(else)\}\}|\{\{/(if|unless)\}\}")
 _INLINE_CALL = re.compile(r"\[\[call\s+(999|112|111|105|101|0800[\d ]+|0345[\d ]+|0300[\d ]+)\]\]")
-_ANY = re.compile(r"\{\{[#/]?(if|unless|else)[^}]*\}\}")
 NO_PHONES_TEXT = "{n} will not connect while the phones are down: [get help without phones](page:no-phones)"
 
 
@@ -22,8 +22,8 @@ class DirectiveError(ValueError):
 
 
 def flag_names(md_text: str) -> set[str]:
-    """Every flag a document refers to, for validation and for cache keys."""
-    return {m.group(2) for m in _BLOCK.finditer(md_text or "")}
+    """Every flag a document refers to, at any depth, for validation and for cache keys."""
+    return {m.group(2) for m in _TOKEN.finditer(md_text or "") if m.group(2)}
 
 
 def check_flags(names: Iterable[str]) -> list[str]:
@@ -35,9 +35,76 @@ def check_flags(names: Iterable[str]) -> list[str]:
     return bad
 
 
-def resolve(md_text: str, flags: dict[str, bool]) -> str:
-    """Apply the directives. Nested blocks resolve inside out because the regex is non-greedy and we loop."""
+class _Block:
+    """One `{{#if}}` … `{{else}}` … `{{/if}}`, with whatever is inside it (text or more blocks)."""
+
+    __slots__ = ("kind", "name", "then", "otherwise")
+
+    def __init__(self, kind: str, name: str) -> None:
+        self.kind, self.name = kind, name
+        self.then: list = []
+        self.otherwise: list | None = None
+
+
+def _parse(md_text: str) -> list:
+    """The document as a tree of text and blocks. Nesting is handled by a stack, not by a regex."""
     text = md_text or ""
+    root: list = []
+    current = root
+    stack: list[tuple[_Block, list]] = []
+    pos = 0
+    for m in _TOKEN.finditer(text):
+        current.append(text[pos:m.start()])
+        pos = m.end()
+        if m.group(1):
+            block = _Block(m.group(1), m.group(2))
+            stack.append((block, current))
+            current = block.then
+        elif m.group(3):
+            if not stack:
+                raise DirectiveError("{{else}} outside a {{#if}} block")
+            block = stack[-1][0]
+            if block.otherwise is not None:
+                raise DirectiveError(f"two {{{{else}}}} in one {{{{#{block.kind} {block.name}}}}} block")
+            block.otherwise = []
+            current = block.otherwise
+        else:
+            if not stack:
+                raise DirectiveError("unbalanced {{#if}} / {{/if}} directive")
+            block, parent = stack.pop()
+            if block.kind != m.group(4):
+                raise DirectiveError(f"{{{{#{block.kind} {block.name}}}}} closed by {{{{/{m.group(4)}}}}}")
+            parent.append(block)
+            current = parent
+    current.append(text[pos:])
+    if stack:
+        raise DirectiveError("unbalanced {{#if}} / {{/if}} directive")
+    return root
+
+
+def _walk(nodes: list):
+    for node in nodes:
+        if isinstance(node, _Block):
+            yield node
+            yield from _walk(node.then)
+            yield from _walk(node.otherwise or [])
+
+
+def _render(nodes: list, lookup) -> str:
+    out = []
+    for node in nodes:
+        if isinstance(node, _Block):
+            value = lookup(node.name)
+            if node.kind == "unless":
+                value = not value
+            out.append(_render(node.then if value else (node.otherwise or []), lookup))
+        else:
+            out.append(node)
+    return "".join(out)
+
+
+def resolve(md_text: str, flags: dict[str, bool]) -> str:
+    """Apply the directives. Blocks may nest to any depth, and an {{else}} belongs to its own block."""
 
     def lookup(name: str) -> bool:
         if name in flags:
@@ -46,22 +113,12 @@ def resolve(md_text: str, flags: dict[str, bool]) -> str:
             return bool(flags.get(name, False))
         raise DirectiveError(f"unknown condition flag '{name}'")
 
-    def replace(m: re.Match) -> str:
-        kind, name, yes, no = m.group(1), m.group(2), m.group(3), m.group(4) or ""
-        value = lookup(name)
-        if kind == "unless":
-            value = not value
-        return yes if value else no
-
-    previous = None
-    while previous != text:
-        previous = text
-        text = _BLOCK.sub(replace, text)
-    if _ANY.search(text):
-        raise DirectiveError("unbalanced {{#if}} / {{/if}} directive")
+    tree = _parse(md_text)
+    for block in _walk(tree):          # a typo in a branch nobody is reading is still a mistake
+        lookup(block.name)
+    text = _render(tree, lookup)
     phones = flags.get("phones", True)
-    text = _INLINE_CALL.sub(lambda m: f"call {m.group(1)}" if phones else NO_PHONES_TEXT.format(n=m.group(1)), text)
-    return text
+    return _INLINE_CALL.sub(lambda m: f"call {m.group(1)}" if phones else NO_PHONES_TEXT.format(n=m.group(1)), text)
 
 
 def signature(flags: dict[str, bool], used: Iterable[str]) -> str:

@@ -243,7 +243,10 @@ def directive_signature(doc: Document, modules: dict[str, Document] | None, flag
             used.add("phones")
     if not used:
         return ""
-    return directives.signature(directives.default_flags() if flags is None else flags, used)
+    flags = directives.default_flags() if flags is None else flags
+    # an absent flag means "working" for a service but "not this scenario" for a scenario flag
+    explicit = {name: bool(flags.get(name, not name.startswith("scenario:"))) for name in used}
+    return directives.signature(explicit, used)
 
 
 def render_module(mod: Document, md: MarkdownIt, flags: dict[str, bool] | None = None) -> dict:

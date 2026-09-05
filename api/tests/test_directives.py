@@ -52,6 +52,42 @@ def test_unless_and_nesting():
     assert directives.resolve(text, flags | {"power": False, "gas": False}) == "No power."
 
 
+NESTED = ("{{#if power}}Boil the kettle{{#if water}} and fill the bath{{else}} with bottled water{{/if}}, then rest."
+          "{{else}}No power: {{#unless gas}}light the stove{{else}}use the gas hob{{/unless}}.{{/if}}")
+
+
+def test_blocks_nest_two_deep_in_both_branches():
+    flags = directives.default_flags()
+    assert directives.resolve(NESTED, flags) == "Boil the kettle and fill the bath, then rest."
+    assert directives.resolve(NESTED, flags | {"water": False}) == "Boil the kettle with bottled water, then rest."
+    assert directives.resolve(NESTED, flags | {"power": False}) == "No power: use the gas hob."
+    assert directives.resolve(NESTED, flags | {"power": False, "gas": False}) == "No power: light the stove."
+
+
+def test_a_nested_flag_is_found_by_the_validator_and_the_branch_sets():
+    assert directives.flag_names(NESTED) == {"power", "water", "gas"}
+    assert len(directives.branch_flag_sets(NESTED)) == 8
+    assert directives.check_flags(directives.flag_names("{{#if power}}{{#if broadband}}x{{/if}}{{/if}}")) == ["broadband"]
+
+
+def test_a_typo_inside_a_branch_nobody_is_reading_is_still_an_error():
+    with pytest.raises(directives.DirectiveError):
+        directives.resolve("{{#if power}}fine{{else}}{{#if watr}}oops{{/if}}{{/if}}", directives.default_flags())
+
+
+@pytest.mark.parametrize("text,fragment", [
+    ("{{#if power}}x", "unbalanced"),
+    ("x{{/if}}", "unbalanced"),
+    ("{{else}}x", "outside"),
+    ("{{#if power}}a{{else}}b{{else}}c{{/if}}", "two {{else}}"),
+    ("{{#if power}}a{{/unless}}", "closed by"),
+])
+def test_malformed_directives_are_refused(text, fragment):
+    with pytest.raises(directives.DirectiveError) as exc:
+        directives.resolve(text, directives.default_flags())
+    assert fragment in str(exc.value)
+
+
 def test_inline_call_swaps_for_the_alternative():
     assert directives.resolve("[[call 999]] now.", {"phones": True}) == "call 999 now."
     out = directives.resolve("[[call 999]] now.", {"phones": False})
@@ -176,6 +212,13 @@ def test_validation_rejects_an_unbalanced_directive(tree, items):
     append(tree / "pages" / "pmr446.md", "\n\n{{#if water}}Fill the bath.\n")
     out = content.validate_tree(tree, items, OVERLAYS)
     assert any("unbalanced" in e for e in out)
+
+
+def test_validation_checks_the_links_inside_a_nested_branch(tree, items):
+    append(tree / "pages" / "pmr446.md",
+           "\n\n{{#if power}}Fine{{else}}{{#if water}}Boil it{{else}}See the [ghost page](page:ghost).{{/if}}{{/if}}\n")
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert any("page 'ghost' does not exist" in e for e in out)
 
 
 def test_validation_refuses_a_document_with_too_many_flags(tree, items):
