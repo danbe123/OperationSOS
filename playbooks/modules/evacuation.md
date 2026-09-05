@@ -52,3 +52,6 @@ sources:
 - [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)
 - [Canadian Prepper: bug-out bag](kiwix:canadian-prepper_en_bugoutroll/index.html)
 - [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)
+- [Moving across country](page:fieldcraft-moving)
+- [Field craft in Britain](page:fieldcraft-basics)
+- [Getting found](page:fieldcraft-rescue)

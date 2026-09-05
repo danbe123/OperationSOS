@@ -123,3 +123,5 @@ A grid does not simply switch back on: it is rebuilt by black start, islands of 
 - [Severe winter playbook](playbook:severe-winter)
 - [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)
 - [Canadian Prepper: winter prepping](kiwix:canadian-prepper_en_winterprepping/index.html)
+- [Water outdoors](page:fieldcraft-water)
+- [Living in the field: hygiene](page:fieldcraft-hygiene)

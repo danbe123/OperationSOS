@@ -124,7 +124,7 @@ def test_modules_cards_pages(client):
     assert client.get("/api/cards/bleeding").json()["title"] == "Severe bleeding"
     assert client.get("/api/cards/nope").status_code == 404
     r = client.get("/api/pages")
-    assert r.json() == [{"slug": "pmr446", "title": "PMR446 radio channels", "icon": "radio", "order": 1, "category": "comms"}]
+    assert r.json() == [{"slug": "pmr446", "title": "PMR446 radio channels", "icon": "radio", "order": 1, "category": "comms", "summary": "The 16 licence-free UK walkie-talkie channels."}]
     page = client.get("/api/pages/pmr446").json()
     assert set(page) == {"slug", "title", "icon", "order", "html", "category"} and "<table>" in page["html"]
     assert client.get("/api/pages/nope").status_code == 404

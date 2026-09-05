@@ -5,7 +5,7 @@ router = APIRouter(tags=["pages"])
 
 @router.get("/pages")
 def list_pages(request: Request):
-    return [{"slug": d.id, "title": d.title, "icon": d.icon, "order": d.order, "category": d.category}
+    return [{"slug": d.id, "title": d.title, "icon": d.icon, "order": d.order, "category": d.category, "summary": d.summary}
             for d in request.app.state.content.list("page")]
 
 

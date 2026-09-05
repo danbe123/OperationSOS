@@ -144,3 +144,7 @@ sources:
 - [WikiCiv: building civilisation from scratch](kiwix:wikiciv_en_all/Main_Page)
 - [Rigging Techniques, FM 5-125 (moving heavy loads by rope and tackle)](doc:fm-5-125-rigging)
 - [WikiVet: veterinary encyclopedia](kiwix:wikivet.net_en_all/New_Front_Page)
+- [Field craft in Britain](page:fieldcraft-basics)
+- [Wild food in Britain and Ireland](page:fieldcraft-food)
+- [Rope, knots and tools](page:fieldcraft-rope-tools)
+- [Living in the field: hygiene](page:fieldcraft-hygiene)

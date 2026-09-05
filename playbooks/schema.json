@@ -58,7 +58,7 @@
       "description": "playbooks/pages/<slug>.md: a comms, reference, plan or about page.",
       "required": ["category"],
       "properties": {
-        "category": { "enum": ["comms", "reference", "plan", "about"], "description": "Which list the page appears in: comms (the Phone and radio screen), reference, plan (the Plan screen) or about." },
+        "category": { "enum": ["comms", "reference", "plan", "about", "fieldcraft"], "description": "Which list the page appears in: comms (the Phone and radio screen), reference, plan (the Plan screen), about, or fieldcraft (the Field craft screen)." },
         "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the page was written from." }
       },
       "unevaluatedProperties": false

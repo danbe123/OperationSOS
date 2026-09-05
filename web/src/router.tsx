@@ -12,6 +12,7 @@ import { Module } from './screens/Module';
 import { Page } from './screens/Page';
 import { Plan } from './screens/Plan';
 import { Tools } from './screens/Tools';
+import { Fieldcraft } from './screens/Fieldcraft';
 import { Timers } from './screens/tools/Timers';
 import { SunMoon } from './screens/tools/SunMoon';
 import { Calculators } from './screens/tools/Calculators';
@@ -77,6 +78,7 @@ export const routes: RouteObject[] = [
       { path: 'p/:slug', element: <Page /> },
       { path: 'plan', element: <Plan /> },
       { path: 'tools', element: <Tools /> },
+      { path: 'fieldcraft', element: <Fieldcraft /> },
       { path: 'tools/timers', element: <Timers /> },
       { path: 'tools/sun', element: <SunMoon /> },
       { path: 'tools/calc', element: <Calculators /> },

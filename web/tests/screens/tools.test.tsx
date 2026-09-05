@@ -7,10 +7,10 @@ import { library, notes } from '../fixtures/api';
 import { resetTimers } from '../../src/tools/timerStore';
 
 describe('Tools', () => {
-  it('lists the six tools', async () => {
+  it('lists the seven tools', async () => {
     renderRoute('/tools');
     const nav = await screen.findByRole('navigation', { name: 'Tools' });
-    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/tools/timers', '/tools/sun', '/tools/calc', '/tools/log', '/medical/dose', '/plan#stock']);
+    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/fieldcraft', '/tools/timers', '/tools/sun', '/tools/calc', '/tools/log', '/medical/dose', '/plan#stock']);
   });
 });
 
@@ -86,5 +86,19 @@ describe("Children's doses", () => {
     await user.clear(screen.getByLabelText('Months'));
     await user.type(screen.getByLabelText('Months'), '2');
     expect(result).toHaveTextContent(/not given under 3 months/);
+  });
+});
+
+describe('Field craft', () => {
+  it('lists the fieldcraft pages in order', async () => {
+    const { pages } = await import('../fixtures/api');
+    vi.spyOn(api, 'pages').mockResolvedValue([
+      ...pages,
+      { slug: 'fieldcraft-fire', title: 'Fire in a wet country', icon: 'fire', order: 15, html: '', category: 'fieldcraft', summary: 'Fire' },
+      { slug: 'fieldcraft-basics', title: 'Field craft in Britain', icon: 'shield', order: 13, html: '', category: 'fieldcraft', summary: 'Rules' },
+    ]);
+    renderRoute('/fieldcraft');
+    const nav = await screen.findByRole('navigation', { name: 'Field craft pages' });
+    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/p/fieldcraft-basics', '/p/fieldcraft-fire']);
   });
 });

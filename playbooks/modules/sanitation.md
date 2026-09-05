@@ -55,3 +55,4 @@ sources:
 - [Water disinfection table](page:water-disinfection)
 - [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)
 - [Unit Field Sanitation Team, FM 4-25.12](doc:fm-4-25-12-field-sanitation)
+- [Living in the field: hygiene](page:fieldcraft-hygiene)

@@ -65,3 +65,5 @@ sources:
 - [Where There Is No Dentist (Hesperian)](doc:where-there-is-no-dentist)
 - [Special Forces Medical Handbook, ST 31-91B](doc:st-31-91b-sf-medical-handbook)
 - [Quick guides for medicine](kiwix:quickguidesformedicine_en_all/index.html)
+- [Reading the weather and exposure](page:fieldcraft-weather)
+- [Living in the field: hygiene](page:fieldcraft-hygiene)

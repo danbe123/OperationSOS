@@ -56,3 +56,4 @@ sources:
 - [Dehydration and rehydration card](card:dehydration)
 - [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
 - [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)
+- [Wild food in Britain and Ireland](page:fieldcraft-food)

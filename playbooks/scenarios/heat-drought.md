@@ -113,3 +113,5 @@ Heatwaves are becoming more likely and mortality "increases significantly with i
 - [Water Treatment Library](kiwix:zimgit-water_en/home)
 - [Reservoirs and water works on the map](map:?overlay=water&overlay=health)
 - [Famine playbook](playbook:famine)
+- [Reading the weather and exposure](page:fieldcraft-weather)
+- [Water outdoors](page:fieldcraft-water)

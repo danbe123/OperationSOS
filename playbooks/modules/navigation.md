@@ -56,3 +56,6 @@ sources:
 - [Map Reading and Land Navigation, FM 3-25.26](doc:fm-3-25-26-map-reading)
 - [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)
 - [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)
+- [Moving across country](page:fieldcraft-moving)
+- [Getting found](page:fieldcraft-rescue)
+- [Reading the weather and exposure](page:fieldcraft-weather)

@@ -34,7 +34,7 @@ export type Playbook = PlaybookSummary & {
   reviewed: string | null;
 };
 export type Card = { slug: string; title: string; icon: string; order: number; html: string };
-export type Page = { slug: string; title: string; icon: string; order: number; html: string; category: string };
+export type Page = { slug: string; title: string; icon: string; order: number; html: string; category: string; summary?: string };
 export type Overlay = {
   id: string; title: string; kind: 'geojson' | 'pmtiles' | 'style-layer'; layer_id: string | null; url: string | null;
   default_on: boolean; scenarios_on: string[]; coverage: string[]; color: string; icon: string | null; available: boolean;

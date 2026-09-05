@@ -68,3 +68,4 @@ sources:
 - [Rainwater harvesting (Wikipedia)](kiwix:wikipedia_en_all_maxi/Rainwater_harvesting)
 - [Reservoirs and water works on the map](map:?overlay=water)
 - [Sanitation module](module:sanitation)
+- [Water outdoors](page:fieldcraft-water)

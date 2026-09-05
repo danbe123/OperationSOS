@@ -107,3 +107,5 @@ Recovery from an EMP is recovery from a grid collapse whose transformers, contro
 - [Solar storm playbook](playbook:solar-storm)
 - [Restarters: how things work and how to fix them](kiwix:restarters_en_all/Main_Page)
 - [Map Reading and Land Navigation, FM 3-25.26](doc:fm-3-25-26-map-reading)
+- [Field craft in Britain](page:fieldcraft-basics)
+- [Moving across country](page:fieldcraft-moving)

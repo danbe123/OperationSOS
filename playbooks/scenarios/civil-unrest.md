@@ -114,3 +114,5 @@ Order in Britain has broken locally and briefly, never nationally for long: the 
 - [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)
 - [Canadian Prepper: bug-out bag](kiwix:canadian-prepper_en_bugoutroll/index.html)
 - [Ranger Handbook, TC 3-21.76 (small-group field craft)](doc:tc-3-21-76-ranger-handbook)
+- [Moving across country](page:fieldcraft-moving)
+- [Field craft in Britain](page:fieldcraft-basics)

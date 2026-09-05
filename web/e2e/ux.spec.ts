@@ -25,7 +25,7 @@ test('field manual shortcuts, checklist jump and resume work on kiosk and phone'
     // tools: the sixth tile, the tool list and a timer that keeps running while reading a playbook
     await page.getByRole('navigation', { name: 'Main sections' }).getByRole('link', { name: /Tools/ }).click();
     const tools = page.getByRole('navigation', { name: 'Tools' });
-    await expect(tools.getByRole('link')).toHaveCount(6);
+    await expect(tools.getByRole('link')).toHaveCount(7);
     await tools.getByRole('link', { name: /Timers/ }).click();
     await page.getByRole('button', { name: 'Next dose in 4 hours' }).click();
     await expect(page.getByRole('list', { name: 'Running timers' })).toContainText('Next dose in 4 hours');

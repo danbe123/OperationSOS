@@ -114,3 +114,4 @@ Ireland lost a million people to hunger and a million to emigration between 1845
 - [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
 - [WikiVet: veterinary encyclopedia](kiwix:wikivet.net_en_all/New_Front_Page)
 - [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)
+- [Wild food in Britain and Ireland](page:fieldcraft-food)

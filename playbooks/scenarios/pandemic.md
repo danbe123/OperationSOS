@@ -113,3 +113,4 @@ An emerging disease with a 25% case fatality rate is planned for as an outbreak 
 - [Where There Is No Doctor (Hesperian)](doc:where-there-is-no-doctor)
 - [Quick guides for medicine](kiwix:quickguidesformedicine_en_all/index.html)
 - [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)
+- [Living in the field: hygiene](page:fieldcraft-hygiene)

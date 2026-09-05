@@ -122,3 +122,6 @@ The winter of 1962 to 1963 froze Britain from Boxing Day to March, the sea iced 
 - [Canadian Prepper: winter prepping](kiwix:canadian-prepper_en_winterprepping/index.html)
 - [Camping and Woodcraft (Kephart, 1917)](doc:kephart-camping-and-woodcraft)
 - [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)
+- [Shelter and staying warm](page:fieldcraft-shelter)
+- [Reading the weather and exposure](page:fieldcraft-weather)
+- [Fire in a wet country](page:fieldcraft-fire)

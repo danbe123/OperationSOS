@@ -2,6 +2,7 @@ import { AppBar } from '../components/AppBar';
 import { Tile } from '../components/Tile';
 
 export const TOOL_TILES = [
+  { to: '/fieldcraft', icon: 'fire', title: 'Field craft', subtitle: 'Shelter, fire, water, wild food, moving' },
   { to: '/tools/timers', icon: 'alert', title: 'Timers', subtitle: 'Boil, CPR beat, fallout, doses' },
   { to: '/tools/sun', icon: 'sun', title: 'Sun and moon', subtitle: 'Sunrise, sunset, daylight, phase' },
   { to: '/tools/calc', icon: 'bolt', title: 'Calculators', subtitle: 'Generator, battery, solar, rations' },

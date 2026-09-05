@@ -120,3 +120,6 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 - [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)
 - [Map Reading and Land Navigation, FM 3-25.26](doc:fm-3-25-26-map-reading)
 - [Canadian Prepper: bug-out concepts](kiwix:canadian-prepper_en_bugoutconcepts/index.html)
+- [Field craft in Britain](page:fieldcraft-basics)
+- [Moving across country](page:fieldcraft-moving)
+- [Getting found](page:fieldcraft-rescue)

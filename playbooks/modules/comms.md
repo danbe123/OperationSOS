@@ -53,3 +53,4 @@ sources:
 - [Amateur Radio Q&A](kiwix:ham.stackexchange.com_en_all/questions)
 - [Emergency Alerts (Wikipedia)](kiwix:wikipedia_en_all_maxi/Emergency_Alerts_(United_Kingdom))
 - [RAYNET (Wikipedia)](kiwix:wikipedia_en_all_maxi/RAYNET)
+- [Getting found](page:fieldcraft-rescue)
