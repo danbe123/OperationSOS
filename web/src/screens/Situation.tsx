@@ -56,12 +56,6 @@ export function Situation() {
           </>
         }
       />
-      {view?.meta.drill && (
-        <p className="pad notice drill-banner" role="status">
-          <span aria-hidden="true">⚑</span> DRILL in progress. Nothing here is real; tasks still tick and the log says drill.
-          {' '}<button type="button" className="btn btn-danger" disabled={busy} onClick={() => void run('end the drill', async () => apply(await api.endDrill()))}>End drill</button>
-        </p>
-      )}
       {error && <p className="pad warning">The situation is unavailable: {error}</p>}
       {loading && !view && <p className="pad muted">Reading the situation…</p>}
 

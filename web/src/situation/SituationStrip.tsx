@@ -18,7 +18,7 @@ export function SituationStrip() {
   if (!view) return null;
   const eventful = isEventful(view);
   const scenario = view.scenario;
-  const gap = view.readiness.gaps[0];
+  const gaps = view.readiness.gaps.slice(0, 4);
   return (
     <section className={eventful ? 'situation-strip situation-strip-live' : 'situation-strip'} aria-label="Situation">
       <div className="strip-head">
@@ -44,8 +44,14 @@ export function SituationStrip() {
       ) : (
         <div className="readiness" aria-label="Readiness">
           <p className="readiness-score"><strong>{view.readiness.score}</strong><span className="muted"> / 100 ready</span></p>
-          {gap ? (
-            <p className="readiness-gap">Biggest gap: <Link to={gap.link}>{gap.title}</Link> <span className="muted">(worth {gap.points} points)</span></p>
+          {gaps.length > 0 ? (
+            <ul className="readiness-gaps" aria-label="Gaps to close">
+              {gaps.map((gap) => (
+                <li key={gap.link + gap.title} className="readiness-gap">
+                  <Link to={gap.link}>{gap.title}</Link> <span className="muted">worth {gap.points} points</span>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="muted">No gaps recorded. Tap the sheet to run a drill.</p>
           )}

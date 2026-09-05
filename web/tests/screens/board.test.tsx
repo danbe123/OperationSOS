@@ -44,7 +44,9 @@ describe('/board', () => {
     }));
     renderRoute('/board');
     expect(await screen.findByRole('heading', { name: 'National grid collapse' })).toBeInTheDocument();
-    expect(screen.getByText('⚑ DRILL')).toBeInTheDocument();
+    // the board flies its own flag, and the chrome's drill bar flies one on every screen
+    expect(screen.getAllByText('⚑ DRILL').length).toBeGreaterThanOrEqual(1);
+    expect(document.querySelector('.board-drill')).toHaveTextContent('⚑ DRILL');
     expect(screen.getByText(/2 h in/)).toBeInTheDocument();
   });
 

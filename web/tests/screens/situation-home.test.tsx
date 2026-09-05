@@ -14,6 +14,7 @@ describe('Home: the situation strip', () => {
     expect(strip).toHaveTextContent('Everything is working');
     expect(within(strip).getByLabelText('Readiness')).toHaveTextContent('62');
     expect(within(strip).getByRole('link', { name: 'Water: 1.5 days for 3 people' })).toHaveAttribute('href', '/plan#stock');
+    expect(within(strip).getByLabelText('Gaps to close')).toHaveTextContent('worth 12 points');
     expect(within(strip).queryByRole('group', { name: 'What is working' })).toBeNull();
   });
 

@@ -27,6 +27,7 @@ import { Search } from './screens/Search';
 import { Situation } from './screens/Situation';
 import { Tasks } from './screens/Tasks';
 import { System } from './screens/System';
+import { DrillBanner } from './situation/DrillBanner';
 import { Keyboard } from './kiosk/Keyboard';
 import { IdleOverlay } from './kiosk/IdleOverlay';
 
@@ -51,6 +52,7 @@ export function Layout() {
   useScrollToTop(main);
   return (
     <div className="layout">
+      <DrillBanner />
       <main className="layout-main" ref={main}>
         <Outlet />
       </main>
