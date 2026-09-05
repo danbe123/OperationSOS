@@ -21,6 +21,7 @@ smoke:
 test: venv
 > cd api && .venv/bin/pytest -q
 > if [ -f web/package.json ]; then pnpm --dir web test -- --run; fi
+> cd tools/map-styles && pnpm install --frozen-lockfile --silent && node --test
 > SOS_PLAYBOOKS_DIR=playbooks SOS_MANIFEST_DIR=manifest $(SOS) validate-playbooks --all-scenarios
 > bash dev/smoke-selftest.sh
 

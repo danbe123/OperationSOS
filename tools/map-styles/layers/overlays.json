@@ -1,0 +1,23 @@
+{
+  "sources": {
+    "water": {"type": "vector", "url": "pmtiles:///maps/overlays/water.pmtiles"},
+    "airports-military": {"type": "vector", "url": "pmtiles:///maps/overlays/airports-military.pmtiles"},
+    "access-land": {"type": "vector", "url": "pmtiles:///maps/overlays/access-land.pmtiles"}
+  },
+  "layers": [
+    {"id": "water-fill", "type": "fill", "source": "water", "source-layer": "water",
+     "paint": {"fill-color": "#1ca3c9", "fill-opacity": 0.45, "fill-outline-color": "#0e6f8a"}},
+    {"id": "water-label", "type": "symbol", "source": "water", "source-layer": "water", "minzoom": 11,
+     "filter": ["has", "name"],
+     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
+     "paint": {"text-color": "#0e6f8a", "text-halo-color": "#ffffff", "text-halo-width": 1}},
+    {"id": "airports-military-fill", "type": "fill", "source": "airports-military", "source-layer": "airports-military",
+     "paint": {"fill-color": ["case", ["has", "military"], "#8b0000", "#555555"], "fill-opacity": 0.35}},
+    {"id": "airports-military-label", "type": "symbol", "source": "airports-military", "source-layer": "airports-military",
+     "minzoom": 9, "filter": ["has", "name"],
+     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
+     "paint": {"text-color": "#3a0000", "text-halo-color": "#ffffff", "text-halo-width": 1}},
+    {"id": "access-land-fill", "type": "fill", "source": "access-land", "source-layer": "access-land",
+     "paint": {"fill-color": "#f2b705", "fill-opacity": 0.3, "fill-outline-color": "#a07800"}}
+  ]
+}

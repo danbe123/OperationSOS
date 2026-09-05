@@ -17,7 +17,8 @@ STEP_IDS = ("base", "os", "contours", "hillshade", "overlays", "places", "packs"
 def all_steps() -> list:
     """Registry in pipeline order. Later tasks append their step here."""
     from sos.mapbuild.base import BaseStep
-    return [BaseStep()]
+    from sos.mapbuild.styles import StylesStep
+    return [BaseStep(), StylesStep()]
 
 
 def select_steps(ids: list[str] | None) -> list:
