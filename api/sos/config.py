@@ -22,9 +22,46 @@ class Settings(BaseSettings):
     dev: bool = False
     port: int = 8000
 
+    # The map build workspace, when it is still on the machine: overlays the build turned into PMTiles
+    # (health, water) have no GeoJSON on the box, and `sos.nearby` reads the source files from here.
+    maps_src: Path | None = None
+
+    # Read aloud (spec section 6): Piper and its British voice, both manifest items in the `ai` category.
+    piper_dir: Path | None = None
+    piper_voice: str = "en_GB-alba-medium"
+    speak_timeout_s: float = 30.0
+
+    # Sensors (spec section 2). Every driver is optional; a missing path or binary simply records nothing.
+    sensors: bool = True
+    sensor_probe_host: str = "one.one.one.one"
+    sensor_probe_url: str = "http://one.one.one.one/"
+    sensor_probe_timeout_s: float = 3.0
+    sensor_mains_glob: str = "/sys/class/power_supply/*/online"
+    sensor_mains_gpio: str = ""                       # e.g. /sys/class/gpio/gpio17/value on a UPS HAT
+    sensor_mains_gpio_active_low: bool = False
+    sensor_files: dict[str, str] = {}                 # SOS_SENSOR_FILES='{"temp_in": "/run/sos/temp_in"}'
+    sensor_interval_s: float = 60.0
+    rtl_interval_s: float = 600.0
+    rtl_power_bin: str = "rtl_power"
+    rtl_fm_bin: str = "rtl_fm"
+    rtl_power_dwell_s: int = 8
+    bulletin_window_s: int = 300                      # how long a recorded bulletin runs
+
     @property
     def db_path(self) -> Path:
         return self.state / "sos.db"
+
+    @property
+    def recordings(self) -> Path:
+        return self.state / "recordings"
+
+    @property
+    def piper_bin(self) -> Path:
+        return (self.piper_dir or self.core / "bin" / "piper") / "piper"
+
+    @property
+    def piper_voice_path(self) -> Path:
+        return self.core / "models" / "piper" / f"{self.piper_voice}.onnx"
 
     @property
     def library_xml(self) -> Path:

@@ -1,9 +1,10 @@
 """Household register and stock (tools spec sections 3 and 4)."""
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
+from sos import readiness
 from sos.db import now_iso
 from sos.routers import get_db
 
@@ -98,17 +99,18 @@ def list_household(conn=Depends(get_db)):
 
 
 @router.post("/household")
-def add_person(body: PersonIn, conn=Depends(get_db)):
+def add_person(body: PersonIn, request: Request, conn=Depends(get_db)):
     if not body.name.strip():
         raise HTTPException(status_code=400, detail="People need a name")
     cur = conn.execute("INSERT INTO household(name, age, needs, medications, contacts, updated_at) VALUES (?,?,?,?,?,?)",
                        (body.name.strip(), body.age, body.needs, body.medications, body.contacts, now_iso()))
     conn.commit()
+    readiness.refresh(request, conn)
     return _person(_get_person(conn, cur.lastrowid))
 
 
 @router.put("/household/{person_id}")
-def update_person(person_id: int, body: PersonPatch, conn=Depends(get_db)):
+def update_person(person_id: int, body: PersonPatch, request: Request, conn=Depends(get_db)):
     current = _get_person(conn, person_id)
     merged = {k: (getattr(body, k) if getattr(body, k) is not None else current[k])
               for k in ("name", "age", "needs", "medications", "contacts")}
@@ -118,14 +120,16 @@ def update_person(person_id: int, body: PersonPatch, conn=Depends(get_db)):
                  (merged["name"].strip(), merged["age"], merged["needs"], merged["medications"], merged["contacts"],
                   now_iso(), person_id))
     conn.commit()
+    readiness.refresh(request, conn)
     return _person(_get_person(conn, person_id))
 
 
 @router.delete("/household/{person_id}")
-def delete_person(person_id: int, conn=Depends(get_db)):
+def delete_person(person_id: int, request: Request, conn=Depends(get_db)):
     _get_person(conn, person_id)
     conn.execute("DELETE FROM household WHERE id=?", (person_id,))
     conn.commit()
+    readiness.refresh(request, conn)
     return {"ok": True}
 
 
@@ -136,18 +140,19 @@ def list_stock(conn=Depends(get_db)):
 
 
 @router.post("/stock")
-def add_stock(body: StockIn, conn=Depends(get_db)):
+def add_stock(body: StockIn, request: Request, conn=Depends(get_db)):
     _check_stock(body.name, body.quantity)
     rate = body.per_person_day if body.per_person_day is not None else DEFAULT_PER_PERSON_DAY.get(body.category)
     cur = conn.execute(
         "INSERT INTO stock(name, category, quantity, unit, per_person_day, expires, notes, updated_at) VALUES (?,?,?,?,?,?,?,?)",
         (body.name.strip(), body.category, body.quantity, body.unit, rate, body.expires, body.notes, now_iso()))
     conn.commit()
+    readiness.refresh(request, conn)
     return _item(_get_item(conn, cur.lastrowid), people_count(conn))
 
 
 @router.put("/stock/{item_id}")
-def update_stock(item_id: int, body: StockPatch, conn=Depends(get_db)):
+def update_stock(item_id: int, body: StockPatch, request: Request, conn=Depends(get_db)):
     current = _get_item(conn, item_id)
     merged = {k: (getattr(body, k) if getattr(body, k) is not None else current[k])
               for k in ("name", "category", "quantity", "unit", "per_person_day", "expires", "notes")}
@@ -156,12 +161,14 @@ def update_stock(item_id: int, body: StockPatch, conn=Depends(get_db)):
                  (merged["name"].strip(), merged["category"], merged["quantity"], merged["unit"], merged["per_person_day"],
                   merged["expires"], merged["notes"], now_iso(), item_id))
     conn.commit()
+    readiness.refresh(request, conn)
     return _item(_get_item(conn, item_id), people_count(conn))
 
 
 @router.delete("/stock/{item_id}")
-def delete_stock(item_id: int, conn=Depends(get_db)):
+def delete_stock(item_id: int, request: Request, conn=Depends(get_db)):
     _get_item(conn, item_id)
     conn.execute("DELETE FROM stock WHERE id=?", (item_id,))
     conn.commit()
+    readiness.refresh(request, conn)
     return {"ok": True}

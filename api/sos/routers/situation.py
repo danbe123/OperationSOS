@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from sos import conditions as cond
-from sos import engine, rules as rules_mod, situation
+from sos import engine, nearby, readiness, rules as rules_mod, sensors, situation
 from sos.db import get_setting, now_iso, set_setting
 from sos.routers import LOCALHOSTS, get_db
 
@@ -54,8 +54,8 @@ class DrillBody(BaseModel):
 
 # --- building the model -------------------------------------------------------------------------------------
 
-def _title(request: Request, kind: str, slug: str) -> Optional[str]:
-    doc = request.app.state.content.document(kind, slug)
+def _title(content, kind: str, slug: str) -> Optional[str]:
+    doc = content.document(kind, slug)
     return doc.title if doc is not None else None
 
 
@@ -74,7 +74,7 @@ def _stock(conn: sqlite3.Connection) -> tuple[dict, ...]:
                  for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
 
 
-def _titles(request: Request, ruleset: rules_mod.Rules, scenario: Optional[str]) -> dict[str, str]:
+def _titles(content, ruleset: rules_mod.Rules, scenario: Optional[str]) -> dict[str, str]:
     """Titles for everything the reading rules can open, so the briefing reads like a list of pages."""
     kinds = {"playbook": "scenario", "module": "module", "page": "page", "card": "card"}
     links = [link for rule in ruleset.readings for link in rule.open]
@@ -85,22 +85,29 @@ def _titles(request: Request, ruleset: rules_mod.Rules, scenario: Optional[str])
         scheme, _, rest = link.partition(":")
         slug = rest.partition("#")[0]
         if scheme in kinds and link not in out:
-            title = _title(request, kinds[scheme], slug)
+            title = _title(content, kinds[scheme], slug)
             if title:
                 out[f"{scheme}:{slug}"] = title
     return out
 
 
 def _ruleset(request: Request) -> rules_mod.Rules:
-    return rules_mod.load(request.app.state.settings.playbooks / "rules")
+    return ruleset_for(request.app.state.settings)
 
 
-def build_model(request: Request, conn: sqlite3.Connection, now: Optional[datetime] = None) -> engine.Model:
-    """Everything in the database that the engine is allowed to see, as one immutable snapshot."""
+def ruleset_for(settings) -> rules_mod.Rules:
+    return rules_mod.load(settings.playbooks / "rules")
+
+
+def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[datetime] = None) -> engine.Model:
+    """Everything in the database that the engine is allowed to see, as one immutable snapshot.
+
+    Takes the content cache and the settings rather than the request, so the background tasks (the nightly
+    readiness recompute) can build the same model as a screen does."""
     now = now or datetime.now(timezone.utc).replace(microsecond=0)
-    ruleset = _ruleset(request)
+    ruleset = ruleset_for(settings)
     slug = get_setting(conn, "situation_slug")
-    scenario = situation.snapshot(conn, _title(request, "scenario", slug) if slug else None, now) if slug else None
+    scenario = situation.snapshot(conn, _title(content, "scenario", slug) if slug else None, now) if slug else None
     if scenario is not None and not scenario.get("slug"):
         scenario = None
     states = {cid: c.state for cid, c in cond.load(conn).items()}
@@ -112,7 +119,7 @@ def build_model(request: Request, conn: sqlite3.Connection, now: Optional[dateti
     checklist: tuple[dict, ...] = ()
     checklist_state: dict[str, bool] = {}
     if slug:
-        rendered = request.app.state.content.rendered("scenario", slug, flags)
+        rendered = content.rendered("scenario", slug, flags)
         if rendered is not None:
             checklist = tuple({"id": item["id"], "text": item["text"]} for item in rendered.checklist)
             checklist_state = {r["item_id"]: bool(r["checked"]) for r in conn.execute(
@@ -127,13 +134,41 @@ def build_model(request: Request, conn: sqlite3.Connection, now: Optional[dateti
     return engine.Model(
         now=now, conditions=cond.load(conn), scenario=scenario, household=household, stock=_stock(conn), home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
-        titles=_titles(request, ruleset, slug), meeting_point=meeting is not None,
+        titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
         last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),
+        detected=sensors.detected_states(conn, now),
     )
 
 
+def build_model(request: Request, conn: sqlite3.Connection, now: Optional[datetime] = None) -> engine.Model:
+    return build_model_for(request.app.state.content, request.app.state.settings, conn, now)
+
+
 def view_for(request: Request, conn: sqlite3.Connection) -> dict:
-    return engine.compute(build_model(request, conn), _ruleset(request))
+    settings = request.app.state.settings
+    view = engine.compute(build_model(request, conn), _ruleset(request))
+    return with_nearby(settings, conn, view)
+
+
+def with_nearby(settings, conn: sqlite3.Connection, view: dict) -> dict:
+    """The home's nearest facilities, in `meta.home.nearby`, cached per home so the overlays are read once."""
+    home = view["meta"]["home"]
+    if home.get("lat") is None or home.get("lon") is None:
+        return view
+    home["nearby"] = _nearby_cached(settings, round(float(home["lat"]), 5), round(float(home["lon"]), 5), conn)
+    return view
+
+
+_NEARBY_CACHE: dict[tuple, list[dict]] = {}
+
+
+def _nearby_cached(settings, lat: float, lon: float, conn: sqlite3.Connection) -> list[dict]:
+    key = (str(settings.core), lat, lon)
+    if key not in _NEARBY_CACHE:
+        if len(_NEARBY_CACHE) > 8:                 # one home, a handful of drills; never a cache to manage
+            _NEARBY_CACHE.clear()
+        _NEARBY_CACHE[key] = nearby.summary(nearby.nearest(settings, lat, lon, conn))
+    return _NEARBY_CACHE[key]
 
 
 def current_flags(request: Request, conn: sqlite3.Connection) -> dict[str, bool]:
@@ -166,7 +201,7 @@ def _clock(value: Optional[str]) -> str:
 def get_situation(request: Request, conn=Depends(get_db)):
     snap = situation.snapshot(conn)
     if snap["slug"]:
-        snap["title"] = _title(request, "scenario", snap["slug"]) or snap["slug"]
+        snap["title"] = _title(request.app.state.content, "scenario", snap["slug"]) or snap["slug"]
     return snap
 
 
@@ -175,7 +210,7 @@ def start_situation(body: StartBody, request: Request, conn=Depends(get_db)):
     if request.app.state.content.document("scenario", body.slug) is None:
         raise HTTPException(status_code=404, detail="Playbook not found")
     situation.start(conn, body.slug)
-    event(conn, f"Situation started: {_title(request, 'scenario', body.slug)} ({actor(request, conn)})")
+    event(conn, f"Situation started: {_title(request.app.state.content, 'scenario', body.slug)} ({actor(request, conn)})")
     return get_situation(request, conn)
 
 
@@ -183,7 +218,7 @@ def start_situation(body: StartBody, request: Request, conn=Depends(get_db)):
 def end_situation(request: Request, conn=Depends(get_db)):
     snap = situation.snapshot(conn)
     if snap["slug"]:
-        event(conn, f"Situation ended: {_title(request, 'scenario', snap['slug'])} ({actor(request, conn)})")
+        event(conn, f"Situation ended: {_title(request.app.state.content, 'scenario', snap['slug'])} ({actor(request, conn)})")
     situation.clear(conn)
     return {"slug": None}
 
@@ -309,9 +344,27 @@ def put_home(body: HomeBody, request: Request, conn=Depends(get_db)):
     set_setting(conn, "home_label", body.label or "Home")
     set_setting(conn, "home_flood_zone", body.flood_zone)
     home = _home(conn)
+    readiness.refresh(request, conn)               # the home on the map is worth eight points of the plan score
     event(conn, f"Home set to {home['label']} at {body.lat:.4f}, {body.lon:.4f} ({actor(request, conn)})",
           f"Flood zone {home['flood_zone']}" if home["flood_zone"] else "")
     return home
+
+
+@router.get("/nearby")
+def get_nearby(request: Request, lat: float | None = None, lon: float | None = None, conn=Depends(get_db)):
+    """The nearest emergency department, pharmacy, GP, fuel station, water works, fire station and rest centre.
+
+    Defaults to the home when no point is given; 404 when neither is set, because a bearing from nowhere is
+    worse than no answer."""
+    settings = request.app.state.settings
+    if lat is None or lon is None:
+        home = _home(conn)
+        lat, lon = home["lat"], home["lon"]
+        if lat is None or lon is None:
+            raise HTTPException(status_code=404, detail="No home is set on the map, and no lat and lon were given")
+    if not (-90 <= float(lat) <= 90 and -180 <= float(lon) <= 180):
+        raise HTTPException(status_code=422, detail="lat must be -90 to 90 and lon -180 to 180")
+    return nearby.nearest(settings, float(lat), float(lon), conn)
 
 
 # --- drills ------------------------------------------------------------------------------------------------------
@@ -324,7 +377,7 @@ def start_drill(body: DrillBody, request: Request, conn=Depends(get_db)):
         if cid not in cond.IDS:
             raise HTTPException(status_code=422, detail=f"Unknown condition '{cid}'")
     situation.start_drill(conn, body.scenario, dict(body.conditions), body.hours_ago)
-    event(conn, f"Drill started: {_title(request, 'scenario', body.scenario)} (drill)",
+    event(conn, f"Drill started: {_title(request.app.state.content, 'scenario', body.scenario)} (drill)",
           ", ".join(f"{cid} {state}" for cid, state in sorted(body.conditions.items())))
     return view_for(request, conn)
 
@@ -337,4 +390,5 @@ def end_drill(request: Request, conn=Depends(get_db)):
     summary = situation.end_drill(conn)
     event(conn, f"Drill ended: {summary['tasks_done']} task{'s' if summary['tasks_done'] != 1 else ''} done in "
                 f"{summary['elapsed_s'] // 60} minutes ({who})")
+    readiness.refresh(request, conn)               # a drill just now is ten points of practice
     return view_for(request, conn)

@@ -63,7 +63,7 @@ CORE_REQUIRED = {
     "chemistry.stackexchange.com_en_all", "engineering.stackexchange.com_en_all", "earthscience.stackexchange.com_en_all",
     "pets.stackexchange.com_en_all",
     # ai
-    "gemma-4-E2B-it-Q4_K_M", "Qwen3.5-2B-Q4_K_M", "gemma-3-1b-it-Q4_K_M",
+    "gemma-4-E2B-it-Q4_K_M", "Qwen3.5-2B-Q4_K_M", "gemma-3-1b-it-Q4_K_M", "piper", "piper-voice-en_GB",
 }
 
 
@@ -143,7 +143,10 @@ def test_build_items_have_artifact_and_seed_lists():
     for it in items("core.json"):
         src = it["source"]
         if src["type"] == "build":
-            assert src["tool"] in {"zimit", "build-nhs", "manual"}, it["id"]
+            assert src["tool"] in {"zimit", "build-nhs", "build-crawl", "manual"}, it["id"]
+            if it["kind"] == "dir":                 # a directory item is unpacked in place: artifact is its dest
+                assert src == {"type": "build", "tool": "manual", "artifact": it["dest"]}, it["id"]
+                continue
             assert src["artifact"].endswith((".zim", ".pdf", ".gguf")), it["id"]
             if src["tool"] == "zimit":
                 seeds = (ZIMIT_DIR / f"{it['id']}.txt").read_text(encoding="utf-8").split()
@@ -168,6 +171,20 @@ def test_reader_home_only_where_verified():
     assert core["ifixit_en_all"]["reader_home"] == "home/home"
     assert core["homebrew.stackexchange.com_en_all"]["reader_home"] == "questions"
     assert "reader_home" not in core["wikipedia_en_all_maxi"]
+
+
+def test_read_aloud_items():
+    """Piper and its British voice (spec section 6): the binary directory and the voice directory, both `ai`."""
+    core = by_id("core.json")
+    piper, voice = core["piper"], core["piper-voice-en_GB"]
+    for it in (piper, voice):
+        assert it["kind"] == "dir" and it["category"] == "ai" and it["tier"] == "core", it["id"]
+        assert it["size_bytes"] > 0 and it["source"]["tool"] == "manual", it["id"]
+        assert "sha256" in it["description"] and "https://" in it["description"], it["id"]
+    assert piper["dest"] == "bin/piper"             # sos.config resolves core/bin/piper/piper
+    assert voice["dest"] == "models/piper"          # and core/models/piper/<SOS_PIPER_VOICE>.onnx
+    assert "aarch64" in piper["description"] and "x86_64" in piper["description"]
+    assert "en_GB" in voice["title"]
 
 
 def test_core_size_near_target():

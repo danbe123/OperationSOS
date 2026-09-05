@@ -1,20 +1,28 @@
 # The radio times worth being by the set for. UK clock times in the box's local zone; the board shows the next
 # one, and with an RTL dongle the box records it.
+#
+# record_hz is the FM carrier in hertz. An RTL-SDR tunes from about 24 MHz to 1.766 GHz, so long wave (198 kHz)
+# and medium wave are far below anything the dongle can hear: those entries carry `recordable: false` instead,
+# and the box will never try. Where a station's frequency changes from town to town, write your own record_hz
+# into this file once you have found it on the dial; until then the bulletin is listed but not recorded.
 rules: []
 
 bulletins:
   - station: BBC Radio 4
     frequency: 198 kHz long wave
     times: ["06:00", "13:00", "18:00", "22:00"]
-    note: The main news bulletins. Long wave reaches the whole country from one transmitter and needs no mast near you, but the service is being closed down, so check FM as well.
+    recordable: false
+    note: "The main news bulletins. Long wave reaches the whole country from one transmitter and needs no mast near you, but the service is being closed down, so check FM as well. The box cannot record this one: long wave is far below anything the radio dongle can hear, so listen and take notes by hand."
 
   - station: BBC Radio 4 FM
     frequency: 92 to 95 MHz FM
     times: ["06:00", "13:00", "18:00", "22:00"]
-    note: The same bulletins on FM, and the network that carries government announcements in an emergency.
+    note: "The same bulletins on FM, and the network that carries government announcements in an emergency. The box records this one when the radio dongle is plugged in."
+    # 93.5 MHz is the London transmitter; change it to whatever Radio 4 sits on where you are.
     record_hz: 93500000
 
   - station: BBC local radio
     frequency: FM, see the comms module for your station
     times: ["07:00", "08:00", "12:00", "17:00"]
-    note: Local radio is where the council, the police and the water company say what is happening in your town.
+    # No record_hz: every county has its own frequency. Add yours in hertz (104300000 for 104.3 MHz) to record it.
+    note: "Local radio is where the council, the police and the water company say what is happening in your town."

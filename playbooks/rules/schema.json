@@ -61,7 +61,7 @@
     },
     "bulletin": {
       "type": "object", "required": ["station", "times"], "additionalProperties": false,
-      "properties": { "station": { "type": "string" }, "frequency": { "type": "string" }, "times": { "type": "array", "items": { "type": "string", "pattern": "^\\d\\d:\\d\\d$" } }, "note": { "type": "string" }, "record_hz": { "type": "integer" } }
+      "properties": { "station": { "type": "string" }, "frequency": { "type": "string" }, "times": { "type": "array", "items": { "type": "string", "pattern": "^\\d\\d:\\d\\d$" } }, "note": { "type": "string" }, "record_hz": { "type": "integer", "minimum": 24000000, "maximum": 1766000000, "description": "The FM carrier in hertz. Inside an RTL-SDR's tuning range (24 MHz to 1.766 GHz), so long and medium wave cannot be given one." }, "recordable": { "type": "boolean", "description": "false when the dongle cannot receive this station at all (long or medium wave)" } }
     }
   }
 }

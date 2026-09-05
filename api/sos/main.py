@@ -10,11 +10,12 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from sos import __version__, db, library, manifest, search as search_mod, system
+from sos import __version__, db, library, manifest, readiness, search as search_mod, sensors, system
 from sos.config import Settings, get_settings
 from sos.content import ContentCache
 from sos.kiwix import KiwixClient
 from sos.routers import ai, cards, household, kiosk, notes, pages, places, playbooks, search, status
+from sos.routers import sensors as sensors_router
 from sos.routers import situation as situation_router
 from sos.routers import library as library_router
 from sos.routers import map as map_router
@@ -63,6 +64,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         if background:
             tasks.append(asyncio.create_task(app.state.watchdog.run()))
             tasks.append(asyncio.create_task(search_mod.warm(settings, app.state.kiwix, settings.db_path)))
+            tasks.append(asyncio.create_task(readiness.nightly(settings, app.state.content, settings.db_path)))
+            if settings.sensors:
+                tasks.append(asyncio.create_task(sensors.run(settings, settings.db_path)))
         try:
             yield
         finally:
@@ -76,7 +80,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app = FastAPI(title="Operation SOS", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)
     for router in (status.router, library_router.router, search.router, playbooks.router, cards.router, pages.router,
                    map_router.router, places.router, notes.router, ai.router, kiosk.router, system_router.router,
-                   household.router, situation_router.router):
+                   household.router, situation_router.router, sensors_router.router):
         app.include_router(router, prefix="/api")
 
     @app.exception_handler(ValueError)
