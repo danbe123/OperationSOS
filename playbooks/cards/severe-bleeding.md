@@ -12,7 +12,7 @@ Blood is flowing or spurting, soaking through cloth, or pooling; the person is p
 
 ## Steps
 
-1. Call 999. Put on gloves if you have them.
+1. Get help coming — [[call 999]]. Gloves on if you have them.
 2. Press hard on the wound with a pad or clean cloth. Do not let go.
 3. Keep pressing for at least 10 minutes without lifting to look.
 4. If blood soaks through, add more on top; never remove the first pad.
@@ -28,7 +28,7 @@ Blood is flowing or spurting, soaking through cloth, or pooling; the person is p
 
 ## Stop or escalate
 
-999 at once. If they stop breathing, start [CPR](card:cpr-adult).
+Bleeding like this needs help at once — [[call 999]]. If they stop breathing, start [CPR](card:cpr-adult).
 
 ## Source
 

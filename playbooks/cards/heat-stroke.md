@@ -12,13 +12,13 @@ Hot skin, confusion, fast breathing, fits, or no better 30 minutes after cooling
 
 ## Steps
 
-1. Call 999. Heat stroke can kill within the hour.
+1. Heat stroke can kill within the hour — [[call 999]].
 2. Move them to the coolest shaded place. Take off outer clothing.
 3. Cool with cool water: sponge, spray or pour it over them and fan.
 4. Put cold packs or wet cloths on the neck, armpits and groin.
 5. If they are fully awake, give sips of water or oral rehydration solution.
 6. If they are drowsy or fitting, put them in the [recovery position](card:recovery-position) and give nothing by mouth.
-7. Keep cooling until they are alert and their skin feels normal, then keep them in the shade and watch them.
+7. {{#if water}}Keep cooling until they are alert and their skin feels normal, then keep them in the shade and watch them.{{else}}With the mains off, wet cloths from stored water and fan them rather than pouring it away; keep cooling until they are alert, then keep them in the shade and watch them.{{/if}}
 
 ## Warnings
 
@@ -27,7 +27,7 @@ Hot skin, confusion, fast breathing, fits, or no better 30 minutes after cooling
 
 ## Stop or escalate
 
-999 for confusion, fits, loss of consciousness, or no improvement after 30 minutes of cooling.
+Confusion, fits, loss of consciousness, or no improvement after 30 minutes of cooling — [[call 999]].
 
 ## Source
 

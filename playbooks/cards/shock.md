@@ -12,7 +12,7 @@ Pale clammy skin, fast weak pulse, fast breathing, dizziness, thirst or confusio
 
 ## Steps
 
-1. Call 999. Treat the cause: stop bleeding, cool burns.
+1. Send for help — [[call 999]]. Stop bleeding, cool burns.
 2. Lie them down on a blanket. Raise the legs about 30 cm.
 3. Keep the legs flat if a leg, pelvis or head is injured.
 4. Loosen tight clothing at the neck, chest and waist.
@@ -27,7 +27,7 @@ Pale clammy skin, fast weak pulse, fast breathing, dizziness, thirst or confusio
 
 ## Stop or escalate
 
-999 at once. If breathing stops, start [CPR](card:cpr-adult).
+Shock kills without treatment, so get help at once — [[call 999]]. If breathing stops, start [CPR](card:cpr-adult).
 
 ## Source
 

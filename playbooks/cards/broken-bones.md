@@ -17,7 +17,7 @@ Pain, swelling, a limb bent the wrong way, grating, or unable to move or bear we
 3. Support it with padding: cushions, rolled clothes, a sling for an arm.
 4. Splint a leg to the other leg or to a board with padding between, tying above and below the break, not over it.
 5. Cover any open wound with a clean dressing and control bleeding with pressure around, not on, the bone.
-6. Wrapped ice or a cold pack for 20 minutes eases swelling.
+6. {{#if power}}Wrapped ice or a cold pack for 20 minutes eases swelling.{{else}}With the freezer off, a cloth wrung out in cold water and changed often eases swelling.{{/if}}
 7. Check colour, warmth and feeling below the injury every few minutes; loosen ties if fingers or toes go white or numb.
 
 ## Warnings
@@ -27,7 +27,7 @@ Pain, swelling, a limb bent the wrong way, grating, or unable to move or bear we
 
 ## Stop or escalate
 
-999 for an open fracture, a thigh, hip, pelvis, spine or skull injury, an obvious deformity, numbness or a white cold limb below the injury, or heavy bleeding.
+An open fracture, a thigh, hip, pelvis, spine or skull injury, an obvious deformity, numbness or a white cold limb below the injury, or heavy bleeding — [[call 999]].
 
 ## Source
 

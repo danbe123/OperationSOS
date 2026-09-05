@@ -13,7 +13,7 @@ Pulled from water and not breathing normally, or coughing, confused or exhausted
 ## Steps
 
 1. Do not go in. Reach with a pole or throw something that floats.
-2. Call 999; ask for the coastguard at the sea, the fire service inland.
+2. Ask for coastguard at sea, fire service inland — [[call 999]].
 3. Once out: check breathing for up to 10 seconds.
 4. If not breathing normally: give 5 rescue breaths first, then 30 chest compressions and 2 breaths, and keep going.
 5. Expect vomiting; turn them on their side to clear it, then continue.
@@ -27,7 +27,7 @@ Pulled from water and not breathing normally, or coughing, confused or exhausted
 
 ## Stop or escalate
 
-999 always. Continue CPR until help takes over; cold-water drowning victims have survived long resuscitations.
+Anyone pulled from the water needs help coming — [[call 999]]. Continue CPR until help takes over; cold-water drowning victims have survived long resuscitations.
 
 ## Source
 

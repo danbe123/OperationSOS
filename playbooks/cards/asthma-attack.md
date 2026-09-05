@@ -15,7 +15,7 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 1. Sit them upright, leaning slightly forward. Stay calm with them.
 2. One puff of the blue reliever (salbutamol) every 30 to 60 seconds.
 3. Use a spacer if there is one. Up to 10 puffs.
-4. If no better after 10 puffs, or they cannot speak, call 999.
+4. If no better after 10 puffs, or they cannot speak, [[call 999]].
 5. While waiting, repeat 10 puffs after 15 minutes if the ambulance has not come.
 6. Do not lie them down and do not leave them.
 7. Keep windows open if the air is clean; close them if smoke, ash or pollen is the trigger.
@@ -27,7 +27,7 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 
 ## Stop or escalate
 
-999 if 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue. After any attack, they need a GP review within 48 hours.
+If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours.
 
 ## Source
 

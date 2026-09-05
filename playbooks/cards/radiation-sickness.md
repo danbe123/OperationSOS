@@ -16,7 +16,7 @@ Nausea, vomiting or diarrhoea within hours of being outside during fallout or ne
 2. Remove outer clothing, bag it, wash skin and hair with soap.
 3. Write down when the exposure started and when vomiting began.
 4. Vomiting within an hour means a severe dose; within 1 to 2 hours serious; 2 to 4 hours moderate; none in 6 hours is probably a low dose.
-5. Rest, fluids and oral rehydration solution; paracetamol for fever and pain; small frequent meals when they can eat.
+5. {{#if water}}Rest, fluids and oral rehydration solution; paracetamol for fever and pain; small frequent meals when they can eat.{{else}}Rest, fluids and oral rehydration solution made with stored or covered water, which the fallout has not reached; paracetamol for fever and pain; small frequent meals when they can eat.{{/if}}
 6. Keep every cut clean and covered; infection is the main killer in the following weeks while the blood counts fall.
 7. Keep them away from anyone with a cough or cold and away from crowds.
 8. Do not give stable iodine unless the authorities have told you to; it does nothing for radiation sickness.
@@ -28,7 +28,7 @@ Nausea, vomiting or diarrhoea within hours of being outside during fallout or ne
 
 ## Stop or escalate
 
-999 or 111 as soon as either works; hospital care with antibiotics and transfusions changes the odds at doses above about 2 Gy. See the [radiation module](module:radiation).
+Hospital care with antibiotics and transfusions changes the odds at doses above about 2 Gy, so get them to it by any route — [[call 999]]. {{#if phones}}For advice short of an emergency, [[call 111]].{{else}}Nothing short of an emergency will be answered from here: use the cards and the [medical module](module:medical).{{/if}} See the [radiation module](module:radiation).
 
 ## Source
 

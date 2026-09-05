@@ -12,7 +12,7 @@ Someone has collapsed, does not respond when you shout and shake them, and is no
 
 ## Steps
 
-1. Shout for help. Call 999 on speaker and put the phone beside you.
+1. Shout for help, a phone on speaker beside you — [[call 999]].
 2. Send someone for a defibrillator (AED) if one is nearby.
 3. Kneel beside them. Heel of one hand on the centre of the chest.
 4. Other hand on top, arms straight. Press down 5 to 6 cm, 100 to 120 times a minute (two a second), letting the chest come back up fully each time.
@@ -28,7 +28,7 @@ Someone has collapsed, does not respond when you shout and shake them, and is no
 
 ## Stop or escalate
 
-999 is already on the way. Stop only when the person breathes normally on their own (then use the [recovery position](card:recovery-position)) or a paramedic takes over.
+Someone else raises the alarm while you keep pressing — [[call 999]]. Stop only when the person breathes normally on their own (then use the [recovery position](card:recovery-position)) or a paramedic takes over.
 
 ## Source
 

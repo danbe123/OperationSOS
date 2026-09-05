@@ -12,7 +12,7 @@ Contractions every two to three minutes, the mother says the baby is coming, or 
 
 ## Steps
 
-1. Call 999 and stay on the line; put the phone on speaker.
+1. Get help coming, on speaker if it connects — [[call 999]].
 2. Wash your hands. Clean towels, a warm room, privacy.
 3. Let the mother choose her position; do not make her lie flat.
 4. As the head appears, support it gently with a clean hand; do not pull. Let the mother push with contractions.
@@ -23,12 +23,12 @@ Contractions every two to three minutes, the mother says the baby is coming, or 
 
 ## Warnings
 
-**Warning:** Feet or bottom first, heavy bleeding before the birth, a cord coming out first, or fits are emergencies: tell 999 immediately.
+**Warning:** Feet or bottom first, heavy bleeding before the birth, a cord coming out first, or fits are emergencies: get help at once — [[call 999]].
 **Warning:** Never pull on the cord to deliver the placenta.
 
 ## Stop or escalate
 
-999 always. If the baby does not breathe after drying and rubbing for a minute, start [child CPR](card:cpr-child).
+A birth like this always needs help coming — [[call 999]]. If the baby does not breathe after drying and rubbing for a minute, start [child CPR](card:cpr-child).
 
 ## Source
 

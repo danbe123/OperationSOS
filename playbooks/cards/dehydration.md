@@ -17,7 +17,7 @@ Dark urine, dry mouth, dizziness, headache, tiredness; in babies a sunken soft s
 3. Add half a level teaspoon of salt. Stir until clear.
 4. Adults: a cup every 20 minutes, more after each loose stool.
 5. Children: small sips often; keep breastfeeding or milk feeds going; aim for about a cup (200 ml) of solution after every loose stool.
-6. Keep going until urine is pale and plentiful; two to three litres a day for an adult in heat or with diarrhoea.
+6. {{#if water}}Keep going until urine is pale and plentiful; two to three litres a day for an adult in heat or with diarrhoea.{{else}}Keep going until urine is pale and plentiful; two to three litres a day for an adult in heat or with diarrhoea, boiled or treated first because the mains is off ([Water module](module:water)).{{/if}}
 7. Bought sachets (Dioralyte and similar) work the same way; follow the packet.
 8. Avoid alcohol, strong coffee and very sugary drinks; they make it worse.
 
@@ -28,7 +28,7 @@ Dark urine, dry mouth, dizziness, headache, tiredness; in babies a sunken soft s
 
 ## Stop or escalate
 
-999 or 111 if they are drowsy or confused, have not passed urine in 8 hours, cannot keep fluids down, have a fast weak pulse, or are a baby with a sunken soft spot or no wet nappy in 12 hours.
+Drowsy or confused, no urine in 8 hours, unable to keep fluids down, a fast weak pulse, or a baby with a sunken soft spot or no wet nappy in 12 hours — [[call 999]]. {{#if phones}}For a milder case where they are still alert and drinking, [[call 111]].{{else}}A milder case still needs someone who can treat them: the [medical module](module:medical), and a runner to the nearest help.{{/if}}
 
 ## Source
 

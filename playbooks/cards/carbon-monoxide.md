@@ -16,8 +16,8 @@ Headache, dizziness, nausea or flu-like feeling in several people or pets at onc
 2. Open doors and windows on the way out if it takes no time.
 3. Turn off the generator, stove, heater or barbecue if safe to do so.
 4. Do not go back in. Count everyone.
-5. Call the gas emergency line: 0800 111 999 in Great Britain, 0800 002 001 in Northern Ireland; 999 if anyone is unconscious or has chest pain.
-6. Everyone exposed needs a medical check even if they feel better; call 111 or go to A&E.
+5. {{#if phones}}Call the gas emergency line: 0800 111 999 in Great Britain, 0800 002 001 in Northern Ireland; [[call 999]] if anyone is unconscious or has chest pain.{{else}}No line will connect: keep everyone out in the fresh air and send someone to the nearest fire station, which is crewed and has its own radio ([getting help without phones](page:no-phones)).{{/if}}
+6. Everyone exposed needs a medical check even if they feel better — go to A&E, or [[call 111]].
 7. Never run a generator, barbecue or camping stove indoors, in a garage, tent or conservatory; fit a CO alarm before any stove is used.
 
 ## Warnings
@@ -27,7 +27,7 @@ Headache, dizziness, nausea or flu-like feeling in several people or pets at onc
 
 ## Stop or escalate
 
-999 for anyone unconscious, confused, fitting or with chest pain; if breathing stops, [CPR](card:cpr-adult) in fresh air.
+Anyone unconscious, confused, fitting or with chest pain — [[call 999]]. If breathing stops, [CPR](card:cpr-adult) in fresh air.
 
 ## Source
 

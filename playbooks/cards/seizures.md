@@ -27,7 +27,7 @@ Someone is shaking or jerking uncontrollably, has gone stiff, or is unresponsive
 
 ## Stop or escalate
 
-999 if it lasts over 5 minutes, repeats, they are injured, it happened in water, it is their first seizure, they are pregnant or diabetic, or breathing does not return to normal.
+Over 5 minutes, one seizure after another, injury, in water, a first seizure, pregnancy or diabetes, or breathing that does not return to normal — [[call 999]].
 
 ## Source
 

@@ -13,7 +13,7 @@ Swollen face, lips or throat, wheeze or trouble breathing, hives or faintness af
 ## Steps
 
 1. Use their adrenaline pen now: outer thigh, through clothing.
-2. Hold it in place (Jext 10 seconds, EpiPen 3 seconds). Call 999.
+2. Hold in place: Jext 10 seconds, EpiPen 3 seconds. Then [[call 999]].
 3. Lie them flat with legs raised; sit them up only if breathing is hard.
 4. A pregnant woman lies on her left side. Do not let them stand or walk.
 5. If no better after 5 minutes, give a second pen if there is one.
@@ -27,7 +27,7 @@ Swollen face, lips or throat, wheeze or trouble breathing, hives or faintness af
 
 ## Stop or escalate
 
-999, say "anaphylaxis". Hospital observation is needed even after recovery because a second reaction can follow hours later.
+This is always an emergency, and the message is "anaphylaxis" — [[call 999]]. Hospital observation is needed even after recovery because a second reaction can follow hours later.
 
 ## Source
 

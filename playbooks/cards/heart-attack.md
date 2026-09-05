@@ -12,7 +12,7 @@ Crushing or tight chest pain, maybe spreading to arms, jaw, neck or back, with s
 
 ## Steps
 
-1. Call 999. Say "chest pain, possible heart attack".
+1. Say "chest pain, possible heart attack" — [[call 999]].
 2. Sit them on the floor, back against a wall, knees bent and supported.
 3. Give one 300 mg aspirin to chew slowly, if not allergic.
 4. If they have a GTN spray prescribed, let them use it as directed.
@@ -27,7 +27,7 @@ Crushing or tight chest pain, maybe spreading to arms, jaw, neck or back, with s
 
 ## Stop or escalate
 
-999 immediately. Every minute of delay costs heart muscle.
+This is an emergency from the first minute — [[call 999]]. Every minute of delay costs heart muscle.
 
 ## Source
 

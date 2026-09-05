@@ -14,7 +14,7 @@ Face drooping on one side, an arm they cannot lift, slurred speech, sudden loss 
 
 1. Face: ask them to smile. Does one side droop?
 2. Arms: ask them to raise both. Does one drift down?
-3. Speech: is it slurred or jumbled? Time: call 999 now.
+3. Speech: slurred or jumbled? Time: act now — [[call 999]].
 4. Note the exact time the symptoms started; the hospital needs it.
 5. Keep them still and calm, sitting or lying with the head supported; loosen tight clothing.
 6. Nothing to eat or drink; swallowing is often affected.
@@ -22,12 +22,12 @@ Face drooping on one side, an arm they cannot lift, slurred speech, sudden loss 
 
 ## Warnings
 
-**Warning:** Symptoms that pass in minutes (a mini-stroke, TIA) still need 999; a full stroke often follows.
+**Warning:** Symptoms that pass in minutes (a mini-stroke, TIA) still need the same response, because a full stroke often follows — [[call 999]].
 **Warning:** Do not give aspirin for a suspected stroke; it is deadly in the bleeding kind.
 
 ## Stop or escalate
 
-999 at the first sign. Clot-busting treatment works only within the first hours.
+At the first sign, without waiting to see — [[call 999]]. Clot-busting treatment works only within the first hours.
 
 ## Source
 

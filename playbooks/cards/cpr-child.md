@@ -12,12 +12,12 @@ A child or baby does not respond and is not breathing normally.
 
 ## Steps
 
-1. Shout for help. Alone? Do one minute of CPR, then call 999.
+1. Shout for help. Alone? One minute of CPR, then [[call 999]].
 2. Tilt the head back a little, lift the chin, and give 5 rescue breaths.
 3. Baby: seal your mouth over mouth and nose. Child: pinch the nose.
 4. Press the centre of the chest 30 times at 100 to 120 a minute: a baby with two fingers about 4 cm deep, a child with the heel of one hand about 5 cm deep (a third of the chest).
 5. Give 2 breaths, then 30 more presses. Keep going 30 to 2.
-6. Call 999 on speaker after the first minute if nobody else has, and use a defibrillator if one arrives (paediatric pads or setting if available; adult pads if not).
+6. After the first minute, if nobody else has, [[call 999]]. Use a defibrillator if one arrives (paediatric pads or setting if available; adult pads if not).
 7. Do not stop until the child breathes normally or help takes over.
 
 ## Warnings
@@ -27,7 +27,7 @@ A child or baby does not respond and is not breathing normally.
 
 ## Stop or escalate
 
-999 straight away if someone else can call; otherwise after one minute of CPR. Stop only when the child breathes normally (then the [recovery position](card:recovery-position)) or a paramedic takes over.
+Someone else raises the alarm straight away, otherwise you go after one minute of CPR — [[call 999]]. Stop only when the child breathes normally (then the [recovery position](card:recovery-position)) or a paramedic takes over.
 
 ## Source
 

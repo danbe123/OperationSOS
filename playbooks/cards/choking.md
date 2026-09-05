@@ -18,7 +18,7 @@ Someone cannot breathe, cough or speak, is clutching their throat, or is turning
 4. If still choking: stand behind, fist above the navel, other hand over it, pull sharply inwards and upwards 5 times.
 5. Keep alternating 5 back blows and 5 abdominal thrusts.
 6. Baby under one: lay face down along your forearm, head low, 5 back blows; then face up, 5 chest thrusts with two fingers on the breastbone. Never abdominal thrusts on a baby.
-7. If they become unresponsive, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)) and call 999.
+7. If they become unresponsive, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)), and [[call 999]].
 
 ## Warnings
 
@@ -27,7 +27,7 @@ Someone cannot breathe, cough or speak, is clutching their throat, or is turning
 
 ## Stop or escalate
 
-Call 999 if the blockage does not clear after the first cycle or the person becomes unresponsive.
+If the blockage does not clear after the first cycle, or the person becomes unresponsive — [[call 999]].
 
 ## Source
 

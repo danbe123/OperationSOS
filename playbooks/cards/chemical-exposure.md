@@ -16,7 +16,7 @@ Splashed, doused or caught in a cloud of an unknown chemical; stinging eyes, cou
 2. Remove their clothing; cut it off rather than pull it over the head.
 3. Remove the chemical: blot with dry tissue or cloth, do not rub.
 4. If it is a powder, brush it off first; if it is caustic or in the eyes, rinse with lots of water.
-5. Then wash skin and hair with plenty of water and soap if available, for 15 to 20 minutes.
+5. {{#if water}}Then wash skin and hair with plenty of water and soap if available, for 15 to 20 minutes.{{else}}Then wash skin and hair for 15 to 20 minutes with every litre you can pour: stored bottles, the bath, a water butt ([Water module](module:water)).{{/if}}
 6. Flush eyes with clean water for 15 minutes, eyelids held open.
 7. Bag the clothing and keep it away from people. Do not induce vomiting if the chemical was swallowed.
 
@@ -27,7 +27,7 @@ Splashed, doused or caught in a cloud of an unknown chemical; stinging eyes, cou
 
 ## Stop or escalate
 
-999 for breathing difficulty, burns, confusion, or any exposure to an industrial release. Tell them the substance if you know it.
+Breathing difficulty, burns, confusion, or any exposure to an industrial release — [[call 999]]. Name the substance if you know it.
 
 ## Source
 

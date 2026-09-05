@@ -15,7 +15,7 @@ Skin is burned by heat, steam, hot liquid, chemicals or electricity.
 1. Move away from the heat. Stop, drop and roll if clothing is alight.
 2. Cool the burn under cool running water for 20 minutes.
 3. Take off jewellery and loose clothing near it; leave stuck cloth.
-4. Cooling helps up to three hours after the burn. Never use ice, butter, creams or toothpaste.
+4. {{#if water}}Cooling helps up to three hours after the burn.{{else}}With the mains off, pour from bottles, the bath or a water butt: any clean cool water will do, and cooling still helps up to three hours after the burn.{{/if}} Never use ice, butter, creams or toothpaste.
 5. Cover loosely with cling film laid lengthways, or a clean non-fluffy cloth or plastic bag. Do not wrap tightly.
 6. Give paracetamol for pain (adult 1 g, see the medicine pack). Keep the person warm; a big burn loses heat fast.
 7. Chemical burns: brush off dry powder, then rinse for 20 minutes or more; keep the run-off away from you.
@@ -27,7 +27,7 @@ Skin is burned by heat, steam, hot liquid, chemicals or electricity.
 
 ## Stop or escalate
 
-999 for any large or deep burn, any electrical or chemical burn, burns to the face or airway, difficulty breathing, or a burned baby, child or older person.
+Any large or deep burn, any electrical or chemical burn, burns to the face or airway, difficulty breathing, or a burned baby, child or older person — [[call 999]].
 
 ## Source
 
