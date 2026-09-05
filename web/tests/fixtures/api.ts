@@ -1,6 +1,6 @@
 import type {
   AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
-  Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, StockResponse, Suggestion, UpdateProgress,
+  ExportChunks, ImportSummary, Neighbour, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, StockResponse, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 
@@ -298,6 +298,28 @@ export const nearby: NearbyResponse = {
       why: 'No searchable copy of the emergency-services overlay on this box.',
     },
   ],
+};
+
+/* Phase 4: the street, and carrying the situation to another box. */
+export const neighbours: Neighbour[] = [
+  { id: 1, name: 'Joan Reeve', address: '14 Mill Lane', needs: 'oxygen concentrator, cannot manage stairs', skills: '', contacts: '07700 900123', notes: 'key is with number 12', updated_at: '2026-09-05T10:00:00Z' },
+  { id: 2, name: 'Ade Okafor', address: '18 Mill Lane', needs: '', skills: 'nurse, has a petrol generator', contacts: '07700 900456', notes: '', updated_at: '2026-09-05T10:00:00Z' },
+];
+
+export const exportChunks: ExportChunks = {
+  chunks: ['{"i":0,"n":2,"d":"H4sIAAAAAAACA61W247bIBD9FcRTq"}', '{"i":1,"n":2,"d":"8ar0iFOzA90K7V9aCv1oapWGHC"}'],
+};
+
+export const importSummary: ImportSummary = {
+  ok: true, version: 1, exported_at: '2026-09-06T13:00:00Z',
+  counts: {
+    conditions: { updated: 2, kept: 8 },
+    household: { added: 1, updated: 0, kept: 2 },
+    neighbours: { added: 2, updated: 0, kept: 0 },
+    events: { added: 3, skipped: 1 },
+  },
+  home: 'kept', scenario: 'started: grid-collapse',
+  changes: ['Mains power set to off', 'Joan Reeve added to the street list'],
 };
 
 export const sensors: Sensors = {

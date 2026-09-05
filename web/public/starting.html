@@ -5,11 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Operation SOS is starting</title>
 <style>
-html,body{margin:0;height:100%;background:#0a0f0a;color:#d7f2cf;font-family:system-ui,-apple-system,sans-serif}
+/* The kiosk boot page: the vault palette, the box's own display face for its name, and nothing else. */
+:root{--ground:#0b120c;--ink:#dcefdd;--ink-muted:#96b69a;--signal:#6cf08c}
+@font-face{font-family:'VT323';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/vt323-v18-latin-regular.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/inter-v20-latin-regular.woff2') format('woff2')}
+html,body{margin:0;height:100%;background:var(--ground);color:var(--ink);font:400 18px/1.5 'Inter',system-ui,-apple-system,sans-serif}
 main{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;text-align:center}
-h1{color:#39ff7a;font-size:48px;margin:0;letter-spacing:.04em}
+h1{color:var(--signal);font:400 64px/1 'VT323','Courier New',monospace;letter-spacing:.06em;margin:0;text-shadow:0 0 6px rgba(108,240,140,.45)}
 p{font-size:22px;margin:0}
-#tries{color:#9cc79a;font-size:16px}
+#tries{color:var(--ink-muted);font-size:16px}
 </style>
 </head>
 <body>

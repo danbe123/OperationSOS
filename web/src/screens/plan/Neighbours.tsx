@@ -127,7 +127,7 @@ export function Neighbours() {
         jobs when something goes off, and the street list prints on one page to put through doors.</p>
       {q.error && <p className="warning">Neighbours unavailable: {q.error}</p>}
       {skills.length > 0 && (
-        <div className="panel panel-signal" aria-label="What the street can do">
+        <section className="panel panel-signal" aria-label="What the street can do">
           <h3>What the street can do</h3>
           <ul className="list">
             {skills.map((s) => (
@@ -137,7 +137,7 @@ export function Neighbours() {
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
       <ul className="list" aria-label="Neighbours">
         {(q.data ?? []).map((n) => <NeighbourRow key={n.id} neighbour={n} checkOn={checkOn.has(n.name)} onChanged={q.refetch} />)}

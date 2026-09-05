@@ -11,13 +11,18 @@ const html = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Welcome to Operation SOS</title>
 <style>
-html,body{margin:0;background:#f4efe4;color:#1a1a1a;font-family:system-ui,-apple-system,sans-serif}
+/* The captive-portal landing page: the field palette and the app's own scale, with the bundled
+   Inter where it is installed and the system stack where it is not. No app JavaScript. */
+:root{--ground:#f3efe4;--panel:#fff;--ink:#1b1b1b;--ink-muted:#474740;--line:#c3b9a2;--signal:#15532e;--radius:6px}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/inter-v20-latin-regular.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/inter-v20-latin-700.woff2') format('woff2')}
+html,body{margin:0;background:var(--ground);color:var(--ink);font:400 16px/1.5 'Inter',system-ui,-apple-system,sans-serif}
 main{max-width:560px;margin:0 auto;padding:24px 16px;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
-h1{font-size:28px;margin:0}
-.big{font-size:24px;font-weight:700;margin:0}
-.ssid{font-size:20px;margin:0}
-.qr{width:240px;height:240px;background:#fff;padding:8px;border:1px solid #b8ae94}
-.help{font-size:17px;margin:0}
+h1{font-size:28px;line-height:1.2;margin:0}
+.big{font-size:22px;font-weight:700;margin:0;overflow-wrap:anywhere}
+.ssid{font-size:18px;margin:0}
+.qr{width:240px;height:240px;background:#fff;padding:8px;border:1px solid var(--line);border-radius:var(--radius)}
+.help{font-size:16px;margin:0;color:var(--ink-muted)}
 </style>
 </head>
 <body>
