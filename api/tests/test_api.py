@@ -49,7 +49,7 @@ def test_library_and_rescan(client, env):
     assert wiki["available"] is False and wiki["url"] is None
     _install_zims(env)
     r = client.post("/api/system/rescan")
-    assert r.status_code == 200 and r.json() == {"items": 14, "available": 2}
+    assert r.status_code == 200 and r.json() == {"items": 18, "available": 2}
     r = client.get(f"/api/library/{WIKI}")
     assert r.status_code == 200
     assert r.json()["available"] is True and r.json()["url"] == f"/read/{WIKI}/" and r.json()["drive_label"] == "Core"
@@ -132,7 +132,7 @@ def test_modules_cards_pages(client):
 
 def test_map_config_and_overlays(client, env):
     (env.core / "maps" / "overlays").mkdir()
-    (env.core / "maps" / "uk-ie.pmtiles").write_bytes(b"PMTiles")
+    (env.core / "maps" / "test.pmtiles").write_bytes(b"PMTiles")
     (env.core / "maps" / "overlays" / "health.geojson").write_text('{"type":"FeatureCollection","features":[]}')
     conn = db.connect(env.db_path)
     db.set_setting(conn, "overlay_scenarios", '{"health": ["grid-collapse", "pandemic"]}')
