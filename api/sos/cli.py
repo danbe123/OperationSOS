@@ -1,4 +1,4 @@
-"""`sos` command line: sync, index, storage-event, validate-playbooks, build-maps, build-nhs, eval, pin, status."""
+"""`sos` command line: sync, index, storage-event, validate-playbooks, build-maps, build-crawl, eval, pin, status."""
 from __future__ import annotations
 
 import argparse
@@ -139,16 +139,24 @@ def cmd_build_maps(settings: Settings, args) -> int:
     return buildmaps.run(args)
 
 
-def cmd_build_nhs(settings: Settings, args) -> int:
-    from sos import buildnhs
+def cmd_build_crawl(settings: Settings, args) -> int:
+    from sos import buildcrawl
 
-    return buildnhs.main(args.out)
+    playbooks = settings.playbooks if settings.playbooks.is_dir() else buildcrawl.REPO_ROOT / "playbooks"
+    return buildcrawl.main(getattr(args, "id", "nhs_uk"), args.out, playbooks=playbooks,
+                           skip_crawl=getattr(args, "skip_crawl", False))
 
 
 def cmd_eval(settings: Settings, args) -> int:
     from sos import evalrun
 
     return evalrun.run_from_namespace(args)
+
+
+def _crawl_ids() -> list[str]:
+    from sos import buildcrawl
+
+    return sorted(buildcrawl.CRAWLS)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -171,9 +179,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build-maps", help="PC only: build map tiles, styles, overlays, places and phone packs")
     buildmaps.add_arguments(p)
     p.set_defaults(func=cmd_build_maps)
-    p = sub.add_parser("build-nhs", help="PC only: zimit crawl of nhs.uk")
+    p = sub.add_parser("build-crawl", help="PC only: crawl and pack one 'build' ZIM item")
+    p.add_argument("id", choices=sorted(_crawl_ids()), help="manifest item id")
     p.add_argument("--out")
-    p.set_defaults(func=cmd_build_nhs)
+    p.add_argument("--skip-crawl", action="store_true", help="reuse the WARCs already in --out")
+    p.set_defaults(func=cmd_build_crawl)
+    p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
+    p.add_argument("--out")
+    p.add_argument("--skip-crawl", action="store_true")
+    p.set_defaults(func=cmd_build_crawl, id="nhs_uk")
     p = sub.add_parser("eval", help="AI evaluation (plan 05)")
     p.add_argument("--retrieval-only", action="store_true")
     p.add_argument("--out")
