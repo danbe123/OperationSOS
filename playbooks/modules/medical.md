@@ -30,15 +30,15 @@ sources:
 
 ## Key facts
 
-- Call **999** for anything life-threatening, **111** for urgent advice in England, Scotland and Wales (Northern Ireland uses GP out-of-hours numbers instead), and use Pharmacy First in England for seven minor conditions; the full list is on [UK numbers](page:uk-numbers).
+- {{#if phones}}For anything life-threatening, [[call 999]]; for urgent advice in England, Scotland and Wales, [[call 111]] (Northern Ireland uses GP out-of-hours numbers instead); and use Pharmacy First in England for seven minor conditions; the full list is on [UK numbers](page:uk-numbers).{{else}}With the phones down, 999 and 111 are out of reach: treat what you can from the quick cards, send a runner to the nearest fire, ambulance or police station for anything life-threatening, and ask a pharmacy in person for the rest ([getting help without phones](page:no-phones); [UK numbers](page:uk-numbers)).{{/if}}
 - Keep two weeks of any prescribed medicine, and ask the GP about "sick day rules" for insulin, steroids and heart drugs before an emergency, not during one. Never self-source antibiotics.
-- Sepsis can follow any infection and kills quickly; know the warning signs and treat them as a 999 call ([NHS sepsis](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/)).
+- Sepsis can follow any infection and kills quickly; know the warning signs and treat them as an emergency — [[call 999]] ([NHS sepsis](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/)).
 
 ## What to do
 
 1. Stock a home kit with UK names and adult doses: paracetamol 500 mg tablets, up to 1 g four times a day and never more than 4 g in 24 hours ([NHS paracetamol](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/)); ibuprofen 400 mg up to three times a day with food, avoided with asthma, kidney or stomach problems ([NHS ibuprofen](kiwix:nhs_medicines/www.nhs.uk/medicines/ibuprofen-for-adults/)); aspirin 300 mg to chew during a suspected heart attack ([Heart attack card](card:heart-attack)).
 2. Add antihistamines (cetirizine, loratadine, chlorphenamine), loperamide, oral rehydration salts, chlorhexidine antiseptic, dressings, a thermometer, a pulse oximeter, gloves and a tick tool.
-3. Clean a wound under running water, apply pressure to stop bleeding, cover it, then watch for spreading redness, pus or fever over the following days ([Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15)).
+3. {{#if water}}Clean a wound under running water{{else}}Clean a wound by pouring bottled, or boiled and cooled, water over it{{/if}}, apply pressure to stop bleeding, cover it, then watch for spreading redness, pus or fever over the following days ([Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15)).
 4. If a source in this library uses American terms, translate them: acetaminophen is paracetamol, epinephrine is adrenaline, albuterol is salbutamol.
 5. In a mass-casualty situation, sort the injured before treating anyone, using the triage method in [Emergency War Surgery, p. 38](doc:emergency-war-surgery-2018#page=38).
 6. Use the WHO essential medicines list as a shopping list for a community pharmacy or first-aid store ([WHO EML, p. 12](doc:who-eml-2025#page=12)).

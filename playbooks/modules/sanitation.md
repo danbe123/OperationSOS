@@ -33,7 +33,7 @@ sources:
 
 ## What to do
 
-1. Wash hands with soap for 20 seconds after the toilet, before eating and after handling waste, even when water is scarce.
+1. {{#if water}}Wash hands with soap for 20 seconds after the toilet, before eating and after handling waste, even when water is scarce.{{else}}Wash hands with soap for 20 seconds after the toilet, before eating and after handling waste: with the mains off, have someone pour a thin stream from a jug over a bowl, and keep that water for flushing.{{/if}}
 2. Clean surfaces contaminated by vomit or faeces with a 0.5% chlorine solution (one part 5% thin bleach to nine parts water); use a weaker 0.05% solution on hands and skin ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
 3. Keep food waste sealed, and bury or burn paper and food scraps; never burn plastics. Rats spread leptospirosis, so do not let rubbish accumulate ([Leptospirosis](kiwix:wikipedia_en_all_maxi/Leptospirosis)).
 4. Stock nappies and menstrual products in advance; they are easy to forget until they run out.

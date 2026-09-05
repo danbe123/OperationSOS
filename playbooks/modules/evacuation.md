@@ -25,7 +25,7 @@ sources:
 ## Key facts
 
 - Staying put is the default in the UK. Leave only when the police or an Emergency Alert say so, or the building itself is unsafe: fire, rising water, structural damage, or a gas or chemical plume ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
-- For a chemical plume the advice is to go in, stay in and tune in unless you are told to leave; for a fire it is get out, stay out and call 999.
+- For a chemical plume the advice is to go in, stay in and tune in unless you are told to leave; for a fire it is get out, stay out, and get the fire brigade — [[call 999]].
 - After a nuclear detonation, shelter first, and evacuate only when told to and along the route given ([FEMA, p. 33](doc:fema-nuclear-detonation-2022#page=33)).
 
 ## What to do

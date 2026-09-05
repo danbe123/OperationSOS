@@ -35,7 +35,7 @@ sources:
 
 1. Estimate walking time with Naismith's rule: 5 km an hour, plus one extra minute for every 10 m of climb ([Naismith's rule](kiwix:wikipedia_en_all_maxi/Naismith's_rule)).
 2. Check the map's margin for the current magnetic variation before relying on a compass bearing; in the UK in 2026 it is small, roughly 0 to 2 degrees east, so it can otherwise be ignored for rough work ([magnetic declination](kiwix:wikipedia_en_all_maxi/Magnetic_declination)).
-3. In an emergency call 999 and ask for police, then mountain rescue, or the coastguard if you are near the coast.
+3. In an emergency, ask for the police, who call out mountain rescue, or for the coastguard if you are near the coast — [[call 999]].
 4. Signal distress with six whistle blasts or torch flashes a minute, then a minute's pause, and repeat ([FM 21-76, p. 134](doc:fm-21-76-survival#page=134)).
 5. Check the weather and remaining daylight before setting out, and treat every beach and estuary as a tidal trap: this box carries no tide tables, since the UK Hydrographic Office's tidal data is not openly licensed.
 

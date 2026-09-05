@@ -33,7 +33,7 @@ sources:
 
 ## What to do
 
-1. Four to six hens will give three to five eggs a day in summer and far fewer in winter; each needs about 0.3 litres of water a day.
+1. Four to six hens will give three to five eggs a day in summer and far fewer in winter; each needs about 0.3 litres of water a day. {{#if water}}Fill their drinkers from the tap and keep a spare container filled against a cut.{{else}}With the mains off that water comes out of your store or the butt: fill the drinkers first thing and keep the butt covered ([Water module](module:water)).{{/if}}
 2. Goats provide milk but need 5 to 10 litres of water a day each; rabbits are the fastest source of home-reared protein.
 3. If you plan to keep pigs, you need a county parish holding number and movement licences before you start ([keeping a pet pig](kiwix:govuk_resilience/www.gov.uk/guidance/keeping-a-pet-pig-or-micropig)).
 4. Keep bees for honey and wax if you have the space and are willing to learn the basics first ([beekeeping](kiwix:wikipedia_en_all_maxi/Beekeeping)).

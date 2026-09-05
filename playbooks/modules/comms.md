@@ -27,7 +27,7 @@ sources:
 
 ## Key facts
 
-- The numbers that matter: 999 or 112 from any phone; 999 by text after registering by texting "register" to 999; 111; 105; the gas emergency line 0800 111 999 in Great Britain (0800 002 001 in Northern Ireland); Floodline 0345 988 1188 in England, Scotland and Wales (0300 2000 100 in Northern Ireland); 101; Samaritans 116 123. The full list is on [UK numbers](page:uk-numbers).
+- {{#if phones}}The numbers that matter:{{else}}The numbers that matter, none of which will connect until the network is back ([getting help without phones](page:no-phones)):{{/if}} 999 or 112 from any phone; 999 by text after registering by texting "register" to 999; 111; 105; the gas emergency line 0800 111 999 in Great Britain (0800 002 001 in Northern Ireland); Floodline 0345 988 1188 in England, Scotland and Wales (0300 2000 100 in Northern Ireland); 101; Samaritans 116 123. The full list is on [UK numbers](page:uk-numbers).
 - The National Risk Register lists a simultaneous loss of all fixed and mobile forms of communication among its reasonable worst-case scenarios, alongside the risk of a cyber attack on telecommunications systems ([NRR 2025, p. 88](doc:nrr-2025#page=88); [NRR 2025, p. 55](doc:nrr-2025#page=55)).
 - Digital Voice landlines stop in a power cut unless the provider supplied a battery backup unit, which typically gives about an hour of calls, and the old copper network closes by January 2027. Mobile masts mostly run for about an hour on battery; texts often get through when calls do not, and a phone will try any available network for a 999 call.
 

@@ -31,7 +31,7 @@ sources:
 ## What to do
 
 1. Write a community emergency plan covering: contacts, local risks, a skills register, an asset register (generators, chainsaws, 4x4s, halls), people who may need help, a rest centre or warm hub, how information is shared when phones are down (noticeboard, runners, a PMR446 channel), and who activates the plan and when it is reviewed ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)).
-2. Check on neighbours, especially anyone likely to be on the Priority Services Register.
+2. {{#if phones}}Check on neighbours by phone or at the door, especially anyone likely to be on the Priority Services Register.{{else}}Check on neighbours at the door, especially anyone likely to be on the Priority Services Register: with the phones down nobody else will notice they are missing.{{/if}}
 3. Keep a paper copy of the plan and of the numbers page somewhere shared, such as a village hall, not only on one person's phone.
 4. Keep politics and blame out of the group; the plan works only if everyone stays willing to take part in it.
 

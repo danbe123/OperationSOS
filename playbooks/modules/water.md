@@ -38,7 +38,7 @@ sources:
 
 ## What to do
 
-1. Fill every clean container the moment a warning arrives: kettle, pans, bottles, the bath (for washing and flushing, not drinking).
+1. {{#if water}}Fill every clean container while the mains still runs: kettle, pans, bottles, the bath (for washing and flushing, not drinking).{{else}}With the mains off it is too late to fill: ration what you stored, and fill everything you can the moment supply returns, even briefly.{{/if}}
 2. Ration in this order: drinking, cooking, hand washing, dishes, flushing.
 3. When the mains fails, use in this order: stored bottled water; the hot-water cylinder (drain from its bottom tap; drinking quality only if the cylinder is fed straight from the mains, otherwise washing only); the toilet cistern (washing only, never the bowl); rainwater and streams after treatment.
 4. Treat any water you did not store yourself:

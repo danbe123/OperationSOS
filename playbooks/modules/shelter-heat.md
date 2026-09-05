@@ -30,13 +30,13 @@ sources:
 
 ## What to do
 
-1. Use the one-warm-room method: everyone sleeps in it, curtains are shut at dusk, doors to unused rooms stay closed, and draught excluders, rugs and layers do the rest.
+1. {{#if heating}}Choose the one warm room before you need it: the room everyone would sleep in, with curtains shut at dusk, doors to unused rooms closed, and draught excluders, rugs and layers doing the rest.{{else}}Move into one warm room now: everyone sleeps in it, curtains are shut at dusk, doors to unused rooms stay closed, and draught excluders, rugs and layers do the rest.{{/if}}
 2. Add hats indoors, hot-water bottles and sleeping bags rated to the temperature you actually expect.
 3. A wood or solid-fuel stove needs a proper flue and an air supply, and a carbon monoxide alarm within the room ([Approved Document J, p. 43](doc:ad-j#page=43); flues, [p. 11](doc:ad-j#page=11)).
 4. Paraffin and LPG heaters need ventilation. Barbecues, generators and camping stoves are never used indoors, in a garage or in a doorway ([Carbon monoxide card](card:carbon-monoxide)).
 5. A tent or den pitched inside a room traps body heat further; watch for the signs of hypothermia, especially in children and older people ([Hypothermia card](card:hypothermia)).
 6. In heat: shade windows in the day, ventilate at night, use wet sheets, and sleep on the ground floor on the north side of the house ([Heat stroke card](card:heat-stroke)).
-7. After storm damage, cover a hole in the roof with a tarpaulin battened down at the edges; never walk on a damaged roof. Have a fire escape plan and call 999 for anything beyond a small fire.
+7. After storm damage, cover a hole in the roof with a tarpaulin battened down at the edges; never walk on a damaged roof. Have a fire escape plan, and get the fire brigade for anything beyond a small fire — [[call 999]].
 
 ## UK specifics
 

@@ -30,7 +30,7 @@ sources:
 1. Keep a routine: sleep, food, limiting news intake, and one useful task a day, even a small one.
 2. With children, give honest, simple answers, keep them with familiar adults, and let them play and help rather than sit and wait.
 3. Ask directly about suicidal thoughts if you are worried about someone, remove any means of harm, and do not leave that person alone ([Samaritans](kiwix:wikipedia_en_all_maxi/Samaritans_(charity))).
-4. Use the helplines: Samaritans 116 123 (free, 24 hours), Shout by texting 85258, NHS urgent mental health help through 111 (option 2 in England), CALM 0800 58 58 58, and Childline 0800 1111 ([UK numbers](page:uk-numbers)).
+4. {{#if phones}}Use the helplines: Samaritans 116 123 (free, 24 hours), Shout by texting 85258, NHS urgent mental health help — [[call 111]] and take option 2 in England — CALM 0800 58 58 58, and Childline 0800 1111 ([UK numbers](page:uk-numbers)).{{else}}No helpline will answer while the phones are down, so be the help yourself: sit with the person, stay the night if that is what it takes, share the load with another adult, and walk them to a rest centre, a surgery or a church where people are gathering ([getting help without phones](page:no-phones); the numbers for when the lines return are on [UK numbers](page:uk-numbers)).{{/if}}
 
 ## UK specifics
 

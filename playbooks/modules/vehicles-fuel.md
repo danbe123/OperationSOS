@@ -26,7 +26,7 @@ sources:
 
 - The Petroleum (Consolidation) Regulations 2014 let a household keep up to 30 litres of petrol without telling anyone: in plastic containers of up to 10 litres each, metal containers of up to 20 litres, or a demountable tank of up to 30 litres; diesel is not covered by these limits ([Petroleum Regulations](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)).
 - Fuel pumps need mains electricity to work, as the September 2021 fuel crisis showed when panic buying, not a shortage of fuel itself, emptied forecourts ([2021 UK fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)).
-- Petrol goes off after about six months (E10 sooner), diesel keeps for a year or more but grows "diesel bug" if it holds water; keep every tank above half so you always have a reserve.
+- Petrol goes off after about six months (E10 sooner), diesel keeps for a year or more but grows "diesel bug" if it holds water; {{#if power}}keep every tank above half so you always have a reserve.{{else}}the pumps have no power, so what is in the tank is all there is: save it for the journey that matters.{{/if}}
 
 ## What to do
 
