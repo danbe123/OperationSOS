@@ -169,3 +169,9 @@ def test_load_is_cached_by_mtime(rules_dir):
 def test_schema_file_is_valid_json_schema():
     schema = json.loads((RULES_DIR / "schema.json").read_text(encoding="utf-8"))
     assert set(schema["$defs"]["rule"]["properties"]["kind"]["enum"]) == set(rules.KINDS)
+
+
+def test_the_fixture_rules_use_the_committed_schema():
+    """The API tests load their own small rule set; it must be validated by the same schema as the real one."""
+    fixture = Path(__file__).parent / "fixtures" / "playbooks" / "rules" / "schema.json"
+    assert fixture.read_text(encoding="utf-8") == (RULES_DIR / "schema.json").read_text(encoding="utf-8")
