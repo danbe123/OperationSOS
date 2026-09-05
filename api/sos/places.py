@@ -9,7 +9,7 @@ from pathlib import Path
 from sos.config import Settings
 from sos.query import fts5_match, tokenise
 
-KIND_RANK = {"city": 0, "town": 1, "village": 2, "suburb": 3, "hamlet": 4, "locality": 5, "road": 6, "postcode": 7}
+KIND_RANK = {"city": 0, "town": 1, "village": 2, "suburb": 3, "hamlet": 4, "locality": 5, "named-road": 6, "postcode": 7}
 _KIND_CASE = "CASE kind " + " ".join(f"WHEN '{k}' THEN {v}" for k, v in KIND_RANK.items()) + " ELSE 8 END"
 
 

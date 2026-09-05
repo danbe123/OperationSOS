@@ -52,7 +52,7 @@ REAL_PLACES = [
     ("M1 1AE", "postcode", 53.4780, -2.2420, "England", "M1 1AE"),
     ("BB11 1AA", "postcode", 53.7880, -2.2470, "England", "BB11 1AA"),
     ("EH1 1AA", "postcode", 55.9500, -3.1900, "Scotland", "EH1 1AA"),
-    ("High Street", "road", 51.7515, -1.2555, "England", ""),
+    ("High Street", "named-road", 51.7515, -1.2555, "England", ""),
 ]
 
 
