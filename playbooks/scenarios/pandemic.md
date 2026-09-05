@@ -61,7 +61,7 @@ sources:
 
 - **Waves.** The pandemic "may come in single or multiple waves"; the emergency stage lasts at least nine months ([NRR 2025, p. 156](doc:nrr-2025#page=156)). Assume the shops, schools and surgeries close and reopen more than once.
 - **Bacterial complications** are what killed most people in 1918: pneumonia after the flu ([Spanish flu](kiwix:wikipedia_en_all_maxi/Spanish_flu)). A fever that comes back after improvement, rusty sputum or one-sided chest pain needs antibiotics; amoxicillin and doxycycline are the WHO first choices for community pneumonia ([WHO EML, p. 12](doc:who-eml-2025#page=12); [WHO EML, p. 18](doc:who-eml-2025#page=18)), prescribed by whoever can still prescribe. Do not self-source antibiotics while any pharmacy or 111 works ([Medical module](module:medical)).
-- **Other illness does not stop.** Children still get measles and bronchiolitis, adults still get heart attacks; the quick cards are on [Medical](card:cpr-adult).
+- **Other illness does not stop.** Children still get measles and bronchiolitis, adults still get heart attacks; the quick cards are on [Medical module](module:medical).
 - **Food and money.** A two-week store lets you skip the shop at the peak ([Food module](module:food)); keep cash in case card networks or banks go down ([Economic collapse playbook](playbook:economic-collapse)).
 - **Deaths at home.** Confirm death, wear gloves, wrap and label the body, keep it cool and separate ([Ship Captain's Medical Guide ch. 12, p. 1](doc:scmg-ch12#page=1)); register it within five days in England and Wales, eight in Scotland, when registration is working ([After a death](kiwix:govuk_resilience/www.gov.uk/after-a-death)).
 

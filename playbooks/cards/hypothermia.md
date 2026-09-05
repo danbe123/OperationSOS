@@ -27,7 +27,7 @@ Shivering, cold pale skin, slurred speech, clumsiness, confusion; later shiverin
 
 ## Stop or escalate
 
-999 if they are confused, drowsy, have stopped shivering, or are a baby or an older person. If they stop breathing, start [CPR](card:cpr-adult) and keep going; cold people have survived long resuscitation.
+999 if they are confused, drowsy, have stopped shivering, or are a baby or an older person. If they stop breathing, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)) and keep going; cold people have survived long resuscitation.
 
 ## Source
 

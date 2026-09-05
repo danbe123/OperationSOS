@@ -54,6 +54,7 @@ sources:
 - [Severe bleeding card](card:severe-bleeding)
 - [Wound cleaning card](card:wound-cleaning)
 - [CPR for adults card](card:cpr-adult)
+- [CPR for children and babies card](card:cpr-child)
 - [Choking card](card:choking)
 - [Seizures card](card:seizures)
 - [Where There Is No Doctor](doc:where-there-is-no-doctor)

@@ -75,7 +75,7 @@ Markdown links use these schemes; `sos validate-playbooks` checks every target e
 
 | Link | Opens |
 |---|---|
-| `kiwix:<id>/<path>` | the reader at that article, e.g. `kiwix:wikipedia_en_all_maxi/A/Potassium_iodide` |
+| `kiwix:<id>/<path>` | the reader at that article, e.g. `kiwix:wikipedia_en_all_maxi/Potassium_iodide` |
 | `doc:<id>` | the PDF or EPUB viewer for a manifest item |
 | `doc:<id>#page=<n>` | the same document at page n |
 | `map:?overlay=<id>&overlay=<id>` | the map with those overlays switched on |
@@ -89,7 +89,7 @@ The box is offline: do not link to the internet from a body. Put the origin of a
 ## Modules, cards and pages
 
 - **Modules** are written once and included by playbooks. Headings are free (`##`), task lists are allowed and become part of the including playbook's checklist.
-- **Cards** are one screen each: the title and the first three steps fit without scrolling on the kiosk (853x480) and on a 360 px phone; later steps scroll. Numbered steps, `> **Warning:**` blockquotes for red warnings, when to stop or escalate, and the source.
+- **Cards** are one screen each: the title and the first three steps fit without scrolling on the kiosk (853x480) and on a 360 px phone; later steps scroll. Numbered steps, `**Warning:**` lines for warnings, when to stop or escalate, and the source.
 - **Pages** carry `category`; tables render as tables (the PMR446 channel list, UK numbers, band plans).
 
 ## Validation

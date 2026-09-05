@@ -29,7 +29,7 @@ The law allows reasonable force to defend yourself, others or your property. For
 
 ## Scotland and Northern Ireland
 
-Scotland has its own equivalent to the householder defence provisions ([Criminal Law (Consolidation) (Scotland) Act 1995 s49](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1995/39/section/49)). Northern Ireland applies stricter firearms and air weapon certification rules through the Police Service of Northern Ireland than the rest of the UK.
+Scotland has no statutory householder defence; self-defence there is a matter of common law, and the test for using force against an intruder is stricter than the English and Welsh householder test. Northern Ireland follows the same common-law self-defence principles as Scotland, not the English/Welsh statutory householder test, and applies stricter firearms and air weapon certification rules through the Police Service of Northern Ireland than the rest of the UK.
 
 ## Go deeper
 
