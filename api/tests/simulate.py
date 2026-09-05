@@ -1,12 +1,20 @@
 """A random walk over the situation, to catch what fixed examples never will.
 
-Four hundred steps of conditions changing, scenarios starting and ending, drills, ticks and the clock moving on.
-After every step the View is computed twice and checked against the invariants the whole app relies on. Seeded,
-so a failure is reproducible: `python -m tests.simulate 1234`."""
+Hundreds of steps of conditions changing, scenarios starting and ending, drills, neighbours moving in and out,
+ticks and the clock moving on. After every step the View is computed twice and checked against the invariants the
+whole app relies on, including the one that matters most: no rendered instruction ever tells someone to ring a
+number that will not connect. Seeded, so a failure is reproducible:
+
+    python -m tests.simulate --steps 2000 --seeds 5
+    python -m tests.simulate --seed 1234 --steps 400
+"""
 from __future__ import annotations
 
+import argparse
 import random
+import re
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,10 +23,21 @@ from sos import engine, rules as rules_mod
 
 REPO = Path(__file__).resolve().parents[2]
 RULES_DIR = REPO / "playbooks" / "rules"
+PLAYBOOKS = REPO / "playbooks"
 START = datetime(2026, 1, 5, 8, 0, tzinfo=timezone.utc)
 SCENARIOS = ("grid-collapse", "storms-flooding", "severe-winter", "pandemic", "heat-drought")
 NEEDS = ("insulin", "oxygen", "cpap", "stairlift", "asthma", "")
+NEIGHBOUR_NEEDS = ("oxygen", "dialysis", "over 75", "stairlift", "", "baby")
+NEIGHBOUR_SKILLS = ("nurse", "generator", "electrician", "4x4", "", "chainsaw")
 PHASE_TITLES = ("National grid collapse", "Storms and flooding", "Severe winter", "Pandemic", "Heat and drought")
+SEEDS = (1234, 7, 2026, 99, 31415, 8, 555, 271828, 42, 17)
+
+# A number that will not connect, given as an instruction. The directives turn `[[call 999]]` into "999 will not
+# connect while the phones are down", which names the number but tells nobody to ring it: that is the difference.
+DEAD_NUMBERS = ("999", "112", "111", "105", "101")
+BARE_CALL = re.compile(r"\b(?:call|calling|dial|dialling|ring|ringing|phone|telephone)\s+(?:the\s+|for\s+)?"
+                       r"(" + "|".join(DEAD_NUMBERS) + r")\b", re.IGNORECASE)
+ESCALATE = "Stop or escalate"
 
 
 def _scenario(slug: str, started: datetime, now: datetime) -> dict:
@@ -28,6 +47,60 @@ def _scenario(slug: str, started: datetime, now: datetime) -> dict:
     return {"slug": slug, "title": PHASE_TITLES[SCENARIOS.index(slug)], "started_at": started.isoformat(),
             "elapsed_s": int(elapsed), "phase": phase_for(elapsed)}
 
+
+# --- the content invariant ------------------------------------------------------------------------------------
+
+def _content_cache():
+    from sos.content import ContentCache
+
+    return ContentCache(PLAYBOOKS)
+
+
+def _card_slugs() -> tuple[str, ...]:
+    return tuple(sorted(p.stem for p in (PLAYBOOKS / "cards").glob("*.md")))
+
+
+def _escalate_html(html: str) -> str:
+    """The part of a quick card after its "Stop or escalate" heading: the last thing anyone reads."""
+    start = html.find(ESCALATE)
+    if start < 0:
+        return ""
+    rest = html[start + len(ESCALATE):]
+    end = rest.find("<h2")
+    return rest if end < 0 else rest[:end]
+
+
+def check_content(view: dict, cache, cards: tuple[str, ...], seen: set, where: str) -> int:
+    """With both phone routes down, nothing rendered may tell anyone to ring a number that will not connect."""
+    states = {cid: item["state"] for cid, item in view["conditions"].items()}
+    if engine.phones_state(states) != "off":
+        return 0
+    flags = engine.flags(view)
+    slug = (view.get("scenario") or {}).get("slug")
+    key = (slug, tuple(sorted(flags.items())))
+    if key in seen:
+        return 0
+    seen.add(key)
+    checked = 0
+    pieces: list[tuple[str, str]] = []
+    if slug:
+        rendered = cache.rendered("scenario", slug, flags)
+        if rendered is not None:
+            section = next((s for s in rendered.sections if s["id"] == "right-now"), None)
+            if section:
+                pieces.append((f"scenario {slug} right-now", section["html"]))
+    for card in cards:
+        rendered = cache.rendered("card", card, flags)
+        if rendered is not None:
+            pieces.append((f"card {card} stop-or-escalate", _escalate_html(rendered.html)))
+    for name, html in pieces:
+        checked += 1
+        found = BARE_CALL.search(html)
+        assert found is None, f"{where}: {name} still says {found.group(0)!r} with both phone routes down"
+    return checked
+
+
+# --- the invariants -------------------------------------------------------------------------------------------
 
 def _check(view: dict, model: engine.Model, ruleset: rules_mod.Rules, step: int) -> None:
     where = f"step {step}"
@@ -55,19 +128,28 @@ def _check(view: dict, model: engine.Model, ruleset: rules_mod.Rules, step: int)
     for item in view["inferred"]:
         assert 0 < item["confidence"] <= 1 and item["why"] and item["due_at"], f"{where}: {item}"
 
+    names = [c["id"] for c in view["neighbours"]["check_on"]]
+    assert len(names) == len(set(names)), f"{where}: the same door twice on the check-on list"
+    assert set(names) <= set(ids), f"{where}: a neighbour to check on with no task"
+    for item in view["neighbours"]["skills"]:
+        assert item["name"] and item["skill"] and item["text"].startswith(item["name"]), f"{where}: {item}"
+
     if states["mobile"] == "off" and states["landline"] == "off":
         assert view["modes"]["calls"] == "hidden", f"{where}: numbers still on show with no phones"
     assert 0 <= view["readiness"]["score"] <= 100, where
     assert view["meta"]["now"] == model.now.isoformat(), where
 
 
-def walk(seed: int = 1234, steps: int = 400) -> dict:
+def walk(seed: int = 1234, steps: int = 400, content: bool = True) -> dict:
     """Take the walk and return a small summary. Raises on the first broken invariant."""
     rng = random.Random(seed)
     ruleset = rules_mod.load(RULES_DIR)
+    cache = _content_cache() if content else None
+    cards = _card_slugs() if content else ()
     now = START
     conditions: dict[str, cond.Condition] = {cid: cond.Condition(cid) for cid in cond.IDS}
     household: list[dict] = []
+    neighbours: list[dict] = []
     stock: list[dict] = [{"name": "Bottled water", "category": "water", "days_left": 4.0, "notes": ""}]
     scenario_slug: str | None = None
     scenario_started = now
@@ -77,10 +159,14 @@ def walk(seed: int = 1234, steps: int = 400) -> dict:
     tasks_seen: set[str] = set()
     forecast_seen: set[str] = set()
     modes_seen: set[str] = set()
+    check_on_seen: set[str] = set()
+    skills_seen: set[str] = set()
+    content_seen: set = set()
+    rendered_checked = 0
 
     for step in range(steps):
         action = rng.choice(["condition", "condition", "condition", "clock", "clock", "scenario", "drill",
-                             "task", "household", "stock"])
+                             "task", "household", "stock", "neighbour"])
         if action == "condition":
             cid = rng.choice(cond.IDS)
             state = rng.choice(cond.STATES)
@@ -109,6 +195,15 @@ def walk(seed: int = 1234, steps: int = 400) -> dict:
             else:
                 household.append({"name": f"Person {len(household) + 1}", "needs": rng.choice(NEEDS),
                                   "medications": rng.choice(NEEDS), "contacts": rng.choice(["", "Gran 01703 555 123"])})
+        elif action == "neighbour":
+            if neighbours and rng.random() < 0.3:
+                neighbours.pop()
+            else:
+                number = len(neighbours) + 1
+                neighbours.append({"name": f"Neighbour {number}",
+                                   "address": rng.choice([f"{number} Elm Road", ""]),
+                                   "needs": rng.choice(NEIGHBOUR_NEEDS), "skills": rng.choice(NEIGHBOUR_SKILLS),
+                                   "contacts": rng.choice(["", "07700 900123"]), "notes": ""})
         else:
             if stock and rng.random() < 0.3:
                 stock.pop()
@@ -118,7 +213,8 @@ def walk(seed: int = 1234, steps: int = 400) -> dict:
                               "days_left": rng.choice([None, 0.5, 2.0, 9.0, 30.0]), "notes": ""})
 
         model = engine.Model(
-            now=now, conditions=dict(conditions), household=tuple(household), stock=tuple(stock),
+            now=now, conditions=dict(conditions), household=tuple(household), neighbours=tuple(neighbours),
+            stock=tuple(stock),
             scenario=_scenario(scenario_slug, scenario_started, now) if scenario_slug else None,
             home={"lat": 50.93, "lon": -1.43, "label": "Home", "flood_zone": "3"}, drill=drill,
             checklist=({"id": "one", "text": "The first thing"}, {"id": "two", "text": "The second thing"})
@@ -128,15 +224,58 @@ def walk(seed: int = 1234, steps: int = 400) -> dict:
         view = engine.compute(model, ruleset)
         assert engine.compute(model, ruleset) == view, f"step {step}: the same model gave two different Views"
         _check(view, model, ruleset, step)
+        if cache is not None:
+            rendered_checked += check_content(view, cache, cards, content_seen, f"step {step}")
         tasks_seen.update(t["id"] for t in view["tasks"])
         forecast_seen.update(f["id"] for f in view["forecast"])
         modes_seen.add(repr(sorted(view["modes"].items())))
+        check_on_seen.update(c["id"] for c in view["neighbours"]["check_on"])
+        skills_seen.update(s["text"] for s in view["neighbours"]["skills"])
         engine.report(view)                                    # the report must survive every situation too
 
     return {"seed": seed, "steps": steps, "states_seen": len(seen_states), "people": len(household),
-            "stock": len(stock), "now": now.isoformat(), "tasks_seen": len(tasks_seen),
-            "forecast_seen": len(forecast_seen), "modes_seen": len(modes_seen)}
+            "neighbours": len(neighbours), "stock": len(stock), "now": now.isoformat(),
+            "tasks_seen": len(tasks_seen), "forecast_seen": len(forecast_seen), "modes_seen": len(modes_seen),
+            "check_on_seen": len(check_on_seen), "skills_seen": len(skills_seen),
+            "rendered_checked": rendered_checked}
+
+
+def run(steps: int = 400, seeds: int = 1, first: int | None = None, content: bool = True) -> dict:
+    """Several walks, and one line saying what they covered."""
+    chosen = [first] if first is not None else [SEEDS[i % len(SEEDS)] for i in range(max(1, seeds))]
+    started = time.monotonic()
+    totals = {"tasks_seen": 0, "forecast_seen": 0, "modes_seen": 0, "check_on_seen": 0, "rendered_checked": 0}
+    for seed in chosen:
+        summary = walk(seed=seed, steps=steps, content=content)
+        for key in totals:
+            totals[key] = max(totals[key], summary[key]) if key != "rendered_checked" else \
+                totals[key] + summary[key]
+    return {"seeds": chosen, "steps": steps, "views": len(chosen) * steps,
+            "seconds": round(time.monotonic() - started, 1), **totals}
+
+
+def summary_line(result: dict) -> str:
+    return (f"simulate: {len(result['seeds'])} seed(s) x {result['steps']} steps = {result['views']} views, "
+            f"{result['tasks_seen']} task ids, {result['forecast_seen']} forecast ids, {result['modes_seen']} mode sets, "
+            f"{result['check_on_seen']} doors, {result['rendered_checked']} rendered sections checked for dead "
+            f"numbers, no invariant broken in {result['seconds']}s")
+
+
+def main(argv: list[str] | None = None) -> int:                # pragma: no cover - a hand-run and make-run tool
+    parser = argparse.ArgumentParser(description="Random walk over the situation engine")
+    parser.add_argument("--steps", type=int, default=400, help="steps in each walk")
+    parser.add_argument("--seeds", type=int, default=1, help="how many seeded walks to take")
+    parser.add_argument("--seed", type=int, default=None, help="one particular seed, to reproduce a failure")
+    parser.add_argument("--no-content", action="store_true", help="skip the rendered-content invariant")
+    args = parser.parse_args(argv)
+    try:
+        result = run(steps=args.steps, seeds=args.seeds, first=args.seed, content=not args.no_content)
+    except AssertionError as exc:
+        print(f"simulate: FAILED: {exc}", file=sys.stderr)
+        return 1
+    print(summary_line(result))
+    return 0
 
 
 if __name__ == "__main__":                                     # pragma: no cover - a hand-run tool
-    print(walk(int(sys.argv[1]) if len(sys.argv) > 1 else 1234))
+    raise SystemExit(main())

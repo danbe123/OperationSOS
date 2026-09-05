@@ -20,6 +20,7 @@ smoke:
 
 test: venv
 > cd api && .venv/bin/pytest -q
+> cd api && .venv/bin/python -m tests.simulate --steps 2000 --seeds 5
 > if [ -f web/package.json ]; then pnpm --dir web test -- --run; fi
 > cd tools/map-styles && pnpm install --frozen-lockfile --silent && node --test
 > SOS_PLAYBOOKS_DIR=playbooks SOS_MANIFEST_DIR=manifest $(SOS) validate-playbooks --all-scenarios

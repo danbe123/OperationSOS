@@ -26,6 +26,33 @@ Manual checks on the box (spec section 14). Close a row with the date, the commi
 | 18 | Load with five phones browsing, one panning the map at z14 and one AI question in flight (search p95 under 3 seconds, no OOM kills, under 80°C for 10 minutes) | | | |
 | 19 | Power-bank runtime with the screen lit | | | |
 | 20 | `install.sh` run twice with no changes the second time | | | |
+| 21 | Mains sensor detects a power cut: pull the plug on the UPS HAT and the box records `mains 0` within two polls (120 s) and offers "Mains power off" on the situation sheet | | | |
+| 22 | Internet probe flips within three minutes: unplug the uplink and the box proposes "Internet off" after three failed probes | | | |
+| 23 | Board appears on the kiosk when a condition is set off from a phone (kiosk idle, phone sets power off, board within one poll) | | | |
+| 24 | Read aloud plays through the speaker: a briefing spoken from the kiosk at arm's length in a quiet room | | | |
+| 25 | A drill runs end to end: start from the sheet, work the board, tick the tasks, end the drill and read the summary event | | | |
+| 26 | A situation export scans between two phones: QR sequence on one, scanned and imported on the other, summary names what changed | | | |
+
+## What the hardware has to provide
+
+Every driver in `api/sos/sensors.py` is optional; the box runs with none of them. What each one needs on the Pi:
+
+| Driver | Sensor rows | What it needs | Settings |
+|---|---|---|---|
+| Internet probe | `internet` | Nothing but the uplink: one DNS lookup and one short HTTP GET on a three-second timeout. Three failed polls running before the box proposes "Internet off" | `SOS_SENSOR_PROBE_HOST`, `SOS_SENSOR_PROBE_URL`, `SOS_SENSOR_PROBE_TIMEOUT_S` |
+| Mains | `mains` | A UPS HAT that registers as a power supply and publishes `/sys/class/power_supply/*/online` (battery paths are skipped), or a HAT that only pulls a GPIO pin, exported to sysfs and named in the settings | `SOS_SENSOR_MAINS_GLOB`, `SOS_SENSOR_MAINS_GPIO`, `SOS_SENSOR_MAINS_GPIO_ACTIVE_LOW` |
+| Box | `hotspot_clients`, `cpu_temp` | Nothing beyond what `sos.system` already reads: the hostapd station list and the thermal zone | — |
+| File | any name in the map | A script of your own writing one number per file — an I2C thermometer, a leak pad, a Geiger counter. The name fixes the unit (`temp_in` C, `humidity` %, `pressure_hpa` hPa, `co_ppm` ppm, `radiation_usvh` uSv/h, `leak` bool) | `SOS_SENSOR_FILES='{"temp_in": "/run/sos/temp_in"}'` |
+| Sweeps | `band_fm`, `band_dab`, `band_mobile_800`, `band_mobile_900` | `rtl_power` on PATH and an RTL-SDR dongle in a USB socket. A mobile band 10 dB below its own recent best, after at least three readings, is what makes the box suspect the masts have gone | `SOS_RTL_POWER_BIN`, `SOS_RTL_POWER_DWELL_S` |
+| Recording | bulletin WAVs in `state/recordings/` | The same dongle plus `rtl_fm`. Long and medium wave (Radio 4 on 198 kHz) is below the dongle's 24 MHz floor and is marked `recordable: false` in `playbooks/rules/bulletins.yaml` | `SOS_RTL_FM_BIN` |
+
+The cheap drivers run every `SOS_SENSOR_INTERVAL_S` (60 s by default) and the sweeps every `SOS_RTL_INTERVAL_S` (10 minutes); `SOS_SENSORS=0` turns the whole background task off.
+
+Hardware the box expects around it:
+
+- **RTL-SDR dongle** (RTL2832U, R820T2 or R860 tuner). USB 2 socket, tunes 24 MHz to 1.766 GHz, so it hears FM, DAB and the mobile downlink bands but not long or medium wave. It draws about 300 mA and runs warm; keep it out of the case airflow and on a short extension away from the Pi's own USB 3 noise. A telescopic whip on a ground plane is enough for the sweeps; recording a bulletin wants the whip outside or in a window.
+- **UPS HAT** with an 18650 pair or a supercapacitor bank. It has to hold the Pi and the panel long enough to finish a write and shut down cleanly, and it has to expose the mains state either as a power supply class device or as a GPIO pin. Fit it below the panel so its own heat does not sit under the SoC. The mains sensor is what turns a power cut into a proposal on the sheet rather than a mystery.
+- **Speaker for read aloud**: a small amplified speaker on the 3.5 mm jack, or a USB or I2S class-compliant device (a MAX98357A breakout on I2S is the tidiest inside a printed case). Piper (`SOS_PIPER_DIR`, `SOS_PIPER_VOICE`, default `en_GB-alba-medium`) writes a WAV and the browser plays it, so anything ALSA can see will do; check the volume is usable at arm's length with the case shut, because the kiosk has no volume knob.
 
 ## Milestone box criteria (spec section 15)
 

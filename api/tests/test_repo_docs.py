@@ -14,7 +14,14 @@ HARDWARE_ITEMS = [
     "update over ethernet", "hot-plug", "landscape", "backlight device", "low power mode", "idle dim",
     "keyboard usable", "300-page pdf", "nvme boot", "pull the power", "10-minute ai session", "thermal auto-off",
     "zero swap", "five phones", "power-bank", "run twice",
+    # phase 4: the sensors, the board, read aloud, a drill and a situation export
+    "mains sensor detects a power cut", "internet probe flips within three minutes",
+    "board appears on the kiosk when a condition is set off from a phone", "read aloud plays through the speaker",
+    "a drill runs end to end", "a situation export scans between two phones",
 ]
+
+HARDWARE_NOTES = ["rtl-sdr dongle", "ups hat", "speaker for read aloud", "rtl_power", "rtl_fm",
+                  "/sys/class/power_supply/", "sos_sensor_files", "piper"]
 
 
 def test_readme_covers_the_workflow():
@@ -37,13 +44,15 @@ def test_hardware_checklist_has_every_spec_item_with_date_commit_result():
     text = (REPO / "docs" / "hardware-checklist.md").read_text(encoding="utf-8")
     assert "| # | Item | Date | Commit | Result |" in text
     rows = [line for line in text.splitlines() if re.match(r"^\| \d+ \|", line)]
-    assert len(rows) == 20 and [int(r.split("|")[1]) for r in rows] == list(range(1, 21))
+    assert len(rows) == 26 and [int(r.split("|")[1]) for r in rows] == list(range(1, 27))
     assert all(row.count("|") == 6 for row in rows)
     lowered = text.lower()
     for item in HARDWARE_ITEMS:
         assert item in lowered, item
-    for section in ("## Milestone box criteria", "## CI runs", "## Maps"):
+    for section in ("## What the hardware has to provide", "## Milestone box criteria", "## CI runs", "## Maps"):
         assert section in text, section
+    for note in HARDWARE_NOTES:
+        assert note in lowered, note
 
 
 def test_playbooks_readme_matches_the_content_rules():
