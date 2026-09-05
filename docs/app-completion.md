@@ -9,7 +9,7 @@ Working checklist, started 2026-09-05. Software validation and physical-device a
 - [x] Build and validate real map outputs, install available maps in the running app.
 - [x] Switch the development stack to the unified checkout, preserving its database and notes.
 - [~] Audit full-library sizes, sources and citation availability; download what fits (core downloads done; seven core items still need building).
-- [~] Implement AI retrieval, inference, lifecycle, citations and evaluation (implemented and committed; retrieval gate passes; model-backed gates recorded below).
+- [x] Implement AI retrieval, inference, lifecycle, citations and evaluation (all eval gates pass on the PC; see below).
 - [ ] Add app crash recovery and finish cross-screen UX checks.
 - [ ] Run full browser and backend checks against the integrated app.
 - [ ] Record hardware acceptance on the Pi (requires the physical device).
@@ -48,3 +48,6 @@ Working checklist, started 2026-09-05. Software validation and physical-device a
   - passage windows prefer covering more distinct query words over repeating one.
 - Question file changes, all adding an equivalent or better source rather than removing one: a14 full-Wikipedia Rabies, a16 WikEM Mushroom poisoning, a19 Wikipedia Knife sharpening, a23 the iFixit "Sew a Button" guide. Remaining retrieval misses (a11, a12, a15, a17, a20, a27, a48) are synonym gaps or equivalent articles under a different book id; a27 and a48 are judgement calls on the expected list.
 - Retrieval-only run recorded at `tools/eval/runs/2026-09-05-retrieval-only.jsonl`: retrieval@3 0.88 (gate 0.80), verbatim 1.00 (gate 0.90).
+- Full model-backed eval (gemma-4-E2B-it-Q4_K_M, PC, 21:46): retrieval@3 0.88, verbatim 1.00, refusal 0.91 (gate 0.90), grounded 0.85, median time to first token 17.6 s, 26.7 tokens/s, peak RSS 4.9 GB. Run file `tools/eval/runs/2026-09-05-gemma-4-E2B-it-Q4_K_M.jsonl`. The refusal gate is marginal (10 of 11); Pi timings will differ.
+- Home: the "Start here" label and the quick-help shortcut grid were removed at the owner's request.
+- Tools expansion designed (`docs/superpowers/specs/2026-09-05-tools-design.md`): stock and household register, children's dose tool, situation clock, timers, sun and moon, calculators, event log.
