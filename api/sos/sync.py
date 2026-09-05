@@ -135,7 +135,8 @@ def stream_download(url: str, target: Path, client: httpx.Client | None = None) 
 
 def aria2c_download(url: str, target: Path, sha256: str | None = None, mirrors=(), run: Callable = subprocess.run) -> Path:
     cmd = ["aria2c", "--continue=true", "--max-connection-per-server=4", "--split=4", "--file-allocation=none",
-           "--auto-file-renaming=false", "--allow-overwrite=true", f"--dir={target.parent}", f"--out={target.name}"]
+           "--auto-file-renaming=false", "--allow-overwrite=true", "--header=Accept: application/octet-stream",
+           "--follow-metalink=false", f"--dir={target.parent}", f"--out={target.name}"]
     if sha256:
         cmd.append(f"--checksum=sha-256={sha256}")
     cmd.append(url)
@@ -154,13 +155,21 @@ def download(url: str, target: Path, sha256: str | None = None, mirrors=(), use_
         use_aria2 = shutil.which("aria2c") is not None
     if use_aria2:
         return aria2c_download(url, target, sha256, mirrors, run)  # aria2c verifies --checksum itself
-    stream_download(url, target, client)
-    if sha256:
-        actual = sha256_file(target)
-        if actual != sha256:
-            target.unlink(missing_ok=True)
-            raise ChecksumError(f"sha256 mismatch for {target.name}: expected {sha256}, got {actual}")
-    return target
+    last_error = None
+    sources = list(dict.fromkeys([url, *mirrors]))
+    for source in sources:
+        try:
+            stream_download(source, target, client)
+            if sha256:
+                actual = sha256_file(target)
+                if actual != sha256:
+                    target.unlink(missing_ok=True)
+                    raise ChecksumError(f"sha256 mismatch for {target.name}: expected {sha256}, got {actual}")
+            return target
+        except (httpx.HTTPError, SyncError) as exc:
+            last_error = exc
+    assert last_error is not None
+    raise last_error
 
 
 def _open_db(settings: Settings) -> sqlite3.Connection:

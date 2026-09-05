@@ -43,6 +43,12 @@ def fts5_match(tokens: list[str]) -> str:
     return " ".join(f'"{t}"' for t in tokens)
 
 
+def fts_match(tokens: list[str], mode: str = "and") -> str:
+    if mode not in ("and", "or"):
+        raise ValueError("mode must be 'and' or 'or'")
+    return (" OR " if mode == "or" else " ").join('"' + t.replace('"', '""') + '"' for t in tokens)
+
+
 def kiwix_pattern(tokens: list[str]) -> str:
     return " ".join(tokens)
 

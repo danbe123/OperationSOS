@@ -41,10 +41,25 @@ export function NotFound() {
   );
 }
 
+export function RouteError() {
+  return (
+    <div className="screen">
+      <AppBar title="Unable to open this page" back={false} search={false} />
+      <section className="pad">
+        <h2>Something went wrong</h2>
+        <p>Try loading this page again, or return to Home to open another resource.</p>
+        <button className="btn" type="button" onClick={() => window.location.reload()}>Reload page</button>
+        {' '}<a className="btn" href="/">Return to Home</a>
+      </section>
+    </div>
+  );
+}
+
 export const routes: RouteObject[] = [
   {
     path: '/',
     element: <Layout />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <Home /> },
       { path: 'search', element: <Search /> },

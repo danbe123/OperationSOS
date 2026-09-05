@@ -5,10 +5,11 @@ import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 import { attachKeyboardTo } from '../kiosk/Keyboard';
-import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation } from '../links';
+import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
 import { PdfFrame } from './Doc';
+import { api } from '../api/client';
 
 export const TEXT_SIZES = [100, 125, 150] as const;
 export const TEXT_SIZE_KEY = 'sos.textSize';
@@ -18,25 +19,26 @@ function readStoredSize(): number {
   return (TEXT_SIZES as readonly number[]).includes(n) ? n : 100;
 }
 
-/** The frame's own URL when it is one of ours; otherwise the URL we are loading (jsdom reports about:blank). */
-function frameUrl(win: Window): URL | null {
-  try {
-    const url = new URL(win.location.href);
-    return url.origin === window.location.origin ? url : null;
-  } catch {
-    // Native document viewers and cross-origin redirects have protected Locations.
-    return null;
-  }
-}
-
 function frameBase(win: Window, fallbackPath: string): string {
-  return frameUrl(win)?.href ?? new URL(fallbackPath, window.location.origin).href;
+  return sameOriginFrameUrl(win)?.href ?? new URL(fallbackPath, window.location.origin).href;
 }
 
 export function Reader() {
   const { id = '' } = useParams();
   const location = useLocation();
   const { theme } = useTheme();
+  const navigate = useNavigate();
+  useEffect(() => {
+    let active = true;
+    // Saved links may use a dated archive name from before the full library was installed.
+    void api.libraryItem(id).then((item) => {
+      if (active && item.id !== id) {
+        const tail = location.pathname.slice(`/read/${id}`.length);
+        navigate(`/read/${item.id}${tail}${location.search}${location.hash}`, { replace: true });
+      }
+    }).catch(() => { /* The reader can also open archives outside the managed catalogue. */ });
+    return () => { active = false; };
+  }, [id, location.pathname, location.search, location.hash, navigate]);
   const prefix = `/read/${id}/`;
   const path = location.pathname.startsWith(prefix) ? location.pathname.slice(prefix.length) : '';
   if (/\.pdf$/i.test(path)) {
@@ -47,7 +49,7 @@ export function Reader() {
       <PdfFrame url={kiwixContentUrl(id, path) + location.search} theme={theme} hash={location.hash} />
     </div>;
   }
-  return <ArticleReader />;
+  return <ArticleReader key={id} />;
 }
 
 function ArticleReader() {
@@ -90,7 +92,7 @@ function ArticleReader() {
     const win = frameRef.current?.contentWindow;
     if (!win) return;
     if (pending.current === target) return;
-    const url = frameUrl(win);
+    const url = sameOriginFrameUrl(win);
     const current = url ? url.pathname + url.search + url.hash : '';
     if (current !== target) {
       pending.current = target;
@@ -156,7 +158,7 @@ function ArticleReader() {
     setTitle(doc.title || decodeURIComponent(targetRef.current.split('/').pop() ?? '') || 'Reader');
     if (kiosk) attachKeyboardTo(doc);
     // A form submit or redirect inside the frame: keep the app URL honest.
-    const url = frameUrl(win);
+    const url = sameOriginFrameUrl(win);
     if (url) {
       const parsed = parseKiwixContentPath(url.pathname);
       if (parsed) {

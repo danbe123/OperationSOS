@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import { errorMessage, useQuery } from '../api/useQuery';
 import { AppBar } from '../components/AppBar';
 import { Icon } from '../icons';
-import { replaceFrameLocation } from '../links';
+import { replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, pdfViewerCss, READER_STYLE_ID } from '../theme/readerTheme';
 import { useTheme, type Theme } from '../theme/ThemeProvider';
 
@@ -39,8 +39,9 @@ export function PdfFrame({ url, theme, hash }: { url: string; theme: Theme; hash
   // A later #page= link to the same document: change the viewer's hash in place (PDF.js listens for hashchange).
   useEffect(() => {
     const win = frameRef.current?.contentWindow;
-    if (!win || !hash || !win.location.href.startsWith(window.location.origin)) return;
-    if (win.location.hash !== hash) replaceFrameLocation(win, win.location.pathname + win.location.search + hash);
+    if (!win || !hash) return;
+    const current = sameOriginFrameUrl(win);
+    if (current && current.hash !== hash) replaceFrameLocation(win, current.pathname + current.search + hash);
   }, [hash]);
 
   return (

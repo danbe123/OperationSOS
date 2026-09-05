@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './test';
 
-type MapWindow = Window & { __sosMap?: { loaded(): boolean; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; __styleVersion?: number } };
+type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers: { id: string; type: string; source?: string }[] }; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; __styleVersion?: number } };
 
 async function waitForMap(page: Page) {
   await page.waitForFunction(() => Boolean((window as MapWindow).__sosMap?.loaded()));
@@ -13,7 +13,8 @@ async function waitForStyleReload(page: Page, sinceVersion: number) {
 const layerVisible = (page: Page, id: string) =>
   page.evaluate((layerId) => {
     const m = (window as MapWindow).__sosMap!;
-    return Boolean(m.getLayer(layerId)) && (m.getLayoutProperty(layerId, 'visibility') ?? 'visible') === 'visible';
+    const actual = m.getLayer(layerId) ? layerId : m.getStyle().layers.find((l) => l.source === layerId.replace(/-point$/, '') && l.type === 'circle')?.id;
+    return Boolean(actual) && (m.getLayoutProperty(actual!, 'visibility') ?? 'visible') === 'visible';
   }, id);
 
 test('renders from PMTiles over range requests, toggles an overlay and keeps it across a base switch', async ({ page }) => {
@@ -27,25 +28,25 @@ test('renders from PMTiles over range requests, toggles an overlay and keeps it 
 
   await page.getByRole('button', { name: 'Layers' }).click();
   const panel = page.getByRole('dialog', { name: 'Layers' });
-  await panel.getByLabel('Hospitals, pharmacies, GP surgeries').check();
+  await panel.getByLabel(/Hospitals, pharmacies.*GP surgeries/).check();
   await expect(page).toHaveURL(/overlay=health/);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
 
   const versionBeforeBaseSwitch = await styleVersion(page);
-  await panel.getByLabel('OS Open Zoomstack').check();
+  await panel.getByRole('radio', { name: /OS Open Zoomstack|Ordnance Survey/ }).check();
   await waitForStyleReload(page, versionBeforeBaseSwitch);
   await waitForMap(page);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
-  await panel.getByLabel('Hospitals, pharmacies, GP surgeries').uncheck();
+  await panel.getByLabel(/Hospitals, pharmacies.*GP surgeries/).uncheck();
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(false);
 });
 
-test('place search, pin persistence and grid reference for a known point', async ({ page }) => {
+test('place search, pin persistence and grid reference for a known point', async ({ page, request }) => {
   await page.goto('/map');
   await waitForMap(page);
   await page.getByRole('button', { name: 'Find place' }).click();
   await page.getByLabel('Place, postcode or grid reference').fill('oxf');
-  await page.getByRole('button', { name: /Oxford/ }).click();
+  await page.getByRole('button', { name: /^Oxford city,/ }).click();
   await expect(page.getByTestId('map-readout')).toContainText('Centre: SP');
 
   await page.getByRole('button', { name: 'Find place' }).click();
@@ -55,11 +56,18 @@ test('place search, pin persistence and grid reference for a known point', async
 
   await page.getByRole('button', { name: 'Pins' }).click();
   await page.getByRole('button', { name: 'Drop a pin at the centre' }).click();
-  await page.getByLabel('Pin name').fill('OS HQ');
+  const pinTitle = `Browser map check ${Date.now()}`;
+  await page.getByLabel('Pin name').fill(pinTitle);
+  const created = page.waitForResponse((r) => r.url().endsWith('/api/notes') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Save pin' }).click();
-  await expect(page.getByRole('dialog', { name: 'Pins' }).getByText('OS HQ')).toBeVisible();
-  await page.reload();
-  await waitForMap(page);
-  await page.getByRole('button', { name: 'Pins' }).click();
-  await expect(page.getByRole('dialog', { name: 'Pins' }).getByText('OS HQ')).toBeVisible();
+  const note = await (await created).json();
+  try {
+    await expect(page.getByRole('dialog', { name: 'Pins' }).getByText(pinTitle)).toBeVisible();
+    await page.reload();
+    await waitForMap(page);
+    await page.getByRole('button', { name: 'Pins' }).click();
+    await expect(page.getByRole('dialog', { name: 'Pins' }).getByText(pinTitle)).toBeVisible();
+  } finally {
+    await request.delete(`/api/notes/${note.id}`);
+  }
 });

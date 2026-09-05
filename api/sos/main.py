@@ -45,11 +45,17 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         _bootstrap(settings)
         app.state.settings = settings
         app.state.kiwix = KiwixClient(settings.kiwix_url)
+        from sos.ai import LlamaClient
+        from sos.ai_runtime import AiRuntime, restore_on_startup, shutdown as ai_shutdown
+        app.state.conn = db.connect(settings.db_path)
+        app.state.ai_runtime = AiRuntime(settings=settings, llama=LlamaClient(settings.llama_url))
+        await restore_on_startup(app.state.ai_runtime, app.state.conn)
         app.state.tokens = system.TokenStore()
         app.state.pin_limiter = system.RateLimiter()
         app.state.content = ContentCache(settings.playbooks)
         app.state.updater = system.UpdateRunner()
         app.state.watchdog = system.ThermalWatchdog(settings, settings.db_path)
+        app.state.watchdog.app = app
         app.state.idle = "active"
         app.state.backlight_level = 100
         tasks: list[asyncio.Task] = []
@@ -61,6 +67,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         finally:
             for t in tasks:
                 t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await ai_shutdown(app.state.ai_runtime)
+            app.state.conn.close()
             await app.state.kiwix.aclose()
 
     app = FastAPI(title="Operation SOS", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None)

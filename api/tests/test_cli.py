@@ -58,9 +58,12 @@ def test_pin_set_and_reset(env):
     assert system.pin_required(db.connect(env.db_path)) is False
 
 
-def test_stubs_exit_2(env, capsys):
-    assert cli.main(["eval", "--retrieval-only"]) == 2
-    assert "plan 05" in capsys.readouterr().err
+def test_eval_dispatches_to_runner(env, monkeypatch):
+    from sos import evalrun
+    calls = []
+    monkeypatch.setattr(evalrun, "run_from_namespace", lambda args: calls.append(args) or 0)
+    assert cli.main(["eval", "--retrieval-only"]) == 0
+    assert calls[0].retrieval_only
 
 
 def test_build_maps_exits_2_with_micromamba_hint_when_tools_missing(env, capsys, monkeypatch):

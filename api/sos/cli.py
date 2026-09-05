@@ -148,7 +148,7 @@ def cmd_build_nhs(settings: Settings, args) -> int:
 def cmd_eval(settings: Settings, args) -> int:
     from sos import evalrun
 
-    return evalrun.main(args)
+    return evalrun.run_from_namespace(args)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -178,6 +178,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--retrieval-only", action="store_true")
     p.add_argument("--out")
     p.set_defaults(func=cmd_eval)
+    p.add_argument("--questions", help="evaluation question file")
     p = sub.add_parser("pin", help="admin PIN")
     p.add_argument("action", choices=["reset", "set"])
     p.add_argument("pin", nargs="?")

@@ -9,7 +9,7 @@ export const TERRAIN_LAYER_IDS = ['sos-hillshade', 'sos-contours'];
 let registered = false;
 export function registerPmtilesProtocol(): void {
   if (registered) return;
-  const protocol = new Protocol();
+  const protocol = new Protocol({ metadata: true });
   maplibregl.addProtocol('pmtiles', protocol.tile);
   registered = true;
 }

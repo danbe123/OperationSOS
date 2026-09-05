@@ -212,7 +212,7 @@ def test_verify_manifest_kinds_passes_against_the_real_merged_manifest(tmp_path)
     index = {
         "water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
         "airports-military": {"kind": "pmtiles", "file": "overlays/airports-military.pmtiles"},
-        "health": {"kind": "geojson", "file": "overlays/health.geojson"},
+        "health": {"kind": "pmtiles", "file": "overlays/health.pmtiles"},
         "access-land": {"kind": "pmtiles", "file": "overlays/access-land.pmtiles"},
     }
     overlays.verify_manifest_kinds(ctx, index)  # must not raise

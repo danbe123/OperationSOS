@@ -54,6 +54,16 @@ export function replaceFrameLocation(win: Window, url: string): void {
   win.location.replace(url);
 }
 
+/** A native document viewer or redirect can expose a protected, cross-origin Location. */
+export function sameOriginFrameUrl(win: Window): URL | null {
+  try {
+    const url = new URL(win.location.href);
+    return url.origin === window.location.origin ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 export type HrefClass =
   | { kind: 'app'; to: string }
   | { kind: 'external'; href: string }

@@ -184,10 +184,11 @@ def test_notes_crud(client):
     assert [n["id"] for n in client.get("/api/notes").json()] == [2]
 
 
-def test_ai_stub_returns_503(client):
-    for method, path in (("get", "/api/ai/status"), ("post", "/api/ai/enable"), ("post", "/api/ai/disable"), ("post", "/api/ai/ask")):
-        r = getattr(client, method)(path, json={"question": "x", "history": []}) if method == "post" else client.get(path)
-        assert r.status_code == 503 and r.json() == {"detail": "AI not installed"}
+def test_ai_is_off_until_enabled(client):
+    assert client.get("/api/ai/status").json() == {"state": "off", "model": None, "message": None}
+    response = client.post("/api/ai/ask", json={"question": "Where is water?", "history": []})
+    assert response.status_code == 200
+    assert '"code": "unavailable"' in response.text
 
 
 def test_localhost_only_endpoints(client, remote_client, monkeypatch):
@@ -300,3 +301,26 @@ def test_system_settings_hotspot_eth_and_update(client, app):
 def test_validation_errors_are_strings(client):
     r = client.post("/api/notes", json={"kind": "bookmark"})
     assert r.status_code == 422 and isinstance(r.json()["detail"], str) and "kind" in r.json()["detail"]
+
+
+def test_overlay_coverage_comes_from_the_installed_build(client, env):
+    import json
+    root = env.core / 'maps' / 'overlays'
+    root.mkdir(exist_ok=True)
+    (root / 'flood-zones.pmtiles').write_bytes(b'PMTiles')
+    (root / 'index.json').write_text(json.dumps({'flood-zones': {'coverage': ['england']}}))
+    client.post('/api/system/rescan')
+    overlays = client.get('/api/map/overlays').json()
+    flood = next(o for o in overlays if o['id'] == 'flood-zones')
+    assert flood['available'] is True
+    assert flood['coverage'] == ['england']
+
+
+def test_library_resolves_a_dated_archive_link_after_an_upgrade(client, env):
+    conn = db.connect(env.db_path)
+    conn.execute("UPDATE library_items SET resolved_name='old-dated-name' WHERE id=?", (WIKI,))
+    conn.commit()
+    conn.close()
+    response = client.get('/api/library/old-dated-name')
+    assert response.status_code == 200
+    assert response.json()['id'] == WIKI

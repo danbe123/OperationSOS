@@ -127,7 +127,7 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 - [Nuclear fallout (Wikipedia)](kiwix:wikipedia_en_all_maxi/Nuclear_fallout)
 - [Fallout shelter (Wikipedia)](kiwix:wikipedia_en_all_maxi/Fallout_shelter)
 - [Effects of nuclear explosions (Wikipedia)](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)
-- [Nuclear explosion (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/nuclear-explosion)
+- [Radiation emergencies (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/radiation)
 - [UK target overlay](map:?overlay=nuclear-sites&overlay=airports-military)
 - [Nuclear accident playbook](playbook:nuclear-accident)
 - [Impact winter playbook](playbook:impact-winter)

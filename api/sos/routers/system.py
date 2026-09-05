@@ -42,7 +42,9 @@ class PinBody(BaseModel):
 
 
 def _status(request: Request, conn) -> dict:
-    return system.status(conn, request.app.state.settings)
+    result = system.status(conn, request.app.state.settings)
+    result["ai"] = request.app.state.ai_runtime.snapshot()
+    return result
 
 
 @router.post("/system/backlight")
@@ -51,7 +53,9 @@ def system_backlight(body: BacklightBody, request: Request):
 
 
 @router.post("/system/power-mode", dependencies=[Depends(require_pin)])
-def power_mode(body: PowerBody, request: Request, conn=Depends(get_db)):
+async def power_mode(body: PowerBody, request: Request, conn=Depends(get_db)):
+    if body.mode == "low":
+        await system.stop_ai_for(request.app, "power")
     system.set_power_mode(conn, request.app.state.settings, body.mode)
     return _status(request, conn)
 

@@ -121,6 +121,18 @@ def test_builtin_download_verifies_sha256(tmp_path, range_server):
     assert not bad.exists()
 
 
+def test_builtin_download_resumes_on_mirror_after_network_failure(tmp_path, respx_mock):
+    target = tmp_path / "mirror.part"
+    target.write_bytes(b"start")
+    respx_mock.get("https://primary.test/file").mock(side_effect=httpx.ReadError("disconnected"))
+    mirror = respx_mock.get("https://mirror.test/file").mock(
+        return_value=httpx.Response(206, content=b"finish", headers={"Content-Range": "bytes 5-10/11"}))
+    sync.download("https://primary.test/file", target, mirrors=["https://mirror.test/file"],
+                  sha256=hashlib.sha256(b"startfinish").hexdigest(), use_aria2=False)
+    assert target.read_bytes() == b"startfinish"
+    assert mirror.calls[0].request.headers["Range"] == "bytes=5-"
+
+
 def test_aria2c_command_line(tmp_path):
     calls = []
 
@@ -135,6 +147,7 @@ def test_aria2c_command_line(tmp_path):
     cmd = calls[0]
     assert cmd[0] == "aria2c" and "--continue=true" in cmd and f"--dir={tmp_path}" in cmd and "--out=x.zim.part" in cmd
     assert "--checksum=sha-256=" + "ab" * 32 in cmd
+    assert "--header=Accept: application/octet-stream" in cmd and "--follow-metalink=false" in cmd
     assert cmd[-2:] == ["https://h.test/x.zim", "https://m.test/x.zim"]
     assert target.exists()
 

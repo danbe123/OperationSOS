@@ -110,7 +110,7 @@ The 7 July 2005 bombings killed 52 people on three trains and a bus; the inquest
 - [Triage (Wikipedia)](kiwix:wikipedia_en_all_maxi/Triage)
 - [Emergency War Surgery, triage](doc:emergency-war-surgery-2018#page=38)
 - [Ship Captain's Medical Guide, care of the injured](doc:scmg-ch04)
-- [Attacks in public places (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/attacks-public-places)
+- [Attacks in public places (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/public-spaces)
 - [NRR 2025, marauding attacks](doc:nrr-2025#page=32)
 - [Hospitals on the map](map:?overlay=health&overlay=rail)
 - [Chemical playbook](playbook:chemical)

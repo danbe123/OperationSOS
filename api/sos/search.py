@@ -111,14 +111,15 @@ def _empty(q: str) -> dict:
 
 
 async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
-                 sources: list[str] | None = None, limit: int = 40) -> dict:
+                 sources: list[str] | None = None, limit: int = 40, *, fts_mode: str = "and", use_cache: bool = True) -> dict:
     t0 = time.perf_counter()
     reduced = query_mod.reduce_query(q or "")
     if not reduced.terms:
         return _empty(q or "")
     limit = max(1, min(int(limit or 40), 100))
     key = SearchCache.key(q, sources, limit)
-    cached = SearchCache.get(conn, key)
+    use_cache = use_cache and fts_mode == "and"
+    cached = SearchCache.get(conn, key) if use_cache else None
     if cached is not None:
         cached["q"] = q  # the cache key is normalised; echo back what the caller actually asked for
         cached["took_ms"] = int((time.perf_counter() - t0) * 1000)
@@ -136,7 +137,8 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         books.setdefault((cls, languages.get(row["id"], "eng")), []).append(row["id"])
         weights[row["id"]] = float(row["search_weight"] or 1.0)
         titles[row["id"]] = row["title"]
-    tasks = [_search_class(kiwix, cls, names, reduced.kiwix, CLASS_TIMEOUTS.get(cls, DEFAULT_TIMEOUT))
+    pattern = query_mod.fts_match(reduced.terms, "or") if fts_mode == "or" else reduced.kiwix
+    tasks = [_search_class(kiwix, cls, names, pattern, CLASS_TIMEOUTS.get(cls, DEFAULT_TIMEOUT))
              for (cls, _lang), names in books.items()]
     for cls, hits, timed_out in await asyncio.gather(*tasks):
         if hits is None:
@@ -153,7 +155,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     rows = conn.execute(
         "SELECT title, doc_id, kind, category, page, url, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
         "FROM fts_docs WHERE fts_docs MATCH ? ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT 20",
-        (reduced.fts,),
+        (query_mod.fts_match(reduced.terms, fts_mode),),
     ).fetchall()
     for rank, row in enumerate(rows, 1):
         kind = row["kind"]
@@ -209,7 +211,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         r.pop("_cat", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
-    if not partial:
+    if not partial and use_cache:
         SearchCache.put(conn, key, payload)
     return payload
 

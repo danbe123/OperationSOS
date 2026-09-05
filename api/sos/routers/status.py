@@ -8,4 +8,6 @@ router = APIRouter(tags=["status"])
 
 @router.get("/status")
 def get_status(request: Request, conn=Depends(get_db)):
-    return system.status(conn, request.app.state.settings)
+    result = system.status(conn, request.app.state.settings)
+    result["ai"] = request.app.state.ai_runtime.snapshot()
+    return result

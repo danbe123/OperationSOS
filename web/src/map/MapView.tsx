@@ -47,7 +47,7 @@ function syncPins(map: MlMap, pins: Note[], labelPoint: MapViewProps['labelPoint
     map.addLayer({ id: 'sos-pins-point', type: 'circle', source: 'sos-pins', paint: { 'circle-radius': 8, 'circle-color': ['match', ['get', 'kind'], 'label', '#1e88e5', '#ffb000'], 'circle-stroke-color': '#000000', 'circle-stroke-width': 2 } });
   }
   if (!map.getLayer('sos-pins-label') && map.getStyle().glyphs) {
-    map.addLayer({ id: 'sos-pins-label', type: 'symbol', source: 'sos-pins', layout: { 'text-field': ['get', 'title'], 'text-size': 13, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } });
+    map.addLayer({ id: 'sos-pins-label', type: 'symbol', source: 'sos-pins', layout: { 'text-field': ['get', 'title'], 'text-font': ['Noto Sans Regular'], 'text-size': 13, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } });
   }
 }
 

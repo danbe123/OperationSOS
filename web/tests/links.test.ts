@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveLink, classifyHref, parseKiwixContentPath, readerRoute, kiwixContentUrl } from '../src/links';
+import { resolveLink, classifyHref, parseKiwixContentPath, readerRoute, kiwixContentUrl, sameOriginFrameUrl } from '../src/links';
 
 const BASE = 'http://10.42.0.1/s/grid-collapse';
 
@@ -57,5 +57,19 @@ describe('kiwix path helpers', () => {
     expect(parseKiwixContentPath('/kiwix/raw/nhs_uk/content/x')).toBeNull();
     expect(readerRoute('nhs_uk', 'www.nhs.uk/index.html')).toBe('/read/nhs_uk/www.nhs.uk/index.html');
     expect(kiwixContentUrl('nhs_uk', 'www.nhs.uk/index.html')).toBe('/kiwix/content/nhs_uk/www.nhs.uk/index.html');
+  });
+});
+
+
+describe('protected frame locations', () => {
+  it('ignores inaccessible or foreign locations without crashing', () => {
+    const protectedFrame = { get location() { throw new DOMException('Blocked a frame', 'SecurityError'); } };
+    expect(sameOriginFrameUrl(protectedFrame as unknown as Window)).toBeNull();
+    expect(sameOriginFrameUrl({ location: { href: 'https://outside.example/document' } } as Window)).toBeNull();
+  });
+
+  it('returns the complete URL for an app frame', () => {
+    const href = new URL('/pdfjs/web/viewer.html?file=manual.pdf#page=12', window.location.origin).href;
+    expect(sameOriginFrameUrl({ location: { href } } as Window)?.href).toBe(href);
   });
 });

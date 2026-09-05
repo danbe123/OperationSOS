@@ -322,6 +322,12 @@ class RateLimiter:
         return True
 
 
+async def stop_ai_for(app, reason: str, message: str | None = None) -> None:
+    from sos.ai_runtime import disable_ai
+    if app.state.ai_runtime.state in {"starting", "ready", "busy"}:
+        await disable_ai(app.state.ai_runtime, app.state.conn, reason, message)
+
+
 class ThermalWatchdog:
     """Polls the SoC temperature; at or above thermal_ai_off_c with the AI on it stops llama and sets
     off-thermal. It never restarts the AI."""
@@ -330,6 +336,7 @@ class ThermalWatchdog:
         self.settings = settings
         self.db_path = db_path
         self.interval = interval
+        self.app = None
 
     def tick(self, conn: sqlite3.Connection) -> str | None:
         temp = cpu_temp(self.settings)
@@ -347,7 +354,13 @@ class ThermalWatchdog:
         while True:
             conn = connect(self.db_path)
             try:
-                self.tick(conn)
+                if self.app is None:
+                    self.tick(conn)
+                else:
+                    temp = cpu_temp(self.settings)
+                    threshold = float(get_setting(conn, "thermal_ai_off_c", DEFAULTS["thermal_ai_off_c"]))
+                    if temp is not None and temp >= threshold and self.app.state.ai_runtime.state in AI_RUNNING_STATES:
+                        await stop_ai_for(self.app, "thermal", f"AI stopped at {temp:.0f} C (limit {threshold:.0f} C)")
             except Exception:  # the watchdog must survive transient errors
                 pass
             finally:

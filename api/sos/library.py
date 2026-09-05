@@ -169,7 +169,10 @@ def item_dict(row: sqlite3.Row, ext_ok: bool) -> dict:
 
 
 def get_item(conn: sqlite3.Connection, item_id: str) -> sqlite3.Row | None:
-    return conn.execute("SELECT * FROM library_items WHERE id=?", (item_id,)).fetchone()
+    row = conn.execute("SELECT * FROM library_items WHERE id=?", (item_id,)).fetchone()
+    if row is None:
+        row = conn.execute("SELECT * FROM library_items WHERE resolved_name=? ORDER BY available DESC, priority LIMIT 1", (item_id,)).fetchone()
+    return row
 
 
 def library_response(conn: sqlite3.Connection, settings: Settings) -> dict:

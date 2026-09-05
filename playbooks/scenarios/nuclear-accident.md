@@ -109,6 +109,6 @@ Restrictions on upland sheep in Wales and Cumbria after Chernobyl in 1986 lasted
 - [Chernobyl disaster (Wikipedia)](kiwix:wikipedia_en_all_maxi/Chernobyl_disaster)
 - [Fukushima nuclear accident (Wikipedia)](kiwix:wikipedia_en_all_maxi/Fukushima_nuclear_accident)
 - [Dirty bomb (Wikipedia)](kiwix:wikipedia_en_all_maxi/Dirty_bomb)
-- [Radiological dispersion device (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/radiological-dispersion-device)
+- [Radiation emergencies (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/radiation)
 - [Nuclear sites overlay](map:?overlay=nuclear-sites&overlay=health)
 - [Nuclear war playbook](playbook:nuclear-war)

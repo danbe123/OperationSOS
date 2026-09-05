@@ -1,0 +1,3 @@
+{"id": "fx01", "question": "what are the symptoms of a heart attack", "kind": "answer", "expected": [{"item": "wikipedia_en_100_mini_2026-01", "path": "Myocardial_infarction"}, {"item": "card:heart-attack", "path": ""}], "notes": "fixture: mini Wikipedia article or the quick card"}
+{"id": "fx02", "question": "heart attack", "kind": "health", "expected": [{"item": "card:heart-attack", "path": ""}], "notes": "fixture: exact card title"}
+{"id": "fx03", "question": "what is the weather forecast for tomorrow", "kind": "refuse", "expected": [], "notes": "fixture: nothing in any library answers this"}

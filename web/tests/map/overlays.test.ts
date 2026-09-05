@@ -65,4 +65,13 @@ describe('addOverlay and setOverlayVisible', () => {
     setOverlayVisible(asMap(map), contourLabels, true);
     expect(map.visibility('contour_label')).toBe('visible');
   });
+  it('uses the latest toggle when vector metadata arrives later', () => {
+    const map = new FakeMap();
+    map.setStyle('/maps/styles/osm-vault.json');
+    addOverlay(asMap(map), footpaths, false);
+    setOverlayVisible(asMap(map), footpaths, true);
+    map.vectorLayers[overlaySourceId('footpaths')] = ['footpaths'];
+    map.emit('sourcedata', { sourceId: overlaySourceId('footpaths'), isSourceLoaded: true });
+    expect(map.visibility('sos-overlay-footpaths-footpaths-line')).toBe('visible');
+  });
 });

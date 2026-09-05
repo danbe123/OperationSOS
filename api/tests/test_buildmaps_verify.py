@@ -262,6 +262,8 @@ def test_verify_step_fixture_verifies_every_archive_and_writes_sizes(tmp_path):
     ctx = make_ctx(tmp_path, fixture=True, runner=runner)
     ctx.repo = _repo_copy(tmp_path)
     _synthetic_out(ctx.out)
+    production_before = (ctx.repo / "manifest" / "maps.json").read_bytes()
+    overlays_before = (ctx.repo / "manifest" / "overlays.json").read_bytes()
     verify.VerifyStep().run(ctx)
     verified = sorted(c[2] for c in runner.find("pmtiles", "verify"))
     assert verified == sorted(str(p) for p in [ctx.out / "test.pmtiles", ctx.out / "os-zoomstack.pmtiles", ctx.out / "contours.pmtiles", ctx.out / "hillshade.pmtiles",
@@ -271,10 +273,9 @@ def test_verify_step_fixture_verifies_every_archive_and_writes_sizes(tmp_path):
     doc = json.loads(fixture_manifest.read_text())
     assert next(i for i in doc["items"] if i["id"] == "uk-ie")["size_bytes"] == 2
     assert "apk" not in [i["id"] for i in doc["items"]]
-    original = json.loads((ctx.repo / "manifest" / "maps.json").read_text())
-    assert next(i for i in original["items"] if i["id"] == "uk-ie")["size_bytes"] == 3400000000, "fixture runs never touch manifest/maps.json"
-    original_overlays = json.loads((ctx.repo / "manifest" / "overlays.json").read_text())
-    assert next(i for i in original_overlays["items"] if i["id"] == "footpaths")["size_bytes"] == 900000000, "fixture runs never touch the real manifest/overlays.json"
+    assert (ctx.repo / "manifest" / "maps.json").read_bytes() == production_before, "fixture runs never touch manifest/maps.json"
+    assert (ctx.repo / "manifest" / "overlays.json").read_bytes() == overlays_before, "fixture runs never touch the real manifest/overlays.json"
+    original_overlays = json.loads(overlays_before)
     fixture_overlays = ctx.repo / "api" / "tests" / "fixtures" / "manifest" / "overlays.json"
     overlays_doc = json.loads(fixture_overlays.read_text())
     assert next(i for i in overlays_doc["items"] if i["id"] == "footpaths")["size_bytes"] == 2, "the fixture copy of overlays.json IS regenerated"

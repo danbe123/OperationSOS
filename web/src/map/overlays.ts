@@ -44,8 +44,16 @@ type VectorSourceLike = { vectorLayerIds?: string[] } | undefined;
 
 // Source ids whose vector layers we are still waiting for, per map, so repeated calls never stack listeners.
 const pending = new WeakMap<MlMap, Set<string>>();
+const desiredVisibility = new WeakMap<MlMap, Map<string, boolean>>();
+
+function rememberVisibility(map: MlMap, id: string, visible: boolean): void {
+  const states = desiredVisibility.get(map) ?? new Map<string, boolean>();
+  states.set(id, visible);
+  desiredVisibility.set(map, states);
+}
 
 export function addOverlay(map: MlMap, overlay: Overlay, visible: boolean): void {
+  rememberVisibility(map, overlay.id, visible);
   const visibility = visible ? 'visible' : 'none';
   if (overlay.kind === 'style-layer') {
     if (overlay.layer_id && map.getLayer(overlay.layer_id)) map.setLayoutProperty(overlay.layer_id, 'visibility', visibility);
@@ -56,7 +64,8 @@ export function addOverlay(map: MlMap, overlay: Overlay, visible: boolean): void
   const src = overlaySourceId(overlay.id);
   if (!map.getSource(src)) map.addSource(src, spec.source);
   const addLayers = (layers: LayerSpecification[]) => {
-    for (const l of layers) if (!map.getLayer(l.id)) map.addLayer({ ...l, layout: { ...('layout' in l ? l.layout : {}), visibility } } as LayerSpecification);
+    const current = (desiredVisibility.get(map)?.get(overlay.id) ?? visible) ? 'visible' : 'none';
+    for (const l of layers) if (!map.getLayer(l.id)) map.addLayer({ ...l, layout: { ...('layout' in l ? l.layout : {}), visibility: current } } as LayerSpecification);
   };
   if (overlay.kind === 'geojson') {
     addLayers(spec.layers);
@@ -85,6 +94,7 @@ export function addOverlay(map: MlMap, overlay: Overlay, visible: boolean): void
 }
 
 export function setOverlayVisible(map: MlMap, overlay: Overlay, visible: boolean): void {
+  rememberVisibility(map, overlay.id, visible);
   const visibility = visible ? 'visible' : 'none';
   if (overlay.kind === 'style-layer') {
     if (overlay.layer_id && map.getLayer(overlay.layer_id)) map.setLayoutProperty(overlay.layer_id, 'visibility', visibility);

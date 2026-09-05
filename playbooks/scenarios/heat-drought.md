@@ -109,7 +109,7 @@ Heatwaves are becoming more likely and mortality "increases significantly with i
 - [Adverse Weather and Health Plan, heat](doc:awhp-2026#page=34)
 - [2022 United Kingdom heatwaves (Wikipedia)](kiwix:wikipedia_en_all_maxi/2022_United_Kingdom_heatwaves)
 - [Drought in the United Kingdom (Wikipedia)](kiwix:wikipedia_en_all_maxi/Drought_in_the_United_Kingdom)
-- [Extreme heat (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/extreme-heat)
+- [Extreme heat (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/heat)
 - [Water Treatment Library](kiwix:zimgit-water_en/home)
 - [Reservoirs and water works on the map](map:?overlay=water&overlay=health)
 - [Famine playbook](playbook:famine)

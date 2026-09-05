@@ -107,6 +107,6 @@ Britain's worst industrial accidents, Flixborough in 1974 with 28 dead and Bunce
 - [Buncefield fire (Wikipedia)](kiwix:wikipedia_en_all_maxi/Buncefield_fire)
 - [Decontamination (Wikipedia)](kiwix:wikipedia_en_all_maxi/Decontamination)
 - [Chemistry Q&A](kiwix:chemistry.stackexchange.com_en_all/questions)
-- [Hazardous materials incidents (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/hazardous-materials-incidents)
+- [Hazardous materials incidents (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/hazmat)
 - [Chemical sites on the map](map:?overlay=chemical-sites&overlay=health)
 - [Terrorism playbook](playbook:terrorism)

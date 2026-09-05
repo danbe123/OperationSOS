@@ -37,3 +37,7 @@ install/answers.env
 !api/tests/fixtures/maps/*.pmtiles
 !api/tests/fixtures/maps/overlays/*.pmtiles
 !api/tests/fixtures/maps/fonts/**/*.pbf
+
+# Python packaging metadata and local development logs
+*.egg-info/
+.vite-dev.log
