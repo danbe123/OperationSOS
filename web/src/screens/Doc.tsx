@@ -13,7 +13,7 @@ export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): strin
   return `/pdfjs/web/viewer.html?file=${encodeURIComponent(fileUrl)}&theme=${theme}${hash}`;
 }
 
-function PdfFrame({ url, theme, hash }: { url: string; theme: Theme; hash: string }) {
+export function PdfFrame({ url, theme, hash }: { url: string; theme: Theme; hash: string }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [initialSrc] = useState(() => pdfViewerUrl(url, theme, hash));
   const themeRef = useRef(theme);

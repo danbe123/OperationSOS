@@ -8,8 +8,8 @@ export function Module() {
   const { slug = '' } = useParams();
   const { data, error, loading } = useQuery(() => api.module(slug), [slug]);
   return (
-    <div className="screen">
-      <AppBar title={data?.title ?? 'Module'} />
+    <div className="screen reference-page">
+      <AppBar title={data?.title ?? 'Module'} search={false} />
       {loading && <p className="pad muted">Loading…</p>}
       {error && <p className="pad warning">Could not load this module: {error}</p>}
       {data && <Html html={data.html} />}

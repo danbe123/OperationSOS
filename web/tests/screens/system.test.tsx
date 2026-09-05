@@ -124,7 +124,8 @@ describe('System', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     vi.spyOn(api, 'status').mockResolvedValue(status);
     const start = vi.spyOn(api, 'update').mockResolvedValue({ started: true });
-    vi.spyOn(api, 'updateProgress')
+    const poll = vi.spyOn(api, 'updateProgress')
+      .mockRejectedValueOnce(new Error('Connection interrupted'))
       .mockResolvedValueOnce(updateProgress)
       .mockResolvedValue({ running: false, lines: [...updateProgress.lines, 'Done'], done: true, ok: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
@@ -136,9 +137,15 @@ describe('System', () => {
     // registered yet when we advance fake time below.
     await act(async () => {});
     await act(async () => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText(/Update progress unavailable: Connection interrupted/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start update' })).toBeDisabled();
+    await act(async () => { vi.advanceTimersByTime(2000); });
     expect(screen.getByText('Downloading 12%')).toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(2000); });
     expect(screen.getByText('Update finished')).toBeInTheDocument();
     expect(within(screen.getByRole('log')).getByText('Done')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start update' })).toBeEnabled();
+    await act(async () => { vi.advanceTimersByTime(6000); });
+    expect(poll).toHaveBeenCalledTimes(3);
   });
 });

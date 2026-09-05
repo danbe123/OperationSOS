@@ -28,6 +28,26 @@ describe('isProtectedRoute', () => {
 });
 
 describe('IdleOverlay', () => {
+  it('keeps the kiosk awake during activity in dynamically added nested reader frames', async () => {
+    vi.useFakeTimers();
+    const backlight = vi.spyOn(api, 'kioskBacklight').mockResolvedValue({ level: 10 });
+    vi.spyOn(api, 'kioskIdle').mockResolvedValue({ ok: true });
+    const view = renderRoute('/search', { routes, kiosk: true });
+    await act(async () => {});
+    const frame = document.createElement('iframe');
+    await act(async () => { view.container.append(frame); });
+    const nested = frame.contentDocument!.createElement('iframe');
+    await act(async () => { frame.contentDocument!.body.append(nested); });
+    for (let i = 0; i < 9; i++) {
+      await act(async () => { vi.advanceTimersByTime(4 * MIN); });
+      await act(async () => { fireEvent.pointerDown(nested.contentDocument!.body); });
+    }
+    expect(backlight).not.toHaveBeenCalled();
+    expect(screen.getByTestId('where')).toHaveTextContent('/search');
+    await act(async () => { vi.advanceTimersByTime(5 * MIN + 1); });
+    expect(screen.getByRole('button', { name: 'Touch to wake' })).toBeInTheDocument();
+  });
+
   it('dims after idle_minutes without pointer events, consumes the first touch, restores the backlight', async () => {
     vi.useFakeTimers();
     const backlight = vi.spyOn(api, 'kioskBacklight').mockResolvedValue({ level: 10 });

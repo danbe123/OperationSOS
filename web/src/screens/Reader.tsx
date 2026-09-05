@@ -8,6 +8,7 @@ import { attachKeyboardTo } from '../kiosk/Keyboard';
 import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation } from '../links';
 import { injectStyle, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
+import { PdfFrame } from './Doc';
 
 export const TEXT_SIZES = [100, 125, 150] as const;
 export const TEXT_SIZE_KEY = 'sos.textSize';
@@ -18,12 +19,38 @@ function readStoredSize(): number {
 }
 
 /** The frame's own URL when it is one of ours; otherwise the URL we are loading (jsdom reports about:blank). */
+function frameUrl(win: Window): URL | null {
+  try {
+    const url = new URL(win.location.href);
+    return url.origin === window.location.origin ? url : null;
+  } catch {
+    // Native document viewers and cross-origin redirects have protected Locations.
+    return null;
+  }
+}
+
 function frameBase(win: Window, fallbackPath: string): string {
-  const href = win.location.href;
-  return href.startsWith(window.location.origin) ? href : new URL(fallbackPath, window.location.origin).href;
+  return frameUrl(win)?.href ?? new URL(fallbackPath, window.location.origin).href;
 }
 
 export function Reader() {
+  const { id = '' } = useParams();
+  const location = useLocation();
+  const { theme } = useTheme();
+  const prefix = `/read/${id}/`;
+  const path = location.pathname.startsWith(prefix) ? location.pathname.slice(prefix.length) : '';
+  if (/\.pdf$/i.test(path)) {
+    let title = path.split('/').pop() ?? 'PDF';
+    try { title = decodeURIComponent(title); } catch { /* Keep malformed names readable. */ }
+    return <div className="screen screen-fill">
+      <AppBar title={title} search={false} actions={<Link className="btn btn-chrome" to={`/library#item-${id}`}><Icon name="library" /><span>Open in library</span></Link>} />
+      <PdfFrame url={kiwixContentUrl(id, path) + location.search} theme={theme} hash={location.hash} />
+    </div>;
+  }
+  return <ArticleReader />;
+}
+
+function ArticleReader() {
   const { id = '' } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -33,7 +60,7 @@ export function Reader() {
   // Read the raw pathname so percent-encoding in article paths survives (useParams decodes the splat).
   const prefix = `/read/${id}/`;
   const path = location.pathname.startsWith(prefix) ? location.pathname.slice(prefix.length) : '';
-  const target = kiwixContentUrl(id, path) + location.hash;
+  const target = kiwixContentUrl(id, path) + location.search + location.hash;
 
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [initialSrc] = useState(target); // set once: browser history holds one entry per article via the app URL
@@ -63,10 +90,16 @@ export function Reader() {
     const win = frameRef.current?.contentWindow;
     if (!win) return;
     if (pending.current === target) return;
-    const current = win.location.href.startsWith(window.location.origin) ? win.location.pathname + win.location.hash : '';
+    const url = frameUrl(win);
+    const current = url ? url.pathname + url.search + url.hash : '';
     if (current !== target) {
       pending.current = target;
-      replaceFrameLocation(win, target);
+      try {
+        replaceFrameLocation(win, target);
+      } catch {
+        // A protected native viewer can reject Location access; navigate via the iframe element.
+        if (frameRef.current) frameRef.current.src = target;
+      }
     }
   }, [target]);
 
@@ -97,8 +130,8 @@ export function Reader() {
         e.stopPropagation();
         const u = new URL(href, base);
         const parsed = parseKiwixContentPath(u.pathname);
-        if (parsed) {
-          const next = kiwixContentUrl(parsed.id, parsed.path) + u.hash;
+        if (parsed && !/\.pdf$/i.test(parsed.path)) {
+          const next = kiwixContentUrl(parsed.id, parsed.path) + u.search + u.hash;
           pending.current = next;
           replaceFrameLocation(win, next);
         }
@@ -123,10 +156,11 @@ export function Reader() {
     setTitle(doc.title || decodeURIComponent(targetRef.current.split('/').pop() ?? '') || 'Reader');
     if (kiosk) attachKeyboardTo(doc);
     // A form submit or redirect inside the frame: keep the app URL honest.
-    if (win.location.href.startsWith(window.location.origin)) {
-      const parsed = parseKiwixContentPath(win.location.pathname);
+    const url = frameUrl(win);
+    if (url) {
+      const parsed = parseKiwixContentPath(url.pathname);
       if (parsed) {
-        const route = readerRoute(parsed.id, parsed.path) + win.location.search + win.location.hash;
+        const route = readerRoute(parsed.id, parsed.path) + url.search + url.hash;
         const here = locRef.current.pathname + locRef.current.search + locRef.current.hash;
         if (route !== here) navigate(route, { replace: true });
       }
@@ -150,7 +184,7 @@ export function Reader() {
         }
       />
       <div className="frame-wrap">
-        <iframe ref={frameRef} title="Article" src={initialSrc} sandbox="allow-same-origin allow-scripts allow-forms" onLoad={onLoad} />
+        <iframe ref={frameRef} title="Article" src={initialSrc} sandbox="allow-same-origin allow-scripts allow-forms allow-modals" onLoad={onLoad} />
       </div>
     </div>
   );

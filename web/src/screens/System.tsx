@@ -64,17 +64,28 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
   const [aiState, setAiState] = useState<AiState | null>(null);
   const backlightTimer = useRef<number | undefined>(undefined);
 
+  const pollingUpdate = progress !== null && !progress.done;
   useEffect(() => {
-    if (!progress || progress.done) return;
-    const id = window.setTimeout(async () => {
+    if (!pollingUpdate) return;
+    let cancelled = false;
+    let timer: number;
+    const poll = async () => {
+      let done = false;
       try {
-        setProgress(await api.updateProgress());
+        const next = await api.updateProgress();
+        done = next.done;
+        if (!cancelled) setProgress(next);
       } catch (e) {
-        notify(`Update progress unavailable: ${errorMessage(e)}`);
+        if (!cancelled) notify(`Update progress unavailable: ${errorMessage(e)}`);
       }
-    }, 2000);
-    return () => window.clearTimeout(id);
-  }, [progress]);
+      if (!cancelled && !done) timer = window.setTimeout(() => void poll(), 2000);
+    };
+    timer = window.setTimeout(() => void poll(), 2000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [pollingUpdate]);
 
   const gated = async (fn: () => Promise<Status>) => {
     try {

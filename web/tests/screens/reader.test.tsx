@@ -36,10 +36,39 @@ const ARTICLE = `
 beforeEach(() => replaceMock.mockReset());
 
 describe('Reader', () => {
+  it('opens encoded PDF links in PDF.js and returns to the article on Back', async () => {
+    const { router } = renderRoute(MAIN);
+    const pdfPath = 'files/First%20Aid%20and%20Medicine%20(1).pdf';
+    const doc = await loadArticle('Main Page', `<a href="/kiwix/content/${WIKI}/${pdfPath}#page=2">Manual</a>`);
+    await act(async () => { fireEvent.click(doc.querySelector('a')!); });
+    const viewer = screen.getByTitle('Document');
+    const src = new URL(viewer.getAttribute('src')!, window.location.origin);
+    expect(src.pathname).toBe('/pdfjs/web/viewer.html');
+    expect(src.searchParams.get('file')).toBe(`/kiwix/content/${WIKI}/${pdfPath}`);
+    expect(src.hash).toBe('#page=2');
+    expect(replaceMock).not.toHaveBeenCalled();
+    await act(async () => { await router.navigate(-1); });
+    expect(frame()).toHaveAttribute('src', `/kiwix/content/${WIKI}/A/Main_Page`);
+  });
+
+  it('recovers from a protected frame Location when navigating Back', async () => {
+    const { router } = renderRoute(MAIN);
+    const doc = await loadArticle('Main Page', ARTICLE);
+    await act(async () => { fireEvent.click(doc.getElementById('in')!); });
+    await loadArticle('Water', '<h1>Water</h1>');
+    Object.defineProperty(frame(), 'contentWindow', { configurable: true, value: {
+      get location() { throw new DOMException('Blocked a cross-origin frame', 'SecurityError'); },
+    } });
+    replaceMock.mockImplementationOnce(() => { throw new DOMException('Blocked', 'SecurityError'); });
+    await act(async () => { await router.navigate(-1); });
+    expect(frame()).toHaveAttribute('src', `/kiwix/content/${WIKI}/A/Main_Page`);
+    expect(screen.queryByText('Unexpected Application Error!')).toBeNull();
+  });
+
   it('renders a sandboxed same-origin iframe whose src is set once', async () => {
     renderRoute(MAIN);
     const f = frame();
-    expect(f).toHaveAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms');
+    expect(f).toHaveAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-modals');
     expect(f).toHaveAttribute('src', `/kiwix/content/${WIKI}/A/Main_Page`);
   });
 
@@ -100,6 +129,7 @@ describe('Reader', () => {
     renderRoute(MAIN);
     await loadArticle('Main Page', ARTICLE);
     const win = frame().contentWindow!;
+    expect(frame().getAttribute('sandbox')?.split(' ')).toContain('allow-modals');
     win.print = vi.fn();
     await act(async () => { screen.getByRole('button', { name: /Print/ }).click(); });
     expect(win.print).toHaveBeenCalled();

@@ -51,6 +51,10 @@ export function Scenario() {
   const kiosk = useKiosk();
   const { data, error, loading, setData } = useQuery(() => api.playbook(slug), [slug], { intervalMs: 15_000, refetchOnFocus: true });
   const [printing, setPrinting] = useState(false);
+  useEffect(() => {
+    if (!data) return;
+    try { localStorage.setItem('sos.lastPlaybook', data.slug); } catch { /* Storage is optional. */ }
+  }, [data]);
 
   const tab = params.get('tab') ?? 'right-now';
   const selectTab = (id: string) => {
@@ -93,6 +97,7 @@ export function Scenario() {
     <div className="screen playbook">
       <AppBar
         title={data.title}
+        search={false}
         actions={
           <>
             {data.overlays.length > 0 && (
@@ -102,7 +107,7 @@ export function Scenario() {
           </>
         }
       />
-      <p className="pad muted">{data.summary}</p>
+      <div className="scenario-intro"><p className="eyebrow">Your response guide</p><p>{data.summary}</p><a className="btn" href="#response-checklist"><Icon name="plan" /> Household checklist</a></div>
       <div className="tabs" role="tablist" aria-label="Sections">
         {data.sections.map((s) => (
           <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
@@ -110,8 +115,11 @@ export function Scenario() {
           </button>
         ))}
       </div>
+      <div className="scenario-workspace">
+      <div className="scenario-guidance">
       {sections.map((s) => (
-        <section key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
+        <section className={s.id === 'right-now' ? 'response-panel response-now' : 'response-panel'} key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
+          {!printing && <div className="response-heading"><p className="eyebrow">{s.id === 'right-now' ? 'Start here' : 'Plan ahead'}</p><h2>{s.id === 'right-now' ? 'Do this first' : s.title}</h2></div>}
           {printing && <h2 className="pad">{s.title}</h2>}
           <SectionBody section={s} playbook={data} open={printing} />
         </section>
@@ -127,8 +135,14 @@ export function Scenario() {
           ))}
         </>
       )}
-      <h2 className="pad">Checklist</h2>
-      <Checklist slug={data.slug} items={data.checklist} onItems={(items) => setData({ ...data, checklist: items })} />
+      </div>
+      <aside className="scenario-checklist" id="response-checklist" aria-labelledby="checklist-heading">
+        <div className="checklist-heading"><p className="eyebrow">Work through it together</p><h2 id="checklist-heading">Checklist</h2><p className="muted">Shared with everyone on this box.</p></div>
+        <progress className="checklist-progress" aria-label="Checklist completion" value={data.checklist.filter((item) => item.checked).length} max={Math.max(1, data.checklist.length)} />
+        <Checklist slug={data.slug} items={data.checklist} onItems={(items) => setData({ ...data, checklist: items })} />
+        <a className="btn checklist-return no-print" href={`#panel-${current.id}`}>Back to guidance <Icon name="forward" /></a>
+      </aside>
+      <footer className="scenario-sources">
       <h2 className="pad">Sources</h2>
       <ul className="list">
         {data.sources.map((s, i) => (
@@ -139,6 +153,8 @@ export function Scenario() {
         ))}
       </ul>
       <p className="pad muted">{data.reviewed ? `Reviewed ${data.reviewed}` : 'Not yet reviewed by the owner'}</p>
+      </footer>
+      </div>
     </div>
   );
 }

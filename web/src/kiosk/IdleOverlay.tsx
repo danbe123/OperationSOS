@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import { useKiosk } from './KioskProvider';
+import { watchActivity } from './activity';
 
 export const IDLE_LEVEL = 10;
 export const ACTIVE_LEVEL = 100;
@@ -62,11 +63,9 @@ export function IdleOverlay() {
     const onActivity = () => {
       if (!dimmedRef.current) arm();
     };
-    window.addEventListener('pointerdown', onActivity, true);
-    window.addEventListener('keydown', onActivity, true);
+    const detach = watchActivity(document, onActivity);
     return () => {
-      window.removeEventListener('pointerdown', onActivity, true);
-      window.removeEventListener('keydown', onActivity, true);
+      detach();
       window.clearTimeout(idleTimer.current);
       window.clearTimeout(homeTimer.current);
     };
