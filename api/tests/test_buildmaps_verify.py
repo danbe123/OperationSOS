@@ -112,6 +112,30 @@ def test_check_style_sources_accepts_a_complete_tree_and_reports_gaps(tmp_path):
     assert verify.check_style_sources(out) == ["no styles under styles/"]
 
 
+def test_check_style_sources_walks_nested_case_literal_text_font_expressions(tmp_path):
+    """Ruling R14: `@protomaps/basemaps@5.7.2` emits `text-font` as a nested case/literal expression
+    for internationalised labels (e.g. layer `places_locality`), not a flat list of face names. The
+    naive "is it a list" check used to wrongly treat the condition token `"case"` as a face name and
+    report a bogus missing-glyphs problem for it, while never checking the real face names nested
+    inside the `["literal", [...]]` branches."""
+    out = tmp_path / "out"
+    _synthetic_out(out)
+    nested_font = ["case", ["==", ["get", "script"], "Devanagari"],
+                   ["literal", ["Noto Sans Devanagari Regular v1"]],
+                   ["literal", ["Noto Sans Regular"]]]
+    style = {"version": 8, "sources": {"s": {"type": "vector", "url": "pmtiles:///maps/test.pmtiles"}},
+              "sprite": "/maps/sprites/v4/light", "glyphs": "/maps/fonts/{fontstack}/{range}.pbf",
+              "layers": [{"id": "places_locality", "type": "symbol", "source": "s", "source-layer": "x",
+                          "layout": {"text-font": nested_font}}]}
+    _write(out / "styles" / "osm-field.json", style)
+    problems = verify.check_style_sources(out)
+    assert not any("case" in p for p in problems), problems
+    assert any("Noto Sans Devanagari Regular v1" in p for p in problems), problems
+    assert not any("Noto Sans Regular" in p for p in problems), problems
+    _write(out / "fonts" / "Noto Sans Devanagari Regular v1" / "0-255.pbf", b"g")
+    assert verify.check_style_sources(out) == []
+
+
 def test_check_overlays_requires_the_index_checks_its_files_and_skips_unbuilt_ids(tmp_path):
     out = tmp_path / "out"
     overlays_manifest = tmp_path / "overlays.json"
@@ -135,6 +159,27 @@ def test_check_overlays_requires_the_index_checks_its_files_and_skips_unbuilt_id
 
     _write(out / "overlays" / "water.pmtiles", b"pm")
     assert verify.check_overlays(out, overlays_manifest) == []
+
+
+def test_check_overlays_skips_the_artifact_kind_cross_check_in_fixture_mode(tmp_path):
+    """Ruling R15: access-land/airports-military/water are declared in manifest/overlays.json at their
+    real production-scale kind (pmtiles), but at fixture scale every overlay's tiny sample input
+    legitimately finalises as geojson under the uniform 5MB rule (Task 7's `finalise()`) -- this is
+    correct fixture behaviour, not a drifted manifest, so the artifact-path cross-check must not fire
+    for it when fixture=True. Full-mode (or the default) must still catch the mismatch."""
+    out = tmp_path / "out"
+    overlays_manifest = tmp_path / "overlays.json"
+    overlays_manifest.write_text(json.dumps({"items": [
+        {"id": "access-land", "kind": "pmtiles", "source": {"artifact": "overlays/access-land.pmtiles"}},
+    ]}))
+    _write(out / "overlays" / "access-land.geojson", b"{}")
+    _write(out / "overlays" / "index.json", {
+        "access-land": {"kind": "geojson", "file": "overlays/access-land.geojson"},
+    })
+    assert verify.check_overlays(out, overlays_manifest, fixture=True) == []
+    problems = verify.check_overlays(out, overlays_manifest)
+    assert any("access-land" in p and "overlays/access-land.pmtiles" in p for p in problems)
+    assert verify.check_overlays(out, overlays_manifest, fixture=False) == problems
 
 
 def test_output_sizes_and_manifest_update(tmp_path):

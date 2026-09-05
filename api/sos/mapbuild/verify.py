@@ -38,6 +38,37 @@ def _exists(out: Path, url: str, prefix: str) -> bool:
     return url.startswith(prefix) and (out / url[len(prefix):]).exists()
 
 
+def _collect_font_faces(expr, out: set[str], top: bool = True) -> None:
+    """Walk a `text-font` value, which is either a flat list of face-name strings or a nested
+    case/match expression (protomaps-basemaps emits the latter for internationalised labels, e.g.
+    `["case", ["==", ["get", "script"], "Devanagari"], ["literal", [...]], ["literal", [...]]]`).
+    Only a top-level flat array of strings, or a `["literal", [...]]` branch, names real faces --
+    everything else (conditions, operators, get expressions) is walked but never treated as a face."""
+    if not isinstance(expr, list):
+        return
+    if top and expr and all(isinstance(f, str) for f in expr):
+        out.update(expr)
+        return
+    if expr and expr[0] == "literal" and isinstance(expr[1], list) and all(isinstance(f, str) for f in expr[1]):
+        out.update(expr[1])
+        return
+    for item in expr:
+        if isinstance(item, list):
+            _collect_font_faces(item, out, top=False)
+
+
+def _find_text_font_faces(node, out: set[str]) -> None:
+    if isinstance(node, list):
+        for item in node:
+            _find_text_font_faces(item, out)
+    elif isinstance(node, dict):
+        for key, value in node.items():
+            if key == "text-font":
+                _collect_font_faces(value, out)
+            else:
+                _find_text_font_faces(value, out)
+
+
 def check_style_sources(out: Path) -> list[str]:
     problems: list[str] = []
     styles_dir = out / "styles"
@@ -66,11 +97,11 @@ def check_style_sources(out: Path) -> list[str]:
         if "glyphs" in doc and doc["glyphs"] != GLYPHS_URL:
             problems.append(f"{path.name}: glyphs {doc['glyphs']!r} is not {GLYPHS_URL}")
         for layer in doc.get("layers", []):
-            fonts = layer.get("layout", {}).get("text-font")
-            if isinstance(fonts, list):
-                for face in fonts:
-                    if isinstance(face, str) and not (out / "fonts" / face / "0-255.pbf").exists():
-                        problems.append(f"{path.name}: glyphs for {face!r} are missing (layer {layer.get('id')})")
+            faces: set[str] = set()
+            _find_text_font_faces(layer.get("layout", {}), faces)
+            for face in sorted(faces):
+                if not (out / "fonts" / face / "0-255.pbf").exists():
+                    problems.append(f"{path.name}: glyphs for {face!r} are missing (layer {layer.get('id')})")
     index_path = styles_dir / "index.json"
     if not index_path.exists():
         problems.append("styles/index.json is missing")
@@ -87,13 +118,23 @@ def check_style_sources(out: Path) -> list[str]:
     return sorted(set(problems))
 
 
-def check_overlays(out: Path, overlays_manifest: Path) -> list[str]:
+def check_overlays(out: Path, overlays_manifest: Path, fixture: bool = False) -> list[str]:
     """Ruling R5: `overlays/index.json` must exist and name only files that exist under `<out>`, and
     every overlay item in `manifest/overlays.json` that this build actually produced (named in the
     index) must resolve to a real file at its `source.artifact`. An overlay id absent from the index is
     skipped rather than failed: a deliberately partial `--steps` run that never reaches the `overlays`
     step (or a manifest item added ahead of the code that builds it) should not fail verification for
-    ids this run was never asked to build."""
+    ids this run was never asked to build.
+
+    Ruling R15: the second check (the `source.artifact` cross-check) is skipped entirely in fixture
+    mode. `manifest/overlays.json` declares access-land/airports-military/water at their real
+    production-scale kind (pmtiles, since full UK-wide data crosses the 5MB tippecanoe threshold), but
+    at fixture scale every overlay's tiny sample input legitimately finalises as geojson under the
+    uniform 5MB rule (Task 7's `finalise()`) -- so the manifest's hardcoded production-scale artifact
+    path can never match a fixture build's real output for those overlays. This mirrors
+    `overlays.verify_manifest_kinds`, which is likewise gated to `not ctx.fixture`. The first loop
+    (every file `overlays/index.json` names actually exists under `<out>`) stays unconditional: it is
+    meaningful regardless of fixture scale."""
     index_path = out / "overlays" / "index.json"
     if not index_path.exists():
         return ["overlays/index.json is missing"]
@@ -102,7 +143,7 @@ def check_overlays(out: Path, overlays_manifest: Path) -> list[str]:
     for overlay_id, entry in index.items():
         if not (out / entry["file"]).exists():
             problems.append(f"overlays/index.json: {overlay_id} -> {entry['file']} is missing")
-    if overlays_manifest.exists():
+    if not fixture and overlays_manifest.exists():
         for item in json.loads(overlays_manifest.read_text()).get("items", []):
             overlay_id = item.get("id")
             if overlay_id not in index:
@@ -198,7 +239,7 @@ class VerifyStep:
         else:
             problems.append(f"{ctx.base_name} is missing")
         problems += check_style_sources(ctx.out)
-        problems += check_overlays(ctx.out, ctx.repo / "manifest" / "overlays.json")
+        problems += check_overlays(ctx.out, ctx.repo / "manifest" / "overlays.json", fixture=ctx.fixture)
         for rel in MANIFEST_OUTPUTS.values():
             if not (ctx.out / rel).exists():
                 problems.append(f"missing output {rel}")
