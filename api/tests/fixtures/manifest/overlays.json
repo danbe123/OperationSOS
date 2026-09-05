@@ -1,16 +1,366 @@
 {
   "items": [
-    { "id": "health", "title": "Hospitals, pharmacies, GP surgeries", "kind": "geojson", "tier": "core", "category": "maps",
-      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/health.geojson" }, "dest": "maps/overlays/health.geojson",
-      "size_bytes": 4000000, "as_at": "2026-09", "licence": "ODbL", "priority": 70,
-      "overlay": { "id": "health", "kind": "geojson", "layer_id": null, "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#e03131", "icon": "cross" } },
-    { "id": "nuclear-sites", "title": "Nuclear sites", "kind": "geojson", "tier": "core", "category": "maps",
-      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/nuclear-sites.geojson" }, "dest": "maps/overlays/nuclear-sites.geojson",
-      "size_bytes": 20000, "as_at": "2026-09", "licence": "CC0", "priority": 71,
-      "overlay": { "id": "nuclear-sites", "kind": "geojson", "layer_id": null, "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#f59f00", "icon": "radiation" } },
-    { "id": "water", "title": "Reservoirs and water works", "kind": "pmtiles", "tier": "core", "category": "maps",
-      "source": { "type": "build", "tool": "build-maps", "artifact": "overlays/water.pmtiles" }, "dest": "maps/overlays/water.pmtiles",
-      "size_bytes": 9000000, "as_at": "2026-09", "licence": "ODbL", "priority": 72,
-      "overlay": { "id": "water", "kind": "pmtiles", "layer_id": "water", "default_on": false, "coverage": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"], "color": "#1c7ed6", "icon": "droplet" } }
+    {
+      "id": "footpaths",
+      "title": "Footpaths and rights of way",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/footpaths.pmtiles"
+      },
+      "dest": "maps/overlays/footpaths.pmtiles",
+      "size_bytes": 287553,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 70,
+      "description": "Public footpaths, bridleways, restricted byways, byways, Scottish core paths and other paths from OpenStreetMap, styled by designation.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "footpaths",
+        "kind": "pmtiles",
+        "default_on": true,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#3fb950",
+        "icon": "footpath"
+      }
+    },
+    {
+      "id": "access-land",
+      "title": "Open access land",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/access-land.geojson"
+      },
+      "dest": "maps/overlays/access-land.geojson",
+      "size_bytes": 292,
+      "as_at": "2026-07-13",
+      "licence": "OGL v3 (Natural England, Natural Resources Wales)",
+      "priority": 71,
+      "description": "CRoW Act open access land in England and Wales; Scotland's right of responsible access is explained in the navigation module.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "access-land",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales"
+        ],
+        "color": "#b58900",
+        "icon": null
+      }
+    },
+    {
+      "id": "flood-zones",
+      "title": "Flood zones",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/flood-zones.pmtiles"
+      },
+      "dest": "maps/overlays/flood-zones.pmtiles",
+      "size_bytes": 3797,
+      "as_at": "2026-05-20",
+      "licence": "OGL v3 (Environment Agency, NRW, SEPA, DfI Rivers)",
+      "priority": 72,
+      "description": "Flood zones 2 and 3 for England, NRW zones for Wales, SEPA river and coastal outlines, DfI strategic flood map for Northern Ireland.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "flood-zones",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni"
+        ],
+        "color": "#1f77b4",
+        "icon": null
+      }
+    },
+    {
+      "id": "health",
+      "title": "Hospitals, pharmacies and GP surgeries",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/health.geojson"
+      },
+      "dest": "maps/overlays/health.geojson",
+      "size_bytes": 3054,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 73,
+      "description": "Every hospital, pharmacy and doctors' surgery in OpenStreetMap with name, phone and opening hours where mapped.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "health",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#d62728",
+        "icon": "hospital"
+      }
+    },
+    {
+      "id": "fuel",
+      "title": "Fuel stations",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/fuel.geojson"
+      },
+      "dest": "maps/overlays/fuel.geojson",
+      "size_bytes": 2027,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 74,
+      "description": "Petrol and diesel stations from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "fuel",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#ff7f0e",
+        "icon": "fuel"
+      }
+    },
+    {
+      "id": "water",
+      "title": "Reservoirs and water works",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/water.geojson"
+      },
+      "dest": "maps/overlays/water.geojson",
+      "size_bytes": 20440,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 75,
+      "description": "Reservoirs and water treatment works from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "water",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#17becf",
+        "icon": "water"
+      }
+    },
+    {
+      "id": "rail",
+      "title": "Railway stations",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/rail.geojson"
+      },
+      "dest": "maps/overlays/rail.geojson",
+      "size_bytes": 934,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 76,
+      "description": "Railway stations from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "rail",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#9467bd",
+        "icon": "rail"
+      }
+    },
+    {
+      "id": "nuclear-sites",
+      "title": "Nuclear sites",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/nuclear-sites.geojson"
+      },
+      "dest": "maps/overlays/nuclear-sites.geojson",
+      "size_bytes": 8310,
+      "as_at": "2026-09-03",
+      "licence": "CC0 (hand-authored from public sources)",
+      "priority": 77,
+      "description": "Civil nuclear power stations, fuel and reprocessing plants, weapons establishments and naval nuclear bases, hand-authored in tools/map-styles/data/nuclear-sites.geojson.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "nuclear-sites",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#e6c700",
+        "icon": "radiation"
+      }
+    },
+    {
+      "id": "chemical-sites",
+      "title": "Major chemical and fuel sites",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/chemical-sites.geojson"
+      },
+      "dest": "maps/overlays/chemical-sites.geojson",
+      "size_bytes": 1964,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors) plus hand-authored additions",
+      "priority": 78,
+      "description": "Chemical works, refineries and oil terminals from OpenStreetMap plus plan 04's hand-authored list.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "chemical-sites",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#8c564b",
+        "icon": "chemical"
+      }
+    },
+    {
+      "id": "airports-military",
+      "title": "Airports and military bases",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/airports-military.geojson"
+      },
+      "dest": "maps/overlays/airports-military.geojson",
+      "size_bytes": 45,
+      "as_at": "2026-09-02",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 79,
+      "description": "Aerodromes and military land from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "airports-military",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#7f7f7f",
+        "icon": "airport"
+      }
+    }
   ]
 }

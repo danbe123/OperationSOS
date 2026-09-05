@@ -222,6 +222,31 @@ def test_write_fixture_manifest_rewrites_base_and_drops_apk(tmp_path):
     assert next(i for i in doc["items"] if i["id"] == "places")["dest"] == "maps/places.csv.gz"
 
 
+def test_write_fixture_overlays_manifest_rewrites_only_ids_whose_kind_drifted(tmp_path):
+    dest = tmp_path / "fixtures" / "manifest" / "overlays.json"
+    index = {
+        "footpaths": {"kind": "pmtiles", "file": "overlays/footpaths.pmtiles"},  # matches -> untouched
+        "water": {"kind": "geojson", "file": "overlays/water.geojson"},  # fixture-scale drift -> rewritten
+    }
+    verify.write_fixture_overlays_manifest(REPO / "manifest" / "overlays.json", dest, index)
+    doc = json.loads(dest.read_text())
+    ids = [i["id"] for i in doc["items"]]
+    original = json.loads((REPO / "manifest" / "overlays.json").read_text())
+    assert ids == [i["id"] for i in original["items"]], "every real manifest id is carried over, none dropped"
+
+    footpaths = next(i for i in doc["items"] if i["id"] == "footpaths")
+    assert footpaths["kind"] == "pmtiles" and footpaths["source"]["artifact"] == "overlays/footpaths.pmtiles"
+    assert footpaths["dest"] == "maps/overlays/footpaths.pmtiles" and footpaths["overlay"]["kind"] == "pmtiles"
+
+    water = next(i for i in doc["items"] if i["id"] == "water")
+    assert water["kind"] == "geojson" and water["source"]["artifact"] == "overlays/water.geojson"
+    assert water["dest"] == "maps/overlays/water.geojson" and water["overlay"]["kind"] == "geojson"
+
+    health = next(i for i in doc["items"] if i["id"] == "health")
+    original_health = next(i for i in original["items"] if i["id"] == "health")
+    assert health == original_health, "an id absent from the index is copied verbatim"
+
+
 def _repo_copy(tmp_path):
     repo = tmp_path / "repo"
     (repo / "manifest").mkdir(parents=True)
@@ -249,10 +274,15 @@ def test_verify_step_fixture_verifies_every_archive_and_writes_sizes(tmp_path):
     original = json.loads((ctx.repo / "manifest" / "maps.json").read_text())
     assert next(i for i in original["items"] if i["id"] == "uk-ie")["size_bytes"] == 3400000000, "fixture runs never touch manifest/maps.json"
     original_overlays = json.loads((ctx.repo / "manifest" / "overlays.json").read_text())
-    assert next(i for i in original_overlays["items"] if i["id"] == "footpaths")["size_bytes"] == 900000000, "fixture runs never touch manifest/overlays.json either"
+    assert next(i for i in original_overlays["items"] if i["id"] == "footpaths")["size_bytes"] == 900000000, "fixture runs never touch the real manifest/overlays.json"
+    fixture_overlays = ctx.repo / "api" / "tests" / "fixtures" / "manifest" / "overlays.json"
+    overlays_doc = json.loads(fixture_overlays.read_text())
+    assert next(i for i in overlays_doc["items"] if i["id"] == "footpaths")["size_bytes"] == 2, "the fixture copy of overlays.json IS regenerated"
+    assert {i["id"] for i in overlays_doc["items"]} == {i["id"] for i in original_overlays["items"]}, "every id from the real manifest is carried over"
     report = json.loads((ctx.out / "build.json").read_text())
     assert report["fixture"] is True and report["sizes"]["contours"] == 2 and len(report["verified_archives"]) == 7
-    assert report["overlay_sizes"]["footpaths"] == 2 and report["updated_overlays"] == []
+    assert report["overlay_sizes"]["footpaths"] == 2
+    assert set(report["updated_overlays"]) == {"footpaths", "flood-zones", "water", "nuclear-sites"}
 
 
 def test_verify_step_full_mode_updates_the_real_manifest_copy(tmp_path):

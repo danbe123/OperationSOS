@@ -51,5 +51,16 @@
     "packs"
   ],
   "overlays_manifest": "manifest/overlays.json",
-  "updated_overlays": []
+  "updated_overlays": [
+    "footpaths",
+    "access-land",
+    "flood-zones",
+    "health",
+    "fuel",
+    "water",
+    "rail",
+    "nuclear-sites",
+    "chemical-sites",
+    "airports-military"
+  ]
 }

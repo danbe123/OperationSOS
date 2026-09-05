@@ -49,7 +49,7 @@ def test_library_and_rescan(client, env):
     assert wiki["available"] is False and wiki["url"] is None
     _install_zims(env)
     r = client.post("/api/system/rescan")
-    assert r.status_code == 200 and r.json() == {"items": 18, "available": 2}
+    assert r.status_code == 200 and r.json() == {"items": 25, "available": 2}
     r = client.get(f"/api/library/{WIKI}")
     assert r.status_code == 200
     assert r.json()["available"] is True and r.json()["url"] == f"/read/{WIKI}/" and r.json()["drive_label"] == "Core"
@@ -148,9 +148,9 @@ def test_map_config_and_overlays(client, env):
     assert cfg["packs"] == [] and cfg["packs_index_url"] is None
     overlays = {o["id"]: o for o in cfg["overlays"]}
     assert overlays["health"]["available"] is True and overlays["health"]["url"] == "/maps/overlays/health.geojson"
-    assert overlays["health"]["scenarios_on"] == ["grid-collapse", "pandemic"] and overlays["health"]["color"] == "#e03131"
+    assert overlays["health"]["scenarios_on"] == ["grid-collapse", "pandemic"] and overlays["health"]["color"] == "#d62728"
     assert overlays["nuclear-sites"]["available"] is False and overlays["nuclear-sites"]["url"] is None
-    assert overlays["water"]["kind"] == "pmtiles" and overlays["water"]["layer_id"] == "water"
+    assert overlays["water"]["kind"] == "geojson" and overlays["water"]["layer_id"] is None
     assert set(overlays["health"]) == {"id", "title", "kind", "layer_id", "url", "default_on", "scenarios_on", "coverage", "color", "icon", "available"}
     assert client.get("/api/map/overlays").json() == cfg["overlays"]
 

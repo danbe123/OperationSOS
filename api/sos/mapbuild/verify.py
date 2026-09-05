@@ -212,6 +212,28 @@ def write_fixture_manifest(source: Path, dest: Path, base_name: str) -> None:
     dest.write_text(json.dumps({"items": items}, indent=2, ensure_ascii=False) + "\n")
 
 
+def write_fixture_overlays_manifest(source: Path, dest: Path, index: dict) -> None:
+    """Fixture counterpart of write_fixture_manifest, for manifest/overlays.json. At fixture scale every
+    overlay's tiny sample input legitimately finalises under Task 7's uniform 5MB rule (`finalise()`), so
+    an id this run actually built (named in `index`, the loaded `overlays/index.json`) may have produced
+    a different `kind` than the real, production-scale manifest declares -- this mirrors the reasoning
+    already established in `check_overlays`'s R15 fixture gate and `overlays.verify_manifest_kinds`. When
+    that happens, rewrite the item's kind/source.artifact/dest/overlay.kind to the real produced values;
+    an id absent from `index`, or one whose kind already matches, is copied verbatim."""
+    doc = json.loads(source.read_text())
+    items = []
+    for item in doc["items"]:
+        entry = index.get(item["id"])
+        if entry is not None and entry["kind"] != item["kind"]:
+            item["kind"] = entry["kind"]
+            item["source"]["artifact"] = entry["file"]
+            item["dest"] = f"maps/{entry['file']}"
+            item["overlay"]["kind"] = entry["kind"]
+        items.append(item)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps({"items": items}, indent=2, ensure_ascii=False) + "\n")
+
+
 class VerifyStep:
     id = "verify"
 
@@ -254,7 +276,12 @@ class VerifyStep:
             target = ctx.repo / "api" / "tests" / "fixtures" / "manifest" / "maps.json"
             write_fixture_manifest(manifest, target, ctx.base_name)
             updated = update_manifest_sizes(target, sizes)
-            updated_overlays: list[str] = []  # fixture runs never touch either repo manifest
+            # The real manifest/overlays.json is never touched in fixture mode -- only this fixture copy is.
+            overlays_target = ctx.repo / "api" / "tests" / "fixtures" / "manifest" / "overlays.json"
+            index_path = ctx.out / "overlays" / "index.json"
+            index = json.loads(index_path.read_text()) if index_path.exists() else {}
+            write_fixture_overlays_manifest(overlays_manifest, overlays_target, index)
+            updated_overlays = update_manifest_sizes(overlays_target, overlay_size_map)
         else:
             target = manifest
             updated = update_manifest_sizes(target, sizes)

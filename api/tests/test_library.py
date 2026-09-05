@@ -52,7 +52,7 @@ def test_refresh_availability_and_labels(conn, env):
     _install_zims(env)
     (env.core / "docs" / "sos-test.pdf").write_bytes(b"%PDF-1.4\n")
     total, available = library.refresh_items(conn, env)
-    assert total == 18 and available == 3
+    assert total == 25 and available == 3
     rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
     assert rows["wikipedia_en_100_mini_2026-01"]["local_path"] == str(env.core / "zim" / "wikipedia_en_100_mini_2026-01.zim")
     assert rows["nrr-2025"]["available"] == 0
@@ -122,7 +122,7 @@ def test_rescan_with_extended_missing_flushes_cache(conn, env):
     conn.execute("INSERT INTO search_cache(q, results_json, created_at) VALUES ('water','[]','2026-01-01')")
     conn.commit()
     result = library.rescan(conn, env)
-    assert result == {"items": 18, "available": 2}
+    assert result == {"items": 25, "available": 2}
     assert conn.execute("SELECT count(*) FROM search_cache").fetchone()[0] == 0
     assert db.get_setting(conn, "zim_languages") is not None
     assert not env.ext.exists()
