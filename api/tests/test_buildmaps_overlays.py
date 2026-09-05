@@ -177,6 +177,47 @@ def test_nuclear_sites_rejects_short_or_non_point_lists(tmp_path, monkeypatch):
     assert len(overlays.nuclear_sites(ctx)["features"]) >= 20
 
 
+def test_verify_manifest_kinds_raises_on_drift(tmp_path):
+    ctx = make_ctx(tmp_path, fixture=False)
+    repo = tmp_path / "repo"
+    (repo / "manifest").mkdir(parents=True)
+    (repo / "manifest" / "overlays.json").write_text(json.dumps({"items": [
+        {"id": "water", "kind": "geojson", "dest": "maps/overlays/water.geojson"},
+        {"id": "health", "kind": "geojson", "dest": "maps/overlays/health.geojson"}]}))
+    ctx.repo = repo
+    # The build actually produced water as pmtiles (its real size class); the manifest still says geojson.
+    index = {"water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
+             "health": {"kind": "geojson", "file": "overlays/health.geojson"}}
+    with pytest.raises(BuildError, match="water"):
+        overlays.verify_manifest_kinds(ctx, index)
+
+
+def test_verify_manifest_kinds_passes_when_dest_and_kind_agree(tmp_path):
+    ctx = make_ctx(tmp_path, fixture=False)
+    repo = tmp_path / "repo"
+    (repo / "manifest").mkdir(parents=True)
+    (repo / "manifest" / "overlays.json").write_text(json.dumps({"items": [
+        {"id": "water", "kind": "pmtiles", "dest": "maps/overlays/water.pmtiles"}]}))
+    ctx.repo = repo
+    # An overlay id absent from the manifest (e.g. newly added, not yet merged) must be ignored, not flagged.
+    index = {"water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
+             "brand-new-overlay": {"kind": "geojson", "file": "overlays/brand-new-overlay.geojson"}}
+    overlays.verify_manifest_kinds(ctx, index)  # must not raise
+
+
+def test_verify_manifest_kinds_passes_against_the_real_merged_manifest(tmp_path):
+    # ctx.repo defaults to REPO, so this checks the actual committed manifest/overlays.json (cross-plan,
+    # already merged) still agrees with what this step really produces for its size-gated entries.
+    ctx = make_ctx(tmp_path, fixture=False)
+    index = {
+        "water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
+        "airports-military": {"kind": "pmtiles", "file": "overlays/airports-military.pmtiles"},
+        "health": {"kind": "geojson", "file": "overlays/health.geojson"},
+        "access-land": {"kind": "pmtiles", "file": "overlays/access-land.pmtiles"},
+    }
+    overlays.verify_manifest_kinds(ctx, index)  # must not raise
+
+
 def test_overlays_step_end_to_end_fixture(tmp_path):
     runner = FakeRunner(files={"fixture.osm.pbf": b"pbf", "_raw.geojson": POINT_FC, "health.geojson": POINT_FC, "fuel.geojson": POINT_FC,
                                "rail.geojson": POINT_FC, "chemical-sites.geojson": POINT_FC, "access_england.geojson": POINT_FC,
