@@ -36,6 +36,7 @@ sources:
 - Get inside within minutes, into the middle of a building or a basement, and stay there: "get inside, stay inside, stay tuned" ([FEMA, p. 128](doc:fema-nuclear-detonation-2022#page=128)).
 - The 7:10 rule: every sevenfold increase in time cuts the fallout dose rate tenfold, so after 7 hours about 10% of the initial rate remains, after two days about 1%, and after two weeks about 0.1% ([FEMA, p. 35](doc:fema-nuclear-detonation-2022#page=35)).
 - Radiation sickness is judged in the field by time to vomiting: under an hour is severe. Doses above about 6 Gy are usually fatal without intensive care, while 1 to 2 Gy is survivable with nursing care ([acute radiation syndrome](kiwix:wikipedia_en_all_maxi/Acute_radiation_syndrome); [Radiation sickness card](card:radiation-sickness)).
+- Doses are measured in grays (absorbed dose) and sieverts (risk to health); UK background radiation averages about 2.7 mSv a year ([Sievert](kiwix:wikipedia_en_all_maxi/Sievert)).
 
 ## What to do
 
@@ -44,6 +45,7 @@ sources:
 3. Plan to stay sheltered for at least 48 hours, and expect up to two weeks in the worst-affected areas; the 1980 UK guidance gave a figure of fourteen days ([Protect and Survive, p. 14](doc:protect-and-survive-1980#page=14)).
 4. Decontaminate by removing outer clothing and bagging it, then showering with soap, no conditioner, without scrubbing; this removes up to about 90% of contamination ([UKHSA decontamination, p. 1](doc:ukhsa-radiation-decontamination#page=1); [FEMA, p. 40](doc:fema-nuclear-detonation-2022#page=40)).
 5. Only take stable iodine tablets when the authorities say so: they protect the thyroid alone, and only against radioactive iodine, mattering most for children, pregnant women and adults under 40 ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
+6. Without a proper detector, a Kearny fallout meter can be built from a tin and foil to give a rough read on fallout gamma levels ([NWSS, p. 221](doc:nwss#page=221)).
 
 ## UK specifics
 
