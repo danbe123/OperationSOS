@@ -13,7 +13,7 @@ Rescue in Britain starts with someone knowing you are missing. Leave a route car
 
 ## Calling for help while the phones work
 
-- **999 or 112** from any phone, on any network, even without credit or a SIM. Ask for **police** for anything inland (they call mountain rescue, lowland search teams and cave rescue), **coastguard** for the shore, cliffs, estuaries and sea, **ambulance** for a medical emergency by a road, **fire** for fire, floods and people trapped.
+- From any phone, on any network, even without credit or a SIM, **999** and **112** reach the same operator — [[call 999]]. Ask for **police** for anything inland (they call mountain rescue, lowland search teams and cave rescue), **coastguard** for the shore, cliffs, estuaries and sea, **ambulance** for a medical emergency by a road, **fire** for fire, floods and people trapped.
 - Register your phone for **emergency SMS** by texting "register" to 999 in advance; a text gets through on a signal too weak for a call.
 - Give the **location** first: a six-figure grid reference from the map (the box's map shows it for the centre and for any tapped point), a what3words address if the app is on the phone, a road, a named feature. Then the number of people, injuries, what you can see, your phone number.
 - Keep the phone warm and the battery for the callback. Climb for a signal only if it is safe. Aeroplane mode between calls.

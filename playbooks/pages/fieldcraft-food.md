@@ -29,7 +29,7 @@ Eat nothing you cannot name with certainty, and do not learn to name things from
 - **Yew**: every part except the red flesh of the berry, and the seed inside that flesh is deadly ([Yew](kiwix:wikipedia_en_all_maxi/Taxus_baccata)).
 - **Deadly nightshade**, **lords-and-ladies** (bright orange berries in woods), **laburnum**, **daffodil bulbs** (mistaken for onions), **bryony**, **monkshood**, **giant hogweed** (sap blisters skin in sunlight; do not touch) ([Deadly nightshade](kiwix:wikipedia_en_all_maxi/Atropa_belladonna); [Giant hogweed](kiwix:wikipedia_en_all_maxi/Heracleum_mantegazzianum)).
 
-If someone has eaten something and you are not sure: call 999 or 111, keep a sample of the plant, and do not induce vomiting ([Medical module](module:medical)).
+If someone has eaten something and you are not sure: keep a sample of the plant and do not induce vomiting. {{#if phones}}Then get advice — [[call 111]], or [[call 999]] if they are ill ([Medical module](module:medical)).{{else}}Then take them, and the sample, to a pharmacy or a hospital in person ([getting help without phones](page:no-phones); [Medical module](module:medical)).{{/if}}
 
 ## Fungi
 

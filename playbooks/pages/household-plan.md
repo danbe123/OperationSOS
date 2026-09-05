@@ -28,7 +28,7 @@ This page follows the sections of the government's Household Emergency Plan ([Pr
 
 ## Our out-of-area contact
 
-Someone less likely to be caught up in the same event, who everyone can call or text: name, number.
+{{#if phones}}Someone less likely to be caught up in the same event, who everyone can call or text: name, number.{{else}}Someone less likely to be caught up in the same event: name, number and address. With the phones down the address is the useful half, because the only way to reach them is to go ([getting help without phones](page:no-phones)).{{/if}}
 
 ## Numbers
 

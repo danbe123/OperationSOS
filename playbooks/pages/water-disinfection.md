@@ -18,6 +18,8 @@ category: reference
 | SODIS (solar) | Clear PET bottle, full sun | 6 hours full sun, 2 days if cloudy ([Solar water disinfection](kiwix:wikipedia_en_all_maxi/Solar_water_disinfection)) | Bacteria, viruses, parasites | Chemicals |
 | Hollow-fibre or ceramic filter (0.1 to 0.2 micron) | — | — | Bacteria, parasites | Viruses, chemicals |
 
+{{#if power}}Boiling is the surest of these, on the hob or in the kettle.{{else}}Boiling is still the surest of these, but with the power off it means a gas hob lit with a match or a stove used outdoors, so the tablets and the bleach doses may be the practical answer ([Power module](module:power)).{{/if}}
+
 ## UK bleach
 
 Ordinary UK household bleach comes in two strengths: thin bleach around 4.5 to 5% sodium hypochlorite, used for the doses above, and thick, gelled bleach which is far stronger and unsuitable for dosing this way. Read the label for the percentage of sodium hypochlorite and check it says "no perfume, no thickener, no added cleaning agents". If the label does not state a plain sodium hypochlorite percentage, or you are in any doubt, do not use it to treat drinking water.

@@ -36,7 +36,7 @@ Storms build on summer afternoons and along fronts. When thunder follows the fla
 
 ## Heat, which is now real
 
-The country hit 40°C in July 2022 and will again. Heat kills the old, the young, the ill and anyone working hard in it. Move in the early morning and evening, rest in shade at midday, drink before thirst and add salt to food, wear a hat and light long sleeves, and watch for heat exhaustion (heavy sweating, headache, cramps, nausea, faintness) before it becomes heat stroke (hot dry skin, confusion, collapse), which is a 999 emergency ([Heat stroke card](card:heat-stroke); [Heat and drought playbook](playbook:heat-drought)). Sunburn is a real injury: cover up, and the British sun burns through thin cloud.
+The country hit 40°C in July 2022 and will again. Heat kills the old, the young, the ill and anyone working hard in it. Move in the early morning and evening, rest in shade at midday, drink before thirst and add salt to food, wear a hat and light long sleeves, and watch for heat exhaustion (heavy sweating, headache, cramps, nausea, faintness) before it becomes heat stroke (hot dry skin, confusion, collapse), which is an emergency — [[call 999]] ([Heat stroke card](card:heat-stroke); [Heat and drought playbook](playbook:heat-drought)). Sunburn is a real injury: cover up, and the British sun burns through thin cloud.
 
 ## Fog, mist and dark
 

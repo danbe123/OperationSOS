@@ -9,6 +9,8 @@ category: reference
 
 ## Emergency
 
+{{#if phones}}These connect from any phone, on any network, with no credit and no SIM.{{else}}None of these will connect while the network is down: [getting help without phones](page:no-phones) is the page to use until it comes back.{{/if}}
+
 | Number | For | Notes |
 |---|---|---|
 | 999 or 112 | Police, fire, ambulance, coastguard | Mountain rescue is reached via police |

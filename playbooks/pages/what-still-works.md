@@ -38,8 +38,8 @@ category: comms
 ## What to do about it
 
 - Keep a battery or wind-up radio and spare batteries.
-- Keep a charged power bank for phones and this box.
-- Keep cash: card readers and cash machines go down with the network.
+- {{#if power}}Keep a charged power bank for phones and this box, and top it up whenever the mains is on.{{else}}The power bank is now all you have: phones off between check-ins, screens dim, and this box before anything else.{{/if}}
+- {{#if shops}}Keep cash: card readers and cash machines go down with the network.{{else}}Cash is the only money that works: card readers and cash machines are down with the network, so spend small notes carefully.{{/if}}
 - Keep the numbers on paper, not just in a phone ([UK numbers](page:uk-numbers)).
 - If anyone in the house relies on the landline, ask the provider for a battery backup unit before it is needed.
 - Register for the Priority Services Register with your utilities if anyone in the house is vulnerable.

@@ -34,7 +34,7 @@ Law matters less once society has stopped functioning, but the habits it builds 
 
 ## Rescue in Britain
 
-There is no 911 and no forest ranger. Dial **999** (or **112**) and ask for the **police** for anything inland, including mountain rescue, which the police call out; ask for the **coastguard** for anything on the coast, cliffs, estuaries or in the sea; ask for the **ambulance** for a medical emergency you can reach by road. Mountain rescue teams are volunteers and free, and they would far rather be called early than find you the next morning ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales); [HM Coastguard](kiwix:wikipedia_en_all_maxi/HM_Coastguard)). If the phones are down, the rules change: see [Getting found](page:fieldcraft-rescue) and the [comms module](module:comms).
+There is no 911 and no forest ranger. The number is **999**, or **112** — [[call 999]]. Ask for the **police** for anything inland, including mountain rescue, which the police call out; ask for the **coastguard** for anything on the coast, cliffs, estuaries or in the sea; ask for the **ambulance** for a medical emergency you can reach by road. Mountain rescue teams are volunteers and free, and they would far rather be called early than find you the next morning ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales); [HM Coastguard](kiwix:wikipedia_en_all_maxi/HM_Coastguard)). If the phones are down, the rules change: see [Getting found](page:fieldcraft-rescue) and the [comms module](module:comms).
 
 ## Kit that earns its place
 
