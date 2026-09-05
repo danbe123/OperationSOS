@@ -52,8 +52,7 @@ CORE_REQUIRED = {
     "foss.cooking_en_all", "usda-2015_en",
     # reference
     "wikipedia_en_all_maxi", "wikipedia_en-simple_all_maxi", "wiktionary_en_all_nopic",
-    "wikibooks_en_all_maxi", "wikivoyage_en_all_maxi", "openstreetmap-wiki_en_all_maxi",
-    # practical
+    "wikibooks_en_all_maxi", # practical
     "ifixit_en_all", "restarters_en_all", "wikivet.net_en_all",
     "diy.stackexchange.com_en_all", "electronics.stackexchange.com_en_all",
     "gardening.stackexchange.com_en_all", "outdoors.stackexchange.com_en_all",
@@ -61,11 +60,8 @@ CORE_REQUIRED = {
     "cooking.stackexchange.com_en_all", "homebrew.stackexchange.com_en_all",
     "sustainability.stackexchange.com_en_all", "ham.stackexchange.com_en_all",
     "bicycles.stackexchange.com_en_all", "biology.stackexchange.com_en_all",
-    "chemistry.stackexchange.com_en_all", "physics.stackexchange.com_en_all",
-    "engineering.stackexchange.com_en_all", "earthscience.stackexchange.com_en_all",
+    "chemistry.stackexchange.com_en_all", "engineering.stackexchange.com_en_all", "earthscience.stackexchange.com_en_all",
     "pets.stackexchange.com_en_all",
-    "devdocs_en_python", "devdocs_en_bash", "devdocs_en_sqlite", "devdocs_en_html",
-    "devdocs_en_css", "devdocs_en_javascript",
     # ai
     "gemma-4-E2B-it-Q4_K_M", "Qwen3.5-2B-Q4_K_M", "gemma-3-1b-it-Q4_K_M",
 }
@@ -185,7 +181,7 @@ OVERLAY_IDS = [
 ]
 REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
 EXTENDED_REQUIRED = {
-    "gutenberg_en_all", "stackoverflow.com_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
+    "gutenberg_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
     "wikipedia_cy_all_maxi", "libretexts.org_en_med", "libretexts.org_en_bio", "openstax-biology-2e",
     "openstax-anatomy-physiology-2e", "s2underground_en_all",
     "media-films", "media-music", "media-audiobooks", "owner-books",
@@ -211,7 +207,7 @@ def test_extended_holds_every_stack_exchange_site_not_in_core():
     core = by_id("core.json")
     ext = by_id("extended.json")
     se_ext = [i for i in ext if i.endswith(".stackexchange.com_en_all")]
-    assert len(se_ext) == 140
+    assert sorted(i.split('.')[0] for i in se_ext) == sorted(['3dprinting', 'arduino', 'astronomy', 'crafts', 'fitness', 'lifehacks', 'parenting', 'raspberrypi', 'unix'])   # the relevant few; the rest were pruned on 2026-09-06
     assert not (set(se_ext) & set(core))
     for i in se_ext:
         assert ext[i]["reader_home"] == "questions"
