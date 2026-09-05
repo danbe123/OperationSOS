@@ -47,4 +47,4 @@ Manual checks on the box (spec section 14). Close a row with the date, the commi
 
 Recorded by the maps pipeline plan after its fixture build.
 
-Maps CI (plan 04): sos build-maps --fixture passed with pmtiles verify on every output on 2026-09-05, commit 31651d6, fixture base 4935818 bytes
+Maps CI (plan 04): sos build-maps --fixture passed with pmtiles verify on every output on 2026-09-05, commit 3a7e5ec, fixture base 4935818 bytes
