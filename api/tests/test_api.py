@@ -324,3 +324,13 @@ def test_library_resolves_a_dated_archive_link_after_an_upgrade(client, env):
     response = client.get('/api/library/old-dated-name')
     assert response.status_code == 200
     assert response.json()['id'] == WIKI
+
+
+def test_event_notes_keep_their_time_and_list_newest_first(client):
+    first = client.post("/api/notes", json={"kind": "event", "title": "Water off"}).json()
+    assert first["kind"] == "event" and first["updated_at"]
+    second = client.post("/api/notes", json={"kind": "event", "title": "Heard sirens"}).json()
+    assert [e["title"] for e in client.get("/api/notes", params={"kind": "event"}).json()] == ["Heard sirens", "Water off"]
+    edited = client.put(f"/api/notes/{first['id']}", json={"title": "Water off at the mains"}).json()
+    assert edited["title"] == "Water off at the mains" and edited["updated_at"] == first["updated_at"]
+    assert second["updated_at"] >= first["updated_at"]

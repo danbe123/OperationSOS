@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 
-from sos import system
+from sos import situation, system
 from sos.routers import get_db
 
 router = APIRouter(tags=["status"])
@@ -10,4 +10,5 @@ router = APIRouter(tags=["status"])
 def get_status(request: Request, conn=Depends(get_db)):
     result = system.status(conn, request.app.state.settings)
     result["ai"] = request.app.state.ai_runtime.snapshot()
+    result["situation"] = situation.brief(conn)
     return result

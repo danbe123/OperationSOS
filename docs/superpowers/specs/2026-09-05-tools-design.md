@@ -53,7 +53,7 @@ stock     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TE
 
 `phase` from elapsed time: under 12 hours `right-now`, under 72 hours `first-72-hours`, under 30 days `first-month`, else `long-term`. The thresholds live in one place (`sos.situation.PHASES`) and are mirrored in the frontend for display between polls.
 
-`days_left` is `null` when `per_person_day` is null or zero; otherwise a float rounded to one decimal. Validation: `quantity >= 0`, `category` in the set, name non-empty (400 otherwise).
+`days_left` is `null` when `per_person_day` is null or zero; otherwise a float rounded to one decimal. Validation: `quantity >= 0` and a non-empty name (400 otherwise); `category` outside the set is a schema error (422).
 
 `/status` gains `situation: {slug, started_at} | null` so the status strip and Home can show it without another request.
 

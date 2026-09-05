@@ -10,7 +10,7 @@ router = APIRouter(tags=["notes"])
 
 
 class NoteIn(BaseModel):
-    kind: Literal["note", "pin"] = "note"
+    kind: Literal["note", "pin", "event"] = "note"
     title: str = ""
     body: str = ""
     lat: float | None = None
@@ -18,7 +18,7 @@ class NoteIn(BaseModel):
 
 
 class NotePatch(BaseModel):
-    kind: Literal["note", "pin"] | None = None
+    kind: Literal["note", "pin", "event"] | None = None
     title: str | None = None
     body: str | None = None
     lat: float | None = None
@@ -44,7 +44,9 @@ def _check_pin(kind: str, lat, lon) -> None:
 
 @router.get("/notes")
 def list_notes(kind: str | None = None, conn=Depends(get_db)):
-    if kind:
+    if kind == "event":                      # the log reads newest first
+        rows = conn.execute("SELECT * FROM notes WHERE kind='event' ORDER BY updated_at DESC, id DESC")
+    elif kind:
         rows = conn.execute("SELECT * FROM notes WHERE kind=? ORDER BY id", (kind,))
     else:
         rows = conn.execute("SELECT * FROM notes ORDER BY id")
@@ -65,8 +67,10 @@ def update_note(note_id: int, body: NotePatch, conn=Depends(get_db)):
     current = _get(conn, note_id)
     merged = {k: (getattr(body, k) if getattr(body, k) is not None else current[k]) for k in ("kind", "title", "body", "lat", "lon")}
     _check_pin(merged["kind"], merged["lat"], merged["lon"])
+    # an event keeps the time it was logged; editing only corrects its wording
+    stamp = current["updated_at"] if merged["kind"] == "event" else now_iso()
     conn.execute("UPDATE notes SET kind=?, title=?, body=?, lat=?, lon=?, updated_at=? WHERE id=?",
-                 (merged["kind"], merged["title"], merged["body"], merged["lat"], merged["lon"], now_iso(), note_id))
+                 (merged["kind"], merged["title"], merged["body"], merged["lat"], merged["lon"], stamp, note_id))
     conn.commit()
     return _row(_get(conn, note_id))
 
