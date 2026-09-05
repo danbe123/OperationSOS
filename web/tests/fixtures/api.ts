@@ -1,7 +1,8 @@
 import type {
-  AiEvent, Card, LibraryItem, LibraryResponse, MapConfig, Note, Page, Place, Playbook, PlaybookSummary,
-  SearchResponse, Status, Suggestion, UpdateProgress,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, LibraryItem, LibraryResponse, MapConfig, Note,
+  Page, Place, Playbook, PlaybookSummary, SearchResponse, SituationView, Status, Suggestion, UpdateProgress,
 } from '../../src/api/types';
+import { CONDITION_IDS } from '../../src/api/types';
 
 export const status: Status = {
   version: '0.1.0', uptime_s: 3600, cpu_temp_c: 51.2, load: [0.3, 0.2, 0.1],
@@ -15,6 +16,9 @@ export const status: Status = {
   ai: { state: 'off', model: null, message: null },
   thermal_ai_off_c: 80, idle_minutes: 5, home_minutes: 30,
   pin_required: false, dev: true, default_theme: 'vault',
+  conditions: Object.fromEntries(CONDITION_IDS.map((id) => [id, 'working' as ConditionState])) as Record<ConditionId, ConditionState>,
+  modes: { theme: null, dim: false, calls: 'shown', map_first: false, board: false },
+  drill: false, readiness_score: 62,
 };
 
 export const WIKI = 'wikipedia_en_100_mini_2026-01';
@@ -200,3 +204,60 @@ export const aiEvents: AiEvent[] = [
 export function sseBody(events: AiEvent[]): string {
   return events.map((e, i) => `${i === 1 ? ': ping\n\n' : ''}event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`).join('');
 }
+
+/* The situation engine's View, at a fixed clock so countdowns are stable. */
+export const VIEW_NOW = '2026-09-06T14:00:00.000Z';
+const CONDITION_TITLES: Record<ConditionId, string> = {
+  power: 'Mains power', water: 'Water supply', mobile: 'Mobile network', landline: 'Landline and 999', internet: 'Internet',
+  gas: 'Gas', heating: 'Heating', roads: 'Roads and transport', shops: 'Shops and cash', sewage: 'Sewage and drains',
+};
+
+export function condition(id: ConditionId, state: ConditionState = 'working', over: Partial<Condition> = {}): Condition {
+  const now = Date.parse(VIEW_NOW);
+  const since = over.since ?? new Date(now - (state === 'working' ? 0 : 3600_000)).toISOString();
+  return {
+    id, title: CONDITION_TITLES[id], state, since,
+    for_s: Math.round((now - Date.parse(since)) / 1000),
+    source: 'manual', confidence: 1, note: '', set_by: 'phone',
+    updated_at: since, confirmed_at: since, stale: false, ...over,
+  };
+}
+
+/** A whole View: peacetime by default, with the pieces a test cares about overridden. */
+export function makeView(over: Partial<SituationView> = {}): SituationView {
+  const conditions = Object.fromEntries(CONDITION_IDS.map((id) => [id, condition(id)])) as Conditions;
+  return {
+    meta: { now: VIEW_NOW, dark: false, sunrise: '2026-09-06T05:22:00.000Z', sunset: '2026-09-06T18:41:00.000Z', home: null, drill: false },
+    scenario: null,
+    conditions,
+    inferred: [], forecast: [], tasks: [], briefing: [],
+    modes: { theme: null, dim: false, calls: 'shown', map_first: false, board: false },
+    readiness: { score: 62, gaps: [{ title: 'Water: 1.5 days for 3 people', link: '/plan#stock', points: 12 }] },
+    bulletins: { next: { station: 'BBC Radio 4', frequency: '198 kHz LW', at: '2026-09-06T18:00:00.000Z' } },
+    ...over,
+    ...(over.conditions ? { conditions: { ...conditions, ...over.conditions } } : {}),
+  };
+}
+
+export const view: SituationView = makeView();
+
+/** Power off for an hour: a freezer countdown, a bath to fill, and the box guessing about the mobile network. */
+export const powerOffView: SituationView = makeView({
+  conditions: { power: condition('power', 'off'), mobile: condition('mobile', 'degraded') } as Conditions,
+  inferred: [{ condition: 'mobile', state: 'off', confidence: 0.7, due_at: '2026-09-06T21:00:00.000Z', why: 'Masts run about 8 hours on battery.', rule: 'power-off-mobile-off', source: 'page:what-still-works' }],
+  forecast: [
+    { id: 'fridge', title: 'Fridge food unsafe', due_at: '2026-09-06T17:00:00.000Z', severity: 'warn', why: 'A closed fridge holds about 4 hours.', link: 'module:food', passed: false },
+    { id: 'freezer', title: 'Freezer food unsafe', due_at: '2026-09-07T13:00:00.000Z', severity: 'danger', why: 'A half-full freezer holds about 24 hours.', link: 'module:food', passed: false },
+  ],
+  tasks: [
+    { id: 'fill-bath', title: 'Fill the bath and every container', bucket: 'now', why: 'Pumped supplies fail once the power has been off a day.', link: 'module:water', person: null, done: false, done_at: null, source: 'rule:fill-bath' },
+    { id: 'freezer-shut', title: 'Keep the fridge and freezer shut', bucket: 'now', why: 'Every opening costs hours.', link: 'module:food', person: 'Sam', done: false, done_at: null, source: 'rule:freezer-shut' },
+    { id: 'cash', title: 'Get cash out while the shops take cards', bucket: 'hour', why: 'Card terminals need power.', link: 'module:money', person: null, done: false, done_at: null, source: 'rule:cash' },
+    { id: 'street', title: 'Knock on both neighbours', bucket: 'today', why: 'Check on anyone medically dependent.', link: 'page:neighbours', person: null, done: true, done_at: '2026-09-06T13:00:00.000Z', source: 'rule:street' },
+  ],
+  briefing: [
+    { title: 'Right now', kind: 'playbook-section', ref: 'grid-collapse#right-now' },
+    { title: 'Power', kind: 'module', ref: 'power' },
+    { title: 'What still works in an outage', kind: 'page', ref: 'what-still-works' },
+  ],
+});

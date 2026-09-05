@@ -10,7 +10,10 @@ export type Status = {
   thermal_ai_off_c: number; idle_minutes: number; home_minutes: number;
   pin_required: boolean; dev: boolean; default_theme: 'vault' | 'field' | 'blackout';
   situation?: { slug: string; started_at: string } | null;
-  services?: Services;
+  conditions?: Record<ConditionId, ConditionState>;
+  modes?: Modes;
+  drill?: boolean;
+  readiness_score?: number;
 };
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
@@ -67,5 +70,41 @@ export type AiEvent =
 export type AiAskRequest = { question: string; history: { role: 'user' | 'assistant'; content: string }[] };
 export type UpdateProgress = { running: boolean; lines: string[]; done: boolean; ok: boolean | null };
 
-export type ServiceId = 'power' | 'water' | 'gas' | 'internet' | 'phones';
-export type Services = Record<ServiceId, boolean>;
+/* The situation engine (spec 2026-09-06). The View is one snapshot of the household's situation. */
+export const CONDITION_IDS = ['power', 'water', 'mobile', 'landline', 'internet', 'gas', 'heating', 'roads', 'shops', 'sewage'] as const;
+export type ConditionId = (typeof CONDITION_IDS)[number];
+export type ConditionState = 'working' | 'degraded' | 'off';
+export type ConditionSource = 'manual' | 'detected' | 'inferred';
+export type Condition = {
+  id: ConditionId; title: string; state: ConditionState; since: string; for_s: number;
+  source: ConditionSource; confidence: number; note: string; set_by: string;
+  updated_at: string; confirmed_at: string | null; stale: boolean;
+};
+export type Conditions = Record<ConditionId, Condition>;
+export type ConditionPatch = { state: ConditionState; since?: string; note?: string; expected_updated_at?: string };
+export type Inferred = { condition: ConditionId; state: ConditionState; confidence: number; due_at: string; why: string; rule: string; source: string };
+export type Severity = 'info' | 'warn' | 'danger' | 'passed';
+export type Forecast = { id: string; title: string; due_at: string; severity: Severity; why: string; link: string; passed: boolean };
+export type TaskBucket = 'now' | 'hour' | 'today' | 'week';
+export type Task = { id: string; title: string; bucket: TaskBucket; why: string; link: string; person: string | null; done: boolean; done_at: string | null; source: string };
+export type TaskPatch = { done?: boolean; person?: string | null };
+export type BriefingItem = { title: string; kind: 'playbook-section' | 'module' | 'page' | 'card' | 'doc'; ref: string; html?: string };
+export type Modes = { theme: 'vault' | 'field' | 'blackout' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
+export type Home = { lat: number; lon: number; label: string; flood_zone: string | null };
+export type ReadinessGap = { title: string; link: string; points: number };
+export type Readiness = { score: number; gaps: ReadinessGap[] };
+export type Bulletin = { station: string; frequency: string; at: string };
+export type SituationScenario = { slug: string; title: string; started_at: string; elapsed_s: number; phase: SituationPhase };
+export type SituationView = {
+  meta: { now: string; dark: boolean; sunrise: string | null; sunset: string | null; home: Home | null; drill: boolean };
+  scenario: SituationScenario | null;
+  conditions: Conditions;
+  inferred: Inferred[];
+  forecast: Forecast[];
+  tasks: Task[];
+  briefing: BriefingItem[];
+  modes: Modes;
+  readiness: Readiness;
+  bulletins: { next: Bulletin | null };
+};
+export type DrillRequest = { scenario: string; conditions: Partial<Record<ConditionId, ConditionState>>; hours_ago?: number };

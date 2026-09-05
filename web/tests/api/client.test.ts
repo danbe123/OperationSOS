@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { api, ApiError, setToken, parseSse } from '../../src/api/client';
 import type { AiEvent } from '../../src/api/types';
-import { status, search, aiEvents, sseBody } from '../fixtures/api';
+import { status, search, aiEvents, sseBody, condition, view } from '../fixtures/api';
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' }, ...init });
@@ -126,5 +126,52 @@ describe('askAi', () => {
   it('throws ApiError when the server refuses the stream', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'AI is off' }, { status: 503 }));
     await expect(collect(api.askAi({ question: 'q', history: [] }))).rejects.toMatchObject({ status: 503, detail: 'AI is off' });
+  });
+});
+
+describe('the situation engine endpoints', () => {
+  it('reads the View', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(view));
+    const v = await api.situationView();
+    expect(v.readiness.score).toBe(62);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/situation/view');
+  });
+
+  it('sends a condition with the row it was based on, and reports a conflict', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(condition('power', 'off')));
+    await api.setCondition('power', { state: 'off', since: '2026-09-06T13:00:00.000Z', note: 'street dark', expected_updated_at: '2026-09-06T12:00:00.000Z' });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/conditions/power');
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body as string)).toEqual({ state: 'off', since: '2026-09-06T13:00:00.000Z', note: 'street dark', expected_updated_at: '2026-09-06T12:00:00.000Z' });
+    fetchMock.mockResolvedValueOnce(jsonResponse({ detail: 'stale write' }, { status: 409 }));
+    await expect(api.setCondition('power', { state: 'off' })).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('confirms and accepts', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(condition('power', 'off')));
+    await api.confirmCondition('power');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/conditions/power/confirm');
+    fetchMock.mockResolvedValueOnce(jsonResponse(condition('mobile', 'off')));
+    await api.acceptInferred('mobile', 'power-off-mobile-off');
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/conditions/mobile/accept');
+    expect(JSON.parse((fetchMock.mock.calls[1][1] as RequestInit).body as string)).toEqual({ rule: 'power-off-mobile-off' });
+  });
+
+  it('encodes a checklist task id in the path', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({}));
+    await api.setTask('checklist:grid-collapse/fill-bath', { done: true });
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/tasks/checklist%3Agrid-collapse%2Ffill-bath');
+  });
+
+  it('starts and ends a drill', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(view));
+    await api.startDrill({ scenario: 'grid-collapse', conditions: { power: 'off' }, hours_ago: 2 });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/drill');
+    expect(JSON.parse(init.body as string)).toEqual({ scenario: 'grid-collapse', conditions: { power: 'off' }, hours_ago: 2 });
+    fetchMock.mockResolvedValueOnce(jsonResponse(view));
+    await api.endDrill();
+    expect((fetchMock.mock.calls[1][1] as RequestInit).method).toBe('DELETE');
   });
 });

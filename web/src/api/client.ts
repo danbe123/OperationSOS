@@ -1,6 +1,7 @@
 import type {
-  AiAskRequest, AiEvent, AiState, Card, ChecklistItem, LibraryItem, LibraryResponse, MapConfig, Note, Overlay, Page,
-  Person, Place, Playbook, PlaybookSummary, SearchResponse, ServiceId, Services, Situation, Status, StockItem, StockResponse, Suggestion, UpdateProgress,
+  AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
+  Home, LibraryItem, LibraryResponse, MapConfig, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
+  SearchResponse, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
 export class ApiError extends Error {
@@ -139,11 +140,21 @@ export const api = {
   addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
   updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
   deleteStock: (id: number) => request<{ ok: true }>('DELETE', `/stock/${id}`),
-  services: () => request<Services>('GET', '/services'),
-  setService: (id: ServiceId, on: boolean) => request<Services>('PUT', `/services/${id}`, { on }),
   situation: () => request<Situation>('GET', '/situation'),
   startSituation: (slug: string) => request<Situation>('POST', '/situation', { slug }),
   endSituation: () => request<Situation>('DELETE', '/situation'),
+  // The situation engine (spec 2026-09-06)
+  situationView: (signal?: AbortSignal) => request<SituationView>('GET', '/situation/view', undefined, signal),
+  conditions: () => request<Conditions>('GET', '/conditions'),
+  setCondition: (id: ConditionId, body: ConditionPatch) => request<Condition>('PUT', `/conditions/${enc(id)}`, body),
+  confirmCondition: (id: ConditionId) => request<Condition>('POST', `/conditions/${enc(id)}/confirm`, {}),
+  acceptInferred: (id: ConditionId, rule: string) => request<Condition>('POST', `/conditions/${enc(id)}/accept`, { rule }),
+  tasks: () => request<Task[]>('GET', '/tasks'),
+  setTask: (id: string, body: TaskPatch) => request<Task>('PUT', `/tasks/${enc(id)}`, body),
+  home: () => request<Home | null>('GET', '/home'),
+  setHome: (body: Partial<Home> & { lat: number; lon: number }) => request<Home>('PUT', '/home', body),
+  startDrill: (body: DrillRequest) => request<SituationView>('POST', '/drill', body),
+  endDrill: () => request<SituationView>('DELETE', '/drill'),
   createNote: (note: Partial<Note>) => request<Note>('POST', '/notes', note),
   updateNote: (id: number, note: Partial<Note>) => request<Note>('PUT', `/notes/${id}`, note),
   deleteNote: (id: number) => request<{ ok: true }>('DELETE', `/notes/${id}`),
