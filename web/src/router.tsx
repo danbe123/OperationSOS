@@ -1,4 +1,5 @@
-import { Outlet, type RouteObject } from 'react-router';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
+import { Outlet, useLocation, useNavigationType, type RouteObject } from 'react-router';
 import { AppBar } from './components/AppBar';
 import { Notices } from './components/Notice';
 import { Ai } from './screens/Ai';
@@ -26,10 +27,28 @@ import { System } from './screens/System';
 import { Keyboard } from './kiosk/Keyboard';
 import { IdleOverlay } from './kiosk/IdleOverlay';
 
+/** Start each new screen at the top: the app scrolls inside .layout-main, so the browser never resets it for us.
+ * Back and forward keep their position; a hash link scrolls to its anchor instead. */
+export function useScrollToTop(main: RefObject<HTMLElement | null>) {
+  const { pathname, hash } = useLocation();
+  const type = useNavigationType();
+  useLayoutEffect(() => {
+    if (type === 'POP') return;
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) { target.scrollIntoView(); return; }
+    }
+    if (main.current) main.current.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, [pathname, hash, type, main]);
+}
+
 export function Layout() {
+  const main = useRef<HTMLElement>(null);
+  useScrollToTop(main);
   return (
     <div className="layout">
-      <main className="layout-main">
+      <main className="layout-main" ref={main}>
         <Outlet />
       </main>
       <Notices />
