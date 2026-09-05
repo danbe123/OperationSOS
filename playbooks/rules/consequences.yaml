@@ -1,0 +1,128 @@
+# Countdowns from the moment a condition changed: what stops being safe, and when. The engine turns each one
+# into a forecast item with a due time, so the house can see what is coming before it arrives.
+rules:
+  - id: fridge
+    kind: consequence
+    when: {power: "off"}
+    title: Fridge food unsafe
+    after: 4h
+    severity: warn
+    why: A shut fridge holds its temperature for about four hours; chilled food above 8 °C for longer than that goes in the bin.
+    link: module:food
+    source: module:food
+
+  - id: freezer
+    kind: consequence
+    when: {power: "off"}
+    title: Freezer food unsafe
+    after: 48h
+    severity: danger
+    why: A full freezer keeps food frozen for about 48 hours with the door shut, a half-full one for about 24.
+    link: module:food
+    source: module:food
+
+  - id: phone-batteries
+    kind: consequence
+    when: {power: "off"}
+    title: Phones and radios flat
+    after: 12h
+    severity: warn
+    why: A phone left on with no signal hunts for a mast and empties itself; charge everything early and switch the rest off.
+    link: module:power
+    source: module:power
+
+  - id: hot-water
+    kind: consequence
+    when: {power: "off"}
+    title: Hot water runs out
+    after: 24h
+    severity: info
+    why: A hot water cylinder stays useful for about a day; after that, washing and dishes need water heated on a stove.
+    link: module:shelter-heat
+    source: module:shelter-heat
+
+  - id: cold-medicines-insulin
+    kind: consequence
+    when: {power: "off"}
+    needs: insulin
+    title: "{name}'s insulin has been out of the fridge too long"
+    after: 24h
+    severity: danger
+    why: Insulin keeps for about 28 days at room temperature but not in a warm room; a cold box with ice packs buys the time back.
+    link: module:medical
+    source: module:medical
+
+  - id: cold-medicines-fridge
+    kind: consequence
+    when: {power: "off"}
+    needs: fridge
+    title: "{name}'s cold-chain medicine has been out of the fridge too long"
+    after: 24h
+    severity: danger
+    why: Medicines labelled "store in a fridge" lose strength once they warm up; ring the pharmacy for replacements as soon as anything works.
+    link: module:medical
+    source: module:medical
+
+  - id: oxygen-concentrator
+    kind: consequence
+    when: {power: "off"}
+    needs: oxygen
+    title: "{name}'s oxygen: back-up cylinders running low"
+    after: 6h
+    severity: danger
+    why: A concentrator needs mains power; the emergency cylinder that comes with it runs for hours, not days, so get help moving early.
+    link: module:medical
+    source: module:medical
+
+  - id: cpap
+    kind: consequence
+    when: {power: "off"}
+    needs: cpap
+    title: "{name} has a night without CPAP coming"
+    after: 8h
+    severity: warn
+    why: A CPAP machine on a battery lasts a night at most; plan where the person sleeps and who watches them.
+    link: module:medical
+    source: module:medical
+
+  - id: hoist
+    kind: consequence
+    when: {power: "off"}
+    needs: hoist
+    title: "{name}'s hoist is out of action"
+    after: 0h
+    severity: warn
+    why: An electric hoist stops with the power; moving someone by hand needs two people and a plan made before it is needed.
+    link: module:medical
+    source: module:medical
+
+  - id: stairlift
+    kind: consequence
+    when: {power: "off"}
+    needs: stairlift
+    title: "{name}'s stairlift is out of action"
+    after: 0h
+    severity: warn
+    why: A stairlift has a small battery for a few trips; decide now whether the person stays upstairs or comes down.
+    link: module:medical
+    source: module:medical
+
+  - id: tank-water
+    kind: consequence
+    when: {water: "off"}
+    title: Stored and tank water runs out
+    after: 3d
+    severity: warn
+    why: A loft tank and a few filled containers cover roughly three days at three litres a person a day; find the next source before then.
+    link: module:water
+    source: module:water
+
+  - id: cash-only
+    kind: consequence
+    when: {shops: "off"}
+    title: Cash only, and the machines are down
+    after: 0h
+    severity: info
+    why: Card payments and cash machines fail together, so what is in the house is what there is to spend.
+    link: page:what-still-works
+    source: page:what-still-works

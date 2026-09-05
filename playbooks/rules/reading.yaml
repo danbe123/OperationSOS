@@ -1,0 +1,99 @@
+# What to open, given what is happening. The engine puts the active scenario's current phase first, then these.
+rules:
+  - id: read-power-off
+    kind: reading
+    when: {power: "off"}
+    open: [page:what-still-works, module:power]
+    why: What keeps working and for how long, then how to make your own power last.
+    source: page:what-still-works
+
+  - id: read-power-degraded
+    kind: reading
+    when: {power: degraded}
+    open: [module:power, page:mains-electricity]
+    why: A wobbling supply is the hour to charge everything and to know where the consumer unit is.
+    source: page:mains-electricity
+
+  - id: read-water-trouble
+    kind: reading
+    when: {water: [degraded, "off"]}
+    open: [module:water, page:water-disinfection]
+    why: Finding water, then making it safe, are two different jobs and both are needed.
+    source: module:water
+
+  - id: read-phones-off
+    kind: reading
+    when: {phones: "off"}
+    open: [page:no-phones, module:comms]
+    why: How to raise the alarm on foot and by radio when no number will connect.
+    source: page:no-phones
+
+  - id: read-gas-off
+    kind: reading
+    when: {gas: "off"}
+    open: [module:shelter-heat, card:carbon-monoxide]
+    why: Cooking and heating without gas, and the alarm to test before anything is burned indoors.
+    source: module:shelter-heat
+
+  - id: read-heating-off
+    kind: reading
+    when: {heating: "off"}
+    open: [module:shelter-heat, card:hypothermia]
+    why: One warm room, and how to spot the cold getting into someone before they notice it themselves.
+    source: card:hypothermia
+
+  - id: read-sewage-trouble
+    kind: reading
+    when: {sewage: [degraded, "off"]}
+    open: [module:sanitation]
+    why: Flushing, bagging and where waste goes when the drains stop taking it.
+    source: module:sanitation
+
+  - id: read-shops-off
+    kind: reading
+    when: {shops: "off"}
+    open: [module:food, page:what-still-works]
+    why: Eating out of the cupboard for a while, and what cash is for when the tills are down.
+    source: module:food
+
+  - id: read-roads-trouble
+    kind: reading
+    when: {roads: [degraded, "off"]}
+    open: [module:evacuation, module:navigation]
+    why: Whether to go or stay, and how to move on foot with a map and no signal.
+    source: module:evacuation
+
+  - id: read-grid-collapse
+    kind: reading
+    when: {scenario: grid-collapse}
+    open: [playbook:grid-collapse, page:what-still-works, module:power]
+    why: The playbook for a long blackout, alongside the service-by-service table.
+    source: playbook:grid-collapse
+
+  - id: read-storms-flooding
+    kind: reading
+    when: {scenario: storms-flooding}
+    open: [playbook:storms-flooding, module:evacuation, "map:?overlay=flood-zones"]
+    why: The flood playbook, the go-or-stay decision, and the flood zones under the house.
+    source: playbook:storms-flooding
+
+  - id: read-severe-winter
+    kind: reading
+    when: {scenario: severe-winter}
+    open: [playbook:severe-winter, module:shelter-heat, card:hypothermia]
+    why: Keeping one room and everyone in it warm through a cold snap.
+    source: playbook:severe-winter
+
+  - id: read-heat-drought
+    kind: reading
+    when: {scenario: heat-drought}
+    open: [playbook:heat-drought, card:heat-stroke, module:water]
+    why: Keeping cool, keeping hydrated, and making the water last.
+    source: playbook:heat-drought
+
+  - id: read-pandemic
+    kind: reading
+    when: {scenario: pandemic}
+    open: [playbook:pandemic, module:medical]
+    why: Nursing at home and keeping the rest of the household out of it.
+    source: playbook:pandemic

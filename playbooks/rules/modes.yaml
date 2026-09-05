@@ -1,0 +1,29 @@
+# How the interface itself changes with the situation. Modes merge in file order, later rules winning.
+rules:
+  - id: blackout-at-night
+    kind: mode
+    when: {power: "off", dark: true}
+    set: {theme: blackout, dim: true}
+    why: A dark red screen at night keeps night vision, and a dim backlight is most of what the box's power bank is spending.
+    source: module:power
+
+  - id: calls-hidden
+    kind: mode
+    when: {phones: "off"}
+    set: {calls: hidden}
+    why: With no mobile and no landline, 999, 111 and 105 will not connect, so the app stops offering numbers and offers the alternatives instead.
+    source: page:no-phones
+
+  - id: map-first-flooding
+    kind: mode
+    when: {scenario: storms-flooding}
+    set: {map_first: true}
+    why: In a flood the first question is always where the water is and which way out is still open, so the map comes first.
+    source: playbook:storms-flooding
+
+  - id: board-while-a-scenario-runs
+    kind: mode
+    when: {scenario: any}
+    set: {board: true}
+    why: While a scenario is running the kiosk shows the board, so anyone walking past sees the clock, the next tasks and who has them.
+    source: page:about-sos

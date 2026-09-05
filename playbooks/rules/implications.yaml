@@ -1,0 +1,74 @@
+# What one failure means for the others. Each rule proposes a state for another condition once `after` has
+# elapsed; the engine never applies them silently, it offers them for confirmation.
+rules:
+  - id: power-off-internet-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: internet, state: "off", after: 0h}
+    confidence: 0.95
+    why: The router and the fibre box in the house both need mains electricity, so home broadband stops with the power.
+    source: page:what-still-works
+
+  - id: power-off-landline-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: landline, state: "off", after: 1h, where: "digital voice lines without a battery back-up unit"}
+    confidence: 0.8
+    why: Landlines now run over broadband; the battery unit, where there is one, gives about an hour of calls.
+    source: page:what-still-works
+
+  - id: power-off-shops-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: shops, state: "off", after: 0h}
+    confidence: 0.9
+    why: Tills, cash machines, card payments and petrol pumps all stop the moment the power does.
+    source: page:what-still-works
+
+  - id: power-off-heating-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: heating, state: "off", after: 0h, where: "gas and oil boilers, which need electricity for the pump and controls"}
+    confidence: 0.9
+    why: A gas boiler needs mains electricity to run, so central heating goes with the power even when the gas is on.
+    source: page:what-still-works
+
+  - id: power-off-mobile-degraded
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: mobile, state: degraded, after: 4h}
+    confidence: 0.7
+    why: Most masts hold about an hour on battery and only a few have generators, so coverage thins out within the first few hours.
+    source: page:what-still-works
+
+  - id: power-off-mobile-off
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: mobile, state: "off", after: 8h}
+    confidence: 0.6
+    why: In a long power cut the mobile network goes off area by area within the first day.
+    source: page:no-phones
+
+  - id: power-off-water-degraded
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: water, state: degraded, after: 24h, where: "pumped supplies, high-rise flats and anywhere fed by a booster"}
+    confidence: 0.5
+    why: Mains water usually keeps running for hours to days, but anything pumped fails once the reservoirs and boosters lose power.
+    source: page:what-still-works
+
+  - id: power-off-sewage-degraded
+    kind: implication
+    when: {power: "off"}
+    expect: {condition: sewage, state: degraded, after: 24h, where: "areas served by a sewage pumping station"}
+    confidence: 0.5
+    why: Sewers run on gravity where they can, but pumping stations lose power and back up towards the lowest properties.
+    source: module:sanitation
+
+  - id: gas-off-heating-off
+    kind: implication
+    when: {gas: "off"}
+    expect: {condition: heating, state: "off", after: 0h, where: "gas central heating and gas fires"}
+    confidence: 0.9
+    why: With the gas off the boiler and the gas fire are dead; only solid fuel, electric or bottled heat is left.
+    source: module:shelter-heat

@@ -1,0 +1,20 @@
+# The radio times worth being by the set for. UK clock times in the box's local zone; the board shows the next
+# one, and with an RTL dongle the box records it.
+rules: []
+
+bulletins:
+  - station: BBC Radio 4
+    frequency: 198 kHz long wave
+    times: ["06:00", "13:00", "18:00", "22:00"]
+    note: The main news bulletins. Long wave reaches the whole country from one transmitter and needs no mast near you, but the service is being closed down, so check FM as well.
+
+  - station: BBC Radio 4 FM
+    frequency: 92 to 95 MHz FM
+    times: ["06:00", "13:00", "18:00", "22:00"]
+    note: The same bulletins on FM, and the network that carries government announcements in an emergency.
+    record_hz: 93500000
+
+  - station: BBC local radio
+    frequency: FM, see the comms module for your station
+    times: ["07:00", "08:00", "12:00", "17:00"]
+    note: Local radio is where the council, the police and the water company say what is happening in your town.

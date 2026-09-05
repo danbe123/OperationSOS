@@ -1,0 +1,154 @@
+# What to do, in the order it matters. `until` retires a task when the situation moves past it; `needs` makes
+# one task per person in the household register; `stock` fires on the days left in the store cupboard.
+rules:
+  - id: fill-bath
+    kind: task
+    when: {power: "off", water: working}
+    title: Fill the bath and every container while the water is still on
+    bucket: now
+    why: Mains pressure usually lasts hours to days in a power cut, but pumped and high-rise supplies fail first, and a full bath is a day of flushing.
+    link: module:water
+    until: {water: [degraded, "off"]}
+    source: module:water
+
+  - id: fridge-doors-shut
+    kind: task
+    when: {power: "off"}
+    title: Keep the fridge and freezer doors shut, and write the time on them
+    bucket: now
+    why: Every opening costs an hour of cold; a shut fridge holds about four hours and a full freezer about 48.
+    link: module:food
+    source: module:food
+
+  - id: cooker-off
+    kind: task
+    when: {power: "off"}
+    title: Turn the cooker, the iron and any electric heater off at the knobs
+    bucket: now
+    why: When the power comes back a ring or heater left switched on starts a fire in an empty kitchen.
+    link: page:mains-electricity
+    source: page:mains-electricity
+
+  - id: co-alarm-power
+    kind: task
+    when: {power: "off"}
+    title: Test the carbon monoxide alarm before you burn anything indoors
+    bucket: now
+    why: Stoves, generators and barbecues brought inside in a power cut are what kill people, and carbon monoxide gives no warning.
+    link: card:carbon-monoxide
+    source: card:carbon-monoxide
+
+  - id: co-alarm-gas
+    kind: task
+    when: {gas: degraded}
+    title: Test the carbon monoxide alarm and open a window
+    bucket: now
+    why: A wobbling gas supply means appliances burn badly, and badly burning gas makes carbon monoxide.
+    link: card:carbon-monoxide
+    source: card:carbon-monoxide
+
+  - id: charge-everything
+    kind: task
+    when: {power: degraded}
+    title: Charge every phone, power bank, torch and radio now
+    bucket: now
+    why: A wobbling supply is the warning; charge while it is there, because after it goes the box's power bank is the only socket.
+    link: module:power
+    until: {power: "off"}
+    source: module:power
+
+  - id: medicines-cold-box
+    kind: task
+    when: {power: "off"}
+    needs: insulin
+    after: 2h
+    title: Move {name}'s insulin into a cold box with ice packs
+    bucket: hour
+    why: The freezer's ice packs are still cold in the first hours of a cut; used early they keep insulin at fridge temperature for a day or more.
+    link: module:medical
+    source: module:medical
+
+  - id: check-dependent
+    kind: task
+    when: {power: "off"}
+    needs: "*"
+    title: Check on {name} and everything of theirs that needed a plug
+    bucket: now
+    why: Anyone on powered equipment or refrigerated medicine is the first person to think about, and the Priority Services Register wants to know they are affected.
+    link: module:medical
+    source: module:medical
+
+  - id: fill-containers
+    kind: task
+    when: {water: degraded}
+    title: Fill every container while there is still pressure
+    bucket: now
+    why: A failing supply comes back dirty or not at all; three litres a person a day is the minimum to store.
+    link: module:water
+    until: {water: "off"}
+    source: module:water
+
+  - id: boil-water
+    kind: task
+    when: {water: [degraded, "off"]}
+    title: Boil or treat every drop, including the first day the mains comes back
+    bucket: now
+    why: A rolling boil for one minute kills what matters; the mains stays suspect until the water company says otherwise.
+    link: page:water-disinfection
+    source: page:water-disinfection
+
+  - id: bucket-flush
+    kind: task
+    when: {sewage: [degraded, "off"]}
+    title: Flush with a bucket of grey water, and bag it if the drains back up
+    bucket: hour
+    why: "A cistern needs mains pressure but the pan does not: a bucket of bath or rain water flushes it, unless the sewer itself is backing up."
+    link: module:sanitation
+    source: module:sanitation
+
+  - id: meeting-point
+    kind: task
+    when: {phones: "off"}
+    title: Agree the meeting point and who runs where
+    bucket: now
+    why: "With no phones, help is fetched on foot: a runner in a pair with a written note, and a place everyone comes back to."
+    link: page:no-phones
+    source: page:no-phones
+
+  - id: cash-out
+    kind: task
+    when: {shops: degraded}
+    title: Draw cash while the machines are still paying out
+    bucket: hour
+    why: Card payments and cash machines fail together, and small shops go cash-only long before they close.
+    link: page:what-still-works
+    source: page:what-still-works
+
+  - id: one-warm-room
+    kind: task
+    when: {heating: "off"}
+    title: Heat one room, close the doors on the rest and sleep in it
+    bucket: today
+    why: One room warmed by bodies, a stove or a bottled-gas heater is the whole house's heating; the rest can go cold.
+    link: module:shelter-heat
+    source: module:shelter-heat
+
+  - id: water-stock-low
+    kind: task
+    when: {}
+    stock: {category: water, days_lt: 3}
+    title: "Top up the stored water: less than three days for the household"
+    bucket: week
+    why: Three days of drinking water is the standard the national advice asks households to hold, at three litres a person a day.
+    link: module:water
+    source: module:water
+
+  - id: medicine-stock-missing
+    kind: task
+    when: {}
+    stock: {category: medicine, missing: true}
+    title: Put the medicine box on the stock list
+    bucket: week
+    why: Two weeks of every repeat prescription, plus painkillers and dressings, is what the box counts as covered.
+    link: module:medical
+    source: module:medical
