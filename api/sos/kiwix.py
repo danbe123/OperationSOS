@@ -41,7 +41,9 @@ _WS_RE = re.compile(r"\s+")
 
 
 def strip_tags(text: str) -> str:
-    return _WS_RE.sub(" ", html.unescape(_TAG_RE.sub("", text or ""))).strip()
+    # Unescape first: some feeds (kiwix's suggest JSON) double-encode tags as "&lt;b&gt;" rather than
+    # emitting them literally, so stripping tags before unescaping would miss them entirely.
+    return _WS_RE.sub(" ", _TAG_RE.sub("", html.unescape(text or ""))).strip()
 
 
 def _split_content_link(link: str) -> tuple[str, str]:
@@ -99,7 +101,7 @@ def parse_suggest_json(text: str) -> list[dict]:
     for entry in json.loads(text):
         if entry.get("kind") != "path" or not entry.get("path"):
             continue
-        out.append({"value": entry.get("value", ""), "label": html.unescape(entry.get("label", "")), "path": entry["path"]})
+        out.append({"value": entry.get("value", ""), "label": strip_tags(entry.get("label", "")), "path": entry["path"]})
     return out
 
 

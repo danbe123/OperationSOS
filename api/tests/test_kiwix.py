@@ -36,12 +36,13 @@ def test_parse_catalog_uses_content_link_for_book_name():
     assert books[1].fts is False
 
 
-def test_parse_suggest_drops_pattern_entries_and_unescapes_labels():
+def test_parse_suggest_drops_pattern_entries_and_strips_label_tags():
     out = kiwix.parse_suggest_json((FX / "suggest.json").read_text())
     assert out == [
-        {"value": "Aquatic water turtles", "label": "Aquatic <b>water</b> turtles", "path": "Aquatic_water_turtles"},
-        {"value": "Water", "label": "<b>Water</b>", "path": "Water"},
+        {"value": "Aquatic water turtles", "label": "Aquatic water turtles", "path": "Aquatic_water_turtles"},
+        {"value": "Water", "label": "Water", "path": "Water"},
     ]
+    assert all("<b>" not in e["label"] for e in out)
 
 
 def test_extract_text_wikipedia_keeps_main_and_drops_boilerplate():
