@@ -66,3 +66,51 @@ Five destinations: **Now** (the situation, the briefing, the tasks; in peacetime
 ## 5. The critique loop
 
 Five rounds. Each round: a critic agent reviews screenshots of Now (peacetime and power off), Guides, a scenario, a quick card, Medical, Map, Find, the sheet, Tasks and the board, at 853x480 and 390 wide, in all three themes, against a rubric (first-time intuitiveness, hierarchy and scanning, consistency of components and words, touch targets and contrast, copy, the two-tap rule, what a frightened person at 03:00 would misread), and writes a ranked list of at most ten concrete changes with the screen, the problem and the fix. An implementer agent applies them with tests. The round is recorded in `docs/superpowers/critique/round-N.md` with before and after screenshots. Round five ends with the full test target, the browser suite and a rebuilt dev stack.
+
+## 6. Coverage inventory
+
+The redesign is not done until every entry below has been restyled inside the shell, checked at 853x480 and 390 wide, in vault, field and blackout, and appears in the critique screenshots. Nothing is out of scope.
+
+### Routes (all keep their paths)
+
+| Route | Screen | States to cover |
+|---|---|---|
+| `/` (`/now`) | Now | peacetime (readiness, gaps, drill button), scenario active, conditions off, proposals pending, drill, loading, engine unreachable, empty household and stock |
+| `/situation` | Situation sheet | all ten conditions in each state, stale prompt, conflict (409), note editing, clock controls, drill start and end, sensors present and absent, print report |
+| `/tasks` | Tasks | four buckets, empty bucket, done filter, assignment with and without a household, checklist tasks, drill ticks |
+| `/board` | Board | scenario active, conditions off, peacetime, no bulletin, no stock, tap to leave |
+| `/s/:slug` | Scenario | six tabs, current phase marked, modules as accordions, checklist as the task list, sources, reviewed and unreviewed, print (all tabs open), loading, missing |
+| `/m/:slug` | Module | standalone, with checklist items, print |
+| `/p/:slug` | Page | reference, comms, fieldcraft and plan categories, calls-hidden notice, read aloud present and absent, print |
+| `/medical` | Medical | 999 line through the directives, quick cards, household needs present and absent, NHS installed, NHS on a missing drive, NHS absent |
+| `/medical/card/:slug` | Quick card | extra-large type, steps, warnings, stop or escalate with phones on and off, print |
+| `/medical/dose` | Children's doses | both medicines, every form, an age under the table, 18 and over, source link to either NHS book |
+| `/map` | Map | base switch, terrain, layers panel, find place, locate me (kiosk only), pins, home (set, not set, flood zone), nearby (with results, with missing kinds, no home), measure, share, print, tooltips on hover and tap, calls hidden |
+| `/search` | Find | empty, suggestions, results with source chips, partial results notice, no results, library browse |
+| `/library` | Library | categories, item cards with drive badges, unavailable items, extended tier on a missing drive |
+| `/read/:id/*` | Reader | article, theme injected, text size, external link notice, missing article |
+| `/doc/:id` | Document | PDF with thumbnails and search, EPUB, `#page=` deep link, missing file |
+| `/ai` | Assistant | off, starting, ready, busy by this screen, busy by another, thermal off, error, streaming answer with citations, refusal |
+| `/plan` | Household | household register, stock with badges, plan page, notes, pins, event log, empty states |
+| `/fieldcraft` | Field craft | the ten pages |
+| `/radio` | Phone and radio | comms pages, calls hidden |
+| `/tools` | Tools | tile list |
+| `/tools/timers` | Timers | idle, running countdown, finished, CPR running, fallout marks |
+| `/tools/sun` | Sun and moon | pin, place search, polar day and night, moon phase |
+| `/tools/calc` | Calculators | defaults, invalid input |
+| `/tools/log` | Event log | empty, entries, edit |
+| `/system` | System | status, storage, hotspot, ethernet, power mode, backlight (present and 501 fallback), AI toggle, thermal threshold, update progress, theme default, PIN set and unset, PIN dialog |
+| `*` | Not found | |
+| route error | Unable to open this page | |
+
+### Overlays, panels and chrome
+
+The shell (rail on the kiosk, bar on phones, band, screen title and actions), the notices toast, the on-screen keyboard (kiosk), the idle overlay and the board switch, the Connect a phone panel with its QR codes, the admin PIN dialog, the map panels (Layers, Find place, Locate me, Pins, Home, Nearby, Share), the map tooltip popup, the pin modal, the reader's text-size control, the document viewer chrome, the chip strip on every screen, the read-aloud player, forecast reminder toasts, the DRILL banner, the dim mode.
+
+### Static pages outside the app
+
+`welcome.html` (captive portal landing) and `starting.html` (kiosk boot page) in `web/public` get the same tokens and type.
+
+### Cross-cutting states
+
+Loading, error and empty for every list; the three themes; dim mode; calls hidden; `map_first`; drill; kiosk versus phone; landscape phone; print stylesheet for every printable screen; keyboard focus visible everywhere; reduced motion; RTL not required.
