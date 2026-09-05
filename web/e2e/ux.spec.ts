@@ -21,14 +21,6 @@ test('field manual shortcuts, checklist jump and resume work on kiosk and phone'
     }
     await expect(page.getByRole('heading', { name: 'Checklist', exact: true })).toBeInViewport();
     await page.getByRole('link', { name: 'Home', exact: true }).click();
-    // what is working: phones off marks the numbers on a page and offers the no-phones page
-    await page.getByRole('button', { name: 'Phones: on' }).click();
-    await expect(page.getByRole('button', { name: 'Phones: off' })).toBeVisible();
-    await page.getByRole('region', { name: 'What is off' }).getByRole('link', { name: 'Getting help without phones' }).click();
-    await expect(page.getByRole('status')).toContainText('Off right now: phones');
-    await page.getByRole('link', { name: 'Home', exact: true }).click();
-    await page.getByRole('button', { name: 'Phones: off' }).click();
-    await expect(page.getByRole('button', { name: 'Phones: on' })).toBeVisible();
     await expect(page.getByRole('link', { name: /Continue: National grid collapse/ })).toBeVisible();
     // tools: the sixth tile, the tool list and a timer that keeps running while reading a playbook
     await page.getByRole('navigation', { name: 'Main sections' }).getByRole('link', { name: /Tools/ }).click();

@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, Note, Person, StockItem } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, ConditionId, ConditionState, Note, Person, StockItem } from '../../src/api/types';
+import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
 import { aiEvents, cards, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
 import { PIN, TOKEN, type FixtureState } from './state';
 
@@ -83,7 +85,15 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     const body = (): Record<string, unknown> => (req.postData() ? (JSON.parse(req.postData() as string) as Record<string, unknown>) : {});
     const gated = () => state.status.pin_required && req.headers()['authorization'] !== `Bearer ${TOKEN}`;
 
-    if (method === 'GET' && p === '/status') return json(route, { ...state.status, eth_mode: state.ethMode });
+    if (method === 'GET' && p === '/status') {
+      const v = computeView(state);
+      return json(route, {
+        ...state.status, eth_mode: state.ethMode,
+        conditions: Object.fromEntries(CONDITION_IDS.map((id) => [id, v.conditions[id].state])),
+        modes: v.modes, drill: v.meta.drill, readiness_score: v.readiness.score,
+        situation: state.situation.slug ? { slug: state.situation.slug, started_at: state.situation.started_at } : null,
+      });
+    }
     if (method === 'GET' && p === '/library') return json(route, library);
     if (method === 'GET' && p.startsWith('/library/')) {
       const item = library.categories.flatMap((c) => c.items).find((i) => i.id === decodeURIComponent(p.slice('/library/'.length)));
@@ -171,12 +181,84 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (method === 'PUT') { state.stock[idx] = { ...state.stock[idx], ...body() } as StockItem; return json(route, withDays(state.stock[idx])); }
       if (method === 'DELETE') { state.stock.splice(idx, 1); return json(route, { ok: true }); }
     }
-    if (p === '/services' && method === 'GET') return json(route, state.services);
-    const svc = /^\/services\/(\w+)$/.exec(p);
-    if (svc && method === 'PUT') {
-      state.services = { ...state.services, [svc[1]]: Boolean(body().on) };
-      state.status = { ...state.status, services: state.services };
-      return json(route, state.services);
+    // The situation engine (spec 2026-09-06): an in-memory View over the fixture state.
+    if (method === 'GET' && p === '/situation/view') return json(route, computeView(state));
+    if (method === 'GET' && p === '/situation/report') return route.fulfill({ status: 200, contentType: 'text/markdown; charset=utf-8', body: report(state) });
+    if (method === 'GET' && p === '/conditions') return json(route, computeView(state).conditions);
+    const cond = /^\/conditions\/([\w-]+)(?:\/(confirm|accept))?$/.exec(p);
+    if (cond) {
+      const id = cond[1] as ConditionId;
+      const current = state.conditions[id];
+      if (!current) return detail(route, 404, 'no such condition');
+      const now = new Date().toISOString();
+      if (method === 'PUT') {
+        const b = body();
+        const next = String(b.state ?? '');
+        if (!['working', 'degraded', 'off'].includes(next)) return detail(route, 422, 'bad state');
+        if (b.expected_updated_at && b.expected_updated_at !== current.updated_at) return json(route, current, 409);
+        state.conditions = { ...state.conditions, [id]: {
+          ...current, state: next as ConditionState, since: String(b.since ?? now), note: String(b.note ?? ''),
+          source: 'manual', confidence: 1, set_by: 'phone', updated_at: now, confirmed_at: now,
+        } };
+        return json(route, computeView(state).conditions[id]);
+      }
+      if (method === 'POST' && cond[2] === 'confirm') {
+        state.conditions = { ...state.conditions, [id]: { ...current, confirmed_at: now, updated_at: now } };
+        return json(route, computeView(state).conditions[id]);
+      }
+      if (method === 'POST' && cond[2] === 'accept') {
+        const rule = String(body().rule ?? '');
+        const proposal = computeView(state).inferred.find((i) => i.rule === rule && i.condition === id);
+        if (!proposal) return detail(route, 404, 'no such proposal');
+        state.conditions = { ...state.conditions, [id]: { ...current, state: proposal.state, since: now, source: 'inferred', confidence: proposal.confidence, set_by: 'box', updated_at: now, confirmed_at: now } };
+        return json(route, computeView(state).conditions[id]);
+      }
+    }
+    if (method === 'GET' && p === '/tasks') return json(route, computeView(state).tasks);
+    if (method === 'PUT' && p.startsWith('/tasks/')) {
+      const id = decodeURIComponent(p.slice('/tasks/'.length));
+      const b = body();
+      const existing = computeView(state).tasks.find((t) => t.id === id);
+      if (!existing) return detail(route, 404, 'no such task');
+      const done = b.done === undefined ? existing.done : Boolean(b.done);
+      const person = b.person === undefined ? existing.person : (b.person as string | null);
+      state.taskState.set(id, { done, person, done_at: done ? new Date().toISOString() : null });
+      const checklist = /^checklist:([\w-]+)\/(.+)$/.exec(id);
+      if (checklist) {
+        const list = state.checklists.get(checklist[1]) ?? [];
+        const item = list.find((i) => i.id === checklist[2]);
+        if (item) { item.checked = done; item.updated_at = new Date().toISOString(); }
+      }
+      return json(route, computeView(state).tasks.find((t) => t.id === id));
+    }
+    if (p === '/home' && method === 'GET') return json(route, state.home);
+    if (p === '/home' && method === 'PUT') {
+      const b = body();
+      state.home = { lat: Number(b.lat ?? 0), lon: Number(b.lon ?? 0), label: String(b.label ?? 'Home'), flood_zone: (b.flood_zone as string | null) ?? null };
+      return json(route, state.home);
+    }
+    if (p === '/drill' && method === 'POST') {
+      const b = body();
+      const slug = String(b.scenario ?? '');
+      const summary = playbooks.find((x) => x.slug === slug);
+      if (!summary) return detail(route, 404, 'Playbook not found');
+      const at = new Date(Date.now() - Number(b.hours_ago ?? 0) * 3_600_000).toISOString();
+      state.savedConditions = state.conditions;
+      const conditions = freshConditions(at);
+      for (const [id, value] of Object.entries((b.conditions ?? {}) as Record<string, ConditionState>)) {
+        if (conditions[id as ConditionId]) conditions[id as ConditionId] = { ...conditions[id as ConditionId], state: value, set_by: 'drill' };
+      }
+      state.conditions = conditions;
+      state.situation = { slug, title: summary.title, started_at: at, elapsed_s: 0, phase: phaseFor(0).id };
+      state.drill = true;
+      return json(route, computeView(state));
+    }
+    if (p === '/drill' && method === 'DELETE') {
+      if (state.savedConditions) state.conditions = state.savedConditions;
+      state.savedConditions = null;
+      state.drill = false;
+      state.situation = { slug: null };
+      return json(route, computeView(state));
     }
     if (p === '/situation' && method === 'GET') return json(route, state.situation);
     if (p === '/situation' && method === 'POST') {

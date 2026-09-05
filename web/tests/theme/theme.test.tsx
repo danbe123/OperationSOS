@@ -42,6 +42,22 @@ describe('ThemeProvider', () => {
     expect(screen.getByTestId('theme')).toHaveTextContent('vault');
   });
 
+  it('takes the mode theme from the engine over a stored preference, until somebody chooses', async () => {
+    localStorage.setItem(THEME_KEY, 'field');
+    const { rerender } = render(<ThemeProvider mode="blackout"><Probe /></ThemeProvider>);
+    expect(document.documentElement.dataset.theme).toBe('blackout');
+    await act(async () => { screen.getByText('go blackout').click(); });
+    rerender(<ThemeProvider mode="vault"><Probe /></ThemeProvider>);
+    expect(document.documentElement.dataset.theme).toBe('blackout');   // the tap wins from here on
+  });
+
+  it('dims the screen while the mode says so', () => {
+    const { rerender } = render(<ThemeProvider dim><Probe /></ThemeProvider>);
+    expect(document.documentElement.dataset.dim).toBe('on');
+    rerender(<ThemeProvider dim={false}><Probe /></ThemeProvider>);
+    expect(document.documentElement.dataset.dim).toBeUndefined();
+  });
+
   it('setTheme persists to localStorage and re-stamps <html>', async () => {
     render(<ThemeProvider><Probe /></ThemeProvider>);
     await act(async () => { screen.getByText('go blackout').click(); });
