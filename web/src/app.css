@@ -357,3 +357,28 @@ input[type="checkbox"] { width: 28px; height: 28px; }
 .ask { display: flex; gap: 8px; align-items: center; position: sticky; bottom: 0; background: var(--bg); }
 .ask input { flex: 1; }
 .count { font-size: 0.85rem; }
+
+/* tools (spec 2026-09-05) */
+.pad-inner { padding: 14px 16px; }
+.pad-inner h3 { margin: 0 0 8px; }
+.timer-big { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 4ch; }
+.cpr-pulse { width: 28px; height: 28px; border-radius: 50%; background: var(--border); transition: background 60ms, transform 60ms; }
+.cpr-pulse.on { background: var(--danger); transform: scale(1.25); }
+.fallout, .sun-table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+.fallout th, .fallout td, .sun-table th, .sun-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+.sun-table th { font-weight: 600; width: 60%; }
+.result { font-size: 1.15rem; font-weight: 600; margin: 8px 0; }
+.dose-amount { font-size: 2.2rem; font-weight: 700; margin: 0 0 8px; }
+.dose-result ul { margin: 8px 0; padding-left: 20px; }
+.situation-clock { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; width: 100%; }
+.situation-card { border-color: var(--warn); }
+.tab-now { margin-left: 6px; }
+.plan-jump { gap: 6px; }
+.event-row { align-items: baseline; }
+.event-time { min-width: 11ch; font-variant-numeric: tabular-nums; }
+.event-text { flex: 1 1 200px; }
+.event-input { flex: 1 1 240px; }
+.stock-summary { list-style: none; margin: 0; padding: 0 16px; }
+.stock-summary li { border: 1px solid var(--border); }
+.person-form .row .field { flex: 1 1 160px; }
+.household-needs li { padding: 6px 0; }

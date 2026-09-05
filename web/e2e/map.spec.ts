@@ -46,7 +46,7 @@ test('place search, pin persistence and grid reference for a known point', async
   await waitForMap(page);
   await page.getByRole('button', { name: 'Find place' }).click();
   await page.getByLabel('Place, postcode or grid reference').fill('oxf');
-  await page.getByRole('button', { name: /^Oxford city,/ }).click();
+  await page.getByRole('button', { name: /^Oxford city,/i }).click();   // fixture says City, the live places index says city
   await expect(page.getByTestId('map-readout')).toContainText('Centre: SP');
 
   await page.getByRole('button', { name: 'Find place' }).click();

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, Note } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, Note, Person, StockItem } from '../../src/api/types';
+import { phaseFor } from '../../src/tools/situation';
 import { aiEvents, cards, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
 import { KIWIX_PAGES } from './kiwix';
 import { PIN, TOKEN, type FixtureState } from './state';
@@ -138,7 +139,52 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (p === '/notes' && method === 'GET') {
       const kind = url.searchParams.get('kind');
-      return json(route, state.notes.filter((n) => !kind || n.kind === kind));
+      const list = state.notes.filter((n) => !kind || n.kind === kind);
+      return json(route, kind === 'event' ? [...list].reverse() : list);
+    }
+    if (p === '/household' && method === 'GET') return json(route, state.household);
+    if (p === '/household' && method === 'POST') {
+      const b = body();
+      const person: Person = { id: state.nextId++, name: String(b.name ?? ''), age: (b.age as number | null) ?? null, needs: String(b.needs ?? ''), medications: String(b.medications ?? ''), contacts: String(b.contacts ?? ''), updated_at: new Date().toISOString() };
+      state.household.push(person);
+      return json(route, person);
+    }
+    const person = /^\/household\/(\d+)$/.exec(p);
+    if (person) {
+      const idx = state.household.findIndex((x) => x.id === Number(person[1]));
+      if (idx === -1) return detail(route, 404, 'Person not found');
+      if (method === 'PUT') { state.household[idx] = { ...state.household[idx], ...body() } as Person; return json(route, state.household[idx]); }
+      if (method === 'DELETE') { state.household.splice(idx, 1); return json(route, { ok: true }); }
+    }
+    const withDays = (i: StockItem): StockItem => ({ ...i, days_left: i.per_person_day ? Math.round((i.quantity / (i.per_person_day * Math.max(1, state.household.length))) * 10) / 10 : null });
+    if (p === '/stock' && method === 'GET') return json(route, { people: Math.max(1, state.household.length), items: state.stock.map(withDays) });
+    if (p === '/stock' && method === 'POST') {
+      const b = body();
+      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null };
+      state.stock.push(item);
+      return json(route, withDays(item));
+    }
+    const stockItem = /^\/stock\/(\d+)$/.exec(p);
+    if (stockItem) {
+      const idx = state.stock.findIndex((x) => x.id === Number(stockItem[1]));
+      if (idx === -1) return detail(route, 404, 'Stock item not found');
+      if (method === 'PUT') { state.stock[idx] = { ...state.stock[idx], ...body() } as StockItem; return json(route, withDays(state.stock[idx])); }
+      if (method === 'DELETE') { state.stock.splice(idx, 1); return json(route, { ok: true }); }
+    }
+    if (p === '/situation' && method === 'GET') return json(route, state.situation);
+    if (p === '/situation' && method === 'POST') {
+      const slug = String(body().slug ?? '');
+      const summary = playbooks.find((x) => x.slug === slug);
+      if (!summary) return detail(route, 404, 'Playbook not found');
+      const started_at = new Date().toISOString();
+      state.situation = { slug, title: summary.title, started_at, elapsed_s: 0, phase: phaseFor(0).id };
+      state.status = { ...state.status, situation: { slug, started_at } };
+      return json(route, state.situation);
+    }
+    if (p === '/situation' && method === 'DELETE') {
+      state.situation = { slug: null };
+      state.status = { ...state.status, situation: null };
+      return json(route, state.situation);
     }
     if (p === '/notes' && method === 'POST') {
       const b = body();

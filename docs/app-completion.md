@@ -51,3 +51,11 @@ Working checklist, started 2026-09-05. Software validation and physical-device a
 - Full model-backed eval (gemma-4-E2B-it-Q4_K_M, PC, 21:46): retrieval@3 0.88, verbatim 1.00, refusal 0.91 (gate 0.90), grounded 0.85, median time to first token 17.6 s, 26.7 tokens/s, peak RSS 4.9 GB. Run file `tools/eval/runs/2026-09-05-gemma-4-E2B-it-Q4_K_M.jsonl`. The refusal gate is marginal (10 of 11); Pi timings will differ.
 - Home: the "Start here" label and the quick-help shortcut grid were removed at the owner's request.
 - Tools expansion designed (`docs/superpowers/specs/2026-09-05-tools-design.md`): stock and household register, children's dose tool, situation clock, timers, sun and moon, calculators, event log.
+
+## 2026-09-05 late: tools expansion built
+
+Per `docs/superpowers/specs/2026-09-05-tools-design.md`, all on main:
+- API: household register, stock with days-left from the household size, situation clock (`/situation`, `situation` on `/status`), event notes.
+- Web: sixth Home tile Tools; Timers (countdowns, CPR beat at 110, fallout 7:10 marks), Sun and moon, Calculators (generator, battery, solar, rations), Event log, Children's doses (NHS age bands from the library's NHS pages, cited), Plan split into Household, Stock, Household plan, Notes, Pins, Event log; situation clock on playbooks with the current phase tab marked; Medical shows household medical needs and the dose tool.
+- Checks: `make test` 665 backend, 251 frontend, 72 documents, smoke OK; Playwright UX spec extended with the tools and clock passes; screens screenshotted on the dev stack at 853x480.
+- Restarting the dev API by hand trips `run-dev.sh`'s cleanup trap and stops Caddy, kiwix and llama-server too: restart the whole stack with `SOS_MANIFEST_DIR=.dev/full-manifest dev/run-dev.sh` and re-enable the AI afterwards.

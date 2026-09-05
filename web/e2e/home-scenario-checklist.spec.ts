@@ -2,7 +2,7 @@ import { test, expect } from './test';
 
 test('Home -> scenario -> tick a checklist item; a second phone sees the tick', async ({ page, browser, withFixtures }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'What is happening?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All situations' })).toBeVisible();
   await page.getByRole('navigation', { name: 'Scenarios' }).getByRole('link', { name: /National grid collapse/ }).click();
   await expect(page).toHaveURL(/\/s\/grid-collapse$/);
   await expect(page.getByRole('tab', { name: 'Right now', selected: true })).toBeVisible();

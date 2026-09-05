@@ -38,7 +38,7 @@ describe('Medical', () => {
     vi.spyOn(api, 'library').mockResolvedValue({ categories: [{ id: 'medical', title: 'Medical', items: [{ ...nhsItem, tier: 'extended', available: false, url: null, drive_label: 'On external drive (not connected)' }] }] });
     renderRoute('/medical');
     const nhs = await screen.findByRole('navigation', { name: 'NHS A to Z' });
-    expect(within(nhs).queryAllByRole('link')).toHaveLength(0);
+    expect(within(nhs).queryAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/dose']);   // the dose tool never depends on the drive
     expect(within(nhs).getAllByText('On external drive (not connected)')).toHaveLength(2);
   });
 });

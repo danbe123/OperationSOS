@@ -11,6 +11,12 @@ import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Page } from './screens/Page';
 import { Plan } from './screens/Plan';
+import { Tools } from './screens/Tools';
+import { Timers } from './screens/tools/Timers';
+import { SunMoon } from './screens/tools/SunMoon';
+import { Calculators } from './screens/tools/Calculators';
+import { Log } from './screens/tools/Log';
+import { Dose } from './screens/tools/Dose';
 import { Radio } from './screens/Radio';
 import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
@@ -70,6 +76,12 @@ export const routes: RouteObject[] = [
       { path: 'radio', element: <Radio /> },
       { path: 'p/:slug', element: <Page /> },
       { path: 'plan', element: <Plan /> },
+      { path: 'tools', element: <Tools /> },
+      { path: 'tools/timers', element: <Timers /> },
+      { path: 'tools/sun', element: <SunMoon /> },
+      { path: 'tools/calc', element: <Calculators /> },
+      { path: 'tools/log', element: <Log /> },
+      { path: 'medical/dose', element: <Dose /> },
       { path: 'doc/:id', element: <Doc /> },
       { path: 'read/:id/*', element: <Reader /> },
       { path: 's/:slug', element: <Scenario /> },

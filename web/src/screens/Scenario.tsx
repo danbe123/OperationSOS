@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { api } from '../api/client';
-import type { Playbook, Section as SectionData } from '../api/types';
+import type { Playbook, Section as SectionData, Situation } from '../api/types';
 import { useQuery } from '../api/useQuery';
 import { AppBar } from '../components/AppBar';
 import { Checklist } from '../components/Checklist';
 import { Html } from '../components/Html';
 import { Section } from '../components/Section';
+import { SituationClock } from '../components/SituationClock';
+import { elapsedSince, phaseFor } from '../tools/situation';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 
@@ -51,6 +53,9 @@ export function Scenario() {
   const kiosk = useKiosk();
   const { data, error, loading, setData } = useQuery(() => api.playbook(slug), [slug], { intervalMs: 15_000, refetchOnFocus: true });
   const [printing, setPrinting] = useState(false);
+  const situationQ = useQuery<Situation>(() => api.situation(), [slug], { intervalMs: 30_000, refetchOnFocus: true });
+  const situation = situationQ.data ?? null;
+  const nowPhase = situation && situation.slug === slug ? phaseFor(elapsedSince(situation.started_at)).id : null;
   useEffect(() => {
     if (!data) return;
     try { localStorage.setItem('sos.lastPlaybook', data.slug); } catch { /* Storage is optional. */ }
@@ -107,11 +112,13 @@ export function Scenario() {
           </>
         }
       />
-      <div className="scenario-intro"><p className="eyebrow">Your response guide</p><p>{data.summary}</p><a className="btn" href="#response-checklist"><Icon name="plan" /> Household checklist</a></div>
+      <div className="scenario-intro"><p className="eyebrow">Your response guide</p><p>{data.summary}</p><a className="btn" href="#response-checklist"><Icon name="plan" /> Household checklist</a>
+        {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
+      </div>
       <div className="tabs" role="tablist" aria-label="Sections">
         {data.sections.map((s) => (
-          <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
-            {s.title}
+          <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
+            {s.title}{s.id === nowPhase && <span className="badge badge-warn tab-now">now</span>}
           </button>
         ))}
       </div>
