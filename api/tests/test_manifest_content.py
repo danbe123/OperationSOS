@@ -41,10 +41,12 @@ CORE_REQUIRED = {
     "scmg-ch09", "scmg-ch10", "scmg-ch11", "scmg-ch12", "scmg-annex",
     "who-eml-2025", "irp.fas.org_en_military-medicine", "survival-austere-medicine-2017",
     "emergency-war-surgery-2018", "fm-4-25-11-first-aid", "medicalsciences.stackexchange.com_en_all",
+    "st-31-91b-sf-medical-handbook", "quickguidesformedicine_en_all",
     # survival
     "zimgit-water_en", "zimgit-food-preparation_en", "zimgit-knots_en", "zimgit-post-disaster_en",
     "www.ready.gov_en", "appropedia_en_all", "cd3wdproject.org_en_all", "nwss",
     "fema-nuclear-detonation-2022", "fm-21-76-survival", "fm-3-05-70-survival",
+    "atp-3-50-21-survival", "fm-21-76-1-survival-evasion-recovery", "fm-21-10-field-hygiene", "fm-4-25-12-field-sanitation", "fm-31-70-cold-weather", "tc-3-97-61-military-mountaineering", "fm-3-25-26-map-reading", "fm-5-125-rigging", "tc-3-21-76-ranger-handbook", "kephart-camping-and-woodcraft", "seton-book-of-woodcraft", "nessmuk-woodcraft-and-camping", "beard-camp-lore-and-woodcraft", "kreps-woodcraft", "boy-scouts-handbook-1911", "canadian-prepper_en_winterprepping", "canadian-prepper_en_preppingfood", "canadian-prepper_en_bugoutconcepts", "canadian-prepper_en_bugoutroll", "wikiciv_en_all", "grimgrains_en_all",
     "urban-prepper_en_all", "trueprepper.com_en_all", "lrnselfreliance_en_all",
     "energypedia_en_all_maxi", "solar.lowtechmagazine.com_mul_all", "based.cooking_en_all",
     "foss.cooking_en_all", "usda-2015_en",
@@ -52,7 +54,7 @@ CORE_REQUIRED = {
     "wikipedia_en_all_maxi", "wikipedia_en-simple_all_maxi", "wiktionary_en_all_nopic",
     "wikibooks_en_all_maxi", "wikivoyage_en_all_maxi", "openstreetmap-wiki_en_all_maxi",
     # practical
-    "ifixit_en_all",
+    "ifixit_en_all", "restarters_en_all", "wikivet.net_en_all",
     "diy.stackexchange.com_en_all", "electronics.stackexchange.com_en_all",
     "gardening.stackexchange.com_en_all", "outdoors.stackexchange.com_en_all",
     "mechanics.stackexchange.com_en_all", "woodworking.stackexchange.com_en_all",
@@ -185,7 +187,7 @@ REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
 EXTENDED_REQUIRED = {
     "gutenberg_en_all", "stackoverflow.com_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
     "wikipedia_cy_all_maxi", "libretexts.org_en_med", "libretexts.org_en_bio", "openstax-biology-2e",
-    "openstax-anatomy-physiology-2e", "s2underground_en_all", "canadian-prepper_en_winterprepping",
+    "openstax-anatomy-physiology-2e", "s2underground_en_all",
     "media-films", "media-music", "media-audiobooks", "owner-books",
 }
 
