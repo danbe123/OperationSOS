@@ -99,3 +99,13 @@ The box is offline: do not link to the internet from a body. Put the origin of a
 ## Style
 
 British English. Emergency numbers are 999, 111 (NHS), 105 (power cut) and 0345 988 1188 (Floodline). Drug names are the UK names (paracetamol, adrenaline). Every icon has a word next to it in the app, so `icon` is decoration, not meaning. The product is "Operation SOS", "SOS" for short.
+
+## Conventions (sub-plan 03)
+
+- Icons are words from the fixed vocabulary in docs/superpowers/plans/2026-09-03-03-content.md ("Icon vocabulary"); unknown names render as a book.
+- Modules use exactly these headings: `## Key facts`, `## What to do`, `## UK specifics`, `## Go deeper`, and never contain `- [ ]` lines.
+- Cards use exactly these headings: `## When to use`, `## Steps`, `## Warnings`, `## Stop or escalate`, `## Source`. Steps 1 to 3 are at most 70 characters; "When to use" is at most 110 characters (the one-screen rule). Warnings start with `**Warning:**`.
+- Scenario checklist items always carry an explicit `{#id}` so that rewording never resets anyone's ticks.
+- Every dose, distance, time or law is followed by a citation in brackets: `([NRR 2025, p. 45](doc:nrr-2025#page=45))`, `([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/))`.
+- Zimit article paths are the crawled URL without scheme (`www.gov.uk/buying-carrying-knives`); Wikipedia paths are the underscored title; Stack Exchange paths are `questions/<id>/<slug>`.
+- British English; 999, 111, 105, 0345 988 1188; UK drug names; never "NOMAD".
