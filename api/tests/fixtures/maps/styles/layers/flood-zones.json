@@ -1,0 +1,65 @@
+{
+ "sources": {
+  "flood-zones": {
+   "type": "vector",
+   "url": "pmtiles:///maps/overlays/flood-zones.pmtiles"
+  }
+ },
+ "layers": [
+  {
+   "id": "flood-zones-england",
+   "type": "fill",
+   "source": "flood-zones",
+   "source-layer": "flood_england",
+   "paint": {
+    "fill-color": "#1e90ff",
+    "fill-opacity": 0.35,
+    "fill-outline-color": "#0b5cad"
+   }
+  },
+  {
+   "id": "flood-zones-wales",
+   "type": "fill",
+   "source": "flood-zones",
+   "source-layer": "flood_wales",
+   "paint": {
+    "fill-color": "#1e90ff",
+    "fill-opacity": 0.35,
+    "fill-outline-color": "#0b5cad"
+   }
+  },
+  {
+   "id": "flood-zones-scotland",
+   "type": "fill",
+   "source": "flood-zones",
+   "source-layer": "flood_scotland",
+   "paint": {
+    "fill-color": "#1e90ff",
+    "fill-opacity": 0.35,
+    "fill-outline-color": "#0b5cad"
+   }
+  },
+  {
+   "id": "flood-zones-ni",
+   "type": "fill",
+   "source": "flood-zones",
+   "source-layer": "flood_ni",
+   "paint": {
+    "fill-color": "#1e90ff",
+    "fill-opacity": 0.35,
+    "fill-outline-color": "#0b5cad"
+   }
+  },
+  {
+   "id": "flood-zones-roi",
+   "type": "fill",
+   "source": "flood-zones",
+   "source-layer": "flood_roi",
+   "paint": {
+    "fill-color": "#1e90ff",
+    "fill-opacity": 0.35,
+    "fill-outline-color": "#0b5cad"
+   }
+  }
+ ]
+}

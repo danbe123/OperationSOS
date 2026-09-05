@@ -1,0 +1,18 @@
+{
+  "output": "places.csv.gz",
+  "built_at": "2026-09-05T16:45:44+00:00",
+  "size_bytes": 22826,
+  "step": "places",
+  "rows": 1843,
+  "gb_rows": 1843,
+  "osm_rows": 0,
+  "columns": [
+    "name",
+    "kind",
+    "lat",
+    "lon",
+    "region",
+    "postcode"
+  ],
+  "source": "OS Open Names (opname_csv_gb.zip) + OSM place nodes"
+}

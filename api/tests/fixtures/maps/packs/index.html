@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOS phone map packs</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+  code { background: #eee; padding: 0 .25rem; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #ccc; }
+  .warn { border-left: 4px solid #c8102e; padding-left: .75rem; }
+</style>
+</head>
+<body>
+<h1>Phone map packs (Organic Maps)</h1>
+<p>These files give an Android phone its own offline map of the UK, the Republic of Ireland, the Isle of Man and the Channel Islands, usable when the phone cannot reach this box.</p>
+<ol>
+  <li><strong>Install the app first.</strong> The Android app is not included in this build.</li>
+  <li><strong>Copy the map files from a PC over USB.</strong> Plug the phone into a computer, choose <em>File transfer</em> on the phone, then copy the <code>.mwm</code> files below into <code>Android/data/app.organicmaps/files/260826/</code> on the phone (create the folder if it is missing). Android 11 and later block the browser from saving into that folder, so downloading a <code>.mwm</code> directly on the phone does not work.</li>
+  <li><strong>Getting the files onto the PC:</strong> the intended route is the Ethernet <em>direct laptop link</em> from the System screen: plug a laptop into the box with an Ethernet cable and download the files from this page. <code>adb push</code> works too.</li>
+  <li>Open Organic Maps. The maps appear under <em>Downloaded maps</em>.</li>
+</ol>
+<p class="warn"><strong>iPhone and iPad are not supported.</strong> iOS has no way to load map files from outside the App Store.</p>
+<table>
+  <thead><tr><th>File</th><th>Area</th><th>Size</th></tr></thead>
+  <tbody>
+      <tr><td><a href="/maps/packs/Jersey.mwm">Jersey.mwm</a></td><td>Jersey</td><td>3 MB</td></tr>
+  </tbody>
+</table>
+<p>Map data &copy; OpenStreetMap contributors, &copy; Organic Maps. Data version 260826.</p>
+</body>
+</html>

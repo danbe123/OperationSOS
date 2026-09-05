@@ -1,0 +1,55 @@
+{
+  "fixture": true,
+  "build": "20260902",
+  "bbox": [
+    -1.56,
+    50.87,
+    -1.46,
+    50.97
+  ],
+  "verified_archives": [
+    "contours.pmtiles",
+    "hillshade.pmtiles",
+    "os-zoomstack.pmtiles",
+    "test.pmtiles",
+    "overlays/flood-zones.pmtiles",
+    "overlays/footpaths.pmtiles"
+  ],
+  "sizes": {
+    "uk-ie": 4935818,
+    "os-zoomstack": 3952325,
+    "contours": 835057,
+    "hillshade": 73426,
+    "styles": 705997,
+    "sprites": 123930,
+    "glyphs": 1535866,
+    "places": 22826,
+    "packs": 2592513
+  },
+  "overlay_sizes": {
+    "footpaths": 287553,
+    "health": 3054,
+    "fuel": 2027,
+    "water": 20440,
+    "rail": 934,
+    "chemical-sites": 1964,
+    "airports-military": 45,
+    "flood-zones": 3797,
+    "access-land": 292,
+    "nuclear-sites": 8310
+  },
+  "manifest": "api/tests/fixtures/manifest/maps.json",
+  "updated": [
+    "uk-ie",
+    "os-zoomstack",
+    "contours",
+    "hillshade",
+    "styles",
+    "sprites",
+    "glyphs",
+    "places",
+    "packs"
+  ],
+  "overlays_manifest": "manifest/overlays.json",
+  "updated_overlays": []
+}

@@ -13,7 +13,7 @@
         "artifact": "test.pmtiles"
       },
       "dest": "maps/test.pmtiles",
-      "size_bytes": 3400000000,
+      "size_bytes": 4935818,
       "as_at": "2026-09-02",
       "licence": "ODbL 1.0 (OpenStreetMap contributors); Protomaps BSD-3",
       "priority": 50,
@@ -32,7 +32,7 @@
         "artifact": "os-zoomstack.pmtiles"
       },
       "dest": "maps/os-zoomstack.pmtiles",
-      "size_bytes": 2852712448,
+      "size_bytes": 3952325,
       "as_at": "2026-06",
       "licence": "OGL v3 (Contains OS data © Crown copyright and database right 2026)",
       "priority": 51,
@@ -51,7 +51,7 @@
         "artifact": "contours.pmtiles"
       },
       "dest": "maps/contours.pmtiles",
-      "size_bytes": 1100000000,
+      "size_bytes": 835057,
       "as_at": "2026-07",
       "licence": "OGL v3 (OS Terrain 50); Copernicus DEM licence (ESA)",
       "priority": 52,
@@ -70,7 +70,7 @@
         "artifact": "hillshade.pmtiles"
       },
       "dest": "maps/hillshade.pmtiles",
-      "size_bytes": 1500000000,
+      "size_bytes": 73426,
       "as_at": "2026-07",
       "licence": "OGL v3 (OS Terrain 50, OSNI); Copernicus DEM licence (ESA)",
       "priority": 53,
@@ -89,7 +89,7 @@
         "artifact": "styles"
       },
       "dest": "maps/styles",
-      "size_bytes": 2000000,
+      "size_bytes": 705997,
       "as_at": "2026-09",
       "licence": "BSD-3 (Protomaps basemaps); OGL v3 (OS Open Zoomstack stylesheets)",
       "priority": 56,
@@ -108,7 +108,7 @@
         "artifact": "sprites"
       },
       "dest": "maps/sprites",
-      "size_bytes": 1000000,
+      "size_bytes": 123930,
       "as_at": "2026-09",
       "licence": "BSD-3 (Protomaps basemaps-assets); OGL v3 (Ordnance Survey)",
       "priority": 57,
@@ -127,7 +127,7 @@
         "artifact": "fonts"
       },
       "dest": "maps/fonts",
-      "size_bytes": 40000000,
+      "size_bytes": 1535866,
       "as_at": "2026-09",
       "licence": "OFL 1.1 (Noto Sans, Source Sans Pro, Open Sans)",
       "priority": 58,
@@ -146,7 +146,7 @@
         "artifact": "places.csv.gz"
       },
       "dest": "maps/places.csv.gz",
-      "size_bytes": 60000000,
+      "size_bytes": 22826,
       "as_at": "2026-09",
       "licence": "OGL v3 (OS Open Names); ODbL 1.0 (OpenStreetMap contributors)",
       "priority": 59,
@@ -165,7 +165,7 @@
         "artifact": "packs"
       },
       "dest": "maps/packs",
-      "size_bytes": 2614260432,
+      "size_bytes": 2592513,
       "as_at": "2026-08-26",
       "licence": "ODbL 1.0 (OpenStreetMap contributors); Apache-2.0 (Organic Maps)",
       "priority": 60,

@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "SELECT",
+"features": [
+{"type":"Feature","id":"w172706159","properties":{"amenity":"fuel","landuse":null,"name":"Shell","opening_hours":null,"operator":null,"phone":"+44 23 8077 8375"},"geometry":{"type":"Point","coordinates":[-1.4618781,50.9189127]}},
+{"type":"Feature","id":"w517418973","properties":{"amenity":"fuel","landuse":null,"name":"Esso","opening_hours":null,"operator":"Esso","phone":null},"geometry":{"type":"Point","coordinates":[-1.4910762,50.9177457]}},
+{"type":"Feature","id":"w878935039","properties":{"amenity":"fuel","landuse":"retail","name":"Morrisons","opening_hours":"Mo-Sa 06:00-21:00; Su 06:00-22:00","operator":"WM Morrison Supermarkets Ltd","phone":"+44 23 8086 4981"},"geometry":{"type":"Point","coordinates":[-1.5243733,50.9233897]}},
+{"type":"Feature","id":"w1106151870","properties":{"amenity":"fuel","landuse":null,"name":"Esso","opening_hours":null,"operator":"Rontec","phone":null},"geometry":{"type":"Point","coordinates":[-1.5355337,50.9550319]}},
+{"type":"Feature","id":"a345412318","properties":{"amenity":"fuel","landuse":null,"name":"Shell","opening_hours":null,"operator":null,"phone":"+44 23 8077 8375"},"geometry":{"type":"Point","coordinates":[-1.461829871537839,50.91898225]}},
+{"type":"Feature","id":"a1034837946","properties":{"amenity":"fuel","landuse":null,"name":"Esso","opening_hours":null,"operator":"Esso","phone":null},"geometry":{"type":"Point","coordinates":[-1.491137368953388,50.91769545]}},
+{"type":"Feature","id":"a1757870078","properties":{"amenity":"fuel","landuse":"retail","name":"Morrisons","opening_hours":"Mo-Sa 06:00-21:00; Su 06:00-22:00","operator":"WM Morrison Supermarkets Ltd","phone":"+44 23 8086 4981"},"geometry":{"type":"Point","coordinates":[-1.524368675282592,50.9235371]}},
+{"type":"Feature","id":"a2212303740","properties":{"amenity":"fuel","landuse":null,"name":"Esso","opening_hours":null,"operator":"Rontec","phone":null},"geometry":{"type":"Point","coordinates":[-1.535459958310575,50.95485755]}}
+]
+}

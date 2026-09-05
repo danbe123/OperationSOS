@@ -1,0 +1,28 @@
+{
+  "output": "hillshade.pmtiles",
+  "built_at": "2026-09-05T16:45:18+00:00",
+  "size_bytes": 73426,
+  "step": "hillshade",
+  "sources": [
+    "glo30.vrt",
+    "t50.vrt"
+  ],
+  "header": {
+    "tile_compression": "none",
+    "tile_type": "png",
+    "minzoom": 11,
+    "maxzoom": 12,
+    "bounds": [
+      -1.5599999,
+      50.8700083,
+      -1.460093,
+      50.97
+    ],
+    "center": [
+      -1.5100464,
+      50.9200041,
+      11
+    ]
+  },
+  "pipeline": "gdalwarp -t_srs EPSG:3857 -tr 30 30 (Copernicus, OSNI, OS Terrain 50; later inputs win) -> gdaldem hillshade -compute_edges -z 1 -s 1 -az 315 -alt 45 -> gdal_translate MBTILES PNG8 -> gdaladdo 2..128 -> pmtiles convert"
+}
