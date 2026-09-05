@@ -64,6 +64,8 @@ describe('links', () => {
     expect(briefingHref({ title: 'Right now', kind: 'playbook-section', ref: 'grid-collapse#right-now' })).toBe('/s/grid-collapse#right-now');
     expect(briefingHref({ title: 'Power', kind: 'module', ref: 'power' })).toBe('/m/power');
     expect(briefingHref({ title: 'NRR', kind: 'doc', ref: 'nrr-2025' })).toBe('/doc/nrr-2025');
+    expect(briefingHref({ title: 'Grid collapse', kind: 'playbook', ref: 'grid-collapse' })).toBe('/s/grid-collapse');
+    expect(briefingHref({ title: 'The map', kind: 'map', ref: '' })).toBe('/map');
   });
 });
 

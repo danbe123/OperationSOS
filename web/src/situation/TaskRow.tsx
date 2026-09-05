@@ -10,7 +10,7 @@ import { contentHref } from './links';
 export function TaskRow({ task, people, onChanged }: { task: Task; people?: Person[]; onChanged: (t: Task) => void }) {
   const [busy, setBusy] = useState(false);
   const href = contentHref(task.link);
-  const save = async (patch: { done?: boolean; person?: string | null }) => {
+  const save = async (patch: { done?: boolean; person?: string }) => {
     setBusy(true);
     try {
       onChanged(await api.setTask(task.id, patch));
@@ -32,7 +32,7 @@ export function TaskRow({ task, people, onChanged }: { task: Task; people?: Pers
         {people && (
           <label className="field task-person">
             <span className="muted">Who</span>
-            <select aria-label={`Who is doing: ${task.title}`} value={task.person ?? ''} disabled={busy} onChange={(e) => void save({ person: e.target.value === '' ? null : e.target.value })}>
+            <select aria-label={`Who is doing: ${task.title}`} value={task.person ?? ''} disabled={busy} onChange={(e) => void save({ person: e.target.value })}>
               <option value="">Nobody yet</option>
               {people.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
             </select>

@@ -19,10 +19,13 @@ export function freshConditions(at = new Date().toISOString()): Conditions {
 }
 
 function aged(c: Condition, now: number): Condition {
-  const for_s = Math.max(0, Math.round((now - Date.parse(c.since)) / 1000));
+  const since = c.since ? Date.parse(c.since) : now;
+  const for_s = Math.max(0, Math.round((now - since) / 1000));
   const confirmed = c.confirmed_at ? Date.parse(c.confirmed_at) : Date.parse(c.updated_at);
   return { ...c, for_s, stale: c.state !== 'working' && now - confirmed >= 24 * HOUR };
 }
+
+const sinceOf = (c: Condition): number => (c.since ? Date.parse(c.since) : Date.now());
 
 function task(id: string, title: string, bucket: Task['bucket'], why: string, link: string, state: FixtureState): Task {
   const saved = state.taskState.get(id);
@@ -38,14 +41,14 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
   const inferred: Inferred[] = [];
   if (off('power') && power.for_s >= 4 * 3600 && conditions.mobile.state === 'working') {
     inferred.push({
-      condition: 'mobile', state: 'degraded', confidence: 0.7, due_at: new Date(Date.parse(power.since) + 4 * HOUR).toISOString(),
+      condition: 'mobile', state: 'degraded', confidence: 0.7, due_at: new Date(sinceOf(power) + 4 * HOUR).toISOString(),
       why: 'Masts run about four hours on battery once the street power goes.', rule: 'power-off-mobile-degraded', source: 'page:what-still-works',
     });
   }
 
   const forecast: Forecast[] = [];
   if (off('power')) {
-    const from = Date.parse(power.since);
+    const from = sinceOf(power);
     const item = (id: string, title: string, hours: number, severity: Forecast['severity'], why: string): Forecast => {
       const due = new Date(from + hours * HOUR).toISOString();
       return { id, title, due_at: due, severity: Date.parse(due) <= now ? 'passed' : severity, why, link: 'module:food', passed: Date.parse(due) <= now };

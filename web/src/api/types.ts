@@ -76,7 +76,7 @@ export type ConditionId = (typeof CONDITION_IDS)[number];
 export type ConditionState = 'working' | 'degraded' | 'off';
 export type ConditionSource = 'manual' | 'detected' | 'inferred';
 export type Condition = {
-  id: ConditionId; title: string; state: ConditionState; since: string; for_s: number;
+  id: ConditionId; title: string; state: ConditionState; since: string | null; for_s: number;
   source: ConditionSource; confidence: number; note: string; set_by: string;
   updated_at: string; confirmed_at: string | null; stale: boolean;
 };
@@ -84,16 +84,18 @@ export type Conditions = Record<ConditionId, Condition>;
 export type ConditionPatch = { state: ConditionState; since?: string; note?: string; expected_updated_at?: string };
 export type Inferred = { condition: ConditionId; state: ConditionState; confidence: number; due_at: string; why: string; rule: string; source: string };
 export type Severity = 'info' | 'warn' | 'danger' | 'passed';
-export type Forecast = { id: string; title: string; due_at: string; severity: Severity; why: string; link: string; passed: boolean };
+export type Forecast = { id: string; title: string; due_at: string; severity: Severity; why: string; link: string | null; passed: boolean; rule?: string };
 export type TaskBucket = 'now' | 'hour' | 'today' | 'week';
-export type Task = { id: string; title: string; bucket: TaskBucket; why: string; link: string; person: string | null; done: boolean; done_at: string | null; source: string };
-export type TaskPatch = { done?: boolean; person?: string | null };
-export type BriefingItem = { title: string; kind: 'playbook-section' | 'module' | 'page' | 'card' | 'doc'; ref: string; html?: string };
+export type Task = { id: string; title: string; bucket: TaskBucket; why: string; link: string | null; person: string | null; done: boolean; done_at: string | null; source: string };
+/** An empty `person` clears the assignment; leaving a field out means "unchanged". */
+export type TaskPatch = { done?: boolean; person?: string };
+export type BriefingKind = 'playbook' | 'playbook-section' | 'module' | 'page' | 'card' | 'doc' | 'map' | 'kiwix';
+export type BriefingItem = { title: string; kind: BriefingKind; ref: string; html?: string };
 export type Modes = { theme: 'vault' | 'field' | 'blackout' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
-export type Home = { lat: number; lon: number; label: string; flood_zone: string | null };
+export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null };
 export type ReadinessGap = { title: string; link: string; points: number };
 export type Readiness = { score: number; gaps: ReadinessGap[] };
-export type Bulletin = { station: string; frequency: string; at: string };
+export type Bulletin = { station: string; frequency: string; at: string; note?: string };
 export type SituationScenario = { slug: string; title: string; started_at: string; elapsed_s: number; phase: SituationPhase };
 export type SituationView = {
   meta: { now: string; dark: boolean; sunrise: string | null; sunset: string | null; home: Home | null; drill: boolean };

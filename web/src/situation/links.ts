@@ -8,17 +8,9 @@ export function contentHref(link: string | null | undefined): string | null {
   return resolveLink(link);
 }
 
-/** A briefing entry names what to open: a playbook section, a module, a page, a card or a document. */
+/** A briefing entry names what to open: a playbook section, a module, a page, a card, a document,
+ * the map or an article. The engine splits the content link into kind and ref; this puts it back. */
 export function briefingHref(item: BriefingItem): string {
-  switch (item.kind) {
-    case 'playbook-section': {
-      const [slug, section] = item.ref.split('#');
-      return section ? `/s/${slug}#${section}` : `/s/${slug}`;
-    }
-    case 'module': return `/m/${item.ref}`;
-    case 'page': return `/p/${item.ref}`;
-    case 'card': return `/medical/card/${item.ref}`;
-    case 'doc': return `/doc/${item.ref}`;
-    default: return '/';
-  }
+  const scheme = item.kind === 'playbook-section' ? 'playbook' : item.kind;
+  return resolveLink(`${scheme}:${item.ref}`) ?? '/';
 }

@@ -221,7 +221,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       const existing = computeView(state).tasks.find((t) => t.id === id);
       if (!existing) return detail(route, 404, 'no such task');
       const done = b.done === undefined ? existing.done : Boolean(b.done);
-      const person = b.person === undefined ? existing.person : (b.person as string | null);
+      const person = b.person === undefined ? existing.person : (String(b.person) || null);
       state.taskState.set(id, { done, person, done_at: done ? new Date().toISOString() : null });
       const checklist = /^checklist:([\w-]+)\/(.+)$/.exec(id);
       if (checklist) {
