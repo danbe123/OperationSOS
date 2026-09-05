@@ -35,6 +35,7 @@ RETRY_TERMS = 3
 MIN_HITS_BEFORE_RETRY = 3
 PASSAGE_COUNT = 3
 PASSAGE_TOKENS = 400
+WINDOW_COVERAGE_WEIGHT = 10      # a passage window covering one more distinct query word beats any number of repeats
 SYSTEM_TOKENS = 250
 QUESTION_TOKENS = 150
 PROMPT_CAP = 2000
@@ -104,6 +105,81 @@ def _field(obj: Any, name: str, default: Any = "") -> Any:
     return getattr(obj, name, default)
 
 
+# --- title shape ------------------------------------------------------------
+# A page whose title the query fully explains ("Virus", "Knife sharpening") is a topical reference; a title that is
+# itself a question ("How can I tell if a mushroom is poisonous?") is a discussion thread that covers every query
+# word by construction. Plain word coverage cannot tell them apart, so title evidence is shaped before it is scored.
+
+TOPIC_TITLE_BONUS = 2.0
+QUESTION_DISCOUNT = 0.5
+MIN_STEM = 4
+_REMAINDERS = frozenset({"s", "es", "ed", "ing", "ous", "e", "er", "ers", "ly"})
+RANK_TRACE: Optional[list] = None      # diagnostics: set to a list to collect (quality, covered, title, score, url)
+QUESTION_OPENERS = frozenset("how what why when where which who whom can could should would is are do does did will "
+                             "any anyone am was were has have had may might must shall".split())
+
+
+def stem(word: str) -> str:
+    """Crude suffix stripping for matching only: foxes -> fox, warnings and warning -> warn, poisonous -> poison."""
+    if word.endswith("ies") and len(word) > 5:
+        word = word[:-3] + "y"
+    elif word.endswith("es") and len(word) > 4 and word[-3] in "xsz":
+        word = word[:-2]
+    elif word.endswith("s") and not word.endswith("ss") and len(word) - 1 >= MIN_STEM:
+        word = word[:-1]
+    for suffix in ("ing", "ous", "ed"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= MIN_STEM:
+            return word[: -len(suffix)]
+    return word
+
+
+def _extends(short: str, long: str) -> bool:
+    base = stem(short)
+    return long.startswith(base) and long[len(base):] in _REMAINDERS
+
+
+def term_matches_word(term: str, word: str) -> bool:
+    return term == word or stem(term) == stem(word) or _extends(term, word) or _extends(word, term)
+
+
+def term_in_text(term: str, text: str) -> bool:
+    return any(term_matches_word(term, word) for word in sos_query.tokenise(text))
+
+
+def is_question_title(title: str) -> bool:
+    text = title.strip()
+    if text.endswith("?"):
+        return True
+    words = sos_query.tokenise(text)
+    if not words or words[0] not in QUESTION_OPENERS:
+        return False
+    return not (words[0] == "how" and len(words) > 1 and words[1] == "to")      # "How to Reattach Shoe Sole" is a guide
+
+
+def title_precision(title: str, terms: list[str]) -> float:
+    """The share of the title's content words that some query term explains."""
+    words = [w for w in sos_query.tokenise(title) if w not in sos_query.STOPWORDS]
+    if not words:
+        return 0.0
+    return sum(any(term_matches_word(t, w) for t in terms) for w in words) / len(words)
+
+
+def title_signal(title: str, terms: list[str], curated: bool = False) -> float:
+    """Query words matched in the title, halved for question-form titles and raised for topical ones.
+
+    Curated titles (playbooks, modules, cards, pages) name their topic in a few words, so any match is topical.
+    """
+    covered = float(sum(term_in_text(t, title) for t in terms))
+    if covered == 0:
+        return 0.0
+    if curated:
+        return covered + TOPIC_TITLE_BONUS
+    if is_question_title(title):
+        return covered * QUESTION_DISCOUNT
+    precision = title_precision(title, terms)
+    return covered + (TOPIC_TITLE_BONUS * precision if precision >= 0.5 else 0.0)
+
+
 async def run_search(q: str, conn: sqlite3.Connection, kiwix: KiwixClient, settings: Settings,
                      fts_mode: str = "or") -> list[Hit]:
     """Adapter over sos.search.search: FTS5 OR mode, cache bypassed, plain Hit objects."""
@@ -144,8 +220,7 @@ async def run_search(q: str, conn: sqlite3.Connection, kiwix: KiwixClient, setti
                      "source": sos_search.classify(book), "kind": "article", "score": 0.1}
                     for e in entries if e.get("path")]
 
-        stems = dict.fromkeys(t[:-2] if t.endswith("xes") else t[:-1] if len(t) > 3 and t.endswith("s") else t
-                              for t in terms)
+        stems = dict.fromkeys(probe for t in terms for probe in dict.fromkeys((stem(t), t)) if probe == stem(t) or t.endswith("s"))
         tasks = [asyncio.create_task(titles(book, term)) for book in books for term in stems]
         batches = []
         try:
@@ -159,16 +234,26 @@ async def run_search(q: str, conn: sqlite3.Connection, kiwix: KiwixClient, setti
             await asyncio.gather(*tasks, return_exceptions=True)
         rows.extend(row for batch in batches for row in batch)
 
-    def matches(term, text):
-        words = sos_query.tokenise(text)
-        return any(word == term or (len(term) > 3 and word.startswith(term.rstrip("s"))) for word in words)
+    weights = {r["id"]: float(r["search_weight"] or 1.0)
+               for r in conn.execute("SELECT id, search_weight FROM library_items")}
+
+    def authority(source: str, url: str) -> float:
+        """The spec's search weight: playbooks 1.6, otherwise the library item's manifest search_weight."""
+        if source == "playbooks":
+            return sos_search.PLAYBOOK_WEIGHT
+        m = READ_URL.match(url)
+        if m:
+            return weights.get(m.group(1), 1.0)
+        if url.startswith("/doc/"):
+            return weights.get(url[5:].split("#", 1)[0], 1.0)
+        return 1.0
 
     def relevance(row):
         title = str(_field(row, "title"))
         snippet = str(_field(row, "snippet"))
-        coverage = sum(matches(term, title) for term in terms)
-        body_coverage = sum(matches(term, snippet) for term in terms)
-        return (coverage * 2 + body_coverage, float(_field(row, "score", 0)))
+        body_coverage = sum(term_in_text(term, snippet) for term in terms)
+        curated = _field(row, "source") == "playbooks"
+        return (title_signal(title, terms, curated) * 2 + body_coverage, float(_field(row, "score", 0)))
 
     rows.sort(key=relevance, reverse=True)
     # Judge title-only hits using article text too; a product name alone is weak evidence.
@@ -194,11 +279,15 @@ async def run_search(q: str, conn: sqlite3.Connection, kiwix: KiwixClient, setti
                 except (KiwixError, httpx.HTTPError, TimeoutError):
                     body = ""
             title = hit.title
-            covered = sum(matches(t, body) or matches(t, title) for t in terms)
-            title_covered = sum(matches(t, title) for t in terms)
-            quality = covered * 2 + title_covered * 0.5 + float(_field(row, "score", 0))
-            if hit.source == "playbooks" and covered >= max(1, len(terms) / 2):
-                quality += 2
+            covered = sum(term_in_text(t, body) or term_in_text(t, title) for t in terms)
+            curated = hit.source == "playbooks"
+            signal = title_signal(title, terms, curated)
+            # relevance (words explained, shaped title evidence) scaled by source authority, so a curated page or a
+            # reference work beats a discussion thread that merely repeats every word of the question
+            quality = (covered * 2 + signal) * authority(hit.source, hit.url) + float(_field(row, "score", 0))
+            if RANK_TRACE is not None:
+                RANK_TRACE.append((round(quality, 2), covered, round(signal, 1), round(authority(hit.source, hit.url), 2),
+                                   hit.source, hit.url))
             return quality, row
         ranked = await asyncio.gather(*(preview(row) for row in candidates))
         rows = [row for _, row in sorted(ranked, key=lambda pair: pair[0], reverse=True)]
@@ -314,25 +403,29 @@ def trim_around_first_term(text: str, terms: list[str], max_words: int) -> str:
 
 
 def best_window(blocks: list[str], terms: list[str], max_tokens: int = PASSAGE_TOKENS) -> str:
-    """The run of consecutive blocks within max_tokens that contains the most query terms; ties go earlier."""
+    """The run of consecutive blocks within max_tokens that covers the most distinct query terms, then the most
+    term hits; ties go earlier. Covering a second word beats repeating the first."""
     blocks = [b for b in blocks if b.strip()]
     if not blocks:
         return ""
     costs = [estimate_tokens(b) for b in blocks]
     scores = [term_hits(b, terms) for b in blocks]
+    present = [{t for t in terms if re.search(r"\b" + re.escape(t.lower()), b.lower())} for b in blocks]
     best_text, best_score = "", -1.0
     for start in range(len(blocks)):
-        used, chosen, score = 0, [], 0.0
+        used, chosen, score, covered = 0, [], 0.0, set()
         for j in range(start, len(blocks)):
             if used + costs[j] > max_tokens:
                 if not chosen:               # a single oversized block: trim it around the first term
                     chosen.append(trim_around_first_term(blocks[j], terms, int(max_tokens / 1.3)))
                     score += scores[j]
+                    covered |= present[j]
                 break
             chosen.append(blocks[j])
             used += costs[j]
             score += scores[j]
-        score -= start * 0.001
+            covered |= present[j]
+        score += len(covered) * WINDOW_COVERAGE_WEIGHT - start * 0.001
         if score > best_score:
             best_score, best_text = score, "\n".join(chosen)
     return best_text

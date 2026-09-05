@@ -106,6 +106,14 @@ def test_best_window_prefers_the_term_dense_region():
     assert out.startswith("Boil water") and "Chlorine" in out
 
 
+def test_best_window_prefers_covering_a_second_term_over_repeating_the_first():
+    dense = ["A virus is a virus. Virus particles. Virus capsids. Virus genomes.", "More virus talk and virus history."]
+    broad = ["Most viruses spread between hosts by contact, droplets or insects.", "Vaccines limit spread."]
+    blocks = dense + ["Unrelated paragraph." * 3] + broad
+    out = best_window(blocks, ["virus", "spread"], max_tokens=30)
+    assert "Most viruses spread" in out and "Virus particles" not in out
+
+
 def test_best_window_trims_an_oversized_block_around_the_first_term():
     big = "word " * 900 + "water is key here " + "tail " * 100
     out = best_window([big], ["water"], max_tokens=130)
@@ -277,3 +285,96 @@ async def test_title_only_archive_is_searched_and_relevant_text_wins(monkeypatch
     hits = await run_search('replace battery', ai_db, k, ai_settings)
     assert k.suggest.await_count > 0
     assert hits[0].url.endswith('/Guide')
+
+
+# --- title shape: topical titles beat question-form titles ------------------
+
+def test_term_matches_word_handles_plural_and_suffix_stems():
+    from sos.ai import term_matches_word
+    assert term_matches_word("foxes", "fox") and term_matches_word("fox", "foxes")
+    assert term_matches_word("beetles", "beetle")
+    assert term_matches_word("poisonous", "poisoning")
+    assert term_matches_word("sharpen", "sharpening")
+    assert term_matches_word("warning", "warnings") and term_matches_word("issued", "issues")
+    assert term_matches_word("safe", "safely")
+    assert not term_matches_word("form", "formula")
+    assert not term_matches_word("bat", "battery")
+
+
+def test_is_question_title():
+    from sos.ai import is_question_title
+    assert is_question_title("How can I tell if a mushroom is poisonous?")
+    assert is_question_title("Can you sharpen a ceramic knife")
+    assert is_question_title("Tube Patch or tubeless plug?")
+    assert not is_question_title("Virus")
+    assert not is_question_title("Knife sharpening")
+    assert not is_question_title("How to Reattach Shoe Sole")
+
+
+def test_title_precision_is_the_share_of_title_words_the_query_explains():
+    from sos.ai import title_precision
+    assert title_precision("Virus", ["virus", "spread"]) == 1.0
+    assert title_precision("Knife sharpening", ["sharpen", "knife"]) == 1.0
+    assert title_precision("Red fox", ["urban", "foxes", "dangerous", "people"]) == 0.5
+    assert title_precision("Flat tire", ["patch", "bicycle", "inner", "tube"]) == 0.0
+    assert title_precision("How to Reattach Shoe Sole", ["reattach", "boot", "sole", "come"]) == pytest.approx(2 / 3)
+    assert title_precision("", ["virus"]) == 0.0
+
+
+def test_title_signal_discounts_questions_and_rewards_topical_titles():
+    from sos.ai import TOPIC_TITLE_BONUS, title_signal
+    terms = ["virus", "spread"]
+    topical = title_signal("Virus", terms)
+    question = title_signal("Does a virus that spreads more rapidly have less chance to evolve?", terms)
+    assert topical == 1 + TOPIC_TITLE_BONUS
+    assert question == pytest.approx(1.0)          # two words matched, halved for question form
+    assert topical > question
+    assert title_signal("Flat tire", ["patch", "bicycle"]) == 0
+    # a curated page names its topic in a few words: "Ticks and adders" is topical for a tick question
+    assert title_signal("Ticks and adders", ["remove", "tick", "safely"], curated=True) == 1 + TOPIC_TITLE_BONUS
+    assert title_signal("Ticks and adders", ["remove", "tick", "safely"]) == 2.0     # half the title explained
+
+
+@pytest.mark.anyio
+async def test_curated_page_outranks_encyclopedia_entry_and_thread_on_the_same_topic(monkeypatch, ai_db, ai_settings):
+    from unittest.mock import AsyncMock
+    ai_db.execute("INSERT INTO fts_docs(title, doc_id, kind, category, page, url, body) VALUES (?,?,?,?,?,?,?)",
+                  ("Ticks and adders", "ticks-adders", "page", "medical", None, "/p/ticks-adders#ticks",
+                   "Remove a tick with fine tweezers, pulling straight up."))
+    ai_db.execute("UPDATE library_items SET search_weight=0.8 WHERE id=?", ("outdoors.stackexchange.com_en_all",))
+    ai_db.commit()
+    thread = "/read/outdoors.stackexchange.com_en_all/questions/9/remove-a-tick-safely"
+    tick = f"/read/{WIKI}/Tick"
+
+    async def search(*args, **kwargs):
+        return {"results": [
+            {"title": "How do I remove a tick safely?", "url": thread, "source": "practical", "kind": "article", "score": 1 / 6, "snippet": ""},
+            {"title": "Tick", "url": tick, "source": "reference", "kind": "article", "score": 1 / 6, "snippet": ""}]}
+
+    monkeypatch.setattr(ai.sos_search, "search", search)
+    bodies = {"questions/9/remove-a-tick-safely": "<p>How do I remove a tick safely? Use tweezers and remove it.</p>",
+              "Tick": "<p>Ticks are arachnids. Remove an attached tick safely with tweezers.</p>"}
+    k = SimpleNamespace(suggest=AsyncMock(return_value=[]),
+                        raw_article=AsyncMock(side_effect=lambda book, path: bodies.get(path, "<p></p>")))
+    hits = await run_search("remove tick safely", ai_db, k, ai_settings)
+    assert hits[0].url == "/p/ticks-adders#ticks"
+    assert [h.url for h in hits[1:3]] == [tick, thread]
+
+
+@pytest.mark.anyio
+async def test_topical_article_outranks_question_thread_covering_every_word(monkeypatch, ai_db, ai_settings):
+    from unittest.mock import AsyncMock
+    thread = f"/read/biology.stackexchange.com_en_all/questions/1/does-a-virus-that-spreads"
+
+    async def search(*args, **kwargs):
+        return {"results": [{"title": "Does a virus that spreads more rapidly have less chance to evolve?",
+                             "url": thread, "source": "practical", "kind": "article", "score": 1 / 6, "snippet": "virus spread"}]}
+
+    monkeypatch.setattr(ai.sos_search, "search", search)
+    bodies = {thread: "<p>Does a virus that spreads more rapidly have less chance to evolve? Yes it spreads.</p>",
+              "Virus": "<p>A virus is a submicroscopic agent that spreads between hosts.</p>"}
+    k = SimpleNamespace(
+        suggest=AsyncMock(side_effect=lambda book, term: [{"value": "Virus", "path": "Virus"}] if term == "viru" else []),
+        raw_article=AsyncMock(side_effect=lambda book, path: bodies.get(path, "<p>Nothing here.</p>")))
+    hits = await run_search("virus spread", ai_db, k, ai_settings)
+    assert hits[0].title == "Virus"

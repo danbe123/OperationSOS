@@ -104,7 +104,9 @@ def test_core_tier_and_categories():
 def test_search_weights():
     for it in items("core.json"):
         w = it.get("search_weight", 1.0)
-        if it["category"] == "uk-official" or it["id"] in {"nhs_uk", "nhs_medicines"}:
+        if "stackexchange" in it["id"]:
+            assert w == 0.8, it["id"]           # community Q&A ranks below reference works and NHS
+        elif it["category"] == "uk-official" or it["id"] in {"nhs_uk", "nhs_medicines"}:
             assert w == 1.4, it["id"]
         elif it["category"] == "medical":
             assert w == 1.2, it["id"]
