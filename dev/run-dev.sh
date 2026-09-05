@@ -72,7 +72,7 @@ echo "run-dev: kiwix-serve  http://127.0.0.1:$KIWIX_PORT/kiwix"
 
 SOS_DEV=1 SOS_CORE=$CONTENT SOS_EXT=$EXT SOS_STATE=$STATE SOS_WEB=$WEB_ROOT \
   SOS_MANIFEST_DIR=$MANIFEST_DIR SOS_PLAYBOOKS_DIR=$PLAYBOOKS_DIR \
-  SOS_KIWIX_URL="http://127.0.0.1:$KIWIX_PORT/kiwix" SOS_PORT=$API_PORT \
+  SOS_KIWIX_URL="http://127.0.0.1:$KIWIX_PORT/kiwix" SOS_PORT=$API_PORT SOS_MAPS_SRC="${SOS_MAPS_SRC:-$CONTENT/maps-src}" \
   "$UVICORN" sos.main:app --host 127.0.0.1 --port "$API_PORT" --proxy-headers --forwarded-allow-ips 127.0.0.1 \
   > "$LOGS/sos-api.log" 2>&1 &
 PIDS+=("$!")
