@@ -44,15 +44,6 @@ export function Home() {
         </div>
       </div>
       {last && <Link className="resume-card" to={`/s/${last.slug}`}><Icon name="plan" /><span><small>Recently opened on this device</small><strong>Continue: {last.title}</strong></span><Icon name="forward" /></Link>}
-      <div className="home-section-heading"><h2>What is happening?</h2></div>
-      <nav className="situation-grid" aria-label="Quick help">
-        <Link className="situation medical-entry" to="/medical"><Icon name="medical" /><span><strong>Someone is hurt</strong><small>First aid and medical guidance</small></span><Icon name="forward" /></Link>
-        <Link className="situation" to="/s/grid-collapse"><Icon name="power" /><span><strong>Power is out</strong><small>Blackouts and essential supplies</small></span><Icon name="forward" /></Link>
-        <Link className="situation" to="/p/water-disinfection"><Icon name="wave" /><span><strong>Need safe water</strong><small>Water disinfection guidance</small></span><Icon name="forward" /></Link>
-        <Link className="situation" to="/s/storms-flooding"><Icon name="plume" /><span><strong>Storms or flooding</strong><small>Prepare and respond</small></span><Icon name="forward" /></Link>
-        <Link className="situation" to="/s/severe-winter"><Icon name="snowflake" /><span><strong>Severe cold</strong><small>Warmth and winter disruption</small></span><Icon name="forward" /></Link>
-        <a className="situation" href="#all-situations"><Icon name="library" /><span><strong>All situations</strong><small>Browse the complete field manual</small></span><Icon name="forward" /></a>
-      </nav>
       <div className="home-section-heading"><p className="eyebrow">Keep within reach</p><h2>Your tools</h2></div>
       <nav className="tiles home-tools" aria-label="Main sections">
         {HOME_TILES.map((t) => <Tile key={t.to} to={t.to} icon={t.icon} title={t.title} subtitle={t.subtitle} />)}

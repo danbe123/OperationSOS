@@ -20,7 +20,7 @@ describe('Home', () => {
     expect(tiles[0]).toHaveAttribute('href', '/s/nuclear-war');
     expect(tiles[19]).toHaveTextContent('The long rebuild');
     expect(tiles[0].querySelector('svg.icon')).not.toBeNull();
-    expect(screen.getByRole('heading', { name: 'What is happening?' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'All situations' })).toBeInTheDocument();
     expect(await screen.findByTestId('status-strip')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Search' })).toBeInTheDocument();
   });

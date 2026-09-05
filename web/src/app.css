@@ -46,17 +46,8 @@ img, canvas, video { max-width: 100%; }
 .home-section-heading { padding: 22px 24px 10px; scroll-margin-top: 85px; }
 .home-section-heading h2 { margin: 0; font-size: 1.35rem; }
 .home-section-heading > .muted { margin: 6px 0 0; }
-.situation-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 0 24px 8px; }
-.situation { min-height: 88px; display: flex; gap: 12px; align-items: center; padding: 14px; background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; }
-.situation > .icon:first-child { color: var(--accent); flex-shrink: 0; }
-.situation > .icon:last-child { width: 16px; margin-left: auto; flex-shrink: 0; color: var(--text-muted); }
-.situation span { display: flex; flex-direction: column; gap: 5px; }
-.situation strong { font-size: 0.98rem; line-height: 1.2; }
-.situation small { font-size: 0.75rem; color: var(--text-muted); }
-.medical-entry { border-left: 3px solid var(--danger); }
-.medical-entry > .icon:first-child { color: var(--danger); }
-.situation:hover, .resume-card:hover { background: var(--bg-3); border-color: var(--accent); }
-.situation:focus-visible, .resume-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.resume-card:hover { background: var(--bg-3); border-color: var(--accent); }
+.resume-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .home-tools { padding: 0 24px; gap: 10px; }
 .home-tools .tile { border-radius: 8px; background: transparent; }
 .home-tools .tile-sub { font-size: 0.75rem; }
@@ -87,10 +78,6 @@ img, canvas, video { max-width: 100%; }
   .playbook .appbar-actions { min-width: 48px; }
   .home-intro { grid-template-columns: 1fr; gap: 18px; padding: 20px 16px; }
   .home-section-heading { padding: 20px 16px 10px; scroll-margin-top: 130px; }
-  .situation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 16px 8px; }
-  .situation { flex-wrap: wrap; align-content: flex-start; gap: 10px; padding: 14px 12px; }
-  .situation span { width: 100%; }
-  .situation > .icon:last-child { display: none; }
   .home-tools { padding: 0 16px; }
   .home .grid { padding: 0 16px 20px; }
   .resume-card { margin: 16px 16px 0; }
