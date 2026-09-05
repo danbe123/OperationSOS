@@ -5,6 +5,7 @@ import type { MapConfig, Note } from '../api/types';
 import type { Theme } from '../theme/ThemeProvider';
 import { addTerrain, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainVisible } from './layers';
 import { addOverlay, setOverlayVisible } from './overlays';
+import { attachFeatureTooltip } from './tooltip';
 import type { LngLat } from './measure';
 
 // e2e exposure: window.__sosMap is the live map instance; __styleVersion is bumped on every
@@ -122,10 +123,12 @@ export function MapView(props: MapViewProps) {
       const ev = e as { error?: unknown; sourceId?: string };
       if (ev.sourceId && isEtagMismatch(ev.error)) recreateSource(map, ev.sourceId);
     });
+    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays);
     mapRef.current = map;
     (window as unknown as { __sosMap?: ExposedMap }).__sosMap = map as ExposedMap;
     propsRef.current.onReady(map);
     return () => {
+      detachTooltip();
       map.remove();
       mapRef.current = null;
     };

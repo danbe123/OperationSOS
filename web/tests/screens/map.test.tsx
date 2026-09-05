@@ -18,7 +18,8 @@ vi.mock('maplibre-gl', async () => {
       created.maps.push(this);
     }
   }
-  const stub = { Map, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
+  const { FakePopup } = await import('../map/fakeMap');
+  const stub = { Map, Popup: FakePopup, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
   return { default: stub, ...stub };
 });
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));
@@ -173,6 +174,30 @@ describe('Map screen', () => {
     expect(screen.getByTestId('map-readout')).toHaveTextContent('343.6 km');
     expect(screen.getByTestId('map-readout')).toHaveTextContent('148° SSE');
     expect(map.getLayer('sos-measure-line')).toBeDefined();
+  });
+
+  it('hovering an overlay feature shows a tooltip that survives a base switch; tapping empty map closes a pinned one', async () => {
+    mockApis();
+    const user = userEvent.setup();
+    renderRoute('/map?overlay=health');
+    await user.click(await screen.findByRole('button', { name: /Layers/ }));
+    const map = lastMap();
+    map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
+    await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
+    const tip = screen.getByRole('tooltip');
+    expect(tip).toHaveTextContent('Southampton General Hospital');
+    expect(tip).toHaveTextContent('Hospitals, pharmacies, GP surgeries');
+    expect(tip).toHaveTextContent('Hospital');
+    expect(map.getCanvas().style.cursor).toBe('pointer');
+    await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
+    await user.click(within(screen.getByRole('dialog', { name: 'Layers' })).getByLabelText('OS Open Zoomstack'));
+    await act(async () => {});
+    expect(map.style.name).toBe('/maps/styles/os-vault.json');
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
+    map.renderedFeatures = [];
+    await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(screen.getByTestId('map-readout')).toHaveTextContent('Tapped:');
   });
 
   it('share shows a selectable URL and a QR; print is hidden in kiosk', async () => {

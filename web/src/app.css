@@ -335,6 +335,26 @@ input[type="checkbox"] { width: 28px; height: 28px; }
   .map-print img { width: 100%; }
 }
 .maplibregl-ctrl-group button { width: var(--touch); height: var(--touch); }
+/* Feature tooltip: one popup that follows the pointer (or is pinned by a tap). It never takes pointer
+   events, so the map underneath keeps hovering and a tap "through" it still counts as a tap elsewhere. */
+.maplibregl-popup.map-tip-popup { pointer-events: none; z-index: 8; max-width: min(340px, calc(100vw - 24px)); }
+.map-tip-popup .maplibregl-popup-content { padding: 10px 12px; background: var(--bg-2); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); font: 400 1rem/1.4 var(--font-body); text-shadow: none; }
+.map-tip-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--border); }
+.map-tip-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--border); }
+.map-tip-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--border); }
+.map-tip-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--border); }
+.map-tip { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.map-tip-title { font-size: 1.05rem; font-weight: 700; overflow-wrap: anywhere; }
+.map-tip-overlay { color: var(--text-muted); font-size: 0.9rem; }
+.map-tip-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 4px 0 0; }
+.map-tip-rows > div { display: contents; }
+.map-tip-rows dt { color: var(--text-muted); white-space: nowrap; }
+.map-tip-rows dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .map-tip-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .map-tip-rows dt { margin-top: 4px; } }
 
 /* System */
 .cards { display: grid; gap: 10px; padding: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }

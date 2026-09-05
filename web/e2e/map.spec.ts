@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './test';
 
-type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers: { id: string; type: string; source?: string }[] }; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; __styleVersion?: number } };
+type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers: { id: string; type: string; source?: string }[] }; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; project(lngLat: [number, number]): { x: number; y: number }; __styleVersion?: number } };
 
 async function waitForMap(page: Page) {
   await page.waitForFunction(() => Boolean((window as MapWindow).__sosMap?.loaded()));
@@ -70,4 +70,38 @@ test('place search, pin persistence and grid reference for a known point', async
   } finally {
     await request.delete(`/api/notes/${note.id}`);
   }
+});
+
+test('hovering a health feature shows what it is; a tap pins it and a tap elsewhere closes it', async ({ page }) => {
+  await page.goto('/map?lat=50.933&lon=-1.435&z=14&overlay=health');
+  await waitForMap(page);
+  await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
+  const canvas = await page.getByTestId('map-canvas').boundingBox();
+  if (!canvas) throw new Error('map canvas has no box');
+  // The fixture health overlay's hospital (web/e2e/fixtures/maps/health.geojson), in screen px.
+  const hospital = await page.evaluate(() => (window as MapWindow).__sosMap!.project([-1.4353, 50.9333]));
+  const at = { x: canvas.x + hospital.x, y: canvas.y + hospital.y };
+  const tip = page.locator('.map-tip');
+
+  // Tiles and the overlay render asynchronously; nudge the pointer until the feature is hit.
+  await expect.poll(async () => {
+    await page.mouse.move(at.x + 1, at.y + 1);
+    await page.mouse.move(at.x, at.y);
+    return tip.isVisible();
+  }, { timeout: 15_000 }).toBe(true);
+  await expect(tip).toContainText('Southampton General Hospital');
+  await expect(tip).toContainText('Hospitals, pharmacies, GP surgeries');
+  await expect(tip.locator('dd').first()).toHaveText('Hospital');
+  expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
+  expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+
+  // Moving off the feature hides the hover tooltip; a click pins it until a click on empty map.
+  await page.mouse.move(canvas.x + 20, canvas.y + 20);
+  await expect(tip).toBeHidden();
+  await page.mouse.click(at.x, at.y);
+  await expect(tip).toContainText('Southampton General Hospital');
+  await page.mouse.move(canvas.x + 20, canvas.y + 20);
+  await expect(tip).toBeVisible();
+  await page.mouse.click(canvas.x + 20, canvas.y + 20);
+  await expect(tip).toBeHidden();
 });
