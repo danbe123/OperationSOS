@@ -10,7 +10,7 @@ from pathlib import Path
 
 import httpx
 
-from sos import db, library, system
+from sos import buildmaps, db, library, system
 from sos.config import Settings, get_settings
 from sos.content import KIND_BY_DIR, validate_tree
 from sos.manifest import load_manifests
@@ -136,9 +136,7 @@ def cmd_status(settings: Settings, args) -> int:
 
 
 def cmd_build_maps(settings: Settings, args) -> int:
-    from sos import buildmaps
-
-    return buildmaps.main(args)
+    return buildmaps.run(args)
 
 
 def cmd_build_nhs(settings: Settings, args) -> int:
@@ -170,12 +168,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--deep", action="store_true", help="also request every kiwix: path and check every doc: file")
     p.add_argument("--all-scenarios", action="store_true", help="require all 20 scenario playbooks")
     p.set_defaults(func=cmd_validate)
-    p = sub.add_parser("build-maps", help="PC only: build map tiles (plan 04)")
-    p.add_argument("--out")
-    p.add_argument("--steps", nargs="*")
-    p.add_argument("--build")
-    p.add_argument("--fixture", action="store_true")
-    p.add_argument("--force", action="store_true")
+    p = sub.add_parser("build-maps", help="PC only: build map tiles, styles, overlays, places and phone packs")
+    buildmaps.add_arguments(p)
     p.set_defaults(func=cmd_build_maps)
     p = sub.add_parser("build-nhs", help="PC only: zimit crawl of nhs.uk")
     p.add_argument("--out")

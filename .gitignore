@@ -26,3 +26,14 @@ build-output/
 
 # per-box install answers (PIN, SSID, passphrase)
 install/answers.env
+
+# maps pipeline (plan 04): scratch, and exceptions so the committed fixture outputs survive the *.pmtiles / *.pbf rules
+.incoming/
+*.apk
+*.fgb
+*.vrt
+*.asc
+*.osm.pbf
+!api/tests/fixtures/maps/*.pmtiles
+!api/tests/fixtures/maps/overlays/*.pmtiles
+!api/tests/fixtures/maps/fonts/**/*.pbf
