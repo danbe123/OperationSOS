@@ -174,7 +174,7 @@ SCENARIO_HEADINGS = [
 TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)\}$")
 INCLUDE = re.compile(r"^\{\{module:([a-z0-9-]+)\}\}$", re.M)
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-WRITTEN = SCENARIOS[:10]  # Task 7 changes this line to `WRITTEN = SCENARIOS`
+WRITTEN = SCENARIOS
 
 
 def checklist_ids(slug: str) -> list[str]:
