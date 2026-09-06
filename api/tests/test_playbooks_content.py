@@ -89,6 +89,9 @@ CARDS = [
     "broken-bones", "radiation-sickness", "chemical-exposure", "childbirth", "dehydration",
     "wound-cleaning", "shock", "drowning", "seizures", "anaphylaxis", "carbon-monoxide", "stroke",
     "heart-attack", "recovery-position", "low-blood-sugar", "asthma-attack",
+    "head-injury", "spinal-injury", "poisoning", "electric-shock", "fever-child", "sepsis",
+    "sprains-strains", "frostbite", "bites-stings", "dental-abscess", "wound-closure", "eye-injury",
+    "pregnancy-emergencies", "nosebleed",
 ]
 CARD_HEADINGS = ["## When to use", "## Steps", "## Warnings", "## Stop or escalate", "## Source"]
 STEP = re.compile(r"^\d+\. (.*)$")
@@ -130,6 +133,9 @@ PAGES = {
     "solar-islanding": "reference", "knife-firearms-law": "reference", "foraging-law": "reference",
     "ticks-adders": "reference", "about-sos": "about",
     "fieldcraft-basics": "fieldcraft", "fieldcraft-shelter": "fieldcraft", "fieldcraft-fire": "fieldcraft", "fieldcraft-water": "fieldcraft", "fieldcraft-food": "fieldcraft", "fieldcraft-moving": "fieldcraft", "fieldcraft-weather": "fieldcraft", "fieldcraft-rescue": "fieldcraft", "fieldcraft-hygiene": "fieldcraft", "fieldcraft-rope-tools": "fieldcraft", "no-phones": "comms",
+    "chronic-conditions": "reference", "death-and-grief": "reference", "infant-feeding": "reference",
+    "fieldcraft-navigation": "fieldcraft", "food-storage": "reference", "fieldcraft-fishing": "fieldcraft",
+    "butchery": "reference",
 }
 
 

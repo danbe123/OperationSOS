@@ -13,12 +13,14 @@ Rescue in Britain starts with someone knowing you are missing. Leave a route car
 
 ## Calling for help while the phones work
 
-- From any phone, on any network, even without credit or a SIM, **999** and **112** reach the same operator — [[call 999]]. Ask for **police** for anything inland (they call mountain rescue, lowland search teams and cave rescue), **coastguard** for the shore, cliffs, estuaries and sea, **ambulance** for a medical emergency by a road, **fire** for fire, floods and people trapped.
-- Register your phone for **emergency SMS** by texting "register" to 999 in advance; a text gets through on a signal too weak for a call.
-- Give the **location** first: a six-figure grid reference from the map (the box's map shows it for the centre and for any tapped point), a what3words address if the app is on the phone, a road, a named feature. Then the number of people, injuries, what you can see, your phone number.
+This is the home page for calling rescue; the other pages only point here.
+
+- From any mobile, on any network, with no credit, **999** and **112** reach the same free operator, but the phone must have a SIM in it ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number)); [What still works](page:what-still-works)) — [[call 999]]. Ask for **police** for anything inland (they call out the volunteer mountain, lowland and cave rescue teams), **coastguard** for the shore, cliffs, estuaries and sea, **ambulance** for a medical emergency by a road, **fire** for fire, floods and people trapped ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales); [Lowland search and rescue](kiwix:wikipedia_en_all_maxi/Association_of_Lowland_Search_And_Rescue); [HM Coastguard](kiwix:wikipedia_en_all_maxi/HM_Coastguard)).
+- **Emergency SMS**: anyone can register a phone in advance by texting "register" to 999; it is open to everyone, not only deaf users, and a text can get through on a signal too weak for a call, but it is slow, so it is the fallback when a call will not connect, not the first choice ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number))).
+- Give the **location** first: a six-figure grid reference from the map (the box's map shows one for the centre and for any tapped point; how to read one is on [Map, compass and tides](page:fieldcraft-navigation)), a what3words address if the app is on the phone, a road, a named feature. Then the number of people, injuries, what you can see, your phone number.
 - Keep the phone warm and the battery for the callback. Climb for a signal only if it is safe. Aeroplane mode between calls.
 
-Mountain rescue teams are volunteers; they are free, they would rather come out for a sprained ankle at dusk than a body in the morning, and they ask only that you call before you are exhausted ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales); [HM Coastguard](kiwix:wikipedia_en_all_maxi/HM_Coastguard)).
+Mountain rescue teams are volunteers called out by the police; they are free, they would rather come out for a sprained ankle at dusk than a body in the morning, and they ask only that you call before you are exhausted ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales)).
 
 ## When the phones are down
 
@@ -26,9 +28,9 @@ Then the route card, the whistle and staying put are the plan. A lost person who
 
 ## Signals rescuers here recognise
 
-- **Six of anything a minute** is the international distress signal in the British hills: six whistle blasts or six torch flashes, then a minute's silence, repeated. The reply is three ([Whistle](kiwix:wikipedia_en_all_maxi/Whistle)).
+- **The distress signal is six, the reply is three.** Six whistle blasts (or torch flashes, or shouts) spread over a minute, then a minute's silence, then six again, and keep going until someone answers: that means "I need rescue". A rescuer who has heard you replies with **three** a minute. Do not stop signalling because you heard three; keep going so they can home in ([Alpine distress signal](kiwix:wikipedia_en_all_maxi/Alpine_distress_signal); [Distress signal](kiwix:wikipedia_en_all_maxi/Distress_signal)). A household's own "come now" signal is a car horn, a bell or a light, never a whistle pattern, so that nobody confuses the two ([Household plan](page:household-plan)).
 - **Bright colour and contrast**: an orange group shelter or bivvy bag on a hillside is visible for miles; a red jacket in bracken is not. Spread a tarp or foil blanket flat, weighted at the corners.
-- **Ground signals** in a clearing or on sand: a large V (need help) or X (need medical help) in stones, logs or trampled snow, with a straight line for a helicopter's approach.
+- **Ground signals** in a clearing or on sand: a large V (need help) or X (need medical help) in stones, logs or trampled snow, with a straight line for a helicopter's approach ([Survival, Evasion and Recovery, FM 21-76-1, the signalling chapter](doc:fm-21-76-1-survival-evasion-recovery)).
 - **Smoke by day, fire by night**, three fires in a triangle if you can keep them; green leaves on a fire make white smoke, rubber or oil makes black.
 - **A mirror or a phone screen** flashed at an aircraft on a sunny day carries further than any torch.
 - **A torch pointed at a helicopter at night**: on, and steady, then switched off once they have seen you, never pointed into the cockpit.
@@ -46,5 +48,6 @@ If someone from the household is missing: fix the last known point and time, sea
 - [Comms module](module:comms)
 - [PMR446 radios](page:pmr446)
 - [UK emergency numbers](page:uk-numbers)
+- [Map, compass and tides](page:fieldcraft-navigation)
 - [Reading the weather and exposure](page:fieldcraft-weather)
 - [Survival, Evasion and Recovery, FM 21-76-1, the signalling chapter (US)](doc:fm-21-76-1-survival-evasion-recovery)

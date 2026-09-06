@@ -3,7 +3,7 @@ id: sanitation
 title: Sanitation
 icon: toilet
 order: 5
-summary: Toilets without water, hand hygiene, chlorine solutions, rubbish, rats and burying the dead lawfully.
+summary: Toilets without water, hand hygiene, chlorine solutions, rubbish and rats, and where to turn when someone dies.
 sources:
   - title: Pit latrine (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Pit_latrine
@@ -37,20 +37,19 @@ sources:
 2. Clean surfaces contaminated by vomit or faeces with a 0.5% chlorine solution (one part 5% thin bleach to nine parts water); use a weaker 0.05% solution on hands and skin ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
 3. Keep food waste sealed, and bury or burn paper and food scraps; never burn plastics. Rats spread leptospirosis, so do not let rubbish accumulate ([Leptospirosis](kiwix:wikipedia_en_all_maxi/Leptospirosis)).
 4. Stock nappies and menstrual products in advance; they are easy to forget until they run out.
-5. For a death in the household: confirm death, wear gloves, keep the body in a cool place, and wrap and label it ([Ship Captain's Medical Guide ch. 12, p. 1](doc:scmg-ch12#page=1)).
+5. For a death in the household, confirm death, wear gloves, keep the body cool, and wrap and label it ([Ship Captain's Medical Guide ch. 12, p. 1](doc:scmg-ch12#page=1)); the full steps, registration, temporary burial and grief are on [Death and grief](page:death-and-grief).
 
 ## UK specifics
 
 - Septic tanks, cesspools and drainage fields are the long-term answer once mains sewerage is unavailable for good ([Approved Document H, p. 31](doc:ad-h#page=31)).
-- Burial on private land in England and Wales is lawful once the death is registered, provided the grave is at least 30 metres from any spring or watercourse, 10 metres from a field drain and 50 metres from a well or borehole, has no standing water in it, and is recorded in the property deeds ([After a death](kiwix:govuk_resilience/www.gov.uk/after-a-death)).
-- Cholera and the Broad Street pump are the historical reason all of this matters: contaminated water and poor sanitation, not "bad air", spread the disease ([1854 Broad Street cholera outbreak](kiwix:wikipedia_en_all_maxi/1854_Broad_Street_cholera_outbreak)).
+- Burial when no undertaker can come, the distances to keep from wells and watercourses, and registering the death first are on [Death and grief](page:death-and-grief).
 
 ## Go deeper
 
 - [Water module](module:water)
+- [Death and grief](page:death-and-grief)
 - [Composting toilet (Wikipedia)](kiwix:wikipedia_en_all_maxi/Composting_toilet)
 - [Hand washing (Wikipedia)](kiwix:wikipedia_en_all_maxi/Hand_washing)
-- [Natural burial (Wikipedia)](kiwix:wikipedia_en_all_maxi/Natural_burial)
 - [Ship Captain's Medical Guide ch. 5](doc:scmg-ch05)
 - [Water disinfection table](page:water-disinfection)
 - [Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)

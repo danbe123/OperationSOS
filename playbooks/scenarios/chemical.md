@@ -14,6 +14,9 @@ sources:
   - title: Chemical emergencies, information for the public (UKHSA)
     kiwix: govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public
     as_at: 2026-09
+  - title: What to do in a chemical emergency (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public/what-to-do-in-a-chemical-emergency
+    as_at: 2024-10-10
   - title: "Ship Captain's Medical Guide, chapter 2: toxic hazards of chemicals"
     doc: scmg-ch02
     as_at: 2019-10
@@ -32,6 +35,9 @@ sources:
   - title: Poisoning (NHS)
     kiwix: nhs_uk/www.nhs.uk/conditions/poisoning/
     as_at: 2026-09
+  - title: Camelford water pollution incident (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Camelford_water_pollution_incident
+    as_at: 2026-02-15
 ---
 
 ## Right now
@@ -49,7 +55,7 @@ sources:
 ## First 72 hours
 
 - **How long.** The register's toxic-release scenario is a large gas release from a COMAH site near a town, with deaths, casualties and long-term health effects in the vulnerable ([NRR 2025, p. 108](doc:nrr-2025#page=108)); its fire scenario is Buncefield-style, a visible plume and buildings damaged near the site ([NRR 2025, p. 106](doc:nrr-2025#page=106)). A gas cloud passes in hours; a fire's smoke can last days.
-- **Sealing the room.** Tape or wet towels along door and window gaps; one room is easier to seal than a house; open it up as soon as the all-clear comes because a sealed room runs out of air in hours ([Shelter-in-place](kiwix:wikipedia_en_all_maxi/Shelter-in-place)).
+- **Sealing the room.** Tape or wet towels along door and window gaps; one room is easier to seal than a house; choose one with heating, water, food and a toilet within reach if you can. Stay in until the emergency services say your area is clear: they decide how long, and sheltering "may be required for a number of hours"; then open everything up and ventilate ([What to do in a chemical emergency (UKHSA)](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public/what-to-do-in-a-chemical-emergency)).
 - **Symptoms and treatment.** Stinging eyes, cough, chest tightness, headache; fresh air, eye flushing for 15 minutes, no vomiting induced; breathing difficulty, burns or confusion need an ambulance, and whoever you reach must be told the substance — [[call 999]] ([Poisoning (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/poisoning/); [Ship Captain's Medical Guide ch. 2](doc:scmg-ch02)). Chemical burns are rinsed for 20 minutes or more ([Burns card](card:burns)). Lung injury from chlorine or smoke can appear hours later; anyone exposed is watched overnight ([Chemical exposure card](card:chemical-exposure)).
 - **Water.** Cover water butts; do not drink from open sources downwind; {{#if water}}tap water is safe unless the company says otherwise{{else}}with the mains off, use stored and covered water, which the plume has not reached{{/if}} ([Water module](module:water)).
 - **Evacuation** only when the police or an Emergency Alert say so, by the route given; the cordon may be a kilometre or more ([NRR 2025, p. 22](doc:nrr-2025#page=22); [How alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
@@ -65,7 +71,7 @@ sources:
 
 - **Going back.** Ventilate fully when told, wash hard surfaces, launder everything that was exposed, and discard open food and garden produce the plume passed over until the council says otherwise ([UKHSA chemical emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public)).
 - **Health follow-up.** Register with the council's incident helpline so you are in the health study; keep a note of symptoms; asthma flares are common for weeks ([Asthma (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/)).
-- **Deliberate release.** Salisbury in 2018 showed what a nerve agent does and that one contaminated object can kill weeks later ([Poisoning of Sergei and Yulia Skripal](kiwix:wikipedia_en_all_maxi/Poisoning_of_Sergei_and_Yulia_Skripal); [NRR 2025, p. 40](doc:nrr-2025#page=40)); do not pick up discarded bottles, perfume or containers near any incident. Nerve agents cause pinpoint pupils, drooling, twitching and collapse; the treatment is atropine, which paramedics carry ([Nerve agent](kiwix:wikipedia_en_all_maxi/Nerve_agent); [Atropine](kiwix:wikipedia_en_all_maxi/Atropine)).
+- **Deliberate release.** Salisbury in 2018 showed what a nerve agent does and that one contaminated object can kill weeks later: a nerve agent on a door handle, two survivors, one death from a discarded bottle months later ([Poisoning of Sergei and Yulia Skripal](kiwix:wikipedia_en_all_maxi/Poisoning_of_Sergei_and_Yulia_Skripal); [NRR 2025, p. 40](doc:nrr-2025#page=40)); do not pick up discarded bottles, perfume or containers near any incident. Nerve agents cause pinpoint pupils, drooling, twitching and collapse; the treatment is atropine, which paramedics carry ([Nerve agent](kiwix:wikipedia_en_all_maxi/Nerve_agent); [Atropine](kiwix:wikipedia_en_all_maxi/Atropine)). An attack rather than an accident is the [terrorism playbook](playbook:terrorism).
 - **Sanitation.** Wash water from decontamination is contaminated; keep it out of the drinking supply and the vegetable patch ([Sanitation module](module:sanitation)).
 
 {{module:comms}}
@@ -74,7 +80,13 @@ sources:
 
 ## Long term
 
-Britain's worst industrial accidents, Flixborough in 1974 with 28 dead and Buncefield in 2005, the largest peacetime fire in Europe, produced the COMAH rules that make every major site plan for the public around it ([Flixborough disaster](kiwix:wikipedia_en_all_maxi/Flixborough_disaster); [Buncefield fire](kiwix:wikipedia_en_all_maxi/Buncefield_fire); [Control of Major Accident Hazards Regulations 2015](kiwix:wikipedia_en_all_maxi/Control_of_Major_Accident_Hazards_Regulations_2015)). Bhopal in 1984 is what happens when there is no plan ([Bhopal disaster](kiwix:wikipedia_en_all_maxi/Bhopal_disaster)). Long-term contamination of land and water is the council's and the Environment Agency's to test; keep every letter and result.
+Britain's worst industrial accidents, Flixborough in 1974 with 28 dead and Buncefield in 2005, the largest peacetime fire in Europe, produced the COMAH rules that make every major site plan for the public around it ([Flixborough disaster](kiwix:wikipedia_en_all_maxi/Flixborough_disaster); [Buncefield fire](kiwix:wikipedia_en_all_maxi/Buncefield_fire); [Control of Major Accident Hazards Regulations 2015](kiwix:wikipedia_en_all_maxi/Control_of_Major_Accident_Hazards_Regulations_2015)). Bhopal in 1984 is what happens when there is no plan ([Bhopal disaster](kiwix:wikipedia_en_all_maxi/Bhopal_disaster)).
+
+**Health monitoring.** Once the release has stopped, public health bodies and the council assess what hazard remains and tell the community what work is needed before land, homes and water are back to safe levels ([What to do in a chemical emergency (UKHSA)](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public/what-to-do-in-a-chemical-emergency)). Camelford in 1988, Britain's worst mass poisoning, is the warning: aluminium sulphate in the mains, decades of disputed symptoms, and no rigorous monitoring of the people affected ([Camelford water pollution incident](kiwix:wikipedia_en_all_maxi/Camelford_water_pollution_incident)). Get on the register, keep your own symptom diary, and ask the GP to record the exposure in your notes so a pattern years later can be traced.
+
+**Compensation** comes slowly and to those with records. Camelford's victims settled for sums between hundreds and a few thousand pounds; Corby's families waited a decade before the High Court found the council liable in 2009 for birth defects linked to reclaimed steelworks land ([Camelford water pollution incident](kiwix:wikipedia_en_all_maxi/Camelford_water_pollution_incident); [Corby toxic waste case](kiwix:wikipedia_en_all_maxi/Corby_toxic_waste_case)). Keep every letter, test result, photograph and receipt.
+
+**Land.** Contaminated land is the council's to identify and the polluter's to clean under Part IIA of the Environmental Protection Act 1990, with the Environment Agency for the worst sites ([Contaminated land](kiwix:wikipedia_en_all_maxi/Contaminated_land); [Environmental Protection Act 1990](kiwix:wikipedia_en_all_maxi/Environmental_Protection_Act_1990)); until the council says the garden is clear, grow in raised beds of clean soil and keep children and hens off the ground.
 
 ## UK specifics
 
@@ -96,15 +108,19 @@ Britain's worst industrial accidents, Flixborough in 1974 with 28 dead and Bunce
 - [ ] Evacuate only when told, by the route given {#evacuate-when-told}
 - [ ] Symptoms and times written down for everyone exposed {#symptom-log}
 - [ ] After the all-clear: ventilate, wash surfaces, launder, discard exposed food {#clean-up-after}
+- [ ] Registered with the incident helpline; exposure recorded in GP notes; every letter kept {#register-and-records}
 
 ## Go deeper
 
 - [Chemical exposure card](card:chemical-exposure)
 - [Evacuation module](module:evacuation)
 - [UKHSA chemical emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public)
+- [What to do in a chemical emergency (UKHSA)](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public/what-to-do-in-a-chemical-emergency)
 - [Ship Captain's Medical Guide, chemical hazards](doc:scmg-ch02)
 - [HSE INDG258 Confined spaces](doc:hse-indg258)
 - [Buncefield fire (Wikipedia)](kiwix:wikipedia_en_all_maxi/Buncefield_fire)
+- [Camelford water pollution incident (Wikipedia)](kiwix:wikipedia_en_all_maxi/Camelford_water_pollution_incident)
+- [Contaminated land (Wikipedia)](kiwix:wikipedia_en_all_maxi/Contaminated_land)
 - [Decontamination (Wikipedia)](kiwix:wikipedia_en_all_maxi/Decontamination)
 - [Chemistry Q&A](kiwix:chemistry.stackexchange.com_en_all/questions)
 - [Hazardous materials incidents (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/hazmat)

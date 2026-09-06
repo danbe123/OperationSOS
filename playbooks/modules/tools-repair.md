@@ -30,15 +30,15 @@ sources:
 
 ## What to do
 
-1. For anything with a battery or a motor, look up the repair first rather than replacing it ([iFixit](kiwix:ifixit_en_all/home/home)).
+1. Before writing off a dead torch, radio, power bank, phone or generator, follow the iFixit teardown and repair guide for that device, and check the Restarters wiki on battery faults, which are most of what fails ([iFixit torches](kiwix:ifixit_en_all/Device/Flashlight); [radios](kiwix:ifixit_en_all/Device/Radio); [power banks](kiwix:ifixit_en_all/Device/Power_Bank); [generators](kiwix:ifixit_en_all/Device/Generator); [Restarters: batteries](kiwix:restarters_en_all/Batteries)).
 2. For plumbing and general building questions, the DIY Q&A is a good source, but remember it is largely American, so its wiring advice does not apply here ([diy Q&A](kiwix:diy.stackexchange.com_en_all/questions)).
 3. If you must use a chainsaw, wear chaps, a helmet and gloves, never cut above shoulder height, and stay clear of the kickback zone ([HSE INDG317, p. 1](doc:hse-indg317#page=1)).
-4. Cover a damaged roof with a tarpaulin and battens as an emergency measure, and board broken windows; never get onto a roof in wind.
+4. Do not go outside to repair storm damage while the storm is still blowing ([Prepare, storms](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/storms/)). Afterwards, cover a damaged roof from a ladder or inside the loft with a tarpaulin held by battens screwed through it into the rafters, never by bricks that blow off, and board broken windows with plywood screwed to the frame; leave anything that means standing on the roof to a roofer with scaffolding.
 5. Learn a handful of knots and lashings for improvised shelters and securing loads ([Knots Library](kiwix:zimgit-knots_en/home)).
 
 ## UK specifics
 
-- Know where your stopcock is and how to deal with a frozen pipe before winter arrives, covered fully in [Shelter and heat](module:shelter-heat).
+- Know where your stopcock is and how to deal with a frozen pipe before winter arrives, covered in the [severe winter playbook](playbook:severe-winter) (lag pipes, the loft hatch, the stopcock, a frozen boiler condensate pipe).
 - Do not remove or cut into a structural wall or prop without checking Approved Document A first ([Approved Document A](doc:ad-a)).
 - Keep tools sharp with a stone rather than replacing them, and use the woodworking Q&A for longer-term projects ([woodworking Q&A](kiwix:woodworking.stackexchange.com_en_all/questions)).
 

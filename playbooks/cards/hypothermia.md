@@ -18,7 +18,7 @@ Shivering, cold pale skin, slurred speech, clumsiness, confusion; later shiverin
 4. {{#if power}}Give warm sweet drinks if they are awake and can swallow. No alcohol.{{else}}Give sweet drinks if they are awake and can swallow, warmed on a gas hob lit with a match, on a stove used outdoors, or poured from a flask. No alcohol.{{/if}}
 5. Warm the trunk first: hot-water bottles or warm packs wrapped in cloth at the chest, armpits and groin, or share body heat under blankets.
 6. Handle gently and keep them lying flat; sudden movement can stop the heart.
-7. Do not rub the limbs, do not use a hot bath, and do not leave them alone.
+7. Do not rub the limbs, do not use a hot bath, and do not leave them alone. Frozen white hard fingers, toes or ears are on the [frostbite card](card:frostbite).
 
 ## Warnings
 
@@ -27,8 +27,8 @@ Shivering, cold pale skin, slurred speech, clumsiness, confusion; later shiverin
 
 ## Stop or escalate
 
-Confusion, drowsiness, shivering that has stopped, or a baby or an older person — [[call 999]]. If they stop breathing, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)) and keep going; cold people have survived long resuscitation.
+Confusion, drowsiness, shivering that has stopped, or a baby or an older person — [[call 999]]. If they stop breathing, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)) and keep going; cold people have survived long resuscitation. If nobody can come: keep warming slowly at the trunk, never fast, with wrapped warm stones or bottles, a warm person on each side under the blankets, and a child inside your own clothing against your skin; sweet food and drink as soon as they can swallow; and if the shivering stops while they stay confused or drowsy, treat it as critical and keep warming through the night ([WTIND, p. 457](doc:where-there-is-no-doctor#page=457); [Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1)).
 
 ## Source
 
-[Hypothermia (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/hypothermia/); [Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1); [FM 4-25.11, p. 118](doc:fm-4-25-11-first-aid#page=118).
+[Hypothermia (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/hypothermia/); [Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1); [FM 4-25.11, p. 118](doc:fm-4-25-11-first-aid#page=118); [WTIND, p. 457](doc:where-there-is-no-doctor#page=457).

@@ -7,7 +7,7 @@ summary: Storing fuel lawfully, keeping vehicles useful without pumps or power, 
 sources:
   - title: Petroleum (Consolidation) Regulations 2014
     kiwix: legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents
-    as_at: 2026-09
+    as_at: 2026-09-06
   - title: HSE INDG370 Controlling fire and explosion risks
     doc: hse-indg370
     as_at: 2026-09
@@ -16,7 +16,7 @@ sources:
     as_at: 2026-02-15
   - title: Help during a flood (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/help-during-flood
-    as_at: 2026-09
+    as_at: 2026-09-05
   - title: Motor Vehicle Maintenance and Repair Q&A
     kiwix: mechanics.stackexchange.com_en_all/questions
     as_at: 2026-08-04

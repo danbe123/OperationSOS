@@ -27,8 +27,8 @@ Face drooping on one side, an arm they cannot lift, slurred speech, sudden loss 
 
 ## Stop or escalate
 
-At the first sign, without waiting to see — [[call 999]]. Clot-busting treatment works only within the first hours.
+At the first sign, without waiting to see — [[call 999]]. Clot-busting treatment works only within the first hours. If nobody can come: nurse them in bed with the head a little higher than the feet, on their side with the head back if unconscious, nothing by mouth until they can swallow safely, and then sips first; once they are stable, help them up with a stick and to use the good hand for themselves, avoiding heavy effort, because much of the loss improves with time ([WTIND, p. 376](doc:where-there-is-no-doctor#page=376)). Anyone on an anticoagulant or blood-pressure tablets keeps taking them ([Chronic conditions](page:chronic-conditions)).
 
 ## Source
 
-[Stroke (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/stroke/); [Ship Captain's Medical Guide ch. 7, p. 34](doc:scmg-ch07#page=34); [Stroke (Wikipedia)](kiwix:wikipedia_en_all_maxi/Stroke).
+[Stroke (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/stroke/); [Ship Captain's Medical Guide ch. 7, p. 34](doc:scmg-ch07#page=34); [Stroke (Wikipedia)](kiwix:wikipedia_en_all_maxi/Stroke); [WTIND, p. 376](doc:where-there-is-no-doctor#page=376).

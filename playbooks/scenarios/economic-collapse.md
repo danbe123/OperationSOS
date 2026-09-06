@@ -29,6 +29,18 @@ sources:
   - title: Local exchange trading system (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Local_exchange_trading_system
     as_at: 2026-02-15
+  - title: Food bank (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Food_bank
+    as_at: 2026-02-15
+  - title: Protection from Eviction Act 1977 (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Protection_from_Eviction_Act_1977
+    as_at: 2026-02-15
+  - title: Bailiff (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Bailiff
+    as_at: 2026-02-15
+  - title: Electricity meter (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Electricity_meter
+    as_at: 2026-02-15
   - title: Prepare, get prepared for emergencies
     kiwix: prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/
     as_at: 2026-09
@@ -36,7 +48,7 @@ sources:
 
 ## Right now
 
-**If your bank's systems are down, wait; if the bank is failing, know the guarantee.** A systemically important bank's technology failure is planned for as customers unable to see balances, pay or draw cash from machines, with a partial outage for days after ([NRR 2025, p. 102](doc:nrr-2025#page=102)). A run, like Northern Rock in September 2007, is a queue that makes the failure it fears ([Northern Rock](kiwix:wikipedia_en_all_maxi/Northern_Rock)). Deposits are protected by the Financial Services Compensation Scheme up to its published limit per person per banking group; check the limit in the library rather than a rumour ([Financial Services Compensation Scheme](kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme)).
+**If your bank's systems are down, wait; if the bank is failing, know the guarantee.** A systemically important bank's technology failure is planned for as customers unable to see balances, pay or draw cash from machines, with a partial outage for days after ([NRR 2025, p. 102](doc:nrr-2025#page=102)). A run is a queue that makes the failure it fears. Deposits are protected by the Financial Services Compensation Scheme up to its published limit per person per banking group; check the limit in the library rather than a rumour ([Financial Services Compensation Scheme](kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme)).
 
 **Cash today.** {{#if power}}Draw what you are allowed while the machines work, in small notes; Argentina's 2001 "corralito" capped withdrawals overnight ([Corralito](kiwix:wikipedia_en_all_maxi/Corralito)).{{else}}The cash machines are dead with the power, so the notes in the house are the money you have: spend them on essentials, in small amounts, and keep a note of what is owed to whom ([Corralito](kiwix:wikipedia_en_all_maxi/Corralito)).{{/if}} Buy what you will need, not what you can carry: the two-week food store, medicines, fuel, the things that break ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
 
@@ -49,7 +61,7 @@ sources:
 - **Payments.** Card terminals, Faster Payments and direct debits stop with the systems behind them; the register plans for a financial market infrastructure to be down for a week and partly down for weeks ([NRR 2025, p. 58](doc:nrr-2025#page=58)). A deliberate attack on those systems is the [cyber attack playbook](playbook:cyber-attack). Cash, cheques and IOUs between people who know each other keep a village trading ([Cheque](kiwix:wikipedia_en_all_maxi/Cheque)).
 - **Prices.** In hyperinflation money loses value between morning and evening; wages are paid daily and spent at once, and anyone holding notes loses ([Hyperinflation](kiwix:wikipedia_en_all_maxi/Hyperinflation)). Hold goods and skills, not paper: food, fuel, tools, seed, and the ability to fix things.
 - **Rent, mortgage, bills.** {{#if phones}}Talk to the lender and the landlord before missing a payment; keep written records of every conversation;{{else}}No lender's line will answer: write and date a letter before you miss a payment, keep a copy, and take it to a branch or an office in person when you can;{{/if}} the Universal Credit helpline and the council are the safety net that still exists ([UK numbers](page:uk-numbers)).
-- **Fuel.** Half a tank at all times and the lawful 30 litres stored outside the house ([Petroleum regulations 2014](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)); a bicycle costs nothing to run ([Vehicles and fuel module](module:vehicles-fuel)).
+- **Fuel.** Half a tank at all times, petrol stored only within the lawful limit and outside the house (see [vehicles and fuel](module:vehicles-fuel)); a bicycle costs nothing to run.
 - **Neighbours.** The people who will trade with you in a month are the ones you help this week ([Community module](module:community)).
 
 {{module:vehicles-fuel}}
@@ -78,16 +90,18 @@ Currency failures end with a new currency, a peg or a foreign one: Germany's 192
 
 ## UK specifics
 
-- **The guarantee.** The Financial Services Compensation Scheme pays within days when a bank fails, up to its limit per person per banking group; joint accounts count double; it is funded by the industry, not by whether the bank had money ([Financial Services Compensation Scheme](kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme)). Spread savings across banking groups, not brands of one group.
+- **The guarantee.** The Financial Services Compensation Scheme pays within days when a bank fails, up to its limit per person per banking group; joint accounts count double; it is funded by the industry, not by whether the bank had money ([Financial Services Compensation Scheme](kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme)). Spread savings across banking groups, not brands of one group. The last British run was Northern Rock, whose depositors queued outside branches on 14 September 2007 until the state took the bank over in February 2008 ([Northern Rock](kiwix:wikipedia_en_all_maxi/Northern_Rock)).
 - **Who acts.** The Bank of England, the Treasury and the Financial Conduct Authority coordinate under the Authorities' Response Framework ([NRR 2025, p. 58](doc:nrr-2025#page=58)); the Bank is lender of last resort and issuer of notes ([Bank of England](kiwix:wikipedia_en_all_maxi/Bank_of_England)).
-- **Energy prices** are the usual British trigger: the register's gas and oil scenarios are about price, with households needing support and vulnerable groups hit hardest ([NRR 2025, p. 62](doc:nrr-2025#page=62); [NRR 2025, p. 63](doc:nrr-2025#page=63)); the Energy Act 1976 gives ministers powers over fuel supply in a real shortage ([NRR 2025, p. 63](doc:nrr-2025#page=63)).
-- **Cash.** Notes remain legal; a shop may refuse them and a bank may limit withdrawals, and neither is a reason to fight ([Cash](kiwix:wikipedia_en_all_maxi/Cash)). Credit unions and the Post Office are the fallback for people a bank has dropped ([Credit union](kiwix:wikipedia_en_all_maxi/Credit_union)).
-- **Benefits and bills:** the Universal Credit helpline, Cold Weather Payments in winter, and the Priority Services Register for anyone who cannot afford to lose power or water ([UK numbers](page:uk-numbers); [Cold Weather Payment](kiwix:govuk_resilience/www.gov.uk/cold-weather-payment)).
+- **Cash.** Notes remain legal; a shop may refuse them and a bank may limit withdrawals, and neither is a reason to fight ([Cash](kiwix:wikipedia_en_all_maxi/Cash)). Credit unions and the Post Office are the fallback for people a bank has dropped ([Credit union](kiwix:wikipedia_en_all_maxi/Credit_union)); a Post Office counter does everyday cash banking for most banks' customers ([Post Office Limited](kiwix:wikipedia_en_all_maxi/Post_Office_Limited)).
+- **Benefits and pensions without a bank.** Universal Credit and the State Pension are paid into an account ([Universal Credit](kiwix:wikipedia_en_all_maxi/Universal_Credit); [State Pension](kiwix:wikipedia_en_all_maxi/State_Pension_(United_Kingdom))); if you cannot open or reach one, ask the Jobcentre or the Pension Service for the Payment Exception Service, which pays by a voucher cashed at a Post Office or PayPoint shop. Cold Weather Payments run from 1 November to 31 March ([Cold Weather Payment](kiwix:govuk_resilience/www.gov.uk/cold-weather-payment)), and the Priority Services Register is for anyone who cannot afford to lose power or water ([UK numbers](page:uk-numbers)).
+- **Food banks.** Most need a referral voucher from a GP, health visitor, social worker, Citizens Advice, the Jobcentre or a housing officer, and the voucher buys a parcel of about three days of non-perishable food; a food bank will usually help a person without a voucher to get one ([Food bank](kiwix:wikipedia_en_all_maxi/Food_bank)).
+- **Prepayment meters.** A prepayment meter, or a smart meter in prepay mode, carries a small emergency credit you switch on at the meter when the money runs out ([Electricity meter](kiwix:wikipedia_en_all_maxi/Electricity_meter)); it is a loan against the next top-up, so tell the supplier before the household goes dark rather than after.
+- **Eviction and bailiffs.** In England and Wales a tenant cannot be evicted without a court order, a notice to quit needs at least four weeks, and putting a tenant out without an order is a criminal offence, whatever the landlord's own debts ([Protection from Eviction Act 1977](kiwix:wikipedia_en_all_maxi/Protection_from_Eviction_Act_1977)). Only a certificated enforcement agent acting on a court order is a bailiff; a debt collector may not call himself one and has none of a bailiff's powers ([Bailiff](kiwix:wikipedia_en_all_maxi/Bailiff)). Ask for the paperwork through the door before opening it, keep every letter, and get advice before any hearing.
 - **Taking from shops or fields is theft** in a crisis as in any other week ([Theft Act 1968 s1](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1968/60/section/1)); foraging for your own use is not ([Foraging law](page:foraging-law)).
 
 ## Checklist
 
-- [ ] Cash for a month in small notes, kept in two places {#cash-month}
+- [ ] Cash for two weeks of essentials in small notes, kept in two places {#cash-month}
 - [ ] Savings spread across banking groups; the FSCS limit checked {#spread-savings}
 - [ ] Two weeks of food, medicines and the things that break bought while cards work {#buy-essentials-now}
 - [ ] Lender, landlord and utilities spoken to before any missed payment; notes kept {#talk-to-creditors}
@@ -107,6 +121,7 @@ Currency failures end with a new currency, a peg or a foreign one: Germany's 192
 - [Bank run (Wikipedia)](kiwix:wikipedia_en_all_maxi/Bank_run)
 - [Barter (Wikipedia)](kiwix:wikipedia_en_all_maxi/Barter)
 - [Mutual aid (Wikipedia)](kiwix:wikipedia_en_all_maxi/Mutual_aid)
+- [Food bank (Wikipedia)](kiwix:wikipedia_en_all_maxi/Food_bank)
 - [NRR 2025, technological failure at a retail bank](doc:nrr-2025#page=102)
 - [Supply chain playbook](playbook:supply-chain)
 - [Famine playbook](playbook:famine)

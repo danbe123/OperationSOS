@@ -27,8 +27,8 @@ Pale clammy skin, fast weak pulse, fast breathing, dizziness, thirst or confusio
 
 ## Stop or escalate
 
-Shock kills without treatment, so get help at once — [[call 999]]. If breathing stops, start [CPR](card:cpr-adult).
+Shock kills without treatment, so get help at once — [[call 999]]. If breathing stops, start [CPR](card:cpr-adult). If nobody can come: keep them lying with the feet a little higher than the head (half-sitting instead if the head is injured), warm, every bleed stopped and every wound dressed; once they are awake and can swallow, give sips of water or rehydration drink, and lots of it if they are dehydrated or burned ([dehydration card](card:dehydration)); give paracetamol rather than anything sedating for pain, and if you know how, fluid into a vein at a fast drip ([WTIND, p. 126](doc:where-there-is-no-doctor#page=126)). Sepsis causes the same picture with fever ([sepsis card](card:sepsis)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 19](doc:scmg-ch01#page=19); [FM 4-25.11, p. 14](doc:fm-4-25-11-first-aid#page=14); [Shock (Wikipedia)](kiwix:wikipedia_en_all_maxi/Shock_(circulatory)).
+[Ship Captain's Medical Guide ch. 1, p. 19](doc:scmg-ch01#page=19); [FM 4-25.11, p. 14](doc:fm-4-25-11-first-aid#page=14); [Shock (Wikipedia)](kiwix:wikipedia_en_all_maxi/Shock_(circulatory)); [WTIND, p. 126](doc:where-there-is-no-doctor#page=126).

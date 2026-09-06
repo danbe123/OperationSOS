@@ -17,19 +17,19 @@ Any cut, graze, puncture or open wound once the bleeding is under control.
 3. Pick out grit and dirt with clean tweezers. Do not scrub.
 4. {{#if water}}Boiled and cooled water, or bottled water, is fine; do not use untreated stream water on a wound.{{else}}With the mains off, rinse from a bottle or with boiled and cooled water, a jug at a time, and never with untreated stream water ([Water module](module:water)).{{/if}}
 5. Pat dry with a clean cloth, apply an antiseptic such as chlorhexidine if you have it, and cover with a non-stick dressing.
-6. Change the dressing daily or when wet or dirty; leave a deep or dirty wound open under a dressing rather than closing it tightly.
+6. Change the dressing daily or when wet or dirty; leave a deep or dirty wound open under a dressing rather than closing it tightly. Only a clean, fresh cut is closed ([wound closure](card:wound-closure)).
 7. Check every day for spreading redness, heat, swelling, pus, a red line up the limb, or fever.
-8. Puncture wounds, bites and anything from soil need a tetanus check if the person's five doses are not complete.
+8. Puncture wounds, bites and anything from soil carry tetanus; if the person's vaccinations are not complete or not known, follow the tetanus rules in the [medical module](module:medical). Bites have their own card ([bites and stings](card:bites-stings)).
 
 ## Warnings
 
-**Warning:** Fever, fast breathing, confusion, mottled or very pale skin, or not passing urine can be sepsis. Sepsis kills within hours.
+**Warning:** Fever, fast breathing, confusion, mottled or very pale skin, or not passing urine can be sepsis. Sepsis kills within hours ([sepsis card](card:sepsis)).
 **Warning:** Do not use hydrogen peroxide or neat bleach in a wound.
 
 ## Stop or escalate
 
-Signs of sepsis are an emergency — [[call 999]]. For spreading infection, a wound that will not close, an animal or human bite, or a wound from a dirty or rusty object, see a pharmacist or [[call 111]].
+Signs of sepsis are an emergency — [[call 999]]. For spreading infection, a wound that will not close, an animal or human bite, or a wound from a dirty or rusty object, see a pharmacist or [[call 111]]. If nobody can come: an infected wound gets hot compresses for 20 minutes four times a day, rest, and the limb raised above the heart; a deep, dirty or bite wound is washed out with boiled water and soap, never stitched, and the antibiotics you hold are started at once if the person is not vaccinated against tetanus or the wound is a bite; a bad smell, brown or grey ooze, or black skin with bubbles is gangrene and needs help by any route ([WTIND, p. 137](doc:where-there-is-no-doctor#page=137); [WTIND, p. 138](doc:where-there-is-no-doctor#page=138)).
 
 ## Source
 
-[Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/); [Sepsis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/); [Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [Survival and Austere Medicine, p. 231](doc:survival-austere-medicine-2017#page=231).
+[Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/); [Sepsis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/); [Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [Survival and Austere Medicine, p. 231](doc:survival-austere-medicine-2017#page=231); [WTIND, p. 137](doc:where-there-is-no-doctor#page=137).

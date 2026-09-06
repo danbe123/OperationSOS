@@ -27,8 +27,8 @@ Someone cannot breathe, cough or speak, is clutching their throat, or is turning
 
 ## Stop or escalate
 
-If the blockage does not clear after the first cycle, or the person becomes unresponsive — [[call 999]].
+If the blockage does not clear after the first cycle, or the person becomes unresponsive — [[call 999]]. If nobody can come: an unconscious person is laid on their back and the thrusts given with the heel of your hand on the belly (on the chest for a pregnant woman or a small child), then rescue breaths, and you keep cycling thrusts and breaths ([WTIND, p. 128](doc:where-there-is-no-doctor#page=128)); once the airway clears, anyone who had abdominal thrusts, or who still coughs, wheezes or has chest or belly pain, is watched for a day for injury or for something left in the lung ([Ship Captain's Medical Guide ch. 1, p. 14](doc:scmg-ch01#page=14)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 14](doc:scmg-ch01#page=14); [Choking (Wikipedia)](kiwix:wikipedia_en_all_maxi/Choking).
+[Ship Captain's Medical Guide ch. 1, p. 14](doc:scmg-ch01#page=14); [Choking (Wikipedia)](kiwix:wikipedia_en_all_maxi/Choking); [WTIND, p. 128](doc:where-there-is-no-doctor#page=128).

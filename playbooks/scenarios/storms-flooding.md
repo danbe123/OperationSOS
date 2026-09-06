@@ -3,7 +3,7 @@ id: storms-flooding
 title: Severe storms and flooding
 icon: waves
 order: 12
-summary: Storm-force winds, river and surface-water floods and a North Sea surge. Warnings, Floodline, the 15, 30 and 60 cm rules, sewage, and the clean-up.
+summary: Storm-force winds, river and surface-water floods and a North Sea surge. Warnings, Floodline, why you never drive through it, sewage, and the clean-up.
 modules: [evacuation, water, sanitation, power, shelter-heat, tools-repair, comms, medical]
 overlays: [flood-zones, health, rail]
 reviewed: null
@@ -38,7 +38,7 @@ sources:
 
 **A severe flood warning means danger to life: act now.** A flood alert means prepare, a flood warning means act, a severe flood warning means immediate danger; Floodline gives the warning in force on 0345 988 1188 in England, Scotland and Wales, or 0300 2000 100 in Northern Ireland — [[call 0345 988 1188]] ([Get flood warnings](kiwix:govuk_resilience/www.gov.uk/get-flood-warnings)). Move people, pets, medicines, documents and valuables upstairs; turn off gas, electricity and water at the mains if water is coming in; go up, not out, unless told to evacuate ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
 
-**Never walk or drive through floodwater:** 15 cm of moving water knocks an adult over, 30 cm floats a car, 60 cm carries it away, and the water hides open manholes and sewage ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
+**Never walk or drive through floodwater.** The depths that knock an adult over and float a car are in the [evacuation module](module:evacuation) below; the water also hides open manholes and sewage ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
 
 **In a storm, stay in.** The register's storm scenario is mean winds over 55 mph and gusts over 85 mph across several regions for six hours, with deaths "mainly due to falling trees, structures or other debris" ([NRR 2025, p. 139](doc:nrr-2025#page=139)); the same debris breaks bones as well as killing outright ([Broken bones card](card:broken-bones)). Park away from trees, stay off the coast and sea walls, and keep away from windows.
 
@@ -49,7 +49,7 @@ sources:
 ## First 72 hours
 
 - **Expect outages of days.** Storm disruption to power, communications and transport "could last for 1-4 days and for more than 5 days in remote rural locations" ([NRR 2025, p. 139](doc:nrr-2025#page=139)); a river flood takes electricity and telecoms from many homes for days to weeks ([NRR 2025, p. 147](doc:nrr-2025#page=147)); all fixed and mobile communication in a region can go at once, with landlines off for several days ([NRR 2025, p. 88](doc:nrr-2025#page=88)). Run the [grid collapse playbook](playbook:grid-collapse) in parallel.
-- **Floodwater is sewage.** Wash hands after any contact, keep children and pets out of it, and throw away food it touched, including tins whose seals were under water ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). Cuts that meet floodwater get cleaned and watched ([Wound cleaning card](card:wound-cleaning)); fever with muscle pain a week later can be leptospirosis ([Leptospirosis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/leptospirosis/)).
+- **Floodwater is sewage** ([sanitation module](module:sanitation)): keep children and pets out of it, and tins whose seals were under water go with the rest of the food it touched ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). Cuts that meet floodwater get cleaned and watched ([Wound cleaning card](card:wound-cleaning)); fever with muscle pain a week later can be leptospirosis ([Leptospirosis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Leptospirosis)).
 - **Water supply.** A "do not drink" or boil notice from the water company overrides everything; the 2007 floods put the Mythe works under water and left 350,000 people in Gloucestershire without mains water for up to 17 days ([2007 United Kingdom floods](kiwix:wikipedia_en_all_maxi/2007_United_Kingdom_floods)). Bowsers and bottled water stations prioritise the Priority Services Register ([Water module](module:water)).
 - **Pumps and generators** run outdoors only; carbon monoxide from petrol pumps in a flooded cellar kills ([Carbon monoxide card](card:carbon-monoxide)).
 - **Cold and wet.** Hypothermia in a flooded house in winter is a real risk; dry clothes, one warm room, hot drinks ([Hypothermia card](card:hypothermia)).
@@ -68,8 +68,7 @@ sources:
 - **Going back in.** Wait until told it is safe; check the structure before entering, never step into standing water where electricity may be live, and have gas and electrics checked before reconnection ([After a flood](kiwix:govuk_resilience/www.gov.uk/after-flood)).
 - **Clean-up.** Gloves, boots, masks; shovel out mud, hose down, then disinfect hard surfaces; dry the house slowly with ventilation and heat; mould grows within days and is a respiratory hazard ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). Photograph everything before you throw it away; the insurer needs it ([After a flood](kiwix:govuk_resilience/www.gov.uk/after-flood)).
 - **Sewage and drains.** Septic tanks and cesspools flood too; do not use them until the water table drops; the rules for drainage fields are in [Approved Document H, p. 31](doc:ad-h#page=31).
-- **Chainsaws** clear the trees that took the roads and the lines: chaps, helmet, gloves, never above shoulder height, and the kickback zone ([HSE INDG317, p. 1](doc:hse-indg317#page=1)); a tree under tension is a professional's job.
-- **Roofs.** Tarpaulin and battens from inside the loft where you can; never on a roof in wind ([Tools and repair module](module:tools-repair)).
+- **Trees and roofs.** The chainsaw rules and the tarpaulin-and-battens rule are in the [tools and repair module](module:tools-repair) below; a windblown tree under tension, and a tree resting on a power line, are a professional's job ([HSE INDG317, p. 1](doc:hse-indg317#page=1)).
 - **Health.** Stress, sleep loss and grief follow floods for months; the flooding health page says so and where to turn ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)).
 
 {{module:sanitation}}

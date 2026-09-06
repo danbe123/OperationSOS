@@ -9,7 +9,7 @@ category: fieldcraft
 
 ## The problem is wind and wet, not deep cold
 
-British cold rarely goes far below freezing, but it comes with rain and wind, and wet clothing loses most of its insulation. The body loses heat five ways: wind stripping warm air from the skin, rain and sweat wetting the layers, the cold ground drawing heat by contact, breathing out warm air, and simply radiating. A shelter has to deal with the first three; clothing and food deal with the rest. Get out of the wind before anything else: a wall, a bank, a hedge or a fold in the ground can halve the heat loss on its own.
+British cold rarely goes far below freezing, but it comes with rain and wind, and wet clothing loses most of its insulation. The body loses heat five ways: wind stripping warm air from the skin, rain and sweat wetting the layers, the cold ground drawing heat by contact, breathing out warm air, and simply radiating ([FM 31-70, the clothing and shelter chapters](doc:fm-31-70-cold-weather)). A shelter has to deal with the first three; clothing and food deal with the rest. Get out of the wind before anything else: a wall, a bank, a hedge or a fold in the ground can halve the heat loss on its own. What wet cold does to the body, and why it happens here at temperatures well above freezing, is on [Reading the weather and exposure](page:fieldcraft-weather).
 
 ## Choosing the spot
 
@@ -35,7 +35,7 @@ Pitch the low side into the wind, peg every corner, and put the ridge line up wi
 
 ## Building with what is there
 
-Without a tarp, build a **lean-to** of branches against a fallen tree, a wall or a ridge pole tied between two trees, then thatch it thick. Bracken is the British thatch: it grows everywhere, dies back to a dry brown carpet in winter, and layered from the bottom up like tiles it sheds rain well ([Bracken](kiwix:wikipedia_en_all_maxi/Bracken)). Leaf litter, heather, rushes, spruce and pine boughs, and turf all work; the rule is a thickness of at least a forearm, more on the windward side, with an overhang at the eaves.
+Without a tarp, build a **lean-to** of branches against a fallen tree, a wall or a ridge pole tied between two trees, then thatch it thick. Bracken is the British thatch: it grows everywhere, dies back to a dry brown carpet in winter, and layered from the bottom up like tiles it sheds rain well ([Bracken](kiwix:wikipedia_en_all_maxi/Bracken)). Leaf litter, heather, rushes, spruce and pine boughs, and turf all work; the rule is a thickness of at least a forearm, more on the windward side, with an overhang at the eaves ([Camping and Woodcraft, the shelter chapters](doc:kephart-camping-and-woodcraft)).
 
 A **debris bed** matters more than the roof. The ground takes heat far faster than the air, so build a mattress of dry bracken, leaves, heather or boughs at least a hand-span deep once compressed, and lie on it inside every layer you own. Cardboard, a foam mat, a rucksack, a coil of rope: anything is better than bare ground.
 
@@ -43,11 +43,11 @@ In snow, which is rare and short-lived below the Scottish tops, a trench with a 
 
 ## Clothing and the body's own shelter
 
-Wool and synthetics stay warm when wet; cotton and denim do not, and a wet cotton hoodie is a cause of hypothermia in British summers. Layers: a wicking base, an insulating middle, a wind and waterproof shell; vent before you sweat, add a layer the moment you stop. Hat and gloves first when cold, because the head and hands lose heat fastest. Keep one dry layer in a bag for the night. Eat: the body cannot make heat from nothing, and a cold person who has not eaten for hours will not warm up in any shelter.
+Wool and synthetics stay warm when wet; cotton and denim do not, and a wet cotton hoodie is a cause of hypothermia in British summers. Layers: a wicking base, an insulating middle, a wind and waterproof shell; vent before you sweat, add a layer the moment you stop ([Layered clothing](kiwix:wikipedia_en_all_maxi/Layered_clothing)). Hat and gloves first when cold, because the head and hands lose heat fastest. Keep one dry layer in a bag for the night. Eat: the body cannot make heat from nothing, and a cold person who has not eaten for hours will not warm up in any shelter.
 
-## Hypothermia: spotting it early
+## Hypothermia and wet feet
 
-The early signs are the ones that matter: shivering, clumsiness, mumbling, stumbling, unusual quiet or irritability, "the umbles". At that stage: out of the wind, wet layers off and dry ones on, insulate from the ground, warm sweet drinks if awake, and get moving gently or into a sleeping bag with another person. Once the shivering stops and the person becomes confused or drowsy, they are in danger: handle them gently, do not rub the limbs, do not give alcohol, insulate and call for help ([Hypothermia card](card:hypothermia); [Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia)). Wet cold over days also causes non-freezing cold injury, the old trench foot: numb, swollen, white then red and painful feet. Dry socks every night and feet out of boots when resting prevent it ([Trench foot](kiwix:wikipedia_en_all_maxi/Trench_foot)).
+Watch each other for the early signs (shivering, clumsiness, mumbling, stumbling, unusual quiet or irritability) and act on them at once: out of the wind, wet layers off and dry ones on, insulated from the ground, food and warm sweet drinks if awake. The signs, the treatment and when it becomes an emergency are on the [hypothermia card](card:hypothermia). Wet feet over days cause trench foot; dry socks every night and feet out of boots when resting prevent it ([Living in the field: hygiene](page:fieldcraft-hygiene)).
 
 ## Go deeper
 

@@ -23,12 +23,12 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 ## Warnings
 
 **Warning:** Blue lips, exhaustion, a silent chest or drowsiness mean a life-threatening attack.
-**Warning:** A brown or other preventer inhaler will not help in an attack.
+**Warning:** A brown or other preventer inhaler will not help in an attack, but it is the one to keep taking every day ([chronic conditions](page:chronic-conditions)).
 
 ## Stop or escalate
 
-If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours.
+If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours. If nobody can come: keep repeating the reliever through the spacer every 15 minutes while it helps, move them to the cleanest air you have, give plenty to drink to loosen the mucus, and if fever comes or the attack drags on for more than three days treat it as a chest infection with the antibiotics you hold under the rules in Where There Is No Doctor ([WTIND, p. 216](doc:where-there-is-no-doctor#page=216)).
 
 ## Source
 
-[Asthma attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/); [Ship Captain's Medical Guide ch. 7, p. 7](doc:scmg-ch07#page=7); [WHO Essential Medicines, p. 64](doc:who-eml-2025#page=64).
+[Asthma attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/); [Ship Captain's Medical Guide ch. 7, p. 7](doc:scmg-ch07#page=7); [WHO Essential Medicines, p. 64](doc:who-eml-2025#page=64); [WTIND, p. 216](doc:where-there-is-no-doctor#page=216).

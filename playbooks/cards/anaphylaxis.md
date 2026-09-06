@@ -27,8 +27,8 @@ Swollen face, lips or throat, wheeze or trouble breathing, hives or faintness af
 
 ## Stop or escalate
 
-This is always an emergency, and the message is "anaphylaxis" — [[call 999]]. Hospital observation is needed even after recovery because a second reaction can follow hours later.
+This is always an emergency, and the message is "anaphylaxis" — [[call 999]]. Hospital observation is needed even after recovery because a second reaction can follow hours later. If nobody can come: give the second pen after 5 minutes if there is no improvement (a second dose is needed in up to a third of cases), keep them lying down with the legs raised and give fluids to drink once they can swallow, and watch them for a full 24 hours, because symptoms return in some people between 1 and 72 hours later ([Anaphylaxis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Anaphylaxis); [Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96)). Stings and bites that cause it are on the [bites and stings card](card:bites-stings).
 
 ## Source
 
-[Anaphylaxis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/anaphylaxis/); [WHO Essential Medicines, p. 44](doc:who-eml-2025#page=44); [Anaphylaxis (Wikipedia)](kiwix:wikipedia_en_all_maxi/Anaphylaxis).
+[Anaphylaxis (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/anaphylaxis/); [WHO Essential Medicines, p. 44](doc:who-eml-2025#page=44); [Anaphylaxis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Anaphylaxis); [Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96).

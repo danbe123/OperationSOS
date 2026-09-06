@@ -28,8 +28,8 @@ Blood is flowing or spurting, soaking through cloth, or pooling; the person is p
 
 ## Stop or escalate
 
-Bleeding like this needs help at once — [[call 999]]. If they stop breathing, start [CPR](card:cpr-adult).
+Bleeding like this needs help at once — [[call 999]]. If they stop breathing, start [CPR](card:cpr-adult). If nobody can come: a tourniquet is meant to be off within 2 hours whenever the bleeding can be controlled another way, so pack the wound, put on a firm wide pressure bandage, wait 30 to 60 minutes, then loosen the tourniquet and watch: if heavy bleeding restarts, tighten it again; if it does not, leave it in place but loose and manage the wound; never take off a tourniquet that has been on for more than 6 hours ([Emergency War Surgery, p. 543](doc:emergency-war-surgery-2018#page=543); [Survival and Austere Medicine, p. 88](doc:survival-austere-medicine-2017#page=88)). Then clean and dress it ([wound cleaning](card:wound-cleaning); [wound closure](card:wound-closure)). A nosebleed has its own card ([nosebleed](card:nosebleed)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [FM 4-25.11, p. 41](doc:fm-4-25-11-first-aid#page=41); [Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/).
+[Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [FM 4-25.11, p. 41](doc:fm-4-25-11-first-aid#page=41); [Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/); [Emergency War Surgery, p. 543](doc:emergency-war-surgery-2018#page=543).

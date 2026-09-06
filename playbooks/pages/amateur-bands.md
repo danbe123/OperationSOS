@@ -3,13 +3,13 @@ id: amateur-bands
 title: Amateur radio bands
 icon: antenna
 order: 2
-summary: UK amateur bands, calling frequencies, repeater shifts and what each licence level allows.
+summary: UK amateur bands, calling frequencies, repeater shifts, licence levels and callsigns, CB radio, and who may transmit in an emergency.
 category: comms
 ---
 
-## Licence levels
+## Licence levels and callsigns
 
-Since February 2024, Ofcom's amateur licence has three levels: Foundation (25 W), Intermediate (100 W) and Full (1,000 W), each opening more of the spectrum and requiring a harder exam ([Ofcom amateur licence conditions](doc:ofcom-amateur-licence-2024)). Callsigns in England start M7 (Foundation), 2E0 (Intermediate) or M0 (Full); Scotland, Wales and Northern Ireland use their own prefixes. Passing PMR446 or CB does not require a licence, but transmitting on any amateur band without one is a criminal offence.
+Since February 2024, Ofcom's amateur licence has three levels: Foundation (25 W), Intermediate (100 W) and Full (1,000 W), each opening more of the spectrum and requiring a harder exam ([Ofcom amateur licence conditions, p. 15](doc:ofcom-amateur-licence-2024#page=15); [p. 20](doc:ofcom-amateur-licence-2024#page=20)). New callsigns start M7 (Foundation), 2E0 (Intermediate) or M0 (Full); older licences still carry M3 and M6 (Foundation), 2E1 (Intermediate) or G and M1 (Full). The second character is a Regional Secondary Locator that says where the station is: E for England (optional), M for Scotland, W for Wales, I for Northern Ireland, D for the Isle of Man, J for Jersey and U for Guernsey, so a Scottish Foundation station is MM7, an Intermediate one 2M0 and a Full one MM0; Intermediate callsigns beginning with 2 must always carry the locator ([Ofcom amateur licence conditions, p. 7](doc:ofcom-amateur-licence-2024#page=7); [p. 8](doc:ofcom-amateur-licence-2024#page=8)). Listening on any band needs no licence at all; transmitting on an amateur band without one is a criminal offence, and PMR446 and CB are the licence-free alternatives ([PMR446 channels](page:pmr446)).
 
 ## Bands
 
@@ -33,15 +33,20 @@ These are the band edges from the current RSGB plan; which slice of each band yo
 
 ## Calling and repeaters
 
-The FM calling frequencies are 145.500 MHz on 2 m and 433.500 MHz on 70 cm; the SSB calling frequency on 2 m is 144.300 MHz. Repeaters listen on one frequency and transmit on another: 2 m repeaters use a 600 kHz shift and 70 cm repeaters a 1.6 MHz shift, all listed in the RSGB plan. What works when: 2 m and 70 cm carry local, line-of-sight traffic; 40 m and 80 m reach across the UK by day and night; 20 m reaches Europe and beyond, conditions allowing. A solar storm can black out HF propagation for hours at a time ([Solar storm](playbook:solar-storm)).
+The FM calling frequencies are 145.500 MHz on 2 m and 433.500 MHz on 70 cm; the SSB calling frequency on 2 m is 144.300 MHz. Repeaters listen on one frequency and transmit on another: 2 m repeaters use a 600 kHz shift and 70 cm repeaters a 1.6 MHz shift, all listed in the RSGB plan ([RSGB Band Plans 2026](doc:rsgb-band-plan-2026)). What works when: 2 m and 70 cm carry local, line-of-sight traffic; 40 m and 80 m reach across the UK by day and night; 20 m reaches Europe and beyond, conditions allowing. A solar storm can black out HF propagation for hours at a time ([Solar storm](playbook:solar-storm)).
+
+## CB radio
+
+UK CB radio is licence-free: FM only, 4 W output, on the 40 UK channels and the 40 CEPT channels around 27 MHz ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom); [Citizens band radio](kiwix:wikipedia_en_all_maxi/Citizens_band_radio)). Channel 9 is the emergency calling channel by convention and channel 19 the calling channel; there is no 24-hour monitoring service in the UK, only whoever happens to be listening ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom)). A CB set in a car reaches further than PMR446 and needs no exam.
 
 ## In an emergency
 
-RAYNET volunteers provide backup communications to local councils, the emergency services and event organisers, and can be activated through the local authority in a major incident ([RAYNET](kiwix:wikipedia_en_all_maxi/RAYNET)). An unlicensed person may only use a licensed station with the licensee present and in control of it. In a genuine emergency, when there is a danger to life, a licensee may pass a message for anyone, on any frequency they are licensed to use.
+RAYNET volunteers provide backup communications to local councils, the emergency services and event organisers, and can be activated through the local authority in a major incident ([RAYNET](kiwix:wikipedia_en_all_maxi/Radio_Amateurs_Emergency_Network)). An unlicensed person may only use a licensed station with the licensee present and in control of it ([Ofcom amateur licence conditions](doc:ofcom-amateur-licence-2024)). In a genuine emergency, when there is a danger to life, a licensee may pass a message for anyone. Anyone may listen: a cheap scanner or a handheld tuned to 145.500 MHz hears what the local operators are saying.
 
 ## Go deeper
 
 - [PMR446 channels](page:pmr446)
 - [Communications module](module:comms)
+- [Getting help without phones](page:no-phones)
 - [Amateur Radio Q&A](kiwix:ham.stackexchange.com_en_all/questions)
 - [RSGB Band Plans 2026](doc:rsgb-band-plan-2026)

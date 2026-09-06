@@ -3,13 +3,23 @@ id: fieldcraft-fire
 title: Fire in a wet country
 icon: fire
 order: 15
-summary: Lighting and keeping a fire in British rain, what to use for tinder here, the law and the etiquette, and when a stove is the better answer.
+summary: Lighting and keeping a fire in British rain, what to use for tinder here, the law and the etiquette, stoves and their fuel, and when a stove is the better answer.
 category: fieldcraft
 ---
 
 ## Before you strike a match
 
-Most of the British uplands, heaths, commons and access land forbid open fires, and a moorland fire in a dry April can burn for a week and destroy a peat bog that took eight thousand years to form. In normal times, cook on a stove: gas, meths or a wood-burning twig stove that lifts the fire off the ground. The Scottish access code allows small fires, away from peat, with care and leaving no trace ([Scottish Outdoor Access Code](kiwix:wikipedia_en_all_maxi/Scottish_Outdoor_Access_Code)). When society has stopped working, the law is no longer the point, but the peat still is: never light a fire on peat, heather or dry grass in a drought, and never leave one.
+Most of the British uplands, heaths, commons and access land forbid open fires, and a moorland fire in a dry April can burn for a week and destroy a peat bog that took thousands of years to form. In normal times, cook on a stove: gas, meths or a wood-burning twig stove that lifts the fire off the ground. The Scottish access code allows small fires, away from peat, with care and leaving no trace ([Scottish Outdoor Access Code](kiwix:wikipedia_en_all_maxi/Scottish_Outdoor_Access_Code)). When society has stopped working, the law is no longer the point, but the peat still is: never light a fire on peat, heather or dry grass in a drought, and never leave one.
+
+## Stoves and fuel
+
+A stove is the everyday fire in Britain, and it fails for reasons you can plan for.
+
+- **Gas**: the screw-thread canisters sold in outdoor shops hold a butane, isobutane and propane mix ([EN 417](kiwix:wikipedia_en_all_maxi/EN_417)). Butane stops boiling off at about −1 °C ([Butane](kiwix:wikipedia_en_all_maxi/Butane)) and isobutane at about −12 °C ([Isobutane](kiwix:wikipedia_en_all_maxi/Isobutane)), so on a frosty morning a canister that is mostly butane gives a weak yellow flame or nothing; canister stoves are not recommended in freezing temperatures at all ([TC 3-97.61, p. 82](doc:tc-3-97-61-military-mountaineering#page=82)). Keep the canister warm in a pocket or the sleeping bag before use, stand it in a shallow dish of water (never heat it), and choose a propane-heavy mix for winter. Change canisters away from any flame, and check the seal by listening.
+- **Meths (methylated spirit)**: a Trangia-type spirit burner has no moving parts, lights in any weather, burns quietly and slowly, and the fuel is sold in hardware shops ([Alcohol burner](kiwix:wikipedia_en_all_maxi/Alcohol_burner)). The flame is invisible in daylight: never refill a burner that might still be alight, and keep the bottle well away.
+- **Liquid fuel** (petrol, paraffin, diesel): multi-fuel stoves are heavier and need priming and cleaning, but they work in cold and burn whatever you can find ([TC 3-97.61, p. 82](doc:tc-3-97-61-military-mountaineering#page=82)).
+- **How much**: consumption depends on the stove, the wind, the water temperature and how often you cook. Measure your own: weigh a canister or a fuel bottle before and after a normal day, plan on that figure, and carry a spare. A windshield and a lid cut the fuel used; unprotected in wind, a stove wastes most of its heat ([TC 3-97.61, p. 82](doc:tc-3-97-61-military-mountaineering#page=82)).
+- **Storage**: fuel lives outside the sleeping space, upright, cool and out of the sun, away from the cooking area and any flame; gas canisters and fuel bottles are never left in a hot car or a tent porch in sun. Any stove used inside a closed tent, a bothy or a car makes carbon monoxide ([Carbon monoxide card](card:carbon-monoxide)).
 
 ## Why British fires fail
 
@@ -30,7 +40,7 @@ Never take wood from the ground. Take **dead standing wood**: dead branches stil
 
 ## Building it
 
-Build on a base of sticks or bark, not on wet ground, and out of the wind or behind a reflector of logs or stones. Put the tinder bundle down, lean the thinnest kindling over it in a small tepee or lean-to against a thicker stick, and keep the next two grades ready. Light the tinder at the bottom, upwind, and feed with thin sticks faster than you think, then slow down. Do not add anything thick until the fire has a bed of embers; do not crowd it; do not blow until it needs air. In rain, work under the tarp edge or a large sheet of bark, and keep the reserve wood in your jacket. A fire lay called the **long fire**, two logs parallel with the fire between, holds heat, cooks and dries kit at once; a criss-cross of split wood makes a bed of cooking embers.
+Build on a base of sticks or bark, not on wet ground, and out of the wind or behind a reflector of logs or stones. Put the tinder bundle down, lean the thinnest kindling over it in a small tepee or lean-to against a thicker stick, and keep the next two grades ready. Light the tinder at the bottom, upwind, and feed with thin sticks faster than you think, then slow down. Do not add anything thick until the fire has a bed of embers; do not crowd it; do not blow until it needs air. In rain, work under the tarp edge or a large sheet of bark, and keep the reserve wood in your jacket. A fire lay called the **long fire**, two logs parallel with the fire between, holds heat, cooks and dries kit at once; a criss-cross of split wood makes a bed of cooking embers ([Camping and Woodcraft, the fire chapters](doc:kephart-camping-and-woodcraft)).
 
 ## Keeping it and using it
 
@@ -50,4 +60,5 @@ Drown it, stir it, drown it again, feel it cold with the back of the hand. Scatt
 - [Shelter and heat module](module:shelter-heat)
 - [Knots library (zimgit)](kiwix:zimgit-knots_en/home)
 - [Survival, ATP 3-50.21, the fire chapter (US Army)](doc:atp-3-50-21-survival)
+- [Military Mountaineering, TC 3-97.61, stoves](doc:tc-3-97-61-military-mountaineering#page=82)
 - [Camping and Woodcraft (Kephart), the fire and axe chapters](doc:kephart-camping-and-woodcraft)

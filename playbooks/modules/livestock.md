@@ -23,6 +23,12 @@ sources:
   - title: National Risk Register 2025
     doc: nrr-2025
     as_at: 2025-01-16
+  - title: Raising chickens and ducks (VITA, CD3WD)
+    kiwix: cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM
+    as_at: 2026-09
+  - title: Sheep and goats need water (FAO Better Farming, CD3WD)
+    kiwix: cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/FB12SE/B77_6.HTM
+    as_at: 2026-09
 ---
 
 ## Key facts
@@ -33,11 +39,11 @@ sources:
 
 ## What to do
 
-1. Four to six hens will give three to five eggs a day in summer and far fewer in winter; each needs about 0.3 litres of water a day. {{#if water}}Fill their drinkers from the tap and keep a spare container filled against a cut.{{else}}With the mains off that water comes out of your store or the butt: fill the drinkers first thing and keep the butt covered ([Water module](module:water)).{{/if}}
-2. Goats provide milk but need 5 to 10 litres of water a day each; rabbits are the fastest source of home-reared protein.
+1. Four to six hens will give three to five eggs a day in summer and far fewer in winter; each needs about 0.3 litres of water a day, 30 litres per hundred birds at laying age ([Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM)). {{#if water}}Fill their drinkers from the tap and keep a spare container filled against a cut.{{else}}With the mains off that water comes out of your store or the butt: fill the drinkers first thing and keep the butt covered ([Water module](module:water)).{{/if}}
+2. Goats provide milk but, like sheep, drink about 5 to 6 litres of water a day each and cannot digest their fodder without it ([sheep and goats need water (FAO)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/FB12SE/B77_6.HTM)); rabbits are the fastest source of home-reared protein ([Raising rabbits (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/RABBITS.HTM)).
 3. If you plan to keep pigs, you need a county parish holding number and movement licences before you start ([keeping a pet pig](kiwix:govuk_resilience/www.gov.uk/guidance/keeping-a-pet-pig-or-micropig)).
 4. Keep bees for honey and wax if you have the space and are willing to learn the basics first ([beekeeping](kiwix:wikipedia_en_all_maxi/Beekeeping)).
-5. Killing an animal for your own consumption at home is lawful only with proper stunning, under the 2015 regulations ([Welfare of Animals at the Time of Killing Regulations 2015](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2015/1782/contents)).
+5. Killing an animal for your own consumption at home is lawful only with proper stunning, under the 2015 regulations ([Welfare of Animals at the Time of Killing Regulations 2015](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2015/1782/contents)); how to kill, bleed, skin, pluck, draw, hang and preserve rabbits, poultry, sheep and goats is on the [butchery page](page:butchery).
 
 ## UK specifics
 
@@ -54,3 +60,6 @@ sources:
 - [Growing food module](module:growing-food)
 - [Food module](module:food)
 - [WikiVet: veterinary encyclopedia](kiwix:wikivet.net_en_all/New_Front_Page)
+- [Butchery and preserving meat](page:butchery)
+- [Raising rabbits (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/RABBITS.HTM)
+- [Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM)

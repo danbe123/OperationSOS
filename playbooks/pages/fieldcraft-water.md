@@ -3,13 +3,13 @@ id: fieldcraft-water
 title: Water outdoors
 icon: drop
 order: 16
-summary: Where to find water in the British countryside, which sources to distrust, and how to make it safe with what you carry.
+summary: Where to find water in the British countryside, which sources to distrust, how to make it safe with what you carry, and ice on ponds and canals.
 category: fieldcraft
 ---
 
 ## Britain is wet, which is not the same as safe
 
-There is water almost everywhere here, and almost all of it has been through a sheep, a cow, a field of slurry or a sewage outflow. The two illnesses to fear are cryptosporidium, a parasite from livestock and human waste that causes weeks of diarrhoea and survives chlorine, and leptospirosis (Weil's disease), from rat and cattle urine in still or slow water, which starts like flu and can attack the liver and kidneys ([Cryptosporidiosis](kiwix:wikipedia_en_all_maxi/Cryptosporidiosis); [Leptospirosis](kiwix:wikipedia_en_all_maxi/Leptospirosis)). Neither shows in the water. Treat everything you did not carry.
+There is water almost everywhere here, and almost all of it has been through a sheep, a cow, a field of slurry or a sewage outflow. The two illnesses to fear are cryptosporidiosis, from a parasite in livestock and human waste that causes weeks of diarrhoea and survives chlorine, and leptospirosis (Weil's disease), from rat and cattle urine in still or slow water and on stored food, which starts like flu and can attack the liver and kidneys ([Cryptosporidiosis](kiwix:wikipedia_en_all_maxi/Cryptosporidiosis); [Leptospirosis](kiwix:wikipedia_en_all_maxi/Leptospirosis)). Neither shows in the water. Treat everything you did not carry, cover water containers, and wash the tops of tins before opening them.
 
 ## Finding it
 
@@ -23,23 +23,19 @@ Springs show as a green patch on a dry hillside, a line of rushes, or the point 
 
 ## Making it safe
 
-Clear it first: let silt settle, then pour through a cloth, a bandana, a sock or a bottle packed with grass and sand. Then choose one or more of:
-
-- **Boiling** kills everything, including cryptosporidium. A rolling boil for one minute is enough at British altitudes ([Water disinfection](page:water-disinfection)). Cool with the lid on.
-- **Filtering** with a hollow-fibre or ceramic filter of 0.1 to 0.2 microns removes bacteria and parasites but not viruses; in Britain, where viruses in wild water are rare, a filter is the everyday answer. Back-flush it, never let it freeze, and replace it when the flow slows.
-- **Chlorine or chlorine dioxide** tablets kill bacteria and viruses; ordinary chlorine does not touch cryptosporidium, chlorine dioxide does with a long contact time. Follow the packet, and double the time in cold water. Thin household bleach works at the doses on the [water disinfection page](page:water-disinfection).
-- **Ultraviolet** pens work on clear water only.
-- **Iodine** is no longer sold for water in the UK and should not be used by pregnant women or for weeks at a time.
-
-Filter then chemical, or filter then boil, covers everything. A wide-necked bottle, a filter and a metal cup you can boil in are the water kit.
+Clear it first (let silt settle, then pour through a cloth), then boil it, which kills everything including cryptosporidium, or filter it and then chlorinate: a filter removes mud and parasites but not viruses, and chlorine and NaDCC tablets do not kill cryptosporidium, so the two together cover what either misses. Doses, waiting times, UK bleach and the full table are on [Water disinfection](page:water-disinfection); the water kit is a wide-necked bottle, a filter and a metal cup you can boil in ([Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)).
 
 ## How much
 
-Two to three litres a day walking in cool weather, four or more in heat or hard work, plus cooking. Thirst lags behind need: drink at every stop, and watch the colour of your urine, which should be pale. Cold weather dehydrates too, because you do not feel thirsty and lose water in every breath. Salt matters when sweating hard: a pinch in food, or an oral rehydration mix ([Dehydration card](card:dehydration)).
+Two to three litres a day walking in cool weather, four or more in heat or hard work, plus cooking ([Water module](module:water)). Thirst lags behind need: drink at every stop, and watch the colour of your urine, which should be pale. Cold weather dehydrates too, because you do not feel thirsty and lose water in every breath. Salt matters when sweating hard: a pinch in food, or an oral rehydration mix ([Dehydration card](card:dehydration)).
 
 ## Carrying and storing
 
 Bottles in the pack, a bladder for walking, and never a single container: one fall and you have nothing. Store treated water covered and cool and use it within a day or two; re-treat anything that has stood in the warm. Mark the treated and the untreated so nobody in a tired group mixes them up.
+
+## Ice on ponds, lakes and canals
+
+British ice is thin, uneven and short-lived, and it kills every winter. Ice-road rules elsewhere want at least 10 cm of solid ice before a person walks on it ([Ice](kiwix:wikipedia_en_all_maxi/Ice)); a pond or canal here rarely reaches that, you cannot measure it from the bank, and it is thinnest where water moves, over reeds, near inflows and under snow. So: never walk on it, and never go in after a person or a dog. **Reach or throw, do not go**: lie flat on the bank and reach with a pole, a branch, a scarf or a rope, or throw something that floats, and get the person to kick and crawl out flat the way they came ([Survival, ATP 3-50.21, p. 154](doc:atp-3-50-21-survival#page=154)). If you go through yourself: the first minute is a gasp and panic that you can survive by keeping your face out of the water until it passes, then turn to the ice you came from, get your arms flat on it, kick hard and slide out on your chest, and roll away from the hole ([Cold shock response](kiwix:wikipedia_en_all_maxi/Cold_shock_response)). Out of the water, the casualty is treated for drowning and then for hypothermia ([Drowning card](card:drowning); [Hypothermia card](card:hypothermia)) — [[call 999]].
 
 ## Go deeper
 
@@ -47,4 +43,5 @@ Bottles in the pack, a bladder for walking, and never a single container: one fa
 - [Water disinfection](page:water-disinfection)
 - [Water Treatment Library (zimgit)](kiwix:zimgit-water_en/home)
 - [Living in the field: hygiene](page:fieldcraft-hygiene)
+- [Reading the weather and exposure](page:fieldcraft-weather)
 - [Field Hygiene and Sanitation, FM 21-10 (US Army)](doc:fm-21-10-field-hygiene)

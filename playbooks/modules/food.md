@@ -33,7 +33,7 @@ sources:
 
 ## What to do
 
-1. Build a store of tinned beans, fish, tomatoes and fruit; dried pasta, rice, oats and lentils; UHT and powdered milk; oil, salt, sugar, honey and stock cubes; tea and coffee; biscuits; peanut butter; baby formula; pet food; and a manual tin opener. Rotate it first-in, first-out.
+1. Build a store of tinned beans, fish, tomatoes and fruit; dried pasta, rice, oats and lentils; UHT and powdered milk; oil, salt, sugar, honey and stock cubes; tea and coffee; biscuits; peanut butter; baby formula (and read [Infant feeding](page:infant-feeding) for what to do when it runs out); pet food; and a manual tin opener. Rotate it first-in, first-out. Bulk storage of grain, flour, rice and pulses, keeping weevils and rats out, and how many grams of each make a day's calories are on the [Food storage](page:food-storage) page.
 2. {{#if power}}In a power cut, keep fridge and freezer doors shut: a fridge holds its temperature for about 4 hours, a full freezer for 48 hours, a half-full one for 24 hours.{{else}}Keep the fridge and freezer doors shut from now on, and note the time the power went: a fridge holds its temperature for about 4 hours, a full freezer for 48 hours, a half-full one for 24 hours.{{/if}} Discard any chilled food that has been above 8 °C for more than 4 hours ([FSA chill, freeze and defrost](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)).
 3. {{#if power}}Work out now how you would cook without mains power: a gas hob lit with a match, or a camping stove used only in a ventilated space; never a barbecue or a generator indoors, even in a doorway or open window ([Carbon monoxide card](card:carbon-monoxide)).{{else}}Cook on a gas hob lit with a match if the gas is still on, or on a camping stove used only in a ventilated space; never a barbecue or a generator indoors, even in a doorway or open window ([Carbon monoxide card](card:carbon-monoxide)).{{/if}}
 4. Home-canning low-acid vegetables and meat needs a pressure canner; water-bath canning them risks botulism, which grows unseen in low-acid, low-oxygen jars ([USDA Complete Guide to Home Canning](kiwix:usda-2015_en/home); [Botulism](kiwix:wikipedia_en_all_maxi/Botulism)).
@@ -41,8 +41,8 @@ sources:
 
 ## UK specifics
 
-- Foraging for personal consumption is lawful under the Theft Act 1968 s4(3), which covers the "four Fs": fruit, foliage, fungi and flowers. Uprooting a whole plant needs the landowner's permission under the Wildlife and Countryside Act 1981 s13. Roadside verges, dog-walking routes and sprayed field margins are often contaminated ([FSA safe foraging](kiwix:govuk_resilience/www.gov.uk/government/publications/guidance-for-safe-foraging/guidance-for-safe-foraging); [Foraging law](page:foraging-law)).
-- The two plants that kill in the UK are hemlock water dropwort ([Oenanthe crocata](kiwix:wikipedia_en_all_maxi/Oenanthe_crocata)), easily mistaken for wild parsnip or celery, and the death cap ([Amanita phalloides](kiwix:wikipedia_en_all_maxi/Amanita_phalloides)), which resembles edible field mushrooms.
+- Picking wild fruit, foliage, fungi and flowers for your own use is lawful, uprooting and selling are not, and verges, dog-walking routes and sprayed margins are contaminated: the detail is in [Foraging law](page:foraging-law) ([FSA safe foraging](kiwix:govuk_resilience/www.gov.uk/government/publications/guidance-for-safe-foraging/guidance-for-safe-foraging)).
+- The plants and fungi that kill most often in the UK are hemlock water dropwort ([Oenanthe crocata](kiwix:wikipedia_en_all_maxi/Oenanthe_crocata)), mistaken for wild parsnip or celery, and the death cap ([Amanita phalloides](kiwix:wikipedia_en_all_maxi/Amanita_phalloides)), a fungus that resembles edible field mushrooms; the full list is in [Wild food in Britain and Ireland](page:fieldcraft-food).
 - UK food rationing ran from 1940 to 1954 and is the country's own precedent for sustained shortage ([Rationing in the United Kingdom](kiwix:wikipedia_en_all_maxi/Rationing_in_the_United_Kingdom)).
 
 ## Go deeper
@@ -57,3 +57,7 @@ sources:
 - [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
 - [GrimGrains: cooking from stores](kiwix:grimgrains_en_all/grimgrains.com/)
 - [Wild food in Britain and Ireland](page:fieldcraft-food)
+- [Food storage: bulk staples and the calorie table](page:food-storage)
+- [Infant feeding](page:infant-feeding)
+- [Butchery and preserving meat](page:butchery)
+- [Fishing and the shore](page:fieldcraft-fishing)

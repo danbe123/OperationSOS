@@ -27,8 +27,8 @@ Crushing or tight chest pain, maybe spreading to arms, jaw, neck or back, with s
 
 ## Stop or escalate
 
-This is an emergency from the first minute — [[call 999]]. Every minute of delay costs heart muscle.
+This is an emergency from the first minute — [[call 999]]. Every minute of delay costs heart muscle. If nobody can come: complete rest in bed, propped up on pillows, or sitting forward if that eases the breathing, for at least a week and then very quiet for a month or more; the aspirin at once and then one a day; no smoking, no alcohol, no salt if the feet swell, and a pulse and breathing check every half hour in the first day ([WTIND, p. 374](doc:where-there-is-no-doctor#page=374); [Ship Captain's Medical Guide ch. 7, p. 3](doc:scmg-ch07#page=3)).
 
 ## Source
 
-[Heart attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/heart-attack/); [Ship Captain's Medical Guide ch. 1, p. 14](doc:scmg-ch01#page=14); [Myocardial infarction (Wikipedia)](kiwix:wikipedia_en_all_maxi/Myocardial_infarction).
+[Heart attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/heart-attack/); [Ship Captain's Medical Guide ch. 1, p. 14](doc:scmg-ch01#page=14); [Myocardial infarction (Wikipedia)](kiwix:wikipedia_en_all_maxi/Myocardial_infarction); [WTIND, p. 374](doc:where-there-is-no-doctor#page=374).

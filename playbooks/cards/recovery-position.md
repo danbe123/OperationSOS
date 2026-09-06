@@ -22,13 +22,13 @@ Someone is unresponsive but breathing normally, or is drowsy after a seizure, dr
 
 ## Warnings
 
-**Warning:** If you suspect a spinal injury, move them only if they are vomiting or you cannot keep the airway open.
+**Warning:** If you suspect a spinal injury, move them only if they are vomiting or you cannot keep the airway open ([spinal injury](card:spinal-injury)).
 **Warning:** If breathing stops, roll them onto their back and start [CPR](card:cpr-adult).
 
 ## Stop or escalate
 
-Anyone who is unconscious, however briefly, needs help coming — [[call 999]].
+Anyone who is unconscious, however briefly, needs help coming — [[call 999]]; after a blow to the head see the [head injury card](card:head-injury). If nobody can come: an unconscious person who keeps breathing is nursed on their side with the head low and tilted back so saliva or vomit runs out, nothing by mouth until they wake, the mouth swabbed and lips greased to keep them moist, and turned regularly day and night by two people to prevent bedsores; someone checks the breathing every few minutes ([WTIND, p. 126](doc:where-there-is-no-doctor#page=126); [Ship Captain's Medical Guide ch. 3, p. 7](doc:scmg-ch03#page=7)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 11](doc:scmg-ch01#page=11); [Recovery position (Wikipedia)](kiwix:wikipedia_en_all_maxi/Recovery_position).
+[Ship Captain's Medical Guide ch. 1, p. 11](doc:scmg-ch01#page=11); [Recovery position (Wikipedia)](kiwix:wikipedia_en_all_maxi/Recovery_position); [Ship Captain's Medical Guide ch. 3, p. 7](doc:scmg-ch03#page=7).

@@ -3,19 +3,20 @@ id: uk-numbers
 title: UK emergency numbers
 icon: phone
 order: 3
-summary: Every number a household needs in a UK emergency, on one printable page.
+summary: Every number a household needs in a UK emergency, on one printable page, with the Priority Services Register.
 category: reference
 ---
 
 ## Emergency
 
-{{#if phones}}These connect from any phone, on any network, with no credit and no SIM.{{else}}None of these will connect while the network is down: [getting help without phones](page:no-phones) is the page to use until it comes back.{{/if}}
+{{#if phones}}999 and 112 connect from any mobile on any network that has signal, with no credit, but the phone must have a SIM in it; the call roams onto whichever network can carry it ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).{{else}}None of these will connect while the network is down: [getting help without phones](page:no-phones) is the page to use until it comes back.{{/if}}
 
 | Number | For | Notes |
 |---|---|---|
 | 999 or 112 | Police, fire, ambulance, coastguard | Mountain rescue is reached via police |
-| 999 (text) | Deaf or speech-impaired users | Register first: text "register" to 999 |
-| 18000 | Relay UK | Text relay to the emergency services |
+| 999 (text) | Anyone who cannot make a voice call | Register first: text "register" to 999. Open to everyone, but slow ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number))) |
+| 999 BSL | Deaf people who use British Sign Language | Video relay to a BSL interpreter through the 999 BSL app or website; needs the internet |
+| 18000 | Relay UK | Text relay to the emergency services ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number))) |
 | 101 | Police non-emergency | Crime that has already happened, no danger to life |
 
 ## Health
@@ -30,13 +31,17 @@ category: reference
 
 | Number | For | Notes |
 |---|---|---|
-| 105 | Power cut | Great Britain, free from any phone |
-| 03457 643 643 | Power cut, Northern Ireland | NIE Networks |
+| 105 | Power cut | Great Britain, free from any phone ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)) |
+| 03457 643 643 | Power cut, Northern Ireland | NIE Networks ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)) |
 | 1800 372 999 | Power cut, Republic of Ireland | ESB Networks |
 | — | Power cut, Isle of Man, Jersey, Guernsey | The number on your bill |
+| 105 | Fallen or damaged power lines | Keep well away and report them ([Mains electricity](page:mains-electricity)) |
 | 0800 111 999 | Gas emergency, Great Britain | Smell gas: call this |
 | 0800 002 001 | Gas emergency, Northern Ireland | |
-| — | Water | Your supplier's number, on the bill; ask about the Priority Services Register ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)) |
+| — | Water, England | Your regional company; the number is on the bill |
+| — | Water, Scotland | Scottish Water covers the whole country; the number is on the bill ([Scottish Water](kiwix:wikipedia_en_all_maxi/Scottish_Water)) |
+| — | Water, Wales | Dŵr Cymru Welsh Water for most of Wales; the number is on the bill ([Welsh Water](kiwix:wikipedia_en_all_maxi/Dŵr_Cymru_Welsh_Water)) |
+| — | Water, Northern Ireland | NI Water; the number is on the bill ([Northern Ireland Water](kiwix:wikipedia_en_all_maxi/Northern_Ireland_Water)) |
 
 ## Flooding
 
@@ -64,9 +69,13 @@ category: reference
 | 0300 123 2040 | Action Fraud | Fraud and cyber crime |
 | 0800 328 5644 | Universal Credit helpline | |
 
+## Priority Services Register
+
+The Priority Services Register is a free, UK-wide scheme run by the electricity, gas and water companies for anyone who needs extra help when a supply fails: people who depend on medical equipment or on water, disabled and older people, households with young children, and anyone who needs information in another format or language. One registration through thepsr.co.uk reaches your electricity and gas networks; water companies keep their own register, so ring the number on the water bill as well. Benefits include advance warning of planned cuts, priority reconnection, help in a form you can use, and bottled water or a temporary supply when the mains fails ([The PSR](kiwix:govuk_resilience/www.thepsr.co.uk/); [Priority Services Register](kiwix:wikipedia_en_all_maxi/Priority_Services_Register); [Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). Register before the emergency: with the phones down there is no way to join.
+
 ## Emergency Alerts
 
-Emergency Alerts need no number and no app: they are sent by cell broadcast over 4G and 5G to every compatible phone in the affected area, complete with a loud siren-like sound even if the phone is silenced. Check your phone's setting is switched on ([How emergency alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
+Emergency Alerts need no number and no app; what they are and which phones get them is on [What still works](page:what-still-works).
 
 ## Electricity network operators
 
@@ -98,3 +107,5 @@ Write these in and keep this page on the fridge or in the grab bag:
 | Vet | |
 | School | |
 | Neighbours | |
+| Water company | |
+| Out-of-area contact | |

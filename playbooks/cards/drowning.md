@@ -15,7 +15,7 @@ Pulled from water and not breathing normally, or coughing, confused or exhausted
 1. Do not go in. Reach with a pole or throw something that floats.
 2. Ask for coastguard at sea, fire service inland — [[call 999]].
 3. Once out: check breathing for up to 10 seconds.
-4. If not breathing normally: give 5 rescue breaths first, then 30 chest compressions and 2 breaths, and keep going.
+4. If not breathing normally: give 5 rescue breaths first, then carry on as on the [adult CPR](card:cpr-adult) or [child and baby CPR](card:cpr-child) card, 30 presses to 2 breaths.
 5. Expect vomiting; turn them on their side to clear it, then continue.
 6. If they breathe, put them in the [recovery position](card:recovery-position), strip wet clothes and cover them; treat as [hypothermia](card:hypothermia).
 7. Use a defibrillator if one arrives; dry the chest first.
@@ -27,8 +27,8 @@ Pulled from water and not breathing normally, or coughing, confused or exhausted
 
 ## Stop or escalate
 
-Anyone pulled from the water needs help coming — [[call 999]]. Continue CPR until help takes over; cold-water drowning victims have survived long resuscitations.
+Anyone pulled from the water needs help coming — [[call 999]]. Continue CPR until help takes over; cold-water drowning victims have survived long resuscitations. If nobody can come: keep going, because drowning is the case where long CPR is worth it: the heart can restart once oxygen gets back in ([Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96)); anyone revived is rewarmed slowly, nursed sitting up once awake, and watched for a day for breathing trouble ([Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1); [Drowning (Wikipedia)](kiwix:wikipedia_en_all_maxi/Drowning).
+[Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1); [Drowning (Wikipedia)](kiwix:wikipedia_en_all_maxi/Drowning); [Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96).

@@ -30,7 +30,7 @@ When the cord runs out, Britain grows it. **Nettle** stems, stripped of leaves, 
 
 ## The knife
 
-A fixed blade of 10 to 12 cm with a full tang, or a stout folding knife, does everything from feather sticks to butchery. Cut away from the body and away from the hand holding the work, with the elbows on the knees for a stable cut; never cut towards the thigh's femoral artery, and never catch a falling knife. Use the spine on the ferro rod and keep the edge for wood. The law: a folding non-locking blade under three inches (7.62 cm) may be carried without a reason; any fixed or locking blade needs a good reason, and "in case" is not one, though an actual camping trip is ([Knife and firearms law](page:knife-firearms-law)).
+A fixed blade of 10 to 12 cm with a full tang, or a stout folding knife, does everything from feather sticks to butchery. Cut away from the body and away from the hand holding the work, with the elbows on the knees for a stable cut; never cut towards the thigh's femoral artery, and never catch a falling knife. Use the spine on the ferro rod and keep the edge for wood. What you may carry, and what counts as a good reason for a fixed or locking blade, is on [Knife and firearms law](page:knife-firearms-law).
 
 ## Saw and axe
 

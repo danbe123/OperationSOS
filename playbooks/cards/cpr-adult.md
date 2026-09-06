@@ -28,8 +28,8 @@ Someone has collapsed, does not respond when you shout and shake them, and is no
 
 ## Stop or escalate
 
-Someone else raises the alarm while you keep pressing — [[call 999]]. Stop only when the person breathes normally on their own (then use the [recovery position](card:recovery-position)) or a paramedic takes over.
+Someone else raises the alarm while you keep pressing — [[call 999]]. Stop only when the person breathes normally on their own (then use the [recovery position](card:recovery-position)) or a paramedic takes over. If nobody can come: CPR only buys time until a defibrillator or the heart's own recovery, so without a defibrillator it is reasonable to stop after 20 minutes with no response; keep going much longer for drowning, hanging, suffocation or anaphylaxis, where the heart can restart once oxygen or adrenaline gets through ([Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96)).
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 12](doc:scmg-ch01#page=12); [Cardiopulmonary resuscitation (Wikipedia)](kiwix:wikipedia_en_all_maxi/Cardiopulmonary_resuscitation).
+[Ship Captain's Medical Guide ch. 1, p. 12](doc:scmg-ch01#page=12); [Cardiopulmonary resuscitation (Wikipedia)](kiwix:wikipedia_en_all_maxi/Cardiopulmonary_resuscitation); [Survival and Austere Medicine, p. 96](doc:survival-austere-medicine-2017#page=96).

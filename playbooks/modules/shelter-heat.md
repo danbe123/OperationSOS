@@ -42,7 +42,7 @@ sources:
 
 - Load-bearing walls, openings and structural repairs are governed by Approved Document A; get advice before removing or cutting into one after storm or impact damage ([Approved Document A](doc:ad-a)).
 - Candles are a real fire risk in a powered-down house: keep them away from curtains and bedding and never leave one burning unattended.
-- Hypothermia can develop indoors in a cold house, not only outdoors; shivering that stops, confusion and slurred speech are late warning signs ([Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia)).
+- Hypothermia can develop indoors in a cold house, not only outdoors ([Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia)); the signs and first aid are on the [hypothermia card](card:hypothermia).
 
 ## Go deeper
 

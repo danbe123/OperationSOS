@@ -7,10 +7,10 @@ summary: Who is responsible for what in a UK emergency, and how a street or vill
 sources:
   - title: Community emergency planning (Ready Scotland)
     kiwix: govuk_resilience/ready.campaign.gov.scot/community-emergency-planning
-    as_at: 2026-09
+    as_at: 2026-09-05
   - title: Local resilience forums contact details (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/guidance/local-resilience-forums-contact-details
-    as_at: 2026-09
+    as_at: 2026-09-05
   - title: Wales Resilience Framework 2025
     doc: wales-resilience-framework-2025
     as_at: 2025-05
@@ -19,21 +19,21 @@ sources:
     as_at: 2025-07-08
   - title: Prepare, get involved in your community
     kiwix: prepare_uk/prepare.campaign.gov.uk/get-involved-in-your-community/
-    as_at: 2026-09
+    as_at: 2026-09-05
 ---
 
 ## Key facts
 
 - Category 1 responders — police, fire, ambulance, councils, the NHS and the Environment Agency — plan through Local Resilience Forums in England and Wales, Regional Resilience Partnerships in Scotland, and Emergency Preparedness Groups in Northern Ireland ([LRF contact details](kiwix:govuk_resilience/www.gov.uk/guidance/local-resilience-forums-contact-details)).
-- Councils open rest centres in a large emergency; RAYNET and 4x4 response groups are the volunteer layer underneath them.
+- Councils open rest centres in a large emergency; RAYNET and 4x4 response groups are the volunteer layer underneath them ([Amateur bands](page:amateur-bands)).
 - The government expects households to be self-sufficient for the first days of an emergency and wants to see more community groups able to help each other ([Resilience Action Plan, p. 21](doc:resilience-action-plan-2025#page=21)).
 
 ## What to do
 
-1. Write a community emergency plan covering: contacts, local risks, a skills register, an asset register (generators, chainsaws, 4x4s, halls), people who may need help, a rest centre or warm hub, how information is shared when phones are down (noticeboard, runners, a PMR446 channel), and who activates the plan and when it is reviewed ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)).
-2. {{#if phones}}Check on neighbours by phone or at the door, especially anyone likely to be on the Priority Services Register.{{else}}Check on neighbours at the door, especially anyone likely to be on the Priority Services Register: with the phones down nobody else will notice they are missing.{{/if}}
-3. Keep a paper copy of the plan and of the numbers page somewhere shared, such as a village hall, not only on one person's phone.
-4. Keep politics and blame out of the group; the plan works only if everyone stays willing to take part in it.
+1. Write a community emergency plan covering: contacts, local risks, a skills register, an asset register (generators, chainsaws, 4x4s, halls, grit bins, defibrillators), people who may need help, a rest centre or warm hub, how information is shared when phones are down (noticeboard, runners, a PMR446 channel), and who activates the plan and when it is reviewed ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)).
+2. {{#if phones}}Check on neighbours by phone or at the door, especially anyone likely to be on the Priority Services Register ([UK numbers](page:uk-numbers)).{{else}}Check on neighbours at the door, especially anyone likely to be on the Priority Services Register ([UK numbers](page:uk-numbers)): with the phones down nobody else will notice they are missing.{{/if}}
+3. Keep a paper copy of the community plan somewhere shared, such as a village hall, not only on one person's phone; each household's own meeting point, contacts and numbers belong on its [household plan](page:household-plan).
+4. Rehearse it: plan with the council's emergency planning team so you work well together, agree with other local groups how you will work with them, practise with your volunteers how they will respond safely to the local risks, and decide in advance how you will communicate, whether at a meeting place, over a messaging group or by radio ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)).
 
 ## UK specifics
 

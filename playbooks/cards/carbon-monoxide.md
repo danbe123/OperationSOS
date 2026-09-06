@@ -27,8 +27,8 @@ Headache, dizziness, nausea or flu-like feeling in several people or pets at onc
 
 ## Stop or escalate
 
-Anyone unconscious, confused, fitting or with chest pain — [[call 999]]. If breathing stops, [CPR](card:cpr-adult) in fresh air.
+Anyone unconscious, confused, fitting or with chest pain — [[call 999]]. If breathing stops, [CPR](card:cpr-adult) in fresh air. If nobody can come: fresh air alone clears half the carbon monoxide from the blood in a little over five hours, and oxygen from a cylinder or concentrator does it in under an hour and a half, so keep everyone resting outdoors or by a wide-open window for the rest of the day, give any oxygen you have, and do not let anyone back into the building until the appliance is off and the place aired ([Carbon monoxide poisoning (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Carbon_monoxide_poisoning); [Ship Captain's Medical Guide ch. 2](doc:scmg-ch02)). Poisoning by other gases and swallowed poisons is on the [poisoning card](card:poisoning).
 
 ## Source
 
-[Carbon monoxide poisoning (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/carbon-monoxide-poisoning/); [Carbon monoxide poisoning (GOV.UK)](kiwix:govuk_resilience/www.gov.uk/government/publications/carbon-monoxide-poisoning); [Approved Document J, p. 43](doc:ad-j#page=43).
+[Carbon monoxide poisoning (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/carbon-monoxide-poisoning/); [Carbon monoxide poisoning (GOV.UK)](kiwix:govuk_resilience/www.gov.uk/government/publications/carbon-monoxide-poisoning); [Approved Document J, p. 43](doc:ad-j#page=43); [Carbon monoxide poisoning (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Carbon_monoxide_poisoning).

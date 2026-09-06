@@ -7,12 +7,15 @@ summary: The numbers that matter, what still works when the power is off, Emerge
 sources:
   - title: How emergency alerts work (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/alerts/how-alerts-work
-    as_at: 2026-09
+    as_at: 2026-09-05
+  - title: Prepare, phone and broadband outages
+    kiwix: prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/
+    as_at: 2026-09-05
   - title: PMR446 (Wikipedia)
     kiwix: wikipedia_en_all_maxi/PMR446
     as_at: 2026-02-15
-  - title: Citizens band radio (Wikipedia)
-    kiwix: wikipedia_en_all_maxi/Citizens_band_radio
+  - title: CB radio in the United Kingdom (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom
     as_at: 2026-02-15
   - title: RSGB Band Plans 2026
     doc: rsgb-band-plan-2026
@@ -27,22 +30,22 @@ sources:
 
 ## Key facts
 
-- {{#if phones}}The numbers that matter:{{else}}The numbers that matter, none of which will connect until the network is back ([getting help without phones](page:no-phones)):{{/if}} 999 or 112 from any phone; 999 by text after registering by texting "register" to 999; 111; 105; the gas emergency line 0800 111 999 in Great Britain (0800 002 001 in Northern Ireland); Floodline 0345 988 1188 in England, Scotland and Wales (0300 2000 100 in Northern Ireland); 101; Samaritans 116 123. The full list is on [UK numbers](page:uk-numbers).
+- {{#if phones}}The numbers that matter:{{else}}The numbers that matter, none of which will connect until the network is back ([getting help without phones](page:no-phones)):{{/if}} 999 or 112 from any phone with a SIM; 999 by text after registering by texting "register" to 999; 111; 105; the gas emergency line 0800 111 999 in Great Britain (0800 002 001 in Northern Ireland); Floodline 0345 988 1188 in England, Scotland and Wales (0300 2000 100 in Northern Ireland); 101; Samaritans 116 123. The full list is on [UK numbers](page:uk-numbers).
 - The National Risk Register lists a simultaneous loss of all fixed and mobile forms of communication among its reasonable worst-case scenarios, alongside the risk of a cyber attack on telecommunications systems ([NRR 2025, p. 88](doc:nrr-2025#page=88); [NRR 2025, p. 55](doc:nrr-2025#page=55)).
-- Digital Voice landlines stop in a power cut unless the provider supplied a battery backup unit, which typically gives about an hour of calls, and the old copper network closes by January 2027. Mobile masts mostly run for about an hour on battery; texts often get through when calls do not, and a phone will try any available network for a 999 call.
+- In a power cut the landline, the broadband and most mobile masts stop within hours; what keeps going, for how long, and the satellite and Wi-Fi routes that still reach 999 are all on [What still works](page:what-still-works) ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/)).
 
 ## What to do
 
-1. Get a battery or wind-up FM radio: BBC Radio 4 (92 to 95 MHz FM) and BBC local radio carry official information; DAB drains batteries faster than FM, and Radio 4 long wave on 198 kHz closes in 2026 ([What still works](page:what-still-works)).
-2. Recognise Emergency Alerts: cell broadcasts sent over 4G and 5G that need no phone number, no data and no app, tested nationally on 23 April 2023 and again on 7 September 2025 ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
-3. For short-range talking, use PMR446: 16 licence-free analogue channels from 446.00625 to 446.19375 MHz at 0.5 W with a fixed antenna, giving 1 to 3 km in town and more from high ground ([PMR446](kiwix:wikipedia_en_all_maxi/PMR446); [PMR446 channels](page:pmr446)).
-4. Write down a household communications plan: meeting points, an out-of-area contact who is less likely to be affected by the same event, and every number on paper, not just in a phone ([Household plan](page:household-plan)).
-5. As a last resort, use a whistle: six blasts a minute, a minute of silence, then repeat.
+1. Get a battery or wind-up FM radio and write down the frequencies you use; the stations, and how long each service lasts without power, are on [What still works](page:what-still-works) ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/)).
+2. Check Emergency Alerts are switched on: the phone-based national warning, explained on [What still works](page:what-still-works) ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
+3. For short-range talking, use PMR446 walkie-talkies: licence-free and good for a few kilometres; the channels, tones and rules are on [PMR446 channels](page:pmr446) ([PMR446](kiwix:wikipedia_en_all_maxi/PMR446)).
+4. Fill in the household communications plan on [Household plan](page:household-plan): meeting point, out-of-area contact, every number on paper, and the "come now" signal.
+5. Listening to any radio service needs no licence; transmitting on the amateur or marine bands does ([Amateur bands](page:amateur-bands)). When nothing connects, [Getting help without phones](page:no-phones) covers runners, radios and satellite, and the whistle rescue signal is on [Getting found](page:fieldcraft-rescue).
 
 ## UK specifics
 
-- UK CB radio offers 40 licence-free FM channels around 27 MHz at up to 4 W, with channel 9 used by convention for emergencies ([Citizens band radio](kiwix:wikipedia_en_all_maxi/Citizens_band_radio)).
-- Amateur radio licences step up from Foundation (25 W) through Intermediate (100 W) to Full (1 kW, since February 2024) ([Ofcom amateur licence conditions](doc:ofcom-amateur-licence-2024)); the 2 m calling channel is 145.500 MHz FM and 70 cm is 433.500 MHz ([Amateur bands](page:amateur-bands); [RSGB Band Plans 2026](doc:rsgb-band-plan-2026)). RAYNET volunteers support councils and the emergency services with amateur radio during incidents.
+- CB radio is licence-free in the UK, FM at 4 W around 27 MHz; the amateur licence has had three levels since February 2024; RAYNET is the volunteer emergency network: all on [Amateur bands](page:amateur-bands) ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom); [Ofcom amateur licence conditions](doc:ofcom-amateur-licence-2024); [RSGB Band Plans 2026](doc:rsgb-band-plan-2026)).
+- Radio 4 long wave on 198 kHz is due to close; the date and the FM frequencies that replace it are on [What still works](page:what-still-works).
 
 ## Go deeper
 
@@ -51,7 +54,7 @@ sources:
 - [PMR446 channels](page:pmr446)
 - [Amateur bands](page:amateur-bands)
 - [Amateur Radio Q&A](kiwix:ham.stackexchange.com_en_all/questions)
-- [Emergency Alerts (Wikipedia)](kiwix:wikipedia_en_all_maxi/Emergency_Alerts_(United_Kingdom))
-- [RAYNET (Wikipedia)](kiwix:wikipedia_en_all_maxi/RAYNET)
+- [Cell Broadcast (Wikipedia)](kiwix:wikipedia_en_all_maxi/Cell_Broadcast)
+- [RAYNET (Wikipedia)](kiwix:wikipedia_en_all_maxi/Radio_Amateurs_Emergency_Network)
 - [Getting found](page:fieldcraft-rescue)
 - [Getting help without phones](page:no-phones)

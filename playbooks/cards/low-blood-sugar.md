@@ -27,8 +27,8 @@ Someone with diabetes is shaky, sweaty, pale, confused or drowsy; blood glucose 
 
 ## Stop or escalate
 
-Unconscious, fitting, unable to swallow, or no better after two rounds of sugar — [[call 999]].
+Unconscious, fitting, unable to swallow, or no better after two rounds of sugar — [[call 999]]. If nobody can come: keep giving sugar every 15 minutes while they can swallow, then a proper carbohydrate meal, and watch them for hours because the sugar can fall again; when in doubt whether it is low or high sugar, give the sugar, because low is far more dangerous and the sugar does no harm; an unconscious diabetic gets nothing by mouth and stays in the recovery position until they wake ([Ship Captain's Medical Guide ch. 7, p. 57](doc:scmg-ch07#page=57)). Insulin storage and what to do when it runs short are on [Chronic conditions](page:chronic-conditions).
 
 ## Source
 
-[Low blood sugar (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/low-blood-sugar-hypoglycaemia/); [Ship Captain's Medical Guide ch. 7, p. 56](doc:scmg-ch07#page=56); [Hypoglycemia (Wikipedia)](kiwix:wikipedia_en_all_maxi/Hypoglycemia).
+[Low blood sugar (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/low-blood-sugar-hypoglycaemia/); [Ship Captain's Medical Guide ch. 7, p. 57](doc:scmg-ch07#page=57); [Hypoglycemia (Wikipedia)](kiwix:wikipedia_en_all_maxi/Hypoglycemia).
