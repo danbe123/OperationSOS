@@ -35,7 +35,11 @@ describe('/board', () => {
     const facts = await screen.findByRole('region', { name: 'Today' });
     expect(facts).toHaveTextContent('Sunset');
     expect(facts).toHaveTextContent('BBC Radio 4');
-    expect(within(facts).getByRole('list', { name: 'Stock left' })).toHaveTextContent('Water 1.5 days');
+    const left = within(facts).getByRole('list', { name: 'Stock left' });
+    expect(left).toHaveTextContent('Water 1.5 days');
+    expect(left).toHaveTextContent('Food 4.6 days');
+    // Straight from the API's three figures: medicine is nought days, not left off.
+    expect(left).toHaveTextContent('Medicine 0 days');
 
     const log = await screen.findByRole('region', { name: 'Last events' });
     expect(within(log).getAllByRole('listitem')).toHaveLength(3);

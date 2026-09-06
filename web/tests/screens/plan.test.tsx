@@ -14,7 +14,7 @@ const stock: StockResponse = {
   people: 2,
   days: { water: 4, food: 3, medicine: 0 },
   items: [
-    { id: 1, name: 'Bottled water', category: 'water', quantity: 24, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4, kit_item: null },
+    { id: 1, name: 'Bottled water', category: 'water', quantity: 24, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4, expired: false, kit_item: null },
   ],
 };
 const events: Note[] = [

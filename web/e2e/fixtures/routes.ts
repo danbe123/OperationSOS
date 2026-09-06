@@ -258,7 +258,18 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (method === 'PUT') { state.household[idx] = { ...state.household[idx], ...body() } as Person; return json(route, state.household[idx]); }
       if (method === 'DELETE') { state.household.splice(idx, 1); return json(route, { ok: true }); }
     }
-    const withDays = (i: StockItem): StockItem => ({ ...i, days_left: i.per_person_day ? Math.round((i.quantity / (i.per_person_day * Math.max(1, state.household.length))) * 10) / 10 : null });
+    /** The API's own arithmetic in miniature: an expired row lasts nought days, and the category's
+     * figure is the shortest run in it. */
+    const withDays = (i: StockItem): StockItem => {
+      const expired = i.expires !== null && i.expires < new Date().toISOString().slice(0, 10);
+      const run = i.per_person_day ? Math.round((i.quantity / (i.per_person_day * Math.max(1, state.household.length))) * 10) / 10 : null;
+      return { ...i, expired, days_left: expired ? 0 : run };
+    };
+    const categoryDays = (items: StockItem[]) => {
+      const runs = (c: StockItem['category']) => items.filter((i) => i.category === c && i.days_left !== null).map((i) => i.days_left as number);
+      const shortest = (c: StockItem['category']) => (runs(c).length ? Math.min(...runs(c)) : 0);
+      return { water: shortest('water'), food: shortest('food'), medicine: shortest('medicine') };
+    };
     if (p === '/neighbours' && method === 'GET') return json(route, state.neighbours);
     if (p === '/neighbours' && method === 'POST') {
       const b = body();
@@ -303,10 +314,13 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
         changes: ['Mains power set to off', 'One person added to the household'],
       });
     }
-    if (p === '/stock' && method === 'GET') return json(route, { people: Math.max(1, state.household.length), items: state.stock.map(withDays) });
+    if (p === '/stock' && method === 'GET') {
+      const items = state.stock.map(withDays);
+      return json(route, { people: Math.max(1, state.household.length), days: categoryDays(items), items });
+    }
     if (p === '/stock' && method === 'POST') {
       const b = body();
-      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, kit_item: null };
+      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, expired: false, kit_item: null };
       state.stock.push(item);
       return json(route, withDays(item));
     }

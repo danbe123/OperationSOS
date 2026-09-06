@@ -1,18 +1,45 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { api } from '../../api/client';
-import type { StockCategory, StockItem } from '../../api/types';
+import type { StockCategory, StockItem, StockResponse } from '../../api/types';
 import { errorMessage, useQuery } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 import { isoToUkDate, ukDateToIso } from '../../tools/dates';
 
-export const CATEGORIES: { id: StockCategory; title: string; unit: string; rate: string }[] = [
-  { id: 'water', title: 'Water', unit: 'L', rate: '3' },
-  { id: 'food', title: 'Food', unit: 'days of meals', rate: '1' },
-  { id: 'fuel', title: 'Fuel', unit: 'L', rate: '' },
-  { id: 'medicine', title: 'Medicine', unit: 'doses', rate: '' },
-  { id: 'other', title: 'Other', unit: '', rate: '' },
+/** How much of a thing one person gets through in a day, by what it is. The rate belongs to the
+ * category, not to the tin: a household counting water at three litres a person a day should not be
+ * asked the same question again every time it buys another bottle. The API holds the same defaults,
+ * so a row added here without a rate is counted the same way. */
+export const RATE_BY_CATEGORY: Record<MeteredCategory, { rate: number; unit: string }> = {
+  water: { rate: 3, unit: 'L' },
+  food: { rate: 1, unit: 'person-days' },
+  medicine: { rate: 1, unit: 'days of supply' },
+};
+
+/** The order the screen counts in, and the unit each type is prefilled with. Fuel and other are
+ * tracked but not rated: nobody drinks diesel at so many litres a person a day. */
+export const CATEGORIES: { id: StockCategory; title: string; unit: string }[] = [
+  { id: 'water', title: 'Water', unit: 'L' },
+  { id: 'food', title: 'Food', unit: 'person-days' },
+  { id: 'medicine', title: 'Medicine', unit: 'days of supply' },
+  { id: 'fuel', title: 'Fuel', unit: 'L' },
+  { id: 'other', title: 'Other', unit: '' },
 ];
+
+/** The three the box meters: the ones that run out and matter when they do. */
+export const METERED = ['water', 'food', 'medicine'] as const;
+export type MeteredCategory = (typeof METERED)[number];
+const TITLE: Record<MeteredCategory, string> = { water: 'Water', food: 'Food', medicine: 'Medicine' };
+/** Two weeks: what the meters, and the kit tiers, are measured against. */
+const TARGET_DAYS = 14;
+
+function dayWords(days: number): string {
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+function peopleWords(people: number): string {
+  return `${people} ${people === 1 ? 'person' : 'people'}`;
+}
 
 /** The kit a row came from, by name. The API sends the kit's real title; a row saved by an older box has
  * only the slug, so "power-and-light/torch" becomes "Power and light" rather than nothing. */
@@ -23,6 +50,8 @@ export function kitTitle(item: Pick<StockItem, 'kit_item' | 'kit_title'>): strin
 }
 
 export function daysBadge(item: StockItem, today = new Date()): { text: string; cls: string } | null {
+  // The API's own verdict first: an expired row is worth nothing whatever its arithmetic says.
+  if (item.expired) return { text: 'expired', cls: 'badge badge-danger' };
   if (item.expires) {
     const exp = new Date(item.expires + 'T00:00:00');
     const days = Math.floor((exp.getTime() - today.getTime()) / 86_400_000);
@@ -34,18 +63,97 @@ export function daysBadge(item: StockItem, today = new Date()): { text: string; 
   return { text, cls: item.days_left < 3 ? 'badge badge-danger' : item.days_left < 7 ? 'badge badge-warn' : 'badge badge-ok' };
 }
 
+/** One meter: what is held, how long the API says it lasts, and what a fortnight would take.
+ * The days figure is the API's — the screen never counts a second one of its own — but the quantity
+ * held is the rows', and an expired row holds nothing. */
+export function meter(c: MeteredCategory, stock: StockResponse): { title: string; held: string; days: number; need: string; fraction: number } {
+  const { rate, unit } = RATE_BY_CATEGORY[c];
+  const rows = stock.items.filter((i) => i.category === c && !i.expired);
+  const held = rows.reduce((n, i) => n + i.quantity, 0);
+  const days = stock.days[c];
+  const needQty = rate * stock.people * TARGET_DAYS;
+  return {
+    title: TITLE[c],
+    held: `${held} ${unit}`.trim(),
+    days,
+    need: `two weeks needs ${needQty} ${unit}`.trim(),
+    fraction: Math.min(1, days / TARGET_DAYS),
+  };
+}
+
+const ORDER = CATEGORIES.map((c) => c.id);
+
+/** The list's order: the things that matter most first, and inside each the run that ends soonest.
+ * A row with no run at all (a torch, a tin with no rate) sorts last rather than first. */
+export function sortStock(items: StockItem[]): StockItem[] {
+  return [...items].sort((a, b) => {
+    const byCategory = ORDER.indexOf(a.category) - ORDER.indexOf(b.category);
+    if (byCategory !== 0) return byCategory;
+    if (a.days_left !== b.days_left) {
+      if (a.days_left === null) return 1;
+      if (b.days_left === null) return -1;
+      return a.days_left - b.days_left;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function StockMeters({ stock }: { stock: StockResponse }) {
+  return (
+    <ul className="meters" aria-label="Stock meters">
+      {METERED.map((c) => {
+        const m = meter(c, stock);
+        const tone = m.fraction < 3 / TARGET_DAYS ? 'meter meter-danger' : m.fraction < 0.5 ? 'meter meter-warn' : 'meter';
+        return (
+          <li className={tone} key={c}>
+            <div className="row meter-line">
+              <strong>{m.title}</strong>
+              <span className="muted">{m.held} · {dayWords(m.days)} for {peopleWords(stock.people)} · {m.need}</span>
+            </div>
+            <progress className="progress-line" value={m.days} max={TARGET_DAYS} aria-label={`${m.title} against two weeks`} />
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** A row is read first and changed second: what it is, how much of it there is and how long it
+ * lasts, with the fields behind Change. The date is never on the row — the badge already says
+ * "expired" or how long is left — so it appears once, in the edit. */
 function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
   const [quantity, setQuantity] = useState(String(item.quantity));
+  const [useBy, setUseBy] = useState(item.expires ? isoToUkDate(item.expires) : '');
   const [confirm, setConfirm] = useState(false);
+  // What one person gets through in a day: the row's own rate in the row's own unit, or the type's
+  // default in the type's unit. Never the two mixed, which would print "1 doses" for a rate in days.
+  const byCategory: { rate: number; unit: string } | undefined = RATE_BY_CATEGORY[item.category as MeteredCategory];
+  const rate = item.per_person_day !== null
+    ? { amount: item.per_person_day, unit: item.unit || 'units' }
+    : byCategory ? { amount: byCategory.rate, unit: byCategory.unit } : null;
+  const close = () => {
+    setQuantity(String(item.quantity));
+    setUseBy(item.expires ? isoToUkDate(item.expires) : '');
+    setConfirm(false);
+    setEditing(false);
+  };
   const save = async () => {
     const q = Number(quantity);
-    if (!Number.isFinite(q) || q < 0 || q === item.quantity) { setQuantity(String(item.quantity)); return; }
+    if (!Number.isFinite(q) || q < 0) { notify(`Write the quantity of ${item.name} as a number of zero or more.`); return; }
+    const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
+    if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
+    const patch: Partial<StockItem> = {};
+    if (q !== item.quantity) patch.quantity = q;
+    if (expires !== item.expires) patch.expires = expires;
+    if (Object.keys(patch).length === 0) { close(); return; }
     try {
-      await api.updateStock(item.id, { quantity: q });
+      await api.updateStock(item.id, patch);
+      setEditing(false);
+      setConfirm(false);
       await onChanged();
     } catch (e) {
       notify(`Could not update ${item.name}: ${errorMessage(e)}`);
-      setQuantity(String(item.quantity));
     }
   };
   const remove = async () => {
@@ -54,6 +162,7 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
       await onChanged();
     } catch (e) {
       notify(`Could not remove ${item.name}: ${errorMessage(e)}`);
+      setConfirm(false);
     }
   };
   const badge = daysBadge(item);
@@ -61,44 +170,56 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
     <li className="stack stock-row">
       <div className="row">
         <strong>{item.name}</strong>
+        <span className="muted">{item.quantity} {item.unit || 'units'}</span>
         {badge && <span className={badge.cls}>{badge.text}</span>}
-        {item.expires && <span className="muted">use by {isoToUkDate(item.expires)}</span>}
         {item.kit_item && (
           <Link className="muted" to={`/kit/${item.kit_item.split('/')[0]}`}>From the {kitTitle(item)} kit</Link>
         )}
-      </div>
-      <div className="row no-print">
-        <label className="field"><span>Quantity ({item.unit || 'units'})</span>
-          <input type="number" inputMode="decimal" min={0} step="any" aria-label={`Quantity of ${item.name}`} value={quantity} onChange={(e) => setQuantity(e.target.value)} onBlur={() => void save()} />
-        </label>
-        {item.per_person_day !== null && <span className="muted">{item.per_person_day} {item.unit} per person a day</span>}
-        {confirm ? (
-          <>
-            <button type="button" className="btn btn-danger" onClick={() => void remove()}>Confirm remove</button>
-            <button type="button" className="btn" onClick={() => setConfirm(false)}>Cancel</button>
-          </>
-        ) : (
-          <button type="button" className="btn btn-danger" onClick={() => setConfirm(true)} aria-label={`Remove ${item.name}`}>Remove</button>
+        {!editing && (
+          <button type="button" className="btn btn-small no-print" aria-label={`Change ${item.name}`} onClick={() => setEditing(true)}>Change</button>
         )}
       </div>
       {item.notes && <p className="note-body">{item.notes}</p>}
+      {editing && (
+        <div className="stack no-print">
+          <div className="row">
+            <label className="field"><span>Quantity ({item.unit || 'units'})</span>
+              <input type="number" inputMode="decimal" min={0} step="any" aria-label={`Quantity of ${item.name}`} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            </label>
+            <label className="field"><span>Use by</span>
+              <input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label={`Use by for ${item.name}`} value={useBy} onChange={(e) => setUseBy(e.target.value)} />
+            </label>
+          </div>
+          {rate && <p className="muted">This counts as {rate.amount} {rate.unit} per person a day.</p>}
+          <div className="row">
+            <button type="button" className="btn btn-primary" onClick={() => void save()}>Save</button>
+            <button type="button" className="btn" onClick={close}>Cancel</button>
+            {confirm ? (
+              <>
+                <button type="button" className="btn btn-danger" onClick={() => void remove()}>Confirm remove</button>
+                <button type="button" className="btn" onClick={() => setConfirm(false)}>Keep it</button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-danger" onClick={() => setConfirm(true)} aria-label={`Remove ${item.name}`}>Remove</button>
+            )}
+          </div>
+        </div>
+      )}
     </li>
   );
 }
 
-export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
-  const q = useQuery(() => api.stock(), [refreshKey], { refetchOnFocus: true });
+/** Adding something: what it is, how much, and when it goes off. No rate field — the type carries
+ * the rate, and leaving it out of the request is what tells the API to use it. */
+function AddStockForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
   const [category, setCategory] = useState<StockCategory>('water');
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('L');
-  const [rate, setRate] = useState('3');
   const [useBy, setUseBy] = useState('');
   const pick = (id: StockCategory) => {
-    const c = CATEGORIES.find((x) => x.id === id) ?? CATEGORIES[0];
     setCategory(id);
-    setUnit(c.unit);
-    setRate(c.rate);
+    setUnit((CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[0]).unit);
   };
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -107,52 +228,58 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
     const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
     if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
     try {
-      await api.addStock({ name: name.trim(), category, quantity: qty, unit: unit.trim() || 'units',
-        per_person_day: rate.trim() === '' ? null : Number(rate), expires });
-      setName(''); setQuantity(''); setUseBy('');
-      await q.refetch();
+      await api.addStock({ name: name.trim(), category, quantity: qty, unit: unit.trim() || 'units', expires });
+      onSaved();
     } catch (err) {
       notify(`Could not add the item: ${errorMessage(err)}`);
     }
   };
-  const people = q.data?.people ?? 1;
-  const items = q.data?.items ?? [];
-  const summary = CATEGORIES.map((c) => {
-    const inCat = items.filter((i) => i.category === c.id && i.days_left !== null);
-    if (!inCat.length) return null;
-    return { title: c.title, days: Math.min(...inCat.map((i) => i.days_left as number)) };
-  }).filter((x): x is { title: string; days: number } => x !== null);
   return (
-    <section className="panel" id="stock" aria-label="Stock">
-      <h2>Stock</h2>
-      <p className="muted">Days left are for {people} {people === 1 ? 'person' : 'people'} at the rates you set. Water: 3 litres per person a day covers drinking and basic hygiene.</p>
+    <form className="stack no-print" onSubmit={(e) => void add(e)} aria-label="Add stock">
+      <div className="row">
+        <label className="field"><span>Type</span>
+          <select aria-label="Type" value={category} onChange={(e) => pick(e.target.value as StockCategory)}>
+            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+        </label>
+        <label className="field"><span>Item</span><input type="text" aria-label="Item" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Bottled water" /></label>
+      </div>
+      <div className="row">
+        <label className="field"><span>Quantity</span><input type="number" inputMode="decimal" min={0} step="any" aria-label="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></label>
+        <label className="field"><span>Unit</span><input type="text" aria-label="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={20} /></label>
+        <label className="field"><span>Use by</span><input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label="Use by" value={useBy} onChange={(e) => setUseBy(e.target.value)} /></label>
+      </div>
+      <div className="row">
+        <button type="submit" className="btn btn-primary">Add item</button>
+        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
+  );
+}
+
+/** The cupboard: three meters, the rows behind them, and one button. Every days figure on it is the
+ * API's own, so the screen, the hub, the front door and the board all say the same number. */
+export function Stock() {
+  const q = useQuery(() => api.stock(), [], { refetchOnFocus: true });
+  const [adding, setAdding] = useState(false);
+  const stock = q.data;
+  const people = stock?.people ?? 1;
+  const items = sortStock(stock?.items ?? []);
+  return (
+    <>
+      <p className="muted">
+        Days are for {people} on the register. Water counts drinking and basic hygiene at 3 litres a
+        person a day; food in person-days; medicine in days of supply.
+      </p>
       {q.error && <p className="warning">Stock unavailable: {q.error}</p>}
-      {summary.length > 0 && (
-        <ul className="row stock-summary" aria-label="Stock summary">
-          {summary.map((s) => <li key={s.title} className="badge"><strong>{s.title}</strong> <span className={s.days < 3 ? 'warning' : ''}>{s.days} days</span></li>)}
-        </ul>
-      )}
+      {stock && <StockMeters stock={stock} />}
       <ul className="list" aria-label="Stock items">
         {items.map((i) => <StockRow key={i.id} item={i} onChanged={q.refetch} />)}
-        {q.data && items.length === 0 && <li className="muted">Nothing tracked yet.</li>}
+        {stock && items.length === 0 && <li className="muted">Nothing tracked yet.</li>}
       </ul>
-      <form className="stack no-print" onSubmit={(e) => void add(e)} aria-label="Add stock">
-        <div className="row">
-          <label className="field"><span>Type</span>
-            <select aria-label="Type" value={category} onChange={(e) => pick(e.target.value as StockCategory)}>
-              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-            </select>
-          </label>
-          <label className="field"><span>Item</span><input type="text" aria-label="Item" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="Bottled water" /></label>
-        </div>
-        <div className="row">
-          <label className="field"><span>Quantity</span><input type="number" inputMode="decimal" min={0} step="any" aria-label="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></label>
-          <label className="field"><span>Unit</span><input type="text" aria-label="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={20} /></label>
-          <label className="field"><span>Per person a day</span><input type="number" inputMode="decimal" min={0} step="any" aria-label="Per person a day" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="leave blank to skip" /></label>
-          <label className="field"><span>Use by</span><input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label="Use by" value={useBy} onChange={(e) => setUseBy(e.target.value)} /></label>
-        </div>
-        <button type="submit" className="btn btn-primary">Add item</button>
-      </form>
-    </section>
+      {adding
+        ? <AddStockForm onSaved={() => { setAdding(false); void q.refetch(); }} onCancel={() => setAdding(false)} />
+        : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add something else</button>}
+    </>
   );
 }

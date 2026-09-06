@@ -21,7 +21,12 @@ describe('Now', () => {
     const household = await screen.findByRole('region', { name: 'Household and stock' });
     // Who the box counts for is said once, on this panel and nowhere else on the screen.
     expect(household).toHaveTextContent('Nobody is registered yet, so the box counts stock for one person.');
-    expect(within(household).getByRole('list', { name: 'Days of stock left' })).toHaveTextContent('Water 1.5 days');
+    // The three figures are the API's own: medicine is on the panel at nought days even though no
+    // medicine row exists, and each one opens the Stock screen.
+    const left = within(household).getByRole('list', { name: 'Days of stock left' });
+    expect(left).toHaveTextContent('Water 1.5 days');
+    expect(left).toHaveTextContent('Medicine 0 days');
+    expect(within(left).getByRole('link', { name: 'Water 1.5 days' })).toHaveAttribute('href', '/plan/stock');
     // The front door says how a phone joins the box and nothing else about the machine: the address,
     // the drive's free space and the chip's temperature are on System.
     const box = await screen.findByTestId('status-strip');

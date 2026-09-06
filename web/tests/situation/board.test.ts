@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { boardSunset, nextTasks, stockDays, wantsBoard } from '../../src/situation/board';
-import { condition, makeView, powerOffView, stockResponse, VIEW_NOW, view } from '../fixtures/api';
+import { boardSunset, nextTasks, wantsBoard } from '../../src/situation/board';
+import { condition, makeView, powerOffView, VIEW_NOW, view } from '../fixtures/api';
 
 const NOW = Date.parse(VIEW_NOW);
 
@@ -29,10 +29,5 @@ describe('the board', () => {
     expect(computed!.getUTCHours()).toBe(18);
     const home = makeView({ meta: { ...view.meta, sunset: null, home: { lat: 50.93, lon: -1.43, label: 'Home', flood_zone: '3' } } });
     expect(boardSunset(home, NOW)!.getTime()).toBeLessThan(computed!.getTime());
-  });
-
-  it('counts the shortest run of each stock category, water first', () => {
-    expect(stockDays(stockResponse.items)).toEqual([{ category: 'water', days: 1.5 }, { category: 'food', days: 4.6 }]);
-    expect(stockDays([])).toEqual([]);
   });
 });

@@ -41,6 +41,7 @@ const People = lazy(() => import('./screens/plan/People').then((m) => ({ default
 const NeighboursScreen = lazy(() => import('./screens/plan/NeighboursScreen').then((m) => ({ default: m.NeighboursScreen })));
 const NotesScreen = lazy(() => import('./screens/plan/NotesScreen').then((m) => ({ default: m.NotesScreen })));
 const PlanPage = lazy(() => import('./screens/plan/PlanPage').then((m) => ({ default: m.PlanPage })));
+const StockScreen = lazy(() => import('./screens/plan/StockScreen').then((m) => ({ default: m.StockScreen })));
 const SunMoon = lazy(() => import('./screens/tools/SunMoon').then((m) => ({ default: m.SunMoon })));
 
 /** What a screen looks like while its own code is being read off the disk. It is a screen, not a
@@ -102,6 +103,7 @@ export const routes: RouteObject[] = [
       { path: 'plan', element: <Later title="Household"><Plan /></Later> },
       { path: 'plan/people', element: <Later title="People"><People /></Later> },
       { path: 'plan/neighbours', element: <Later title="Neighbours"><NeighboursScreen /></Later> },
+      { path: 'plan/stock', element: <Later title="Stock"><StockScreen /></Later> },
       { path: 'plan/notes', element: <Later title="Notes and pins"><NotesScreen /></Later> },
       { path: 'plan/plan', element: <Later title="The plan"><PlanPage /></Later> },
       { path: 'tools', element: <Tools /> },

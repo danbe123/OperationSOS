@@ -64,6 +64,8 @@ export type StockCategory = 'water' | 'food' | 'fuel' | 'medicine' | 'other';
 export type StockItem = {
   id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
   expires: string | null; notes: string; updated_at: string; days_left: number | null;
+  /** Past its use-by date: it is still in the cupboard, but it counts for nothing and `days_left` is 0. */
+  expired: boolean;
   kit_item: string | null;
   /** The title of the kit `kit_item` names, so the row can say "From the Power and light kit". Absent on a
    * box built before the field existed, where the screen falls back to the slug. */

@@ -1,5 +1,5 @@
 // What the board shows, worked out without React so it can be tested with a fixed clock.
-import type { SituationView, StockItem, Task } from '../api/types';
+import type { SituationView, Task } from '../api/types';
 import { sunTimes } from '../tools/sun';
 
 /** The kiosk falls back to the board rather than a dim screen when the engine asks for it,
@@ -29,18 +29,4 @@ export function boardSunset(view: SituationView | null, now: number = Date.now()
   const lon = home?.lon ?? UK_CENTRE.lon;
   const times = sunTimes(lat, lon, new Date(now));
   return times.polar === null ? times.sunset : null;
-}
-
-/** The shortest run of each stock category, the way the plan screen counts it. */
-export function stockDays(items: StockItem[]): { category: string; days: number }[] {
-  const out = new Map<string, number>();
-  for (const i of items) {
-    if (i.days_left === null) continue;
-    const current = out.get(i.category);
-    if (current === undefined || i.days_left < current) out.set(i.category, i.days_left);
-  }
-  const order = ['water', 'food', 'medicine', 'fuel', 'other'];
-  return [...out.entries()]
-    .map(([category, days]) => ({ category, days }))
-    .sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category));
 }

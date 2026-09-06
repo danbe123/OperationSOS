@@ -70,7 +70,8 @@ function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (k
     }
   };
   const badge = item.stock_item ? daysBadge({ id: item.stock_item.id, name: item.name, category: item.stock?.category ?? 'other', quantity: item.stock_item.quantity,
-    unit: item.stock_item.unit, per_person_day: null, expires: item.stock_item.expires, notes: '', updated_at: '', days_left: item.stock_item.days_left, kit_item: `${slug}/${item.id}` }) : null;
+    unit: item.stock_item.unit, per_person_day: null, expires: item.stock_item.expires, notes: '', updated_at: '',
+    days_left: item.stock_item.days_left, expired: false, kit_item: `${slug}/${item.id}` }) : null;
   const id = `kit-${slug}-${item.id}`;
   return (
     <li className={item.checked ? 'task-row task-done' : 'task-row'}>

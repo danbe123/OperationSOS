@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
@@ -12,19 +12,19 @@ import { nowTitle } from '../situation/nowTitle';
 import { Readiness } from '../situation/Readiness';
 import { scenarioMapHref } from '../situation/mapLink';
 import { isEventful, useCallsHidden, useSituation } from '../situation/SituationProvider';
-import { stockDays } from '../situation/board';
 import { situationLine } from '../components/SituationClock';
 import { ReadAloud } from '../situation/ReadAloud';
 import './now.css';
 
-const STOCK_TITLE: Record<string, string> = { water: 'Water', food: 'Food', medicine: 'Medicine', fuel: 'Fuel', other: 'Other' };
+/** The three the box counts in days, in the order it counts them. */
+const STOCK_DAYS = [['water', 'Water'], ['food', 'Food'], ['medicine', 'Medicine']] as const;
 
 /** Who lives here and how long the stock lasts: the two facts the rest of the box counts with. */
 function HouseholdSummary() {
   const people = useQuery(() => api.household(), [], { refetchOnFocus: true });
   const stock = useQuery(() => api.stock(), [], { refetchOnFocus: true });
   const neighbours = useQuery(() => api.neighbours(), [], { refetchOnFocus: true });
-  const days = useMemo(() => stockDays(stock.data?.items ?? []), [stock.data]);
+  const days = stock.data?.days ?? null;
   const count = people.data?.length ?? 0;
   return (
     <section className="panel" aria-label="Household and stock">
@@ -41,19 +41,28 @@ function HouseholdSummary() {
           : `${count} ${count === 1 ? 'person is' : 'people are'} registered.`}
         {neighbours.data && neighbours.data.length > 0 && ` ${neighbours.data.length} ${neighbours.data.length === 1 ? 'neighbour' : 'neighbours'} on the street list.`}
       </p>
-      {days.length === 0 ? (
+      {!days || (stock.data?.items.length ?? 0) === 0 ? (
         <>
           <p className="muted">No stock recorded yet, so the box cannot say how many days you have.</p>
-          <p className="row"><Link className="btn" to="/plan#stock"><Icon name="drop" size={18} /><span>Add water, food and fuel</span></Link></p>
+          <p className="row"><Link className="btn" to="/plan/stock"><Icon name="drop" size={18} /><span>Add water, food and fuel</span></Link></p>
         </>
       ) : (
+        /* The API's own three figures, not a fourth count of the same cupboard: whatever Stock,
+           the hub and the board say, this panel says too. */
         <ul className="row now-stock" aria-label="Days of stock left">
-          {days.map((d) => (
-            <li key={d.category} className={d.days < 3 ? 'badge badge-danger' : d.days < 7 ? 'badge badge-warn' : 'badge badge-ok'}>
-              <span aria-hidden="true">{d.days < 3 ? '⚠' : d.days < 7 ? '▲' : '✓'}</span>
-              {STOCK_TITLE[d.category] ?? d.category} {d.days} {d.days === 1 ? 'day' : 'days'}
-            </li>
-          ))}
+          {STOCK_DAYS.map(([id, title]) => {
+            const d = days[id];
+            return (
+              <li key={id}>
+                {/* The badge is the link, not a link inside a badge: a chip that keeps its tone and
+                    opens the cupboard it is talking about. */}
+                <Link className={d < 3 ? 'badge badge-danger' : d < 7 ? 'badge badge-warn' : 'badge badge-ok'} to="/plan/stock">
+                  <span aria-hidden="true">{d < 3 ? '⚠' : d < 7 ? '▲' : '✓'}</span>
+                  {title} {d} {d === 1 ? 'day' : 'days'}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

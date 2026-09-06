@@ -5,14 +5,15 @@ import { useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
 import { describeElapsed, phaseFor } from '../tools/situation';
 import '../screens/board.css';
-import { boardSunset, nextTasks, stockDays } from './board';
+import { boardSunset, nextTasks } from './board';
 import { ago, clockTime, CONDITION_INFO, HOME_CONDITION_IDS, sinceDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
 import { bulletinWords, eventTitle } from '../api/words';
 import { nowTitle } from './nowTitle';
 import { useSituation } from './SituationProvider';
 
 export const BOARD_REFRESH_MS = 30_000;
-const STOCK_TITLE: Record<string, string> = { water: 'Water', food: 'Food', medicine: 'Medicine', fuel: 'Fuel', other: 'Other' };
+/** The three the box counts in days, in the order it counts them. */
+const STOCK_DAYS = [['water', 'Water'], ['food', 'Food'], ['medicine', 'Medicine']] as const;
 
 function timeOfDay(at: number): string {
   return new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -39,7 +40,7 @@ export function BoardView() {
   const jobs = nextTasks(view.tasks);
   const sunset = boardSunset(view, now);
   const bulletin = view.bulletins.next;
-  const days = stockDays(stock.data?.items ?? []);
+  const days = (stock.data?.items.length ?? 0) > 0 ? stock.data?.days ?? null : null;
   // Three lines, not five: the log was the bottom third of the across-the-room screen, in the
   // smallest type on it, and the tiles above it were being clipped to make room.
   const log = (events.data ?? []).slice(0, 3);
@@ -91,10 +92,10 @@ export function BoardView() {
           <p><Icon name="sun" size={22} /> <span>Sunset {sunset ? timeOfDay(sunset.getTime()) : 'not tonight'}</span></p>
           <p><Icon name="radio" size={22} /> <span>{bulletin ? `${bulletinWords(bulletin.station)} ${bulletinWords(bulletin.frequency)} at ${clockTime(bulletin.at)}` : 'No bulletin scheduled'}</span></p>
           <ul className="board-stock" aria-label="Stock left">
-            {days.length === 0 && <li className="muted">No stock recorded</li>}
-            {days.map((d) => (
-              <li key={d.category} className={d.days < 3 ? 'warning' : undefined}>
-                {STOCK_TITLE[d.category] ?? d.category} {d.days} {d.days === 1 ? 'day' : 'days'}
+            {!days && <li className="muted">No stock recorded</li>}
+            {days && STOCK_DAYS.map(([id, title]) => (
+              <li key={id} className={days[id] < 3 ? 'warning' : undefined}>
+                {title} {days[id]} {days[id] === 1 ? 'day' : 'days'}
               </li>
             ))}
           </ul>
