@@ -15,7 +15,7 @@ describe('Tasks', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     vi.spyOn(api, 'household').mockResolvedValue(people);
     renderRoute('/tasks');
-    const now = await screen.findByRole('region', { name: 'Now' });
+    const now = await screen.findByRole('region', { name: 'Right now' });
     expect(within(now).getAllByRole('listitem')).toHaveLength(2);
     expect(within(now).getByText('Pumped supplies fail once the power has been off a day.')).toBeInTheDocument();
     expect(within(now).getByRole('link', { name: 'Read more: Fill the bath and every container' })).toHaveAttribute('href', '/m/water');

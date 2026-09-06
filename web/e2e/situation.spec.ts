@@ -28,7 +28,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await doing.getByRole('checkbox', { name: /Fill the bath/ }).click();
   await expect(doing.getByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
   await page.getByRole('link', { name: 'All tasks' }).click();
-  await expect(page.getByRole('region', { name: 'Now' })).toContainText('Keep the fridge and freezer doors shut');
+  await expect(page.getByRole('region', { name: 'Right now' })).toContainText('Keep the fridge and freezer doors shut');
   await expect(page.locator('.task-count')).toHaveText('3 to do');
 
   // the band follows onto every other screen

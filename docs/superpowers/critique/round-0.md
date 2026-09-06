@@ -261,3 +261,11 @@ own screenshots before declaring it done:
 - **The checklist counted itself twice**, in a badge and in its own summary line.
 - **The plan's sections were not landmarks** — a `<section>` with no name is not a region — so a
   screen reader had no way to jump between the household, the street list, the stock and the log.
+- **MapLibre's own controls arrived as white boxes** on a phosphor-green map. The zoom, compass and
+  scale now follow the theme, and their icons invert in the two dark ones.
+- **The map toolbar had eight tools and 757 pixels**, so Share fell off the end. "Locate me" moved
+  inside Find place, which is where it belonged: one panel that either reads the device's position
+  or says why it cannot, with the place, postcode and grid-reference entry either way. The toolbar
+  is now exactly the seven the brief names, plus Print in the screen head.
+- **The task list called its first bucket "Now"**, the same word as the destination. It says "Right
+  now", which is what the guides call the same moment.

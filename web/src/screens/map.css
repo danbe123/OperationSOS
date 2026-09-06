@@ -59,3 +59,11 @@
 .map-tip-rows dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 480px) { .map-tip-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .map-tip-rows dt { margin-top: 4px; } }
 .map-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; text-align: center; }
+
+/* MapLibre's own controls follow the theme rather than arriving as white boxes on a dark map. */
+.maplibregl-ctrl-group { background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: none; }
+.maplibregl-ctrl-group button + button { border-top: 1px solid var(--line); }
+.maplibregl-ctrl-group button:disabled { opacity: 0.5; }
+.maplibregl-ctrl-scale { background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-top: 0; font-size: var(--t-meta); }
+:root[data-theme="vault"] .maplibregl-ctrl-icon,
+:root[data-theme="blackout"] .maplibregl-ctrl-icon { filter: invert(1) brightness(1.1); }

@@ -97,11 +97,11 @@ describe('Map screen', () => {
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Centre: SU 3728 1551');
   });
 
-  it('Locate me on a phone explains the HTTP limit and offers place, postcode, grid entry and the packs', async () => {
+  it('Find place on a phone explains the HTTP limit and offers place, postcode, grid entry and the packs', async () => {
     mockApis();
     const user = userEvent.setup();
     renderRoute('/map');
-    await user.click(await screen.findByRole('button', { name: /Locate me/ }));
+    await user.click(await screen.findByRole('button', { name: /Find place/ }));
     expect(screen.getByText(/GPS is blocked over HTTP/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Phone map packs/ })).toHaveAttribute('href', '/maps/packs/index.html');
     await user.type(screen.getByLabelText('Place, postcode or grid reference'), 'SU 3728 1551');
@@ -111,14 +111,15 @@ describe('Map screen', () => {
     expect(Math.abs(call.center[1] - 50.9379)).toBeLessThan(0.001);
   });
 
-  it('Locate me on the kiosk uses geolocation', async () => {
+  it('Find place on the kiosk offers the device position and flies to it', async () => {
     mockApis();
     Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
     const getCurrentPosition = vi.fn((ok: (p: { coords: { latitude: number; longitude: number } }) => void) => ok({ coords: { latitude: 51.5, longitude: -0.12 } }));
     Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true });
     const user = userEvent.setup();
     renderRoute('/map', { kiosk: true });
-    await user.click(await screen.findByRole('button', { name: /Locate me/ }));
+    await user.click(await screen.findByRole('button', { name: /Find place/ }));
+    await user.click(screen.getByRole('button', { name: /Locate me/ }));
     expect(getCurrentPosition).toHaveBeenCalled();
     expect(lastMap().flyTo).toHaveBeenLastCalledWith(expect.objectContaining({ center: [-0.12, 51.5] }));
     Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });

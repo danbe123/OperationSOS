@@ -29,7 +29,7 @@ export const STATE_TONE: Record<ConditionState, 'ok' | 'warn' | 'danger'> = { wo
 export const SEVERITY_SYMBOL: Record<Severity, string> = { info: 'ℹ', warn: '▲', danger: '⚠', passed: '✕' };
 export const SEVERITY_TONE: Record<Severity, 'default' | 'warn' | 'danger'> = { info: 'default', warn: 'warn', danger: 'danger', passed: 'danger' };
 
-export const BUCKET_TITLE: Record<TaskBucket, string> = { now: 'Now', hour: 'Within the hour', today: 'Today', week: 'This week' };
+export const BUCKET_TITLE: Record<TaskBucket, string> = { now: 'Right now', hour: 'Within the hour', today: 'Today', week: 'This week' };
 export const BUCKET_ORDER: TaskBucket[] = ['now', 'hour', 'today', 'week'];
 
 const MINUTE = 60;

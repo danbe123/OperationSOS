@@ -22,7 +22,7 @@ import { Screen } from '../shell/Screen';
 import './map.css';
 
 const BASE_KEY = 'sos.mapBase';
-type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'locate' | 'home' | 'nearby';
+type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'home' | 'nearby';
 const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 
 export function MapScreen() {
@@ -132,16 +132,15 @@ export function MapScreen() {
     setNearbyAt({ lat: view.lat, lon: view.lon });
   };
 
+  /** The box asks the device where it is where it can, and says why it cannot where it cannot.
+   * Either way the answer lives in the Find place panel, so there is one place to look. */
+  const canLocate = typeof window !== 'undefined' && window.isSecureContext && Boolean(navigator.geolocation);
   const locate = () => {
-    if (window.isSecureContext && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => flyTo(pos.coords.longitude, pos.coords.latitude, 14),
-        () => notify('No position available on this device.'),
-        { timeout: 10_000 },
-      );
-      return;
-    }
-    setPanel('locate');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { flyTo(pos.coords.longitude, pos.coords.latitude, 14); setPanel('none'); },
+      () => notify('No position available on this device.'),
+      { timeout: 10_000 },
+    );
   };
 
   const print = () => {
@@ -167,7 +166,6 @@ export function MapScreen() {
         <button type="button" className={panel === 'home' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'home'} onClick={() => setPanel(panel === 'home' ? 'none' : 'home')}><Icon name="home" size={18} /><span>Home</span></button>
         <button type="button" className={panel === 'nearby' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'nearby'} onClick={() => (panel === 'nearby' ? setPanel('none') : openNearby())}><Icon name="locate" size={18} /><span>Nearby</span></button>
         <button type="button" className={measuring ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={measuring} onClick={() => { setMeasuring(!measuring); if (measuring) setMeasure([]); }}><Icon name="measure" size={18} /><span>Measure</span></button>
-        <button type="button" className="btn btn-small" onClick={locate}><Icon name="locate" size={18} /><span>Locate me</span></button>
         <button type="button" className={panel === 'share' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'share'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" size={18} /><span>Share</span></button>
       </div>
       <div className="map-host">
@@ -188,15 +186,13 @@ export function MapScreen() {
         {panel === 'search' && (
           <div className="map-panel" role="dialog" aria-label="Find place">
             <div className="row"><h2>Find a place</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
+            {canLocate ? (
+              <button type="button" className="btn" onClick={locate}><Icon name="locate" size={18} /><span>Locate me</span></button>
+            ) : (
+              <p className="warning">GPS is blocked over HTTP on phones, so the box cannot read your position. Type a place, a postcode or a grid reference instead.</p>
+            )}
             <PlaceSearch onPick={onPick} onGrid={onGrid} />
-          </div>
-        )}
-        {panel === 'locate' && (
-          <div className="map-panel" role="dialog" aria-label="Locate me">
-            <div className="row"><h2>Where am I?</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
-            <p>⚠ GPS is blocked over HTTP on phones, so the box cannot read your position. Type a place, a postcode or a grid reference instead.</p>
-            <PlaceSearch onPick={onPick} onGrid={onGrid} />
-            {config?.packs_index_url && <p>For GPS on your phone, install the offline <a href={config.packs_index_url}>Phone map packs</a>.</p>}
+            {!canLocate && config?.packs_index_url && <p>For GPS on your phone, install the offline <a href={config.packs_index_url}>Phone map packs</a>.</p>}
           </div>
         )}
         {panel === 'pins' && (
