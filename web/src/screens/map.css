@@ -19,15 +19,14 @@
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
 /* The map surface is somebody else's cartography and it arrives at somebody else's brightness: a
-   mid-grey OpenStreetMap sheet is the brightest large area on a blackout screen at night, on the
-   one screen a household reads outdoors in the dark. A wash in the theme's own ground colour sits
-   over the tiles and under every control; field keeps the paper it was drawn as. */
+   mid-grey OpenStreetMap sheet is the brightest large area on a mono screen at night, on the one
+   screen a household reads outdoors in the dark. A wash in the theme's own ground colour sits over
+   the tiles and under every control; field keeps the paper it was drawn as. */
 .map-host::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: var(--ground); opacity: 0;
 }
-:root[data-theme="vault"] .map-host::after { opacity: 0.34; }
-:root[data-theme="blackout"] .map-host::after { opacity: 0.5; }
+:root[data-theme="mono"] .map-host::after { opacity: 0.5; }
 :root[data-dim="on"] .map-host::after { opacity: 0.55; }
 :root[data-theme="field"] .map-host::after { opacity: 0; }
 @media print { .map-host::after { display: none; } }
@@ -136,5 +135,4 @@
 .maplibregl-ctrl-group button + button { border-top: 1px solid var(--line); }
 .maplibregl-ctrl-group button:disabled { opacity: 0.5; }
 .maplibregl-ctrl-scale { background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-top: 0; font-size: var(--t-meta); }
-:root[data-theme="vault"] .maplibregl-ctrl-icon,
-:root[data-theme="blackout"] .maplibregl-ctrl-icon { filter: invert(1) brightness(1.1); }
+:root[data-theme="mono"] .maplibregl-ctrl-icon { filter: invert(1) brightness(1.1); }

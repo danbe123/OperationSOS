@@ -9,7 +9,7 @@ import { notify } from '../components/Notice';
 import { usePinGate } from '../components/PinModal';
 import { Progress } from '../components/Progress';
 import { useKiosk } from '../kiosk/KioskProvider';
-import { THEMES, type Theme } from '../theme/ThemeProvider';
+import { THEMES, THEME_LABELS, type Theme } from '../theme/ThemeProvider';
 
 export function formatUptime(s: number): string {
   const days = Math.floor(s / 86400);
@@ -219,7 +219,7 @@ function SystemBody({ status, kiosk, run, dialog, update, refresh }: {
           <label className="field"><span>Return to Home after (minutes)</span><input type="number" aria-label="Return to Home after (minutes)" min={5} max={480} value={home} onChange={(e) => setHome(e.target.value)} inputMode="numeric" /></label>
           <label className="field"><span>Default theme</span>
             <select aria-label="Default theme" value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
-              {THEMES.map((t) => <option key={t} value={t}>{t}</option>)}
+              {THEMES.map((t) => <option key={t} value={t}>{THEME_LABELS[t]}</option>)}
             </select>
           </label>
           <button type="submit" className="btn btn-primary">Save settings</button>

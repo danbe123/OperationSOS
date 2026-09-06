@@ -51,7 +51,8 @@ export function terrainSpec(config: MapConfig, theme: Theme): { sources: Record<
   return { sources, layers };
 }
 function contourColour(theme: Theme): string {
-  return theme === 'blackout' ? '#7a3a3a' : theme === 'vault' ? '#6a8a5a' : '#b08050';
+  // Mono states no hue anywhere, the map included, so its contours are a plain grey.
+  return theme === 'mono' ? '#6e6e6e' : '#b08050';
 }
 
 export function addTerrain(map: MlMap, config: MapConfig, theme: Theme): void {

@@ -39,7 +39,7 @@ export function isDarkSurface(value: string): boolean {
 
 /** A code to point another phone's camera at.
  *
- * Blackout exists to protect somebody's dark adaptation, and a 220 px sheet of white paper on the
+ * Mono exists to protect somebody's dark adaptation, and a 220 px sheet of white paper on the
  * screen undoes an hour of it in one blink. So on a dark theme the white stops at the edge of the
  * code and the panel's own colour carries on around it, and the four-module white border a reader
  * likes is offered rather than imposed: "Make it brighter to scan" hands it over when a camera

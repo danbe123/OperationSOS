@@ -8,7 +8,7 @@ export type Status = {
   eth_mode: 'client' | 'direct'; power_mode: 'normal' | 'low';
   ai: { state: AiState; model: string | null; message: string | null };
   thermal_ai_off_c: number; idle_minutes: number; home_minutes: number;
-  pin_required: boolean; dev: boolean; default_theme: 'vault' | 'field' | 'blackout';
+  pin_required: boolean; dev: boolean; default_theme: 'field' | 'mono';
   situation?: { slug: string; started_at: string } | null;
   conditions?: Record<ConditionId, ConditionState>;
   modes?: Modes;
@@ -50,7 +50,7 @@ export type Overlay = {
   default_on: boolean; scenarios_on: string[]; coverage: string[]; color: string; icon: string | null; available: boolean;
 };
 export type MapConfig = {
-  bases: { id: 'osm' | 'os'; title: string; styles: { vault: string; field: string; blackout: string }; available: boolean }[];
+  bases: { id: 'osm' | 'os'; title: string; styles: { field: string; mono: string }; available: boolean }[];
   terrain: { contours: string | null; hillshade: string | null };
   overlays: Overlay[];
   packs: { title: string; url: string; size_bytes: number }[]; packs_index_url: string | null;
@@ -106,7 +106,7 @@ export type Task = { id: string; title: string; bucket: TaskBucket; why: string;
 export type TaskPatch = { done?: boolean; person?: string };
 export type BriefingKind = 'playbook' | 'playbook-section' | 'module' | 'page' | 'card' | 'doc' | 'map' | 'kiwix';
 export type BriefingItem = { title: string; kind: BriefingKind; ref: string; html?: string };
-export type Modes = { theme: 'vault' | 'field' | 'blackout' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
+export type Modes = { theme: 'field' | 'mono' | null; dim: boolean; calls: 'shown' | 'hidden'; map_first: boolean; board: boolean };
 export type Home = { lat: number | null; lon: number | null; label: string; flood_zone: string | null; nearby?: NearbySummary[] };
 
 /* Phase 2 and 3: the nearest facilities, the box's own senses, and reading aloud. */

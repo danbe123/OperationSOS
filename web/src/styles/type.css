@@ -24,9 +24,9 @@ a { color: var(--link); }
 strong, b { font-weight: 700; }
 small { font-size: var(--t-meta); }
 
-/* Vault's display face is the box's voice, and only in the two places that are its voice: the app
-   name in the rail and the board's clocks. Nothing glows: the system's rule is no shadows, and a
-   `text-shadow` on every heading in vault was one. */
+/* The display face is the box's voice, and only in the two places that are its voice: the app name
+   in the rail and a card's step numerals. Nothing glows: the system's rule is no shadows, and a
+   `text-shadow` on every heading was one. */
 
 .muted { color: var(--ink-muted); }
 .meta { color: var(--ink-muted); font-size: var(--t-meta); }

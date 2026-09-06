@@ -1,8 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-export type Theme = 'vault' | 'field' | 'blackout';
-export const THEMES: readonly Theme[] = ['vault', 'field', 'blackout'] as const;
+/** Two themes and no more: Field, paper and ink, and Mono, white on pure black with no hue in it.
+ * Field is the box default, so an unstamped document (and the bare `:root` in tokens.css) is light. */
+export type Theme = 'field' | 'mono';
+export const THEMES: readonly Theme[] = ['field', 'mono'] as const;
 export const THEME_KEY = 'sos.theme';
+/** The names a person sees. The ids are what is stored, posted and stamped on <html>. */
+export const THEME_LABELS: Record<Theme, string> = { field: 'Field', mono: 'Mono' };
 
 export function isTheme(value: unknown): value is Theme {
   return typeof value === 'string' && (THEMES as readonly string[]).includes(value);
@@ -20,12 +24,12 @@ export function readStoredTheme(storage: Storage): Theme | null {
 type ThemeContextValue = { theme: Theme; setTheme: (t: Theme) => void };
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-/** `mode` and `dim` come from the engine's modes (blackout in a night-time power cut, say). A mode
+/** `mode` and `dim` come from the engine's modes (mono in a night-time power cut, say). A mode
  * outranks the stored preference while it lasts, but a deliberate tap on the theme button outranks it. */
 export function ThemeProvider({ fallback, mode = null, dim = false, children }: { fallback?: Theme; mode?: Theme | null; dim?: boolean; children: ReactNode }) {
   const [stored, setStored] = useState<Theme | null>(() => readStoredTheme(localStorage));
   const [chosen, setChosen] = useState<Theme | null>(null);
-  const theme: Theme = chosen ?? mode ?? stored ?? fallback ?? 'vault';
+  const theme: Theme = chosen ?? mode ?? stored ?? fallback ?? 'field';
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

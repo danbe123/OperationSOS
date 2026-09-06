@@ -1,7 +1,5 @@
 import { Icon } from '../icons';
-import { THEMES, useTheme, type Theme } from './ThemeProvider';
-
-const LABELS: Record<Theme, string> = { vault: 'Vault', field: 'Field', blackout: 'Blackout' };
+import { THEME_LABELS as LABELS, THEMES, useTheme } from './ThemeProvider';
 
 /** The theme button is on every screen: in the rail's footer where there is a rail, and among the
  * screen's own actions where there is not. One word — "Theme" — in a 20 px icon's company, so the

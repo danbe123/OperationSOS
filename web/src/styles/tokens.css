@@ -1,10 +1,10 @@
-/* The one token system. Every theme carries the same role names; nothing outside this file states a
-   colour. Body text sits at 7:1 or better on --ground, on --panel and on --sunken in all three
-   themes (checked by tests/theme/contrast.test.ts), and every state carries a symbol as well as a
-   colour so the single-hue blackout theme still reads.
-   --sunken joined that list in round 3: the situation sheet's chosen state button is filled with it,
-   so vault's --danger and field's --warn were being read on a ground nobody had measured them
-   against — 6.94:1 and 6.82:1. Both moved along their own hue. */
+/* The one token system. Both themes carry the same role names; nothing outside this file states a
+   colour. Body text sits at 7:1 or better on --ground, --panel, --sunken and --raised in both themes
+   and in both dim palettes (checked by tests/theme/contrast.test.ts), and every state carries a
+   symbol as well as a colour so the hueless Mono theme still reads.
+   --sunken joined that list in round 3 (the situation sheet's chosen state button is filled with it)
+   and --raised in round 5 (every button, tile and chip is), which moved field's --signal from
+   #15532e, read at 6.97:1 on a raised surface, to #144e2b at 7.47:1. */
 
 /* Bundled faces (OFL). Fetched into public/fonts by the commands in the plan; no network fonts. */
 /* VT323 is the box's voice and it says exactly two things: the wordmark in the rail (S, O) and the
@@ -53,29 +53,10 @@
    floor on the one device the rule was written for. Both sizes go up. */
 :root.kiosk { --t-body: 18px; --t-meta: 18px; --gutter: 24px; }
 
-/* Vault (default): phosphor green on near-black, one green accent, amber focus. Original artwork only. */
+/* Field (the default): paper and ink, serif headings, dark ochre warnings. It is also the print
+   palette, and it is what the bare `:root` carries, so a document nobody has stamped a theme on yet
+   is the light one rather than a dark one flashing past on the first paint. */
 :root,
-:root[data-theme="vault"] {
-  color-scheme: dark;
-  --ground: #0b120c;
-  --panel: #141f17;
-  --sunken: #18251a;
-  --raised: #223627;
-  --ink: #dcefdd;
-  --ink-muted: #96b69a;
-  --link: #6cf08c;
-  --signal: #6cf08c;
-  --on-signal: #0b120c;
-  --ok: #6cf08c;
-  --warn: #f2c14e;
-  --danger: #ff9d8b;
-  --line: #223126;
-  --line-strong: #3a5140;
-  --focus: #ffb000;
-  --font-heading: var(--font-body);
-}
-
-/* Field manual: paper and ink, serif headings, dark ochre warnings. Also the print palette. */
 :root[data-theme="field"] {
   color-scheme: light;
   --ground: #f3efe4;
@@ -85,9 +66,9 @@
   --ink: #1b1b1b;
   --ink-muted: #474740;
   --link: #1a3f8a;
-  --signal: #15532e;
+  --signal: #144e2b;
   --on-signal: #ffffff;
-  --ok: #15532e;
+  --ok: #144e2b;
   --warn: #603c00;
   --danger: #8a1209;
   --line: #ddd6c6;
@@ -96,29 +77,33 @@
   --font-heading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 }
 
-/* Blackout: one red hue on black for night vision. The three states are separated by luminance, and
-   the symbol carries the meaning; the dim mode does the dimming, not unreadable text. */
-:root[data-theme="blackout"] {
+/* Mono: white on pure black, and not one hue anywhere — every value below is a grey. Two reasons,
+   and they are the same reason. An OLED phone draws no current for a black pixel, so the theme a
+   household reads on the fourth day of a power cut is the one that costs the least to read; and a
+   screen with no colour in it keeps night vision and reads under a head torch. The three states are
+   separated by luminance instead of hue — the worse the news the brighter the grey — and the
+   symbols already beside each one (✓ ▲ ✕) carry the meaning. Links stay underlined. */
+:root[data-theme="mono"] {
   color-scheme: dark;
   --ground: #000000;
-  --panel: #0a0000;
-  --sunken: #150505;
-  --raised: #220807;
-  --ink: #ff9d93;
-  --ink-muted: #ff7a6e;
-  --link: #ffc4bc;
-  --signal: #ffc4bc;
+  --panel: #0a0a0a;
+  --sunken: #111111;
+  --raised: #1c1c1c;
+  --ink: #f2f2f2;
+  --ink-muted: #b9b9b9;
+  --link: #ffffff;
+  --signal: #ffffff;
   --on-signal: #000000;
-  --ok: #ffc4bc;
-  --warn: #ffa79c;
-  --danger: #ff8074;
-  --line: #3a1310;
-  --line-strong: #6e2119;
-  --focus: #ffc4bc;
+  --ok: #bdbdbd;
+  --warn: #dedede;
+  --danger: #ffffff;
+  --line: #2a2a2a;
+  --line-strong: #4a4a4a;
+  --focus: #ffffff;
   --font-heading: var(--font-body);
 }
 
-/* Dim mode — the 03:00 blackout state the engine raises when the power is off and it is dark.
+/* Dim mode — the 03:00 state the engine raises when the power is off and it is dark.
    It used to be `filter: brightness(0.55)` on `body`, which did two things nobody asked for: a
    filtered element becomes the containing block for every `position: fixed` descendant, so the
    kiosk keyboard, the toasts, the modals and the idle board measured from the 256 px shell instead
@@ -128,23 +113,6 @@
    The kiosk's own backlight is separate hardware and stays with the System control and the idle
    timer (`kiosk/IdleOverlay.tsx`), which already drop it. */
 :root[data-dim="on"],
-:root[data-theme="vault"][data-dim="on"] {
-  --ground: #050805;
-  --panel: #0a0f0b;
-  --sunken: #0e150f;
-  --raised: #152016;
-  --ink: #b6d2b8;
-  --ink-muted: #8aa88e;
-  --link: #57c274;
-  --signal: #57c274;
-  --on-signal: #050805;
-  --ok: #57c274;
-  --warn: #c39b3e;
-  --danger: #e2897a;
-  --line: #223a26;
-  --line-strong: #35583a;
-  --focus: #d99400;
-}
 :root[data-theme="field"][data-dim="on"] {
   --ground: #d5cfc0;
   --panel: #e6e0d0;
@@ -156,35 +124,37 @@
   --signal: #0e3a20;
   --on-signal: #ffffff;
   --ok: #0e3a20;
-  --warn: #4a2e00;
+  --warn: #452a00;
   --danger: #650f07;
   --line: #a9a08a;
   --line-strong: #7b7360;
   --focus: #12305c;
 }
-:root[data-theme="blackout"][data-dim="on"] {
+/* Mono is already black, so dim has nothing to take off the ground: it takes it off the ink instead,
+   and flattens the panel into the ground so the screen is one unlit sheet with words on it. */
+:root[data-theme="mono"][data-dim="on"] {
   --ground: #000000;
-  --panel: #050000;
-  --sunken: #0a0202;
-  --raised: #170504;
-  --ink: #e08d84;
-  --ink-muted: #dc8078;
-  --link: #e8a29a;
-  --signal: #e8a29a;
+  --panel: #000000;
+  --sunken: #0a0a0a;
+  --raised: #141414;
+  --ink: #c8c8c8;
+  --ink-muted: #a8a8a8;
+  --link: #d4d4d4;
+  --signal: #d4d4d4;
   --on-signal: #000000;
-  --ok: #e8a29a;
-  --warn: #dd9088;
-  --danger: #d4837a;
-  --line: #43140f;
-  --line-strong: #6e211b;
-  --focus: #e8a29a;
+  --ok: #a8a8a8;
+  --warn: #bcbcbc;
+  --danger: #d4d4d4;
+  --line: #232323;
+  --line-strong: #3d3d3d;
+  --focus: #d4d4d4;
 }
 
 /* Printing always uses the field palette on white paper. Written with the same specificity as the
    dim palettes above (0,3,0) and placed after them: dim is a token override, not a filter, so a
-   0,2,0 print block lost to `:root[data-theme="blackout"][data-dim="on"]` and a household printing a
+   0,2,0 print block lost to `:root[data-theme="mono"][data-dim="on"]` and a household printing a
    CPR card during a night-time power cut — the exact moment somebody prints one — got three solid
-   black A4 pages. Print now wins from every theme, dim or not. */
+   black A4 pages. Print now wins from either theme, dim or not. */
 @media print {
   :root,
   :root[data-theme],
@@ -198,9 +168,9 @@
     --ink: #1b1b1b;
     --ink-muted: #474740;
     --link: #1a3f8a;
-    --signal: #15532e;
+    --signal: #144e2b;
     --on-signal: #ffffff;
-    --ok: #15532e;
+    --ok: #144e2b;
     --warn: #603c00;
     --danger: #8a1209;
     --line: #c3b9a2;

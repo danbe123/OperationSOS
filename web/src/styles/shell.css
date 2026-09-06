@@ -235,7 +235,7 @@
 .connect-big { font-size: var(--t-lead); margin: 0; }
 .qr { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 /* The quiet zone is the component's own business now: on a dark theme it paints the panel colour
-   around the code so blackout never shows a slab of white paper (QrCode.tsx), and a flat #fff here
+   around the code so mono never shows a slab of white paper (QrCode.tsx), and a flat #fff here
    would put it back. The radius is the system's one radius. */
 .qr img, .qr-blank { border-radius: var(--radius); }
 .qr figcaption { font-size: var(--t-meta); color: var(--ink-muted); text-align: center; }

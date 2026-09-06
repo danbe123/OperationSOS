@@ -16,8 +16,8 @@
   font: 600 var(--t-body)/1.2 var(--font-body); text-decoration: none; cursor: pointer;
 }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
-/* A disabled primary was a filled accent slab at 55 % — a low-contrast green in vault and close to
-   invisible in blackout. It gives up the fill instead of its legibility. */
+/* A disabled primary was a filled accent slab at 55 % — a low-contrast green on paper and close to
+   invisible on black. It gives up the fill instead of its legibility. */
 .btn-primary:disabled, .btn-primary[aria-disabled="true"] { opacity: 1; background: var(--raised); color: var(--ink-muted); }
 .btn-primary { background: var(--signal); color: var(--on-signal); }
 .btn-danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, var(--panel)); }
@@ -42,8 +42,8 @@ input[type="date"], input[type="datetime-local"], textarea, select {
 input::placeholder, textarea::placeholder { color: var(--ink-muted); opacity: 1; }
 input[type="range"] { width: 100%; min-height: var(--touch); accent-color: var(--signal); }
 /* A radio is drawn the way a checkbox now is. Left to the browser, the *unselected* base map was a
-   solid grey disc in vault and blackout and the selected one a thin ring: the filled control was the
-   one that was off. Outline when unchosen, a filled dot inside the accent ring when chosen. */
+   solid grey disc on a dark theme and the selected one a thin ring: the filled control was the one
+   that was off. Outline when unchosen, a filled dot inside the accent ring when chosen. */
 input[type="radio"] {
   appearance: none; -webkit-appearance: none;
   width: 26px; height: 26px; flex-shrink: 0; margin: 0;
@@ -271,8 +271,7 @@ a.chip { text-decoration: none; }
 
 .frame-wrap { flex: 1; min-height: 0; display: flex; }
 .frame-wrap iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-:root[data-theme="vault"] .frame-wrap iframe { background: #0b120c; }
-:root[data-theme="blackout"] .frame-wrap iframe { background: #000; }
+:root[data-theme="mono"] .frame-wrap iframe { background: #000; }
 .epub { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .epub-host { flex: 1; min-height: 0; background: var(--panel); }
 

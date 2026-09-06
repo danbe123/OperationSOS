@@ -13,9 +13,8 @@ export function textSizeCss(percent: number): string {
 export type ViewerTokens = { ground: string; panel: string; ink: string; line: string; link: string };
 
 const VIEWER_FALLBACK: Record<Theme, ViewerTokens> = {
-  vault: { ground: '#0b120c', panel: '#121b14', ink: '#dcefdd', line: '#2c4a30', link: '#6cf08c' },
   field: { ground: '#f3efe4', panel: '#ffffff', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' },
-  blackout: { ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17', link: '#ffc4bc' },
+  mono: { ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' },
 };
 
 /** Read the live token values off a document's root element. */
@@ -57,7 +56,7 @@ export function readerCss(theme: Theme, tokens?: ViewerTokens, dim = false): str
 
 /** Stylesheet injected into the PDF.js viewer document. The viewer's own toolbar was the one vendor
  * surface in the box: a light-grey bar of twelve wordless icons, a page box reading "0 of 0" and an
- * "Automatic Zoom" select, in every theme including blackout. It is hidden here and the app draws
+ * "Automatic Zoom" select, in every theme including mono. It is hidden here and the app draws
  * the chrome itself (`screens/Doc.tsx`), in the app's own tokens. */
 export function pdfViewerCss(theme: Theme, tokens?: ViewerTokens): string {
   const t = tokens ?? VIEWER_FALLBACK[theme];
@@ -68,8 +67,9 @@ export function pdfViewerCss(theme: Theme, tokens?: ViewerTokens): string {
     `#outerContainer,#mainContainer,#viewerContainer{background:${t.ground} !important;color:${t.ink} !important}`,
     `#errorWrapper{background:${t.panel} !important;color:${t.ink} !important;border:1px solid ${t.line} !important}`,
   ];
-  // Blackout is a red-on-black theme for night vision: a white page in it is a torch in the face.
-  if (theme === 'blackout') rules.push('.pdfViewer .page{filter:invert(1) hue-rotate(180deg)}');
+  // Mono is white on black for night vision: a white A4 page in it is a torch in the face. The page
+  // has no hue to rotate away, so the invert alone is the whole of it.
+  if (theme === 'mono') rules.push('.pdfViewer .page{filter:invert(1)}');
   return rules.join('\n');
 }
 

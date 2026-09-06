@@ -4,10 +4,10 @@
 .board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .board-title { margin: 0; font-size: var(--t-display); line-height: 1.05; }
 .board-elapsed { margin: 0; font-size: var(--t-lead); color: var(--ink-muted); }
-/* The clock is the across-the-room element: 64 px in every theme. Only the face changes — VT323 is
-   the box's voice in vault, and field and blackout draw the same size in Inter. */
+/* The clock is the across-the-room element: 64 px in both themes, and in the body face in both. The
+   display face used to be stamped on it in the dark-green theme alone, which is gone; the box's
+   voice is now the wordmark and the card numerals, and nothing else. */
 .board-now { margin: 0 0 0 auto; font-size: var(--t-board); line-height: 0.9; font-weight: 700; font-variant-numeric: tabular-nums; }
-:root[data-theme="vault"] .board-now { font-family: var(--font-display); }
 .board-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
 .board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 /* Name on the first line, state and duration on the second: three rows of two fit the column, where
