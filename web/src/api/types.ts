@@ -37,7 +37,7 @@ export type Playbook = PlaybookSummary & {
   overlays: string[]; sources: { title: string; doc?: string; kiwix?: string; url?: string; as_at?: string }[];
   reviewed: string | null;
 };
-export type Card = { slug: string; title: string; icon: string; order: number; html: string };
+export type Card = { slug: string; title: string; icon: string; order: number; html: string; summary?: string };
 export type Page = { slug: string; title: string; icon: string; order: number; html: string; category: string; summary?: string };
 export type Overlay = {
   id: string; title: string; kind: 'geojson' | 'pmtiles' | 'style-layer'; layer_id: string | null; url: string | null;

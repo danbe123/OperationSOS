@@ -147,11 +147,11 @@ export const suggestions: Suggestion[] = [
 
 export const cards: Card[] = [
   {
-    slug: 'cpr-adult', title: 'CPR (adult)', icon: 'heart', order: 1,
+    slug: 'cpr-adult', title: 'CPR (adult)', icon: 'heart', order: 1, summary: 'Collapsed, unresponsive and not breathing normally.',
     html: '<ol><li>Check for danger, then check for a response.</li><li>Call 999 and put it on speaker.</li><li>Push hard and fast in the centre of the chest, 100 to 120 a minute.</li><li>After 30 compressions give 2 breaths if you are trained.</li></ol><p class="warning">Do not stop until help arrives or the person breathes.</p>',
   },
   {
-    slug: 'severe-bleeding', title: 'Severe bleeding', icon: 'drop', order: 2,
+    slug: 'severe-bleeding', title: 'Severe bleeding', icon: 'drop', order: 2, summary: 'Blood that soaks through and does not stop.',
     html: '<ol><li>Press hard on the wound with a clean cloth.</li><li>Call 999.</li><li>Keep pressing; do not lift to look.</li></ol>',
   },
 ];

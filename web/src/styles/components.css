@@ -153,37 +153,6 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .results-group { display: flex; flex-direction: column; gap: 4px; }
 .results-group h2 { margin: 8px 0 0; font-size: var(--t-body); color: var(--ink-muted); }
 
-/* 10. The quick cards are the loudest thing on Medical after 999: full-width rows, lead type, the
-   same red edge the 999 panel wears. */
-.quick-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.quick-card {
-  display: flex; align-items: center; gap: 12px;
-  min-height: 64px; padding: 12px 14px;
-  border: 1px solid var(--line); border-left: 3px solid var(--danger); border-radius: var(--radius);
-  background: var(--panel); color: var(--ink); text-decoration: none;
-  font-size: var(--t-lead); font-weight: 700;
-}
-.quick-card .quick-card-go { margin-left: auto; color: var(--ink-muted); }
-
-/* --- the quick card: the steps scroll, and the card says how many there are ------------------- */
-
-/* The card is the whole screen: the title, one 999 line, the count, and then the steps in a frame of
-   their own. It used to be a long page inside the app's scroller, so a card that carried on past the
-   bottom edge looked exactly like a card that ended — and the compression rate was under the edge. */
-.card-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 0 var(--gutter) 8px; }
-.card .screen-head h1 { font-size: var(--t-title); }
-.card-count { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; }
-.card-more { margin-left: auto; }
-.card-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-/* The fade is the standing cue; the button beside the count is the one you can press. It is short on
-   purpose: the last line of a step a reader can still see must stay a line they can read. */
-.card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent); }
-/* On paper there is no frame to scroll and no cue to give: the whole card prints, at once. */
-@media print {
-  .card-body, .card-scroll { display: block; overflow: visible; padding: 0; mask-image: none; }
-  .card-count { display: none; }
-}
-
 /* --- the one task row: engine tasks, playbook checklists and drill jobs all look like this --- */
 
 .task-row { display: flex; flex-direction: column; gap: 4px; }

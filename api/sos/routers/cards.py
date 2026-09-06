@@ -7,7 +7,7 @@ router = APIRouter(tags=["cards"])
 
 
 def _card(doc) -> dict:
-    return {"slug": doc.slug, "title": doc.title, "icon": doc.icon, "order": doc.order, "html": doc.html}
+    return {"slug": doc.slug, "title": doc.title, "icon": doc.icon, "order": doc.order, "summary": doc.summary, "html": doc.html}
 
 
 @router.get("/cards")

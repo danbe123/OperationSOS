@@ -120,7 +120,7 @@ def test_modules_cards_pages(client):
     assert client.get("/api/modules/nope").status_code == 404
     r = client.get("/api/cards")
     assert r.status_code == 200 and r.json()[0]["slug"] == "bleeding" and "<ol>" in r.json()[0]["html"]
-    assert set(r.json()[0]) == {"slug", "title", "icon", "order", "html"}
+    assert set(r.json()[0]) == {"slug", "title", "icon", "order", "summary", "html"}
     assert client.get("/api/cards/bleeding").json()["title"] == "Severe bleeding"
     assert client.get("/api/cards/nope").status_code == 404
     r = client.get("/api/pages")

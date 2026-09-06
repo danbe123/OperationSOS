@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
-import type { LibraryItem } from '../api/types';
+import type { Card, LibraryItem } from '../api/types';
 import { useQuery } from '../api/useQuery';
 import { LibraryItemCard } from '../components/LibraryItemCard';
 import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
 import { Emergency999 } from '../situation/Emergency999';
+import './card.css';
 
 /**
  * The NHS A to Z lives inside the self-built `nhs_uk` ZIM (a zimit crawl, paths like `www.nhs.uk/conditions/`).
@@ -31,10 +32,37 @@ export function nhsAtoZ(items: LibraryItem[]): { conditions: string | null; medi
   return { conditions: null, medicines: null, note: 'NHS not installed' };
 }
 
+/** The groups the cards are picked from. The first minute comes first; a card not named here lands
+ * in "More cards" rather than vanishing, so a new card is on the screen the day it is written. */
+export const CARD_GROUPS: { id: string; title: string; slugs: string[] }[] = [
+  { id: 'first-minute', title: 'The first minute', slugs: ['cpr-adult', 'cpr-child', 'severe-bleeding', 'choking', 'anaphylaxis', 'heart-attack', 'stroke', 'recovery-position', 'drowning', 'seizures', 'shock'] },
+  { id: 'injuries', title: 'Injuries', slugs: ['broken-bones', 'sprains-strains', 'wound-cleaning', 'wound-closure', 'burns', 'head-injury', 'spinal-injury', 'eye-injury', 'nosebleed', 'bites-stings', 'electric-shock'] },
+  { id: 'heat-cold', title: 'Heat, cold and water', slugs: ['hypothermia', 'frostbite', 'heat-stroke', 'dehydration'] },
+  { id: 'poison', title: 'Poison, gas and radiation', slugs: ['carbon-monoxide', 'chemical-exposure', 'poisoning', 'radiation-sickness'] },
+  { id: 'illness', title: 'Illness', slugs: ['sepsis', 'asthma-attack', 'low-blood-sugar', 'fever-child', 'dental-abscess'] },
+  { id: 'birth', title: 'Pregnancy and birth', slugs: ['childbirth', 'pregnancy-emergencies'] },
+];
+
+export function groupCards(cards: Card[], term = ''): { id: string; title: string; cards: Card[] }[] {
+  const t = term.trim().toLowerCase();
+  const hit = (c: Card) => !t || c.title.toLowerCase().includes(t) || (c.summary ?? '').toLowerCase().includes(t);
+  const bySlug = new Map(cards.map((c) => [c.slug, c]));
+  const placed = new Set<string>();
+  const out = CARD_GROUPS.map((g) => {
+    const members = g.slugs.map((s) => bySlug.get(s)).filter((c): c is Card => Boolean(c));
+    members.forEach((c) => placed.add(c.slug));
+    return { id: g.id, title: g.title, cards: members.filter(hit) };
+  });
+  const rest = cards.filter((c) => !placed.has(c.slug)).sort((a, b) => a.order - b.order).filter(hit);
+  if (rest.length) out.push({ id: 'more', title: 'More cards', cards: rest });
+  return out.filter((g) => g.cards.length > 0);
+}
+
 export function Medical() {
   const cardsQ = useQuery(() => api.cards(), []);
   const libQ = useQuery(() => api.library(), []);
-  const cards = useMemo(() => (cardsQ.data ?? []).slice().sort((a, b) => a.order - b.order), [cardsQ.data]);
+  const [term, setTerm] = useState('');
+  const groups = useMemo(() => groupCards(cardsQ.data ?? [], term), [cardsQ.data, term]);
   const medicalItems = useMemo(() => libQ.data?.categories.find((c) => c.id === 'medical')?.items ?? [], [libQ.data]);
   const nhs = nhsAtoZ(medicalItems);
   const householdQ = useQuery(() => api.household(), [], { refetchOnFocus: true });
@@ -44,24 +72,37 @@ export function Medical() {
       <Body>
         <Emergency999 />
 
-        {/* After 999, the quick cards are the loudest thing here: they are the two-tap, life-critical
-            items, so they are full-width rows and not the smallest tiles on the screen. */}
+        {/* After 999, the quick cards are the loudest thing here. Thirty-odd cards in one column is a
+            wall, so they come in groups, the first minute first, and each row says when it applies. */}
         <section aria-label="Quick cards">
           <h2>Quick cards</h2>
-          <p className="muted">The few things you do in the first minute, in big type.</p>
+          <p className="muted">What to do in the first minutes, one sheet each, in big type.</p>
           {cardsQ.error && <p className="warning">Cards unavailable: {cardsQ.error}</p>}
-          <nav aria-label="Quick cards">
-            <ul className="quick-cards">
-              {cards.map((c) => (
-                <li key={c.slug}>
-                  <Link className="quick-card" to={`/medical/card/${c.slug}`}>
-                    <Icon name={c.icon} size={28} />
-                    <span>{c.title}</span>
-                    <Icon name="forward" size={22} className="quick-card-go" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <label className="field card-filter">
+            <span>Find a card</span>
+            <input type="search" aria-label="Find a card" value={term} placeholder="bleeding, burn, choking" onChange={(e) => setTerm(e.target.value)} />
+          </label>
+          {term && groups.length === 0 && <p>Nothing matches. Try a shorter word, or the <Link to="/medical#nhs">NHS A to Z</Link>.</p>}
+          <nav aria-label="Quick cards" className="card-groups">
+            {groups.map((g) => (
+              <section key={g.id} className="card-group" aria-label={g.title}>
+                <h2>{g.title}</h2>
+                <ul className="quick-cards">
+                  {g.cards.map((c) => (
+                    <li key={c.slug}>
+                      <Link className={g.id === 'first-minute' ? 'quick-card quick-card-urgent' : 'quick-card'} to={`/medical/card/${c.slug}`}>
+                        <Icon name={c.icon} size={28} />
+                        <span className="quick-card-text">
+                          <span className="quick-card-title">{c.title}</span>
+                          {c.summary && <span className="quick-card-sub">{c.summary}</span>}
+                        </span>
+                        <Icon name="forward" size={22} className="quick-card-go" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </nav>
         </section>
 
@@ -80,7 +121,7 @@ export function Medical() {
           </section>
         )}
 
-        <section aria-label="NHS A to Z">
+        <section aria-label="NHS A to Z" id="nhs">
           <h2>NHS A to Z</h2>
           <nav className="tiles tiles-wide" aria-label="NHS A to Z">
             <Tile to={nhs.conditions ?? '#'} icon="medical" title="Conditions A to Z" subtitle="Symptoms, conditions, treatments" disabled={!nhs.conditions} note={nhs.conditions ? undefined : (nhs.note ?? undefined)} />

@@ -25,7 +25,7 @@ describe('Medical', () => {
     renderRoute('/medical');
     const grid = await screen.findByRole('navigation', { name: 'Quick cards' });
     const links = within(grid).getAllByRole('link');
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/medical/card/cpr-adult', '/medical/card/severe-bleeding']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/medical/card/cpr-adult', '/medical/card/severe-bleeding', '/medical/card/choking']);
     const nhs = await screen.findByRole('navigation', { name: 'NHS A to Z' });
     expect(within(nhs).getByRole('link', { name: /Conditions A to Z/ })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/');
     expect(within(nhs).getByRole('link', { name: /Medicines A to Z/ })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/medicines/');
@@ -40,5 +40,25 @@ describe('Medical', () => {
     const nhs = await screen.findByRole('navigation', { name: 'NHS A to Z' });
     expect(within(nhs).queryAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/dose']);   // the dose tool never depends on the drive
     expect(within(nhs).getAllByText('On external drive (not connected)')).toHaveLength(2);
+  });
+});
+
+describe('Medical card groups', () => {
+  it('groups the cards, the first minute first, and filters them by title or summary', async () => {
+    vi.spyOn(api, 'cards').mockResolvedValue([...cards, { slug: 'new-card', title: 'Something new', icon: 'book', order: 40, html: '<p>x</p>' }]);
+    vi.spyOn(api, 'library').mockResolvedValue(library);
+    renderRoute('/medical');
+    const nav = await screen.findByRole('navigation', { name: 'Quick cards' });
+    expect(within(nav).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['The first minute', 'More cards']);
+    const first = within(nav).getByRole('region', { name: 'The first minute' });
+    expect(within(first).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/card/cpr-adult', '/medical/card/severe-bleeding', '/medical/card/choking']);
+    expect(within(first).getByText('Collapsed, unresponsive and not breathing normally.')).toBeInTheDocument();
+    expect(within(first).getByRole('link', { name: /CPR \(adult\)/ })).toHaveClass('quick-card-urgent');
+    expect(within(nav).getByRole('link', { name: /Something new/ })).not.toHaveClass('quick-card-urgent');
+    const { fireEvent } = await import('@testing-library/react');
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a card' }), { target: { value: 'soaks' } });
+    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/card/severe-bleeding']);
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a card' }), { target: { value: 'zzz' } });
+    expect(screen.getByText(/Nothing matches/)).toBeInTheDocument();
   });
 });

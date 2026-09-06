@@ -1,0 +1,81 @@
+/* The quick card and the list it is picked from.
+
+   The card is a laminated sheet, not a page and not a slideshow: one line says when it is the right
+   card, the steps follow with their numbers in the margin, and the warnings and the escalation come
+   after the last step where they are what happens next. The first three steps are the ones read
+   from a standing start, so they are set large; the content rule keeps each under 70 characters,
+   which is what lets three of them share a 480 px kiosk screen with the title and the 999 line.
+   The numerals are the box's own voice (the VT323 wordmark face) in the signal colour: they are
+   the one loud thing on the sheet, and everything else stays quiet around them. */
+
+.card { --t-step: 28px; }
+@media (max-width: 699px) { .card { --t-step: 25px; } }
+
+.card .screen-head h1 { font-size: var(--t-title); }
+.card-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 0 var(--gutter) 8px; }
+.card-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The fade is the cue that the sheet goes on. Short, so the last visible line is still a readable line. */
+.card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); }
+.card-sheet { max-width: 40em; padding-bottom: 8px; }
+
+.card-when { margin: 2px 0 12px; font-size: var(--t-body); line-height: 1.4; }
+.card-when p { margin: 0; }
+
+.card-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.card-step {
+  counter-increment: step; position: relative;
+  padding-left: 2em; margin: 0 0 14px;
+  font-size: var(--t-lead); line-height: 1.3;
+}
+/* The numeral sits in its own column: its box is set in the step's em so it never runs into the text. */
+.card-step::before {
+  content: counter(step);
+  position: absolute; left: 0; top: -0.06em; width: 1.4em; text-align: left;
+  font-family: var(--font-display); font-size: 1.45em; line-height: 1; font-weight: 400;
+  color: var(--signal);
+}
+.card-step-lead { font-size: var(--t-step); font-weight: 700; line-height: 1.2; margin-bottom: 18px; }
+.card-step-lead::before { top: -0.1em; }
+.card-step p { margin: 0; }
+
+.card-warnings { margin: 20px 0 0; padding: 10px 14px; border-radius: var(--radius); background: var(--panel); box-shadow: inset 3px 0 0 var(--danger); font-size: var(--t-lead); line-height: 1.3; }
+.card-warning { margin: 0 0 8px; }
+.card-warning:last-child { margin-bottom: 0; }
+.card-warning strong { color: var(--danger); }
+.card-warning strong::after { content: ':'; }
+
+.card-escalate { margin: 14px 0 0; padding: 10px 14px; border-radius: var(--radius); background: var(--panel); box-shadow: inset 3px 0 0 var(--signal); font-size: var(--t-body); line-height: 1.45; }
+.card-escalate h2 { margin: 0 0 6px; font-size: var(--t-body); }
+.card-escalate p { margin: 0 0 8px; }
+.card-escalate p:last-child { margin-bottom: 0; }
+
+.card-source { margin: 14px 0 0; font-size: var(--t-meta); line-height: 1.4; color: var(--ink-muted); }
+.card-source p { margin: 0; }
+.card-source p::before { content: 'Source: '; }
+
+/* --- the list on Medical: grouped, the first minute first, each row saying when it applies ---- */
+.card-groups { display: flex; flex-direction: column; gap: 4px; }
+.card-group h2 { margin: 12px 0 6px; }
+.quick-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.quick-card {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 64px; padding: 10px 14px;
+  border-radius: var(--radius); background: var(--panel); color: var(--ink); text-decoration: none;
+}
+.quick-card > svg { flex: 0 0 auto; }
+.quick-card-urgent { box-shadow: inset 3px 0 0 var(--danger); }
+.quick-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.quick-card-title { font-size: var(--t-lead); font-weight: 700; line-height: 1.2; }
+.quick-card-sub { font-size: var(--t-meta); color: var(--ink-muted); line-height: 1.3; }
+.quick-card-go { margin-left: auto; flex: 0 0 auto; color: var(--ink-muted); }
+.card-filter { margin: 0 0 4px; }
+
+/* On paper there is no frame to scroll: the whole sheet prints, at once. */
+@media print {
+  .card-body, .card-scroll { display: block; overflow: visible; padding: 0; mask-image: none; }
+  .card-step { font-size: 14pt; margin-bottom: 8px; }
+  .card-step-lead { font-size: 18pt; }
+  .card-step::before { color: #000; }
+  .card-warnings, .card-escalate { font-size: 12pt; box-shadow: none; border-left: 3pt solid #000; border-radius: 0; }
+  .card-source { font-size: 10pt; }
+}
