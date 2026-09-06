@@ -12,10 +12,11 @@ describe('Now', () => {
     vi.spyOn(api, 'household').mockResolvedValue([]);
     vi.spyOn(api, 'neighbours').mockResolvedValue([]);
     renderRoute('/');
-    // The heading is the answer, not the name of the screen: the rail already says this is Now. And
-    // it is the whole answer: the services are fine, and the cupboard is empty.
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Nothing stored yet.' })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe('Everything is working. Nothing stored yet. · SOS'));
+    // The heading is the answer, not the name of the screen: the rail already says this is Now. The
+    // services are fine and the readiness still wants more water, but there is water in the cupboard,
+    // so the box does not tell this household it has stored nothing.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Not ready yet.' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Everything is working. Not ready yet. · SOS'));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     const household = await screen.findByRole('region', { name: 'Household and stock' });
@@ -38,7 +39,18 @@ describe('Now', () => {
   it('/now is the same screen as /', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
     renderRoute('/now');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Not ready yet.' })).toBeInTheDocument();
+  });
+
+  it('says nothing is stored only when the cupboard really is empty', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    vi.spyOn(api, 'stock').mockResolvedValue({ people: 3, days: { water: 0, food: 0, medicine: 0 }, items: [] });
+    vi.spyOn(api, 'household').mockResolvedValue([]);
+    vi.spyOn(api, 'neighbours').mockResolvedValue([]);
+    renderRoute('/');
     expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Nothing stored yet.' })).toBeInTheDocument();
   });
 

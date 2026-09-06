@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
-import { useQuery } from '../api/useQuery';
+import type { StockResponse } from '../api/types';
+import { useQuery, type QueryState } from '../api/useQuery';
 import { Icon } from '../icons';
 import { ConnectPanel } from '../kiosk/ConnectPanel';
 import { Screen, Body } from '../shell/Screen';
@@ -19,10 +20,10 @@ import './now.css';
 /** The three the box counts in days, in the order it counts them. */
 const STOCK_DAYS = [['water', 'Water'], ['food', 'Food'], ['medicine', 'Medicine']] as const;
 
-/** Who lives here and how long the stock lasts: the two facts the rest of the box counts with. */
-function HouseholdSummary() {
+/** Who lives here and how long the stock lasts: the two facts the rest of the box counts with. The
+ * cupboard is read one level up, in Now, because the heading needs the same answer this panel does. */
+function HouseholdSummary({ stock }: { stock: QueryState<StockResponse> }) {
   const people = useQuery(() => api.household(), [], { refetchOnFocus: true });
-  const stock = useQuery(() => api.stock(), [], { refetchOnFocus: true });
   const neighbours = useQuery(() => api.neighbours(), [], { refetchOnFocus: true });
   const days = stock.data?.days ?? null;
   const count = people.data?.length ?? 0;
@@ -151,6 +152,9 @@ function CarryOn() {
  * shows how ready the household is. */
 export function Now() {
   const { view, error, loading, refresh } = useSituation();
+  // The cupboard, read once for the two things that ask about it: the heading and the panel below.
+  const stock = useQuery(() => api.stock(), [], { refetchOnFocus: true });
+  const stockEmpty = stock.data ? stock.data.items.length === 0 : null;
   const eventful = isEventful(view);
   const mapHref = scenarioMapHref(view?.scenario?.slug);
   // What is read aloud is the briefing itself; the button that reads it belongs in the screen's own
@@ -159,7 +163,7 @@ export function Now() {
   // The heading is the answer, not the name of the screen: the rail already says this is Now.
   return (
     <Screen
-      title={nowTitle(view)}
+      title={nowTitle(view, stockEmpty)}
       back={false}
       actions={eventful ? <ReadAloud id="briefing" target={briefing} label="Read aloud" /> : undefined}
     >
@@ -180,7 +184,7 @@ export function Now() {
         )}
         <CarryOn />
         {eventful ? <Briefing blockRef={briefing} /> : <Readiness />}
-        <HouseholdSummary />
+        <HouseholdSummary stock={stock} />
         <BoxPanel />
       </Body>
     </Screen>
