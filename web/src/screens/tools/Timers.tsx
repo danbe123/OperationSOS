@@ -63,7 +63,11 @@ function Cpr() {
   return (
     <section className="panel">
       <h3>CPR beat</h3>
-      <p>{CPR_BPM} compressions a minute, 5 to 6 cm deep. 30 compressions then 2 breaths. <Link to="/medical/card/cpr-adult">Adult CPR card</Link> · <Link to="/medical/card/cpr-child">Child CPR card</Link></p>
+      <p>{CPR_BPM} compressions a minute, 5 to 6 cm deep. 30 compressions then 2 breaths.</p>
+      <p className="row">
+        <Link className="btn btn-small" to="/medical/card/cpr-adult">Adult CPR card</Link>
+        <Link className="btn btn-small" to="/medical/card/cpr-child">Child CPR card</Link>
+      </p>
       <div className="row">
         {startedAt === null ? (
           <button type="button" className="btn btn-primary btn-big" onClick={() => setStartedAt(Date.now())}>Start the beat</button>
@@ -94,7 +98,13 @@ function Fallout() {
   return (
     <section className="panel">
       <h3>Fallout 7:10 rule</h3>
-      <p>After a nuclear detonation the radiation dose rate falls to about a tenth every time the elapsed time multiplies by seven. Stay sheltered; the first two days matter most. <Link to="/m/radiation">Radiation module</Link> · <Link to="/s/nuclear-war">Nuclear war playbook</Link></p>
+      <p>After a nuclear detonation the radiation dose rate falls to about a tenth every time the elapsed time multiplies by seven. Stay sheltered; the first two days matter most.</p>
+      {/* "Playbook" is a word the brief says a household never has to learn, and a dot between two
+          links is not a sentence: they are two buttons that say where they go. */}
+      <p className="row">
+        <Link className="btn btn-small" to="/m/radiation">Read about radiation</Link>
+        <Link className="btn btn-small" to="/s/nuclear-war">Open the nuclear war guide</Link>
+      </p>
       <label className="field"><span>Time of the detonation</span><input type="datetime-local" aria-label="Time of the detonation" value={when} onChange={(e) => setWhen(e.target.value)} /></label>
       <table className="fallout" aria-label="Fallout marks">
         <thead><tr><th>Mark</th><th>Dose rate</th><th>Reached</th></tr></thead>

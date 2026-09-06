@@ -3,7 +3,7 @@ import type { BrowserContext, Route } from '@playwright/test';
 import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Neighbour, Note, Person, StockItem } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
-import { aiEvents, cards, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { aiEvents, cards, fieldcraftPage, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
@@ -209,6 +209,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     if (method === 'GET' && p.startsWith('/pages/')) {
       const slug = p.slice('/pages/'.length);
       if (slug === 'household-plan') return json(route, householdPlan);
+      if (slug === fieldcraftPage.slug) return json(route, fieldcraftPage);
       const meta = pages.find((x) => x.slug === slug);
       return meta ? json(route, { ...pmrPage, ...meta, html: pmrPage.html }) : detail(route, 404, 'no such page');
     }

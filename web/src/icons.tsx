@@ -56,6 +56,10 @@ const P = {
   drop: <path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z" />,
   'text-size': <path d="M3 7h10M8 7v12M14 12h7M17.5 12v7" />,
   refresh: <><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" /><path d="M20.5 4v5h-5" /></>,
+  boot: <><path d="M6 3h5v8h4l5 4v5H6z" /><path d="M11 11v4M6 17h14" /></>,
+  compass: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" /></>,
+  cloud: <path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.5 1.5A3.5 3.5 0 0 1 17 18z" />,
+  leaf: <><path d="M4 20C4 10 11 4 20 4c0 9-6 16-16 16z" /><path d="M4 20c4-6 8-9 12-11" /></>,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof P;

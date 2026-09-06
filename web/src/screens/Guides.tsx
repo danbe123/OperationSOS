@@ -19,6 +19,11 @@ const PAGE_GROUPS: { id: string; title: string; unit: string; note: string; cate
   { id: 'reference', title: 'Reference', unit: 'pages', note: 'The pages the guides link to.', categories: ['reference', 'plan', 'about'] },
 ];
 
+/** "1 situation matches", "20 situations". The unit is written in the plural and loses its s. */
+function countable(n: number, unit: string): string {
+  return n === 1 ? unit.replace(/s$/, '') : unit;
+}
+
 function matches(term: string, ...text: (string | undefined)[]): boolean {
   if (!term) return true;
   const t = term.toLowerCase();
@@ -90,8 +95,8 @@ export function Guides() {
                 filter: a section that shows two tiles never claims twenty. */}
             <p className="muted">
               {term
-                ? `${g.entries.length} ${g.unit} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
-                : `${g.total} ${g.unit}. ${g.note}`}
+                ? `${g.entries.length} ${countable(g.entries.length, g.unit)} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
+                : `${g.total} ${countable(g.total, g.unit)}. ${g.note}`}
             </p>
             <nav className={g.id === 'scenarios' ? 'tiles' : 'tiles tiles-wide'} aria-label={g.title === 'Situations' ? 'Scenarios' : g.title}>
               {g.entries.map((e) => <Tile key={e.to} to={e.to} icon={e.icon} title={e.title} subtitle={e.sub} />)}

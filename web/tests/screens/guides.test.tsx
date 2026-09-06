@@ -32,7 +32,9 @@ describe('Guides', () => {
     await screen.findByRole('navigation', { name: 'Scenarios' });
     await user.type(screen.getByRole('searchbox', { name: 'Filter these guides' }), 'flood');
     expect(within(screen.getByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(1);
-    expect(screen.getByRole('status')).toHaveTextContent('1 guide matches');
+    expect(screen.getByRole('status')).toHaveTextContent('2 guides match');
+    // A section counts what it is showing, never what it would show with the filter off.
+    expect(screen.getByRole('region', { name: 'Situations' })).toHaveTextContent('1 situation matches “flood”.');
     await user.clear(screen.getByRole('searchbox', { name: 'Filter these guides' }));
     await user.type(screen.getByRole('searchbox', { name: 'Filter these guides' }), 'zzzz');
     expect(screen.getByRole('link', { name: 'search the whole box' })).toHaveAttribute('href', '/search?q=zzzz');

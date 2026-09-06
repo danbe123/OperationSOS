@@ -156,7 +156,23 @@ export const cards: Card[] = [
   },
 ];
 
+/* The ten field craft pages. `/fieldcraft` renders whatever the box has in this category, and the
+   fixture used to have none, so every field-craft screenshot was a title and one sentence. */
+const FIELDCRAFT: [string, string, string, string][] = [
+  ['shelter-and-warmth', 'Shelter and warmth', 'home', 'Staying dry and out of the wind, indoors and out.'],
+  ['fire-and-fuel', 'Fire and fuel', 'fire', 'Lighting one, feeding it, and the law about where.'],
+  ['finding-water', 'Finding water', 'drop', 'Where it is, and how to make it safe to drink.'],
+  ['wild-food', 'Wild food', 'wheat', 'What is safe to eat in Britain and Ireland, and when.'],
+  ['moving-about', 'Moving about', 'boot', 'On foot, by bike, and what a flooded road really costs.'],
+  ['navigation', 'Finding your way', 'compass', 'Map, compass, the sun, and a grid reference.'],
+  ['weather', 'Reading the weather', 'cloud', 'What the sky and the wind say about the next few hours.'],
+  ['first-aid-outdoors', 'First aid outdoors', 'medical', 'Cold, heat, sprains and cuts, away from a hospital.'],
+  ['animals-and-plants', 'Animals and plants', 'leaf', 'What bites, what stings, and what will make you ill.'],
+  ['staying-put', 'Deciding to stay put', 'plan', 'The commonest right answer, and how to tell.'],
+];
+
 export const pages: Page[] = [
+  ...FIELDCRAFT.map(([slug, title, icon, summary], i) => ({ slug, title, icon, order: i + 1, html: '', category: 'fieldcraft', summary })),
   { slug: 'pmr446', title: 'PMR446 radio', icon: 'radio', order: 1, html: '', category: 'comms' },
   { slug: 'uk-numbers', title: 'UK emergency numbers', icon: 'phone', order: 2, html: '', category: 'comms' },
   { slug: 'what-still-works', title: 'What still works', icon: 'wifi', order: 3, html: '', category: 'comms' },
@@ -168,6 +184,13 @@ export const page: Page = {
   slug: 'pmr446', title: 'PMR446 radio', icon: 'radio', order: 1, category: 'comms',
   html: '<p>Channel 1 is <strong>446.00625 MHz</strong>.</p><table><tr><th>Channel</th><th>MHz</th></tr><tr><td>1</td><td>446.00625</td></tr></table>',
 };
+/** One field craft page in full, so the ten are photographed as a list and as a page. */
+export const fieldcraftPage: Page = {
+  slug: 'shelter-and-warmth', title: 'Shelter and warmth', icon: 'home', order: 1, category: 'fieldcraft',
+  summary: 'Staying dry and out of the wind, indoors and out.',
+  html: '<p>Warmth before food. A dry, still, insulated space keeps a person alive far longer than a meal does.</p><h2>Indoors, with no heating</h2><p>Pick one room, ideally south-facing with the fewest outside walls. Close the doors to the rest of the house. Put something over the windows at dusk and take it down at first light.</p><h2>Outdoors</h2><p>Get off the ground first: bracken, leaves, a rucksack, anything. The ground takes more heat than the air does.</p><table><tr><th>Layer</th><th>What it does</th></tr><tr><td>Next to the skin</td><td>Moves sweat away; never cotton</td></tr><tr><td>Middle</td><td>Traps still air: fleece, wool, down</td></tr><tr><td>Outside</td><td>Stops wind and rain</td></tr></table>',
+};
+
 export const householdPlan: Page = {
   slug: 'household-plan', title: 'Household plan', icon: 'plan', order: 1, category: 'plan',
   html: '<h2>Meeting points</h2><p>First: the front gate. Second: the church hall.</p><h2>Out-of-area contact</h2><p>Name and number.</p>',

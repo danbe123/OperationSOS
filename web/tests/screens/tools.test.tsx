@@ -93,7 +93,7 @@ describe('Field craft', () => {
   it('lists the fieldcraft pages in order', async () => {
     const { pages } = await import('../fixtures/api');
     vi.spyOn(api, 'pages').mockResolvedValue([
-      ...pages,
+      ...pages.filter((p) => p.category !== 'fieldcraft'),
       { slug: 'fieldcraft-fire', title: 'Fire in a wet country', icon: 'fire', order: 15, html: '', category: 'fieldcraft', summary: 'Fire' },
       { slug: 'fieldcraft-basics', title: 'Field craft in Britain', icon: 'shield', order: 13, html: '', category: 'fieldcraft', summary: 'Rules' },
     ]);

@@ -29,12 +29,14 @@ export function Find() {
   }, [data, sources.length]);
   const chips = groups?.q === q ? groups.groups : (data?.groups ?? []);
   // On the kiosk the on-screen keyboard covers the bottom of the screen, so an answer that arrives
-  // under it has not arrived. The results are brought up to the top of what is still visible.
+  // under it has not arrived. Scrolling the count line up instead pushed the field off the top, so
+  // the screen showed "5 results." and two results with no way to see or edit what was typed. The
+  // content column goes to the top: the field, the count and the first results are visible together.
   const found = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (!data || data.results.length === 0) return;
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb-height'));
-    if (kb > 0) found.current?.scrollIntoView({ block: 'start' });
+    if (kb > 0) found.current?.closest('.content')?.scrollTo({ top: 0 });
   }, [data]);
 
   const toggle = (source: string) => {
