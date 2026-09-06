@@ -4,14 +4,14 @@
    says so: a fade at the right edge and a chevron that scrolls it, rather than "Ho" cut in half. */
 .map-toolbar { position: relative; display: flex; align-items: center; padding: 0 var(--gutter) 6px; flex: 0 0 auto; }
 .map-tools { display: flex; gap: 6px; overflow-x: auto; scroll-behavior: smooth; flex: 1 1 auto; scrollbar-width: thin; }
-.map-tools .btn { flex-shrink: 0; }
-.map-tools-more { display: none; flex: 0 0 auto; margin-left: 4px; padding: 4px 8px; }
-.map-toolbar::after {
-  content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 40px); width: 24px;
+.map-tools .btn { flex-shrink: 0; gap: 4px; padding: 4px 8px; }
+/* The chevron sits over the fading right-hand end rather than taking a slice of the row: in the flow
+   it took exactly the width that made it necessary, and a strip that fits would still show it. */
+.map-tools-more { position: absolute; top: 0; right: var(--gutter); z-index: 2; padding: 4px 8px; }
+.map-toolbar-scrolls::after {
+  content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 40px); width: 28px;
   pointer-events: none; background: linear-gradient(to right, transparent, var(--ground));
 }
-@media (min-width: 700px) and (min-height: 440px) { .map-toolbar::after { display: none; } }
-@media (max-width: 699px), (max-height: 439px) { .map-tools-more { display: inline-flex; } }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
 /* The panel's head and its actions are pinned; only its middle scrolls, so the primary action is

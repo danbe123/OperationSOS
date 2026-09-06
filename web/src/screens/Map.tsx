@@ -146,6 +146,22 @@ export function MapScreen() {
 
   const toolbarRef = useRef<HTMLDivElement>(null);
   const scrollTools = () => toolbarRef.current?.scrollBy({ left: 200, behavior: 'smooth' });
+  // The strip says when there is more of it than fits, rather than clipping a tool's name in half:
+  // the fade and the chevron appear only when it actually scrolls, at any width.
+  const [toolsScroll, setToolsScroll] = useState(false);
+  useEffect(() => {
+    const el = toolbarRef.current;
+    if (!el) return;
+    const check = () => setToolsScroll(el.scrollWidth > el.clientWidth + 1);
+    check();
+    window.addEventListener('resize', check);
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    observer?.observe(el);
+    return () => {
+      window.removeEventListener('resize', check);
+      observer?.disconnect();
+    };
+  }, [status, config]);
 
   const copyLink = async () => {
     try {
@@ -174,7 +190,7 @@ export function MapScreen() {
     <Screen title="Map" search={false} back={false} fill className="map-screen">
       {/* Print was a non-scrolling row of its own above the tools; it is the eighth tool, and the
           strip fades and offers a chevron at its right edge rather than clipping "Ho" mid-word. */}
-      <div className="map-toolbar no-print">
+      <div className={toolsScroll ? 'map-toolbar map-toolbar-scrolls no-print' : 'map-toolbar no-print'}>
       <div className="map-tools" role="toolbar" aria-label="Map tools" ref={toolbarRef}>
         <button type="button" className={panel === 'layers' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'layers'} onClick={() => setPanel(panel === 'layers' ? 'none' : 'layers')}><Icon name="layers" size={18} /><span>Layers</span></button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>
@@ -185,7 +201,7 @@ export function MapScreen() {
         <button type="button" className={panel === 'share' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'share'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" size={18} /><span>Share</span></button>
         <PrintButton onPrint={print} />
       </div>
-      <button type="button" className="btn btn-small map-tools-more" aria-label="More map tools" onClick={scrollTools}><Icon name="forward" size={18} /></button>
+      {toolsScroll && <button type="button" className="btn btn-small map-tools-more" aria-label="More map tools" onClick={scrollTools}><Icon name="forward" size={18} /></button>}
       </div>
       <div className="map-host">
         {loading && <p className="map-note muted">Loading map…</p>}

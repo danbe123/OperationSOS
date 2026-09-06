@@ -256,3 +256,284 @@ scroller.
    — call 999" directly under a panel that would say 999 will not connect. Also: on the phone the
    `<nav>` precedes `<main>` in the DOM, so Tab visits the five bottom-bar destinations before the
    first job and there is no skip link.
+
+## Applied
+
+Every screenshot below is `docs/superpowers/critique/round-1/<name>` before and
+`docs/superpowers/critique/round-2/<name>` after, at the same width and in the same theme. The whole
+inventory was re-shot with `node scripts/screenshots.mjs round-2`, and it now carries five entries
+that round 1 could not photograph at all: the dim mode, a field craft page, the quick card with the
+phones off, a toast that is actually on the screen, and a peacetime front door with a household in it.
+
+### 1. Dim mode — the 03:00 blackout state — breaks every overlay and the contrast floor
+
+Root cause, removed: `:root[data-dim="on"] body { filter: brightness(0.55) }`. A filtered element is
+the containing block for every `position: fixed` descendant, so the kiosk keyboard, the toasts, the
+modals and the idle board measured from a 256 px shell instead of the screen; and the same filter
+took ink from 14.6:1 to 3.5:1.
+
+Dim is now a palette. `tokens.css` carries a third block per theme on `:root[data-dim="on"]`,
+`:root[data-theme="field"][data-dim="on"]` and `:root[data-theme="blackout"][data-dim="on"]`,
+overriding `--ground`, `--panel`, `--sunken`, `--ink`, `--ink-muted`, `--link`, `--signal`,
+`--on-signal`, `--ok`, `--warn`, `--danger`, `--line`, `--line-strong` and `--focus`. The ground and
+the panel go darker than the theme they dim, the ink comes down with them but never below 7:1
+against either, and the accent is dimmed with everything else — vault's `#6cf08c` becomes `#57c274`,
+blackout's `#ffc4bc` becomes `#e8a29a`, field's paper drops from `#f3efe4` to `#d5cfc0` with its
+accents darkened along their own hues to keep the floor. Nothing is filtered, so every overlay
+measures from the viewport again.
+
+The unit suite now measures six palettes rather than three (`tests/theme/contrast.test.ts`, 96 cases),
+asserts that each dim ground and panel is darker than the theme it dims, and asserts that no
+`data-dim` rule carries a `filter` at all. `e2e/dim.spec.ts` measures the live tokens in all three
+themes, checks `getComputedStyle(document.body).filter === 'none'`, and opens the kiosk keyboard in
+dim to prove it sits on the bottom edge of the 480 px screen with the search field above it.
+
+The kiosk's own backlight is separate hardware and was left where it is: the idle timer and the
+System control already drop it (`kiosk/IdleOverlay.tsx`).
+
+New in the inventory: `now-power-off-dim`, `board-dim`, `quick-card-dim`, `keyboard-dim` and
+`notice-dim`, at both widths in all three themes.
+
+### 2. The document viewer is raw pdf.js, and a missing document says nothing
+
+The viewer's own chrome is hidden — `pdfViewerCss` sets `--toolbar-height: 0px` and takes
+`#toolbarContainer`, `#sidebarContainer`, `#sidebarResizer`, `#findbar`, `#secondaryToolbar` and
+`#editorUndoBar` off the screen in every theme — and `screens/Doc.tsx` draws the chrome instead:
+Previous, a page field, "of n", Next, "Find in this document" with its match count and a Next match,
+and the page size, all `btn-small` at 48 px with a word beside every icon. It drives PDF.js through
+its own event bus (`pagesloaded`, `pagechanging`, `scalechanging`, `updatefindmatchescount`,
+`documenterror`), and every call is guarded so a viewer that has not finished starting simply does
+nothing. Back is the screen head's, which every screen already has.
+
+The colours are no longer a second palette living in the viewer: `viewerTokens()` reads `--ground`,
+`--panel`, `--ink` and `--line` off the app's own root at inject time, so the viewer follows the
+theme *and* the dim palette. Blackout still inverts the page, because a white page at 03:00 in a
+red-on-black theme is a torch in the face.
+
+The missing state is a state, not the numeral 0: `Doc` probes the file with a HEAD request and, on a
+404 or 410 (or a `documenterror` from the viewer), renders no viewer at all — a `panel-warn` reading
+"The box does not have this document.", who is listed and on which drive, that the file arrives when
+the box is built or updated, and two buttons: "Open the library entry" and "Search the box for this".
+
+Before `round-1/document-missing-853-{vault,field,blackout}.png` and the 390 set · after the same
+names under `round-2/`.
+
+### 3. The kiosk keyboard costs half the screen and takes the rail with it
+
+`.app` is `height: 100dvh` again. Above 700 px wide and 440 px tall the keyboard's height belongs to
+`.app-main` alone (`padding-bottom: var(--kb-height)`), so the rail keeps all 480 px, and
+`.kb-panel` starts at `left: var(--rail)` so it covers the content column and nothing else. The rail
+itself gives way in the right order: `.mainnav-list` is `flex: 0 1 auto; min-height: 0; overflow-y:
+auto` and `.rail-foot` is `flex: 0 0 auto`, so System, AI and the theme button are on the screen at
+any height and the five destinations scroll before they do.
+
+The landscape phone is the same fault without a keyboard: 469 px of rail in a 390 px viewport. The
+rail's query now carries a height — `(min-width: 700px) and (min-height: 440px)`, in `shell.css` and
+in `useWide` — so 844x390 draws the bottom bar, which shows all five destinations at any width, and
+the theme button moves to the screen head with it. 853x480 is unchanged.
+
+On Find, the fix round 1 made scrolled the count line to the top and pushed the field off it; the
+content column is scrolled to the top instead, so the field, the count and the first results are
+above `--kb-height` together.
+
+`e2e/keyboard-rail.spec.ts` measures the rail before and after the keyboard opens, asserts every
+destination and the theme button is still visible, asserts the panel starts where the rail ends, and
+checks the landscape phone gets a bar with all five destinations on the screen.
+
+Before `round-1/find-empty-853-vault.png`, `round-1/find-results-853-vault.png`,
+`round-1/guides-filtered-853-vault.png`, `round-1/keyboard-853-vault.png` and their field and
+blackout pairs · after the same under `round-2/`.
+
+### 4. `.btn-small` is 40 px, and it is most of the app's controls
+
+`components.css` raises `.btn-small` and `.searchbar-compact` to `min-height: var(--touch)`, keeping
+`--t-meta` type and the tighter padding, so the map toolbar, Back on every screen, the band's
+buttons, every "Read more", every Edit and Remove, the theme button, "Try again", "Open the plan",
+"System" and every panel Close clear the floor without growing visually. The map toolbar still fits.
+The two first-run calls to action are `.btn` buttons on a row of their own rather than 145x20 and
+189x20 inline links. While there, a disabled primary gives up its fill rather than its legibility —
+`.btn-primary:disabled` is the panel ground with muted ink, not a 55 %-opacity accent slab.
+
+Before `round-1/map-853-vault.png`, `round-1/map-390-vault.png`, `round-1/now-power-off-853-vault.png`,
+`round-1/tasks-853-vault.png`, `round-1/household-853-vault.png`, `round-1/now-peacetime-853-vault.png`
+· after the same under `round-2/`.
+
+### 5. The front door says four contradictory things about the same water
+
+Every number on the peacetime panel now comes from the engine's readiness and is said once.
+`Readiness.tsx` no longer counts stock itself: its lead is "One thing would help most." (or "Nothing
+is outstanding.") and the gaps follow. Who the box is counting for is said in exactly one place, the
+household panel: "Nobody is registered yet, so the box counts stock for one person." The gap rows
+have their own class — `.gap-row`, a 48 px full-width row with the chevron on the right — and no
+longer wear `.task-tick`, so nothing that is not tickable looks tickable.
+
+The fixture was making the contradiction possible: `readiness.gaps` was the hard-coded string "Water:
+1.5 days for 3 people" while the stock was empty. It is derived from the same register and the same
+stock the household panel counts (`e2e/fixtures/engine.ts:readinessGaps`), so the two cannot
+disagree. And `now-peacetime` now has two people and four and a half days of water in it, which makes
+`now-empty-household` a different picture rather than a pixel-identical one.
+
+Before `round-1/now-peacetime-853-vault.png`, `round-1/now-peacetime-390-vault.png`,
+`round-1/now-empty-household-853-vault.png` and the field and blackout pairs · after the same under
+`round-2/`.
+
+### 6. The same tick behaves three different ways
+
+One behaviour, in one place. `situation/Tick.tsx` carries the ten-second undo window
+(`useTickUndo`), the Undo button and the "who and when" line, and both `TaskRow` (Now and Things to
+do) and `Checklist` (a guide) use them. A ticked job stays exactly where it is, struck through, tick
+filled, with `person, ticked just now` on its own line and an inline **Undo** beside it for ten
+seconds. Only the title is struck through: `.task-time` carries `text-decoration: none`, because the
+meta line is the answer, not part of the job.
+
+On `/tasks` the row no longer vanishes. "Show done" filters the jobs that were already done when the
+screen was opened — the set is seeded on the render the list first arrives in, not in an effect, so
+nothing is painted and then taken away — and turning the chip off re-seeds it. Anything ticked on
+this screen stays where it is until the next load.
+
+`e2e/tick.spec.ts` ticks and undoes the same job on `/tasks`, on `/` and on `/s/grid-collapse`, and
+checks the computed `text-decoration-line` of the title and the meta line.
+
+Before `round-1/tasks-853-vault.png`, `round-1/now-power-off-390-vault.png`,
+`round-1/scenario-right-now-390-vault.png`, `round-1/scenario-later-390-blackout.png` · after the
+same under `round-2/`.
+
+### 7. The drill cannot be started, and its debrief argues with itself
+
+"Start drill" is never a disabled primary with nothing saying why: it stays live, and a tap with
+nothing chosen focuses the situation select and says "Choose a situation first." beside the button
+(and "Choose at least one thing that is off in the drill." when that is what is missing).
+
+The debrief counts once and phrases the clock once: "Drill ended: National grid collapse. 2 h in,
+1 of 4 jobs ticked." The engine's own "Drill ended: N tasks done in M minutes (drill)" line is
+dropped from the log under it (`situation/drill.ts`), because that is the second, disagreeing count
+of the same fact. The log speaks in places rather than suffixes — `api/words.ts:eventTitle` turns
+"(kiosk)" into "on the box", "(phone)" into "on a phone" and "(drill)" into "in the drill" — and the
+event log screen uses the same translation.
+
+The drill's chrome is one row, not four. `DrillBanner`'s bar is gone; the band already carries the
+⚑ Drill chip and the scenario, and the way out of the drill is an "End drill" button beside them
+(`EndDrillButton`). The debrief travels from the band to the panel under it the way a notice does.
+
+Before `round-1/situation-drill-853-vault.png`, `round-1/now-drill-853-vault.png`,
+`round-1/now-drill-390-vault.png` · after the same under `round-2/`.
+
+### 8. Now never says 999 will not connect, and the box still has two 999 components
+
+`CallsNotice` is deleted. `Emergency999` gained one prop, `onlyWhenHidden`, which is the "cannot
+call" state on its own, and the three screens that used the notice — Module, Page and Scenario —
+render that instead, so there is genuinely one component, one look and one sentence for the fact.
+Now renders it at the top whenever calls are hidden, which is the most important new thing on the
+front door and was previously not said there at all. `/tools/timers` renders it only when calls are
+hidden; a screen for boiling water does not carry a 999 panel while the phones work. `/medical`,
+`/medical/card/*`, `/medical/dose` and `/radio` keep both states.
+
+Before `round-1/now-phones-down-853-vault.png`, `round-1/now-phones-down-390-vault.png`,
+`round-1/medical-phones-down-853-vault.png`, `round-1/timers-853-vault.png` · after the same under
+`round-2/`, plus the new `quick-card-phones-off`.
+
+### 9. Guides amputates the one useful line, and its copy does not follow the filter
+
+The clamp is gone from `guides.css`, and every guide's line is written to fit two lines at 390 px —
+about 60 characters — in the content itself, so nothing is cut mid-word and a guide with no short
+line shows none. "A radiation release from a UK or…" is "A radiation release from a UK or nearby
+site."; "Ransomware or sabotage takes o…" is "Sabotage takes out the NHS, banks or the grid."
+
+Each section counts what it is showing, never what it would show with the filter off: "20 situations.
+What to do right now, and over the months after." unfiltered, "1 situation matches “flood”." when
+filtered. On the kiosk the filter block is one row — the field and its chips share a line — instead
+of 190 px of the 480.
+
+Before `round-1/guides-853-vault.png`, `round-1/guides-390-vault.png`,
+`round-1/guides-filtered-853-vault.png`, `round-1/guides-filtered-390-field.png` · after the same
+under `round-2/`.
+
+### 10. On a phone the map panel covers the map you are being asked to aim
+
+Every map panel is now a `MapPanel`: a pinned head with its title and Close, a body that scrolls, and
+pinned actions along the bottom edge. On the kiosk "Set as home" and "Search from this centre" are in
+that pinned row, so the primary action is never the top sliver of a button at the bottom of a 480 px
+screen. On a phone the panel is a bottom sheet at 55 % height, so the map an instruction asks you to
+aim stays live above the instruction.
+
+Home says what it will save and follows the map: "Set as home will use the centre of the map,
+**SU 39 14**. Move the map and this line follows it." The share panel's link is a two-line box with a
+"Copy the link" button beside it. Print is the eighth tool in the toolbar rather than a non-scrolling
+row of its own above it, and the strip has a fade at its right edge and a chevron that scrolls it, so
+"Home" is never cut in half with nothing to say there is more. The fade and the chevron appear only
+when the strip really does scroll, measured rather than guessed at a breakpoint, and the chevron sits
+over the fading end rather than in the flow — in the flow it took exactly the width that made it
+necessary. With the tools' padding tightened the kiosk's seven fit 757 px at 48 px tall with no
+chevron at all; a 390 px phone shows three and the chevron.
+
+Before `round-1/map-home-390-vault.png`, `round-1/map-nearby-390-vault.png`,
+`round-1/map-layers-390-blackout.png`, `round-1/map-390-vault.png`, `round-1/map-home-853-vault.png`,
+`round-1/map-share-853-vault.png` · after the same under `round-2/`.
+
+## The watch list
+
+Taken:
+
+1. **The board's big clock is 40 px in two of three themes.** `.board-now` is `var(--t-board)` — 64 px
+   — in every theme; only the face changes, and VT323 stays vault's alone. Before
+   `round-1/board-853-field.png`, `round-1/board-853-blackout.png` · after the same under `round-2/`.
+2. **Unstyled radios repeat the fault the checkbox fix cured.** `input[type="radio"]` is drawn the way
+   the checkbox now is: `appearance: none`, a 26 px `--line-strong` ring on `--sunken` when unchosen,
+   and the accent ring with a filled accent dot when chosen — so the filled control is the one that is
+   on, in all three themes. Before `round-1/map-layers-853-vault.png`,
+   `round-1/map-layers-390-blackout.png` · after the same under `round-2/`.
+4. **"Playbook" survived, and so did a dot-run.** `Timers.tsx` no longer says "Nuclear war playbook"
+   or joins two links with a middle dot: "Read about radiation" and "Open the nuclear war guide" are
+   buttons that say where they go, and so are "Adult CPR card" and "Child CPR card". No user-facing
+   string in the app contains the word now. Before `round-1/timers-853-vault.png` · after
+   `round-2/timers-853-vault.png`.
+5. **Three things the fixtures never photograph.** The ten field craft pages exist in the fixture, so
+   `/fieldcraft` is a list of ten rather than a title and one sentence, and `field-craft-page` shows
+   one of them in full. The `notice` shot clicked a link that was not there (`hasText: /http/`); it
+   clicks "the live article" and waits for the toast, so `notice` is no longer pixel-identical to
+   `reader`. `quick-card-phones-off` is new: the CPR card's own step 2 says to call 999, and this is
+   the state where it will not connect. Before `round-1/field-craft-853-vault.png`,
+   `round-1/notice-853-vault.png` · after the same under `round-2/`, plus the two new names.
+
+Left, with reasons:
+
+- **The overlay swatches are colour-only squares with no symbol** (watch list 2). The swatch is a
+  legend key that appears in the layers panel, the printed map and the map's own legend; giving it a
+  symbol means giving every overlay a symbol and carrying it through all three, which is a change to
+  the map's data, not to a control.
+- **The warning triangle means five things, and "Remove" is the loudest word on the plan** (watch list
+  3). Half of it is done — "Practise a drill" no longer wears the hazard triangle — but reserving ⚠
+  for danger across the drill chip, the Timers tile and the engine-down line, and putting Remove
+  behind Edit, is a pass over the symbol and button vocabulary the whole app shares. It is the
+  round-3 item the round-1 note about chip shapes already pointed at.
+- **"Development profile", "Version 0.1.0", "CPU 51°C", "Core" as a drive name and "Scan to open SOS"**
+  (watch list 4). These are System and the Connect panel, which round 2's ten did not reach; the
+  clipped heading on `connect-a-phone` at 480 px belongs with them.
+- **`<nav>` before `<main>` on a phone, and no skip link** (watch list 5). The order is the shell's
+  grid, and a skip link is a new piece of chrome on every screen; it wants its own pass with the rest
+  of the keyboard-order work rather than being bolted to one of the ten.
+
+### What the round's own screenshots changed
+
+Round 2 was built, photographed, and then fixed again before it was called done:
+
+- **The map toolbar's own scroll cue was self-fulfilling.** `map-853-vault.png` showed Share clipped
+  and a chevron beside it on the kiosk, because the chevron in the flow took the width that made the
+  strip overflow. It is out of the flow now, over the fade, and shown only when a measurement says
+  the strip scrolls: the kiosk's seven tools fit, and the phone gets the cue it needs.
+- **The keyboard's keys did not fit the narrower panel.** With the rail keeping its own 96 px, eleven
+  64 px keys overflowed 757 px: `keyboard-dim-853-vault.png` showed "ift" where "shift" should be and
+  the delete key cut off at the right edge. The keys share the row now, the wide ones taking twice a
+  letter's share, and `e2e/keyboard-rail.spec.ts` walks every key to check it is inside the panel,
+  48 px tall, and not clipping its own label.
+- **The Guides filter still wrapped its chips to a second row** on the kiosk, which put the count line
+  and every tile under the keyboard (`guides-filtered-853-vault.png`). Under 620 px tall the chips are
+  one scrolling row.
+- **A new box was told to add who lives here twice** — once as the first-run button and once as the
+  engine's own gap (`now-empty-household-390-vault.png`). The gap gives way to the button, and the
+  count above it follows what is shown.
+
+One thing the new shots record rather than fix: `quick-card-phones-off` shows the CPR card's own step
+2, "Call 999 and put it on speaker.", under the panel that says 999 will not connect. The warning is
+at least on the screen and above the step now, which it was not before; making the card's own words
+follow the condition is content, not chrome, and belongs to a later round.
