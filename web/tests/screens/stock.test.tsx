@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import type { StockItem, StockResponse } from '../../src/api/types';
-import { meter, sortStock } from '../../src/screens/plan/Stock';
+import { daysBadge, meter, sortStock } from '../../src/screens/plan/Stock';
+import { isoToUkDate } from '../../src/tools/dates';
 
 const AT = '2026-09-05T10:00:00Z';
 const row = (over: Partial<StockItem> & Pick<StockItem, 'id' | 'name' | 'category'>): StockItem => ({
@@ -95,13 +96,56 @@ describe('The Stock screen', () => {
     await user.click(within(water).getByRole('button', { name: 'Change Bottled water' }));
     const quantity = within(water).getByLabelText('Quantity of Bottled water');
     expect(within(water).getByLabelText('Use by for Bottled water')).toBeInTheDocument();
-    // The rate is the category's, said as a fact rather than offered as a field.
-    expect(water).toHaveTextContent('counts as 3 L per person a day');
+    // The rate the category carries, shown as what it is and left alone unless it is touched.
+    expect(within(water).getByLabelText('Counts as, in L per person a day, for Bottled water')).toHaveValue(3);
     await user.clear(quantity);
     await user.type(quantity, '18');
     await user.click(within(water).getByRole('button', { name: 'Save' }));
     expect(updateStock).toHaveBeenCalledWith(1, { quantity: 18 });
     expect(within(water).queryByLabelText('Quantity of Bottled water')).toBeNull();
+  });
+
+  it('lets a metered row keep its own rate, and offers none to a row that has no rate', async () => {
+    mockStock();
+    const updateStock = vi.spyOn(api, 'updateStock').mockResolvedValue(stock.items[1]);
+    renderRoute('/plan/stock');
+    const list = await screen.findByRole('list', { name: 'Stock items' });
+    const user = userEvent.setup();
+    const water = within(list).getAllByRole('listitem')[1];
+    await user.click(within(water).getByRole('button', { name: 'Change Bottled water' }));
+    // A household that counts its water in five-litre bottles says so here, once, on the row.
+    const rate = within(water).getByLabelText('Counts as, in L per person a day, for Bottled water');
+    await user.clear(rate);
+    await user.type(rate, '5');
+    await user.click(within(water).getByRole('button', { name: 'Save' }));
+    expect(updateStock).toHaveBeenCalledWith(1, { per_person_day: 5 });
+
+    // A torch runs out of nothing: Other and Fuel are tracked, not metered, and are asked nothing.
+    const torch = within(list).getAllByRole('listitem')[3];
+    await user.click(within(torch).getByRole('button', { name: 'Change Torch' }));
+    expect(within(torch).queryByLabelText(/per person a day/)).toBeNull();
+  });
+
+  it('shows the use-by beside the days when a rated row is about to go off', async () => {
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    const far = new Date(Date.now() + 400 * 86_400_000).toISOString().slice(0, 10);
+    mockStock({ items: [
+      row({ id: 1, name: 'Tins', category: 'food', quantity: 12, unit: 'person-days', per_person_day: 1, days_left: 6, expires: soon }),
+      row({ id: 2, name: 'Rice', category: 'food', quantity: 12, unit: 'person-days', per_person_day: 1, days_left: 6, expires: far }),
+    ] });
+    renderRoute('/plan/stock');
+    const list = await screen.findByRole('list', { name: 'Stock items' });
+    // Equal runs sort by name, so Rice (good for a year) comes before Tins (going off in ten days).
+    const [rice, tins] = within(list).getAllByRole('listitem');
+    // Both answers: six days of meals in it, and a date after which there are none.
+    expect(within(tins).getByText('6 days')).toHaveClass('badge-warn');
+    expect(tins).toHaveTextContent(`use by ${isoToUkDate(soon)}`);
+    // A tin good for another year says nothing about it: the days badge is the whole answer.
+    expect(rice).not.toHaveTextContent('use by');
+    expect(far > soon).toBe(true);
+    // Expired still outranks the days, and takes the hint with it.
+    const gone = daysBadge(row({ id: 3, name: 'Old', category: 'food', quantity: 1, per_person_day: 1, days_left: 0, expired: true, expires: '2020-01-01' }));
+    expect(gone).toEqual({ text: 'expired', cls: 'badge badge-danger' });
   });
 
   it('clears a use-by date rather than quietly keeping it', async () => {
@@ -127,15 +171,39 @@ describe('The Stock screen', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Add something else' }));
     const form = screen.getByRole('form', { name: 'Add stock' });
+    // Water is metered: its unit is the category's, said rather than offered.
+    expect(within(form).queryByLabelText('Unit')).toBeNull();
+    expect(within(form).getByText('L')).toBeInTheDocument();
     await user.selectOptions(within(form).getByLabelText('Type'), 'fuel');
     await user.type(within(form).getByLabelText('Item'), 'Diesel');
     await user.type(within(form).getByLabelText('Quantity'), '40');
+    // Fuel is tracked, not metered: jerry cans, batteries, rolls — whatever it is counted in.
     expect(within(form).getByLabelText('Unit')).toHaveValue('L');
     expect(within(form).queryByLabelText(/per person a day/i)).toBeNull();
     await user.click(within(form).getByRole('button', { name: 'Add item' }));
     // No rate is sent: the API holds the rate for the type.
     expect(addStock).toHaveBeenCalledWith({ name: 'Diesel', category: 'fuel', quantity: 40, unit: 'L', expires: null });
     expect(screen.queryByRole('form', { name: 'Add stock' })).toBeNull();
+  });
+
+  it('fixes the unit to the type for the three the box meters', async () => {
+    mockStock();
+    const addStock = vi.spyOn(api, 'addStock').mockResolvedValue(stock.items[0]);
+    renderRoute('/plan/stock');
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Add something else' }));
+    const form = screen.getByRole('form', { name: 'Add stock' });
+    for (const [type, unit] of [['food', 'person-days'], ['medicine', 'days of supply'], ['water', 'L']] as const) {
+      await user.selectOptions(within(form).getByLabelText('Type'), type);
+      // A household could type "bottles" over "L" and get a row the water meter could not add up.
+      expect(within(form).queryByLabelText('Unit'), type).toBeNull();
+      expect(within(form).getByText(unit), type).toBeInTheDocument();
+    }
+    await user.selectOptions(within(form).getByLabelText('Type'), 'food');
+    await user.type(within(form).getByLabelText('Item'), 'Tins');
+    await user.type(within(form).getByLabelText('Quantity'), '12');
+    await user.click(within(form).getByRole('button', { name: 'Add item' }));
+    expect(addStock).toHaveBeenCalledWith({ name: 'Tins', category: 'food', quantity: 12, unit: 'person-days', expires: null });
   });
 
   it('puts the add form away again on Cancel', async () => {

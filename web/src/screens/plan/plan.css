@@ -16,12 +16,19 @@
 
 /* Days left, as a bar a glance can read: full is a fortnight, and the colour is the state, not the
    decoration. The number is always beside it — a bar on its own is not a figure. */
-/* A meter is one line of words and one bar under it: what is held, how long it lasts and what a
-   fortnight would take, against a bar that fills at two weeks and no further. The bar takes the
-   tone of the words it sits under, so the screen can be read from the length and the colour alone. */
+/* A meter is what is held, how long it lasts and what a fortnight would take, against a bar that
+   fills at two weeks and no further. The bar takes the tone of the words it sits under, so the
+   screen can be read from the length and the colour alone. */
 .meters { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.meter { display: flex; flex-direction: column; gap: 4px; }
-.meter-line { justify-content: space-between; gap: 8px; }
+/* Three lines, in this order, at every width: the name, the figures, the bar. The name and the
+   figures used to share a line and wrap only when they ran out of room, so Water was one line, Food
+   two and Medicine one, and the three bars sat at three different offsets down the screen. */
+.meter { display: flex; flex-direction: column; gap: 2px; }
+.meter-title { font-size: var(--t-lead); }
+.meter-figures { margin-bottom: 2px; }
+/* The unit a metered type is counted in is said, not asked: it stands where its field would. */
+.field-fixed { margin: 0; }
+.field-fixed strong { padding: 6px 0; }
 .meter-warn .progress-line { color: var(--warn); }
 .meter-warn .progress-line::-webkit-progress-value { background: var(--warn); }
 .meter-warn .progress-line::-moz-progress-bar { background: var(--warn); }

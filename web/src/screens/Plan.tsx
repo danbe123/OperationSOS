@@ -70,6 +70,10 @@ function Hub() {
   const eventsQ = useQuery(() => api.notes('event'), []);
   const notes = notesQ.data ?? [];
   const pins = pinsQ.data ?? [];
+  // Six fetches, six chances to fail, and a failed one is indistinguishable from an empty list: a
+  // household whose register would not load read "Nobody registered yet" and had no way to know it
+  // was the box talking, not the truth. One line above the rows says so, and names the first fault.
+  const failed = [peopleQ, neighboursQ, stockQ, notesQ, pinsQ, eventsQ].find((q) => q.error);
   const lines = stateLines({
     people: peopleQ.data ?? [],
     neighbours: neighboursQ.data ?? [],
@@ -82,6 +86,7 @@ function Hub() {
   return (
     <Screen title="Household" actions={<PrintButton />}>
       <Body>
+        {failed && <p className="warning">Some of this could not be loaded: {failed.error}</p>}
         <nav className="hub-rows" aria-label="Household">
           {ROWS.map((row) => (
             <Link className="hub-row" key={row.key} to={row.to}>

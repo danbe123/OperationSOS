@@ -98,6 +98,16 @@ describe('The Household hub', () => {
     expect(await screen.findByRole('heading', { name: 'Meeting points' })).toBeInTheDocument();
   });
 
+  it('says so when a list would not load, rather than reading as an empty household', async () => {
+    mockHub();
+    vi.spyOn(api, 'household').mockRejectedValue(new Error('the box is not answering'));
+    renderRoute('/plan');
+    const nav = await screen.findByRole('navigation', { name: 'Household' });
+    expect(await screen.findByText(/Some of this could not be loaded: the box is not answering/)).toHaveClass('warning');
+    // The row still shows its empty sentence; the line above it is what says not to believe it.
+    expect(within(nav).getByText('Nobody registered yet')).toBeInTheDocument();
+  });
+
   it('offers Print, and hides it in kiosk mode', async () => {
     mockHub();
     const shown = renderRoute('/plan');
