@@ -1,0 +1,179 @@
+id: medical
+title: Medical
+icon: medical
+order: 1
+summary: The first-aid box, the trauma kit and the medicines to hold when no ambulance is coming.
+intro: |
+  Most of what saves a life at home is cheap and dull. Build this box in order: dressings and bandages
+  first, because you are far more likely to have to stop a bleed than to close a wound, and the clever
+  equipment is worthless if the basics are missing ([Survival and Austere Medicine, p. 43](doc:survival-austere-medicine-2017#page=43)).
+  Doses here are the UK ones. Paracetamol 500 mg tablets, up to 1 g four times a day and never more than
+  4 g in 24 hours ([NHS paracetamol](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/));
+  ibuprofen 400 mg up to three times a day with food ([NHS ibuprofen](kiwix:nhs_medicines/www.nhs.uk/medicines/ibuprofen-for-adults/)).
+  The medicines that matter most are the ones already prescribed to the people on your register: every
+  playbook on this box plans for two weeks of each, and the serious tier here asks for four weeks
+  ([Chronic conditions](page:chronic-conditions)). Antibiotics are prescription-only in the UK, so stock
+  only a course a prescriber has lawfully given you, and read the rules for old and expired courses long
+  before you need them ([WTIND, p. 381](doc:where-there-is-no-doctor#page=381)). Skill beats kit: the
+  quick cards are the drill, this is only the shopping list.
+sources:
+  - {title: Paracetamol for adults (NHS), kiwix: nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/, as_at: 2025-12-14}
+  - {title: Ibuprofen for adults (NHS), kiwix: nhs_medicines/www.nhs.uk/medicines/ibuprofen-for-adults/, as_at: 2025-12-14}
+  - {title: Survival and Austere Medicine, doc: survival-austere-medicine-2017, as_at: 2017-01}
+  - {title: Where There Is No Doctor, doc: where-there-is-no-doctor, as_at: 2021-01}
+  - {title: WHO Model List of Essential Medicines 2025, doc: who-eml-2025, as_at: 2025-09}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: The box you open for a cut, a burn or a fever before anyone thinks about a hospital.
+  serious:
+    title: Two weeks
+    days: 14
+    why: What you need when the ambulance is hours away and the pharmacy is shut.
+  full:
+    title: No help coming
+    days: 90
+    why: Treating at home, badly but alive, what a hospital would normally take off your hands.
+items:
+  - id: dressings
+    tier: basic
+    name: Plasters, sterile dressings, gauze squares and micropore tape
+    qty: {amount: 1, unit: box, per: household}
+    why: Dressings come before every other purchase; they cover a wound and stop bleeding, and no suture kit replaces them ([Survival and Austere Medicine, p. 52](doc:survival-austere-medicine-2017#page=52)).
+    link: card:wound-cleaning
+  - id: bandages
+    tier: basic
+    name: Triangular bandages and crepe roller bandages, 5 cm and 10 cm
+    qty: {amount: 4, unit: bandages, per: household}
+    why: A rolled bandage over a dressing is what holds direct pressure on a bleed while your hands do something else.
+    link: card:severe-bleeding
+  - id: gloves-shield
+    tier: basic
+    name: Nitrile gloves and a CPR face shield
+    qty: {amount: 20, unit: pairs, per: household}
+    why: Non-sterile exam gloves are enough for wound work and there is little difference in infection rates ([Survival and Austere Medicine, p. 53](doc:survival-austere-medicine-2017#page=53)).
+    link: card:cpr-adult
+  - id: instruments
+    tier: basic
+    name: Digital thermometer, tweezers, tough scissors and a tick tool
+    qty: {amount: 1, unit: set, per: household}
+    why: A temperature is the first number anyone asks for, and a tick is removed with a tool, not fingers ([Ticks and adders](page:ticks-adders)).
+    link: card:fever-child
+  - id: painkillers-adult
+    tier: basic
+    name: Paracetamol 500 mg and ibuprofen 400 mg tablets
+    qty: {amount: 2, unit: tablets, per: person-day}
+    stock: {category: medicine, unit: tablets}
+    why: Paracetamol 500 mg, up to 1 g four times a day and never over 4 g in 24 hours ([NHS paracetamol](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/)); ibuprofen 400 mg up to three times a day with food, avoided with asthma, kidney or stomach problems ([NHS ibuprofen](kiwix:nhs_medicines/www.nhs.uk/medicines/ibuprofen-for-adults/)).
+  - id: painkillers-child
+    tier: basic
+    name: Paracetamol and ibuprofen suspension for children
+    qty: {amount: 2, unit: bottles, per: household}
+    stock: {category: medicine, unit: bottles}
+    why: Children are dosed by weight and age from the bottle, not by breaking adult tablets ([NHS paracetamol for children](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-children/)).
+    link: card:fever-child
+  - id: antihistamine
+    tier: basic
+    name: Antihistamine tablets, cetirizine or loratadine, and bite cream
+    qty: {amount: 30, unit: tablets, per: household}
+    stock: {category: medicine, unit: tablets}
+    why: For hay fever, hives, stings and mild allergic reactions ([NHS cetirizine](kiwix:nhs_medicines/www.nhs.uk/medicines/cetirizine/)); an antihistamine never replaces adrenaline in anaphylaxis.
+    link: card:anaphylaxis
+  - id: ors
+    tier: basic
+    name: Oral rehydration salt sachets
+    qty: {amount: 1, unit: sachets, per: person-day}
+    stock: {category: medicine, unit: sachets}
+    why: Salts and sugar in the right proportion rehydrate faster than water alone and are the treatment for diarrhoea in a child ([Oral rehydration therapy](kiwix:wikipedia_en_medicine_maxi/Oral_rehydration_therapy)).
+    link: card:dehydration
+  - id: tourniquet
+    tier: serious
+    name: Windlass tourniquet, CAT or SOFTT-W pattern
+    qty: {amount: 2, unit: tourniquets, per: household}
+    why: For a limb bleed that direct pressure will not stop; a proper windlass tourniquet, not an improvised strap ([Tourniquet](kiwix:wikipedia_en_medicine_maxi/Tourniquet)).
+    link: card:severe-bleeding
+  - id: haemostatic
+    tier: serious
+    name: Haemostatic gauze
+    qty: {amount: 2, unit: packets, per: household}
+    why: For a junctional wound at the neck, armpit or groin where no tourniquet fits; direct pressure still deals with about 95 per cent of bleeding ([Survival and Austere Medicine, p. 56](doc:survival-austere-medicine-2017#page=56)).
+    link: card:severe-bleeding
+  - id: israeli-bandage
+    tier: serious
+    name: Emergency pressure bandage, 10 cm (Israeli bandage)
+    qty: {amount: 2, unit: bandages, per: household}
+    why: A dressing, a bandage and a pressure bar in one wrapper, applied one-handed on yourself.
+    link: card:severe-bleeding
+  - id: chest-seals
+    tier: serious
+    name: Vented chest seals, a pair
+    qty: {amount: 1, unit: pair, per: household}
+    why: A sucking chest wound is sealed on the way in and vented on the way out; the pair covers entry and exit.
+    link: card:shock
+  - id: splint
+    tier: serious
+    name: Mouldable splint and a broad arm sling
+    qty: {amount: 2, unit: splints, per: household}
+    why: Splinting a limb before moving anyone stops a closed fracture becoming an open one.
+    link: card:broken-bones
+  - id: burn-gel
+    tier: serious
+    name: Burn gel dressings, 10 cm by 10 cm
+    qty: {amount: 4, unit: dressings, per: household}
+    why: Cool running water for 20 minutes comes first; the gel dressing is what goes on afterwards for the wait.
+    link: card:burns
+  - id: eye-wash
+    tier: serious
+    name: Sterile saline eye wash pods
+    qty: {amount: 10, unit: pods, per: household}
+    why: Chemical or grit in an eye needs immediate, prolonged irrigation, and saline is what you can pour without hesitating.
+    link: card:eye-injury
+  - id: wound-closure
+    tier: serious
+    name: Wound closure strips and skin adhesive
+    qty: {amount: 2, unit: packs, per: household}
+    why: Strips and glue close a clean, fresh, shallow cut without stitches and without trapping infection.
+    link: card:wound-closure
+  - id: prescription-buffer
+    tier: serious
+    name: Four weeks of every prescribed medicine on the register
+    qty: {amount: 28, unit: days, per: person}
+    stock: {category: medicine, unit: days}
+    why: Insulin-dependent diabetes and lung disease needing oxygen turn dangerous within days of a supply stopping; everything else gives you weeks ([Survival and Austere Medicine, p. 105](doc:survival-austere-medicine-2017#page=105)).
+    link: page:chronic-conditions
+  - id: suture-kit
+    tier: full
+    name: Suture kit with needle holder, forceps and 3/0 and 4/0 sutures
+    qty: {amount: 1, unit: kit, per: household}
+    why: Only for a clean wound less than a day old that will not close any other way; a dirty or bitten wound is never stitched shut ([WTIND, p. 138](doc:where-there-is-no-doctor#page=138)).
+    link: card:wound-closure
+  - id: antibiotics
+    tier: full
+    name: Antibiotic courses held lawfully on prescription
+    qty: {amount: 1, unit: courses, per: person}
+    stock: {category: medicine, unit: courses}
+    why: Never bought from unregulated sellers; most antibiotics keep much of their potency past the printed date, and the rules for using an old course are written down ([Survival and Austere Medicine, p. 46](doc:survival-austere-medicine-2017#page=46); [WTIND, p. 381](doc:where-there-is-no-doctor#page=381)).
+  - id: dental-kit
+    tier: full
+    name: Dental kit with temporary filling material, oil of cloves and extraction forceps
+    qty: {amount: 1, unit: kit, per: household}
+    why: A lost filling and an abscess are among the commonest reasons a healthy adult becomes useless in a long emergency ([Where There Is No Dentist](doc:where-there-is-no-dentist)).
+    link: card:dental-abscess
+  - id: stethoscope-bp
+    tier: full
+    name: Stethoscope and blood pressure cuff
+    qty: {amount: 1, unit: set, per: household}
+    why: Useful rather than vital, in that they let you follow a patient over hours instead of guessing ([Survival and Austere Medicine, p. 56](doc:survival-austere-medicine-2017#page=56)).
+  - id: pulse-oximeter
+    tier: full
+    name: Pulse oximeter
+    qty: {amount: 1, unit: '', per: household}
+    why: A fingertip reading of oxygen saturation separates breathlessness from an emergency ([Pulse oximetry](kiwix:wikipedia_en_medicine_maxi/Pulse_oximetry)).
+    link: card:asthma-attack
+  - id: printed-references
+    tier: full
+    name: Where There Is No Doctor and Where There Is No Dentist, printed
+    qty: {amount: 1, unit: set, per: household}
+    why: Paper works when the box does not, and the WHO essential medicines list is the shopping list for a community pharmacy ([WHO EML, p. 12](doc:who-eml-2025#page=12)).
+    link: doc:where-there-is-no-doctor

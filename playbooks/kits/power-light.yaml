@@ -1,0 +1,150 @@
+id: power-light
+title: Power and light
+icon: bolt
+order: 4
+summary: Torches, batteries and charging that do not need the grid, then solar, and last of all a generator.
+intro: |
+  The National Risk Register's reasonable worst case for a failure of the national electricity
+  transmission system is a total loss with restoration taking up to about a week, followed by rota
+  disconnections ([NRR 2025, p. 90](doc:nrr-2025#page=90); [NRR 2025, p. 45](doc:nrr-2025#page=45)).
+  Everything in this kit exists so that a dark house stays a working house. Buy light first: torches are
+  safer than candles and a head torch leaves both hands free
+  ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+  Buy charging second, because a phone, a radio and this box all die on the same evening otherwise. Solar
+  comes third, and it is honest work rather than magic: London gets about 0.5 kWh of sunshine per square
+  metre a day in December against 4.7 in July, so a folding panel in midwinter is a phone charger, not a
+  heater ([Solar power in the United Kingdom](kiwix:wikipedia_en_all_maxi/Solar_power_in_the_United_Kingdom)).
+  A generator comes last of all, because it is the item most likely to kill you: its exhaust is carbon
+  monoxide, and back-feeding it through a socket can kill a lineman working on what he believes is a dead
+  network ([Mains electricity](page:mains-electricity)).
+sources:
+  - {title: National Risk Register 2025, doc: nrr-2025, as_at: 2025-01-16}
+  - {title: 'Prepare: power cuts', kiwix: prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/, as_at: 2026-09-05}
+  - {title: Approved Document P, doc: ad-p, as_at: 2013-04}
+  - {title: HSE INDG231 Electrical safety and you, doc: hse-indg231, as_at: 2026-09}
+  - {title: Lithium iron phosphate battery (Wikipedia), kiwix: wikipedia_en_all_maxi/Lithium_iron_phosphate_battery, as_at: 2026-02-15}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Enough light and charge to get a household through three dark evenings safely.
+  serious:
+    title: Two weeks
+    days: 14
+    why: Making your own electricity, in small amounts, once the batteries you bought run flat.
+  full:
+    title: No help coming
+    days: 90
+    why: A supply you can run, refuel and repair for a season without an electrician on call.
+items:
+  - id: torches
+    tier: basic
+    name: LED torch for every person, kept where they sleep
+    qty: {amount: 1, unit: torch, per: person}
+    why: Torches are safer than candles and are the first thing the government's power-cut advice asks for ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+    link: module:power
+  - id: head-torch
+    tier: basic
+    name: Head torch for every person
+    qty: {amount: 1, unit: head torch, per: person}
+    why: Cooking, first aid and anything with tools needs both hands and light in the same place at once.
+    link: module:power
+  - id: batteries
+    tier: basic
+    name: Spare alkaline cells in the sizes your torches and radio take
+    qty: {amount: 24, unit: cells, per: household}
+    stock: {category: other, unit: cells}
+    why: Alkaline cells keep for years in a cool place; buy the sizes you actually own and write the year on the pack ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+    link: module:power
+  - id: power-bank
+    tier: basic
+    name: Power bank, 20,000 mAh or more, kept charged
+    qty: {amount: 1, unit: power bank, per: household}
+    why: A 20,000 mAh bank runs this box for roughly 8 to 15 hours, or refills a phone three or four times ([What still works](page:what-still-works)).
+    link: page:what-still-works
+  - id: lantern
+    tier: basic
+    name: LED lantern for the room everyone sits in
+    qty: {amount: 1, unit: lantern, per: household}
+    why: One diffuse light stops a family burning six torches at once, and it is what makes an evening bearable rather than merely survivable.
+    link: module:power
+  - id: candles
+    tier: basic
+    name: Candles in stable, non-flammable holders
+    qty: {amount: 12, unit: candles, per: household}
+    stock: {category: fuel, unit: candles}
+    why: A last resort, not a first one; unattended candles are a leading cause of house fires in a power cut ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+    link: module:shelter-heat
+  - id: matches-lighters
+    tier: basic
+    name: Windproof matches and lighters, kept dry
+    qty: {amount: 3, unit: boxes, per: household}
+    why: A gas hob and a camping stove both need lighting by hand once their electric ignition is dead ([Fire outdoors](page:fieldcraft-fire)).
+    link: page:fieldcraft-fire
+  - id: solar-panel
+    tier: serious
+    name: Folding solar panel, 100 W or more, with a charge controller
+    qty: {amount: 100, unit: W, per: household}
+    why: UK panels average a capacity factor of around 10 per cent over the year, so size for December, not for July ([Solar power in the United Kingdom](kiwix:wikipedia_en_all_maxi/Solar_power_in_the_United_Kingdom)).
+    link: page:solar-islanding
+  - id: lifepo4-battery
+    tier: serious
+    name: LiFePO4 battery or power station, 1 kWh
+    qty: {amount: 1, unit: kWh, per: household}
+    why: A 12.8 V 100 Ah LiFePO4 battery holds about 1,280 Wh and tolerates 2,500 to more than 9,000 charge cycles, unlike a car starter battery ([Lithium iron phosphate battery](kiwix:wikipedia_en_all_maxi/Lithium_iron_phosphate_battery)).
+    link: page:solar-islanding
+  - id: inverter
+    tier: serious
+    name: Pure sine wave inverter, 300 W or more
+    qty: {amount: 1, unit: inverter, per: household}
+    why: Mains here is 230 V at 50 Hz, and a cheap modified-square-wave inverter mistreats motors, chargers and medical equipment ([Electrical wiring in the United Kingdom](kiwix:wikipedia_en_all_maxi/Electrical_wiring_in_the_United_Kingdom)).
+    link: page:solar-islanding
+  - id: car-charger
+    tier: serious
+    name: 12 V leads and USB charger for the car socket
+    qty: {amount: 1, unit: set, per: household}
+    why: A car is a generator you already own, though a starter battery is not built for deep discharge and a full discharge shortens its life ([Automotive battery](kiwix:wikipedia_en_all_maxi/Automotive_battery)).
+    link: module:vehicles-fuel
+  - id: co-alarm
+    tier: serious
+    name: Audible carbon monoxide alarm for every room with a flame
+    qty: {amount: 2, unit: alarms, per: household}
+    why: Carbon monoxide has no smell and kills people asleep; any stove, heater or generator brought indoors makes an alarm compulsory reading ([Carbon monoxide detector](kiwix:wikipedia_en_all_maxi/Carbon_monoxide_detector)).
+    link: card:carbon-monoxide
+  - id: rechargeables
+    tier: serious
+    name: Rechargeable AA and AAA cells with a 12 V or USB charger
+    qty: {amount: 16, unit: cells, per: household}
+    why: Rechargeables paired with a panel end the arithmetic of how many alkaline cells a fortnight takes ([Rechargeable battery](kiwix:wikipedia_en_all_maxi/Rechargeable_battery)).
+    link: module:power
+  - id: generator
+    tier: full
+    name: Petrol or diesel generator, sized for a fridge and a few lights
+    qty: {amount: 1, unit: generator, per: household}
+    why: Run outdoors, at least 6 metres from doors and windows with the exhaust facing away, never in a garage ([Power module](module:power); [Carbon monoxide](card:carbon-monoxide)).
+    link: page:mains-electricity
+  - id: transfer-switch
+    tier: full
+    name: Transfer switch fitted by a registered electrician
+    qty: {amount: 1, unit: switch, per: household}
+    why: A generator may only feed the house through a switch that disconnects it from the grid first; that is a new circuit and notifiable work under Part P ([Approved Document P, p. 14](doc:ad-p#page=14)).
+    link: page:mains-electricity
+  - id: generator-fuel
+    tier: full
+    name: Stored petrol, within the legal household limit, with stabiliser
+    qty: {amount: 30, unit: L, per: household}
+    stock: {category: fuel, unit: L}
+    why: A household may keep up to 30 litres of petrol without telling anyone, in plastic containers of up to 10 litres, metal containers of up to 20, or a demountable tank of up to 30 ([Petroleum Regulations](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)).
+    link: module:vehicles-fuel
+  - id: spare-panels
+    tier: full
+    name: Spare panels, cable, fuses and a second charge controller
+    qty: {amount: 1, unit: set, per: household}
+    why: Panels survive; controllers, inverters and connectors are what fail, and none of them can be bought in the ninety days this tier plans for.
+    link: page:solar-islanding
+  - id: fused-plugs
+    tier: full
+    name: Spare 13 A fused plugs, 3 A fuses, bulbs and a voltage tester
+    qty: {amount: 1, unit: box, per: household}
+    why: A BS 1363 plug carries a 3 A fuse for lamps and small appliances or a 13 A fuse for anything heavier such as a kettle or heater; isolate and prove dead before touching any of it ([Electrical wiring in the United Kingdom](kiwix:wikipedia_en_all_maxi/Electrical_wiring_in_the_United_Kingdom); [HSE INDG231, p. 3](doc:hse-indg231#page=3)).
+    link: page:mains-electricity

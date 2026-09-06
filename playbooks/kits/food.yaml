@@ -1,0 +1,143 @@
+id: food
+title: Food
+icon: wheat
+order: 3
+summary: Tins, dried staples and a way to cook them, at 2,000 kcal a person a day with the shops shut.
+intro: |
+  Prepare asks every household for at least three days of non-perishable food; this box treats that as the
+  floor and builds towards a fortnight and then a season
+  ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). Plan quantities
+  around roughly 2,000 kcal a day for a woman and 2,500 for a man, more for anyone working outdoors, and
+  remember that carbohydrate and protein give about 4 kcal a gram while fat gives 9, which is why oil is
+  the densest thing in the store ([Food energy](kiwix:wikipedia_en_all_maxi/Food_energy);
+  [Food storage](page:food-storage)). Two weeks for one adult is on the order of 8 kg of dry rice, oats
+  or flour plus tins, oil and pulses. Buy what you already eat and rotate it first in, first out; a store
+  of food nobody likes is a store nobody touches. Dried staples give you nothing at all without water and
+  fuel to cook them, so this kit and the water kit are bought together. In a power cut keep the doors
+  shut: a fridge holds for about 4 hours, a full freezer for 48 and a half-full one for 24
+  ([FSA chill, freeze and defrost](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)).
+sources:
+  - {title: 'Prepare: get prepared for emergencies', kiwix: prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/, as_at: 2026-09}
+  - {title: 'How to chill, freeze and defrost food safely (FSA)', kiwix: govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely, as_at: 2026-09}
+  - {title: Food energy (Wikipedia), kiwix: wikipedia_en_all_maxi/Food_energy, as_at: 2026-02-15}
+  - {title: USDA Complete Guide to Home Canning, kiwix: usda-2015_en/home, as_at: 2025-04-11}
+  - {title: National Risk Register 2025, doc: nrr-2025, as_at: 2025-01-16}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Three days of food that needs no fridge and, at worst, no cooking.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight of real meals from the cupboard, cooked without the mains.
+  full:
+    title: No help coming
+    days: 90
+    why: A season of staples you can mill, preserve and replant rather than only eat.
+items:
+  - id: tinned-and-dried
+    tier: basic
+    name: Tinned beans, fish, tomatoes, fruit and vegetables, and dried pasta and rice
+    qty: {amount: 2000, unit: kcal, per: person-day}
+    stock: {category: food, unit: kcal}
+    why: Plan on about 2,000 kcal a day for a woman and 2,500 for a man ([Food energy](kiwix:wikipedia_en_all_maxi/Food_energy)); tins need no fridge and, at a push, no cooking.
+    link: module:food
+  - id: tin-opener
+    tier: basic
+    name: Manual tin opener, and a second one
+    qty: {amount: 2, unit: openers, per: household}
+    why: An electric opener is scrap metal in a power cut, and a cupboard of tins you cannot open is not food.
+    link: module:food
+  - id: camping-stove
+    tier: basic
+    name: Camping stove with a windshield and a pan
+    qty: {amount: 1, unit: stove, per: household}
+    why: Gas hobs can be lit with a match while the gas is on, but a stove is the fallback; never run one, or a barbecue, in an unventilated room ([Portable stove](kiwix:wikipedia_en_all_maxi/Portable_stove)).
+    link: card:carbon-monoxide
+  - id: stove-gas
+    tier: basic
+    name: Gas canisters or cartridges for the stove
+    qty: {amount: 4, unit: canisters, per: household}
+    stock: {category: fuel, unit: canisters}
+    why: A 220 g cartridge boils roughly 10 to 12 litres of water, so a fortnight of hot meals and hot drinks is several cartridges, not one.
+    link: module:food
+  - id: comfort-food
+    tier: basic
+    name: Tea, coffee, biscuits, sugar, jam and long-life milk
+    qty: {amount: 1, unit: box, per: household}
+    why: Nineteen-eighty's fourteen-day list put sugar, jam and sweet foods next to the tins for a reason, because morale is a supply like any other ([Protect and Survive, p. 7](doc:protect-and-survive-1980#page=7)).
+    link: module:mental-health
+  - id: bulk-staples
+    tier: serious
+    name: Bulk rice, flour, oats and pulses in sealed food-grade buckets
+    qty: {amount: 0.6, unit: kg, per: person-day}
+    stock: {category: food, unit: kg}
+    why: Two weeks for one adult is on the order of 8 kg of dry staples, about 600 g a day, before the tins and the oil are counted ([Food storage](page:food-storage); [Food energy](kiwix:wikipedia_en_all_maxi/Food_energy)).
+    link: page:food-storage
+  - id: fat-and-salt
+    tier: serious
+    name: Cooking oil, salt, stock cubes and spices
+    qty: {amount: 3, unit: L, per: household}
+    stock: {category: food, unit: L}
+    why: Fat carries 9 kcal a gram against 4 for grain, so oil is the cheapest way to add calories, and salt makes plain staples edible for a fortnight ([Food energy](kiwix:wikipedia_en_all_maxi/Food_energy)).
+    link: page:food-storage
+  - id: protein-store
+    tier: serious
+    name: Tinned meat and fish, peanut butter, dried milk and eggs
+    qty: {amount: 1, unit: portions, per: person-day}
+    stock: {category: food, unit: portions}
+    why: A store of grain alone leaves you full and undernourished; protein and fat are what the bulk staples cannot supply ([Food module](module:food)).
+    link: module:food
+  - id: multivitamins
+    tier: serious
+    name: Multivitamin tablets
+    qty: {amount: 1, unit: tablets, per: person-day}
+    stock: {category: medicine, unit: tablets}
+    why: A restricted store of tins and grain is short of vitamins C and D within weeks, which is how scurvy reappears in a rich country ([Food module](module:food)).
+    link: module:food
+  - id: pest-proofing
+    tier: serious
+    name: Sealed buckets, gamma lids, bay leaves and rodent-proof shelving
+    qty: {amount: 6, unit: buckets, per: household}
+    why: Weevils, mice and damp destroy more household stores than any emergency does; how to keep them out is on the food storage page ([Food storage](page:food-storage)).
+    link: page:food-storage
+  - id: seeds-for-eating
+    tier: serious
+    name: Sprouting seeds and dried pulses to sprout
+    qty: {amount: 1, unit: kg, per: household}
+    stock: {category: food, unit: kg}
+    why: Sprouted pulses need no soil, no mill and no cooking fuel, and they are fresh green food in the middle of winter ([Growing food module](module:growing-food)).
+    link: module:growing-food
+  - id: hand-mill
+    tier: full
+    name: Hand grain mill with steel and stone burrs
+    qty: {amount: 1, unit: mill, per: household}
+    why: Whole wheat stores for years and flour does not, so the mill is what turns the store into bread; pounding by hand instead manages about 4 kg an hour ([Grain mill (Appropedia)](kiwix:appropedia_en_all/Grain_mill); [Food storage](page:food-storage)).
+    link: page:food-storage
+  - id: canning-kit
+    tier: full
+    name: Pressure canner, jars, lids and a jam thermometer
+    qty: {amount: 1, unit: set, per: household}
+    why: Low-acid vegetables and meat need a pressure canner; water-bath canning them risks botulism, which grows unseen in a sealed jar ([USDA Complete Guide to Home Canning](kiwix:usda-2015_en/home); [Botulism](kiwix:wikipedia_en_all_maxi/Botulism)).
+    link: module:food
+  - id: preserving-stores
+    tier: full
+    name: Curing salt, vinegar, sugar and a smoking or drying rack
+    qty: {amount: 5, unit: kg, per: household}
+    stock: {category: food, unit: kg}
+    why: Salting, drying, smoking and pickling are how a glut in September becomes food in February ([Food preservation](kiwix:wikipedia_en_all_maxi/Food_preservation); [Butchery](page:butchery)).
+    link: page:butchery
+  - id: seed-stock
+    tier: full
+    name: Open-pollinated seed for a year's growing, stored cool and dry
+    qty: {amount: 1, unit: box, per: household}
+    why: Open-pollinated varieties breed true, so a saved seed is next year's crop, while an F1 hybrid is not ([Open pollination](kiwix:wikipedia_en_all_maxi/Open_pollination)).
+    link: module:growing-food
+  - id: cooking-fuel-store
+    tier: full
+    name: A season's cooking fuel, gas, wood or charcoal, stored dry
+    qty: {amount: 90, unit: days, per: household}
+    stock: {category: fuel, unit: days}
+    why: Ninety days of dried staples is ninety days of boiling, so the fuel store has to match the food store ([Vehicles and fuel](module:vehicles-fuel)).
+    link: module:shelter-heat

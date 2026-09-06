@@ -5,6 +5,7 @@ from pathlib import Path
 
 import frontmatter
 import pytest
+import yaml
 
 from sos import directives
 
@@ -296,3 +297,44 @@ def test_every_card_and_page_is_linked():
     unlinked_pages = set(PAGES) - linked["page"]
     assert unlinked_cards == set(), unlinked_cards
     assert unlinked_pages == set(), unlinked_pages
+
+
+KITS = [
+    "medical", "water", "food", "power-light", "comms", "sanitation-hygiene", "warmth-shelter", "fallout-cbrn",
+    "grab-bag", "car", "baby-child", "pets-livestock", "documents-cash", "tools-repair", "growing-food",
+]
+WORD = re.compile(r"[A-Za-z']+")
+
+
+def load_kit(slug: str) -> dict:
+    return yaml.safe_load((PB / "kits" / f"{slug}.yaml").read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("slug", KITS)
+def test_kit_shape(slug):
+    kit = load_kit(slug)
+    assert kit["id"] == slug and kit["order"] == KITS.index(slug) + 1
+    assert 20 <= len(kit["summary"]) <= 160
+    assert 60 <= len(WORD.findall(kit["intro"])) <= 250, slug
+    assert len(CITE.findall(kit["intro"])) >= 2, slug
+    assert len(kit["sources"]) >= 2 and all(("doc" in s or "kiwix" in s) and AS_AT.match(str(s["as_at"])) for s in kit["sources"]), slug
+    assert [kit["tiers"][t]["days"] for t in ("basic", "serious", "full")] == [3, 14, 90]
+    by_tier = {t: [i for i in kit["items"] if i["tier"] == t] for t in ("basic", "serious", "full")}
+    assert 4 <= len(by_tier["basic"]) <= 8 and 4 <= len(by_tier["serious"]) <= 10 and 3 <= len(by_tier["full"]) <= 10, slug
+    for item in kit["items"]:
+        assert item.get("why") or item.get("link"), (slug, item["id"])
+        if item.get("stock"):
+            assert item.get("qty"), (slug, item["id"])
+    assert "NOMAD" not in (PB / "kits" / f"{slug}.yaml").read_text(encoding="utf-8")
+
+
+def test_kit_relevance_clauses():
+    assert load_kit("baby-child")["relevant_when"] == {"age_under": 2}
+    assert "dog" in load_kit("pets-livestock")["relevant_when"]["needs_any"]
+    assert all("relevant_when" not in load_kit(s) for s in KITS if s not in ("baby-child", "pets-livestock"))
+
+
+def test_kit_tree_validates():
+    items = load_manifests(MANIFEST_DIR)
+    errors = [e for e in validate_tree(PB, items, overlay_ids()) if not e.startswith("warning:")]
+    assert errors == []

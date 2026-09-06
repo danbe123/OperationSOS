@@ -1,0 +1,141 @@
+id: comms
+title: Communications
+icon: radio
+order: 5
+summary: A radio that runs on batteries, numbers on paper, and short-range sets for talking to your street.
+intro: |
+  The National Risk Register carries the simultaneous loss of all fixed and mobile communications among
+  its reasonable worst cases ([NRR 2025, p. 88](doc:nrr-2025#page=88)). Long before that, an ordinary power
+  cut does most of the damage: the landline now runs over broadband and stops with the power, and most
+  mobile masts hold about an hour of battery
+  ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/);
+  [What still works](page:what-still-works)). So this kit starts with receiving rather than transmitting.
+  A battery or wind-up radio hears BBC Radio 4 on 92.5 to 96.1 MHz and BBC local radio when nothing else
+  works, and Emergency Alerts reach any phone that still has a 4G or 5G mast, needing no number, no app
+  and no data ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)). Then comes
+  talking: licence-free PMR446 handhelds at 0.5 W give one to three kilometres in a town, which is a
+  street, a farm or a search party ([PMR446](kiwix:wikipedia_en_all_maxi/PMR446); [PMR446 channels](page:pmr446)).
+  Everything above that needs a licence, so the full tier is an exam and a set, not a purchase.
+sources:
+  - {title: How emergency alerts work (GOV.UK), kiwix: govuk_resilience/www.gov.uk/alerts/how-alerts-work, as_at: 2026-09-05}
+  - {title: 'Prepare: phone and broadband outages', kiwix: prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/, as_at: 2026-09-05}
+  - {title: PMR446 (Wikipedia), kiwix: wikipedia_en_all_maxi/PMR446, as_at: 2026-02-15}
+  - {title: Ofcom IR 2030 licence-exempt short-range devices, doc: ofcom-pmr446-ir2009, as_at: 2025-11}
+  - {title: Ofcom amateur radio licence conditions, doc: ofcom-amateur-licence-2024, as_at: 2024-02-21}
+  - {title: National Risk Register 2025, doc: nrr-2025, as_at: 2025-01-16}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Hearing the official word, and being able to shout for help, when the phones are down.
+  serious:
+    title: Two weeks
+    days: 14
+    why: Listening beyond the local transmitter, and a written plan the household already knows.
+  full:
+    title: No help coming
+    days: 90
+    why: A licensed station of your own, and the spare parts to keep this box alive.
+items:
+  - id: fm-radio
+    tier: basic
+    name: Battery or wind-up FM radio
+    qty: {amount: 1, unit: radio, per: household}
+    why: BBC Radio 4 sits on 92.5 to 96.1 MHz and BBC local radio carries the county's instructions; write your frequencies on the back of the set ([What still works](page:what-still-works); [Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+    link: page:what-still-works
+  - id: radio-batteries
+    tier: basic
+    name: Spare cells for the radio, stored with it
+    qty: {amount: 12, unit: cells, per: household}
+    stock: {category: other, unit: cells}
+    why: A radio with no batteries is the commonest failure in this whole kit, and cold weather flattens cells faster ([PMR446 channels](page:pmr446)).
+    link: module:comms
+  - id: whistle
+    tier: basic
+    name: Whistle on a lanyard for every person
+    qty: {amount: 1, unit: whistle, per: person}
+    why: Six blasts a minute is the international distress signal, it carries further than a shout and it works when a voice has gone ([Getting found](page:fieldcraft-rescue)).
+    link: page:fieldcraft-rescue
+  - id: numbers-on-paper
+    tier: basic
+    name: The emergency numbers and your contacts, printed and by the door
+    qty: {amount: 2, unit: copies, per: household}
+    why: 999, 111, 105, the gas line 0800 111 999 and Floodline 0345 988 1188 are useless inside a phone with a flat battery ([UK numbers](page:uk-numbers)).
+    link: page:uk-numbers
+  - id: pmr446-pair
+    tier: basic
+    name: A pair of PMR446 handhelds, preferably taking AA cells
+    qty: {amount: 2, unit: handhelds, per: household}
+    why: Licence-free at 0.5 W effective radiated power on 16 channels between 446.00625 and 446.19375 MHz; range is one to three kilometres in a town ([Ofcom IR 2030, table 3.18](doc:ofcom-pmr446-ir2009#page=120); [PMR446 channels](page:pmr446)).
+    link: page:pmr446
+  - id: alerts-switched-on
+    tier: basic
+    name: Emergency Alerts switched on, checked on every phone in the house
+    why: The cell broadcast needs no number, no app and no data, but it never reaches a phone that is off, on 2G or 3G only, or older than iOS 14.5 or Android 11 ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
+    link: page:what-still-works
+  - id: household-plan-printed
+    tier: serious
+    name: The household plan, filled in, laminated and carried
+    qty: {amount: 1, unit: copies, per: person}
+    why: Meeting point, out-of-area contact, the agreed PMR446 channel and tone, and the "come now" signal, all on one sheet ([Household plan](page:household-plan)).
+    link: page:household-plan
+  - id: shortwave-receiver
+    tier: serious
+    name: Shortwave receiver covering 3 to 30 MHz
+    qty: {amount: 1, unit: receiver, per: household}
+    why: When every UK transmitter is off, shortwave still brings foreign broadcasts and amateur traffic in from hundreds of miles away, and listening needs no licence ([Shortwave listening](kiwix:wikipedia_en_all_maxi/Shortwave_listening)).
+    link: page:amateur-bands
+  - id: scanner
+    tier: serious
+    name: Handheld scanner or receiver covering the 2 m and 70 cm bands
+    qty: {amount: 1, unit: receiver, per: household}
+    why: Anyone may listen; a set tuned to 145.500 MHz hears what the local amateurs are saying without transmitting a word ([Amateur bands](page:amateur-bands)).
+    link: page:amateur-bands
+  - id: cb-radio
+    tier: serious
+    name: CB set, 27 MHz FM
+    qty: {amount: 1, unit: set, per: household}
+    why: CB is licence-free in the UK at 4 W FM around 27 MHz and reaches further than PMR446, with an external antenna allowed ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom)).
+    link: page:amateur-bands
+  - id: satellite-messenger
+    tier: serious
+    name: Satellite messenger or satellite phone, with credit kept live
+    qty: {amount: 1, unit: device, per: household}
+    why: A satellite handset ignores the terrestrial network entirely, which is exactly the failure this kit plans for; the subscription has to be alive before the day ([Satellite phone](kiwix:wikipedia_en_all_maxi/Satellite_phone)).
+    link: page:no-phones
+  - id: extra-handhelds
+    tier: serious
+    name: More PMR446 handhelds so every group that splits up carries one
+    qty: {amount: 1, unit: handheld, per: person}
+    why: Two radios cover a household; a street, a farm or a search line needs one per party, and sets that take AA cells outlive rechargeable ones ([PMR446 channels](page:pmr446)).
+    link: page:pmr446
+  - id: amateur-licence
+    tier: full
+    name: A Foundation amateur licence and a transceiver
+    qty: {amount: 1, unit: station, per: household}
+    why: Since February 2024 the licence has three levels, Foundation at 25 W, Intermediate at 100 W and Full at 1,000 W; transmitting without one is a criminal offence ([Ofcom amateur licence conditions, p. 15](doc:ofcom-amateur-licence-2024#page=15); [Amateur bands](page:amateur-bands)).
+    link: page:amateur-bands
+  - id: antenna
+    tier: full
+    name: Wire antenna, coax, an ATU and a mast or halyard
+    qty: {amount: 1, unit: set, per: household}
+    why: On HF the antenna does more for range than the radio does, and a dipole cut for the band is a length of wire and an afternoon ([RSGB Band Plans 2026](doc:rsgb-band-plan-2026)).
+    link: page:amateur-bands
+  - id: band-plan-printed
+    tier: full
+    name: The RSGB band plan and the PMR446 channel table, printed
+    qty: {amount: 1, unit: set, per: household}
+    why: Calling frequencies, the RAYNET arrangements and the 38 CTCSS tones are no use inside a box with a flat battery ([RSGB Band Plans 2026](doc:rsgb-band-plan-2026); [PMR446 channels](page:pmr446)).
+    link: page:pmr446
+  - id: spare-sd-card
+    tier: full
+    name: A spare SD card holding this box's image, stored elsewhere
+    qty: {amount: 1, unit: card, per: household}
+    why: The library, the maps and the quick cards live on one card; a second copy in another building is the only backup that survives a fire ([About Operation SOS](page:about-sos)).
+    link: page:about-sos
+  - id: net-schedule
+    tier: full
+    name: A written net schedule and log book for the neighbourhood
+    qty: {amount: 1, unit: book, per: household}
+    why: Agreed listening times save batteries and turn a set of radios into a network; a call every 15 minutes at a fixed time is the usual pattern ([PMR446 channels](page:pmr446)).
+    link: module:community

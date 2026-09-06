@@ -1,0 +1,135 @@
+id: water
+title: Water
+icon: water
+order: 2
+summary: Stored drinking water, the containers to keep it in and the means to make more of it safely.
+intro: |
+  Water is the first thing to run out and the first thing that kills. The government asks every household
+  to keep at least three days of drinking water at 2.5 to 3 litres a person a day, which is 36 litres for
+  a family of four ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
+  Nineteen-eighty's advice for a fortnight indoors was two pints a person a day of drinking water, three
+  and a half gallons each ([Protect and Survive, p. 7](doc:protect-and-survive-1980#page=7)); this kit
+  plans in litres and adds washing and cooking on top of drinking. Storage is easy and cheap; making
+  water safe afterwards is neither, so buy the tablets before you need them. A rolling boil for one minute
+  kills bacteria, viruses and parasites, and it is the only method that deals with Cryptosporidium
+  ([Water Treatment Library](kiwix:zimgit-water_en/home); [Cryptosporidium](kiwix:wikipedia_en_all_maxi/Cryptosporidium)).
+  Boiling needs fuel, though, so tablets and thin bleach carry the load when the gas is off. Every dose,
+  every waiting time and the difference between thin and thickened bleach is on the water disinfection
+  page, and it matters: ordinary UK thick bleach carries thickeners and perfume and must never be used to
+  treat drinking water ([Water disinfection](page:water-disinfection)).
+sources:
+  - {title: 'Prepare: get prepared for emergencies', kiwix: prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/, as_at: 2026-09}
+  - {title: Water Treatment Library (zimgit), kiwix: zimgit-water_en/home, as_at: 2024-08-29}
+  - {title: Priority Services Register, kiwix: govuk_resilience/www.thepsr.co.uk/, as_at: 2026-09}
+  - {title: Sodium dichloroisocyanurate (Wikipedia), kiwix: wikipedia_en_all_maxi/Sodium_dichloroisocyanurate, as_at: 2026-02-15}
+  - {title: Protect and Survive, doc: protect-and-survive-1980, as_at: 1980-05}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: The three days of drinking water the government asks every household to hold.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight without the mains, which means treating water rather than only storing it.
+  full:
+    title: No help coming
+    days: 90
+    why: A supply of your own, from rain, a well or a spring, and the filters to keep it drinkable.
+items:
+  - id: stored-water
+    tier: basic
+    name: Drinking water in sealed food-grade containers
+    qty: {amount: 3, unit: L, per: person-day}
+    stock: {category: water, unit: L}
+    why: 2.5 to 3 litres a person a day is the government's own planning figure, and three days is a floor, not a target ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
+    link: module:water
+  - id: containers
+    tier: basic
+    name: Containers with lids, 10 litres or more, for carrying and storing
+    qty: {amount: 2, unit: containers, per: person}
+    why: Bowsers and bottled-water stations hand out water to whoever turns up with something to carry it in.
+    link: module:water
+  - id: nadcc-tablets
+    tier: basic
+    name: NaDCC water purification tablets
+    qty: {amount: 50, unit: tablets, per: household}
+    stock: {category: other, unit: tablets}
+    why: Sodium dichloroisocyanurate releases chlorine at 8.5 mg per litre, 17 mg per 2 litres or 67 mg per 20 litres, with 30 minutes to wait, and double the dose if the water is cloudy ([Sodium dichloroisocyanurate](kiwix:wikipedia_en_all_maxi/Sodium_dichloroisocyanurate); [Water disinfection](page:water-disinfection)).
+    link: page:water-disinfection
+  - id: thin-bleach
+    tier: basic
+    name: Thin unscented bleach, 4.5 to 5 per cent sodium hypochlorite
+    qty: {amount: 1, unit: L, per: household}
+    stock: {category: other, unit: L}
+    why: Two drops per litre and 30 minutes to wait ([Water disinfection](page:water-disinfection)). Ordinary UK thick, gelled or perfumed bleach must never be used on drinking water; if the label does not state a plain sodium hypochlorite percentage, do not use it.
+    link: page:water-disinfection
+  - id: psr-registration
+    tier: basic
+    name: Everyone eligible signed on to the Priority Services Register
+    why: The register is free and gets bottled water delivered to the door when the mains fails, for anyone medically dependent on water, disabled, older or with a child under five ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
+    link: module:water
+  - id: gravity-filter
+    tier: serious
+    name: Gravity filter with spare cartridges
+    qty: {amount: 1, unit: filter, per: household}
+    why: A hollow-fibre or ceramic filter takes out mud, Cryptosporidium and Giardia but not viruses unless it is rated for them, so filter first and then boil or chlorinate ([Water purification](kiwix:wikipedia_en_all_maxi/Water_purification)).
+    link: page:water-disinfection
+  - id: water-butt
+    tier: serious
+    name: Water butt on a downpipe, 200 litres or more
+    qty: {amount: 200, unit: L, per: household}
+    stock: {category: water, unit: L}
+    why: Roof runoff is not drinking water until it is filtered and boiled, but it flushes the toilet and washes clothes from day one ([Rainwater harvesting](kiwix:wikipedia_en_all_maxi/Rainwater_harvesting)).
+    link: module:water
+  - id: siphon-and-hose
+    tier: serious
+    name: Food-grade siphon hose and a hand pump
+    qty: {amount: 1, unit: set, per: household}
+    why: The hot-water cylinder, a header tank and a water butt all give up their contents far faster with a hose than with a jug, and nobody should be siphoning by mouth.
+    link: module:water
+  - id: washing-store
+    tier: serious
+    name: A second store for washing and flushing, kept separate from drinking water
+    qty: {amount: 20, unit: L, per: person}
+    stock: {category: water, unit: L}
+    why: Drinking is only a fifth of what a household uses; the rest is cooking, washing, dishes and flushing, in that order of priority ([Sanitation module](module:sanitation)).
+    link: module:water
+  - id: bath-liner
+    tier: serious
+    name: Clean bath liner or bladder to fill at the first warning
+    qty: {amount: 1, unit: liner, per: household}
+    why: A bath holds around 100 litres, but a bare bath is dirty and leaks past the plug; a liner keeps that water fit for washing for days.
+    link: module:water
+  - id: cylinder-access
+    tier: serious
+    name: Access to the hot-water cylinder drain tap, with hose and spanner
+    why: A cylinder holds 100 to 200 litres, drinking quality if it is fed straight from the mains, washing quality otherwise; find and free the drain tap before the day you need it ([Water module](module:water)).
+    link: module:water
+  - id: own-supply
+    tier: full
+    name: A well, spring or borehole you may lawfully use, tested
+    why: Private supplies are the owner's responsibility to test and treat and are regulated by the Drinking Water Inspectorate ([DWI private supplies](kiwix:govuk_resilience/www.dwi.gov.uk/private-water-supplies/)).
+    link: module:water
+  - id: hand-pump
+    tier: full
+    name: Hand pump or rope pump for the well
+    qty: {amount: 1, unit: pump, per: household}
+    why: An electric borehole pump is dead the moment the grid is, so the manual pump is the whole point of having the well ([Hand pump](kiwix:wikipedia_en_all_maxi/Hand_pump)).
+  - id: ceramic-elements
+    tier: full
+    name: Spare ceramic filter elements
+    qty: {amount: 4, unit: elements, per: household}
+    why: Ceramic elements clog and are scrubbed back to life a finite number of times, so the spares are the difference between a filter and an ornament ([Ceramic water filter](kiwix:wikipedia_en_all_maxi/Ceramic_water_filter)).
+    link: page:water-disinfection
+  - id: rain-harvesting
+    tier: full
+    name: Rainwater harvesting, guttering, first-flush diverter and covered tanks
+    qty: {amount: 1000, unit: L, per: household}
+    stock: {category: water, unit: L}
+    why: A first-flush diverter throws away the dirtiest water off the roof, and a covered tank keeps light, leaves and mosquitoes out ([Rainwater harvesting](kiwix:wikipedia_en_all_maxi/Rainwater_harvesting)).
+  - id: disinfection-in-print
+    tier: full
+    name: The water disinfection doses, printed and kept with the tablets
+    why: Nobody remembers 8.5 mg a litre under pressure, and a printed table works with a flat battery ([Water Treatment Library](kiwix:zimgit-water_en/home)).
+    link: page:water-disinfection
