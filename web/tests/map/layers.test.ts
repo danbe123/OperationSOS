@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Map as MlMap } from 'maplibre-gl';
 import { FakeMap } from './fakeMap';
-import { carryStyleAcross, terrainSpec, addTerrain, setTerrainVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
+import { annotations, carryStyleAcross, overlayPaint, terrainSpec, addTerrain, setTerrainVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
 import { mapConfig } from '../fixtures/api';
 
 vi.mock('maplibre-gl', () => ({ default: { addProtocol: vi.fn() }, addProtocol: vi.fn() }));
@@ -56,6 +56,60 @@ describe('terrain', () => {
     expect(mono).toMatch(/^#([0-9a-f]{2})\1\1$/);
     // Hillshade sits lighter on the black theme, where the relief is the only thing carrying shape.
     expect(paint('mono').shade).toBeLessThan(paint('field').shade);
+  });
+});
+
+/** A hex colour with no hue in it: #000000 through #ffffff, all three channels equal. */
+const GREY = /^#([0-9a-f]{2})\1\1$/;
+
+describe('annotation colours', () => {
+  it('keeps the Field hues exactly as they were', () => {
+    expect(annotations('field')).toEqual({
+      pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
+      home: '#1b5e20', homeStroke: '#ffffff',
+      route: '#1b5e20', measure: '#ff3d00', halo: '#ffffff',
+    });
+  });
+
+  it('draws every annotation in Mono without a hue anywhere', () => {
+    const c = annotations('mono');
+    for (const [name, value] of Object.entries(c)) expect(value, name).toMatch(GREY);
+    // Pins, the measuring line and the line to a facility are white; the label point is the one
+    // thing told from a pin by tone rather than by hue, so it is a light grey rather than white.
+    expect([c.pin, c.measure, c.route]).toEqual(['#ffffff', '#ffffff', '#ffffff']);
+    expect(c.label).toBe('#d0d0d0');
+    expect(c.label).not.toBe(c.pin);
+    // Home is the one marker drawn the other way round: a white ring on black, so it is never read
+    // as another dropped pin.
+    expect(c.home).toBe('#000000');
+    expect(c.homeStroke).toBe('#ffffff');
+    // Whatever the sheet under it, an annotation carries its own outline and its labels a black halo.
+    expect(c.pinStroke).toBe('#000000');
+    expect(c.halo).toBe('#000000');
+  });
+});
+
+describe('overlay colours', () => {
+  const footpaths = { id: 'footpaths', color: '#3fb950' };
+  const accessLand = { id: 'access-land', color: '#b58900' };
+
+  it('leaves an overlay its own colour on paper', () => {
+    expect(overlayPaint(footpaths, 'field')).toEqual({ color: '#3fb950', fillOpacity: 0.22, stroke: '#ffffff', dash: null });
+    expect(overlayPaint(accessLand, 'field').color).toBe('#b58900');
+  });
+
+  it('gives Mono a white dashed footpath and a light grey wash for access land', () => {
+    const paths = overlayPaint(footpaths, 'mono');
+    // White, and dashed: the roads under it are white too, and a dash is what tells a path from one.
+    expect(paths.color).toBe('#ffffff');
+    expect(paths.dash).toEqual([2, 1.5]);
+    expect(paths.stroke).toBe('#000000');
+    const land = overlayPaint(accessLand, 'mono');
+    expect(land.color).toMatch(GREY);
+    expect(land.color).not.toBe('#ffffff');
+    // A fill of white over a black sheet is a wash, so it sits lighter than it does on paper.
+    expect(land.fillOpacity).toBeLessThan(overlayPaint(accessLand, 'field').fillOpacity);
+    expect(land.dash).toBeNull();
   });
 });
 

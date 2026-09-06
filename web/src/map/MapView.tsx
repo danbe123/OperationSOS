@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import maplibregl, { type Map as MlMap } from 'maplibre-gl';
+import maplibregl, { type DataDrivenPropertyValueSpecification, type Map as MlMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { MapConfig, Note } from '../api/types';
 import type { Theme } from '../theme/ThemeProvider';
-import { addTerrain, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainVisible } from './layers';
+import { addTerrain, annotations, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainVisible } from './layers';
 import { addOverlay, setOverlayVisible } from './overlays';
 import { attachFeatureTooltip } from './tooltip';
 import type { LngLat } from './measure';
@@ -36,7 +36,14 @@ export type MapViewProps = {
 
 const LONG_PRESS_MS = 600;
 
-function syncPins(map: MlMap, pins: Note[], labelPoint: MapViewProps['labelPoint']): void {
+/** Set a paint property on a layer the box drew, whether it has just been added or was carried
+ * across a style reload in the colours of the theme before this one. */
+function paint(map: MlMap, id: string, props: Record<string, unknown>): void {
+  if (!map.getLayer(id)) return;
+  for (const [key, value] of Object.entries(props)) map.setPaintProperty(id, key, value);
+}
+
+function syncPins(map: MlMap, pins: Note[], labelPoint: MapViewProps['labelPoint'], theme: Theme): void {
   const features = [
     ...pins.filter((p) => p.lat !== null && p.lon !== null).map((p) => ({ type: 'Feature' as const, properties: { title: p.title, kind: 'pin' }, geometry: { type: 'Point' as const, coordinates: [p.lon as number, p.lat as number] } })),
     ...(labelPoint ? [{ type: 'Feature' as const, properties: { title: labelPoint.label, kind: 'label' }, geometry: { type: 'Point' as const, coordinates: [labelPoint.lon, labelPoint.lat] } }] : []),
@@ -48,15 +55,19 @@ function syncPins(map: MlMap, pins: Note[], labelPoint: MapViewProps['labelPoint
   } else {
     map.addSource('sos-pins', { type: 'geojson', data });
   }
+  const c = annotations(theme);
+  const pinColour = ['match', ['get', 'kind'], 'label', c.label, c.pin] as unknown as DataDrivenPropertyValueSpecification<string>;
   if (!map.getLayer('sos-pins-point')) {
-    map.addLayer({ id: 'sos-pins-point', type: 'circle', source: 'sos-pins', paint: { 'circle-radius': 8, 'circle-color': ['match', ['get', 'kind'], 'label', '#1e88e5', '#ffb000'], 'circle-stroke-color': '#000000', 'circle-stroke-width': 2 } });
+    map.addLayer({ id: 'sos-pins-point', type: 'circle', source: 'sos-pins', paint: { 'circle-radius': 8, 'circle-color': pinColour, 'circle-stroke-color': c.pinStroke, 'circle-stroke-width': 2 } });
   }
   if (!map.getLayer('sos-pins-label') && map.getStyle().glyphs) {
-    map.addLayer({ id: 'sos-pins-label', type: 'symbol', source: 'sos-pins', layout: { 'text-field': ['get', 'title'], 'text-font': ['Noto Sans Regular'], 'text-size': 13, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } });
+    map.addLayer({ id: 'sos-pins-label', type: 'symbol', source: 'sos-pins', layout: { 'text-field': ['get', 'title'], 'text-font': ['Noto Sans Regular'], 'text-size': 13, 'text-offset': [0, 1.2], 'text-anchor': 'top' }, paint: { 'text-color': c.pin, 'text-halo-color': c.halo, 'text-halo-width': 1.5 } });
   }
+  paint(map, 'sos-pins-point', { 'circle-color': pinColour, 'circle-stroke-color': c.pinStroke });
+  paint(map, 'sos-pins-label', { 'text-color': c.pin, 'text-halo-color': c.halo });
 }
 
-function syncHome(map: MlMap, home: MapViewProps['home']): void {
+function syncHome(map: MlMap, home: MapViewProps['home'], theme: Theme): void {
   const data = {
     type: 'FeatureCollection' as const,
     features: home ? [{ type: 'Feature' as const, properties: { title: `\u2302 ${home.label}` }, geometry: { type: 'Point' as const, coordinates: [home.lon, home.lat] } }] : [],
@@ -64,15 +75,18 @@ function syncHome(map: MlMap, home: MapViewProps['home']): void {
   const existing = map.getSource('sos-home') as { setData?: (d: unknown) => void } | undefined;
   if (existing?.setData) existing.setData(data);
   else map.addSource('sos-home', { type: 'geojson', data });
+  const c = annotations(theme);
   if (!map.getLayer('sos-home-point')) {
-    map.addLayer({ id: 'sos-home-point', type: 'circle', source: 'sos-home', paint: { 'circle-radius': 11, 'circle-color': '#1b5e20', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 } });
+    map.addLayer({ id: 'sos-home-point', type: 'circle', source: 'sos-home', paint: { 'circle-radius': 11, 'circle-color': c.home, 'circle-stroke-color': c.homeStroke, 'circle-stroke-width': 3 } });
   }
   if (!map.getLayer('sos-home-label') && map.getStyle().glyphs) {
-    map.addLayer({ id: 'sos-home-label', type: 'symbol', source: 'sos-home', layout: { 'text-field': ['get', 'title'], 'text-font': ['Noto Sans Regular'], 'text-size': 14, 'text-offset': [0, 1.4], 'text-anchor': 'top' }, paint: { 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 } });
+    map.addLayer({ id: 'sos-home-label', type: 'symbol', source: 'sos-home', layout: { 'text-field': ['get', 'title'], 'text-font': ['Noto Sans Regular'], 'text-size': 14, 'text-offset': [0, 1.4], 'text-anchor': 'top' }, paint: { 'text-color': c.homeStroke, 'text-halo-color': c.halo, 'text-halo-width': 1.5 } });
   }
+  paint(map, 'sos-home-point', { 'circle-color': c.home, 'circle-stroke-color': c.homeStroke });
+  paint(map, 'sos-home-label', { 'text-color': c.homeStroke, 'text-halo-color': c.halo });
 }
 
-function syncRoute(map: MlMap, points: LngLat[]): void {
+function syncRoute(map: MlMap, points: LngLat[], theme: Theme): void {
   const coords = points.map((p) => [p.lon, p.lat]);
   const data = {
     type: 'FeatureCollection' as const,
@@ -81,12 +95,14 @@ function syncRoute(map: MlMap, points: LngLat[]): void {
   const existing = map.getSource('sos-route') as { setData?: (d: unknown) => void } | undefined;
   if (existing?.setData) existing.setData(data);
   else map.addSource('sos-route', { type: 'geojson', data });
+  const c = annotations(theme);
   if (!map.getLayer('sos-route-line')) {
-    map.addLayer({ id: 'sos-route-line', type: 'line', source: 'sos-route', paint: { 'line-color': '#1b5e20', 'line-width': 4, 'line-dasharray': [3, 1.5] } });
+    map.addLayer({ id: 'sos-route-line', type: 'line', source: 'sos-route', paint: { 'line-color': c.route, 'line-width': 4, 'line-dasharray': [3, 1.5] } });
   }
+  paint(map, 'sos-route-line', { 'line-color': c.route });
 }
 
-function syncMeasure(map: MlMap, points: LngLat[]): void {
+function syncMeasure(map: MlMap, points: LngLat[], theme: Theme): void {
   const coords = points.map((p) => [p.lon, p.lat]);
   const data = {
     type: 'FeatureCollection' as const,
@@ -98,8 +114,11 @@ function syncMeasure(map: MlMap, points: LngLat[]): void {
   const existing = map.getSource('sos-measure') as { setData?: (d: unknown) => void } | undefined;
   if (existing?.setData) existing.setData(data);
   else map.addSource('sos-measure', { type: 'geojson', data });
-  if (!map.getLayer('sos-measure-line')) map.addLayer({ id: 'sos-measure-line', type: 'line', source: 'sos-measure', paint: { 'line-color': '#ff3d00', 'line-width': 3, 'line-dasharray': [2, 1] } });
-  if (!map.getLayer('sos-measure-point')) map.addLayer({ id: 'sos-measure-point', type: 'circle', source: 'sos-measure', paint: { 'circle-radius': 5, 'circle-color': '#ff3d00' } });
+  const c = annotations(theme);
+  if (!map.getLayer('sos-measure-line')) map.addLayer({ id: 'sos-measure-line', type: 'line', source: 'sos-measure', paint: { 'line-color': c.measure, 'line-width': 3, 'line-dasharray': [2, 1] } });
+  if (!map.getLayer('sos-measure-point')) map.addLayer({ id: 'sos-measure-point', type: 'circle', source: 'sos-measure', paint: { 'circle-radius': 5, 'circle-color': c.measure, 'circle-stroke-color': c.pinStroke, 'circle-stroke-width': 1.5 } });
+  paint(map, 'sos-measure-line', { 'line-color': c.measure });
+  paint(map, 'sos-measure-point', { 'circle-color': c.measure, 'circle-stroke-color': c.pinStroke });
 }
 
 export function MapView(props: MapViewProps) {
@@ -187,13 +206,13 @@ export function MapView(props: MapViewProps) {
     setTerrainVisible(map, terrainOn);
     for (const o of config.overlays) {
       if (!o.available) continue;
-      addOverlay(map, o, overlaysOn.includes(o.id));
+      addOverlay(map, o, overlaysOn.includes(o.id), theme);
       setOverlayVisible(map, o, overlaysOn.includes(o.id));
     }
-    syncPins(map, pins, labelPoint);
-    syncMeasure(map, measurePoints);
-    syncHome(map, home);
-    syncRoute(map, routePoints);
+    syncPins(map, pins, labelPoint, theme);
+    syncMeasure(map, measurePoints, theme);
+    syncHome(map, home, theme);
+    syncRoute(map, routePoints, theme);
   }, [styleVersion, config, theme, overlaysOn, terrainOn, pins, labelPoint, measurePoints, home, routePoints]);
 
   if (!hasStyle) return <p className="map-note warning">No base map is installed. Run the map build on the PC and copy the outputs to the box.</p>;

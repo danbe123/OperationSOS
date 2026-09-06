@@ -4,6 +4,18 @@ import { errorMessage } from './useQuery';
 import type { Status } from './types';
 
 export const STATUS_POLL_MS = 10_000;
+/** Where the box's own default theme is kept for the next boot. The pre-paint script in index.html
+ * reads it (after any deliberate choice in `sos.theme`), so a box set to Mono paints black from the
+ * first frame instead of flashing paper while the app fetches its own status. */
+export const DEFAULT_THEME_KEY = 'sos.default_theme';
+
+function rememberDefaultTheme(theme: Status['default_theme']): void {
+  try {
+    localStorage.setItem(DEFAULT_THEME_KEY, theme);
+  } catch {
+    // storage may be unavailable (private mode); the running app still has the status itself
+  }
+}
 
 type StatusContextValue = {
   status: Status | null;
@@ -24,6 +36,7 @@ export function StatusProvider({ children, intervalMs = STATUS_POLL_MS }: { chil
       const s = await api.status();
       if (alive.current) {
         setStatus(s);
+        rememberDefaultTheme(s.default_theme);
         setError(null);
       }
     } catch (e) {
@@ -41,7 +54,12 @@ export function StatusProvider({ children, intervalMs = STATUS_POLL_MS }: { chil
     };
   }, [refresh, intervalMs]);
 
-  const update = useCallback((s: Status) => setStatus(s), []);
+  // A Status that came back from a POST (the theme was just changed on System, say) is as good an
+  // answer as a poll's, and the next boot should paint what it says.
+  const update = useCallback((s: Status) => {
+    setStatus(s);
+    rememberDefaultTheme(s.default_theme);
+  }, []);
   const value = useMemo(() => ({ status, error, refresh, update }), [status, error, refresh, update]);
   return <StatusContext.Provider value={value}>{children}</StatusContext.Provider>;
 }

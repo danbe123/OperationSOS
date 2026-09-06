@@ -6,8 +6,11 @@
     <meta name="theme-color" content="#f3efe4" />
     <!-- Field is the default and is stamped above, so the first paint is paper rather than a white
          flash. A household on Mono would get that paper flash instead, at its brightest, on a box
-         they chose black for — so the stored preference is read here, before anything else runs. -->
-    <script>try{if(localStorage["sos.theme"]==="mono"){document.documentElement.dataset.theme="mono";
+         they chose black for — so the theme is read here, before anything else runs: this phone's
+         own choice first, and failing that the box's default, saved by the status provider on every
+         reply it gets. -->
+    <script>try{var t=localStorage["sos.theme"]||localStorage["sos.default_theme"];
+    if(t==="mono"){document.documentElement.dataset.theme="mono";
     document.querySelector('meta[name="theme-color"]').content="#000000"}}catch(e){}</script>
     <title>Operation SOS</title>
     <link rel="manifest" href="/manifest.webmanifest" />

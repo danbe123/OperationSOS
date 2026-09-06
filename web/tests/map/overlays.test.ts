@@ -19,19 +19,19 @@ describe('coverageNote', () => {
 
 describe('overlaySpec and layers', () => {
   it('geojson overlays get a data source and a fill/line/point trio in the overlay colour', () => {
-    const spec = overlaySpec(health);
+    const spec = overlaySpec(health, 'field');
     expect(spec.source).toEqual({ type: 'geojson', data: '/maps/overlays/health.geojson' });
-    expect(overlayLayersFor(health, null).map((l) => l.id)).toEqual(['sos-overlay-health-fill', 'sos-overlay-health-line', 'sos-overlay-health-point']);
-    expect((overlayLayersFor(health, null)[2] as { paint: { 'circle-color': string } }).paint['circle-color']).toBe('#e53935');
+    expect(overlayLayersFor(health, null, 'field').map((l) => l.id)).toEqual(['sos-overlay-health-fill', 'sos-overlay-health-line', 'sos-overlay-health-point']);
+    expect((overlayLayersFor(health, null, 'field')[2] as { paint: { 'circle-color': string } }).paint['circle-color']).toBe('#e53935');
   });
   it('pmtiles overlays get one trio per vector layer', () => {
-    expect(overlaySpec(footpaths).source).toEqual({ type: 'vector', url: `pmtiles://${window.location.origin}/maps/overlays/footpaths.pmtiles` });
-    const layers = overlayLayersFor(footpaths, ['prow', 'other']);
+    expect(overlaySpec(footpaths, 'field').source).toEqual({ type: 'vector', url: `pmtiles://${window.location.origin}/maps/overlays/footpaths.pmtiles` });
+    const layers = overlayLayersFor(footpaths, ['prow', 'other'], 'field');
     expect(layers.map((l) => l.id)).toEqual(['sos-overlay-footpaths-prow-fill', 'sos-overlay-footpaths-prow-line', 'sos-overlay-footpaths-prow-point', 'sos-overlay-footpaths-other-fill', 'sos-overlay-footpaths-other-line', 'sos-overlay-footpaths-other-point']);
     expect((layers[0] as { 'source-layer': string })['source-layer']).toBe('prow');
   });
   it('style-layer overlays have no source of their own', () => {
-    expect(overlaySpec(contourLabels)).toEqual({ source: null, layers: [] });
+    expect(overlaySpec(contourLabels, 'field')).toEqual({ source: null, layers: [] });
   });
 });
 
@@ -39,7 +39,7 @@ describe('addOverlay and setOverlayVisible', () => {
   it('adds a geojson overlay hidden or visible and toggles it', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
-    addOverlay(asMap(map), health, false);
+    addOverlay(asMap(map), health, false, 'field');
     expect(map.getLayer('sos-overlay-health-point')).toBeDefined();
     expect(map.visibility('sos-overlay-health-point')).toBe('none');
     setOverlayVisible(asMap(map), health, true);
@@ -49,18 +49,31 @@ describe('addOverlay and setOverlayVisible', () => {
   it('waits for a pmtiles source to report its vector layers', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
-    addOverlay(asMap(map), footpaths, true);
+    addOverlay(asMap(map), footpaths, true, 'field');
     expect(map.style.sources[overlaySourceId('footpaths')]).toBeDefined();
     expect(map.getLayer('sos-overlay-footpaths-footpaths-line')).toBeUndefined();
     map.vectorLayers[overlaySourceId('footpaths')] = ['footpaths'];
     map.emit('sourcedata', { sourceId: overlaySourceId('footpaths'), isSourceLoaded: true });
     expect(map.visibility('sos-overlay-footpaths-footpaths-line')).toBe('visible');
   });
+  it('repaints an overlay carried across a style reload into the new theme', () => {
+    const map = new FakeMap();
+    map.setStyle('/maps/styles/osm-field.json');
+    addOverlay(asMap(map), health, true, 'field');
+    expect(map.getLayer('sos-overlay-health-line')?.paint?.['line-color']).toBe('#e53935');
+    // A theme switch reloads the style and carries these layers across with the colours they were
+    // drawn in; adding them again is what repaints them.
+    addOverlay(asMap(map), health, true, 'mono');
+    expect(map.getLayer('sos-overlay-health-line')?.paint?.['line-color']).toBe('#d0d0d0');
+    expect(map.getLayer('sos-overlay-health-point')?.paint?.['circle-stroke-color']).toBe('#000000');
+    expect(map.getLayer('sos-overlay-health-fill')?.paint?.['fill-opacity']).toBe(0.12);
+  });
+
   it('toggles a style-layer overlay by its layer_id', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
     map.addLayer({ id: 'contour_label', type: 'symbol', source: 'base' });
-    addOverlay(asMap(map), contourLabels, false);
+    addOverlay(asMap(map), contourLabels, false, 'field');
     expect(map.visibility('contour_label')).toBe('none');
     setOverlayVisible(asMap(map), contourLabels, true);
     expect(map.visibility('contour_label')).toBe('visible');
@@ -68,7 +81,7 @@ describe('addOverlay and setOverlayVisible', () => {
   it('uses the latest toggle when vector metadata arrives later', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
-    addOverlay(asMap(map), footpaths, false);
+    addOverlay(asMap(map), footpaths, false, 'field');
     setOverlayVisible(asMap(map), footpaths, true);
     map.vectorLayers[overlaySourceId('footpaths')] = ['footpaths'];
     map.emit('sourcedata', { sourceId: overlaySourceId('footpaths'), isSourceLoaded: true });

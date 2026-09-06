@@ -34,6 +34,59 @@ export const carryStyleAcross: TransformStyleFunction = (previous, next) => {
   return { ...next, sources, layers: [...layers, ...overlays] };
 };
 
+/** Every colour the box draws on top of the base map, by theme.
+ *
+ * Field is paper and ink and keeps its hues: an amber pin, a green home, an orange measuring line.
+ * Mono states no hue anywhere, the map included, and a mono base sheet is white lines on black — so
+ * an annotation there is white or a light grey with a black outline behind it, which is what makes
+ * it a pin rather than another road. */
+export type Annotations = {
+  /** A pin somebody dropped. */
+  pin: string;
+  /** The one point a `?label=` link asked the map to show. */
+  label: string;
+  /** The outline around both, so a pin is still a pin over a bright sheet. */
+  pinStroke: string;
+  /** Where the household lives: a filled disc and the ring around it. */
+  home: string;
+  homeStroke: string;
+  /** The straight line drawn to a facility, and the line being measured. */
+  route: string;
+  measure: string;
+  /** The halo behind every label the box draws. */
+  halo: string;
+};
+
+const FIELD_ANNOTATIONS: Annotations = {
+  pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
+  home: '#1b5e20', homeStroke: '#ffffff',
+  route: '#1b5e20', measure: '#ff3d00', halo: '#ffffff',
+};
+
+/** White on black, and a light grey where two things must be told apart without hue. */
+const MONO_ANNOTATIONS: Annotations = {
+  pin: '#ffffff', label: '#d0d0d0', pinStroke: '#000000',
+  home: '#000000', homeStroke: '#ffffff',
+  route: '#ffffff', measure: '#ffffff', halo: '#000000',
+};
+
+export function annotations(theme: Theme): Annotations {
+  return theme === 'mono' ? MONO_ANNOTATIONS : FIELD_ANNOTATIONS;
+}
+
+/** How one overlay is painted in this theme. The overlay's own colour is the manifest's, and Field
+ * uses it as it stands; Mono has no hue to spend, so the footpaths — the overlay a walker opens the
+ * map for — are white and dashed, which tells them from the white roads under them, and everything
+ * else is a light grey. A fill sits lighter on black than on paper, where a fifth of a hue is quiet
+ * and a fifth of white is a wash over the sheet. */
+export function overlayPaint(overlay: { id: string; color: string }, theme: Theme): {
+  color: string; fillOpacity: number; stroke: string; dash: number[] | null;
+} {
+  if (theme !== 'mono') return { color: overlay.color, fillOpacity: 0.22, stroke: '#ffffff', dash: null };
+  if (overlay.id === 'footpaths') return { color: '#ffffff', fillOpacity: 0.12, stroke: '#000000', dash: [2, 1.5] };
+  return { color: '#d0d0d0', fillOpacity: 0.12, stroke: '#000000', dash: null };
+}
+
 export function terrainSpec(config: MapConfig, theme: Theme): { sources: Record<string, SourceSpecification>; layers: LayerSpecification[] } {
   const sources: Record<string, SourceSpecification> = {};
   const layers: LayerSpecification[] = [];

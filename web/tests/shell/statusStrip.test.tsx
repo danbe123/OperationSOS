@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { render, screen, act, waitFor, within } from '@testing-library/react';
 import { api } from '../../src/api/client';
-import { StatusProvider } from '../../src/api/status';
+import { DEFAULT_THEME_KEY, StatusProvider } from '../../src/api/status';
 import { StatusStrip } from '../../src/components/StatusStrip';
 import { wifiQrPayload } from '../../src/kiosk/ConnectPanel';
 import { status } from '../fixtures/api';
@@ -48,6 +49,18 @@ describe('StatusStrip', () => {
     expect(within(dialog).getByText('If the page will not load, turn mobile data off.')).toBeInTheDocument();
     await act(async () => { within(dialog).getByRole('button', { name: 'Close' }).click(); });
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it("remembers the box's default theme for the next boot, before the app has run", async () => {
+    localStorage.removeItem(DEFAULT_THEME_KEY);
+    vi.spyOn(api, 'status').mockResolvedValue({ ...status, default_theme: 'mono' });
+    render(<StatusProvider><StatusStrip /></StatusProvider>);
+    await waitFor(() => expect(localStorage.getItem(DEFAULT_THEME_KEY)).toBe('mono'));
+    // The pre-paint script is what reads it: this phone's own choice first, the box's default next.
+    const html = readFileSync(`${process.cwd()}/index.html`, 'utf8');
+    expect(html).toContain('localStorage["sos.theme"]||localStorage["sos.default_theme"]');
+    expect(html).toContain('dataset.theme="mono"');
+    localStorage.removeItem(DEFAULT_THEME_KEY);
   });
 
   it('escapes special characters in the WIFI payload', () => {
