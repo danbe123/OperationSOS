@@ -1,0 +1,154 @@
+id: warmth-shelter
+title: Warmth and shelter
+icon: home
+order: 7
+summary: One warm room, bedding that works without heating, and the materials to keep a damaged house weathertight.
+intro: |
+  Cold is the British emergency. A house with no heating loses temperature over hours rather than
+  minutes, so the plan is not to heat the house but to heat one room and the people in it: the box
+  aims at 18 °C in that room where anyone is over 65, under five or has a long-term condition
+  ([Shelter and heat](module:shelter-heat)). Hypothermia develops indoors in a cold house as
+  readily as it does on a hill, and wet clothing plus draught strips warmth far faster than still
+  cold air does ([Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia);
+  [Wind chill](kiwix:wikipedia_en_all_maxi/Wind_chill)). Everything in the basic tier works with no
+  power and no fuel at all. Once you add a flame for heat, a carbon monoxide alarm stops being
+  optional: Approved Document J requires one in the room with any new fixed solid-fuel appliance
+  ([Approved Document J, p. 43](doc:ad-j#page=43)). UKHSA issues Cold-Health Alerts through the
+  Weather-Health Alert System, and they are the signal to move into the warm room early
+  ([AWHP, p. 22](doc:awhp-2026#page=22)).
+sources:
+  - {title: Hypothermia (Wikipedia), kiwix: wikipedia_en_all_maxi/Hypothermia, as_at: 2026-02-15}
+  - {title: Sleeping bag (Wikipedia), kiwix: wikipedia_en_all_maxi/Sleeping_bag, as_at: 2026-02-15}
+  - {title: Firewood (Wikipedia), kiwix: wikipedia_en_all_maxi/Firewood, as_at: 2026-02-15}
+  - {title: 'Approved Document J: combustion appliances and fuel storage', doc: ad-j, as_at: 2022-06}
+  - {title: Adverse Weather and Health Plan 2026 to 2027 (UKHSA), doc: awhp-2026, as_at: 2026-03-31}
+  - {title: 'HSE INDG317: chainsaws at work', doc: hse-indg317, as_at: 2026-09}
+  - {title: FM 31-70 Basic Cold Weather Manual, doc: fm-31-70-cold-weather, as_at: 1968-04}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Three cold nights are survived with bedding and layers, not with a heater you have not got.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight of winter without heating needs a safe heat source and the fuel to run it.
+  full:
+    title: No help coming
+    days: 90
+    why: A season means a year's wood cut and stacked, and the tools and materials to keep the roof on.
+items:
+  - id: blankets
+    tier: basic
+    name: Wool or fleece blankets
+    qty: {amount: 2, unit: blankets, per: person}
+    why: Layered over a duvet they trap far more air than a thicker single cover, and they do not care whether the power is on.
+    link: module:shelter-heat
+  - id: sleeping-bags
+    tier: basic
+    name: Sleeping bags rated to a comfort limit of −5 °C
+    qty: {amount: 1, unit: bags, per: person}
+    why: A bag's quoted comfort and limit figures come from the EN and ISO test standard, so buy on the comfort figure and not the extreme one ([Sleeping bag](kiwix:wikipedia_en_all_maxi/Sleeping_bag)).
+  - id: hot-water-bottles
+    tier: basic
+    name: Hot-water bottles
+    qty: {amount: 1, unit: bottles, per: person}
+    why: A kettle on a camping stove will warm a bed for the night, which is the cheapest heat in the house.
+    link: kiwix:wikipedia_en_all_maxi/Hot_water_bottle
+  - id: warm-layers
+    tier: basic
+    name: Hats, thermal base layers and wool socks
+    qty: {amount: 2, unit: sets, per: person}
+    why: Hats indoors and dry socks do more than turning a thermostat up, and wet clothing loses most of its insulation ([Wind chill](kiwix:wikipedia_en_all_maxi/Wind_chill)).
+    link: card:hypothermia
+  - id: tarpaulin
+    tier: basic
+    name: Heavy-duty tarpaulin, 4 m by 5 m or larger
+    qty: {amount: 2, unit: tarpaulins, per: household}
+    why: The first repair for a hole in a roof or a blown-out window is a tarpaulin battened down at the edges; never walk on a damaged roof to fit it.
+    link: module:shelter-heat
+  - id: duct-tape
+    tier: basic
+    name: Duct tape and gaffer tape
+    qty: {amount: 3, unit: rolls, per: household}
+    why: Holds sheeting to a frame, seals a cracked pane and patches a torn tarpaulin.
+    link: kiwix:wikipedia_en_all_maxi/Duct_tape
+  - id: draught-kit
+    tier: basic
+    name: Draught excluders, thermal curtains and window film
+    qty: {amount: 1, unit: sets, per: household}
+    why: Shutting curtains at dusk, closing doors to unused rooms and blocking draughts is most of what keeps one room warm without fuel.
+    link: kiwix:wikipedia_en_all_maxi/Thermal_insulation
+  - id: inner-tent
+    tier: serious
+    name: Tent that will pitch inside a room
+    qty: {amount: 1, unit: tents, per: household}
+    why: A tent or den pitched indoors traps body heat around the sleepers and shrinks the volume you are trying to warm.
+    link: module:shelter-heat
+  - id: camping-mats
+    tier: serious
+    name: Closed-cell foam or self-inflating mats
+    qty: {amount: 1, unit: mats, per: person}
+    why: Most of the heat a sleeper loses goes into the floor, so insulation underneath matters more than another blanket on top ([FM 31-70](doc:fm-31-70-cold-weather)).
+  - id: heater
+    tier: serious
+    name: Wood or solid-fuel stove, or a paraffin heater
+    qty: {amount: 1, unit: heaters, per: household}
+    why: A stove needs a proper flue and an air supply; a paraffin heater needs ventilation and is never left burning in a closed room ([Approved Document J, p. 11](doc:ad-j#page=11); [Kerosene heater](kiwix:wikipedia_en_all_maxi/Kerosene_heater)).
+  - id: co-alarm
+    tier: serious
+    name: Carbon monoxide alarm and smoke alarm
+    qty: {amount: 2, unit: alarms, per: household}
+    why: Approved Document J calls for a carbon monoxide alarm in the room holding any new fixed solid-fuel appliance, and the risk only rises when you improvise heat ([Approved Document J, p. 43](doc:ad-j#page=43)).
+    link: card:carbon-monoxide
+  - id: stored-heating-fuel
+    tier: serious
+    name: Seasoned logs, smokeless fuel or paraffin
+    qty: {amount: 0.5, unit: m³, per: household}
+    stock: {category: fuel, unit: m³}
+    why: Wet wood gives less heat and tars the flue, so wood is cut and stacked a year before it is burnt ([Firewood](kiwix:wikipedia_en_all_maxi/Firewood)).
+  - id: flue-kit
+    tier: serious
+    name: Chimney brushes, rods and a flue thermometer
+    qty: {amount: 1, unit: sets, per: household}
+    why: A stove burnt hard all winter needs sweeping more than once, and a chimney fire in a house with no fire brigade coming is a house lost.
+  - id: emergency-shelter-bags
+    tier: serious
+    name: Survival bags or a group bothy shelter
+    qty: {amount: 1, unit: shelters, per: person}
+    why: The fallback when the house itself is unsafe and you are waiting outside in the wet ([Emergency shelter](kiwix:wikipedia_en_all_maxi/Emergency_shelter)).
+    link: page:fieldcraft-shelter
+  - id: wood-store
+    tier: full
+    name: A year's wood cut, split and stacked under cover
+    qty: {amount: 5, unit: m³, per: household}
+    stock: {category: fuel, unit: m³}
+    why: Firewood needs roughly a year of drying under cover before it burns cleanly, so this winter's store is cut in the winter before ([Firewood](kiwix:wikipedia_en_all_maxi/Firewood)).
+  - id: chainsaw-ppe
+    tier: full
+    name: Chainsaw with helmet, visor, gloves, leg protection and boots
+    qty: {amount: 1, unit: sets, per: household}
+    why: HSE lists the kit as a helmet to EN 397, mesh visor to EN 1731 or glasses to EN 166, leg protection to EN 381-5 and chainsaw boots, and warns that no protective equipment gives complete protection against a cutting chain ([HSE INDG317, p. 8](doc:hse-indg317#page=8)).
+    note: Chainsaw work with no ambulance available is one of the sharpest risks in this whole box. Train first, and never cut alone.
+  - id: splitting-tools
+    tier: full
+    name: Splitting axe, maul, wedges and a bow saw
+    qty: {amount: 1, unit: sets, per: household}
+    why: Hand tools keep the wood store going when there is no petrol for the chainsaw.
+    link: module:tools-repair
+  - id: roof-repair
+    tier: full
+    name: Roofing felt, battens, nails, spare tiles and a ladder
+    qty: {amount: 1, unit: sets, per: household}
+    why: Storm damage that goes unpatched turns one wet room into a rotten roof over a winter; structural repairs need Approved Document A advice before you cut anything load-bearing ([Approved Document A](doc:ad-a)).
+  - id: window-boarding
+    tier: full
+    name: Plywood sheets, screws and polythene for broken windows
+    qty: {amount: 4, unit: sheets, per: household}
+    why: Boarding a blown-in window keeps the weather and other people out until glass can be got, which may be a long time.
+  - id: loft-insulation
+    tier: full
+    name: Loft and pipe insulation, brought up to depth
+    qty: {amount: 1, unit: jobs, per: household}
+    why: The cheapest heat over a season is the heat you never lose, and lagged pipes are also the ones that do not burst in a freeze.
+    link: module:shelter-heat

@@ -1,0 +1,141 @@
+id: fallout-cbrn
+title: Fallout and CBRN
+icon: radiation
+order: 8
+summary: The tablets, sheeting and masks for a fallout room, and what it takes to stay inside it for two weeks.
+intro: |
+  This kit exists for one instruction: get inside, stay inside, stay tuned. Distance and mass are
+  the only protection that works, and the fallout dose rate falls fast, so the first two days
+  indoors buy most of the survival there is to buy ([Radiation module](module:radiation)). The 1980
+  UK planning figure for staying in the fall-out room was fourteen days
+  ([Protect and Survive, p. 14](doc:protect-and-survive-1980#page=14)). Stable iodine is not a
+  radiation cure and only protects the thyroid against radioactive iodine; the UK stocks potassium
+  iodate, and the NRPB doses are 168.9 mg for adults and children over 12, 84.4 mg for ages 3 to
+  12, 42.2 mg from one month to three years and 21.1 mg for newborns
+  ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)). Take it only when the authorities say so.
+  Decontamination is simple and it works: taking off the outer layer of clothing removes up to
+  about 90% of the material on you
+  ([UKHSA, p. 1](doc:ukhsa-radiation-decontamination#page=1)).
+sources:
+  - {title: 'Stable iodine prophylaxis (NRPB, 2nd Working Group)', doc: nrpb-stable-iodine, as_at: 2001-01}
+  - {title: Nuclear War Survival Skills (Kearny), doc: nwss, as_at: 1987-01}
+  - {title: Removing radioactive material from your skin and clothes (UKHSA), doc: ukhsa-radiation-decontamination, as_at: 2023-11-28}
+  - {title: Protect and Survive (HMSO), doc: protect-and-survive-1980, as_at: 1980-05}
+  - {title: Planning Guidance for Response to a Nuclear Detonation (FEMA), doc: fema-nuclear-detonation-2022, as_at: 2022-11}
+  - {title: 'Radiation emergencies, information for the public (UKHSA)', kiwix: 'govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public', as_at: 2026-09-05}
+  - {title: Nuclear fallout (Wikipedia), kiwix: wikipedia_en_all_maxi/Nuclear_fallout, as_at: 2026-02-15}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: The first three days indoors are when the dose rate outside is at its worst, so this is the tier that matters most.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight in one shielded room needs the water, food and toilet to be in the room with you.
+  full:
+    title: No help coming
+    days: 90
+    why: Ninety days means mass for shielding, a way to measure what is outside, and a decontamination routine that people keep to.
+items:
+  - id: potassium-iodate
+    tier: basic
+    name: Potassium iodate tablets, UK 85 mg or 170 mg packs
+    qty: {amount: 1, unit: packs, per: person}
+    stock: {category: medicine, unit: packs}
+    why: The UK stocks iodate rather than iodide; the NRPB doses are 168.9 mg for adults and over-12s, 84.4 mg for ages 3 to 12, 42.2 mg from one month to three years and 21.1 mg for newborns ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
+    note: Only take these when the authorities say so. They protect the thyroid alone, do nothing for radiation sickness, and matter most for children, pregnant women and adults under 40.
+    link: module:radiation
+  - id: plastic-sheeting
+    tier: basic
+    name: Polythene sheeting and strong tape
+    qty: {amount: 30, unit: m², per: household}
+    why: Taped over windows, doors and vents it keeps fallout dust and a chemical plume out of the room you are sheltering in.
+    link: kiwix:wikipedia_en_all_maxi/Nuclear_fallout
+  - id: ffp3-masks
+    tier: basic
+    name: FFP3 masks
+    qty: {amount: 5, unit: masks, per: person}
+    why: Fallout and most chemical hazards reach you as dust or aerosol, and FFP3 is the highest of the three European filtering facepiece classes ([European respirator standards](kiwix:wikipedia_en_all_maxi/European_respirator_standards)).
+  - id: clothing-bags
+    tier: basic
+    name: Strong bags and ties for contaminated clothing
+    qty: {amount: 20, unit: bags, per: household}
+    why: Take the outer layer off, cut it away rather than pulling it over your head, bag it, seal it and put it away from people; that alone removes up to about 90% of the contamination ([UKHSA, p. 1](doc:ukhsa-radiation-decontamination#page=1)).
+  - id: fallout-room-plan
+    tier: basic
+    name: A written fall-out room plan for this house
+    why: Which room, which inner corner, who sleeps where, what gets carried in and who goes last. A basement gives a protection factor of roughly 10 to 20 and a car only about 2, so the choice of room is most of the decision ([FEMA, p. 75](doc:fema-nuclear-detonation-2022#page=75)).
+    link: page:household-plan
+  - id: wash-down-kit
+    tier: basic
+    name: Soap, shampoo, flannels and wipes for decontamination
+    qty: {amount: 1, unit: sets, per: person}
+    why: Wash with soap and warm water, hair last, no conditioner and no scrubbing; a damp cloth will do it if there is no water to spare ([UKHSA, p. 1](doc:ukhsa-radiation-decontamination#page=1)).
+  - id: dosimeter
+    tier: serious
+    name: Personal dosimeter or a Geiger counter
+    qty: {amount: 1, unit: instruments, per: household}
+    why: Without an instrument you cannot know when it is safe to come out, only guess ([Dosimeter](kiwix:wikipedia_en_all_maxi/Dosimeter); [Geiger counter](kiwix:wikipedia_en_all_maxi/Geiger_counter)).
+  - id: shelter-water
+    tier: serious
+    name: Water inside the shelter room, in sealed containers
+    qty: {amount: 3, unit: L, per: person-day}
+    stock: {category: water, unit: L}
+    why: Water carried in and covered before the fallout arrives stays safe; going out for it during the first days is the thing this kit exists to prevent ([Water module](module:water)).
+  - id: shelter-food
+    tier: serious
+    name: Food inside the shelter room, sealed and needing no cooking
+    qty: {amount: 2000, unit: kcal, per: person-day}
+    stock: {category: food, unit: kcal}
+    why: Sealed food and covered water stay safe through fallout; the real food risk is fresh milk from animals grazing contaminated pasture ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)).
+    link: module:food
+  - id: shelter-radio
+    tier: serious
+    name: Battery radio kept in the room, with spare batteries
+    qty: {amount: 1, unit: radios, per: household}
+    why: Stay tuned is the third part of the instruction, and it is the only way you will hear that the tablets are to be taken or the area is being evacuated.
+    link: module:comms
+  - id: shelter-toilet
+    tier: serious
+    name: Bucket toilet with lid, bags and cover material, in the room
+    qty: {amount: 1, unit: toilets, per: household}
+    why: Nobody leaves the shielded room to use a toilet during the first days, so the toilet comes in with you.
+    link: module:sanitation
+  - id: shelter-light
+    tier: serious
+    name: Torches, head torches and spare batteries for the room
+    qty: {amount: 1, unit: torches, per: person}
+    why: A shielded inner room has no windows worth uncovering, so it is dark for a fortnight.
+    link: module:power
+  - id: shielding-mass
+    tier: full
+    name: Sandbags, earth, or filled boxes and books for shielding
+    qty: {amount: 100, unit: sandbags, per: household}
+    why: Halving thicknesses are roughly 9 cm of packed earth, 6 cm of concrete, 18 cm of water or 22 cm of wood, so each layer you add halves the gamma dose again ([NWSS, p. 19](doc:nwss#page=19); [Sandbag](kiwix:wikipedia_en_all_maxi/Sandbag)).
+  - id: expedient-shelter-tools
+    tier: full
+    name: Spades, poles, rope and sheeting for an expedient shelter
+    qty: {amount: 1, unit: sets, per: household}
+    why: Kearny gives step-by-step plans for six types of earth-covered expedient shelter, which beat any ordinary house for fallout protection and are dug in hours by people who read the plans first ([NWSS, p. 42](doc:nwss#page=42)).
+  - id: nwss-print
+    tier: full
+    name: Nuclear War Survival Skills, printed and in the box
+    qty: {amount: 1, unit: copies, per: household}
+    why: The shelter designs, the shielding tables and the fallout meter are useless on a screen with a flat battery.
+    link: doc:nwss
+  - id: fallout-meter
+    tier: full
+    name: Materials for a Kearny fallout meter, tin, foil and thread
+    qty: {amount: 1, unit: sets, per: household}
+    why: A home-made electroscope gives a rough dose rate when no instrument can be bought ([NWSS, p. 221](doc:nwss#page=221); [Kearny fallout meter](kiwix:wikipedia_en_all_maxi/Kearny_fallout_meter)).
+  - id: decontamination-station
+    tier: full
+    name: A decontamination point at the door, dirty side and clean side
+    why: A tarpaulin, a bin for clothing, water, soap and clean clothes laid out in that order, so nobody walks contamination into the shelter ([Decontamination](kiwix:wikipedia_en_all_maxi/Decontamination)).
+    link: card:radiation-sickness
+  - id: spare-filters
+    tier: full
+    name: Spare masks, sheeting and tape for a second sealing
+    qty: {amount: 1, unit: sets, per: household}
+    why: Tape lifts, sheeting tears and masks are single-use, and there will be no shop to replace them from.

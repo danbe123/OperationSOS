@@ -1,0 +1,153 @@
+id: car
+title: Car kit
+icon: truck
+order: 10
+summary: What lives in the boot all year, so a breakdown in the dark or a road closed by snow is boring rather than dangerous.
+intro: |
+  A car is a metal box that keeps the wind off and nothing else. The kit in the boot is for the
+  night you are stopped on a closed road, not for a journey you planned. Fuel is the first
+  constraint: pumps need mains electricity, and in September 2021 it was panic buying rather than
+  any shortage of fuel that emptied the forecourts
+  ([2021 UK fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)).
+  Keep the tank above half in winter and store spare fuel lawfully, which for petrol means the
+  30 litre and 275 litre thresholds set out in the
+  [Vehicles and fuel module](module:vehicles-fuel). The second constraint is water on the road:
+  never drive through it, because 30 cm will float a car
+  ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Everything here is
+  cheap, and it lives in the car permanently rather than being packed for a trip, because the trip
+  where you need it is the one you did not plan.
+sources:
+  - {title: '2021 United Kingdom fuel supply crisis (Wikipedia)', kiwix: wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis, as_at: 2026-02-15}
+  - {title: 'Help during a flood (GOV.UK)', kiwix: 'govuk_resilience/www.gov.uk/help-during-flood', as_at: 2026-09-05}
+  - {title: 'Petroleum (Consolidation) Regulations 2014', kiwix: 'legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents', as_at: 2026-09-06}
+  - {title: 'HSE INDG370: controlling fire and explosion risks', doc: hse-indg370, as_at: 2026-09}
+  - {title: 'High-visibility clothing (Wikipedia)', kiwix: wikipedia_en_all_maxi/High-visibility_clothing, as_at: 2026-02-15}
+  - {title: 'Snow tyres and chains (Wikipedia)', kiwix: wikipedia_en_all_maxi/Snow_tire, as_at: 2026-02-15}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: A breakdown or a closed road is a few hours of cold and dark, and this tier is what makes those hours safe.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight of disrupted roads and shut forecourts means fixing the car yourself and navigating on paper.
+  full:
+    title: No help coming
+    days: 90
+    why: With no recovery service and no garage, the car only keeps working if the spares and the winter kit are already aboard.
+items:
+  - id: warning-triangle
+    tier: basic
+    name: Warning triangle and hi-vis vests
+    qty: {amount: 1, unit: vests, per: person}
+    why: Being seen is the whole of roadside safety, and hi-vis works because retroreflective material throws headlights straight back at the driver ([high-visibility clothing](kiwix:wikipedia_en_all_maxi/High-visibility_clothing)).
+    note: Do not put a triangle out on a motorway. Get behind the barrier and well back from the vehicle.
+  - id: car-torch
+    tier: basic
+    name: Torch with spare batteries, kept in the glovebox
+    qty: {amount: 1, unit: torches, per: household}
+    why: A phone torch flattens the phone you need to call for recovery.
+    link: module:power
+  - id: car-blanket
+    tier: basic
+    name: Blanket and a foil survival bag each
+    qty: {amount: 1, unit: blankets, per: person}
+    why: A stationary car with the engine off cools to the outside temperature within the hour, and people get cold sitting still ([Hypothermia card](card:hypothermia)).
+  - id: car-water
+    tier: basic
+    name: Bottled water in the boot
+    qty: {amount: 2, unit: L, per: person}
+    stock: {category: water, unit: L}
+    why: Rotate it every six months so it is drinkable when you need it rather than green.
+    link: module:water
+  - id: car-snacks
+    tier: basic
+    name: Long-life snacks in the boot
+    qty: {amount: 500, unit: kcal, per: person}
+    stock: {category: food, unit: kcal}
+    why: Cold, hungry passengers make bad decisions such as setting off to walk, which is what actually kills people in stranded cars.
+  - id: car-charger
+    tier: basic
+    name: 12 V phone charger and a charged power bank
+    qty: {amount: 1, unit: sets, per: household}
+    why: The car will charge a phone with the engine running, but only while the battery has something left in it.
+  - id: jump-leads
+    tier: basic
+    name: Jump leads or a lithium jump pack, and a tow rope
+    qty: {amount: 1, unit: sets, per: household}
+    why: A flat battery is the commonest breakdown of all, and a jump pack works when no second car will stop ([jumper cables](kiwix:wikipedia_en_all_maxi/Jumper_cable)).
+  - id: shovel-scraper
+    tier: basic
+    name: Folding shovel, ice scraper and de-icer
+    qty: {amount: 1, unit: sets, per: household}
+    why: Digging the wheels clear and clearing the glass is usually the difference between stuck and moving.
+  - id: tyre-repair
+    tier: serious
+    name: Tyre inflator, sealant and a pressure gauge
+    qty: {amount: 1, unit: kits, per: household}
+    why: Most new cars carry a sealant kit instead of a spare wheel, and sealant will not fix a sidewall cut ([canned tyre inflator](kiwix:wikipedia_en_all_maxi/Canned_tire_inflator)).
+  - id: spare-fuel
+    tier: serious
+    name: Metal or approved plastic fuel can, filled and rotated
+    qty: {amount: 20, unit: L, per: household}
+    stock: {category: fuel, unit: L}
+    why: How much petrol you may keep at home, in what containers, and when you must notify the Petroleum Enforcement Authority are all set out in the [Vehicles and fuel module](module:vehicles-fuel); store it outside, ventilated and away from ignition ([HSE INDG370, p. 1](doc:hse-indg370#page=1)).
+    note: Petrol goes off in about six months and E10 sooner, so use it in the car and refill the can rather than letting it sit for years.
+  - id: road-atlas
+    tier: serious
+    name: Paper road atlas, current edition
+    qty: {amount: 1, unit: atlases, per: household}
+    why: Satnav dies with the phone network, and a diversion round a flooded valley is a map-sized problem ([road map](kiwix:wikipedia_en_all_maxi/Road_map)).
+    link: module:navigation
+  - id: car-first-aid
+    tier: serious
+    name: First-aid kit in the boot
+    qty: {amount: 1, unit: kits, per: household}
+    why: Road traffic collisions are the injury you are most likely to be first on the scene for; severe bleeding is the one to be ready for.
+    link: card:severe-bleeding
+  - id: car-warm-kit
+    tier: serious
+    name: Boots, gloves, hat and waterproofs in the boot
+    qty: {amount: 1, unit: sets, per: person}
+    why: People break down in the clothes they were sitting in, which are never the clothes for standing on a verge in February.
+  - id: traction-aids
+    tier: serious
+    name: Grit, a bag of sand or traction mats
+    qty: {amount: 10, unit: kg, per: household}
+    why: A handful of grit under a driven wheel moves a car that a pushed engine will not.
+  - id: spare-bulbs-fluids
+    tier: serious
+    name: Spare bulbs, fuses, screenwash, oil and coolant
+    qty: {amount: 1, unit: sets, per: household}
+    why: These are the failures that stop a legal journey rather than a mechanical one, and no shop will be open at the time.
+    link: module:tools-repair
+  - id: winter-tyres
+    tier: full
+    name: Winter tyres or snow chains, fitted or carried
+    qty: {amount: 4, unit: tyres, per: household}
+    why: Winter tyres use a softer compound that keeps grip below about 7 °C, and chains do what no tyre can on packed snow ([snow tyres](kiwix:wikipedia_en_all_maxi/Snow_tire)).
+  - id: cb-radio
+    tier: full
+    name: CB radio, or a PMR446 handheld in the car
+    qty: {amount: 1, unit: radios, per: household}
+    why: CB is licence-free in the UK on FM and remains the traffic-and-road network among drivers when the mobile network is down ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom)).
+    link: module:comms
+  - id: car-tools
+    tier: full
+    name: Basic tool roll, jack, axle stand and a workshop manual
+    qty: {amount: 1, unit: sets, per: household}
+    why: With no garage open, the jobs you can do on a drive are the jobs that keep the car alive.
+    link: module:vehicles-fuel
+  - id: fuel-store
+    tier: full
+    name: A lawful fuel store at home, rotated
+    qty: {amount: 30, unit: L, per: household}
+    stock: {category: fuel, unit: L}
+    why: The household limits, container types and the notification threshold are in the [Vehicles and fuel module](module:vehicles-fuel); diesel keeps far longer than petrol but grows diesel bug if water gets in.
+  - id: bicycle-fallback
+    tier: full
+    name: A bicycle in working order, with pump and spares
+    qty: {amount: 1, unit: bicycles, per: person}
+    why: When there is no fuel at all, the bicycle is the vehicle that still works, and it gets through jams a car cannot.
+    link: module:vehicles-fuel

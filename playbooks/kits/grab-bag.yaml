@@ -1,0 +1,164 @@
+id: grab-bag
+title: Grab bag
+icon: boot
+order: 9
+summary: One bag per person by the door, packed for the night you are told to leave and cannot come back.
+intro: |
+  Staying put is the default in this country. You leave when the police or an Emergency Alert say
+  so, or when the building itself is unsafe, and then you leave quickly
+  ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). A grab bag
+  is what makes that possible without a decision at the door: one bag each, packed, checked twice
+  a year, and light enough that the person it belongs to can carry it. The government's own list
+  is documents, medicines, water, snacks, a torch, a radio, a power bank, cash in small notes,
+  keys, a first-aid kit, a warm layer, waterproofs and a whistle
+  ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/);
+  [survival kit](kiwix:wikipedia_en_all_maxi/Survival_kit)). Pack for wet cold, because that is
+  what Britain gives you. And whatever the route, never drive or walk through floodwater: 15 cm of
+  moving water can knock an adult off their feet and 30 cm will float a car
+  ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
+sources:
+  - {title: 'Prepare, get prepared for emergencies', kiwix: 'prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/', as_at: 2026-09-05}
+  - {title: Survival kit (Wikipedia), kiwix: wikipedia_en_all_maxi/Survival_kit, as_at: 2026-02-15}
+  - {title: Help during a flood (GOV.UK), kiwix: 'govuk_resilience/www.gov.uk/help-during-flood', as_at: 2026-09-05}
+  - {title: 'FM 21-76-1 Survival, Evasion and Recovery', doc: fm-21-76-1-survival-evasion-recovery, as_at: 1999-06}
+  - {title: Hypothermia (Wikipedia), kiwix: wikipedia_en_all_maxi/Hypothermia, as_at: 2026-02-15}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: A bag you can pick up in ten seconds and live out of for a night at a rest centre or a friend's floor.
+  serious:
+    title: Two weeks
+    days: 14
+    why: Enough to sleep, cook and navigate for yourself if the rest centre is full or a long way off.
+  full:
+    title: No help coming
+    days: 90
+    why: The bag becomes the whole of what you own outdoors, so it carries shelter, water treatment and fire.
+items:
+  - id: bag-water
+    tier: basic
+    name: Water bottle and purification tablets
+    qty: {amount: 1, unit: L, per: person}
+    stock: {category: water, unit: L}
+    why: A litre each is the government's grab-bag figure, and NaDCC tablets refill it from any tap or stream you pass ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
+    link: page:water-disinfection
+  - id: bag-snacks
+    tier: basic
+    name: Snacks that need no cooking
+    qty: {amount: 800, unit: kcal, per: person-day}
+    stock: {category: food, unit: kcal}
+    why: Cereal bars, nuts and dried fruit for a day or two; the full food figures are in the food kit and this bag is not the place to carry them.
+    link: module:food
+  - id: bag-torch-whistle
+    tier: basic
+    name: Torch and whistle
+    qty: {amount: 1, unit: sets, per: person}
+    why: The whistle is how you are found when a phone is dead or there is no signal, and six blasts a minute is the distress signal in Britain.
+    link: page:fieldcraft-rescue
+  - id: bag-documents
+    tier: basic
+    name: Copies of passports, prescriptions, insurance and contacts
+    qty: {amount: 1, unit: sets, per: person}
+    why: A rest centre, a claim and a pharmacy all want paper, and none of them can read a phone that will not charge.
+    link: page:household-plan
+  - id: bag-cash
+    tier: basic
+    name: Cash in small notes and coins
+    qty: {amount: 100, unit: pounds, per: person}
+    why: Card terminals and cash machines go down with the network or the power, and nobody has change for a fifty.
+    link: page:what-still-works
+  - id: bag-medication
+    tier: basic
+    name: Seven days of prescription medicines, in the bag
+    qty: {amount: 7, unit: days, per: person}
+    stock: {category: medicine, unit: days}
+    why: Seven days lives in the bag so it leaves with you; the household's fortnight of medicines stays with the medical kit and gets grabbed if there is time ([Evacuation module](module:evacuation)).
+    link: page:chronic-conditions
+  - id: bag-power
+    tier: basic
+    name: Power bank and the right charging cable
+    qty: {amount: 1, unit: banks, per: person}
+    why: The phone is the map, the torch, the contacts and the alert receiver, and it is flat by the evening without one.
+    link: module:power
+  - id: bag-warm-layer
+    tier: basic
+    name: Warm layer, hat and a rain shell
+    qty: {amount: 1, unit: sets, per: person}
+    why: Wet cold, not cold, is what hurts people outdoors in Britain, and a soaked person in wind can become hypothermic well above freezing ([Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia)).
+    link: card:hypothermia
+  - id: bag-sleeping-bag
+    tier: serious
+    name: Sleeping bag or quilt that packs small
+    qty: {amount: 1, unit: bags, per: person}
+    why: A hall floor, a car or a barn are all cold at four in the morning, and there may be no blanket waiting for you.
+  - id: bag-sleeping-mat
+    tier: serious
+    name: Foam or inflatable sleeping mat
+    qty: {amount: 1, unit: mats, per: person}
+    why: The ground takes more heat out of a sleeper than the air does, so the mat matters more than the bag.
+    link: page:fieldcraft-shelter
+  - id: bag-stove
+    tier: serious
+    name: Small gas or meths stove with fuel
+    qty: {amount: 1, unit: stoves, per: household}
+    stock: {category: fuel, unit: canisters}
+    why: A hot drink is the fastest way to bring a cold, frightened person back to themselves, and it makes untreated water safe.
+    link: page:fieldcraft-fire
+  - id: bag-first-aid
+    tier: serious
+    name: Personal first-aid kit
+    qty: {amount: 1, unit: kits, per: person}
+    why: Blisters, cuts and a headache are what actually happen on an evacuation; the trauma kit stays in the medical kit at home.
+    link: module:medical
+  - id: bag-map
+    tier: serious
+    name: Paper map of the area and a baseplate compass
+    qty: {amount: 1, unit: sets, per: household}
+    why: A six-figure grid reference is what the police and mountain rescue ask for, and paper does not need a signal or a battery ([Ordnance Survey](kiwix:wikipedia_en_all_maxi/Ordnance_Survey)).
+    link: page:fieldcraft-navigation
+  - id: bag-spare-clothing
+    tier: serious
+    name: Spare socks, underwear and gloves in a dry bag
+    qty: {amount: 2, unit: sets, per: person}
+    why: Dry socks every night are the whole of trench-foot prevention, and trench foot ends more British trips than frostbite ([field hygiene](page:fieldcraft-hygiene)).
+  - id: bag-rucksack
+    tier: serious
+    name: Rucksack that fits the person carrying it
+    qty: {amount: 1, unit: rucksacks, per: person}
+    why: A holdall is unwearable over a mile; children carry their own small bag with their own things in it.
+  - id: bag-fieldcraft-load
+    tier: full
+    name: The full field-craft load, packed and walked with
+    qty: {amount: 1, unit: loads, per: person}
+    why: Shelter, warmth, water, fire, navigation and signalling, in the order that keeps people alive in Britain ([Field craft in Britain](page:fieldcraft-basics)).
+    link: doc:fm-21-76-1-survival-evasion-recovery
+  - id: bag-water-filter
+    tier: full
+    name: Pump or squeeze water filter with spare cartridge
+    qty: {amount: 1, unit: filters, per: household}
+    why: Tablets run out in a fortnight; a filter keeps working for thousands of litres and handles cloudy water that tablets struggle with.
+    link: module:water
+  - id: bag-tarp
+    tier: full
+    name: Tarpaulin or bivvy bag and cord
+    qty: {amount: 1, unit: shelters, per: person}
+    why: Getting out of the wind and off the ground is the first priority outdoors, ahead of water and long ahead of food ([Emergency shelter](kiwix:wikipedia_en_all_maxi/Emergency_shelter)).
+    link: page:fieldcraft-shelter
+  - id: bag-fire-kit
+    tier: full
+    name: Fire kit, lighter, ferrocerium rod and tinder in a tin
+    qty: {amount: 1, unit: kits, per: person}
+    why: Wet Britain eats matches; carry two ways to light a fire and keep the tinder dry.
+    link: page:fieldcraft-fire
+  - id: bag-cook-set
+    tier: full
+    name: Metal mug, pot and spoon
+    qty: {amount: 1, unit: sets, per: person}
+    why: A metal mug boils water directly over a fire when the stove fuel has gone.
+  - id: bag-route-plan
+    tier: full
+    name: Written route out, grid references and a meeting point
+    qty: {amount: 1, unit: plans, per: household}
+    why: Everyone in the house knows where to go and who to tell, so a separated household still converges ([Household plan](page:household-plan)).
+    link: page:household-plan

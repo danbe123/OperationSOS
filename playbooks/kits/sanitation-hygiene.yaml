@@ -1,0 +1,151 @@
+id: sanitation-hygiene
+title: Sanitation and hygiene
+icon: drop
+order: 6
+summary: Toilets, hands and rubbish for the weeks when the water is off and no bin lorry is coming.
+intro: |
+  When the sewer backs up or the taps stop, a household's own waste becomes the fastest route
+  to illness in the house. The 1980 government advice was blunt about the answer: a bucket with a
+  lid for the toilet and a second bucket for other refuse
+  ([Protect and Survive, p. 8](doc:protect-and-survive-1980#page=8)). Everything else on this list
+  keeps that arrangement from making people ill. Wash hands with soap; alcohol gel is unreliable
+  against norovirus and useless against cryptosporidium
+  ([Norovirus](kiwix:wikipedia_en_medicine_maxi/Norovirus)). Keep thin unscented bleach, because
+  one part of 5% bleach to nine parts of water gives the 0.5% solution used on surfaces after
+  vomit or faeces ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
+  Thickened, scented and "splash-less" bleaches are for cleaning only and must never go anywhere
+  near drinking water. If you end up digging, the pit goes at least 30 metres from any well,
+  spring or stream, and downhill of it ([Pit latrine](kiwix:wikipedia_en_all_maxi/Pit_latrine)).
+sources:
+  - {title: Pit latrine (Wikipedia), kiwix: wikipedia_en_all_maxi/Pit_latrine, as_at: 2026-02-15}
+  - {title: Sodium hypochlorite (Wikipedia), kiwix: wikipedia_en_all_maxi/Sodium_hypochlorite, as_at: 2026-02-15}
+  - {title: Norovirus (WikiMed), kiwix: wikipedia_en_medicine_maxi/Norovirus, as_at: 2026-04-11}
+  - {title: Protect and Survive (HMSO), doc: protect-and-survive-1980, as_at: 1980-05}
+  - {title: FM 4-25.12 Unit Field Sanitation Team, doc: fm-4-25-12-field-sanitation, as_at: 2002-01}
+  - {title: 'Approved Document H: drainage and waste disposal', doc: ad-h, as_at: 2015-10}
+  - {title: Flooding and health advice for the public (UKHSA), kiwix: 'govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public', as_at: 2026-09-05}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Three days of bagged waste and washed hands is what a burst main or a blocked sewer actually costs you.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight with no collection needs somewhere for the waste to go, not just something to put it in.
+  full:
+    title: No help coming
+    days: 90
+    why: A season with no sewer and no shop means a latrine, lime and things you can wash and use again.
+items:
+  - id: bin-bags
+    tier: basic
+    name: Heavy-duty bin bags
+    qty: {amount: 100, unit: bags, per: household}
+    why: Line the bucket, double-bag each use and tie it off; the 1980 advice was one lidded bucket for the toilet and a second bin for refuse ([Protect and Survive, p. 8](doc:protect-and-survive-1980#page=8)).
+    link: module:sanitation
+  - id: toilet-bucket
+    tier: basic
+    name: Buckets with close-fitting lids
+    qty: {amount: 2, unit: buckets, per: household}
+    why: One for the toilet and one for other refuse, with urine kept separate so the solid waste stays drier and smells less.
+    link: module:sanitation
+  - id: toilet-roll
+    tier: basic
+    name: Toilet roll
+    qty: {amount: 0.5, unit: rolls, per: person-day}
+    why: It runs out far sooner than anyone plans for, and nothing in the house replaces it comfortably.
+    link: kiwix:wikipedia_en_all_maxi/Toilet_paper
+  - id: hand-gel
+    tier: basic
+    name: Alcohol hand gel
+    qty: {amount: 1, unit: bottles, per: person}
+    why: For when there is no water to spare, but gel does not deal with norovirus, so it is the second choice, never the first ([Hand sanitiser](kiwix:wikipedia_en_all_maxi/Hand_sanitizer); [Norovirus](kiwix:wikipedia_en_medicine_maxi/Norovirus)).
+  - id: soap
+    tier: basic
+    name: Bar soap and washing-up liquid
+    qty: {amount: 6, unit: bars, per: household}
+    why: Twenty seconds of soap and water after the toilet and before food is the whole of hand hygiene ([Hand washing](kiwix:wikipedia_en_all_maxi/Hand_washing)).
+  - id: thin-bleach
+    tier: basic
+    name: Thin unscented bleach, 5% sodium hypochlorite
+    qty: {amount: 2, unit: L, per: household}
+    stock: {category: other, unit: L}
+    why: One part to nine parts water gives the 0.5% surface solution after vomit or faeces ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
+    note: Thickened, scented or splash-less bleach is for cleaning only. Never use it to treat drinking water; the table is on the water disinfection page.
+    link: page:water-disinfection
+  - id: period-products
+    tier: basic
+    name: Period products
+    qty: {amount: 2, unit: boxes, per: person}
+    why: The easiest thing in the house to forget until the shops shut, and there is no improvising it.
+    link: module:sanitation
+  - id: camping-toilet
+    tier: serious
+    name: Chemical or camping toilet with fluid
+    qty: {amount: 1, unit: toilets, per: household}
+    why: A fortnight of bucket use indoors is grim; a cassette toilet keeps it sanitary and containable.
+    link: kiwix:wikipedia_en_all_maxi/Chemical_toilet
+  - id: cover-material
+    tier: serious
+    name: Sawdust, wood ash or cat litter
+    qty: {amount: 25, unit: L, per: household}
+    why: A scoop thrown in after each use holds down the smell and keeps flies off, the same rule used for a trench latrine ([FM 4-25.12, p. 36](doc:fm-4-25-12-field-sanitation#page=36)).
+  - id: wet-wipes
+    tier: serious
+    name: Wet wipes
+    qty: {amount: 6, unit: packs, per: household}
+    why: Washing where there is no water to pour. Burn or bag them; never bury them and never put them down a toilet you still need.
+    link: page:fieldcraft-hygiene
+  - id: laundry-kit
+    tier: serious
+    name: Laundry soap, a tub and a plunger or washboard
+    qty: {amount: 1, unit: sets, per: household}
+    why: Clothing worn against the skin for two weeks causes rashes and skin infections, and hand washing needs soap that works in cold water.
+  - id: nail-kit
+    tier: serious
+    name: Nail clippers and a nail brush
+    qty: {amount: 2, unit: sets, per: household}
+    why: Short nails and a brush are the difference between hands that are washed and hands that only look washed ([Hand washing](kiwix:wikipedia_en_all_maxi/Hand_washing)).
+  - id: gloves-waste
+    tier: serious
+    name: Disposable nitrile gloves and rubber gloves
+    qty: {amount: 100, unit: gloves, per: household}
+    why: For waste, for nursing and for anything floodwater has touched, because floodwater carries sewage ([UKHSA flooding advice](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)).
+  - id: hand-wash-point
+    tier: serious
+    name: Hand-washing point by the toilet, jug, bowl and soap
+    qty: {amount: 1, unit: points, per: household}
+    why: A hand-washing point stands outside every latrine, and a hung bottle tilted by a string will wash a whole group from a litre ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35)).
+  - id: composting-toilet
+    tier: full
+    name: Composting or twin-pit toilet, built
+    qty: {amount: 1, unit: builds, per: household}
+    why: The answer when the sewer is gone for good, and it has to be built before you need it, not during ([Composting toilet](kiwix:wikipedia_en_all_maxi/Composting_toilet)).
+    link: module:sanitation
+  - id: latrine-tools
+    tier: full
+    name: Spade, mattock and a lid board for a pit latrine
+    qty: {amount: 1, unit: sets, per: household}
+    why: The pit sits at least 30 metres from any well, spring or stream, downhill of it and downwind of the house ([Pit latrine](kiwix:wikipedia_en_all_maxi/Pit_latrine); [FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35)).
+  - id: hydrated-lime
+    tier: full
+    name: Hydrated lime or stored wood ash
+    qty: {amount: 25, unit: kg, per: household}
+    why: Spread over the pit it suppresses flies and smell, and it is caustic enough to need gloves and eye protection ([Calcium hydroxide](kiwix:wikipedia_en_all_maxi/Calcium_hydroxide)).
+  - id: reusable-sanitary
+    tier: full
+    name: Menstrual cups and washable pads
+    qty: {amount: 2, unit: sets, per: person}
+    why: A cup lasts years where a box of tampons lasts a month ([Menstrual cup](kiwix:wikipedia_en_all_maxi/Menstrual_cup)).
+  - id: chlorine-stock
+    tier: full
+    name: NaDCC tablets or calcium hypochlorite granules in bulk
+    qty: {amount: 1, unit: kg, per: household}
+    stock: {category: other, unit: kg}
+    why: Liquid bleach loses strength on the shelf within months; dry chlorine keeps for years and makes both the cleaning solution and drinking water ([Sodium dichloroisocyanurate](kiwix:wikipedia_en_all_maxi/Sodium_dichloroisocyanurate)).
+    link: page:water-disinfection
+  - id: septic-plan
+    tier: full
+    name: A septic tank, cesspool or drainage field plan on paper
+    why: The long-term replacement for mains sewerage, with siting rules that are worth reading before you dig ([Approved Document H, p. 31](doc:ad-h#page=31)).
