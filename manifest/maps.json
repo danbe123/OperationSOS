@@ -70,7 +70,7 @@
         "artifact": "hillshade.pmtiles"
       },
       "dest": "maps/hillshade.pmtiles",
-      "size_bytes": 392722112,
+      "size_bytes": 400500333,
       "as_at": "2026-07",
       "licence": "OGL v3 (OS Terrain 50, OSNI); Copernicus DEM licence (ESA)",
       "priority": 53,

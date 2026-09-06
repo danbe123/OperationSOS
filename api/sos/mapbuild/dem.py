@@ -4,16 +4,22 @@ from __future__ import annotations
 import io
 import math
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
-from .common import BBox, BuildError, Context, bbox_intersects, log
+from .common import BBox, BuildError, Context, bbox_args, bbox_intersects, log
 from .osdata import os_fetch, unzip_single
 
 COPERNICUS_MAX_LAT = 57  # rows N49..N56 cover RoI, NI, IoM and CI; north of 57 N is Great Britain (OS Terrain 50)
 NI_BBOX: BBox = (-8.2, 54.0, -5.4, 55.4)
 OSNI_SRS = "EPSG:29902"  # TM65 / Irish Grid
 T50_SRS = "EPSG:27700"
+# Every source stores open sea as 0 m (Copernicus) or about -0.7 m (OS Terrain 50), and a VRT reads the gaps
+# between its grids as 0 too, so without a nodata value the whole rectangle around a source shades as flat
+# ground and the later source's gaps overwrite the earlier one. -9999 is below any real elevation.
+DTM_NODATA = "-9999"
+LAND_POLYGONS_ZIP = "land-polygons-split-4326.zip"
+LAND_POLYGONS_SHP = "land-polygons-split-4326/land_polygons.shp"
 
 
 def copernicus_name(lat: int, lon: int) -> str:
@@ -97,20 +103,35 @@ def dem_vrts(ctx: Context, work: Path) -> list[Path]:
     work.mkdir(parents=True, exist_ok=True)
     vrts: list[Path] = []
     glo = work / "glo30.vrt"
-    ctx.run(["gdalbuildvrt", "-overwrite", "-input_file_list", str(_input_list(work, "glo30.txt", fetch_copernicus(ctx, ctx.bbox))), str(glo)])
+    ctx.run(["gdalbuildvrt", "-overwrite", "-vrtnodata", DTM_NODATA, "-input_file_list",
+             str(_input_list(work, "glo30.txt", fetch_copernicus(ctx, ctx.bbox))), str(glo)])
     vrts.append(glo)
     osni = osni_dtm(ctx)
     if osni is not None and bbox_intersects(ctx.bbox, NI_BBOX):
         osni_vrt = work / "osni.vrt"
-        ctx.run(["gdalbuildvrt", "-overwrite", "-a_srs", OSNI_SRS, str(osni_vrt), str(osni)])
+        ctx.run(["gdalbuildvrt", "-overwrite", "-vrtnodata", DTM_NODATA, "-a_srs", OSNI_SRS, str(osni_vrt), str(osni)])
         vrts.append(osni_vrt)
     grids = sorted(terr50_asc_dir(ctx).glob("*.asc"))
     if not grids:
         raise BuildError("no OS Terrain 50 .asc grids found")
     t50 = work / "t50.vrt"
-    ctx.run(["gdalbuildvrt", "-overwrite", "-a_srs", T50_SRS, "-input_file_list", str(_input_list(work, "t50.txt", grids)), str(t50)])
+    # A grid whose values happen to be whole metres opens as Int32 and gdalbuildvrt drops it as a mixed type.
+    ctx.run(["gdalbuildvrt", "-overwrite", "-vrtnodata", DTM_NODATA, "-a_srs", T50_SRS, "-oo", "DATATYPE=Float32",
+             "-input_file_list", str(_input_list(work, "t50.txt", grids)), str(t50)])
     vrts.append(t50)
     return vrts
+
+
+def land_mask(ctx: Context, work: Path) -> Path:
+    """OSM land polygons clipped to the bbox, in the mosaic's EPSG:3857, so the hillshade step can burn nodata into
+    the sea: without this the 0 m sea shades as a flat grey box around each source."""
+    work.mkdir(parents=True, exist_ok=True)
+    zip_path = ctx.download(ctx.version("LAND_POLYGONS_URL"), LAND_POLYGONS_ZIP)
+    out = work / "land.gpkg"
+    out.unlink(missing_ok=True)
+    ctx.run(["ogr2ogr", "-f", "GPKG", "-t_srs", "EPSG:3857", "-spat", *bbox_args(ctx.bbox), "-clipsrc", *bbox_args(ctx.bbox),
+             "-makevalid", "-nlt", "PROMOTE_TO_MULTI", str(out), f"/vsizip/{zip_path}/{LAND_POLYGONS_SHP}"])
+    return out
 
 
 def nongb_dtm_vrt(ctx: Context, work: Path) -> Path:

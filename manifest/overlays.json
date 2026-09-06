@@ -82,7 +82,7 @@
         "artifact": "overlays/flood-zones.pmtiles"
       },
       "dest": "maps/overlays/flood-zones.pmtiles",
-      "size_bytes": 746599620,
+      "size_bytes": 746978373,
       "as_at": "2026-05-20",
       "licence": "OGL v3 (Environment Agency, NRW, SEPA, DfI Rivers)",
       "priority": 72,

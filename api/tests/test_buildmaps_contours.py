@@ -7,7 +7,7 @@ import pytest
 import respx
 
 from sos.mapbuild import contours, dem, osm
-from sos.mapbuild.common import BuildError, SPEC_BBOX, FIXTURE_BBOX
+from sos.mapbuild.common import FIXTURE_BBOX, SPEC_BBOX, BuildError
 from tests.mapbuild_helpers import FakeRunner, make_ctx
 
 T50_API = "https://api.os.uk/downloads/v1/products/Terrain50/downloads"
@@ -86,8 +86,11 @@ def test_dem_vrts_are_built_in_later_wins_order(tmp_path):
     vrts = dem.dem_vrts(ctx, work)
     assert [v.name for v in vrts] == ["glo30.vrt", "t50.vrt"], "OSNI is skipped when the bbox misses Northern Ireland"
     calls = runner.find("gdalbuildvrt")
-    assert calls[0][:4] == ["gdalbuildvrt", "-overwrite", "-input_file_list", str(work / "glo30.txt")]
-    assert calls[1][:6] == ["gdalbuildvrt", "-overwrite", "-a_srs", "EPSG:27700", "-input_file_list", str(work / "t50.txt")]
+    assert calls[0][:6] == ["gdalbuildvrt", "-overwrite", "-vrtnodata", "-9999", "-input_file_list", str(work / "glo30.txt")]
+    assert calls[1][:10] == ["gdalbuildvrt", "-overwrite", "-vrtnodata", "-9999", "-a_srs", "EPSG:27700", "-oo", "DATATYPE=Float32",
+                             "-input_file_list", str(work / "t50.txt")], "grids with only whole-metre values open as Int32 and would be skipped"
+    for call in calls:
+        assert call[2:4] == ["-vrtnodata", "-9999"], "gaps between grids must read as nodata, not 0 m sea, or they overwrite earlier sources"
     assert (work / "t50.txt").read_text().splitlines() == [str(ctx.src / "terr50_asc" / "SU41.asc"), str(ctx.src / "terr50_asc" / "SU42.asc")]
 
 
@@ -102,7 +105,7 @@ def test_dem_vrts_include_osni_for_full_bbox(tmp_path):
     vrts = dem.dem_vrts(ctx, tmp_path / "work")
     assert [v.name for v in vrts] == ["glo30.vrt", "osni.vrt", "t50.vrt"]
     osni = runner.find("gdalbuildvrt")[1]
-    assert osni[2:4] == ["-a_srs", "EPSG:29902"] and osni[-1] == str(ctx.src / "osni-dtm50.tif")
+    assert osni[2:6] == ["-vrtnodata", "-9999", "-a_srs", "EPSG:29902"] and osni[-1] == str(ctx.src / "osni-dtm50.tif")
 
 
 def test_nongb_dtm_vrt_warps_osni_to_4326_and_puts_it_last(tmp_path):

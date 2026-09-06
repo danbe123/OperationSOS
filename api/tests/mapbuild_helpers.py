@@ -19,6 +19,7 @@ DEFAULT_VERSIONS = {
     "GEOFABRIK_FIXTURE_PBF_URL": "https://example.test/hampshire-latest.osm.pbf",
     "COPERNICUS_DEM_BASE": "https://example.test/dem",
     "OSNI_DTM_URL": "",
+    "LAND_POLYGONS_URL": "https://example.test/land-polygons-split-4326.zip",
     "ORGANICMAPS_TAG": "2026.08.27-18-android",
     "ORGANICMAPS_CDN": "https://example.test/maps",
     "ORGANICMAPS_APK_URL": "https://example.test/OrganicMaps-26082718-web-release.apk",

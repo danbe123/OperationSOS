@@ -29,7 +29,7 @@ MICROMAMBA_HINT = (
 )
 REQUIRED_TOOLS = (
     "pmtiles", "tippecanoe", "tile-join", "osmium", "ogr2ogr", "gdalwarp", "gdaldem", "gdal_translate",
-    "gdaladdo", "gdalbuildvrt", "gdal_contour", "aria2c", "node", "pnpm", "tar",
+    "gdaladdo", "gdalbuildvrt", "gdal_contour", "gdal_rasterize", "gdalinfo", "gdal", "aria2c", "node", "pnpm", "tar",
 )
 
 
