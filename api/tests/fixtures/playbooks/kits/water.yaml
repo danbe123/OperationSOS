@@ -1,0 +1,35 @@
+id: water
+title: Water
+icon: water
+order: 1
+summary: Stored drinking water and the means to make more.
+intro: |
+  Three litres a person a day is the box's planning figure ([Water module](module:water)).
+sources:
+  - {title: Water module, kiwix: wikipedia_en_100_mini_2026-01/A/Water, as_at: 2026-01}
+tiers:
+  basic: {title: Three days, days: 3, why: The government's own baseline.}
+  serious: {title: Two weeks, days: 14, why: What every playbook on this box plans for.}
+  full: {title: No help coming, days: 90, why: A season with no mains and no shops.}
+items:
+  - id: stored-water
+    tier: basic
+    name: Drinking water in sealed containers
+    qty: {amount: 3, unit: L, per: person-day}
+    stock: {category: water, unit: L}
+    why: Bottled, or filled containers, rotated yearly.
+    link: module:water
+  - id: containers
+    tier: basic
+    name: Containers with lids, 10 litres or more
+    qty: {amount: 2, unit: '', per: person}
+    link: module:water
+  - id: tablets
+    tier: serious
+    name: Water purification tablets
+    qty: {amount: 1, unit: pack}
+    stock: {category: other, unit: packs}
+    why: One pack treats a fortnight of water.
+  - id: filter
+    tier: full
+    name: Gravity filter with spare elements

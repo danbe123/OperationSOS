@@ -1,0 +1,18 @@
+id: baby-child
+title: Baby and child
+icon: baby
+order: 2
+summary: What a household with a baby needs on top of everything else.
+sources:
+  - {title: Water module, kiwix: wikipedia_en_100_mini_2026-01/A/Water, as_at: 2026-01}
+relevant_when: {age_under: 2}
+tiers:
+  basic: {title: Three days, days: 3, why: Nappies run out first.}
+  serious: {title: Two weeks, days: 14, why: Formula is the hard one.}
+  full: {title: No help coming, days: 90, why: Relactation and cup feeding.}
+items:
+  - id: nappies
+    tier: basic
+    name: Nappies
+    qty: {amount: 6, unit: '', per: person-day}
+    stock: {category: other, unit: nappies}
