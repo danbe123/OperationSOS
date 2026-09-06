@@ -532,20 +532,25 @@ class ContentCache:
     def _path(self, kind: str, slug: str) -> Path:
         return self.root / DIR_BY_KIND[kind] / f"{slug}.md"
 
+    @staticmethod
+    def _fresh(store: dict, key, path: Path, load: Callable[[Path], object]):
+        """The cached object at `key` if `path` still has the mtime it was cached with; otherwise a fresh
+        load (stored under `key`), or `None` (and `key` evicted) if `path` no longer exists."""
+        if not path.is_file():
+            store.pop(key, None)
+            return None
+        mtime = path.stat().st_mtime
+        cached = store.get(key)
+        if cached is not None and cached.mtime == mtime:
+            return cached
+        value = load(path)
+        store[key] = value
+        return value
+
     def document(self, kind: str, slug: str) -> Document | None:
         if kind not in DIR_BY_KIND or "/" in slug or slug.startswith("."):
             return None
-        path = self._path(kind, slug)
-        if not path.is_file():
-            self._docs.pop((kind, slug), None)
-            return None
-        mtime = path.stat().st_mtime
-        cached = self._docs.get((kind, slug))
-        if cached is not None and cached.mtime == mtime:
-            return cached
-        doc = parse_document(path)
-        self._docs[(kind, slug)] = doc
-        return doc
+        return self._fresh(self._docs, (kind, slug), self._path(kind, slug), parse_document)
 
     def list(self, kind: str) -> list[Document]:
         if kind not in DIR_BY_KIND:
@@ -554,25 +559,16 @@ class ContentCache:
         docs = [self.document(kind, p.stem) for p in sorted(folder.glob("*.md"))] if folder.is_dir() else []
         return sorted([d for d in docs if d is not None], key=lambda d: (d.order, d.title))
 
-    def kit(self, slug: str):
+    def kit(self, slug: str) -> Kit | None:
         """One kit, parsed on demand and cached by mtime, like documents."""
         from sos import kits as kits_mod
 
         if "/" in slug or slug.startswith(".") or not slug:
             return None
         path = self.root / "kits" / f"{slug}.yaml"
-        if not path.is_file():
-            self._kits.pop(slug, None)
-            return None
-        mtime = path.stat().st_mtime
-        cached = self._kits.get(slug)
-        if cached is not None and cached.mtime == mtime:
-            return cached
-        kit = kits_mod.load_kit(path)
-        self._kits[slug] = kit
-        return kit
+        return self._fresh(self._kits, slug, path, kits_mod.load_kit)
 
-    def kits(self) -> list:
+    def kits(self) -> list[Kit]:
         folder = self.root / "kits"
         found = [self.kit(p.stem) for p in sorted(folder.glob("*.yaml"))] if folder.is_dir() else []
         return sorted([k for k in found if k is not None], key=lambda k: (k.order, k.title))
