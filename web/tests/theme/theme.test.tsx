@@ -3,6 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, useTheme, readStoredTheme, THEME_KEY, THEMES } from '../../src/theme/ThemeProvider';
 import { ThemeButton } from '../../src/theme/ThemeButton';
+import { modeTheme } from '../../src/App';
 
 function Probe() {
   const { theme, setTheme } = useTheme();
@@ -67,6 +68,22 @@ describe('ThemeProvider', () => {
     await act(async () => { screen.getByText('go mono').click(); });
     expect(localStorage.getItem(THEME_KEY)).toBe('mono');
     expect(document.documentElement.dataset.theme).toBe('mono');
+  });
+});
+
+describe('the theme the engine imposes', () => {
+  it('takes a mode theme this build has a palette for', () => {
+    expect(modeTheme({ modes: { theme: 'mono' } })).toBe('mono');
+    expect(modeTheme({ modes: { theme: 'field' } })).toBe('field');
+  });
+
+  it('takes no theme at all from a rules file written for the three-theme box', () => {
+    // `vault` and `blackout` were palettes once. Stamped on <html> now they are no palette at all,
+    // and the reader would be left on a document with no colours rather than on their own theme.
+    for (const gone of ['vault', 'blackout', 'signal', '', null]) {
+      expect(modeTheme({ modes: { theme: gone } }), String(gone)).toBeNull();
+    }
+    expect(modeTheme(null)).toBeNull();
   });
 });
 

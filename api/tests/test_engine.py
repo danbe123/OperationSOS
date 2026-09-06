@@ -352,6 +352,24 @@ def test_no_bulletins_configured(blackout):
     assert engine.compute(blackout, empty)["bulletins"] == {"next": None}
 
 
+def mode_rule(rule_id: str, **set_values) -> rules.Rules:
+    rule = rules.Rule(id=rule_id, kind="mode", when={}, source="test", set=set_values)
+    return rules.Rules(by_kind={"mode": (rule,)}, bulletins=())
+
+
+def test_a_mode_theme_the_box_has_no_palette_for_is_no_theme(blackout):
+    """Rules travel on a stick and outlive the build that reads them: a modes file written for the
+    three-theme box still says `theme: vault`. Serving that would stamp <html> with a theme that has
+    no palette and no map style, so it is dropped and the reader keeps whichever of the two they chose."""
+    assert engine.compute(blackout, mode_rule("old", theme="vault", dim=True))["modes"]["theme"] is None
+    assert engine.compute(blackout, mode_rule("older", theme="blackout"))["modes"]["theme"] is None
+    # The rest of the rule still applies: only the theme it cannot honour is dropped.
+    assert engine.compute(blackout, mode_rule("old", theme="vault", dim=True))["modes"]["dim"] is True
+    # And the two the box does have palettes for come through untouched.
+    assert engine.compute(blackout, mode_rule("dark", theme="mono"))["modes"]["theme"] == "mono"
+    assert engine.compute(blackout, mode_rule("light", theme="field"))["modes"]["theme"] == "field"
+
+
 # --- the street list (spec section 8) ------------------------------------------------------------------------
 
 def neighbour(**kwargs) -> dict:

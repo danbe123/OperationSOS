@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 from sos import conditions as cond
 from sos import sun
 from sos.rules import Rule, Rules, parse_duration
+from sos.system import THEMES
 
 BUCKETS = ("now", "hour", "today", "week")
 PHASE_TITLES = {"right-now": "Right now", "first-72-hours": "First 72 hours", "first-month": "First month",
@@ -429,6 +430,12 @@ def modes(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> dic
     for rule in rules.modes:
         if matches(rule.when, states, model, dark):
             out.update(rule.set or {})
+    # A rules file written for the three-theme box still says `theme: vault`, and rules are content:
+    # they travel on a stick and outlive the build that reads them. A theme the box has no palette
+    # for, stamped on <html>, is a document with no colours at all — so it is no theme, and the
+    # reader keeps whichever of the two they were on.
+    if out.get("theme") not in THEMES:
+        out["theme"] = None
     return out
 
 

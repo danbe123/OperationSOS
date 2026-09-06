@@ -104,7 +104,7 @@ const DIM: Shot[] = [
 SHOTS.push(...DIM);
 
 /* Print is a state in the brief's own inventory and was in none of the 336 shots of round 2 — which
- * is how six palettes came to print black paper. These are the three things a household actually
+ * is how four palettes came to print black paper. These are the three things a household actually
  * prints, photographed in the print medium with dim on, the state it prints from in a power cut. */
 const PRINT: Shot[] = [
   { name: 'print-quick-card', print: true, dim: true, go: async (p) => { await p.goto('/medical/card/cpr-adult'); await expect(p.getByRole('heading', { level: 1, name: 'CPR (adult)' })).toBeVisible(); } },

@@ -1,9 +1,14 @@
 <!doctype html>
-<html lang="en-GB" data-theme="vault">
+<html lang="en-GB" data-theme="field">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0f0a" />
+    <meta name="theme-color" content="#f3efe4" />
+    <!-- Field is the default and is stamped above, so the first paint is paper rather than a white
+         flash. A household on Mono would get that paper flash instead, at its brightest, on a box
+         they chose black for — so the stored preference is read here, before anything else runs. -->
+    <script>try{if(localStorage["sos.theme"]==="mono"){document.documentElement.dataset.theme="mono";
+    document.querySelector('meta[name="theme-color"]').content="#000000"}}catch(e){}</script>
     <title>Operation SOS</title>
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icons/icon-192.png" />
