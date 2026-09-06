@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, LibraryItem, LibraryResponse, MapConfig, Neighbour, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, Neighbour, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -144,6 +144,11 @@ export const api = {
   addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
   updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
   deleteStock: (id: number) => request<{ ok: true }>('DELETE', `/stock/${id}`),
+  kits: () => request<KitsResponse>('GET', '/kits'),
+  kit: (slug: string) => request<Kit>('GET', `/kits/${enc(slug)}`),
+  setKitItem: (slug: string, itemId: string, body: { checked: boolean; stock?: { quantity: number; expires?: string | null; notes?: string } }) =>
+    request<Kit>('PUT', `/kits/${enc(slug)}/items/${enc(itemId)}`, body),
+  resetKit: (slug: string) => request<Kit>('DELETE', `/kits/${enc(slug)}/ticks`),
   situation: () => request<Situation>('GET', '/situation'),
   startSituation: (slug: string) => request<Situation>('POST', '/situation', { slug }),
   endSituation: () => request<Situation>('DELETE', '/situation'),

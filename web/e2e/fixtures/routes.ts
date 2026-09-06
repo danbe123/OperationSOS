@@ -289,7 +289,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     if (p === '/stock' && method === 'GET') return json(route, { people: Math.max(1, state.household.length), items: state.stock.map(withDays) });
     if (p === '/stock' && method === 'POST') {
       const b = body();
-      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null };
+      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, kit_item: null };
       state.stock.push(item);
       return json(route, withDays(item));
     }

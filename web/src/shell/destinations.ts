@@ -4,10 +4,11 @@ export type Destination = { to: string; icon: IconName; label: string; match: (p
 
 const starts = (...prefixes: string[]) => (pathname: string) => prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-/** The five places the box goes. The order never changes, on the rail or on the bar. */
+/** The six places the box goes. The order never changes, on the rail or on the bar. */
 export const DESTINATIONS: Destination[] = [
   { to: '/', icon: 'home', label: 'Now', match: (p) => p === '/' || p === '/now' || starts('/situation', '/tasks', '/board', '/plan')(p) },
   { to: '/guides', icon: 'book', label: 'Guides', match: starts('/guides', '/s', '/m', '/p', '/fieldcraft', '/radio', '/tools') },
+  { to: '/kit', icon: 'boot', label: 'Kit', match: starts('/kit') },
   { to: '/medical', icon: 'medical', label: 'Medical', match: starts('/medical') },
   { to: '/map', icon: 'map', label: 'Map', match: starts('/map') },
   { to: '/search', icon: 'search', label: 'Find', match: starts('/search', '/find', '/library', '/read', '/doc', '/ai') },

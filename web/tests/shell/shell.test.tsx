@@ -6,14 +6,15 @@ import { condition, makeView, page, playbooks, powerOffView, view } from '../fix
 import { activeDestination, DESTINATIONS } from '../../src/shell/destinations';
 
 describe('the shell', () => {
-  it('carries the same five destinations, in the same order, on every screen', async () => {
+  it('carries the same six destinations, in the same order, on every screen', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     renderRoute('/');
     const nav = screen.getByRole('navigation', { name: 'Sections' });
     const list = nav.querySelector('.mainnav-list') as HTMLElement;
-    expect(within(list).getAllByRole('link').map((a) => a.textContent)).toEqual(['Now', 'Guides', 'Medical', 'Map', 'Find']);
+    expect(within(list).getAllByRole('link').map((a) => a.textContent)).toEqual(['Now', 'Guides', 'Kit', 'Medical', 'Map', 'Find']);
     expect(within(nav).getByRole('link', { name: 'Now' })).toHaveAttribute('aria-current', 'page');
     expect(within(nav).getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/guides');
+    expect(within(nav).getByRole('link', { name: 'Kit' })).toHaveAttribute('href', '/kit');
     expect(within(nav).getByRole('link', { name: 'Find' })).toHaveAttribute('href', '/search');
   });
 
@@ -23,8 +24,9 @@ describe('the shell', () => {
     expect(activeDestination('/medical/card/cpr-adult')?.label).toBe('Medical');
     expect(activeDestination('/tasks')?.label).toBe('Now');
     expect(activeDestination('/library')?.label).toBe('Find');
+    expect(activeDestination('/kit/water')?.label).toBe('Kit');
     expect(activeDestination('/system')).toBeNull();
-    expect(DESTINATIONS).toHaveLength(5);
+    expect(DESTINATIONS).toHaveLength(6);
   });
 
   it('gives each screen a title, Back to where you came from, and one theme button', async () => {

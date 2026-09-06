@@ -12,7 +12,7 @@
 }
 /* The rail needs height as well as width: at 844x390 (a phone on its side) nine rows of rail do not
    fit 390 px, and System, AI and the theme button were off the bottom of the screen with nothing to
-   say they existed. Under 440 px tall the shell draws the bottom bar instead, which shows all five
+   say they existed. Under 440 px tall the shell draws the bottom bar instead, which shows all six
    destinations at any width. `useWide` carries the same query. */
 @media (min-width: 700px) and (min-height: 440px) {
   .app {
@@ -53,7 +53,7 @@
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
-.mainnav-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex: 1; }
+.mainnav-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); flex: 1; }
 .rail-brand, .rail-foot { display: none; }
 .rail-dest {
   display: flex;

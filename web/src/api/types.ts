@@ -58,6 +58,7 @@ export type StockCategory = 'water' | 'food' | 'fuel' | 'medicine' | 'other';
 export type StockItem = {
   id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
   expires: string | null; notes: string; updated_at: string; days_left: number | null;
+  kit_item: string | null;
 };
 export type StockResponse = { people: number; items: StockItem[] };
 export type SituationPhase = 'right-now' | 'first-72-hours' | 'first-month' | 'long-term';
@@ -158,3 +159,22 @@ export type ImportSummary = {
   counts?: ImportCounts; home?: string; scenario?: string; changes?: string[];
 };
 export type DrillRequest = { scenario: string; conditions: Partial<Record<ConditionId, ConditionState>>; hours_ago?: number };
+
+export type KitTierId = 'basic' | 'serious' | 'full';
+export type KitSummary = {
+  slug: string; title: string; icon: string; order: number; summary: string; relevant: boolean;
+  tiers: Record<KitTierId, { done: number; total: number }>;
+};
+export type KitsResponse = { people: number; kits: KitSummary[] };
+export type KitItem = {
+  id: string; name: string; why: string; note: string; link: string | null; href: string | null;
+  qty: { amount: number; unit: string; scaled: number; text: string } | null;
+  stock: { category: StockCategory; unit: string } | null;
+  checked: boolean; updated_at: string | null;
+  stock_item: { id: number; quantity: number; unit: string; expires: string | null; days_left: number | null } | null;
+};
+export type KitTier = { id: KitTierId; title: string; days: number; why: string; done: number; total: number; items: KitItem[] };
+export type Kit = {
+  slug: string; title: string; icon: string; order: number; summary: string; intro_html: string;
+  sources: { title: string; doc?: string; kiwix?: string; as_at?: string }[]; relevant: boolean; people: number; tiers: KitTier[];
+};

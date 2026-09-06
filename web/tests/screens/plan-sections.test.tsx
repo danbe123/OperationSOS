@@ -10,8 +10,8 @@ const people: Person[] = [
   { id: 1, name: 'Sam', age: 7, needs: 'asthma', medications: 'salbutamol inhaler', contacts: '', updated_at: '2026-09-05T10:00:00Z' },
   { id: 2, name: 'Ali', age: null, needs: '', medications: '', contacts: 'Gran 0161 000', updated_at: '2026-09-05T10:00:00Z' },
 ];
-const water: StockItem = { id: 1, name: 'Bottled water', category: 'water', quantity: 24, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4 };
-const rice: StockItem = { id: 2, name: 'Rice', category: 'food', quantity: 5, unit: 'kg', per_person_day: null, expires: '2020-01-01', notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: null };
+const water: StockItem = { id: 1, name: 'Bottled water', category: 'water', quantity: 24, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4, kit_item: null };
+const rice: StockItem = { id: 2, name: 'Rice', category: 'food', quantity: 5, unit: 'kg', per_person_day: null, expires: '2020-01-01', notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: null, kit_item: null };
 const events = [
   { id: 30, kind: 'event' as const, title: 'Heard sirens', body: '', lat: null, lon: null, updated_at: '2026-09-05T11:30:00Z' },
   { id: 29, kind: 'event' as const, title: 'Water off', body: '', lat: null, lon: null, updated_at: '2026-09-05T10:15:00Z' },

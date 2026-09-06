@@ -1,5 +1,5 @@
 import type {
-  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
   ExportChunks, ImportSummary, Neighbour, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, StockResponse, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
@@ -323,8 +323,8 @@ export const events: Note[] = [
 export const stockResponse: StockResponse = {
   people: 3,
   items: [
-    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5 },
-    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6 },
+    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5, kit_item: null },
+    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6, kit_item: null },
   ],
 };
 
@@ -378,4 +378,36 @@ export const sensors: Sensors = {
   mains: { value: 0, unit: 'on', at: '2026-09-06T13:59:00.000Z' },
   temp_in: { value: 14.5, unit: '°C', at: '2026-09-06T13:57:00.000Z' },
   co_ppm: { value: 3, unit: 'ppm', at: '2026-09-06T13:30:00.000Z' },
+};
+
+export const kitsResponse: KitsResponse = {
+  people: 2,
+  kits: [
+    { slug: 'water', title: 'Water', icon: 'water', order: 2, summary: 'Stored drinking water and the means to make more.', relevant: true,
+      tiers: { basic: { done: 1, total: 2 }, serious: { done: 0, total: 1 }, full: { done: 0, total: 1 } } },
+    { slug: 'baby-child', title: 'Baby and child', icon: 'baby', order: 11, summary: 'What a household with a baby needs on top of everything else.', relevant: false,
+      tiers: { basic: { done: 0, total: 1 }, serious: { done: 0, total: 0 }, full: { done: 0, total: 0 } } },
+  ],
+};
+
+export const kitWater: Kit = {
+  slug: 'water', title: 'Water', icon: 'water', order: 2, summary: 'Stored drinking water and the means to make more.',
+  intro_html: '<p>Three litres a person a day is the planning figure.</p>', sources: [{ title: 'Water module', kiwix: 'x/y', as_at: '2026-01' }],
+  relevant: true, people: 2,
+  tiers: [
+    { id: 'basic', title: 'Three days', days: 3, why: "The government's own baseline.", done: 1, total: 2, items: [
+      { id: 'stored-water', name: 'Drinking water in sealed containers', why: 'Bottled, or filled containers, rotated yearly.', note: '', link: 'module:water', href: '/m/water',
+        qty: { amount: 3, unit: 'L', scaled: 18, text: '18 L for 2 people over 3 days' }, stock: { category: 'water', unit: 'L' },
+        checked: true, updated_at: '2026-09-06T10:00:00+00:00', stock_item: { id: 7, quantity: 18, unit: 'L', expires: null, days_left: 3 } },
+      { id: 'containers', name: 'Containers with lids, 10 litres or more', why: '', note: '', link: 'module:water', href: '/m/water',
+        qty: { amount: 2, unit: '', scaled: 4, text: '4 for 2 people' }, stock: null, checked: false, updated_at: null, stock_item: null },
+    ] },
+    { id: 'serious', title: 'Two weeks', days: 14, why: 'What every playbook on this box plans for.', done: 0, total: 1, items: [
+      { id: 'tablets', name: 'Water purification tablets', why: 'One pack treats a fortnight of water.', note: '', link: null, href: null,
+        qty: { amount: 1, unit: 'pack', scaled: 1, text: '1 pack' }, stock: { category: 'other', unit: 'packs' }, checked: false, updated_at: null, stock_item: null },
+    ] },
+    { id: 'full', title: 'No help coming', days: 90, why: 'A season with no mains and no shops.', done: 0, total: 1, items: [
+      { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', link: null, href: null, qty: null, stock: null, checked: false, updated_at: null, stock_item: null },
+    ] },
+  ],
 };
