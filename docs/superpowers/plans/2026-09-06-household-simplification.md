@@ -272,3 +272,40 @@ Rendered as `ul.meters[aria-label="Stock meters"]` of `li.meter` with `strong` t
 
 - Spec §2 → Task 5; §3 → Task 4 (+ the redirect in Task 5); §4 → Tasks 1 and 6; §5 → Task 3; §6 → Task 2; §7 → the tests in each task. The spec's "Notes and pins" pin-creation affordance depends on what `Pins`/the map already offer; Task 4 keeps the map's "drop a pin" path and adds no new geolocation UI.
 - Names used across tasks: `StockResponse.days`, `StockItem.expired`, `RATE_BY_CATEGORY`, `meter`, `sortStock`, `stateLines`, `EventLogList`/`EventLogForm`, routes `/plan/people|neighbours|stock|plan|notes`, anchor `#log` on `/situation`.
+
+---
+
+### Task 8: Two themes only: Field (light) and Mono (black-and-white, power saving)
+
+Owner direction, 2026-09-06: "i only want the light theme, and a black and white power saving one." The dark-green `vault` and the red `blackout` themes go. The light theme keeps its id `field`. The new theme's id is `mono`: pure black ground (an OLED phone draws nothing for black pixels), white ink, no hue anywhere; the three state tones are separated by luminance and the symbols already beside every colour carry the meaning. The box's default theme becomes `field`.
+
+**Files:**
+- Modify: `web/src/styles/tokens.css` (remove the vault and blackout blocks and their dim variants; add `:root[data-theme="mono"]` and `:root[data-theme="mono"][data-dim="on"]`; the bare `:root` fallback block becomes the field palette so an unstamped document is light), `web/src/theme/ThemeProvider.tsx` (`Theme = 'field' | 'mono'`, `THEMES`, default `'field'`), `web/src/theme/ThemeButton.tsx` (labels `Field`, `Mono`), `web/src/theme/readerTheme.ts` and `web/src/screens/Doc.tsx` (dark reader palette when `theme === 'mono'`), `web/src/map/layers.ts` (hillshade and any per-theme colour: mono uses greys), `web/src/screens/System.tsx` (default theme select: two options), `web/src/screens/Reader.tsx` if it names themes.
+- Modify: `api/sos/system.py` (`THEMES = ("field", "mono")`, `DEFAULTS["default_theme"] = "field"`, the error message "default_theme must be field or mono"), `api/sos/routers/map.py` (`THEMES`), `api/sos/mapbuild/styles.py` (theme list and docstring; `os-mono.json` maps to the OS dark style as `os-blackout.json` did), `tools/map-styles/build-styles.mjs` (write `osm-field.json` and `osm-mono.json`; mono = the Protomaps `black` flavour if the library has one, else the `dark` flavour with every colour replaced by its grey; delete the vault flavour), `playbooks/rules/modes.yaml` (`theme: mono` where it said `blackout`), `playbooks/rules/schema.json` (enum `["field", "mono"]`), `api/sos/engine.py` if it names a theme.
+- Tests: `web/tests/theme/theme.test.tsx` (defaults to field; cycles field → mono → field; labels), `web/tests/theme/contrast.test.ts` (themes `field`, `mono`, `field dim`, `mono dim`; the 7:1 floor stays), `web/tests/theme/readerTheme.test.ts`, `web/tests/screens/doc.test.tsx`, `reader.test.tsx`, `map.test.tsx`, `web/tests/map/*.test.ts`, `web/tests/fixtures/api.ts` (`default_theme: 'field'`), `web/tests/shell/shell.test.tsx` (the theme button's accessible name), `web/e2e/theme.spec.ts`, `dim.spec.ts`, `screenshots.spec.ts` (theme list), `web/e2e/fixtures/engine.ts`; `api/tests/test_system*.py`, `test_engine.py` (the night-mode theme), `test_rules*.py` and any golden that records `modes.theme`; `tools/map-styles/build-styles.test.mjs`.
+- Regenerate the styles on this PC: run the styles step the way `api/sos/mapbuild/styles.py` does (`node build-styles.mjs --out ~/sos-content/maps/styles --tiles pmtiles:///maps/<base>` from `tools/map-styles`, for the base name the existing `osm-field.json` uses; check `~/sos-content/maps/styles/index.json` and update it if it lists themes), delete `os-vault.json`, `osm-vault.json`, `os-blackout.json`, `osm-blackout.json`, and confirm `GET /api/map/config` (or whichever endpoint `map.py` serves) lists `field` and `mono` styles that exist on disk.
+- Docs: `docs/superpowers/specs/2026-09-03-operation-sos-design.md` and `2026-09-06-interface-redesign.md` theme sentences; `README.md` if it names themes; a line in `docs/app-completion.md`.
+
+**Mono palette (starting point; tune until `contrast.test.ts` passes at 7:1 on ground, panel, sunken and raised):**
+
+```css
+:root[data-theme="mono"] {
+  color-scheme: dark;
+  --ground: #000000; --panel: #0a0a0a; --sunken: #111111; --raised: #1c1c1c;
+  --ink: #f2f2f2; --ink-muted: #b9b9b9;
+  --link: #ffffff; --signal: #ffffff; --on-signal: #000000;
+  --ok: #bdbdbd; --warn: #dedede; --danger: #ffffff;
+  --line: #2a2a2a; --line-strong: #4a4a4a; --focus: #ffffff;
+  --font-heading: var(--font-body);
+}
+:root[data-theme="mono"][data-dim="on"] {
+  --ground: #000000; --panel: #000000; --sunken: #0a0a0a; --raised: #141414;
+  --ink: #c4c4c4; --ink-muted: #9a9a9a; --link: #d0d0d0; --signal: #d0d0d0; --ok: #9a9a9a; --warn: #b4b4b4; --danger: #d0d0d0;
+}
+```
+Links in mono are underlined (they already are); the state badges keep their symbols (✓ ▲ ✕) so the three tones read as three even where the greys are close. The wordmark keeps its face.
+
+- [ ] **Step 1:** rewrite the tests named above to the two-theme world (RED).
+- [ ] **Step 2:** tokens, provider, button, reader, map layers, System select, API constants, rules, style generator; regenerate the styles; run `pnpm --dir web exec tsc --noEmit`, `pnpm --dir web test`, `api/.venv/bin/python -m pytest api/tests -q`, `node --test tools/map-styles/build-styles.test.mjs` (or however that test runs).
+- [ ] **Step 3:** rebuild `web/dist`, restart the stack, screenshot `/` and `/medical/card/cpr-adult` in both themes at 853×480 and 390×844 into `docs/screenshots/2026-09-06-themes/`; confirm the map opens in both.
+- [ ] **Step 4:** commit — `feat(theme): two themes, Field and Mono`.
