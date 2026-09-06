@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { api } from '../../api/client';
 import type { StockCategory, StockItem } from '../../api/types';
 import { errorMessage, useQuery } from '../../api/useQuery';
@@ -12,6 +13,12 @@ export const CATEGORIES: { id: StockCategory; title: string; unit: string; rate:
   { id: 'medicine', title: 'Medicine', unit: 'doses', rate: '' },
   { id: 'other', title: 'Other', unit: '', rate: '' },
 ];
+
+/** "water/stored-water" -> "Water": the kit's slug as a title, until the row carries the kit's real title. */
+export function kitTitle(kitItem: string): string {
+  const slug = kitItem.split('/')[0].replace(/-/g, ' ');
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}
 
 export function daysBadge(item: StockItem, today = new Date()): { text: string; cls: string } | null {
   if (item.expires) {
@@ -54,6 +61,9 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
         <strong>{item.name}</strong>
         {badge && <span className={badge.cls}>{badge.text}</span>}
         {item.expires && <span className="muted">use by {isoToUkDate(item.expires)}</span>}
+        {item.kit_item && (
+          <Link className="muted" to={`/kit/${item.kit_item.split('/')[0]}`}>From the {kitTitle(item.kit_item)} kit</Link>
+        )}
       </div>
       <div className="row no-print">
         <label className="field"><span>Quantity ({item.unit || 'units'})</span>
