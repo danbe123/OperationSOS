@@ -6,6 +6,8 @@ from pathlib import Path
 import frontmatter
 import pytest
 
+from sos import directives
+
 from sos.content import parse_document, validate_tree
 from sos.manifest import load_manifests
 
@@ -112,7 +114,9 @@ def test_card_structure_and_screen_rule(slug):
     steps = [STEP.match(l).group(1) for l in body["Steps"].splitlines() if STEP.match(l)]
     assert len(steps) >= 4, slug
     for s in steps[:3]:
-        assert len(s) <= 70, (slug, s)
+        # the one-screen rule applies to what a reader sees with the phones working, not to directive source
+        shown = directives.resolve(s, directives.default_flags())
+        assert len(shown) <= 70, (slug, shown)
     warnings = [l for l in body["Warnings"].splitlines() if l.strip()]
     assert warnings and all(l.startswith("**Warning:**") for l in warnings), slug
     assert "999" in body["Stop or escalate"], slug

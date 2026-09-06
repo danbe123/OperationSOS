@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sqlite3
 import time
 from urllib.parse import quote
@@ -52,6 +53,34 @@ except ImportError:
 
 def score(weight: float, rank: int) -> float:
     return weight / (K + rank)
+
+
+_PARENTHETICAL = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def badge_title(title: str) -> str:
+    """The short name a result wears: the library title without its catalogue tail, e.g. '(Kiwix build, December 2025)'."""
+    return _PARENTHETICAL.sub("", title or "").strip() or title
+
+
+def dedupe(results: list[dict]) -> list[dict]:
+    """One row per authored page: its sections are indexed separately, so "Solar panels in a power cut" could
+    appear three times under different anchors. The best-scoring section wins. Library articles and PDF pages
+    keep their own rows (a PDF page is a distinct answer)."""
+    best: dict[str, dict] = {}
+    out: list[dict] = []
+    for r in results:
+        if r.get("source") != "playbooks":
+            out.append(r)
+            continue
+        key = r["url"].split("#", 1)[0]
+        if key not in best:
+            best[key] = r
+            out.append(r)
+        elif r["score"] > best[key]["score"]:
+            out[out.index(best[key])] = r
+            best[key] = r
+    return out
 
 
 def classify(row) -> str:
@@ -146,7 +175,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             continue
         for rank, hit in enumerate(hits, 1):
             results.append({
-                "source": cls, "badge": titles.get(hit.book, CLASS_TITLES[cls]), "title": hit.title, "snippet": hit.snippet,
+                "source": cls, "badge": badge_title(titles.get(hit.book, CLASS_TITLES[cls])), "title": hit.title, "snippet": hit.snippet,
                 "url": f"/read/{hit.book}/{hit.path}", "score": score(weights.get(hit.book, 1.0), rank), "kind": "article",
                 "_cat": "medical" if cls in ("nhs", "medical") else cls,
             })
@@ -199,6 +228,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         for r in rs:
             if r["title"].strip().lower() == qnorm:
                 r["score"] = top + 0.001
+    results = dedupe(results)
     results.sort(key=lambda r: -r["score"])
 
     counts: dict[str, int] = {}

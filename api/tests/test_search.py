@@ -86,7 +86,7 @@ def test_search_merges_kiwix_and_fts_and_groups(respx_mock, conn, env):
     first = resp["results"][0]
     assert first["kind"] == "module" and first["title"] == "Water"        # exact title jump to the top of its group
     articles = [r for r in resp["results"] if r["kind"] == "article"]
-    assert articles[0]["url"] == f"/read/{WIKI}/Precipitation" and articles[0]["badge"] == "Wikipedia 100 (mini)"
+    assert articles[0]["url"] == f"/read/{WIKI}/Precipitation" and articles[0]["badge"] == "Wikipedia 100"
     assert {g["source"] for g in resp["groups"]} >= {"reference", "playbooks", "docs", "library"}
     assert all(set(r) >= {"source", "badge", "title", "snippet", "url", "score", "kind"} for r in resp["results"])
     doc = next(r for r in resp["results"] if r["kind"] == "doc")
@@ -204,3 +204,14 @@ def test_medical_intent_boosts_quick_cards_as_well_as_medical_sources(conn, env)
     # any rank-1 medical or NHS article (1.4 x 1.5 at rank 1)
     assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5)
     assert resp["results"][0]["kind"] == "card"
+
+
+def test_badge_title_drops_the_catalogue_tail_and_results_are_deduplicated():
+    assert search.badge_title("NHS Medicines A to Z (Kiwix build, December 2025)") == "NHS Medicines A to Z"
+    assert search.badge_title("Wikipedia (English, with images)") == "Wikipedia"
+    assert search.badge_title("iFixit repair guides") == "iFixit repair guides"
+    rows = [{"source": "playbooks", "url": "/p/solar#a", "score": 0.2}, {"source": "playbooks", "url": "/p/solar#b", "score": 0.3},
+            {"source": "playbooks", "url": "/p/water#a", "score": 0.1}, {"source": "docs", "url": "/doc/x#page=1", "score": 0.2},
+            {"source": "docs", "url": "/doc/x#page=2", "score": 0.2}]
+    out = search.dedupe(rows)
+    assert [(r["url"], r["score"]) for r in out] == [("/p/solar#b", 0.3), ("/p/water#a", 0.1), ("/doc/x#page=1", 0.2), ("/doc/x#page=2", 0.2)]
