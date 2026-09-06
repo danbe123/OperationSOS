@@ -30,7 +30,7 @@ function NoteRow({ note, onChanged }: { note: Note; onChanged: () => Promise<voi
   };
   if (editing) {
     return (
-      <li className="stack">
+      <li className="stack no-print">
         <input type="text" aria-label="Edit title" value={title} onChange={(e) => setTitle(e.target.value)} />
         <textarea aria-label="Edit note" rows={3} value={body} onChange={(e) => setBody(e.target.value)} />
         <div className="row"><button type="button" className="btn btn-primary" onClick={() => void save()}>Save</button><button type="button" className="btn" onClick={() => setEditing(false)}>Cancel</button></div>
