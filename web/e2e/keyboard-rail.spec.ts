@@ -22,6 +22,19 @@ test('the keyboard costs the content column its height, never the rail', async (
   // The keyboard starts where the rail ends, so it covers the content column and nothing else.
   const kb = (await keyboard.boundingBox())!;
   expect(Math.round(kb.x)).toBe(Math.round(before.x + before.width));
+
+  // and every key is inside it: the panel is narrower than the screen now, so a fixed key width
+  // would throw "shift" and the delete key off the ends the way the numeric layout once was.
+  const keys = await keyboard.locator('.hg-button').all();
+  expect(keys.length).toBeGreaterThan(20);
+  for (const key of keys) {
+    const label = (await key.textContent()) ?? '';
+    const box = (await key.boundingBox())!;
+    expect(box.x, label).toBeGreaterThanOrEqual(kb.x - 1);
+    expect(box.x + box.width, label).toBeLessThanOrEqual(kb.x + kb.width + 1);
+    expect(box.height, label).toBeGreaterThanOrEqual(48);
+    expect(await key.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), label).toBe(true);
+  }
 });
 
 test('a landscape phone gets the bottom bar, so no destination is off the bottom of the screen', async ({ page }) => {

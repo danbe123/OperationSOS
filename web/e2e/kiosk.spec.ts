@@ -9,7 +9,9 @@ test('kiosk keyboard appears on focus, types, and picks a suggestion', async ({ 
   const box = await keyboard.boundingBox();
   expect(box!.height).toBeGreaterThanOrEqual(200);
   const q = await keyboard.locator('[data-skbtn="q"]').boundingBox();
-  expect(q!.width).toBeGreaterThanOrEqual(64);
+  // 48 px is the floor the brief sets; the keys share the width of the content column, which the
+  // keyboard now covers on its own so the rail stays whole.
+  expect(q!.width).toBeGreaterThanOrEqual(48);
   for (const k of ['w', 'a', 't']) await keyboard.locator(`[data-skbtn="${k}"]`).click();
   await expect(page.getByRole('combobox', { name: 'Search' })).toHaveValue('wat');
   await page.getByRole('option', { name: /Water disinfection/ }).click();

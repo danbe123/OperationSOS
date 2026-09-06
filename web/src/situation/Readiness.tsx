@@ -23,8 +23,10 @@ export function Readiness() {
   const { view } = useSituation();
   const household = useQuery(() => api.household(), [], { refetchOnFocus: true });
   if (!view) return null;
-  const gaps = view.readiness.gaps.slice(0, 5);
   const firstRun = (household.data?.length ?? 0) === 0;
+  // On a new box the first-run row already says "Add who lives here"; the engine's gap for the same
+  // thing would be the same instruction twice, and the count above has to match what is shown.
+  const gaps = view.readiness.gaps.filter((g) => !(firstRun && g.link.startsWith('/plan#household'))).slice(0, 5);
   return (
     <section className="panel panel-signal" aria-label="Situation">
       <div className="panel-head">
