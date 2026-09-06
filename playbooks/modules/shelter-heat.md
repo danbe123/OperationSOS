@@ -57,5 +57,5 @@ sources:
 - [Camping and Woodcraft (Kephart, 1917)](doc:kephart-camping-and-woodcraft)
 - [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)
 - [Shelter and staying warm](page:fieldcraft-shelter)
-- [Fire in a wet country](page:fieldcraft-fire)
+- [Fire](page:fieldcraft-fire)
 - [Reading the weather and exposure](page:fieldcraft-weather)

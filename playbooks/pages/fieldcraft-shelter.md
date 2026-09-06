@@ -53,7 +53,7 @@ Watch each other for the early signs (shivering, clumsiness, mumbling, stumbling
 
 - [Shelter and heat module](module:shelter-heat)
 - [Reading the weather and exposure](page:fieldcraft-weather)
-- [Fire in a wet country](page:fieldcraft-fire)
+- [Fire](page:fieldcraft-fire)
 - [Severe winter playbook](playbook:severe-winter)
 - [Basic Cold Weather Manual, FM 31-70 (US Army: the shelter and clothing chapters)](doc:fm-31-70-cold-weather)
 - [Camping and Woodcraft (Kephart), the shelter chapters](doc:kephart-camping-and-woodcraft)

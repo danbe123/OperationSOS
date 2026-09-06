@@ -28,7 +28,7 @@ Fronts arrive from the south-west, so a falling barometer, a wind backing from w
 Each of these has its own page; this is only the map of them.
 
 - **Access and camping**: rights of way and open access land in England and Wales, the right of responsible access in Scotland, very little in Ireland, and where a night's wild camp is lawful ([Moving across country](page:fieldcraft-moving)).
-- **Fires**: banned on most moor, heath and access land, allowed with care in Scotland, and a stove is the everyday answer ([Fire in a wet country](page:fieldcraft-fire)).
+- **Fires**: banned on most moor, heath and access land, allowed with care in Scotland, and a stove is the everyday answer ([Fire](page:fieldcraft-fire)).
 - **Taking things**: what you may pick, catch and shoot, and what is protected ([Foraging and the law](page:foraging-law)).
 - **Knives and weapons**: what you may carry and why ([Knife and firearms law](page:knife-firearms-law)).
 
@@ -49,7 +49,7 @@ Techniques belong to nobody. This set is written for Britain and Ireland in our 
 ## Go deeper
 
 - [Shelter and staying warm](page:fieldcraft-shelter)
-- [Fire in a wet country](page:fieldcraft-fire)
+- [Fire](page:fieldcraft-fire)
 - [Water outdoors](page:fieldcraft-water)
 - [Wild food in Britain and Ireland](page:fieldcraft-food)
 - [Moving across country](page:fieldcraft-moving)

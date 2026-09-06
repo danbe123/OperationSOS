@@ -129,5 +129,5 @@ So the long plan is built on four things. Crops chosen for cold and low light, r
 - [Canadian Prepper: prepping food](kiwix:canadian-prepper_en_preppingfood/index.html)
 - [WikiCiv: building civilisation from scratch](kiwix:wikiciv_en_all/Main_Page)
 - [Shelter and staying warm](page:fieldcraft-shelter)
-- [Fire in a wet country](page:fieldcraft-fire)
+- [Fire](page:fieldcraft-fire)
 - [Wild food in Britain and Ireland](page:fieldcraft-food)
