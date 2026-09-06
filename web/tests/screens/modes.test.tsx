@@ -36,8 +36,9 @@ describe('modes: calls hidden', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(phonesDown);
     renderRoute('/radio');
     expect(await screen.findByText(/No number will connect/)).toBeInTheDocument();
-    expect(screen.queryByText(/Emergency 999/)).toBeNull();
-    expect(screen.getByRole('link', { name: 'getting help without phones' })).toHaveAttribute('href', '/p/no-phones');
+    expect(screen.queryByRole('region', { name: 'Numbers to ring' })).toBeNull();
+    expect(screen.getByText(/999 will not connect/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Getting help without phones' })).toHaveAttribute('href', '/p/no-phones');
   });
 
   it('turns tel: links in the content into the no-phones page', async () => {

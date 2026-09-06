@@ -21,15 +21,15 @@ describe('Tasks', () => {
     expect(within(now).getByRole('link', { name: 'Read more: Fill the bath and every container' })).toHaveAttribute('href', '/m/water');
     expect(screen.getByRole('region', { name: 'Within the hour' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Today' })).toBeNull();          // its only task is done
-    expect(screen.getByText('3 to do, 1 done.')).toBeInTheDocument();
-    expect(screen.getByText('3 to do')).toHaveClass('task-count');
+    expect(screen.getByText('3 to do, 1 done.')).toHaveClass('task-count');
   });
 
   it('shows the done ones on request, struck through', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     vi.spyOn(api, 'household').mockResolvedValue(people);
     renderRoute('/tasks');
-    await userEvent.setup().click(await screen.findByRole('checkbox', { name: 'Show done' }));
+    // The filter is a chip, not a tick: a filter and a job must not look like the same control.
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Show done' }));
     const today = screen.getByRole('region', { name: 'Today' });
     expect(within(today).getByRole('listitem')).toHaveClass('task-done');
     expect(within(today).getByRole('checkbox', { name: /Knock on both neighbours/ })).toBeChecked();

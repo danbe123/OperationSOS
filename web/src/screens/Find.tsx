@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { SearchResponse } from '../api/types';
 import { useQuery } from '../api/useQuery';
+import { sourceWord } from '../api/words';
 import { Icon } from '../icons';
 import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
@@ -27,6 +28,14 @@ export function Find() {
     if (data && sources.length === 0) setGroups({ q: data.q, groups: data.groups });
   }, [data, sources.length]);
   const chips = groups?.q === q ? groups.groups : (data?.groups ?? []);
+  // On the kiosk the on-screen keyboard covers the bottom of the screen, so an answer that arrives
+  // under it has not arrived. The results are brought up to the top of what is still visible.
+  const found = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (!data || data.results.length === 0) return;
+    const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb-height'));
+    if (kb > 0) found.current?.scrollIntoView({ block: 'start' });
+  }, [data]);
 
   const toggle = (source: string) => {
     const next = sources.includes(source) ? sources.filter((s) => s !== source) : [...sources, source];
@@ -49,7 +58,7 @@ export function Find() {
           <div className="chips" role="group" aria-label="Filter by source">
             {chips.map((g) => (
               <button key={g.source} type="button" className={sources.includes(g.source) ? 'chip active' : 'chip'} aria-pressed={sources.includes(g.source)} onClick={() => toggle(g.source)}>
-                {g.badge} ({g.count})
+                {sourceWord(g.badge)} ({g.count})
               </button>
             ))}
           </div>
@@ -60,12 +69,13 @@ export function Find() {
         {data && !loading && data.results.length === 0 && (
           <p>Nothing found for “{data.q}”. Try fewer words, or a place name or postcode for the map.</p>
         )}
-        {data && <ResultList results={data.results} />}
         {data && data.results.length > 0 && (
-          <p className="muted">
-            {data.results.length} results in {data.took_ms} ms{data.query !== data.q ? ` (searched for “${data.query}”)` : ''}
+          <p className="muted" ref={found}>
+            {data.results.length === 1 ? '1 result' : `${data.results.length} results`}
+            {data.query !== data.q ? ` for “${data.query}”` : ''}.
           </p>
         )}
+        {data && <ResultList results={data.results} />}
 
         {(ai === 'ready' || ai === 'busy') && (
           <section className="panel" aria-label="The assistant">

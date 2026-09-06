@@ -3,6 +3,7 @@ import { api } from '../../api/client';
 import type { StockCategory, StockItem } from '../../api/types';
 import { errorMessage, useQuery } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
+import { isoToUkDate, ukDateToIso } from '../../tools/dates';
 
 export const CATEGORIES: { id: StockCategory; title: string; unit: string; rate: string }[] = [
   { id: 'water', title: 'Water', unit: 'L', rate: '3' },
@@ -52,7 +53,7 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
       <div className="row">
         <strong>{item.name}</strong>
         {badge && <span className={badge.cls}>{badge.text}</span>}
-        {item.expires && <span className="muted">use by {item.expires}</span>}
+        {item.expires && <span className="muted">use by {isoToUkDate(item.expires)}</span>}
       </div>
       <div className="row no-print">
         <label className="field"><span>Quantity ({item.unit || 'units'})</span>
@@ -80,7 +81,7 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState('L');
   const [rate, setRate] = useState('3');
-  const [expires, setExpires] = useState('');
+  const [useBy, setUseBy] = useState('');
   const pick = (id: StockCategory) => {
     const c = CATEGORIES.find((x) => x.id === id) ?? CATEGORIES[0];
     setCategory(id);
@@ -91,10 +92,12 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
     e.preventDefault();
     const qty = Number(quantity);
     if (!name.trim() || !Number.isFinite(qty) || qty < 0) { notify('Give the item a name and a quantity of zero or more.'); return; }
+    const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
+    if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
     try {
       await api.addStock({ name: name.trim(), category, quantity: qty, unit: unit.trim() || 'units',
-        per_person_day: rate.trim() === '' ? null : Number(rate), expires: expires || null });
-      setName(''); setQuantity(''); setExpires('');
+        per_person_day: rate.trim() === '' ? null : Number(rate), expires });
+      setName(''); setQuantity(''); setUseBy('');
       await q.refetch();
     } catch (err) {
       notify(`Could not add the item: ${errorMessage(err)}`);
@@ -134,7 +137,7 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
           <label className="field"><span>Quantity</span><input type="number" inputMode="decimal" min={0} step="any" aria-label="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} /></label>
           <label className="field"><span>Unit</span><input type="text" aria-label="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={20} /></label>
           <label className="field"><span>Per person a day</span><input type="number" inputMode="decimal" min={0} step="any" aria-label="Per person a day" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="leave blank to skip" /></label>
-          <label className="field"><span>Use by</span><input type="date" aria-label="Use by" value={expires} onChange={(e) => setExpires(e.target.value)} /></label>
+          <label className="field"><span>Use by</span><input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label="Use by" value={useBy} onChange={(e) => setUseBy(e.target.value)} /></label>
         </div>
         <button type="submit" className="btn btn-primary">Add item</button>
       </form>

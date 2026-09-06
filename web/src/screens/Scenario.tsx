@@ -63,7 +63,7 @@ function ScenarioTasks({ playbook, onItems }: { playbook: Playbook; onItems: (it
   return (
     <aside className="panel scenario-tasks" id="response-checklist" aria-labelledby="checklist-heading">
       <div className="panel-head">
-        <h2 id="checklist-heading">Checklist</h2>
+        <h2 id="checklist-heading">Things to do for this guide</h2>
         {/* The shared checklist says "n of m done, last change …" for itself; only the engine's own
             list needs the count spelled out here. */}
         {live.length > 0 && <span className="badge">{done} of {total} done</span>}
@@ -138,6 +138,7 @@ export function Scenario() {
       className="playbook"
       actions={
         <>
+          {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
           {data.overlays.length > 0 && (
             <Link className="btn btn-small" to={`/map?${data.overlays.map((o) => `overlay=${encodeURIComponent(o)}`).join('&')}`}><Icon name="map" size={18} /><span>Map</span></Link>
           )}
@@ -148,7 +149,6 @@ export function Scenario() {
       <div className="screen-body">
         <CallsNotice />
         <p className="muted measure">{data.summary}</p>
-        {!printing && <SituationClock slug={data.slug} situation={situation} onChange={situationQ.setData} />}
         <div className="tabs" role="tablist" aria-label="Sections">
           {data.sections.map((s) => (
             <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>

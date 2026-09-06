@@ -7,8 +7,7 @@ import { LibraryItemCard } from '../components/LibraryItemCard';
 import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
-import { CallsNotice } from '../situation/CallsNotice';
-import { useCallsHidden } from '../situation/SituationProvider';
+import { Emergency999 } from '../situation/Emergency999';
 
 /**
  * The NHS A to Z lives inside the self-built `nhs_uk` ZIM (a zimit crawl, paths like `www.nhs.uk/conditions/`).
@@ -40,28 +39,29 @@ export function Medical() {
   const nhs = nhsAtoZ(medicalItems);
   const householdQ = useQuery(() => api.household(), [], { refetchOnFocus: true });
   const people = (householdQ.data ?? []).filter((p) => p.needs || p.medications);
-  const callsHidden = useCallsHidden();
   return (
     <Screen title="Medical" back={false}>
       <Body>
-        <CallsNotice />
-        {callsHidden ? (
-          <p className="panel panel-danger">
-            <Icon name="alert" size={20} /> <span aria-hidden="true">⚠</span> <strong>999 will not connect</strong> while both networks are down.{' '}
-            <Link to="/p/no-phones">How to get help without phones</Link>.
-          </p>
-        ) : (
-          <p className="panel panel-danger">
-            <Icon name="phone" size={20} /> Life-threatening emergency: call <strong>999</strong>. Urgent advice: <strong>111</strong>.
-          </p>
-        )}
+        <Emergency999 />
 
+        {/* After 999, the quick cards are the loudest thing here: they are the two-tap, life-critical
+            items, so they are full-width rows and not the smallest tiles on the screen. */}
         <section aria-label="Quick cards">
           <h2>Quick cards</h2>
           <p className="muted">The few things you do in the first minute, in big type.</p>
           {cardsQ.error && <p className="warning">Cards unavailable: {cardsQ.error}</p>}
-          <nav className="tiles" aria-label="Quick cards">
-            {cards.map((c) => <Tile key={c.slug} to={`/medical/card/${c.slug}`} icon={c.icon} title={c.title} />)}
+          <nav aria-label="Quick cards">
+            <ul className="quick-cards">
+              {cards.map((c) => (
+                <li key={c.slug}>
+                  <Link className="quick-card" to={`/medical/card/${c.slug}`}>
+                    <Icon name={c.icon} size={28} />
+                    <span>{c.title}</span>
+                    <Icon name="forward" size={22} className="quick-card-go" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
         </section>
 

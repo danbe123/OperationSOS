@@ -7,6 +7,7 @@ import { Icon } from '../icons';
 import { ConnectPanel } from '../kiosk/ConnectPanel';
 import { Screen, Body } from '../shell/Screen';
 import { Briefing } from '../situation/Briefing';
+import { nowTitle } from '../situation/nowTitle';
 import { Readiness } from '../situation/Readiness';
 import { scenarioMapHref } from '../situation/mapLink';
 import { isEventful, useCallsHidden, useSituation } from '../situation/SituationProvider';
@@ -127,13 +128,20 @@ function CarryOn() {
 /** Now is the front door. It answers "what do I do" from the engine, or says nothing is wrong and
  * shows how ready the household is. */
 export function Now() {
-  const { view, error, loading } = useSituation();
+  const { view, error, loading, refresh } = useSituation();
   const eventful = isEventful(view);
   const mapHref = scenarioMapHref(view?.scenario?.slug);
+  // The heading is the answer, not the name of the screen: the rail already says this is Now.
   return (
-    <Screen title="Now" back={false}>
+    <Screen title={nowTitle(view)} back={false}>
       <Body>
-        {error && <p className="warning" role="status">The situation is unavailable: {error}. The guides and the map still work.</p>}
+        {error && (
+          <p className="panel panel-warn row" role="status">
+            <span className="warning">The box cannot read the situation.</span>
+            <span className="muted">The guides and the map still work.</span>
+            <button type="button" className="btn btn-small" onClick={() => void refresh()}><Icon name="refresh" size={18} /><span>Try again</span></button>
+          </p>
+        )}
         {loading && !view && <p className="muted">Reading the situation…</p>}
         {view?.modes.map_first && (
           <p><Link className="btn btn-primary btn-big" to={mapHref}><Icon name="map" /><span>Open the map</span></Link></p>

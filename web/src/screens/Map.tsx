@@ -241,7 +241,7 @@ export function MapScreen() {
         {panel === 'nearby' && (
           <div className="map-panel" role="dialog" aria-label="Nearby">
             <div className="row"><h2>Nearby</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
-            <p className="muted">{nearbyQ.data?.method ?? 'Nearest facilities to the centre of the map. Straight-line distance and a walking time; no route.'}</p>
+            <p className="muted">Nearest to the centre of the map, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
             <button type="button" className="btn btn-small" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>
             {nearbyQ.loading && <p className="muted">Looking…</p>}
             {nearbyQ.error && <p className="warning">Nearby facilities unavailable: {nearbyQ.error}</p>}

@@ -69,20 +69,32 @@ export const library: LibraryResponse = {
   ],
 };
 
-const scenarioRows: [string, string, string][] = [
-  ['nuclear-war', 'Nuclear war', 'radiation'], ['nuclear-accident', 'Nuclear accident', 'plume'],
-  ['pandemic', 'Pandemic', 'virus'], ['grid-collapse', 'National grid collapse', 'power'],
-  ['solar-storm', 'Solar superstorm', 'sun'], ['emp', 'EMP attack', 'bolt'],
-  ['cyber-attack', 'Cyber attack', 'lock'], ['invasion', 'Invasion or occupation', 'shield'],
-  ['civil-unrest', 'Civil unrest', 'fire'], ['economic-collapse', 'Economic collapse', 'coins'],
-  ['supply-chain', 'Supply chain collapse', 'truck'], ['storms-flooding', 'Storms and flooding', 'wave'],
-  ['severe-winter', 'Severe winter', 'snowflake'], ['heat-drought', 'Heat and drought', 'thermometer'],
-  ['volcanic', 'Volcanic ash', 'volcano'], ['chemical', 'Chemical disaster', 'flask'],
-  ['famine', 'Famine', 'wheat'], ['impact-winter', 'Impact winter', 'moon'],
-  ['terrorism', 'Terrorism', 'alert'], ['long-rebuild', 'The long rebuild', 'hammer'],
+/* The twenty situations, with the first line of each guide's own summary: a tile's line is the
+   guide's own words, never its title said twice. */
+const scenarioRows: [string, string, string, string][] = [
+  ['nuclear-war', 'Nuclear war', 'radiation', 'A nuclear strike on the UK.'],
+  ['nuclear-accident', 'Nuclear accident', 'plume', 'A radiation release from a UK or nearby site, a lost source, or a dirty bomb.'],
+  ['pandemic', 'Pandemic', 'virus', 'A respiratory pandemic that overwhelms the NHS.'],
+  ['grid-collapse', 'National grid collapse', 'power', 'A nationwide or regional blackout lasting days to weeks.'],
+  ['solar-storm', 'Solar superstorm', 'sun', 'A Carrington-class geomagnetic storm.'],
+  ['emp', 'EMP attack', 'bolt', 'A high-altitude nuclear burst kills electronics, some vehicles and radios nationwide.'],
+  ['cyber-attack', 'Cyber attack', 'lock', 'Ransomware or sabotage takes out the NHS, banks, telecoms, water or the grid for days to weeks.'],
+  ['invasion', 'Invasion or occupation', 'shield', 'Conventional war on UK soil: missile strikes, fighting, occupation.'],
+  ['civil-unrest', 'Civil unrest', 'fire', 'Rioting, looting and arson, police that cannot answer, curfews and emergency regulations.'],
+  ['economic-collapse', 'Economic collapse', 'coins', 'Banks closed, cards dead, the pound failing, prices doubling monthly.'],
+  ['supply-chain', 'Supply chain collapse', 'truck', 'Fuel, food and medicine stop arriving.'],
+  ['storms-flooding', 'Storms and flooding', 'wave', 'Storm-force winds, river and surface-water floods and a North Sea surge.'],
+  ['severe-winter', 'Severe winter', 'snowflake', 'A week or more of deep snow and hard frost with heating fuel short.'],
+  ['heat-drought', 'Heat and drought', 'thermometer', 'Five days over 35 degrees, three dry winters, hosepipe bans, then standpipes and bowsers.'],
+  ['volcanic', 'Volcanic ash', 'volcano', 'An Icelandic eruption sends ash and sulphur over Britain for weeks.'],
+  ['chemical', 'Chemical disaster', 'flask', 'A toxic plume from a refinery, chemical works, tanker or attack.'],
+  ['famine', 'Famine', 'wheat', 'Blight, livestock disease, no fertiliser, no imports.'],
+  ['impact-winter', 'Impact winter', 'moon', 'Years of cold, dark summers after a nuclear exchange, supervolcano or asteroid.'],
+  ['terrorism', 'Terrorism', 'alert', 'A bombing, a marauding knife or vehicle attack, or a poisoning.'],
+  ['long-rebuild', 'The long rebuild', 'hammer', 'No state, no grid, no supply chain, for years.'],
 ];
-export const playbooks: PlaybookSummary[] = scenarioRows.map(([slug, title, icon], i) => ({
-  slug, title, icon, order: i + 1, summary: `${title}: what to do right now and over the months after.`,
+export const playbooks: PlaybookSummary[] = scenarioRows.map(([slug, title, icon, summary], i) => ({
+  slug, title, icon, order: i + 1, summary,
 }));
 
 export const playbook: Playbook = {
@@ -120,15 +132,15 @@ export const search: SearchResponse = {
     { source: 'docs', badge: 'UK official', title: 'National Risk Register 2025, page 12', snippet: 'loss of water supply', url: '/doc/nrr-2025#page=12', score: 0.12, kind: 'doc', page: 12 },
   ],
   groups: [
-    { source: 'playbooks', badge: 'Playbook', count: 1 }, { source: 'wikipedia', badge: 'Wikipedia', count: 1 },
-    { source: 'nhs', badge: 'NHS', count: 1 }, { source: 'places', badge: 'Place', count: 1 }, { source: 'docs', badge: 'UK official', count: 1 },
+    { source: 'playbooks', badge: 'Playbooks', count: 1 }, { source: 'wikipedia', badge: 'Wikipedia', count: 1 },
+    { source: 'nhs', badge: 'NHS', count: 1 }, { source: 'places', badge: 'Places', count: 1 }, { source: 'docs', badge: 'UK official', count: 1 },
   ],
   took_ms: 120, partial: false,
 };
 
 export const suggestions: Suggestion[] = [
-  { value: 'Water', label: 'Water', url: `/read/${WIKI}/A/Water`, source: 'wikipedia' },
-  { value: 'Water disinfection', label: 'Water disinfection', url: '/p/water-disinfection', source: 'pages' },
+  { value: 'Water', label: 'Water', url: `/read/${WIKI}/A/Water`, source: 'Wikipedia' },
+  { value: 'Water disinfection', label: 'Water disinfection', url: '/p/water-disinfection', source: 'page' },
   { value: 'water purification', label: 'water purification', url: null, source: 'query' },
 ];
 

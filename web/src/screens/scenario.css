@@ -1,6 +1,15 @@
 /* A scenario is genuinely two things: the guidance, and the jobs it raises. Two panes where there is
    room for two, one column where there is not. */
-.scenario-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+/* One column puts the jobs before the paperwork: on a phone the tick list must not come after all
+   the prose. */
+.scenario-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; grid-template-areas: "tasks" "guidance" "sources"; }
+.scenario-workspace > .scenario-guidance { grid-area: guidance; }
+.scenario-workspace > .scenario-tasks { grid-area: tasks; }
+.scenario-workspace > .scenario-sources { grid-area: sources; }
+/* The clock rides in the screen head beside Map and Print. */
+.screen-head .situation-clock { gap: 6px; }
+.clock-start-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
+.clock-start-text small { font-weight: 400; color: var(--ink-muted); }
 .scenario-guidance { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .scenario-panel { min-width: 0; scroll-margin-top: 80px; }
 .scenario-panel > h2 { margin-top: 0; }

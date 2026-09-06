@@ -12,8 +12,9 @@ describe('Now', () => {
     vi.spyOn(api, 'household').mockResolvedValue([]);
     vi.spyOn(api, 'neighbours').mockResolvedValue([]);
     renderRoute('/');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Now' })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe('Now · SOS'));
+    // The heading is the answer, not the name of the screen: the rail already says this is Now.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Everything is working · SOS'));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     const household = await screen.findByRole('region', { name: 'Household and stock' });
@@ -26,28 +27,35 @@ describe('Now', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/now');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Now' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
   });
 
-  it('shows the readiness and its gaps in peacetime, and the drill', async () => {
+  it('says how long the household would last and what would help, with no score and no points', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
+    vi.spyOn(api, 'household').mockResolvedValue([]);
     renderRoute('/');
     const panel = await screen.findByRole('region', { name: 'Situation' });
     expect(panel).toHaveTextContent('Everything is working');
-    expect(within(panel).getByLabelText('Readiness')).toHaveTextContent('62');
+    await waitFor(() => expect(panel).toHaveTextContent('You have water for 1.5 days.'));
+    expect(panel).toHaveTextContent('One thing would help most.');
+    expect(panel).not.toHaveTextContent('out of 100');
+    expect(panel).not.toHaveTextContent('points');
+    expect(panel).toHaveTextContent('New box?');
     expect(within(panel).getByRole('link', { name: 'Water: 1.5 days for 3 people' })).toHaveAttribute('href', '/plan#stock');
     expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toHaveAttribute('href', '/situation#drill');
-    expect(screen.queryByRole('region', { name: 'Do this now' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Right now' })).toBeNull();
   });
 
   it('leads with what to do once something is off', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/');
-    const now = await screen.findByRole('region', { name: 'Do this now' });
+    const now = await screen.findByRole('region', { name: 'Right now' });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
     expect(within(now).getAllByRole('listitem')).toHaveLength(3);
-    expect(within(now).getByRole('link', { name: /All tasks/ })).toHaveAttribute('href', '/tasks');
+    expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
     expect(screen.queryByRole('region', { name: 'Situation' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
     expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network is probably off');
@@ -58,7 +66,8 @@ describe('Now', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockRejectedValue(new Error('boom'));
     renderRoute('/');
-    expect(await screen.findByText(/The situation is unavailable: boom/)).toBeInTheDocument();
+    expect(await screen.findByText(/The box cannot read the situation/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Try again/ })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
   });
 });

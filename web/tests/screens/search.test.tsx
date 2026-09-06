@@ -14,7 +14,8 @@ describe('Search screen', () => {
     const list = screen.getByRole('list', { name: 'Results' });
     const items = within(list).getAllByRole('listitem');
     expect(items).toHaveLength(5);
-    expect(within(items[0]).getByText('Playbook')).toHaveClass('badge');
+    // "Playbook" is the box's word; a household reads "Guide".
+    expect(within(items[0]).getByText('Guide')).toHaveClass('badge');
     expect(within(items[4]).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
     await act(async () => { within(items[1]).getByRole('link').click(); });
     expect(router.state.location.pathname).toBe('/read/wikipedia_en_100_mini_2026-01/A/Water');
@@ -25,7 +26,7 @@ describe('Search screen', () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/search?q=water');
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Playbook (1)', 'Wikipedia (1)', 'NHS (1)', 'Place (1)', 'UK official (1)']);
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Guides (1)', 'Wikipedia (1)', 'NHS (1)', 'Places (1)', 'UK official (1)']);
     await user.click(within(chips).getByRole('button', { name: 'NHS (1)' }));
     expect(router.state.location.search).toBe('?q=water&sources=nhs');
     expect(spy).toHaveBeenLastCalledWith('water', { sources: ['nhs'] });

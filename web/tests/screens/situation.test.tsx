@@ -13,7 +13,7 @@ describe('Situation clock', () => {
     const start = vi.spyOn(api, 'startSituation').mockResolvedValue({ slug: 'grid-collapse', title: 'National grid collapse', started_at: startedAt, elapsed_s: 72000, phase: 'first-72-hours' });
     renderRoute('/s/grid-collapse');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'This has started' }));
+    await user.click(await screen.findByRole('button', { name: /This has started/ }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
     expect(await screen.findByRole('status')).toHaveTextContent('20 h in, first 72 hours');
     const tabs = screen.getByRole('tablist', { name: 'Sections' });
@@ -30,15 +30,15 @@ describe('Situation clock', () => {
     const end = vi.spyOn(api, 'endSituation').mockResolvedValue({ slug: null });
     renderRoute('/s/grid-collapse');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'This has started' }));
+    await user.click(await screen.findByRole('button', { name: /This has started/ }));
     expect(start).not.toHaveBeenCalled();
-    expect(screen.getByText(/replaces the active situation \(Severe storms and flooding\)/)).toBeInTheDocument();
+    expect(screen.getByText(/replaces the situation that is running \(Severe storms and flooding\)/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Confirm start' }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
     await user.click(await screen.findByRole('button', { name: 'End situation' }));
     await user.click(screen.getByRole('button', { name: 'Confirm end' }));
     expect(end).toHaveBeenCalled();
-    expect(await screen.findByRole('button', { name: 'This has started' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /This has started/ })).toBeInTheDocument();
   });
 
   it('shows the active situation on Home', async () => {

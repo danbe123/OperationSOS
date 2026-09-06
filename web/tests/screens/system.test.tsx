@@ -29,7 +29,9 @@ describe('System', () => {
     renderRoute('/system');
     expect(await screen.findByText('0.1.0')).toBeInTheDocument();
     expect(screen.getByText('51°C')).toBeInTheDocument();
-    expect(screen.getByText('2100 of 8000 MB')).toBeInTheDocument();
+    // Load averages and megabytes are the box talking to itself.
+    expect(screen.getByText('26% used')).toBeInTheDocument();
+    expect(screen.queryByText(/Load 0\./)).toBeNull();
     expect(screen.getByText('260 of 465 GB free')).toBeInTheDocument();
     expect(screen.getByText('Not connected')).toBeInTheDocument();
     expect(screen.getByText('1 device')).toBeInTheDocument();

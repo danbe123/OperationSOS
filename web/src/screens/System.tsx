@@ -25,8 +25,8 @@ const AI_LABEL: Record<AiState, string> = { off: 'off', starting: 'starting', re
 function StatusCards({ s }: { s: Status }) {
   return (
     <div className="panels">
-      <div className="panel"><h3>Box</h3><p>Version <strong>{s.version}</strong></p><p>Up {formatUptime(s.uptime_s)}</p><p>Load {s.load.map((l) => l.toFixed(2)).join(' / ')}</p></div>
-      <div className="panel"><h3>Heat and memory</h3><p>CPU <strong>{s.cpu_temp_c === null ? 'n/a' : `${Math.round(s.cpu_temp_c)}°C`}</strong></p><p>Memory <strong>{s.mem.used_mb} of {s.mem.total_mb} MB</strong></p></div>
+      <div className="panel"><h3>Box</h3><p>Version <strong>{s.version}</strong></p><p>Up {formatUptime(s.uptime_s)}</p><p>Busyness {s.load[0] < 1 ? 'light' : s.load[0] < 2.5 ? 'moderate' : 'heavy'}</p></div>
+      <div className="panel"><h3>Heat and memory</h3><p>CPU <strong>{s.cpu_temp_c === null ? 'n/a' : `${Math.round(s.cpu_temp_c)}°C`}</strong></p><p>Memory <strong>{Math.round((s.mem.used_mb / Math.max(1, s.mem.total_mb)) * 100)}% used</strong> of {(s.mem.total_mb / 1024).toFixed(1)} GB</p></div>
       <div className="panel"><h3>Storage</h3><p>Core: <strong>{s.disks.core.free_gb} of {s.disks.core.total_gb} GB free</strong></p><p>External: <strong>{s.disks.extended.mounted ? `${s.disks.extended.free_gb} of ${s.disks.extended.total_gb} GB free` : 'Not connected'}</strong></p></div>
       <div className="panel"><h3>Hotspot</h3><p>WiFi <strong>{s.hotspot.ssid}</strong> {s.hotspot.enabled ? '' : '(off)'}</p><p>http://{s.hotspot.ip} · http://sos.box</p><p><strong>{s.hotspot.clients} {s.hotspot.clients === 1 ? 'device' : 'devices'}</strong> connected</p></div>
       <div className="panel"><h3>Security</h3><p>{s.pin_required ? 'PIN protection on' : 'PIN protection off'}</p><p className="muted">{s.dev ? 'Development profile' : 'Production profile'}</p></div>

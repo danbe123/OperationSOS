@@ -2,6 +2,7 @@ import './tools.css';
 import { useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { useQuery } from '../../api/useQuery';
+import { Icon } from '../../icons';
 import { Screen, Body } from '../../shell/Screen';
 import { gridRef } from '../../map/grid';
 import { PlaceSearch } from '../../map/PlaceSearch';
@@ -39,9 +40,9 @@ export function SunMoon() {
           <p><strong>{where.label}</strong> <span className="muted">{gridRef(where.lat, where.lon, 6).text || `${where.lat.toFixed(3)}, ${where.lon.toFixed(3)}`}</span></p>
           <PlaceSearch onPick={(p) => setPicked({ lat: p.lat, lon: p.lon, label: p.name })} onGrid={(pt, text) => setPicked({ lat: pt.lat, lon: pt.lon, label: text })} />
           <div className="row">
-            <button type="button" className="btn" onClick={() => shift(-1)} aria-label="Previous day">◀ Day before</button>
+            <button type="button" className="btn" onClick={() => shift(-1)} aria-label="Previous day"><Icon name="back" size={18} /><span>Day before</span></button>
             <input type="date" aria-label="Date" value={day} onChange={(e) => setDay(e.target.value)} />
-            <button type="button" className="btn" onClick={() => shift(1)} aria-label="Next day">Day after ▶</button>
+            <button type="button" className="btn" onClick={() => shift(1)} aria-label="Next day"><span>Day after</span><Icon name="forward" size={18} /></button>
             <button type="button" className="btn" onClick={() => setDay(isoDate(new Date()))}>Today</button>
           </div>
         </section>

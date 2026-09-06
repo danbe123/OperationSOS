@@ -86,7 +86,7 @@ export function Situation() {
               <label className="field">
                 <span>Start a situation</span>
                 <select aria-label="Situation to start" value={slug} onChange={(e) => setSlug(e.target.value)}>
-                  <option value="">Choose a playbook…</option>
+                  <option value="">Choose a situation…</option>
                   {playbooks.map((p) => <option key={p.slug} value={p.slug}>{p.title}</option>)}
                 </select>
               </label>
@@ -101,13 +101,13 @@ export function Situation() {
       {!view?.meta.drill && (
         <section className="panel" aria-label="Drill" id="drill">
           <div className="stack">
-            <h2>Practice a drill</h2>
+            <h2>Practise a drill</h2>
             <p className="muted">Pretend a situation is running, without touching the real conditions. Everything says DRILL.</p>
             <div className="row">
               <label className="field">
-                <span>Scenario</span>
+                <span>Situation</span>
                 <select aria-label="Drill scenario" value={slug} onChange={(e) => setSlug(e.target.value)}>
-                  <option value="">Choose a playbook…</option>
+                  <option value="">Choose a situation…</option>
                   {playbooks.map((p) => <option key={p.slug} value={p.slug}>{p.title}</option>)}
                 </select>
               </label>

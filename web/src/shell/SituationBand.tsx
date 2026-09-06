@@ -24,19 +24,19 @@ export function SituationBand() {
   return (
     <div className="band no-print" role="group" aria-label="Situation now">
       {view.meta.drill && <span className="badge badge-warn">⚑ Drill</span>}
-      {view.scenario ? (
+      {view.scenario && (
         <Link className="band-scenario" to={`/s/${view.scenario.slug}`}>
           <Icon name="alert" size={20} />
           {view.scenario.title} <span className="muted">{describeElapsed(view.scenario.elapsed_s)}</span>
         </Link>
-      ) : (
-        <span className="band-label">Situation</span>
       )}
       <div className="band-chips">
         {broken.map((c) => <ConditionChip key={c.id} condition={c} compact />)}
       </div>
+      {/* A count of jobs is not an eleventh thing that is wrong: it wears the small button, never a
+          condition chip in condition amber. */}
       {open > 0 && pathname !== '/tasks' && (
-        <Link className="cond-chip cond-warn cond-chip-compact" to="/tasks">▲ {open} to do</Link>
+        <Link className="btn btn-small band-jobs" to="/tasks"><Icon name="plan" size={18} /><span>{open} {open === 1 ? 'thing' : 'things'} to do</span></Link>
       )}
       <Link className="btn btn-small band-open" to="/situation"><Icon name="plan" size={18} /><span>Situation</span></Link>
     </div>

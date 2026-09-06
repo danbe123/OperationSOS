@@ -51,7 +51,7 @@ describe('Now: the briefing', () => {
     mockNow();
     const set = vi.spyOn(api, 'setTask').mockResolvedValue({ ...powerOffView.tasks[0], done: true });
     renderRoute('/');
-    const block = await screen.findByRole('region', { name: 'Do this now' });
+    const block = await screen.findByRole('region', { name: 'Right now' });
     const items = within(block).getAllByRole('listitem');
     expect(items.map((li) => li.querySelector('.task-title')?.textContent)).toEqual([
       'Fill the bath and every container', 'Keep the fridge and freezer shut', 'Get cash out while the shops take cards',

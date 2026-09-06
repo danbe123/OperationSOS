@@ -46,10 +46,10 @@ export function Briefing() {
         <div className="row no-print"><ReadAloud id="briefing" target={block} label="Read the briefing aloud" /></div>
       )}
 
-      <section className="panel panel-signal briefing-block" aria-label="Do this now">
+      <section className="panel panel-signal briefing-block" aria-label="Right now">
         <div className="panel-head">
-          <h2>Do now</h2>
-          <Link className="btn btn-small" to="/tasks"><Icon name="plan" size={18} /><span>All tasks</span></Link>
+          <h2>Right now</h2>
+          <Link className="btn btn-small" to="/tasks"><Icon name="plan" size={18} /><span>All of them</span></Link>
         </div>
         {doing.length === 0 ? (
           <p className="muted">Nothing outstanding right now. The box adds jobs as the situation changes.</p>

@@ -17,14 +17,14 @@ export function Tasks() {
   const shown = showDone ? tasks : tasks.filter((t) => !t.done);
   const done = tasks.length - outstanding;
   return (
-    <Screen title="Tasks" search={false} actions={<span className="badge task-count">{outstanding} to do</span>}>
+    <Screen title="Things to do" search={false}>
       <Body>
         <div className="row">
-          <p className="muted">{outstanding} to do, {done} done.</p>
-          <label className="check-row">
-            <input type="checkbox" checked={showDone} onChange={(e) => setShowDone(e.target.checked)} />
-            <span>Show done</span>
-          </label>
+          <p className="muted task-count">{outstanding} to do, {done} done.</p>
+          {/* A filter is not a job: it wears the chip, not the same square as a task's tick. */}
+          <button type="button" className={showDone ? 'chip active' : 'chip'} aria-pressed={showDone} onClick={() => setShowDone(!showDone)}>
+            {showDone ? 'Hide done' : 'Show done'}
+          </button>
         </div>
         {error && <p className="warning">Tasks unavailable: {error}</p>}
         {loading && !view && <p className="muted">Reading the situation…</p>}

@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { api } from '../../api/client';
 import { useQuery } from '../../api/useQuery';
 import { Screen, Body } from '../../shell/Screen';
+import { Emergency999 } from '../../situation/Emergency999';
 import { doseFor, FORMS, sourceUrl, type Form, type Medicine } from '../../tools/dose';
 
 export function Dose() {
@@ -23,7 +24,8 @@ export function Dose() {
   return (
     <Screen title="Children's doses">
       <Body>
-      <p className="warning">Life-threatening emergency: call 999. Not sure: 111. These are the NHS age bands, not a prescription.</p>
+        <Emergency999 />
+        <p className="muted">These are the NHS age bands, not a prescription.</p>
         <div className="row" role="group" aria-label="Medicine">
           <button type="button" className={medicine === 'paracetamol' ? 'btn active' : 'btn'} aria-pressed={medicine === 'paracetamol'} onClick={() => pickMedicine('paracetamol')}>Paracetamol</button>
           <button type="button" className={medicine === 'ibuprofen' ? 'btn active' : 'btn'} aria-pressed={medicine === 'ibuprofen'} onClick={() => pickMedicine('ibuprofen')}>Ibuprofen</button>
@@ -34,8 +36,8 @@ export function Dose() {
           </select>
         </label>
         <div className="row">
-          <label className="field"><span>Age: years</span><input type="number" inputMode="numeric" min={0} max={17} aria-label="Years" value={years} onChange={(e) => setYears(e.target.value)} /></label>
-          <label className="field"><span>and months</span><input type="number" inputMode="numeric" min={0} max={11} aria-label="Months" value={months} onChange={(e) => setMonths(e.target.value)} /></label>
+          <label className="field"><span>Age: years</span><input type="number" inputMode="numeric" min={0} max={17} aria-label="Years" data-kb-reveal=".dose-result" value={years} onChange={(e) => setYears(e.target.value)} /></label>
+          <label className="field"><span>and months</span><input type="number" inputMode="numeric" min={0} max={11} aria-label="Months" data-kb-reveal=".dose-result" value={months} onChange={(e) => setMonths(e.target.value)} /></label>
         </div>
         <section className="panel dose-result" aria-live="polite" aria-label="Dose">
           {result.ok ? (

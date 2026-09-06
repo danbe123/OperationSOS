@@ -47,10 +47,21 @@ small { font-size: var(--t-meta); }
   text-shadow: none;
 }
 
-/* Quick cards are read at arm's length in bad light: the one place the display size is used for prose. */
+/* Quick cards are read at arm's length in bad light, by someone kneeling over a body: the steps are
+   the display size, one to a line, and the step's number is the same size and weight as its words. */
 .card-html { font-size: var(--t-lead); line-height: 1.45; }
 .card-html li { margin: 0.4em 0; }
-.card-html .warning { display: block; margin: 0.6em 0; }
+.card-html ol { counter-reset: card-step; list-style: none; margin: 0 0 16px; padding: 0; }
+.card-html ol > li {
+  counter-increment: card-step;
+  display: flex; gap: 16px; align-items: baseline;
+  margin: 0 0 20px;
+  font-size: var(--t-display); font-weight: 700; line-height: 1.15;
+}
+.card-html ol > li::before { content: counter(card-step); flex: 0 0 auto; min-width: 1.2em; color: var(--ink-muted); }
+.card-html ol > li:last-child { margin-bottom: 0; }
+.card-html .warning { display: block; margin: 0.6em 0; font-size: var(--t-lead); }
+@media print { .card-html ol > li { font-size: 18pt; margin-bottom: 10px; } }
 
 @media print {
   body { font-size: 11pt; }

@@ -5,8 +5,9 @@ import { nearby } from '../fixtures/api';
 describe('nearby', () => {
   it('reads a place as distance, walking time and the box\'s own compass point', () => {
     const pharmacy = nearby.facilities.find((f) => f.id === 'pharmacy')!;
-    expect(describeNearby(pharmacy.nearest!)).toBe('620 m · 8 min on foot · 092° E');
-    expect(describeNearby({ distance_m: 4300, walk_minutes: 52, bearing_deg: 270, compass: 'W' })).toBe('4.30 km · 52 min on foot · 270° W');
+    expect(describeNearby(pharmacy.nearest!)).toBe('620 m to the east, about 8 min on foot');
+    expect(describeNearby({ distance_m: 4300, walk_minutes: 52, bearing_deg: 270, compass: 'W' })).toBe('4.30 km to the west, about 52 min on foot');
+    expect(describeNearby({ distance_m: 800, walk_minutes: 10, bearing_deg: 45, compass: 'NE' })).toBe('800 m to the north-east, about 10 min on foot');
   });
 
   it('gives every facility an icon, known or not', () => {

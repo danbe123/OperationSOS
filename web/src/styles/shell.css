@@ -101,11 +101,12 @@
   background: var(--panel);
   border-bottom: 1px solid var(--line-strong);
 }
-.band-label { font-size: var(--t-meta); font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .band-scenario { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-weight: 700; }
 .band-scenario .muted { font-weight: 400; }
 .band-open { margin-left: auto; flex-shrink: 0; }
 .band-chips { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+/* A count of jobs is not a condition: it gets the small button, not the amber pill. */
+.band-jobs { flex-shrink: 0; }
 
 /* --- the screen head ------------------------------------------------------------------------ */
 
@@ -125,10 +126,9 @@
   .screen-head-back { order: 1; }
   .screen-head-theme { order: 1; margin-left: auto; }
   .screen-head h1 { flex: 1 1 100%; order: 2; font-size: var(--t-lead); }
+  .screen-head-noback h1 { flex: 1 1 auto; order: 1; }
   .screen-head-actions { order: 3; flex: 1 1 100%; }
   .screen-head-search { display: none; }
-  /* The chips already say what the band is; the label is what does not fit beside them. */
-  .band-label { display: none; }
 }
 @media (min-width: 700px) { .screen-head-theme { display: none; } }
 /* The kiosk is 480 px tall: the title keeps its rank but gives the content back its lines. */
@@ -165,6 +165,10 @@
 .sos-kb .hg-button.hg-activeButton { background: var(--signal); color: var(--on-signal); }
 .sos-kb .hg-button[data-skbtn="{space}"] { min-width: 320px; }
 .sos-kb .hg-button[data-skbtn="{enter}"], .sos-kb .hg-button[data-skbtn="{bksp}"], .sos-kb .hg-button[data-skbtn="{shift}"], .sos-kb .hg-button[data-skbtn="{done}"] { min-width: 96px; }
+/* simple-keyboard's own stylesheet gives every key in the numeric layout `width: 33.3%`, and that
+   layout has four keys a row: each row came out a third too wide and the left column fell off the
+   screen. The keys share the row instead. */
+.sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; }
 
 .idle-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: var(--t-title); font-weight: 700; cursor: pointer; }
 .idle-overlay-dark { background: rgba(0, 0, 0, 0.9); }

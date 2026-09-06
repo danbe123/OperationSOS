@@ -6,7 +6,10 @@
 .cond-row-danger { border-left: 3px solid var(--danger); padding-left: 10px; }
 .cond-row-warn { border-left: 3px solid var(--warn); padding-left: 10px; }
 .cond-states .btn { flex: 0 0 auto; }
-.state-btn { border-width: 2px; }
+/* The set state is the loudest of the three and wears its own colour: an "off" drawn in the accent
+   green is the one misreading this screen cannot afford. The two unset states stay on the plain
+   border. The generic pressed style excludes .state-btn (components.css) so this is not a fight. */
+.state-btn { border-width: 2px; border-color: var(--line); background: var(--panel); font-weight: 600; }
 .state-set { font-weight: 700; background: var(--sunken); }
 .state-set.state-ok { border-color: var(--ok); color: var(--ok); }
 .state-set.state-warn { border-color: var(--warn); color: var(--warn); }

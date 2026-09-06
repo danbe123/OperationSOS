@@ -1,8 +1,8 @@
 import { useEffect, useReducer, useState } from 'react';
 import { Link } from 'react-router';
 import { Screen, Body } from '../../shell/Screen';
+import { Emergency999 } from '../../situation/Emergency999';
 import './tools.css';
-import { Icon } from '../../icons';
 import { click } from '../../tools/audio';
 import { cancelTimer, startTimer, useTimers } from '../../tools/timerStore';
 import { beatsSince, CPR_BPM, falloutMarks, formatCountdown, PRESETS, remainingSeconds } from '../../tools/timers';
@@ -116,7 +116,8 @@ export function Timers() {
   return (
     <Screen title="Timers">
       <Body>
-        <p className="warning">Someone not breathing normally: call 999 and start CPR. <Icon name="phone" size={18} /> 999</p>
+        <Emergency999 />
+        <p>Someone not breathing normally: start CPR and use the beat below.</p>
         <Countdowns />
         <Cpr />
         <Fallout />

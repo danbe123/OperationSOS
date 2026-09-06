@@ -35,11 +35,19 @@ export function describeRoute(from: LngLat, to: LngLat, title: string, fromLabel
   };
 }
 
-/** How one place reads in the list: how far, how long on foot, and which way, in the box's own words.
- * The compass point comes from the box so the screen and the printed report agree. */
+const POINT: Record<string, string> = { N: 'north', S: 'south', E: 'east', W: 'west' };
+
+/** "NE" as a person says it: north-east. The compass point comes from the box so the screen and the
+ * printed report agree; only the wording is ours. */
+export function compassWord(compass: string): string {
+  return compass.split('').map((c) => POINT[c.toUpperCase()] ?? '').filter(Boolean).join('-');
+}
+
+/** How one place reads in the list: how far, which way and how long on foot, as a sentence rather
+ * than three readings joined by dots. */
 export function describeNearby(place: Pick<NearbyPlace, 'distance_m' | 'walk_minutes' | 'bearing_deg' | 'compass'>): string {
-  const bearing = `${Math.round(place.bearing_deg).toString().padStart(3, '0')}° ${place.compass}`;
-  return `${formatDistance(place.distance_m / 1000)} · ${formatWalk(place.walk_minutes)} on foot · ${bearing}`;
+  const way = compassWord(place.compass);
+  return `${formatDistance(place.distance_m / 1000)}${way ? ` to the ${way}` : ''}, about ${formatWalk(place.walk_minutes)} on foot`;
 }
 
 /** What a facility with nothing found should say, in one line. */

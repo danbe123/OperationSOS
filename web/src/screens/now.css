@@ -3,11 +3,11 @@
 .now-box { list-style: none; margin: 0 0 12px; padding: 0; gap: 6px 18px; font-size: var(--t-meta); color: var(--ink-muted); }
 .now-box li { display: inline-flex; align-items: center; gap: 4px; }
 .now-box strong { color: var(--ink); }
-.now-gaps { list-style: none; margin: 0; padding: 0; }
-.now-gaps li { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
-.now-gaps li:last-child { border-bottom: 0; }
-.readiness-score { display: flex; align-items: baseline; gap: 8px; margin: 0 0 8px; }
-.readiness-score strong { font-size: var(--t-display); line-height: 1; font-family: var(--font-heading); }
+/* A gap is a thing to do, so it is drawn as one: the same row as "Right now", not an underlined
+   link with a score beside it. */
+.now-gaps { margin: 8px 0 0; }
+.gap-row { align-items: center; color: var(--ink); text-decoration: none; }
+.gap-row .task-title { flex: 1; }
 .briefing-block { display: flex; flex-direction: column; gap: 8px; }
 .briefing-list > li { display: flex; flex-direction: column; gap: 6px; }
 .briefing-title { margin: 0; font-weight: 600; }

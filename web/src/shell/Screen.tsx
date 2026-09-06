@@ -33,7 +33,9 @@ export function Screen({
   const classes = ['screen', fill ? 'screen-fill' : '', className ?? ''].filter(Boolean).join(' ');
   return (
     <div className={classes}>
-      <header className="screen-head">
+      {/* With no Back button the theme button had a phone row to itself above the title; it shares
+          the title's line instead, and the screen keeps the 40 pixels. */}
+      <header className={back ? 'screen-head' : 'screen-head screen-head-noback'}>
         {back && (
           <button type="button" className="btn btn-quiet btn-small screen-head-back no-print" onClick={goBack}>
             <Icon name="back" size={20} /><span>Back</span>

@@ -46,6 +46,13 @@ export function describeDuration(seconds: number): string {
   return `${days} ${days === 1 ? 'day' : 'days'}`;
 }
 
+/** The band's short form: "4 h", "just now". The compact chip has no room for the word "for", and
+ * the duration is the number the band exists to carry. */
+export function shortDuration(state: ConditionState, forSeconds: number): string {
+  if (state === 'working') return '';
+  return forSeconds < MINUTE ? 'just now' : describeDuration(forSeconds);
+}
+
 /** The chip's second line: nothing while a condition works, "for 5 h" once it does not. */
 export function chipDuration(state: ConditionState, forSeconds: number): string {
   if (state === 'working') return '';

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { api } from '../api/client';
 import type { Suggestion } from '../api/types';
 import { useAppLink } from '../links';
+import { sourceWord } from '../api/words';
 import { Icon } from '../icons';
 
 export const SUGGEST_DEBOUNCE_MS = 250;
@@ -104,9 +105,10 @@ export function SearchBar({
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}
       />
-      <button type="submit" className="btn btn-primary" aria-label="Search">
+      {/* The accent belongs to the screen's own primary action, not to the search on every screen. */}
+      <button type="submit" className="btn">
         <Icon name="search" />
-        {!compact && <span>Search</span>}
+        <span>Search</span>
       </button>
       {open && items.length > 0 && (
         <ul className="suggestions" id={listId} role="listbox">
@@ -122,7 +124,7 @@ export function SearchBar({
               {/* Not a separate focus stop: the combobox input keeps focus while an option list is open (ARIA combobox pattern). */}
               <button type="button" tabIndex={-1}>
                 <span>{s.label}</span>
-                <span className="badge">{s.source}</span>
+                <span className="badge">{sourceWord(s.source)}</span>
               </button>
             </li>
           ))}

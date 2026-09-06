@@ -30,7 +30,9 @@ describe('LibraryItemCard', () => {
   it('shows kind icon, size, as-at, drive badge and an Open button; greys out items on a missing drive', () => {
     renderRoute('/', { routes });
     const wiki = document.getElementById(`item-${wikiItem.id}`)!;
-    expect(within(wiki).getByText('4.5 MB · as at 2026-01 · CC BY-SA 4.0')).toBeInTheDocument();
+    expect(within(wiki).getByText('4.5 MB, copied 2026-01. Licence: CC BY-SA 4.0.')).toBeInTheDocument();
+    // "zim" is the box's word for it, never the household's.
+    expect(within(wiki).getByText('Offline copy')).toHaveClass('badge');
     expect(within(wiki).getByText('Core')).toHaveClass('badge');
     expect(within(wiki).getByRole('link', { name: 'Open' })).toHaveAttribute('href', wikiItem.url!);
     expect(wiki.querySelector('svg.icon')).not.toBeNull();
@@ -38,6 +40,6 @@ describe('LibraryItemCard', () => {
     expect(ext).toHaveClass('unavailable');
     expect(within(ext).getByText('On external drive (not connected)')).toHaveClass('badge-warn');
     expect(within(ext).queryByRole('link', { name: 'Open' })).toBeNull();
-    expect(screen.getAllByText('192 GB · as at 2025-11 · Public domain')).toHaveLength(1);
+    expect(screen.getAllByText('192 GB, copied 2025-11. Licence: Public domain.')).toHaveLength(1);
   });
 });

@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import type { LibraryItem } from '../api/types';
 import { Icon } from '../icons';
+import { sourceWord } from '../api/words';
 import { Badge } from './Badge';
 
 export function formatBytes(n: number): string {
@@ -47,13 +48,13 @@ export function itemOpenPath(item: LibraryItem): string | null {
 export function LibraryItemCard({ item }: { item: LibraryItem }) {
   const open = itemOpenPath(item);
   const isFile = item.kind === 'mwm' || item.kind === 'apk';
-  const meta = [formatBytes(item.size_bytes), item.as_at ? `as at ${item.as_at}` : null, item.licence].filter(Boolean).join(' · ');
+  const meta = `${formatBytes(item.size_bytes)}${item.as_at ? `, copied ${item.as_at}` : ''}.${item.licence ? ` Licence: ${item.licence}.` : ''}`;
   return (
     <li className={item.available ? 'item-card' : 'item-card unavailable'} id={`item-${item.id}`}>
       <div className="row">
         <Icon name={KIND_ICON[item.kind] ?? 'drive'} />
         <strong>{item.title}</strong>
-        <Badge>{item.kind}</Badge>
+        <Badge>{sourceWord(item.kind)}</Badge>
         <Badge tone={item.available ? 'default' : 'warn'}>{item.drive_label}</Badge>
       </div>
       {item.description && <p className="muted">{item.description}</p>}

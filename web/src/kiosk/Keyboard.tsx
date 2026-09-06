@@ -117,7 +117,12 @@ export function Keyboard() {
     const root = document.documentElement;
     if (visible && target) {
       root.style.setProperty('--kb-height', `${KEYBOARD_HEIGHT}px`);
-      target.scrollIntoView?.({ block: 'center' });
+      // The pad opens over whatever the field was asked to work out. A field can name what has to
+      // stay in sight (`data-kb-reveal`), and that is brought up instead of the field itself.
+      const selector = target.getAttribute?.('data-kb-reveal');
+      const answer = selector ? target.ownerDocument.querySelector(selector) : null;
+      if (answer) answer.scrollIntoView({ block: 'end' });
+      else target.scrollIntoView?.({ block: 'start' });
     } else {
       root.style.setProperty('--kb-height', '0px');
     }

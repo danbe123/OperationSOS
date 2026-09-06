@@ -6,6 +6,7 @@ import { useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
 import { Tile } from '../components/Tile';
+import { tileLine } from '../api/words';
 import { useSituation } from '../situation/SituationProvider';
 import { TOOL_TILES } from './Tools';
 import './guides.css';
@@ -39,11 +40,11 @@ export function Guides() {
   const groups: Group[] = [
     {
       id: 'scenarios', title: 'Situations', note: 'Twenty situations: what to do right now and over the months after.',
-      entries: scenarios.map((p) => ({ to: `/s/${p.slug}`, icon: p.icon, title: p.title, sub: p.summary })),
+      entries: scenarios.map((p) => ({ to: `/s/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
     },
     ...PAGE_GROUPS.map((g) => ({
       id: g.id, title: g.title, note: g.note,
-      entries: pages.filter((p) => g.categories.includes(p.category)).map((p) => ({ to: `/p/${p.slug}`, icon: p.icon, title: p.title, sub: p.summary })),
+      entries: pages.filter((p) => g.categories.includes(p.category)).map((p) => ({ to: `/p/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
     })),
     { id: 'tools', title: 'Tools', note: 'Small offline tools. Nothing here needs the internet.', entries: TOOL_TILES.map((t) => ({ to: t.to, icon: t.icon, title: t.title, sub: t.subtitle })) },
   ];
@@ -55,19 +56,21 @@ export function Guides() {
   const found = shown.reduce((n, g) => n + g.entries.length, 0);
 
   return (
-    <Screen title="Guides" back={false}>
+    <Screen title="Guides" back={false} search={false}>
       <Body>
-        <label className="field guides-filter">
-          <span>Filter the guides</span>
-          <input type="search" aria-label="Filter the guides" value={term} placeholder="flood, water, radio, cold" onChange={(e) => setTerm(e.target.value)} />
-        </label>
-        <div className="chips" role="group" aria-label="Kinds of guide">
-          <button type="button" className={only === null ? 'chip active' : 'chip'} aria-pressed={only === null} onClick={() => setOnly(null)}>Everything</button>
-          {groups.filter((g) => g.entries.length > 0).map((g) => (
-            <button key={g.id} type="button" className={only === g.id ? 'chip active' : 'chip'} aria-pressed={only === g.id} onClick={() => setOnly(only === g.id ? null : g.id)}>
-              {g.title} ({g.entries.length})
-            </button>
-          ))}
+        <div className="guides-filter">
+          <label className="field">
+            <span>Filter these guides</span>
+            <input type="search" aria-label="Filter these guides" value={term} placeholder="flood, water, radio, cold" onChange={(e) => setTerm(e.target.value)} />
+          </label>
+          <div className="chips" role="group" aria-label="Kinds of guide">
+            <button type="button" className={only === null ? 'chip active' : 'chip'} aria-pressed={only === null} onClick={() => setOnly(null)}>Everything</button>
+            {groups.filter((g) => g.entries.length > 0).map((g) => (
+              <button key={g.id} type="button" className={only === g.id ? 'chip active' : 'chip'} aria-pressed={only === g.id} onClick={() => setOnly(only === g.id ? null : g.id)}>
+                {g.title} ({g.entries.length})
+              </button>
+            ))}
+          </div>
         </div>
         {active && (
           <p className="panel panel-warn">

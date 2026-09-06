@@ -99,14 +99,15 @@ describe('Map: nearby', () => {
     const items = [...list.querySelectorAll<HTMLElement>(':scope > li')];
     expect(items[0]).toHaveTextContent('Pharmacy');
     expect(items[0]).toHaveTextContent('Boots, High Street');
-    expect(items[0]).toHaveTextContent('620 m · 8 min on foot · 092° E');
+    expect(items[0]).toHaveTextContent('620 m to the east, about 8 min on foot');
     // the runners-up ride under the nearest, not as separate blocks
     expect(within(items[0]).getByRole('list', { name: /Other pharmacy nearby/i })).toHaveTextContent('Shirley Pharmacy');
     expect(items[1]).toHaveTextContent('Emergency department');
     const panel = screen.getByRole('dialog', { name: 'Nearby' });
     expect(panel).toHaveTextContent('Rest centre');
     expect(panel).toHaveTextContent('No searchable copy of the emergency-services overlay on this box.');
-    expect(panel).toHaveTextContent(/Naismith/);
+    expect(panel).toHaveTextContent(/as the crow flies/);
+    expect(panel).not.toHaveTextContent(/Naismith/);
     await user.click(within(items[0]).getByRole('button', { name: /^Boots, High Street/ }));
     expect(lastMap().flyTo).toHaveBeenCalledWith({ center: [-1.4331, 50.9345], zoom: 15 });
   });
