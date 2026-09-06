@@ -189,3 +189,18 @@ def test_suggest_caps_at_ten_and_mixes_sources(respx_mock, conn, env):
     assert all(s["value"].lower().startswith("wat") for s in out)
     short = _run(search.suggest(conn, env, KiwixClient(BASE), "w"))
     assert short == []
+
+
+def test_medical_intent_boosts_quick_cards_as_well_as_medical_sources(conn, env):
+    conn.execute("INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
+                 ("Severe bleeding", "Press hard on the wound and do not let go.", "severe-bleeding", "card", "playbooks", "", None,
+                  "/medical/card/severe-bleeding"))
+    conn.commit()
+    with respx.mock(base_url=BASE) as m:
+        m.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search_multi.xml").read_text()))
+        resp = _run(search.search(conn, env, KiwixClient(BASE), "bleeding", use_cache=False))
+    card = next(r for r in resp["results"] if r["kind"] == "card")
+    # the box's own card carries the playbook weight and, for a medical question, the medical boost: it outranks
+    # any rank-1 medical or NHS article (1.4 x 1.5 at rank 1)
+    assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5)
+    assert resp["results"][0]["kind"] == "card"

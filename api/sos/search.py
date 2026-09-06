@@ -185,7 +185,9 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
 
     if is_medical_intent(reduced.terms):
         for r in results:
-            if r["_cat"] == "medical":
+            # the box's own quick cards are medical guidance too: without the boost an NHS medicine page
+            # about warfarin outranked the Severe bleeding card for "bleeding"
+            if r["_cat"] == "medical" or r["kind"] == "card":
                 r["score"] *= MEDICAL_BOOST
 
     qnorm = " ".join((q or "").lower().split())
