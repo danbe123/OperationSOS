@@ -31,8 +31,10 @@ from sos.buildnhs import EXT_SCRIPT_RE, MIN_ARTICLES, SECTIONS, VIDEO_RE
 
 USER_AGENT = "OperationSOS/0.1 (offline UK emergency knowledge box; +https://github.com/OperationSOS)"
 # NHS (and other) pages embed JSON payloads whose escaped quotes wget parses as relative links,
-# producing thousands of 404s like /conditions/x/%5C%22https://example.org%5C%22. Never request those.
-JUNK = r"%5C%22|%22|%5C|/mailto:|/tel:"
+# producing thousands of 404s like /conditions/x/%5C%22https://example.org%5C%22. wget matches
+# --reject-regex against the *decoded* URL, so the pattern has to be the literal \ and " it saw.
+JUNK = r'\\|"|/mailto:|/tel:'
+
 ASSET_EXT = r"css|js|mjs|png|jpe?g|svg|gif|ico|webp|woff2?|ttf|eot"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LINK_RE = re.compile(r"""(?:href|src)\s*=\s*["']([^"'#>]+)""", re.IGNORECASE)
@@ -177,7 +179,7 @@ CRAWLS: dict[str, Crawl] = {
             NHS_EXCLUDE + r"|/service-search|/nhs-services/|/using-the-nhs/|/start4life"
             r"|/common-health-questions/|/contact-us/|/about-us/|/tools/|" + JUNK
         ),
-        wait=1.0,
+        wait=0.5,          # nhs.uk publishes no Crawl-delay; 2 requests a second at most
         zimit_exclude=NHS_EXCLUDE,
         min_entries=MIN_ARTICLES,
         article_re=r"^www\.nhs\.uk/(?:" + _NHS_SECTIONS + r")/[^?]*$",
