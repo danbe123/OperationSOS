@@ -227,6 +227,9 @@ def facility_answer(settings: Settings, facility: Facility, lat: float, lon: flo
         if candidates:
             searched.append("places")
     candidates.sort(key=lambda r: (r["distance_m"], r["name"]))
+    # a hospital mapped as several buildings is one place to a household: keep the nearest of each name
+    seen: set[str] = set()
+    candidates = [c for c in candidates if not ((c["name"] or "").lower() in seen or seen.add((c["name"] or "").lower()))]
     out: dict = {"id": facility.id, "title": facility.title, "found": bool(candidates),
                  "nearest": candidates[0] if candidates else None, "also": candidates[1:MAX_RESULTS],
                  "searched": searched, "note": facility.note or None}

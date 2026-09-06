@@ -159,12 +159,22 @@ def reader_url(row: sqlite3.Row) -> str | None:
     return None
 
 
+def file_url(row: sqlite3.Row) -> str | None:
+    """Where the PDF or EPUB itself is served (Caddy maps /docs/<tier>/ to the tier's docs folder); the reader route
+    is `reader_url`. Viewers must load this, never the app route."""
+    if not row["available"] or row["kind"] not in ("pdf", "epub"):
+        return None
+    name = str(row["dest"] or "").rsplit("/", 1)[-1]
+    return f"/docs/{'extended' if row['tier'] == 'extended' else 'core'}/{name}" if name else None
+
+
 def item_dict(row: sqlite3.Row, ext_ok: bool) -> dict:
     return {
         "id": row["id"], "title": row["title"], "kind": row["kind"], "tier": row["tier"], "category": row["category"],
         "scenarios": json.loads(row["scenarios_json"] or "[]"), "size_bytes": row["size_bytes"] or 0,
         "as_at": row["resolved_as_at"] or row["as_at"], "licence": row["licence"], "available": bool(row["available"]),
-        "url": reader_url(row), "description": row["description"], "drive_label": drive_label(row, ext_ok),
+        "url": reader_url(row), "file_url": file_url(row), "description": row["description"],
+        "drive_label": drive_label(row, ext_ok),
     }
 
 

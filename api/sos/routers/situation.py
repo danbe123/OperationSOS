@@ -423,7 +423,9 @@ def end_drill(request: Request, conn=Depends(get_db)):
         raise HTTPException(status_code=404, detail="No drill is running")
     who = actor(request, conn)
     summary = situation.end_drill(conn)
-    event(conn, f"Drill ended: {summary['tasks_done']} task{'s' if summary['tasks_done'] != 1 else ''} done in "
-                f"{summary['elapsed_s'] // 60} minutes ({who})")
+    hours = summary["elapsed_s"] / 3600
+    length = f"{summary['elapsed_s'] // 60} min" if hours < 1 else f"{hours:.0f} h"
+    jobs = f"{summary['tasks_done']} job{'s' if summary['tasks_done'] != 1 else ''} ticked"
+    event(conn, f"Drill ended after {length}: {jobs} ({who})")
     readiness.refresh(request, conn)               # a drill just now is ten points of practice
     return view_for(request, conn)

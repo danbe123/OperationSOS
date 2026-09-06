@@ -75,6 +75,8 @@ def test_reader_urls(conn, env):
     rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
     assert library.reader_url(rows["wikipedia_en_100_mini_2026-01"]) == "/read/wikipedia_en_100_mini_2026-01/"
     assert library.reader_url(rows["sos-test-pdf"]) == "/doc/sos-test-pdf"
+    assert library.file_url(rows["sos-test-pdf"]) == "/docs/core/" + str(rows["sos-test-pdf"]["dest"]).rsplit("/", 1)[-1]
+    assert library.file_url(rows["wikipedia_en_100_mini_2026-01"]) is None
     assert library.reader_url(rows["nrr-2025"]) is None
     assert library.reader_url(rows["uk-ie"]) is None
     conn.execute("UPDATE library_items SET reader_home='A/Main_Page' WHERE id='wikipedia_en_100_mini_2026-01'")
@@ -92,7 +94,7 @@ def test_library_response_groups_by_category_in_order(conn, env):
     ref = next(c for c in resp["categories"] if c["id"] == "reference")
     item = ref["items"][0]
     assert set(item) == {"id", "title", "kind", "tier", "category", "scenarios", "size_bytes", "as_at", "licence",
-                         "available", "url", "description", "drive_label"}
+                         "available", "url", "file_url", "description", "drive_label"}
     assert item["available"] is True and item["url"].startswith("/read/")
 
 

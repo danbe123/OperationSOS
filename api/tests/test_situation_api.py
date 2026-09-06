@@ -191,7 +191,7 @@ def test_a_drill_runs_and_puts_everything_back(client):
     assert view["conditions"]["power"]["state"] == "working" and view["conditions"]["water"]["note"] == "Real"
     assert not any(t["id"] == "fill-bath" for t in view["tasks"])          # the power is back on
     assert not any(t["done"] for t in view["tasks"])                        # the drill's ticks went with it
-    assert any(t.startswith("Drill ended: 1 task done in 360 minutes (drill)") for t in events(client))
+    assert any(t.startswith("Drill ended after 6 h: 1 job ticked (drill)") for t in events(client))
     assert client.delete("/api/drill").status_code == 404
 
 
