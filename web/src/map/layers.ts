@@ -53,25 +53,57 @@ export type Annotations = {
   /** The straight line drawn to a facility, and the line being measured. */
   route: string;
   measure: string;
-  /** The halo behind every label the box draws. */
+  /** The ink a caption is written in, and the halo behind it. The two are opposites and are the one
+   * pair that must never be read from the mark they name: "⌂ Home" written in the home marker's own
+   * white ring, over a white halo, is a white word on white paper. */
+  labelInk: string;
   halo: string;
+  /** How thick a ring the measuring points carry. Field draws them as bare orange dots, as it always
+   * has; Mono needs the ring to keep a white dot off a white road. */
+  measureRing: number;
 };
 
 const FIELD_ANNOTATIONS: Annotations = {
   pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
   home: '#1b5e20', homeStroke: '#ffffff',
-  route: '#1b5e20', measure: '#ff3d00', halo: '#ffffff',
+  route: '#1b5e20', measure: '#ff3d00',
+  labelInk: '#000000', halo: '#ffffff', measureRing: 0,
 };
 
 /** White on black, and a light grey where two things must be told apart without hue. */
 const MONO_ANNOTATIONS: Annotations = {
   pin: '#ffffff', label: '#d0d0d0', pinStroke: '#000000',
   home: '#000000', homeStroke: '#ffffff',
-  route: '#ffffff', measure: '#ffffff', halo: '#000000',
+  route: '#ffffff', measure: '#ffffff',
+  labelInk: '#ffffff', halo: '#000000', measureRing: 1.5,
 };
 
 export function annotations(theme: Theme): Annotations {
   return theme === 'mono' ? MONO_ANNOTATIONS : FIELD_ANNOTATIONS;
+}
+
+/** The paint for every layer the box draws over the base map, keyed by layer id.
+ *
+ * One table, so what the screen paints and what a test reads are the same object rather than two
+ * copies of the same intention that can drift apart. `MapView` adds each layer with its entry and
+ * sets the same entry again afterwards, which is what repaints a layer carried across the style
+ * reload a theme switch causes. */
+export function annotationPaint(theme: Theme): Record<string, Record<string, unknown>> {
+  const c = annotations(theme);
+  const caption = { 'text-color': c.labelInk, 'text-halo-color': c.halo, 'text-halo-width': 1.5 };
+  return {
+    'sos-pins-point': {
+      'circle-radius': 8,
+      'circle-color': ['match', ['get', 'kind'], 'label', c.label, c.pin],
+      'circle-stroke-color': c.pinStroke, 'circle-stroke-width': 2,
+    },
+    'sos-pins-label': { ...caption },
+    'sos-home-point': { 'circle-radius': 11, 'circle-color': c.home, 'circle-stroke-color': c.homeStroke, 'circle-stroke-width': 3 },
+    'sos-home-label': { ...caption },
+    'sos-route-line': { 'line-color': c.route, 'line-width': 4, 'line-dasharray': [3, 1.5] },
+    'sos-measure-line': { 'line-color': c.measure, 'line-width': 3, 'line-dasharray': [2, 1] },
+    'sos-measure-point': { 'circle-radius': 5, 'circle-color': c.measure, 'circle-stroke-color': c.pinStroke, 'circle-stroke-width': c.measureRing },
+  };
 }
 
 /** How one overlay is painted in this theme. The overlay's own colour is the manifest's, and Field

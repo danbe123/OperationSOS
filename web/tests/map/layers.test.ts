@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Map as MlMap } from 'maplibre-gl';
 import { FakeMap } from './fakeMap';
-import { annotations, carryStyleAcross, overlayPaint, terrainSpec, addTerrain, setTerrainVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
+import { annotationPaint, annotations, carryStyleAcross, overlayPaint, terrainSpec, addTerrain, setTerrainVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
 import { mapConfig } from '../fixtures/api';
 
 vi.mock('maplibre-gl', () => ({ default: { addProtocol: vi.fn() }, addProtocol: vi.fn() }));
@@ -67,13 +67,54 @@ describe('annotation colours', () => {
     expect(annotations('field')).toEqual({
       pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
       home: '#1b5e20', homeStroke: '#ffffff',
-      route: '#1b5e20', measure: '#ff3d00', halo: '#ffffff',
+      route: '#1b5e20', measure: '#ff3d00',
+      labelInk: '#000000', halo: '#ffffff', measureRing: 0,
     });
+  });
+
+  /** What the map actually paints, not just what the table holds: every one of these is a value the
+   * Field map had before the themes were pulled out into a table, and every one of them is a way of
+   * writing something invisible if a token is wired to the wrong property. */
+  it('paints the Field layers exactly as it did before the tokens existed', () => {
+    const p = annotationPaint('field');
+    // Captions are black ink on a white halo. Written in the mark's own colour instead, the home
+    // caption is white on a white halo — an invisible word — and pin captions turn amber.
+    expect(p['sos-home-label']).toEqual({ 'text-color': '#000000', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 });
+    expect(p['sos-pins-label']).toEqual({ 'text-color': '#000000', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 });
+    // Measuring points are bare orange dots on paper: no ring, as before.
+    expect(p['sos-measure-point']).toEqual({ 'circle-radius': 5, 'circle-color': '#ff3d00', 'circle-stroke-color': '#000000', 'circle-stroke-width': 0 });
+    expect(p['sos-measure-line']).toEqual({ 'line-color': '#ff3d00', 'line-width': 3, 'line-dasharray': [2, 1] });
+    expect(p['sos-home-point']).toEqual({ 'circle-radius': 11, 'circle-color': '#1b5e20', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 });
+    expect(p['sos-route-line']).toEqual({ 'line-color': '#1b5e20', 'line-width': 4, 'line-dasharray': [3, 1.5] });
+    expect(p['sos-pins-point']).toEqual({
+      'circle-radius': 8, 'circle-color': ['match', ['get', 'kind'], 'label', '#1e88e5', '#ffb000'],
+      'circle-stroke-color': '#000000', 'circle-stroke-width': 2,
+    });
+  });
+
+  it('writes Mono captions white on a black halo, and rings the measuring points', () => {
+    const p = annotationPaint('mono');
+    expect(p['sos-home-label']).toEqual({ 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.5 });
+    expect(p['sos-pins-label']).toEqual({ 'text-color': '#ffffff', 'text-halo-color': '#000000', 'text-halo-width': 1.5 });
+    // A white dot over a white road needs the ring Field does not.
+    expect(p['sos-measure-point']['circle-stroke-width']).toBe(1.5);
+    expect(p['sos-measure-point']['circle-stroke-color']).toBe('#000000');
+    // The home marker is the one drawn inside out: black disc, white ring.
+    expect(p['sos-home-point']['circle-color']).toBe('#000000');
+    expect(p['sos-home-point']['circle-stroke-color']).toBe('#ffffff');
+  });
+
+  it('names a paint entry for every layer the box draws, in both themes', () => {
+    const ids = ['sos-pins-point', 'sos-pins-label', 'sos-home-point', 'sos-home-label', 'sos-route-line', 'sos-measure-line', 'sos-measure-point'];
+    for (const theme of ['field', 'mono'] as const) expect(Object.keys(annotationPaint(theme)).sort()).toEqual([...ids].sort());
   });
 
   it('draws every annotation in Mono without a hue anywhere', () => {
     const c = annotations('mono');
-    for (const [name, value] of Object.entries(c)) expect(value, name).toMatch(GREY);
+    for (const [name, value] of Object.entries(c)) {
+      if (typeof value === 'number') continue;   // measureRing is a width, not a colour
+      expect(value, name).toMatch(GREY);
+    }
     // Pins, the measuring line and the line to a facility are white; the label point is the one
     // thing told from a pin by tone rather than by hue, so it is a light grey rather than white.
     expect([c.pin, c.measure, c.route]).toEqual(['#ffffff', '#ffffff', '#ffffff']);
@@ -83,9 +124,12 @@ describe('annotation colours', () => {
     // as another dropped pin.
     expect(c.home).toBe('#000000');
     expect(c.homeStroke).toBe('#ffffff');
-    // Whatever the sheet under it, an annotation carries its own outline and its labels a black halo.
+    // Whatever the sheet under it, an annotation carries its own outline, and a caption is white ink
+    // on a black halo rather than the colour of the mark it names.
     expect(c.pinStroke).toBe('#000000');
     expect(c.halo).toBe('#000000');
+    expect(c.labelInk).toBe('#ffffff');
+    expect(c.labelInk).not.toBe(c.halo);
   });
 });
 
