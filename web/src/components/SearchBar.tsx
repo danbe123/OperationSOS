@@ -24,12 +24,15 @@ export function SearchBar({
   const [active, setActive] = useState(-1);
   const listId = useId();
   const abortRef = useRef<AbortController | null>(null);
+  // Suggestions answer typing. Arriving on a screen that already carries a term (Find, from the URL)
+  // must not drop a list of guesses over the results the reader just asked for.
+  const typed = useRef(false);
 
-  useEffect(() => setQ(initial), [initial]);
+  useEffect(() => { setQ(initial); typed.current = false; }, [initial]);
 
   useEffect(() => {
     const term = q.trim();
-    if (term.length < SUGGEST_MIN_CHARS) {
+    if (!typed.current || term.length < SUGGEST_MIN_CHARS) {
       setItems([]);
       setOpen(false);
       return;
@@ -96,7 +99,7 @@ export function SearchBar({
         placeholder={hint}
         value={q}
         autoFocus={autoFocus}
-        onChange={(e) => setQ(e.target.value)}
+        onChange={(e) => { typed.current = true; setQ(e.target.value); }}
         onFocus={() => items.length > 0 && setOpen(true)}
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}

@@ -68,19 +68,20 @@
   .mainnav-list { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
   .rail-brand {
     display: block;
-    padding: 2px 0 8px;
+    padding: 2px 0 6px;
     color: var(--signal);
-    font: 400 28px/1 var(--font-display);
+    font: 400 26px/1 var(--font-display);
     letter-spacing: 0.06em;
     text-align: center;
     text-decoration: none;
   }
   :root[data-theme="vault"] .rail-brand { text-shadow: var(--glow); }
   :root[data-theme="field"] .rail-brand { font: 700 20px/1 var(--font-heading); letter-spacing: 0; }
-  .rail-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+  .rail-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line); }
+  /* Seven rows and a theme button have to fit 480 px without the rail scrolling. */
   .rail-dest {
     min-height: var(--touch);
-    padding: 6px 2px;
+    padding: 4px 2px;
     border-top: 0;
     border-left: 3px solid transparent;
     border-radius: var(--radius);

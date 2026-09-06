@@ -108,7 +108,7 @@ export function Stock({ refreshKey = 0 }: { refreshKey?: number }) {
     return { title: c.title, days: Math.min(...inCat.map((i) => i.days_left as number)) };
   }).filter((x): x is { title: string; days: number } => x !== null);
   return (
-    <section className="panel" id="stock">
+    <section className="panel" id="stock" aria-label="Stock">
       <h2>Stock</h2>
       <p className="muted">Days left are for {people} {people === 1 ? 'person' : 'people'} at the rates you set. Water: 3 litres per person a day covers drinking and basic hygiene.</p>
       {q.error && <p className="warning">Stock unavailable: {q.error}</p>}

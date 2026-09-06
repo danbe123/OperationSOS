@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within, act } from '@testing-library/react';
+import { screen, within, act, waitFor } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { condition, makeView, page, playbooks, powerOffView, view } from '../fixtures/api';
@@ -31,7 +31,7 @@ describe('the shell', () => {
     vi.spyOn(api, 'page').mockResolvedValue(page);
     const { router } = renderRoute('/p/pmr446');
     expect(await screen.findByRole('heading', { level: 1, name: 'PMR446 radio' })).toBeInTheDocument();
-    expect(document.title).toBe('PMR446 radio · SOS');
+    await waitFor(() => expect(document.title).toBe('PMR446 radio · SOS'));
     expect(screen.getAllByRole('button', { name: /Theme: Vault/ })).toHaveLength(1);
     await act(async () => { screen.getByRole('button', { name: /Back/ }).click(); });
     expect(router.state.location.pathname).toBe('/');

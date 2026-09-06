@@ -25,7 +25,9 @@ function off(state: FixtureState, ...ids: ('power' | 'water' | 'mobile' | 'landl
 }
 
 async function settle(page: Page) {
-  await page.waitForLoadState('networkidle').catch(() => undefined);
+  // The map keeps a tile request in flight for as long as it is on screen, so networkidle is a
+  // best-effort settle with a short leash rather than something to wait 30 seconds for.
+  await page.waitForLoadState('networkidle', { timeout: 2500 }).catch(() => undefined);
   await page.waitForTimeout(250);
 }
 
@@ -34,6 +36,7 @@ const SHOTS: Shot[] = [
   { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Do this now' })).toBeVisible(); } },
   { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByTestId('status-strip')).toBeVisible(); } },
   { name: 'now-drill', go: async (p, s) => { off(s, 'power'); s.drill = true; s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/'); await expect(p.getByRole('group', { name: 'Situation now' })).toBeVisible(); } },
+  { name: 'now-engine-down', go: async (p) => { await p.route('**/api/situation/view', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"detail":"the engine is not answering"}' })); await p.goto('/'); await expect(p.getByText(/The situation is unavailable/)).toBeVisible(); } },
   { name: 'now-empty-household', go: async (p) => { await p.goto('/'); await expect(p.getByRole('region', { name: 'Household and stock' })).toBeVisible(); } },
   { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('heading', { level: 1, name: 'Situation' })).toBeVisible(); } },
   { name: 'situation-carry', go: async (p) => { await p.goto('/situation'); await p.getByRole('button', { name: 'Export as codes' }).click(); await expect(p.getByRole('group', { name: 'Situation codes' })).toBeVisible(); await p.getByRole('group', { name: 'Situation codes' }).scrollIntoViewIfNeeded(); } },
@@ -77,7 +80,7 @@ const SHOTS: Shot[] = [
   { name: 'not-found', go: async (p) => { await p.goto('/nowhere'); await expect(p.getByRole('heading', { level: 1, name: 'Not found' })).toBeVisible(); } },
   { name: 'connect-a-phone', go: async (p) => { await p.goto('/'); await p.getByRole('button', { name: 'Connect a phone' }).click(); await expect(p.getByRole('dialog', { name: 'Connect a phone' })).toBeVisible(); await p.waitForTimeout(400); } },
   { name: 'keyboard', go: async (p) => { await p.goto('/?kiosk=1'); await p.getByRole('searchbox').first().click(); await expect(p.getByTestId('keyboard')).toBeVisible(); } },
-  { name: 'notice', go: async (p) => { await p.goto(`/read/${WIKI}/A/Water`); await p.waitForTimeout(500); await p.getByTitle('Article').contentFrame().getByRole('link', { name: /BBC/i }).first().click().catch(() => undefined); await p.waitForTimeout(400); } },
+  { name: 'notice', go: async (p) => { await p.goto(`/read/${WIKI}/A/Water`); await p.waitForTimeout(500); await p.getByTitle('Article').contentFrame().getByRole('link').filter({ hasText: /http/ }).first().click({ timeout: 3000 }).catch(() => undefined); await p.waitForTimeout(400); } },
 ];
 
 for (const size of SIZES) {

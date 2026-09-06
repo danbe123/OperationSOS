@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, within, waitFor } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { playbooks, powerOffView, stockResponse, view } from '../fixtures/api';
@@ -13,7 +13,7 @@ describe('Now', () => {
     vi.spyOn(api, 'neighbours').mockResolvedValue([]);
     renderRoute('/');
     expect(await screen.findByRole('heading', { level: 1, name: 'Now' })).toBeInTheDocument();
-    expect(document.title).toBe('Now · SOS');
+    await waitFor(() => expect(document.title).toBe('Now · SOS'));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     const household = await screen.findByRole('region', { name: 'Household and stock' });

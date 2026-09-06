@@ -67,7 +67,7 @@ export function EventLog({ compact = false }: { compact?: boolean }) {
     }
   };
   return (
-    <section className="panel" id="log">
+    <section className="panel" id="log" aria-label="Event log">
       {!compact && <h2>Event log</h2>}
       <p className="muted">What happened and when: "water off", "heard sirens", "gave Sam 5ml paracetamol". The time is stamped for you.</p>
       <form className="row no-print" onSubmit={(e) => void add(e)} aria-label="Log an event">

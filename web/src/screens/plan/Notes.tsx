@@ -72,7 +72,7 @@ export function Notes() {
     }
   };
   return (
-    <section className="panel" id="notes">
+    <section className="panel" id="notes" aria-label="Shared notes">
       <h2>Shared notes</h2>
       <p className="muted">Everyone on the hotspot sees these notes.</p>
       <form className="stack no-print" onSubmit={(e) => void add(e)}>

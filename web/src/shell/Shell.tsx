@@ -37,7 +37,7 @@ function MainNav({ pathname, wide }: { pathname: string; wide: boolean }) {
       <div className="mainnav-list">
         {DESTINATIONS.map((d) => (
           <Link key={d.label} className="rail-dest" to={d.to} aria-current={d.match(pathname) ? 'page' : undefined}>
-            <Icon name={d.icon} size={22} />
+            <Icon name={d.icon} size={20} />
             <span>{d.label}</span>
           </Link>
         ))}

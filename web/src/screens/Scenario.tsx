@@ -64,7 +64,9 @@ function ScenarioTasks({ playbook, onItems }: { playbook: Playbook; onItems: (it
     <aside className="panel scenario-tasks" id="response-checklist" aria-labelledby="checklist-heading">
       <div className="panel-head">
         <h2 id="checklist-heading">Checklist</h2>
-        <span className="badge">{done} of {total} done</span>
+        {/* The shared checklist says "n of m done, last change …" for itself; only the engine's own
+            list needs the count spelled out here. */}
+        {live.length > 0 && <span className="badge">{done} of {total} done</span>}
       </div>
       <progress className="progress-line" aria-label="Checklist completion" value={done} max={Math.max(1, total)} />
       <p className="muted">Shared with everyone on this box.</p>

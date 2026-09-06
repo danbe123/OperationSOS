@@ -85,7 +85,7 @@ export function Household({ onChanged }: { onChanged?: () => void } = {}) {
     }
   };
   return (
-    <section className="panel" id="household">
+    <section className="panel" id="household" aria-label="Household">
       <h2>Household</h2>
       <p className="muted">Who lives here, what they need and who to call. Medical needs also show on the Medical screen.</p>
       {q.error && <p className="warning">Household unavailable: {q.error}</p>}

@@ -173,3 +173,91 @@ a default and were changed before building:
 - The first draft kept the six tool tiles on Now. They are a second navigation competing with the
   rail, so they moved to Guides, which is where the manual lives, and Now carries only what the
   situation asks for plus the household and stock summary.
+
+## 10. The screenshots
+
+`web/scripts/screenshots.mjs` captures every entry below at **853x480** (the kiosk, in kiosk mode)
+and **390** wide (a phone), in **vault**, **field** and **blackout**, from the Playwright fixture
+server. It rebuilds first, so a later round cannot photograph an older interface.
+
+```
+cd web && node scripts/screenshots.mjs            # into docs/superpowers/critique/round-0
+cd web && node scripts/screenshots.mjs round-3    # a later round
+cd web && node scripts/screenshots.mjs round-3 map   # only the shots whose name contains "map"
+```
+
+Each file is `round-0/<name>-<width>-<theme>.png`. The inventory entry each name covers:
+
+| Inventory entry | Screenshot name | State reached |
+|---|---|---|
+| `/` Now, peacetime | `now-peacetime` | readiness, gaps, the drill button |
+| `/` Now, conditions off | `now-power-off` | power off an hour, tasks, forecast, proposals |
+| `/` Now, phones down | `now-phones-down` | `calls: hidden`, the no-phones way in |
+| `/` Now, drill | `now-drill` | drill running on a scenario |
+| `/` Now, engine unreachable | `now-engine-down` | the box says so and keeps the rest of itself |
+| `/` Now, empty household and stock | `now-empty-household` | nothing registered yet |
+| `/situation` sheet | `situation-sheet` | two conditions off, states, since, note, sensors |
+| `/situation` carry | `situation-carry` | the export codes with Previous and Next |
+| `/situation` drill | `situation-drill` | the drill form with a scenario chosen |
+| `/tasks` | `tasks` | the four buckets with assignment |
+| `/tasks` empty | `tasks-empty` | nothing to do |
+| `/board` scenario active | `board` | conditions, next jobs, sunset, bulletin, stock, log |
+| `/board` peacetime | `board-peacetime` | everything working |
+| `/guides` | `guides` | twenty situations, then pages and tools |
+| `/guides` filtered | `guides-filtered` | one filter field across every kind |
+| `/s/:slug` Right now | `scenario-right-now` | tabs, guidance beside the task list |
+| `/s/:slug` a later phase | `scenario-later` | first 72 hours |
+| `/m/:slug` | `module` | standalone module with read-aloud |
+| `/p/:slug` | `page` | a reference page with its table |
+| `/medical` | `medical` | 999 line, quick cards, NHS A to Z, library |
+| `/medical` phones down | `medical-phones-down` | 999 will not connect |
+| `/medical/card/:slug` | `quick-card` | extra-large steps and the warning |
+| `/medical/dose` | `childrens-doses` | a dose for a four-year-old |
+| `/map` | `map` | the one toolbar over the map |
+| `/map` layers | `map-layers` | bases, terrain, overlays with coverage |
+| `/map` nearby | `map-nearby` | facilities with the nearest and its runners-up |
+| `/map` home | `map-home` | home set, flood zone, grid reference |
+| `/map` share | `map-share` | the link and its QR code |
+| `/search` Find, empty | `find-empty` | what it searches |
+| `/search` Find, results | `find-results` | source chips, results, the library behind |
+| `/library` | `library` | categories, item cards, drive badges |
+| `/read/:id/*` | `reader` | an article with the theme injected |
+| `/doc/:id` missing | `document-missing` | a document the box does not have |
+| `/ai` off | `assistant-off` | the card explaining how to turn it on |
+| `/plan` household | `household` | the register with medical needs |
+| `/plan` neighbours | `neighbours` | the street list and who to check on |
+| `/plan` stock | `stock` | days left with its badges |
+| `/fieldcraft` | `field-craft` | the field craft pages |
+| `/radio` | `phone-and-radio` | the comms pages and the numbers |
+| `/tools` | `tools` | the tool list |
+| `/tools/timers` | `timers` | a countdown running, the CPR beat, fallout |
+| `/tools/sun` | `sun-and-moon` | sun times and the moon phase |
+| `/tools/calc` | `calculators` | generator, battery, solar, rations |
+| `/tools/log` | `event-log` | the log and its entry field |
+| `/system` | `system` | status, hotspot, power, AI, settings, PIN, updates |
+| `*` not found | `not-found` | the way back |
+| Connect a phone panel | `connect-a-phone` | both QR codes and the addresses |
+| The on-screen keyboard | `keyboard` | the kiosk keyboard under the search field |
+| The notices toast | `notice` | "not in the library" from a reader link |
+
+## 11. What the first look at the screenshots changed
+
+The plan was built, then photographed, then fixed. Everything below came from looking at round 0's
+own screenshots before declaring it done:
+
+- **The chosen condition state was drawn as the primary action**, so "off" appeared in the accent
+  green. Each state now wears its own colour and keeps its symbol.
+- **The board carried the rail and the band**, which said in small type what the board says in large.
+  `/board` is now the whole screen; a tap anywhere still comes back.
+- **The scenario's two panes split at 900 px**, so the kiosk — 853 wide, 757 once the rail is off —
+  got one column. The split is now 800 px, and the guidance sits beside its task list on the kiosk.
+- **The rail did not fit 480 px** and scrolled the theme button out of reach. The rows lost four
+  pixels of padding each and the icons two, and the whole rail now fits.
+- **The compact search field said "Search Wikipedia, NHS, ma…"**. It says "Search the box".
+- **Find showed a list of suggestions over the results it had just been asked for**, because the term
+  arrived from the URL. Suggestions now answer typing only.
+- **Guides offered a "Field craft (0)" chip** and called the situations "playbooks", a word the
+  household never has to learn. Empty chips are gone and the word with them.
+- **The checklist counted itself twice**, in a badge and in its own summary line.
+- **The plan's sections were not landmarks** — a `<section>` with no name is not a region — so a
+  screen reader had no way to jump between the household, the street list, the stock and the log.

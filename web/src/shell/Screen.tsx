@@ -9,7 +9,7 @@ import { useWide } from './useWide';
  * from, and the search field that is on every screen. Navigation lives in the shell, so no screen
  * draws an app bar of its own. */
 export function Screen({
-  title, actions, children, className, back = true, search = true, fill = false, head = true,
+  title, actions, children, className, back = true, search = true, fill = false,
 }: {
   title: string;
   actions?: ReactNode;
@@ -18,7 +18,6 @@ export function Screen({
   back?: boolean;
   search?: boolean;
   fill?: boolean;
-  head?: boolean;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,19 +33,17 @@ export function Screen({
   const classes = ['screen', fill ? 'screen-fill' : '', className ?? ''].filter(Boolean).join(' ');
   return (
     <div className={classes}>
-      {head && (
-        <header className="screen-head">
-          {back && (
-            <button type="button" className="btn btn-quiet btn-small screen-head-back no-print" onClick={goBack}>
-              <Icon name="back" size={20} /><span>Back</span>
-            </button>
-          )}
-          <h1>{title}</h1>
-          {actions && <div className="screen-head-actions no-print">{actions}</div>}
-          {!wide && <ThemeButton className="screen-head-theme no-print" />}
-          {search && wide && <div className="screen-head-search no-print"><SearchBar compact /></div>}
-        </header>
-      )}
+      <header className="screen-head">
+        {back && (
+          <button type="button" className="btn btn-quiet btn-small screen-head-back no-print" onClick={goBack}>
+            <Icon name="back" size={20} /><span>Back</span>
+          </button>
+        )}
+        <h1>{title}</h1>
+        {actions && <div className="screen-head-actions no-print">{actions}</div>}
+        {!wide && <ThemeButton className="screen-head-theme no-print" />}
+        {search && wide && <div className="screen-head-search no-print"><SearchBar compact /></div>}
+      </header>
       {children}
     </div>
   );
