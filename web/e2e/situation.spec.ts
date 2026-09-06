@@ -22,7 +22,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   // Now leads with what to do, and the band says what is off
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   const band = page.getByRole('group', { name: 'Situation now' });
-  await expect(band.getByRole('link', { name: /Mains power: off for 1 h/ })).toBeVisible();
+  await expect(band.getByRole('link', { name: '1 off' })).toBeVisible();
   const coming = page.getByRole('region', { name: 'Coming up' });
   await expect(coming).toContainText('Freezer food unsafe');
   await expect(coming).toContainText('in 23 h');
@@ -41,8 +41,8 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
 
   // the band follows onto every other screen
   await page.goto('/p/pmr446');
-  await expect(band.getByRole('link', { name: /Mains power: off/ })).toBeVisible();
-  await band.getByRole('link', { name: 'Situation', exact: true }).click();
+  await expect(band.getByRole('link', { name: '1 off' })).toBeVisible();
+  await band.getByRole('link', { name: '1 off' }).click();
 
   // end with everything working again
   await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' }).click();
@@ -65,7 +65,6 @@ test('a drill runs the whole thing without touching the real conditions', async 
   const band = page.getByRole('group', { name: 'Situation now' });
   await expect(band).toContainText('Drill');
   await expect(band).toContainText('National grid collapse');
-  await band.getByRole('link', { name: 'Situation', exact: true }).click();
   await page.getByRole('button', { name: 'End drill' }).click();
   await expect(page.getByRole('button', { name: 'End drill' })).toBeHidden();
   // The debrief is a modal now, and a modal is answered before the box carries on.
@@ -96,7 +95,7 @@ test('the sheet and Now fit a phone as well as the kiosk', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   // A phone's band carries the count and the way to the sheet; the heading names the service.
-  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('1 thing off');
+  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('1 off');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Water off');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

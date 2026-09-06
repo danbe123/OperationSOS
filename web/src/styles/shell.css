@@ -129,8 +129,8 @@
 
 /* One row, at every width. The band used to wrap: three conditions off made it 113 px on the kiosk
    and 169 px on a phone, and the first job the household had to do was 87 % of the way down the
-   screen. Chips past what fits collapse into "+2 more" (SituationBand.chipBudget), and the row
-   itself can never grow a second line. */
+   screen. What's wrong is now one count, never a chip per service, so the row can never grow a
+   second line. */
 .band {
   order: -1;
   display: flex;
@@ -149,10 +149,8 @@
 
 .band-scenario { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--ink); text-decoration: none; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .band-scenario .muted { font-weight: 400; }
-.band-open { margin-left: auto; flex-shrink: 0; }
-.band-chips { display: flex; gap: 6px; flex-wrap: nowrap; min-width: 0; }
 /* A count of jobs is not a condition: it gets the small button, not the amber pill. */
-.band-jobs, .band-more { flex-shrink: 0; }
+.band-off, .band-jobs { flex-shrink: 0; margin-left: auto; }
 
 /* --- the screen head ------------------------------------------------------------------------ */
 
@@ -167,11 +165,10 @@
 .screen-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .screen-head-search { flex: 0 1 300px; min-width: 220px; }
 @media (max-width: 699px), (max-height: 439px) {
-  /* One chip, the count of jobs and the way to the sheet have to share 390 pixels, so the band
-     spends less on padding than the rest of the screen does. */
+  /* The count of what's off and the count of jobs have to share 390 pixels, so the band spends
+     less on padding than the rest of the screen does. */
   .band { gap: 6px; padding-left: 10px; padding-right: 10px; }
-  .band-jobs, .band-open { padding: 4px 8px; }
-  .cond-chip-compact { gap: 4px; padding: 2px 8px; }
+  .band-jobs, .band-off { padding: 4px 8px; }
   /* Back and the theme button share the top line; the title has the next line to itself. */
   .screen-head { padding: 8px var(--gutter) 4px; }
   .screen-head-back { order: 1; }

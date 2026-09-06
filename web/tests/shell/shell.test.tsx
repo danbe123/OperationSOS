@@ -44,7 +44,7 @@ describe('the situation band', () => {
   beforeEach(() => vi.useFakeTimers({ now: Date.parse(VIEW_NOW), toFake: ['Date'] }));
   afterEach(() => vi.useRealTimers());
 
-  it('carries what is wrong, the clock, the jobs and the way to the sheet, in one row', async () => {
+  it('carries what is wrong, the clock and the jobs, in one row', async () => {
     vi.spyOn(api, 'page').mockResolvedValue(page);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       ...powerOffView,
@@ -53,17 +53,15 @@ describe('the situation band', () => {
     renderRoute('/p/pmr446');
     const band = await screen.findByRole('group', { name: 'Situation now' });
     const links = within(band).getAllByRole('link');
-    // One row at every width: on a phone with a scenario running there is no room for a chip, so
-    // the two conditions fold into one control that says how many and opens the sheet. The count
-    // of jobs is not dressed as a condition.
+    // One row at every width: what's wrong is a single count, never a chip per service.
     expect(links.map((a) => a.textContent?.trim())).toEqual([
-      expect.stringContaining('National grid collapse'), '2 things off', '3 to do', 'Situation',
+      expect.stringContaining('National grid collapse'), '2 off', '3 to do',
     ]);
-    expect(within(band).getByRole('link', { name: '2 things off' })).toHaveAttribute('href', '/situation');
-    expect(within(band).getByRole('link', { name: 'Situation' })).toHaveAttribute('href', '/situation');
+    expect(within(band).getByRole('link', { name: '2 off' })).toHaveAttribute('href', '/situation');
+    expect(within(band).queryByRole('link', { name: /Mains power/ })).toBeNull();
   });
 
-  it('shows the chips it has room for on the kiosk, and folds the rest', async () => {
+  it('says the same thing on the kiosk, in one row', async () => {
     const narrow = window.matchMedia;
     window.matchMedia = ((query: string) => ({
       matches: query.includes('min-width: 700px'), media: query, addEventListener: () => {}, removeEventListener: () => {},
@@ -76,10 +74,12 @@ describe('the situation band', () => {
       }));
       renderRoute('/p/pmr446');
       const band = await screen.findByRole('group', { name: 'Situation now' });
-      // The band says how long, counted from the instant the box stored.
-      expect(within(band).getByRole('link', { name: 'Mains power: off for 1 h' })).toHaveAttribute('href', '/situation#power');
-      expect(within(band).getByRole('link', { name: '+1 more' })).toHaveAttribute('href', '/situation');
-      expect(within(band).queryByRole('link', { name: /Mobile network/ })).toBeNull();
+      const links = within(band).getAllByRole('link');
+      expect(links.map((a) => a.textContent?.trim())).toEqual([
+        expect.stringContaining('National grid collapse'), '2 off', '3 to do',
+      ]);
+      expect(within(band).getByRole('link', { name: '2 off' })).toHaveAttribute('href', '/situation');
+      expect(within(band).queryByRole('link', { name: /Mains power/ })).toBeNull();
     } finally {
       window.matchMedia = narrow;
     }
@@ -98,7 +98,7 @@ describe('the situation band', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/');
     // On a phone the band carries the count; Now's own heading names the services.
-    expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('2 things off');
+    expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('2 off');
   });
 
   it('flies the drill flag on every screen', async () => {
