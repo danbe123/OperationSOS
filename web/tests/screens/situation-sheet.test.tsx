@@ -11,7 +11,7 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/situation');
-    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    const rows = await screen.findByRole('region', { name: 'What is working' });
     expect(within(rows).getAllByRole('listitem')).toHaveLength(10);
     const power = within(rows).getByRole('group', { name: 'Mains power' });
     expect(within(power).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['✓Working', 'Patchy', 'Off']);
@@ -44,7 +44,7 @@ describe('The situation sheet', () => {
     }));
     const confirm = vi.spyOn(api, 'confirmCondition').mockResolvedValue(condition('power', 'off'));
     renderRoute('/situation');
-    const row = (await screen.findByRole('region', { name: 'Conditions' })).querySelector('#power') as HTMLElement;
+    const row = (await screen.findByRole('region', { name: 'What is working' })).querySelector('#power') as HTMLElement;
     expect(row).toHaveTextContent('Set from kiosk at');
     expect(within(row).getByRole('status')).toHaveTextContent('Still off?');
     await userEvent.setup().click(within(row).getByRole('button', { name: 'Confirm, still off' }));
@@ -56,7 +56,7 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation');
-    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    const rows = await screen.findByRole('region', { name: 'What is working' });
     // A tick, a triangle and a cross on all three buttons at once said nothing about which one the
     // box is holding: the symbol belongs to the answer, not to the options.
     for (const [name, symbol] of [['Mains power', '✕'], ['Mobile network', '▲'], ['Water supply', '✓']] as const) {
@@ -99,7 +99,7 @@ describe('The situation sheet', () => {
       conditions: { gas: condition('gas', 'working', { set_by: '', updated_at: '', since: null }) } as never,
     }));
     renderRoute('/situation');
-    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    const rows = await screen.findByRole('region', { name: 'What is working' });
     expect(rows.querySelector('#gas')).toHaveTextContent('Nobody has set this yet.');
     expect(rows.querySelector('#gas')).not.toHaveTextContent('Set from');
     // and a row somebody has set still says who and when
@@ -147,7 +147,7 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation#water');
-    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    const rows = await screen.findByRole('region', { name: 'What is working' });
     expect(rows.querySelector('#water')).not.toBeNull();
     expect(rows.querySelector('#power')).toHaveClass('cond-row-danger');
   });

@@ -18,6 +18,10 @@ test('the keyboard costs the content column its height, never the rail', async (
     await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
   }
   await expect(nav.getByRole('button', { name: /^Change the theme/ })).toBeVisible();
+  // Visible is not the same as readable: the rail must not be scrolling its own destinations, or a
+  // word is cut in half by the footer with nothing to say it was ever there.
+  const clipped = await page.locator('.mainnav-list').evaluate((el) => el.scrollHeight - el.clientHeight);
+  expect(clipped).toBeLessThanOrEqual(1);
 
   // The keyboard starts where the rail ends, so it covers the content column and nothing else.
   const kb = (await keyboard.boundingBox())!;

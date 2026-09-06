@@ -5,7 +5,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await page.goto('/');
   // peacetime: Now carries the readiness, not chips, and there is no band
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
-  const readiness = page.getByRole('region', { name: 'Situation', exact: true });
+  const readiness = page.getByRole('region', { name: 'How ready you are', exact: true });
   await expect(readiness).toContainText('How ready you are');
   // A plain sentence, not a score out of a hundred nobody was given the meaning of.
   await expect(readiness).toContainText('would help most');
@@ -96,7 +96,7 @@ test('the sheet and Now fit a phone as well as the kiosk', async ({ page }) => {
 
 test('the situation carries to another box as codes, and comes back in', async ({ page }) => {
   await page.goto('/situation');
-  const carry = page.getByRole('region', { name: 'Carry the situation' });
+  const carry = page.getByRole('region', { name: 'Carry it to another box' });
   await carry.getByRole('button', { name: 'Export as codes' }).click();
   const codes = carry.getByRole('group', { name: 'Situation codes' });
   await expect(codes).toContainText('Code 1 of');
@@ -179,7 +179,7 @@ test('the since picker opens on the time the box has stored, not on "Just now"',
 test('carrying a situation describes the paste, and says its trouble under the button', async ({ page }) => {
   await page.setViewportSize({ width: 853, height: 480 });
   await page.goto('/situation');
-  const carry = page.getByRole('region', { name: 'Carry the situation' });
+  const carry = page.getByRole('region', { name: 'Carry it to another box' });
   // There is no camera in the box, so nothing on the panel may ask for a photograph or a scan.
   await expect(carry).toContainText('type or paste each code’s text in order');
   expect(await carry.textContent()).not.toMatch(/scan|photograph|JSON/i);

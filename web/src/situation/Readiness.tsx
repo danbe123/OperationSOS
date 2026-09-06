@@ -28,7 +28,7 @@ export function Readiness() {
   // thing would be the same instruction twice, and the count above has to match what is shown.
   const gaps = view.readiness.gaps.filter((g) => !(firstRun && g.link.startsWith('/plan#household'))).slice(0, 5);
   return (
-    <section className="panel panel-signal" aria-label="Situation">
+    <section className="panel panel-signal" aria-label="How ready you are">
       <div className="panel-head">
         <h2>How ready you are</h2>
         <Link className="btn btn-small" to="/situation">Situation sheet</Link>

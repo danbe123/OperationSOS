@@ -15,6 +15,7 @@ for (const viewport of [{ width: 853, height: 480 }, { width: 360, height: 640 }
     await expect(call).toHaveCount(1);
     await expect(call).toContainText('call 999');
     const first = page.locator('.card-html ol li').first();
+    await expect(first).toBeVisible();
     expect((await call.boundingBox())!.y).toBeLessThan((await first.boundingBox())!.y);
 
     // The steps and their numbers are the display size, one step to a line — unless the card has

@@ -32,7 +32,7 @@ describe('the sheet: what the box detects', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     vi.spyOn(api, 'sensors').mockResolvedValue(sensors);
     renderRoute('/situation');
-    const panel = await screen.findByRole('region', { name: 'Detected' });
+    const panel = await screen.findByRole('region', { name: 'Detected by the box' });
     const rows = within(panel).getAllByRole('listitem');
     expect(rows).toHaveLength(4);
     expect(rows[0]).toHaveTextContent('Internet probe');
@@ -47,8 +47,8 @@ describe('the sheet: what the box detects', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     vi.spyOn(api, 'sensors').mockRejectedValue(new ApiError(404, 'Not Found'));
     renderRoute('/situation');
-    await screen.findByRole('region', { name: 'Conditions' });
-    expect(screen.queryByRole('region', { name: 'Detected' })).toBeNull();
+    await screen.findByRole('region', { name: 'What is working' });
+    expect(screen.queryByRole('region', { name: 'Detected by the box' })).toBeNull();
   });
 });
 

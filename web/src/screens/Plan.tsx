@@ -33,7 +33,7 @@ export function Plan() {
         <Household onChanged={() => setHouseholdVersion((v) => v + 1)} />
         <Neighbours />
         <Stock refreshKey={householdVersion} />
-        <section className="panel" id="plan" aria-label="The household plan">
+        <section className="panel" id="plan" aria-label="The plan">
           <h2>The plan</h2>
           {planQ.error && <p className="warning">The plan is unavailable: {planQ.error}</p>}
           {planQ.data && <Html html={planQ.data.html} />}

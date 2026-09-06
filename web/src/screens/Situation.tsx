@@ -67,7 +67,7 @@ export function Situation() {
       {error && <p className="warning">The situation is unavailable: {error}</p>}
       {loading && !view && <p className="muted">Reading the situation…</p>}
 
-      <section className="panel" aria-label="Conditions">
+      <section className="panel" aria-label="What is working">
         <div className="panel-head"><h2>What is working</h2></div>
         <p className="muted">Tap a state. Everyone on the box sees the change, and the advice follows it.</p>
         <ul className="list cond-rows">
@@ -77,7 +77,7 @@ export function Situation() {
 
       <SensorsPanel />
 
-      <section className="panel" aria-label="Situation clock" id="clock">
+      <section className="panel" aria-label="Clock" id="clock">
         <div className="stack">
           <h2>Clock</h2>
           {scenario ? (
@@ -103,7 +103,7 @@ export function Situation() {
       <SituationExport />
 
       {!view?.meta.drill && (
-        <section className="panel" aria-label="Drill" id="drill">
+        <section className="panel" aria-label="Practise a drill" id="drill">
           <div className="stack">
             <h2>Practise a drill</h2>
             <p className="muted">Pretend a situation is running, without touching the real conditions. Everything says DRILL.</p>

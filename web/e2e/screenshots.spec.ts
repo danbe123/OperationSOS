@@ -20,7 +20,7 @@ const SIZES = [
 
 /** `dim` photographs a shot in the engine's dim mode — the state it raises when the power is off and
  * it is dark. It is set after the screen is up so the theme under test stays the theme under test. */
-type Shot = { name: string; go: (page: Page, state: FixtureState) => Promise<void>; dim?: boolean };
+type Shot = { name: string; go: (page: Page, state: FixtureState) => Promise<void>; dim?: boolean; print?: boolean };
 
 const hour = () => new Date(Date.now() - 3_600_000).toISOString();
 function off(state: FixtureState, ...ids: ('power' | 'water' | 'mobile' | 'landline' | 'internet')[]) {
@@ -44,7 +44,7 @@ const SHOTS: Shot[] = [
   { name: 'now-empty-household', go: async (p) => { await p.goto('/'); await expect(p.getByText('Nobody is registered yet, so the box counts stock for one person.')).toBeVisible(); } },
   { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('heading', { level: 1, name: 'Situation' })).toBeVisible(); } },
   { name: 'situation-carry', go: async (p) => { await p.goto('/situation'); await p.getByRole('button', { name: 'Export as codes' }).click(); await expect(p.getByRole('group', { name: 'Situation codes' })).toBeVisible(); await p.getByRole('group', { name: 'Situation codes' }).scrollIntoViewIfNeeded(); } },
-  { name: 'situation-drill', go: async (p) => { await p.goto('/situation#drill'); await p.getByLabel('Drill scenario').selectOption('grid-collapse'); await p.getByRole('region', { name: 'Drill' }).scrollIntoViewIfNeeded(); } },
+  { name: 'situation-drill', go: async (p) => { await p.goto('/situation#drill'); await p.getByLabel('Drill scenario').selectOption('grid-collapse'); await p.getByRole('region', { name: 'Practise a drill' }).scrollIntoViewIfNeeded(); } },
   { name: 'tasks', go: async (p, s) => { off(s, 'power'); await p.goto('/tasks'); await expect(p.getByRole('heading', { level: 1, name: 'Things to do' })).toBeVisible(); } },
   { name: 'tasks-empty', go: async (p) => { await p.goto('/tasks'); await expect(p.getByText('Nothing to do.')).toBeVisible(); } },
   { name: 'board', go: async (p, s) => { off(s, 'power', 'water'); s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/board'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
@@ -67,7 +67,7 @@ const SHOTS: Shot[] = [
   { name: 'map-home', go: async (p) => { await p.goto('/map'); await p.getByRole('button', { name: 'Home' }).click(); await expect(p.getByRole('dialog', { name: 'Home' })).toBeVisible(); await p.waitForTimeout(800); } },
   { name: 'map-share', go: async (p) => { await p.goto('/map'); await p.getByRole('button', { name: 'Share' }).click(); await expect(p.getByRole('dialog', { name: 'Share' })).toBeVisible(); await p.waitForTimeout(800); } },
   { name: 'find-empty', go: async (p) => { await p.goto('/search'); await expect(p.getByRole('heading', { level: 1, name: 'Find' })).toBeVisible(); } },
-  { name: 'find-results', go: async (p) => { await p.goto('/search?q=water'); await expect(p.getByRole('list', { name: 'Results' })).toBeVisible(); } },
+  { name: 'find-results', go: async (p) => { await p.goto('/search?q=water'); await expect(p.getByRole('region', { name: 'From this box' })).toBeVisible(); } },
   { name: 'library', go: async (p) => { await p.goto('/library'); await expect(p.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible(); } },
   { name: 'reader', go: async (p) => { await p.goto(`/read/${WIKI}/A/Water`); await expect(p.getByTitle('Article')).toBeVisible(); await p.waitForTimeout(600); } },
   { name: 'document-missing', go: async (p) => { await p.goto('/doc/nrr-2025'); await expect(p.getByRole('heading', { level: 1 })).toBeVisible(); } },
@@ -103,6 +103,16 @@ const DIM: Shot[] = [
 ];
 SHOTS.push(...DIM);
 
+/* Print is a state in the brief's own inventory and was in none of the 336 shots of round 2 — which
+ * is how six palettes came to print black paper. These are the three things a household actually
+ * prints, photographed in the print medium with dim on, the state it prints from in a power cut. */
+const PRINT: Shot[] = [
+  { name: 'print-quick-card', print: true, dim: true, go: async (p) => { await p.goto('/medical/card/cpr-adult'); await expect(p.getByRole('heading', { level: 1, name: 'CPR (adult)' })).toBeVisible(); } },
+  { name: 'print-scenario', print: true, dim: true, go: async (p) => { await p.goto('/s/grid-collapse'); await expect(p.getByRole('heading', { name: 'Do this first' })).toBeVisible(); } },
+  { name: 'print-situation-sheet', print: true, dim: true, go: async (p) => { await p.goto('/situation'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
+];
+SHOTS.push(...PRINT);
+
 for (const size of SIZES) {
   for (const theme of THEMES) {
     test.describe(`${size.width} ${theme}`, () => {
@@ -116,10 +126,12 @@ for (const size of SIZES) {
           }, [theme, size.kiosk] as const);
           await shot.go(page, state);
           if (shot.dim) await page.evaluate(() => { document.documentElement.dataset.dim = 'on'; });
+          if (shot.print) await page.emulateMedia({ media: 'print' });
           await settle(page);
           const path = `${OUT}/${shot.name}-${size.width}-${theme}.png`;
           mkdirSync(dirname(path), { recursive: true });
-          await page.screenshot({ path });
+          // A printed page is as long as it is: the whole sheet is photographed, not the window.
+          await page.screenshot({ path, fullPage: shot.print === true });
         });
       }
     });

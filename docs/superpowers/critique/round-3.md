@@ -370,3 +370,392 @@ vault screen for a wordmark and one clock — give it `unicode-range` or load it
    probably off" (compound subjects with a singular verb), each with an "Accept" / "Not now" pair —
    eight buttons of data entry on the front door — and "Coming up" renders "**due** Fridge food unsafe
    in 2 h", which is not a sentence in any register.
+
+## Applied
+
+Every screenshot below is `docs/superpowers/critique/round-2/<name>` before and
+`docs/superpowers/critique/round-3/<name>` after, at the same width and in the same theme. The whole
+inventory was re-shot with `node scripts/screenshots.mjs round-3`, and it now carries the state
+round 3 found in none of the 336: **print**, as `print-quick-card-*`, `print-scenario-*` and
+`print-situation-sheet-*`, taken with `emulateMedia({media:'print'})` and dim on — the exact state a
+household prints from in a night-time power cut.
+
+### 1. The quick card
+
+The card is now a screen of its own shape (`screens/Card.tsx`): the title as a real `h1` at
+`--t-title` (a `.card` override beats the kiosk's own "short screens shrink the title" rule), one
+999 line, a count line, and the steps in a scrolling frame that fills what is left.
+
+- **The 999 line is one line.** `Emergency999` takes a `compact` prop for this screen only: the same
+  words at the body size with 4 px of padding instead of a panel, which gives the steps back 50–90 px
+  of a 480 px screen. Everywhere else the panel is unchanged.
+- **The card says how long it is and where it goes.** "4 steps" is counted from the card's own HTML
+  (`countSteps`), and while there is more below the frame it carries a 48 px "More below ▾" button
+  beside the count and a fade along the bottom edge (`.card-scroll-more`). Round 2's card ended
+  mid-glyph with nothing to say it continued.
+- **The steps fit.** A step over 45 characters is a sentence, not an instruction, and drops from
+  `--t-display` to `--t-lead` (`card-step-long`); then the screen measures the third step and gives
+  up a whole size at a time — display, lead, body, and no lower — until steps 1 to 3 are on the first
+  screen. Measured at 390: the compression rate now ends 769 px down an 844 px screen with the phones
+  on **and** with them off, where before it was never on the screen at all.
+- **The calls-off card no longer contradicts the banner.** The box already resolves `[[call 999]]`
+  against the situation before it renders a card, so the live card was never the fault: the *fixture*
+  served one card in both modes, which is what the round-2 screenshots photographed. The fixture now
+  serves the resolved pair (`tests/fixtures/api.ts` `cardsNoPhones`, chosen in `e2e/fixtures/routes.ts`
+  by the same `modes.calls` the app reads), so "Call 999 and put it on speaker" is replaced by "Send
+  someone to a landline, a neighbour or a payphone: 999 will not connect from here" — and the
+  screenshots now show what the box actually does.
+- **Content.** Five cards had a *later* step that told a reader to ring with no alternative:
+  `asthma-attack` (4), `choking` (7), `cpr-child` (6), `low-blood-sugar` (7), `recovery-position` (7).
+  Each is now `{{#if phones}}[[call 999]]{{else}}send someone to a landline, a neighbour or a
+  payphone: 999 will not connect from here{{/if}}`. `sos validate-playbooks --all-scenarios` passes
+  (83 documents) and `api/tests/test_playbooks_content.py` + `test_content.py` pass (228).
+  **What could not be done, and why:** the same branch cannot go in steps 1 to 3 of any card —
+  `test_card_structure_and_screen_rule` caps those three steps at 70 characters *of Markdown source*,
+  and a two-branch step is 180 to 240. See "For the coordinator" below.
+
+Before `round-2/quick-card-{853,390}-{vault,field,blackout}.png`,
+`round-2/quick-card-phones-off-*.png`, `round-2/quick-card-dim-*.png` · after the same names under
+`round-3/`, plus the new `round-3/print-quick-card-*`.
+Specs: `e2e/card.spec.ts` — "the card says how many steps there are, and the rate is on the screen at
+390" and "with the phones down the card does not tell you to ring, and says it once".
+
+### 2. Print
+
+`tokens.css` now carries the print palette in a `@media print` block written as
+`:root, :root[data-theme], :root[data-dim], :root[data-theme][data-dim],
+:root[data-theme][data-dim="on"]` and placed after the dim palettes, so print wins from every theme
+whether dim is on or not. Measured in print media on all six palettes: ground `#f3efe4`, panel
+`#ffffff`, ink `#1b1b1b`. The blackout-with-dim CPR card that printed three solid black A4 pages
+prints paper.
+
+`type.css` prints the body at **12 pt** (16.00 px measured, against 14.67 px before), `h1` 20 pt,
+`h2` 15 pt, `h3` 13 pt. `.tabs` is `display: none` in print, and `Scenario` now treats
+`matchMedia('print')` as printing in its own right — a PDF export or a browser's own print command
+fires no `beforeprint` anybody can hear — so every phase renders and every module accordion is open
+on paper, instead of one tab plus a row of dead tab buttons.
+
+Before: none — print was in none of round 2's 336 files · after `round-3/print-quick-card-*`,
+`round-3/print-scenario-*`, `round-3/print-situation-sheet-*` (853 and 390, three themes, dim on).
+Spec: `e2e/print.spec.ts` — six palettes × five printable routes assert the paper ground, the ink,
+and a body of at least 16 px; plus "a printed scenario is the whole guide, with no tab strip and
+every module open".
+
+### 3. The situation sheet
+
+- `.state-btn.state-set` (two classes) now outranks `.btn`, so the chosen state really is filled with
+  `--sunken` — measured in all six palettes, where before it computed to `--panel` in every one — and
+  carries a 3 px inset bottom edge in its own colour (`box-shadow: inset 0 -3px 0`, no offset, no
+  blur: still no shadows in the system).
+- The state glyph is on the **chosen** button only; the other two carry the bare word. One glyph per
+  group, asserted.
+- The "Since" picker opens on the time the box has stored (`sinceChoiceFor` maps a stored instant
+  back onto the option that would have written it, within five minutes, and to "custom" when nothing
+  fits), so a row headed "off for 1 h" no longer reads "Just now".
+- The meta line renders only when both `set_by` and a time exist, and says "Nobody has set this yet."
+  when they do not — nine of ten rows on a fresh box used to read "Set from at .".
+- **Contrast.** The chosen button now sits on `--sunken`, so the tokens were re-tuned against it:
+  vault `--danger` `#ff8a76` → `#ff9d8b` (6.94:1 → 7.92:1) and field `--warn` `#6b4400` → `#603c00`
+  (6.82:1 → 7.80:1); field `--danger` `#94170f` was exactly 7.00:1 on `--sunken` and went to
+  `#8a1209` (7.70:1) for headroom. `tests/theme/contrast.test.ts` now measures every readable token
+  against `--sunken` as well as `--ground` and `--panel`: 138 cases, all passing.
+
+Before `round-2/situation-sheet-{853,390}-{vault,field,blackout}.png` · after the same names.
+Specs: `e2e/situation.spec.ts` — "the chosen state is filled and marked, not merely coloured, in all
+six palettes", "the since picker opens on the time the box has stored"; `tests/situation/since.test.ts`,
+`tests/situation/stateFill.test.ts`, `tests/screens/situation-sheet.test.tsx`.
+
+### 4. The drill debrief
+
+It is the modal it behaved like: `role="dialog"`, `aria-modal`, the app's own `.modal-backdrop` and
+`.modal`, a heading ("How the drill went") that takes focus when it opens, and focus returned to the
+screen on close — the "End drill" button it came from goes with the drill, so there is nothing else
+to return it to. It no longer squashes the rail: measured at 853x480 the five destinations stay in
+the rail and the content column keeps its height.
+
+It also counts the drill and not the household's morning. `drillStartedAt` reads the wall-clock moment
+somebody pressed the button out of the log's own "Drill started" line — `scenario.started_at` may be
+backdated two days so the guidance shows the right phase — and only ticks and events inside that
+window count. The log is filtered to events the engine tagged `(drill)` (plus the drill's own start),
+and the tag is stripped for display, so "Drill started: National grid collapse **in the drill**" and
+a real "Water supply working on the box" under "What happened in the drill" are both gone. With
+nothing ticked it says "Nothing was ticked during the drill."
+
+Before: none — round 2 photographed running drills, never the debrief · after: covered by
+`e2e/board.spec.ts` and `e2e/situation.spec.ts` rather than a new inventory entry (a modal over a
+screen the inventory already carries). Specs: `tests/screens/drill.test.tsx` (the window, the tag,
+the dialog), `e2e/board.spec.ts`, `e2e/situation.spec.ts`.
+**Left:** a drill still has no expiry. See "For the coordinator".
+
+### 5. Find
+
+The screen no longer renders the engine's one ranked list in the order it arrives. `api/results.ts`
+is the new seam:
+
+- **De-duplicated by target URL** before anything is rendered — "Solar panels in a power cut" three
+  times in the top four was the same page found in three books.
+- **Grouped by source, the box's own first.** Guides, quick cards, modules and pages are one group,
+  "From this box", above every library source; then places, the box's documents, NHS and medical, then
+  the rest. Each group is a named region with its own heading, so a household's own guidance is the
+  first thing under the count whatever the engine scored it.
+- **The chips count the rows underneath them.** They are computed from the de-duplicated result set,
+  so the nine chips that summed to 61 over a line reading "40 results" now sum to the number on the
+  line. A chip toggles its whole group's sources.
+- **A result is a source badge on one line and a title on the next** (`ResultList`), with the
+  library's cataloguing stripped: "(Kiwix build, December 2025)" off the badge, a trailing "– NHS"
+  and a doubled "ONLINE VERSION" off the title.
+
+Before `round-2/find-results-{853,390}-{vault,field,blackout}.png` · after the same names.
+Specs: `tests/screens/search.test.tsx`, `tests/screens/find.test.tsx`, `e2e/search-reader.spec.ts`.
+**Ranking itself is backend** — see "For the coordinator": the frontend can only put the groups in
+order, and it does.
+
+### 6. The front door
+
+- A job that was already done when Now opened sits **below** the ones that are not, behind one row:
+  "2 done — show them". A row ticked on this screen stays exactly where it was ticked for its ten
+  seconds — the same ten seconds the Undo is offered for — and then joins them (`useSunkTasks`).
+- The "why" paragraph is shown for the **first** undone job only; the rest carry "Read more", and
+  `/tasks` still shows every one. Four "why" paragraphs were most of a 423 px screen.
+- **A scroll cue.** `useScrollCue` watches the content column and the shell paints a 24 px
+  `--ground` fade along its bottom edge whenever there is more below it, on every screen. The kiosk
+  has no scrollbar and no bounce: 423 px of a 2,964 px screen looked exactly like a screen that
+  ended.
+- While there: "Coming up" now reads "Fridge food unsafe ⚠ due in 2 h" rather than "due Fridge food
+  unsafe in 2 h", and "The box thinks" reads "Landline and 999 — probably off" rather than "is
+  probably off" (half the condition names are compound).
+
+Before `round-2/now-power-off-{853,390}-*.png`, `round-2/now-power-off-dim-*.png` · after the same
+names. Specs: `tests/screens/briefing.test.tsx`, `tests/screens/now.test.tsx`.
+
+### 7. The keyboard, the phone's search, and the words landmarks use
+
+- **A skip link** is the first focusable element in the shell on every screen: "Skip to what to do",
+  off-screen until it takes focus, 48 px, targeting `#main`. `<main id="main" tabindex="-1">` is
+  named after the screen it holds (the title travels up through `shell/screenTitle.ts`), so following
+  the link lands focus on a landmark that announces "CPR (adult)", not "main".
+- **The furniture is read last.** `<nav>` now comes after `<main>` in the DOM (the grid still draws
+  it on the left, and the bar along the bottom), and the band is drawn above the content with
+  `order: -1` while sitting after it in the DOM. The decorative wordmark is `tabindex="-1"` and
+  `aria-hidden` — it went to the same place as the "Now" tab 34 px below it. Measured: from the skip
+  link, the first job's tick box is inside 8 tab stops at both widths, against 17.
+- **Search is on every phone screen.** The compact field is rendered in the screen head at every
+  width; the screens that turn it off (a quick card, the map, the sheet, a guide) carry a 48 px
+  "Find" control in the same place instead. Before this round a 390 px phone had neither, on
+  twenty-three screens.
+- **Landmarks say what the screen says.** The "Briefing" region — a region wrapping four regions,
+  named after a word that is nowhere on the screen — is gone. Every remaining `<section aria-label>`
+  is now the text of its own `h2`: "Read this"→"Read", "Conditions"→"What is working", "Situation
+  clock"→"Clock", "Drill"→"Practise a drill", "Detected"→"Detected by the box", "Carry the
+  situation"→"Carry it to another box", "The assistant"→"Ask the assistant", "The library"→"Browse
+  the library", "The household plan"→"The plan", and Readiness's "Situation"→"How ready you are".
+- **The theme control is a control.** It reads "Change theme / Vault now" in a bordered row that is
+  not the rail's destination shape, with the accessible name "Change the theme. Vault now; next is
+  Field" — a verb, one label, and not a sixth place to go.
+- **The map's own controls have words.** MapLibre's `NavigationControl` is not added at all; the map
+  draws Zoom in, Zoom out and Face north as the app's own icon-and-word buttons over the top-right of
+  the map (the scale bar, which has no buttons, stays).
+
+Before: none — this is a flow · after: the same inventory shots, plus `e2e/access.spec.ts` ("the
+first tab stop is a way past the furniture, on every screen", "the wordmark is not a second Now, and
+the navigation is read after the content", "every phone screen carries a search, and the theme
+control is not a destination", "a section is named by its own heading, and the map has words on its
+controls").
+
+### 8. Carrying a situation to another box
+
+The words describe the paste, because the paste is what the box offers: "The box turns this situation
+into a set of codes. On the other box, type or paste each code's text in order, and it says when it
+has them all." No "photograph", no "scan". The code strip says "Code 1 of 3. Work through them in
+order; the other box says how many it has."
+
+The error is inline, immediately under "Bring it in" (it used to render ~500 px above it, off a
+480 px screen), and in household words: "That is not one of this box's codes. Type the line printed
+under the code, starting with `{`", with the box's own sentence kept as a muted detail after it.
+Missing chunks and two different sets have their own sentences. The placeholder is the first
+characters of a real code; the field is labelled "The text of each code, one per line, in order";
+"Copy as text instead" is now "Copy the codes as text"; the "+" is off "Bring it in"; and the panel
+counts as you type ("Code 2 of 3 read. Type the next one on a new line.").
+
+Before `round-2/situation-carry-{853,390}-*.png` · after the same names. Specs:
+`e2e/situation.spec.ts` — "carrying a situation describes the paste, and says its trouble under the
+button"; `tests/screens/carry.test.tsx`.
+
+### 9. The map panels
+
+`MapPanel` gained a third pinned region between the head and the scrolling body, and the panels lead
+with their answers:
+
+- **Nearby** pins a kind chooser and the nearest place of that kind — its name at `--t-lead`, its
+  distance, bearing and rough walking time under it — above the list, with the "as the crow flies"
+  caveat moved to the **bottom** of the body. The pinned action row can no longer cover the first
+  result. A kind the box has nothing for says so in the head instead of leaving it blank.
+- **The phone sheet grows** from 55 % to 70 % of the map as soon as its body has more in it than it
+  can show, and keeps it while that panel is open (it never shrinks back under a reader). At 390x844
+  the scrolling body goes from 146 px to about 210 px, and the map is still live above it.
+- **Home** labels both grid references — "Your home: SU 4015 1465" and "The map is on: NY 0295 1266"
+  — pins both, and lets them wrap rather than clipping after "NY".
+- **Share** gives one notation (the grid reference), the address as a real link rather than a
+  read-only textarea, and a QR sized from the measured panel so it is never clipped.
+- **The QR's quiet zone** is the panel's own colour on a dark theme, so blackout no longer paints a
+  220 px sheet of white paper; a 48 px "Make it brighter to scan" hands the full white border over
+  when a camera refuses the dim one. `shell.css`'s hard-coded `background: #fff` on `.qr img` is
+  gone.
+
+Before `round-2/map-nearby-{853,390}-*.png`, `round-2/map-home-*.png`, `round-2/map-share-*.png`,
+`round-2/connect-a-phone-*-blackout.png`, `round-2/situation-carry-*-blackout.png` · after the same
+names. Specs: `e2e/map-home.spec.ts`, `e2e/map.spec.ts`, `tests/map/panel.test.tsx`,
+`tests/map/nearby.test.ts`.
+
+### 10. The front door's own weight, and the kiosk's small print
+
+**Before** — one chunk, parsed before anything painted, on every screen:
+
+```
+dist/assets/index-qzbqGAXZ.css    112.90 kB │ gzip:  19.52 kB
+dist/assets/index-DBkUBADL.js   2,241.68 kB │ gzip: 661.43 kB
+```
+
+**After** — what the front door loads is the first three lines; everything below is fetched by the
+screen that needs it:
+
+```
+front door   dist/assets/index-B8PC0aBN.js      156.75 kB │ gzip:  47.63 kB
+front door   dist/assets/react-D-ubgs9F.js      287.32 kB │ gzip:  92.10 kB
+front door   dist/assets/index-CJ0Eknug.css      37.71 kB │ gzip:   8.23 kB
+                                       total    481.78 kB │ gzip: 147.96 kB
+
+/map         dist/assets/maplibre-CTmHzN_F.js 1,073.71 kB │ gzip: 292.38 kB
+/map         dist/assets/maplibre-DNVN2dqC.css   69.92 kB │ gzip:  10.05 kB
+/map         dist/assets/Map-DnfIeYOE.js         42.54 kB │ gzip:  14.35 kB
+/map         dist/assets/Map-Dg2a7Ony.css         5.90 kB │ gzip:   1.60 kB
+/map         dist/assets/grid-Cr-rPMwp.js         2.96 kB │ gzip:   1.39 kB
+/map         dist/assets/PlaceSearch-CNIbqGAX.js   1.22 kB │ gzip:  0.65 kB
+/read, /doc  dist/assets/epub-j66FGZCx.js       351.45 kB │ gzip: 108.50 kB
+/read, /doc  dist/assets/Doc-Boo09WgS.js         10.31 kB │ gzip:   3.89 kB
+/read        dist/assets/Reader-SBVxCj4b.js       3.91 kB │ gzip:   1.70 kB
+first field  dist/assets/keyboard-BcX64-1B.js   107.49 kB │ gzip:  35.04 kB
+first field  dist/assets/keyboard-DJV78Rqi.css    3.22 kB │ gzip:   1.06 kB
+first field  dist/assets/Keyboard-CrYXLbBq.js     2.98 kB │ gzip:   1.48 kB
+/plan, /sun  dist/assets/grid-C5TDArtG.js       131.58 kB │ gzip:  43.71 kB
+/plan        dist/assets/Plan-77beh9u5.js        20.31 kB │ gzip:   4.91 kB
+/tools/sun   dist/assets/SunMoon-CwNHlmHj.js      3.94 kB │ gzip:   1.62 kB
+first code   dist/assets/qr-bYEHtTaU.js          25.78 kB │ gzip:  10.13 kB
+/ai          dist/assets/Ai-NMk_kd3I.js           6.15 kB │ gzip:   2.42 kB
+```
+
+**77.6 % less JavaScript on the front door, and 92.8 % less gzipped** (661.43 kB → 47.63 + 92.10 =
+139.73 kB of script, 147.96 kB with the stylesheet) — inside the 250 kB the item asked for.
+
+How: `React.lazy` plus `import()` for `/map`, `/doc/:id`, `/read/:id/*`, `/ai`, `/plan` and
+`/tools/sun`, each behind a plain loading screen that already knows its own title (`Later` in
+`router.tsx`); `kiosk/KeyboardMount.tsx` fetches `simple-keyboard` on the first field anybody focuses
+(the pad's own logic split into `kiosk/editable.ts`, which has no vendor code in it, so the reader and
+the shell can ask what a text field is without loading a keyboard); `components/QrCode.tsx` fetches
+the encoder when the first code is drawn, through one shared promise. `manualChunks` names
+`maplibre-gl`/`pmtiles`, `epubjs`, `simple-keyboard`, `proj4`, `qrcode` and React — matched on
+`/node_modules/<name>/` rather than anywhere in the path, because pnpm keeps a package's own
+dependencies under `.pnpm/<name>@<version>/node_modules/` and a looser test put epubjs's dependencies
+in the reader chunk, which then arrived on the front door.
+
+`SituationProvider.refresh` keeps the previous View object when the new one says the same thing
+(`sameView`, which compares everything but the engine's own `meta.now` stamp), so a box in peacetime
+polls every 30 s and re-renders nobody.
+
+**Kiosk type**: `:root.kiosk` now raises `--t-meta` to 18 px as well as `--t-body`. That is every
+`.btn-small` (Back, Read more, Close, all seven map tools), every chip, every badge, every task
+"why", every tile's second line and the whole rail footer — most of the small print on the device the
+18 px rule was written for.
+
+**VT323** is now declared with a `unicode-range` of exactly the glyphs it draws (the wordmark's S and
+O, the board clock's digits and colon), so it is never fetched for a stray character elsewhere. It is
+still fetched on a vault screen with a rail, because that is where the wordmark is; it is 18 kB from
+the local disk with `font-display: swap`, so it holds no paint. Moving the wordmark off the display
+face is a design change the plan does not authorise, and is left.
+
+Before `round-2/now-power-off-853-field.png`, `round-2/tasks-853-*.png`, `round-2/board-853-*.png`,
+`round-2/library-853-*.png`, `round-2/calculators-853-*.png` · after the same names, re-shot at
+18 px meta.
+
+## The watch list
+
+**Taken:**
+
+- **2, the kiosk number pad.** `.hg-layout-numeric .hg-button` kept the vendor's 60 px height, so four
+  rows plus their margins did not fit the 224 px panel and the fourth row (`. 0 -`) was sliced by the
+  480 px edge: a parent could not type **0**. Every key is now the 48 px touch target, four rows fit
+  with room to spare, and the whole `.sos-kb` block is written from `.kb-panel` down — now that the
+  pad is fetched on demand its vendor stylesheet arrives *after* the app's, and a rule of equal weight
+  would have won. `e2e/keypad.spec.ts` passes on the children's-doses screen.
+- **3, the torches and the toast.** `shell.css`'s hard-coded `background: #fff` on every QR quiet
+  zone is gone (see item 9). `.notices` now clears the bottom bar as well as the keyboard
+  (`bottom: calc(16px + var(--kb-height) + var(--bar-clearance))`), so a toast no longer covers
+  Guides, Medical and Map on a 390 px phone — and every notice carries a 48 px dismiss control, which
+  it never had.
+- **5, the box's own machinery on the front door.** "The box" panel now says one thing about the
+  machine — "Phones join it over its own WiFi, **SOS**" — and then only what is actually wrong (the
+  library drive missing, the chip too hot to run the assistant, each in a sentence). The IP, the
+  second bare URL, the free space and "CPU 45°C" live on System, one tap away, and inside the Connect
+  a phone panel where a second phone needs them. "Connect a phone" no longer disappears when the
+  mobile network goes down — joining the box's own WiFi has nothing to do with the mobile network,
+  and the address went with the button. The two grammar faults are fixed under item 6.
+
+**Left, with reasons:**
+
+- **1, the raw pdf.js toolbar on a real document.** Round 2's chrome is in place and the vendor bar is
+  hidden by `pdfViewerCss`, but the reported fault is a real PDF that throws `InvalidPDFException`
+  behind a HEAD probe that succeeds — which needs a real, broken PDF on a live box to reproduce, and
+  the fixture serves none. It also wants the app's three rows of chrome cut down, "of an unknown
+  number" rewritten, "Next" disabled at the end, and the rail lit for the destination the document
+  belongs to rather than Find. That is a screen's worth of work on the one screen this round did not
+  otherwise touch, and it is the first thing for round 4.
+- **2, the phone's letter keys.** The kiosk pad's letter row is 34 px wide at 390, against the 48 px
+  floor, because eleven keys do not fit 390 px at 48 px each. It only ever appears at that width when
+  kiosk mode is forced on a phone-sized window (the screenshot set does exactly that); a real phone
+  uses its own keyboard. Fixing it properly means a different layout under 700 px — a round-4 item,
+  not a token change.
+- **4, the symbol and shape vocabulary.** ⚠ still does seven jobs, `999px` pills still sit beside the
+  stated single 6 px radius, there are still four border weights, and vault still puts `--glow` on
+  headings as a `text-shadow` in a system whose rule is "no shadows". This is one pass over every
+  component with a written vocabulary at the end of it, and doing it inside a round that also moved
+  the shell, the card, the map panels and the build would have made both unreviewable. It is the
+  round-4 item it was already promised to be.
+- **5, the eight buttons of data entry.** "The box thinks" still offers Accept / Not now per guess, up
+  to eight controls on the front door. They are the engine asking a question only the household can
+  answer, and the alternative — the box deciding for itself — is the fault the panel exists to
+  prevent. Left deliberately.
+
+## For the coordinator: what only the backend can fix
+
+1. **`api/sos/search.py:205–211` counts the chips before it truncates and before it filters.**
+   `groups` is built from the full result list, then `results` is cut to `limit`; the chips therefore
+   describe a set the screen never shows (nine chips summing to 61 over "40 results."). The frontend
+   now counts its own rendered rows, so the screen agrees with itself, but `/api/search`'s `groups`
+   still lies to any other consumer. Count after the truncation, or return the pre-truncation total.
+2. **Nothing de-duplicates by URL.** The same page found in several ZIM classes is several results
+   ("Solar panels in a power cut" three times in the top four). The frontend de-duplicates what it
+   renders; the API still spends its `limit` on duplicates, so a de-duplicated 40 can be 25 distinct
+   answers. De-duplicate by `url`, keeping the highest score, before the `limit`.
+3. **The exact-title jump is per source, not global** (`search.py:194–199`): each source's own top
+   score is raised, so a Kiwix page titled exactly "Bleeding" is promoted inside its own source and
+   lands beside the box's Severe bleeding card. With `PLAYBOOK_WEIGHT` at 1.6, any library book with
+   a `search_weight` at or above 1.6 outranks the box's own guides on relevance alone. The screen now
+   groups the box's own answers first whatever the score, so a household is answered correctly — but
+   the ranked list `/api/search` returns (and the assistant retrieves over) is still wrong for
+   `bleeding`, `power cut` and `water`. Ranking by tier before relevance is section 8's own rule and
+   it is not implemented.
+4. **A ZIM result's badge is the library item's full title**, build stamp and all: "NHS Medicines A to
+   Z (Kiwix build, December 2025)". The frontend strips the parenthetical; the string itself comes
+   from `library_items.title` in the manifest and would be better fixed there.
+5. **`api/tests/test_playbooks_content.py::test_card_structure_and_screen_rule` caps the first three
+   steps of a quick card at 70 characters of Markdown source.** That makes a `{{#if phones}} … {{else}}
+   … {{/if}}` branch impossible in exactly the steps that most need one — step 1 of CPR, step 1 of
+   severe bleeding, step 1 of childbirth, step 3 of stroke. Worse, the rule already fails on its own
+   terms: with the phones down the API expands `[[call 999]]` into "999 will not connect while the
+   phones are down: get help without phones", so those three steps render 65 characters longer than
+   the rule allows and nothing measures it. The rule should measure the *rendered* step, in both
+   phone states, and then the calls-off variants can be written where they belong.
+6. **A drill has no expiry.** The live box carried "Drill started: Nuclear war" from 03:13 that
+   nobody ended. The debrief now counts only what happened inside the drill's own window, but ending
+   one belongs to the engine: a browser that happens to have the page open is not a timer, and two
+   phones would race to end it.

@@ -42,7 +42,7 @@ describe('Now', () => {
     vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
     vi.spyOn(api, 'household').mockResolvedValue([]);
     renderRoute('/');
-    const panel = await screen.findByRole('region', { name: 'Situation' });
+    const panel = await screen.findByRole('region', { name: 'How ready you are' });
     // The heading above already says the state; the panel says what it is about.
     expect(panel).toHaveTextContent('How ready you are');
     // Every number on this panel comes from the engine's readiness: no second count of the same water.
@@ -67,7 +67,7 @@ describe('Now', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
     expect(within(now).getAllByRole('listitem')).toHaveLength(3);
     expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
-    expect(screen.queryByRole('region', { name: 'Situation' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'How ready you are' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
     expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
     expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');

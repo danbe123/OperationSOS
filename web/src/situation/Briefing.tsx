@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
@@ -55,16 +55,18 @@ export function Briefing() {
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
-  const sunk = useSunkTasks((view?.tasks ?? []).filter((t) => t.bucket === 'now' || t.bucket === 'hour'));
+  // The same array each render unless the jobs themselves change, so the settling timers below are
+  // set once rather than re-examined on every tick of the clock.
+  const doingNow = useMemo(() => (view?.tasks ?? []).filter((t) => t.bucket === 'now' || t.bucket === 'hour'), [view]);
+  const sunk = useSunkTasks(doingNow);
   if (!view) return null;
   const now = Date.parse(view.meta.now) || Date.now();
   const inferred = view.inferred.filter((i) => !dismissed.includes(i.rule));
   const soon = view.forecast.filter((f) => secondsUntil(f.due_at, now) < DAY_S);
-  const doing = view.tasks.filter((t) => t.bucket === 'now' || t.bucket === 'hour');
-  const left = doing.filter((t) => !sunk.has(t.id));
-  const done = doing.filter((t) => sunk.has(t.id));
+  const left = doingNow.filter((t) => !sunk.has(t.id));
+  const done = doingNow.filter((t) => sunk.has(t.id));
   const bulletin = view.bulletins.next;
-  const empty = !inferred.length && !soon.length && !doing.length && !view.briefing.length && !bulletin;
+  const empty = !inferred.length && !soon.length && !doingNow.length && !view.briefing.length && !bulletin;
 
   const accept = async (condition: typeof view.inferred[number]) => {
     setBusy(condition.rule);
@@ -93,7 +95,7 @@ export function Briefing() {
         {/* The front door opened on two struck-through jobs and their reasons, and the first job the
             household still had to do was 598 px down a 423 px screen. What is left to do comes
             first, with its reason; what is already done is one line at the bottom. */}
-        {doing.length === 0 ? (
+        {doingNow.length === 0 ? (
           <p className="muted">Nothing outstanding right now. The box adds jobs as the situation changes.</p>
         ) : left.length === 0 ? (
           <p className="muted">Everything the box has asked for is done. {done.length === 1 ? 'The one job' : `All ${done.length} jobs`} below can be unticked if you need to.</p>

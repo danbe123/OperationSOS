@@ -109,8 +109,11 @@
   }
   .rail-dest[aria-current="page"] { border-top-color: transparent; border-left-color: var(--signal); }
   /* Not a destination: the five rows above it are an icon over a word with a signal-coloured left
-     edge when they are the place you are, and this is a bordered control with a verb on it. */
+     edge when they are the place you are, and this is a bordered control with a verb on it. The
+     current theme is in its accessible name only — a third line here costs the rail the last
+     destination's word, and the screen is already wearing the theme it is asking about. */
   .rail-theme { width: 100%; min-height: var(--touch); padding: 4px 6px; gap: 6px; }
+  .rail-theme small { display: none; }
 }
 
 /* --- the situation band --------------------------------------------------------------------- */
@@ -200,7 +203,7 @@
 
 /* Clear of the bottom bar as well as the keyboard: at 390 the toast sat over Guides, Medical and
    Map, which are the three ways out of whatever it was talking about. */
-.notices { position: fixed; left: 50%; bottom: calc(16px + var(--kb-height) + var(--bar-clearance, 0px)); transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; max-width: min(90vw, 480px); }
+.notices { position: fixed; left: 50%; bottom: calc(16px + var(--kb-height) + var(--bar-clearance, 0px)); transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; width: min(90vw, 480px); }
 @media (max-width: 699px), (max-height: 439px) { :root { --bar-clearance: var(--bar); } }
 .notice { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: var(--radius); font-weight: 600; }
 .notice-text { flex: 1 1 auto; min-width: 0; }

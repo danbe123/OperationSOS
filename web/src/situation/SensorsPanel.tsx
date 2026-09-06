@@ -40,7 +40,7 @@ export function SensorsPanel() {
   if (missing) return null;
   if (sensors && entries.length === 0 && !error) return null;
   return (
-    <section className="panel" aria-label="Detected" id="sensors">
+    <section className="panel" aria-label="Detected by the box" id="sensors">
       <h2>Detected by the box</h2>
       <p className="muted">What the box can sense for itself. It proposes; you decide.</p>
       {!sensors && !error && <p className="muted">Reading the sensors…</p>}

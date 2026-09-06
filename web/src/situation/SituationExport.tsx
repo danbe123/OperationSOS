@@ -114,7 +114,7 @@ export function SituationExport() {
   const progress = importProgress(payload);
 
   return (
-    <section className="panel" id="carry" aria-label="Carry the situation">
+    <section className="panel" id="carry" aria-label="Carry it to another box">
       <h2>Carry it to another box</h2>
       <p className="muted">No network needed. The box turns this situation into a set of codes. On the other
         box, type or paste each code&rsquo;s text in order, and it says when it has them all.</p>

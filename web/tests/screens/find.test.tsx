@@ -15,7 +15,7 @@ describe('Find', () => {
     const own = await screen.findByRole('region', { name: 'From this box' });
     expect(within(own).getAllByRole('listitem')).toHaveLength(1);
     expect(screen.getAllByRole('listitem').filter((li) => li.closest('.results'))).toHaveLength(5);
-    const lib = await screen.findByRole('region', { name: 'The library' });
+    const lib = await screen.findByRole('region', { name: 'Browse the library' });
     expect(lib).toHaveTextContent('7 items, 6 available on this box.');
     expect(within(lib).getByRole('link', { name: /Open the library/ })).toHaveAttribute('href', '/library');
   });
@@ -31,6 +31,6 @@ describe('Find', () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     vi.spyOn(api, 'status').mockResolvedValue({ ...status, ai: { state: 'ready', model: 'qwen', message: null } });
     renderRoute('/find');
-    expect(await screen.findByRole('region', { name: 'The assistant' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Ask the assistant' })).toBeInTheDocument();
   });
 });

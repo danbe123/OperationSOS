@@ -72,9 +72,6 @@ small { font-size: var(--t-meta); }
 @media print {
   .card-html ol > li { font-size: 18pt; margin-bottom: 10px; }
   .card-html ol > li.card-step-long { font-size: 14pt; }
-  /* On paper there is no scrolling frame and no cue to give: the whole card prints. */
-  .card-scroll, .card-body { overflow: visible !important; display: block; padding: 0; mask-image: none; }
-  .card-count { display: none; }
 }
 
 /* Paper. 11 pt measured 14.67 px, under the 16 px floor the box holds itself to on a screen — and

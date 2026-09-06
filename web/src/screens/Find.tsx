@@ -95,14 +95,14 @@ export function Find() {
         ))}
 
         {(ai === 'ready' || ai === 'busy') && (
-          <section className="panel" aria-label="The assistant">
+          <section className="panel" aria-label="Ask the assistant">
             <div className="panel-head"><h2>Ask the assistant</h2></div>
             <p className="muted">It answers only from the library on this box, and shows the pages it used.</p>
             <p><Link className="btn" to="/ai"><Icon name="ai" size={18} /><span>Open the assistant</span></Link></p>
           </section>
         )}
 
-        <section aria-label="The library">
+        <section aria-label="Browse the library">
           <h2>Browse the library</h2>
           {libQ.loading && <p className="muted">Loading the library…</p>}
           {libQ.error && <p className="warning">Library unavailable: {libQ.error}</p>}

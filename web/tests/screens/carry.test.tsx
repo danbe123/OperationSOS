@@ -18,7 +18,7 @@ describe('carrying the situation to another box', () => {
     const chunks = vi.spyOn(api, 'exportChunks').mockResolvedValue(exportChunks);
     const user = userEvent.setup();
     renderRoute('/situation');
-    const section = await screen.findByRole('region', { name: 'Carry the situation' });
+    const section = await screen.findByRole('region', { name: 'Carry it to another box' });
     await user.click(within(section).getByRole('button', { name: /Export as codes/ }));
     expect(chunks).toHaveBeenCalled();
 
@@ -40,7 +40,7 @@ describe('carrying the situation to another box', () => {
     const bring = vi.spyOn(api, 'importSituation').mockResolvedValue(importSummary);
     const user = userEvent.setup();
     renderRoute('/situation');
-    const section = await screen.findByRole('region', { name: 'Carry the situation' });
+    const section = await screen.findByRole('region', { name: 'Carry it to another box' });
     const box = within(section).getByRole('textbox', { name: 'Situation to bring in' });
     expect(within(section).getByRole('button', { name: /Bring it in/ })).toBeDisabled();
     await user.type(box, '{{"i":0,"n":1,"d":"x"}');
@@ -59,7 +59,7 @@ describe('carrying the situation to another box', () => {
     vi.spyOn(api, 'importSituation').mockRejectedValue(new ApiError(422, 'a scanned chunk is not a QR chunk: expected {"i", "n", "d"}'));
     const user = userEvent.setup();
     renderRoute('/situation');
-    const section = await screen.findByRole('region', { name: 'Carry the situation' });
+    const section = await screen.findByRole('region', { name: 'Carry it to another box' });
     await user.type(within(section).getByRole('textbox', { name: 'Situation to bring in' }), 'nonsense');
     const button = within(section).getByRole('button', { name: 'Bring it in' });
     await user.click(button);
@@ -75,7 +75,7 @@ describe('carrying the situation to another box', () => {
     mockSheet();
     const user = userEvent.setup();
     renderRoute('/situation');
-    const section = await screen.findByRole('region', { name: 'Carry the situation' });
+    const section = await screen.findByRole('region', { name: 'Carry it to another box' });
     const box = within(section).getByRole('textbox', { name: 'Situation to bring in' });
     await user.click(box);
     await user.paste('{"i":0,"n":3,"d":"one"}');
@@ -87,7 +87,7 @@ describe('carrying the situation to another box', () => {
   it('describes the paste it offers, and never a scan or a photograph', async () => {
     mockSheet();
     renderRoute('/situation');
-    const section = await screen.findByRole('region', { name: 'Carry the situation' });
+    const section = await screen.findByRole('region', { name: 'Carry it to another box' });
     expect(section).toHaveTextContent('type or paste each code’s text in order');
     expect(section.textContent).not.toMatch(/scan|photograph|JSON/i);
     expect(within(section).getByLabelText('Situation to bring in')).toHaveAttribute('placeholder', '{"i":0,"n":3,"d":"H4sIAAAA…');

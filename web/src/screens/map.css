@@ -60,6 +60,12 @@
    It sits above the panel's edge on the kiosk and above the bottom sheet on a phone. */
 .map-nav { position: absolute; top: 8px; right: 8px; z-index: 9; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
 .map-nav .btn { justify-content: flex-start; gap: 6px; background: var(--panel); }
+/* On a phone the map is a band above a bottom sheet, and three stacked buttons take half of it: the
+   same three go in one row along the top instead. */
+@media (max-width: 699px), (max-height: 439px) {
+  .map-nav { flex-direction: row; left: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .map-nav .btn { padding: 4px 8px; }
+}
 
 .map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid var(--line-strong); }
