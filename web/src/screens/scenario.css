@@ -11,7 +11,14 @@
 /* 800 px is the kiosk with its rail taken off (853 - 96 = 757 for the content column, which fits a
    490 px guidance pane beside a 240 px task list). Below it the two panes become one. */
 @media (min-width: 800px) {
-  .scenario-workspace { grid-template-columns: minmax(0, 1fr) minmax(240px, 32%); gap: 20px; }
+  .scenario-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 32%);
+    grid-template-areas: "guidance tasks" "sources tasks";
+    gap: 20px;
+  }
+  .scenario-guidance { grid-area: guidance; }
+  .scenario-tasks { grid-area: tasks; }
+  .scenario-sources { grid-area: sources; }
   .scenario-tasks { position: sticky; top: 0; max-height: calc(100dvh - var(--kb-height) - 120px); overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
 }
 @media print {

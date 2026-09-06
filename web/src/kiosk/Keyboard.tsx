@@ -99,6 +99,10 @@ export function Keyboard() {
     const listener: FocusListener = (el) => setTarget(el);
     focusListeners.add(listener);
     const detach = attachKeyboardTo(document);
+    // A field focused before the listener attached (Find's autoFocus, the PIN pad) never fires a
+    // focusin we can hear, and the keyboard would wait for a second tap that nobody knows to make.
+    const active = document.activeElement;
+    if (isEditable(active)) setTarget(active);
     return () => {
       focusListeners.delete(listener);
       detach();

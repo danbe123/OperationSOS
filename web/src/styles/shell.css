@@ -120,11 +120,15 @@
 .screen-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .screen-head-search { flex: 0 1 300px; min-width: 220px; }
 @media (max-width: 699px) {
+  /* Back and the theme button share the top line; the title has the next line to itself. */
   .screen-head { padding: 8px var(--gutter) 4px; }
-  .screen-head h1 { flex: 1 1 100%; order: 2; font-size: var(--t-lead); }
   .screen-head-back { order: 1; }
+  .screen-head-theme { order: 1; margin-left: auto; }
+  .screen-head h1 { flex: 1 1 100%; order: 2; font-size: var(--t-lead); }
   .screen-head-actions { order: 3; flex: 1 1 100%; }
   .screen-head-search { display: none; }
+  /* The chips already say what the band is; the label is what does not fit beside them. */
+  .band-label { display: none; }
 }
 @media (min-width: 700px) { .screen-head-theme { display: none; } }
 /* The kiosk is 480 px tall: the title keeps its rank but gives the content back its lines. */
@@ -183,7 +187,7 @@
 @media print {
   .mainnav, .band, .notices, .kb-panel, .idle-overlay, .idle-board, .no-print,
   .screen-head-search, .screen-head-back, .drill-bar .btn { display: none !important; }
-  .app, .app-body, .content { height: auto; overflow: visible; display: block; }
+  .app, .content { height: auto; overflow: visible; display: block; }
   .screen-head { padding: 0 0 8px; }
   .screen-body { padding: 0; }
 }

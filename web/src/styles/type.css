@@ -33,9 +33,7 @@ small { font-size: var(--t-meta); }
 .measure { max-width: var(--measure); }
 .warning { color: var(--danger); font-weight: 600; }
 .warning::before { content: '⚠ '; }
-.eyebrow { margin: 0 0 4px; font-size: var(--t-meta); font-weight: 600; color: var(--ink-muted); }
 .print-only { display: none; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Rendered content (playbooks, cards, pages, modules) reads at the body size on a 72-character
    measure, with no overlay and no text shadow in any theme. */

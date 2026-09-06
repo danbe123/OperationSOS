@@ -87,7 +87,7 @@ export function SituationExport() {
       {chunks && total > 0 && (
         <div className="export-codes" role="group" aria-label="Situation codes">
           <p className="muted" role="status">Code {at + 1} of {total}. Scan them in order; the other box asks for the next one.</p>
-          {current && <QrCode text={current} size={220} label={`Situation code ${at + 1} of ${total}`} />}
+          {current && <QrCode text={current} size={260} label={`Situation code ${at + 1} of ${total}`} />}
           <div className="row">
             <button type="button" className="btn" disabled={at === 0} onClick={() => setAt((n) => Math.max(0, n - 1))}>
               <Icon name="back" size={18} /><span>Previous</span>

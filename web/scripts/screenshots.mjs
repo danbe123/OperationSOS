@@ -4,7 +4,7 @@
 //
 //   node scripts/screenshots.mjs            # into docs/superpowers/critique/round-0
 //   node scripts/screenshots.mjs round-3    # into that round's folder
-//   node scripts/screenshots.mjs round-3 map   # only the shots whose name contains "map"
+//   node scripts/screenshots.mjs round-3 map,keyboard   # only the shots whose names contain these
 //
 // The work itself lives in e2e/screenshots.spec.ts so it can use the same fixture state and routes
 // as the browser suite; this wrapper only points it at a folder and reports what it wrote.

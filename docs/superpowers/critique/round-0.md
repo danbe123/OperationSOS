@@ -269,3 +269,15 @@ own screenshots before declaring it done:
   is now exactly the seven the brief names, plus Print in the screen head.
 - **The task list called its first bucket "Now"**, the same word as the destination. It says "Right
   now", which is what the guides call the same moment.
+- **On a phone the theme button sat above the screen title**, on a line of its own, because it had no
+  place in the head's order. It shares the top line with Back.
+- **The band wrapped to two rows on a phone.** Its label is what did not fit beside the chips, and
+  the chips say what the label says.
+- **A guide put its sources between the guidance and the checklist on a phone**, so the jobs came
+  after the paperwork. The two panes are now grid areas: one column puts the jobs first, two put the
+  sources under the guidance they belong to.
+- **The kiosk keyboard did not appear for a field that was already focused** — Find focuses its
+  search field on arrival — because there was no `focusin` left to hear. It now looks at what is
+  focused when it starts.
+- **The situation's QR codes were 220 px** for chunks of up to 800 characters, which is a dense code
+  to read off a screen with a phone. They are 260.

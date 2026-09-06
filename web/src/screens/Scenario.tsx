@@ -177,20 +177,22 @@ export function Scenario() {
                 ))}
               </section>
             )}
-            <footer className="scenario-sources">
-              <h2>Sources</h2>
-              <ul className="list">
-                {data.sources.map((s, i) => (
-                  <li key={i}>
-                    {s.doc ? <Link to={`/doc/${s.doc}`}>{s.title}</Link> : s.kiwix ? <Link to={`/read/${s.kiwix}`}>{s.title}</Link> : <span>{s.title}</span>}
-                    {s.as_at && <span className="muted"> (as at {s.as_at})</span>}
-                  </li>
-                ))}
-              </ul>
-              <p className="muted">{data.reviewed ? `Reviewed ${data.reviewed}` : 'Not yet reviewed by the owner'}</p>
-            </footer>
           </div>
           <ScenarioTasks playbook={data} onItems={(items) => setData({ ...data, checklist: items })} />
+          {/* Where there is one column the jobs come before the paperwork; where there are two the
+              sources sit under the guidance they belong to. */}
+          <footer className="scenario-sources">
+            <h2>Sources</h2>
+            <ul className="list">
+              {data.sources.map((s, i) => (
+                <li key={i}>
+                  {s.doc ? <Link to={`/doc/${s.doc}`}>{s.title}</Link> : s.kiwix ? <Link to={`/read/${s.kiwix}`}>{s.title}</Link> : <span>{s.title}</span>}
+                  {s.as_at && <span className="muted"> (as at {s.as_at})</span>}
+                </li>
+              ))}
+            </ul>
+            <p className="muted">{data.reviewed ? `Reviewed ${data.reviewed}` : 'Not yet reviewed by the owner'}</p>
+          </footer>
         </div>
       </div>
     </Screen>

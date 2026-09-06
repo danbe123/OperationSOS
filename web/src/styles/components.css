@@ -95,8 +95,6 @@ input[type="checkbox"], input[type="radio"] { width: 26px; height: 26px; accent-
 .cond-danger .cond-state { color: var(--danger); }
 .cond-chip-compact { flex-direction: row; gap: 6px; padding: 2px 10px; border-radius: 999px; min-height: 40px; }
 .cond-chip-compact .cond-for { display: none; }
-.cond-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-@media (max-width: 699px) { .cond-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
 /* --- lists ---------------------------------------------------------------------------------- */
 
