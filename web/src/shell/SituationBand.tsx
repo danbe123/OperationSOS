@@ -36,7 +36,7 @@ export function SituationBand() {
       {/* A count of jobs is not an eleventh thing that is wrong: it wears the small button, never a
           condition chip in condition amber. */}
       {open > 0 && pathname !== '/tasks' && (
-        <Link className="btn btn-small band-jobs" to="/tasks"><Icon name="plan" size={18} /><span>{open} {open === 1 ? 'thing' : 'things'} to do</span></Link>
+        <Link className="btn btn-small band-jobs" to="/tasks"><Icon name="plan" size={18} /><span>{open} to do</span></Link>
       )}
       <Link className="btn btn-small band-open" to="/situation"><Icon name="plan" size={18} /><span>Situation</span></Link>
     </div>

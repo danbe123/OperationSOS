@@ -238,3 +238,177 @@ result row the link (`display: block; min-height: var(--touch)`), with the badge
    on every person and every stock line (`household-853-vault.png`, `stock-853-vault.png`), and the
    reader prints its title twice, once in the head and once as the article `h1`
    (`reader-853-vault.png`).
+
+## Applied
+
+Every screenshot below is `docs/superpowers/critique/round-0/<name>` before and
+`docs/superpowers/critique/round-1/<name>` after, at the same width and in the same theme. The whole
+inventory was re-shot with `node scripts/screenshots.mjs round-1`.
+
+### 1. The quick card is not a quick card
+
+The card's steps run at `--t-display` (40 px), one to a line, with the step number in the same size
+and weight as its words (`styles/type.css`, `.card-html ol`). The `⚠` warning stays at `--t-lead`, and
+the "call 999" line moved from the bottom of the card to the top, above step 1, as the same
+`<Emergency999>` component `/medical` uses. `screens/Card.tsx` renders nothing else.
+
+Before `round-0/quick-card-853-vault.png`, `round-0/quick-card-390-vault.png` (and the field and
+blackout pairs) · after the same names under `round-1/`.
+
+### 2. The chosen condition state is painted green
+
+Root cause: `.btn[aria-pressed="true"]` in `components.css` outranked `.state-set.state-danger`. The
+generic pressed rule is now scoped — `.btn.active:not(.state-btn), .btn[aria-pressed="true"]:not(.state-btn)`
+— so a state button never wears the accent, and `screens/situation.css` gives the unset states the
+plain `--line` border while the set one carries `--ok` / `--warn` / `--danger` on its border and its
+text over a `--sunken` ground, in bold. Checked by eye in all three themes: the set state is the
+loudest of the three.
+
+Before `round-0/situation-sheet-853-{vault,field,blackout}.png` and the 390 set · after the same
+under `round-1/`.
+
+### 3. The kiosk number pad hides 1, 4 and 7
+
+`shell.css` adds `.sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; }`,
+which undoes simple-keyboard's own `width: 33.3%` on a four-key row. Every digit and `done ▾` is on
+the screen and at least 48 px wide. While there: a field can name what has to stay in sight
+(`data-kb-reveal`), and the keyboard brings that up instead of the field, so the dose the pad was
+asked to compute sits above the pad; every other field is scrolled to the top of what is left rather
+than centred. New spec `e2e/keypad.spec.ts`.
+
+Before `round-0/childrens-doses-853-{vault,field}.png` · after `round-1/childrens-doses-853-*.png`.
+
+### 4. Medical says the same warning twice, and 999 has five faces
+
+New `situation/Emergency999.tsx` with two states and no others: *can call* — `--danger` panel, phone
+icon, "Life-threatening emergency: call 999. Urgent advice: 111." — and *cannot call* — a `--warn`
+bordered panel on `--sunken`, the `⚠`, "999 will not connect while both networks are down" and one
+link, "Getting help without phones". It is at the top of `/medical`, `/medical/card/*`,
+`/medical/dose`, `/tools/timers` and `/radio`; `CallsNotice` is suppressed on all five and draws its
+own `⚠` once. The Phone-and-radio dot-run became a "Numbers to ring" list.
+
+Before `round-0/medical-phones-down-853-vault.png`, `round-0/medical-853-vault.png`,
+`round-0/quick-card-853-vault.png`, `round-0/timers-853-vault.png`,
+`round-0/phone-and-radio-853-vault.png` · after the same under `round-1/`.
+
+### 5. The band no longer says how long
+
+`components.css` no longer hides `.cond-chip-compact .cond-for`; the chip says "Power ✕ off 1 h" and
+drops its icon under 700 px before it drops the duration (`shortDuration` in `situation/conditions.ts`).
+The chips are `min-height: var(--touch)`. The jobs link is no longer a condition pill: it is the small
+button style the "Situation" link already uses, reading "3 things to do". The band's tracked-out
+"SITUATION" eyebrow is gone with it.
+
+Before `round-0/now-power-off-853-vault.png`, `round-0/now-power-off-390-vault.png`,
+`round-0/situation-sheet-853-vault.png`, `round-0/now-drill-853-vault.png` · after the same under
+`round-1/`.
+
+### 6. Now opens by telling you it is Now
+
+`situation/nowTitle.ts` makes the `h1` the answer: "National grid collapse · 1 h in" while a scenario
+runs, "Power off" or "Power off, mobile patchy" when only conditions are off, "Everything is working"
+in peacetime. The word "Now" is gone from the content; the rail still says it. `Readiness.tsx` drops
+the score and the points for a plain sentence — "You have water for 1.5 days. One thing would help
+most." — renders each gap as the same row shape as a job (48 px, no underline), and shows
+"New box? Add who lives here, then your water and food." while nobody is registered. The engine-down
+line lost its system words and gained a **Try again** button.
+
+Before `round-0/now-power-off-853-vault.png`, `round-0/now-peacetime-853-vault.png`,
+`round-0/now-empty-household-390-vault.png`, `round-0/now-engine-down-853-vault.png` · after the same
+under `round-1/`.
+
+### 7. One list of things to do, under four names
+
+One noun: **things to do**. `/tasks` is titled "Things to do", its count is said once in a sentence
+(the pill is gone), Now's panel is "Right now" with "All of them" beside it, a guide's panel is
+"Things to do for this guide", and the band says "3 things to do". The API's own vocabulary is
+translated in one place, `api/words.ts`: `playbook` → "Guide", `docs` → "Documents", `zim` →
+"Offline copy", `query` → "Search for this", and every badge, source chip and suggestion goes through
+it. The drill and clock selects say "Choose a situation…".
+
+Before `round-0/now-power-off-853-vault.png`, `round-0/tasks-853-vault.png`,
+`round-0/scenario-right-now-853-vault.png`, `round-0/find-results-853-vault.png`,
+`round-0/situation-drill-853-vault.png` · after the same under `round-1/`.
+
+Kept as they were, with reasons: the fourth bucket is still "Within the hour" — the engine raises
+four buckets and the critique's list names three, and dropping one would put hour jobs under "Today";
+and "Done" is a filter on this list, not a fifth bucket, so it stays a chip.
+
+### 8. A scenario leads with a switch, and hides half its tabs
+
+"This has started" moved into the screen head beside Map and Print as an outline `btn-small` carrying
+its consequence on a second line, so the guidance is the first thing under the title. The tab strip
+wraps instead of scrolling (`components.css`, `.tabs { flex-wrap: wrap }`), so all six phases are
+visible at 853 and at 390 with no fade, chevron or count needed to say the rest exist —
+`e2e/ux.spec.ts` now asserts that no tab is past the end of the strip. On one column the task panel
+is above the prose (`screens/scenario.css` grid areas).
+
+Before `round-0/scenario-right-now-853-vault.png`, `round-0/scenario-right-now-390-vault.png`,
+`round-0/scenario-later-853-vault.png` · after the same under `round-1/`.
+
+### 9. Search: a button with no word, and two fields that do different things
+
+The compact submit has its word ("Search") and the quiet button style; the accent is left to the
+screen's own primary action. Guides no longer carries the head's search field at all, so its filter —
+"Filter these guides" — is the only input on the screen, in one bordered block with its chips
+attached. On Find the count line sits immediately under the field, says "5 results." and not
+"5 results in 120 ms", and when the on-screen keyboard is up the results are scrolled to the top of
+what is still visible.
+
+Before `round-0/guides-853-vault.png`, `round-0/guides-filtered-853-vault.png`,
+`round-0/find-empty-853-vault.png`, `round-0/now-power-off-853-vault.png` · after the same under
+`round-1/`.
+
+### 10. Cards that all look alike, and rows you cannot hit
+
+`api/words.ts:tileLine` strips a summary that opens by repeating its own title and shows no line at
+all when nothing useful is left, and the browser fixture now carries each guide's real first line
+("A nationwide or regional blackout lasting days to weeks.") instead of a generated
+"<title>: what to do right now…". Medical's quick cards are full-width rows at `--t-lead` with the
+`--danger` left edge the 999 panel wears, so the screen's order of loudness is 999, quick cards, then
+everything else. A Find result is one target: `display: block`, `min-height: var(--touch)`, badge
+inside.
+
+Before `round-0/guides-853-vault.png`, `round-0/guides-390-vault.png`, `round-0/medical-853-vault.png`,
+`round-0/find-results-390-vault.png` · after the same under `round-1/`.
+
+## The watch list
+
+Taken:
+
+1. **Unchecked ticks read as disabled.** Checkboxes are drawn, not left to the browser: a 26 px
+   `--line-strong` outline on `--sunken` when empty and a filled `--signal` box with a tick when done,
+   the same in all three themes (`components.css`). The "Show done" filter is a chip, not a tick, so a
+   filter and a job no longer look like the same control.
+2. **Generic tells.** The dot-runs are sentences: a nearby place reads "620 m to the east, about 8 min
+   on foot" (`map/nearby.ts`, with `compassWord`), a library item "4.5 MB, copied 2026-01. Licence:
+   CC BY-SA 4.0.", the phone numbers a list. "◀ Day before" and "Day after ▶" are icon-and-word
+   buttons. "5 results in 120 ms" is "5 results.". The uppercase "SITUATION" eyebrow is deleted.
+3. **System words in front of a household.** "Load 0.30 / 0.20 / 0.10" is "Working lightly"; "Memory
+   2100 of 8000 MB" is "26% used of 7.8 GB"; the `zim` badge is "Offline copy"; the engine-down line
+   says "The box cannot read the situation" with a **Try again** button; the suggestion badges read
+   "Wikipedia", "Page" and "Search for this"; the nearby panel says "as the crow flies. The walking
+   time is a rough one; the box has no route planner." instead of naming Naismith's rule.
+4. **British English and UK formats.** `/situation` says "Practise a drill", the same as Now. The
+   stock "Use by" field is a `dd/mm/yyyy` text field parsed by `tools/dates.ts`, because a native date
+   input takes its order from the browser's own locale and shipped `mm/dd/yyyy` on a page already
+   marked `lang="en-GB"`; a saved date reads back as "use by 06/09/2026".
+5. **The phone's first 150 px** — the theme button no longer has a row to itself above the title on
+   the five screens with no Back button; it shares the title's line (`screen-head-noback`).
+
+Left, with reasons:
+
+- **Filter chips, source chips and condition states are all the same 999 px pill** (watch list 2).
+  Separating them is a change to the shape vocabulary the whole app shares, which is a round-2
+  decision about the component set rather than a fix inside one of the ten.
+- **Print above the map's tool scroller, the scroller's own cut-off "Home", and the drill banner's two
+  rows** (watch list 5). The map toolbar is the seven tools the brief names and Print is in the head
+  by the round-0 plan; changing either is a map layout question that wants its own pass.
+- **`Remove` at equal weight beside `Edit`** (watch list 5). The only ways to make it quieter are a
+  smaller target, which breaks the 48 px floor, or a new button variant, which adds to the set the
+  design plan keeps small.
+- **The reader printing its title twice** (watch list 5). The second title is the article's own `h1`
+  inside the ZIM, in the reader iframe; suppressing it means rewriting fetched content.
+- **`datetime-local` fields** on the situation sheet and the fallout timer still take their order from
+  the browser. The watch list names the stock field; the same treatment for a date *and* a time wants
+  its own small component rather than a fourth ad-hoc parser.

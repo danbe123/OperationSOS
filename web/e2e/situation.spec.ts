@@ -3,8 +3,9 @@ import { test, expect } from './test';
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
   await page.goto('/');
   // peacetime: Now carries the readiness, not chips, and there is no band
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
   const readiness = page.getByRole('region', { name: 'Situation', exact: true });
-  await expect(readiness).toContainText('Everything is working');
+  await expect(readiness).toContainText('How ready you are');
   // A plain sentence, not a score out of a hundred nobody was given the meaning of.
   await expect(readiness).toContainText('would help most');
   await expect(readiness).not.toContainText('out of 100');
@@ -45,7 +46,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' }).click();
   await expect(page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  await expect(page.getByRole('region', { name: 'Situation', exact: true })).toContainText('Everything is working');
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
@@ -64,7 +65,7 @@ test('a drill runs the whole thing without touching the real conditions', async 
   await page.getByRole('button', { name: 'End drill' }).click();
   await expect(page.getByText('Drill in progress')).toBeHidden();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  await expect(page.getByRole('region', { name: 'Situation', exact: true })).toContainText('Everything is working');
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });
 
 test('with both phone networks down the pages say the numbers will not connect', async ({ page }) => {

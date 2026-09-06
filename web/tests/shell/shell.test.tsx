@@ -50,7 +50,7 @@ describe('the situation band', () => {
     const links = within(band).getAllByRole('link');
     // The band says how long, and the count of jobs is not dressed as a condition.
     expect(links.map((a) => a.textContent?.trim())).toEqual([
-      expect.stringContaining('National grid collapse'), 'Power✕ off1 h', 'Mobile▲ patchy1 h', '3 things to do', 'Situation',
+      expect.stringContaining('National grid collapse'), 'Power✕ off1 h', 'Mobile▲ patchy1 h', '3 to do', 'Situation',
     ]);
     expect(within(band).getByRole('link', { name: 'Mains power: off for 1 h' })).toHaveAttribute('href', '/situation#power');
     expect(within(band).getByRole('link', { name: 'Situation' })).toHaveAttribute('href', '/situation');

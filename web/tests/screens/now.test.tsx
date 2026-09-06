@@ -37,7 +37,8 @@ describe('Now', () => {
     vi.spyOn(api, 'household').mockResolvedValue([]);
     renderRoute('/');
     const panel = await screen.findByRole('region', { name: 'Situation' });
-    expect(panel).toHaveTextContent('Everything is working');
+    // The heading above already says the state; the panel says what it is about.
+    expect(panel).toHaveTextContent('How ready you are');
     await waitFor(() => expect(panel).toHaveTextContent('You have water for 1.5 days.'));
     expect(panel).toHaveTextContent('One thing would help most.');
     expect(panel).not.toHaveTextContent('out of 100');

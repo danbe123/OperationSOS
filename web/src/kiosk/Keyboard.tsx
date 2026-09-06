@@ -3,7 +3,7 @@ import SimpleKeyboard from 'simple-keyboard';
 import 'simple-keyboard/build/css/index.css';
 import { useKiosk } from './KioskProvider';
 
-export const KEYBOARD_HEIGHT = 210;
+export const KEYBOARD_HEIGHT = 224;
 export type Editable = HTMLInputElement | HTMLTextAreaElement;
 type LayoutName = 'default' | 'shift' | 'numbers' | 'numeric';
 
@@ -122,7 +122,9 @@ export function Keyboard() {
       const selector = target.getAttribute?.('data-kb-reveal');
       const answer = selector ? target.ownerDocument.querySelector(selector) : null;
       if (answer) answer.scrollIntoView({ block: 'end' });
-      else target.scrollIntoView?.({ block: 'start' });
+      // 'nearest' leaves a field that is already above the pad exactly where it is, so opening the
+      // keyboard never scrolls the screen's own title out of sight.
+      else target.scrollIntoView?.({ block: 'nearest' });
     } else {
       root.style.setProperty('--kb-height', '0px');
     }

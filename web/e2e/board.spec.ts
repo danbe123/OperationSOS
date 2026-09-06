@@ -29,7 +29,7 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await page.getByRole('button', { name: 'End drill' }).click();
   await expect(page.getByText(/jobs ticked/)).toContainText('Drill ended: National grid collapse.');
   await expect(page.getByRole('list', { name: 'What happened in the drill' })).toContainText('Drill started');
-  await expect(page.getByRole('region', { name: 'Situation' })).toContainText('Everything is working');
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });
 
 test('Home in peacetime says how long the household would last, in plain words', async ({ page }) => {

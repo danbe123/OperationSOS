@@ -30,7 +30,7 @@ describe('Keyboard', () => {
     expect(screen.queryByTestId('keyboard')).toBeNull();
   });
 
-  it('appears on focus, reserves 210 px of layout height, and types through the native setter into a controlled input', async () => {
+  it('appears on focus, reserves the layout height it needs, and types through the native setter into a controlled input', async () => {
     const { container, user } = setup();
     await user.click(screen.getByLabelText('q'));
     expect(screen.getByTestId('keyboard')).toBeInTheDocument();

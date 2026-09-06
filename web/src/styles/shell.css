@@ -158,7 +158,7 @@
 .qr figcaption { font-size: var(--t-meta); color: var(--ink-muted); text-align: center; }
 
 /* The kiosk keyboard reduces the layout viewport rather than overlaying it. */
-.kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 210px; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); padding: 5px; }
+.kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 224px; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); padding: 5px; }
 .sos-kb.hg-theme-default { background: transparent; padding: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
 .sos-kb .hg-row { display: flex; gap: 5px; justify-content: center; }
 .sos-kb .hg-button { height: var(--touch); min-width: 64px; flex: 0 0 auto; font: 600 20px/1 var(--font-body); border-radius: var(--radius); background: var(--sunken); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }

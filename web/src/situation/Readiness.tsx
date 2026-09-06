@@ -27,7 +27,7 @@ export function Readiness() {
   return (
     <section className="panel panel-signal" aria-label="Situation">
       <div className="panel-head">
-        <h2><Icon name="check" size={20} /> Everything is working</h2>
+        <h2>How ready you are</h2>
         <Link className="btn btn-small" to="/situation">Situation sheet</Link>
       </div>
       <p className="lead">
