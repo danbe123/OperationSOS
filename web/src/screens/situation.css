@@ -6,9 +6,10 @@
    buttons leave over, and the row is two lines at every width. */
 .cond-details-toggle { margin-left: auto; }
 .cond-row-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-/* The three states are the group a screen reader hears; Details rides beside it, not inside it. */
-.cond-states { flex-wrap: nowrap; }
-.cond-state-btns { flex: 0 1 auto; min-width: 0; }
+/* The three states are the group a screen reader hears; Details rides beside it, not inside it. Two
+   classes, because `.row` is one and sets wrap: the buttons line must never become two. */
+.row.cond-states { flex-wrap: nowrap; gap: 6px; }
+.row.cond-state-btns { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; gap: 6px; }
 .cond-row-head h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--t-lead); }
 .cond-row-danger { box-shadow: inset 3px 0 0 var(--danger); padding-left: 12px; }
 .cond-row-warn { box-shadow: inset 3px 0 0 var(--warn); padding-left: 12px; }
@@ -58,6 +59,12 @@
    the button. It used to be one line at the top of the panel, half a screen above it. */
 .cond-trouble { margin: 6px 0 0; max-width: var(--measure); }
 @media (max-width: 699px) {
+  /* 390 px holds three states and a way into the details, but not the four words that would name
+     them all: the three states share what is left over after the toggle, which keeps its chevron
+     and drops its word. `aria-label` still says "Details: Mains power", so nothing is lost to a
+     screen reader — only to the eye, which has the chevron and the row it sits on. */
+  .cond-states .state-btn { flex: 1 1 0; min-width: 0; padding-left: 6px; padding-right: 6px; }
+  .cond-details-toggle span { display: none; }
   .cond-details { flex-direction: column; align-items: stretch; }
   .cond-details .field, .cond-details input { width: 100%; }
   .cond-since .field, .cond-since .field input { width: 100%; }
