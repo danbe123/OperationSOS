@@ -13,13 +13,17 @@ test('set the centre as home, then walk to what is nearby', async ({ page }) => 
   await homePanel.getByRole('button', { name: 'Close' }).click();
 
   await page.getByRole('button', { name: 'Nearby' }).click();
-  const list = page.getByRole('list', { name: 'Nearby facilities' });
-  await expect(list.getByRole('listitem').first()).toContainText('Boots, High Street');
-  await expect(list.getByRole('listitem').first()).toContainText('on foot');
-  await expect(page.getByRole('dialog', { name: 'Nearby' })).toContainText('No data on this box for');
-  await page.screenshot({ path: '/tmp/sos-map-nearby-853.png' });
+  const panel = page.getByRole('dialog', { name: 'Nearby' });
+  const pharmacy = page.locator('.nearby-facility').filter({ hasText: 'Pharmacy' });
+  await expect(pharmacy).toContainText('Boots, High Street');
+  await expect(pharmacy).toContainText('on foot');
+  // the runners-up ride under the nearest rather than as blocks of their own
+  await expect(pharmacy).toContainText('Shirley Pharmacy');
+  // a facility with no data on the box says why, rather than staying silent
+  await expect(panel).toContainText('No searchable copy of the rest-centre data on this box.');
 
-  await list.getByRole('listitem').filter({ hasText: 'Southampton General Hospital' }).getByRole('button', { name: 'Route to' }).click();
+  await page.locator('.nearby-facility').filter({ hasText: 'Emergency department' })
+    .getByRole('button', { name: /Line to Southampton General Hospital/ }).click();
   const readout = page.getByTestId('map-readout');
   await expect(readout).toContainText('Southampton General Hospital');
   await expect(readout).toContainText('from home');

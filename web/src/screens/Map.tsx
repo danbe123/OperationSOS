@@ -171,8 +171,8 @@ export function MapScreen() {
         <button type="button" className={panel === 'share' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'share'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" size={18} /><span>Share</span></button>
       </div>
       <div className="map-host">
-        {loading && <p className="pad muted">Loading map…</p>}
-        {error && <p className="pad warning">Map unavailable: {error}</p>}
+        {loading && <p className="map-note muted">Loading map…</p>}
+        {error && <p className="map-note warning">Map unavailable: {error}</p>}
         {config && overlaysOn && (
           <MapView
             config={config} theme={theme} baseId={baseId} overlaysOn={overlaysOn} terrainOn={terrainOn}

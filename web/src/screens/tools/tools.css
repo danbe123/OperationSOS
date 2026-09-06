@@ -1,8 +1,18 @@
-/* CPR beat: one flash per compression, timed by CSS so it stays on the beat regardless of timer jitter */
+/* The tools that need a look of their own: the CPR beat, the timer faces and the two small tables. */
+.timer-big { font-size: var(--t-title); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 4ch; }
+.cpr-pulse { width: 28px; height: 28px; border-radius: 50%; background: var(--sunken); border: 1px solid var(--line-strong); }
+/* One flash per compression, timed by CSS so it stays on the beat regardless of timer jitter. */
 .cpr-pulse.on { animation-name: cpr-beat; animation-iteration-count: infinite; animation-timing-function: ease-out; }
 @keyframes cpr-beat {
   0% { background: var(--danger); transform: scale(1.3); }
-  35% { background: var(--border); transform: scale(1); }
-  100% { background: var(--border); transform: scale(1); }
+  35% { background: var(--sunken); transform: scale(1); }
+  100% { background: var(--sunken); transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .cpr-pulse.on { animation-duration: 0s !important; background: var(--danger); } }
+
+.fallout, .sun-table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+.fallout th, .fallout td, .sun-table th, .sun-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.sun-table th { font-weight: 600; width: 60%; }
+.result { font-size: var(--t-lead); font-weight: 600; margin: 8px 0; }
+.dose-amount { font-size: var(--t-display); font-weight: 700; margin: 0 0 8px; line-height: 1.1; }
+.dose-result ul { margin: 8px 0; padding-left: 20px; }

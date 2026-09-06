@@ -10,7 +10,8 @@ for (const viewport of [{ width: 853, height: 480 }, { width: 360, height: 640 }
     await expect(third).toBeVisible();
     const box = await third.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+    // a quick card is read at arm's length: the one place prose runs at the lead size or bigger
     const fontSize = await third.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-    expect(fontSize).toBeGreaterThanOrEqual(viewport.width < 480 ? 21 : 24);
+    expect(fontSize).toBeGreaterThanOrEqual(22);
   });
 }

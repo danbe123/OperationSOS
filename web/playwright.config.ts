@@ -6,6 +6,8 @@ const baseURL = MODE === 'dev' ? 'http://127.0.0.1:8080' : 'http://127.0.0.1:417
 export default defineConfig({
   testDir: 'e2e',
   testMatch: /.*\.spec\.ts/,
+  // The inventory screenshots are a separate job (scripts/screenshots.mjs), not part of the suite.
+  testIgnore: process.env.SOS_SHOTS ? [] : ['**/screenshots.spec.ts'],
   timeout: 60_000,
   expect: { timeout: 10_000 },
   retries: 0,

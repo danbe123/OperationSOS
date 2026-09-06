@@ -33,7 +33,7 @@ export function useScrollToTop(main: RefObject<HTMLElement | null>) {
 function MainNav({ pathname, wide }: { pathname: string; wide: boolean }) {
   return (
     <nav className="mainnav no-print" aria-label="Sections">
-      <Link className="rail-brand" to="/" aria-label="Operation SOS: go to Now">SOS</Link>
+      <Link className="rail-brand" to="/" aria-label="Operation SOS">SOS</Link>
       <div className="mainnav-list">
         {DESTINATIONS.map((d) => (
           <Link key={d.label} className="rail-dest" to={d.to} aria-current={d.match(pathname) ? 'page' : undefined}>

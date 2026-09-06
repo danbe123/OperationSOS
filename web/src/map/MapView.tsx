@@ -193,6 +193,6 @@ export function MapView(props: MapViewProps) {
     syncRoute(map, routePoints);
   }, [styleVersion, config, theme, overlaysOn, terrainOn, pins, labelPoint, measurePoints, home, routePoints]);
 
-  if (!hasStyle) return <p className="pad warning">No base map is installed. Run the map build on the PC and copy the outputs to the box.</p>;
+  if (!hasStyle) return <p className="map-note warning">No base map is installed. Run the map build on the PC and copy the outputs to the box.</p>;
   return <div ref={hostRef} className="map-canvas" data-testid="map-canvas" />;
 }
