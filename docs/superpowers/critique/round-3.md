@@ -375,10 +375,11 @@ vault screen for a wordmark and one clock — give it `unicode-range` or load it
 
 Every screenshot below is `docs/superpowers/critique/round-2/<name>` before and
 `docs/superpowers/critique/round-3/<name>` after, at the same width and in the same theme. The whole
-inventory was re-shot with `node scripts/screenshots.mjs round-3`, and it now carries the state
-round 3 found in none of the 336: **print**, as `print-quick-card-*`, `print-scenario-*` and
-`print-situation-sheet-*`, taken with `emulateMedia({media:'print'})` and dim on — the exact state a
-household prints from in a night-time power cut.
+inventory was re-shot with `node scripts/screenshots.mjs round-3` — 354 files, against round 2's
+336 — and it now carries the state round 3 found in none of them: **print**, as `print-quick-card-*`,
+`print-scenario-*` and `print-situation-sheet-*` at both widths in all three themes, taken with
+`emulateMedia({media:'print'})` and dim on, which is the exact state a household prints from in a
+night-time power cut.
 
 ### 1. The quick card
 
@@ -549,12 +550,16 @@ names. Specs: `tests/screens/briefing.test.tsx`, `tests/screens/now.test.tsx`.
   clock"→"Clock", "Drill"→"Practise a drill", "Detected"→"Detected by the box", "Carry the
   situation"→"Carry it to another box", "The assistant"→"Ask the assistant", "The library"→"Browse
   the library", "The household plan"→"The plan", and Readiness's "Situation"→"How ready you are".
-- **The theme control is a control.** It reads "Change theme / Vault now" in a bordered row that is
-  not the rail's destination shape, with the accessible name "Change the theme. Vault now; next is
-  Field" — a verb, one label, and not a sixth place to go.
+- **The theme control is a control.** It reads "Change theme" in a bordered row that is not the
+  rail's destination shape, with the accessible name "Change the theme. Vault now; next is Field" — a
+  verb, one label, and not a sixth place to go. The current theme rides under the verb where there is
+  a row to put it (the phone's screen head) and lives in the accessible name on the rail, where a
+  third line cost Find its word.
 - **The map's own controls have words.** MapLibre's `NavigationControl` is not added at all; the map
-  draws Zoom in, Zoom out and Face north as the app's own icon-and-word buttons over the top-right of
-  the map (the scale bar, which has no buttons, stays).
+  draws Zoom in, Zoom out and Face north as the app's own icon-and-word buttons over the map — a
+  column in the top-right corner on the kiosk, one row along the top on a phone, where three stacked
+  buttons would have taken half of the band of map above the sheet. The scale bar, which has no
+  buttons and no words to miss, stays.
 
 Before: none — this is a flow · after: the same inventory shots, plus `e2e/access.spec.ts` ("the
 first tab stop is a way past the furniture, on every screen", "the wordmark is not a second Now, and
@@ -620,32 +625,35 @@ dist/assets/index-DBkUBADL.js   2,241.68 kB │ gzip: 661.43 kB
 screen that needs it:
 
 ```
-front door   dist/assets/index-B8PC0aBN.js      156.75 kB │ gzip:  47.63 kB
+front door   dist/assets/index-B2d8Y5Ui.js      156.71 kB │ gzip:  47.63 kB
 front door   dist/assets/react-D-ubgs9F.js      287.32 kB │ gzip:  92.10 kB
-front door   dist/assets/index-CJ0Eknug.css      37.71 kB │ gzip:   8.23 kB
-                                       total    481.78 kB │ gzip: 147.96 kB
+front door   dist/assets/index-CJMhNZOG.css      37.74 kB │ gzip:   8.24 kB
+                                       total    481.77 kB │ gzip: 147.97 kB
 
 /map         dist/assets/maplibre-CTmHzN_F.js 1,073.71 kB │ gzip: 292.38 kB
 /map         dist/assets/maplibre-DNVN2dqC.css   69.92 kB │ gzip:  10.05 kB
-/map         dist/assets/Map-DnfIeYOE.js         42.54 kB │ gzip:  14.35 kB
-/map         dist/assets/Map-Dg2a7Ony.css         5.90 kB │ gzip:   1.60 kB
+/map         dist/assets/Map-C28QQA1X.js         42.54 kB │ gzip:  14.35 kB
+/map         dist/assets/Map-o4i-qxXq.css         6.10 kB │ gzip:   1.64 kB
 /map         dist/assets/grid-Cr-rPMwp.js         2.96 kB │ gzip:   1.39 kB
-/map         dist/assets/PlaceSearch-CNIbqGAX.js   1.22 kB │ gzip:  0.65 kB
+/map         dist/assets/PlaceSearch-JplAHmzg.js  1.22 kB │ gzip:   0.66 kB
 /read, /doc  dist/assets/epub-j66FGZCx.js       351.45 kB │ gzip: 108.50 kB
-/read, /doc  dist/assets/Doc-Boo09WgS.js         10.31 kB │ gzip:   3.89 kB
-/read        dist/assets/Reader-SBVxCj4b.js       3.91 kB │ gzip:   1.70 kB
+/read, /doc  dist/assets/Doc-C2C9G7hi.js         10.31 kB │ gzip:   3.89 kB
+/read        dist/assets/Reader-BjkdpAo0.js       3.91 kB │ gzip:   1.70 kB
 first field  dist/assets/keyboard-BcX64-1B.js   107.49 kB │ gzip:  35.04 kB
 first field  dist/assets/keyboard-DJV78Rqi.css    3.22 kB │ gzip:   1.06 kB
-first field  dist/assets/Keyboard-CrYXLbBq.js     2.98 kB │ gzip:   1.48 kB
+first field  dist/assets/Keyboard-DoBJkpUY.js     2.98 kB │ gzip:   1.48 kB
 /plan, /sun  dist/assets/grid-C5TDArtG.js       131.58 kB │ gzip:  43.71 kB
-/plan        dist/assets/Plan-77beh9u5.js        20.31 kB │ gzip:   4.91 kB
-/tools/sun   dist/assets/SunMoon-CwNHlmHj.js      3.94 kB │ gzip:   1.62 kB
+/plan        dist/assets/Plan-CgHK-N9T.js        20.31 kB │ gzip:   4.91 kB
+/tools/sun   dist/assets/SunMoon-CC1xVSxm.js      3.94 kB │ gzip:   1.62 kB
 first code   dist/assets/qr-bYEHtTaU.js          25.78 kB │ gzip:  10.13 kB
-/ai          dist/assets/Ai-NMk_kd3I.js           6.15 kB │ gzip:   2.42 kB
+/ai          dist/assets/Ai-COhFjkcI.js           6.15 kB │ gzip:   2.42 kB
 ```
 
-**77.6 % less JavaScript on the front door, and 92.8 % less gzipped** (661.43 kB → 47.63 + 92.10 =
-139.73 kB of script, 147.96 kB with the stylesheet) — inside the 250 kB the item asked for.
+**The front door parses 444 kB of JavaScript instead of 2,242 kB — 80 % less — and 140 kB gzipped
+instead of 661 kB, 79 % less.** With the stylesheet (37.71 kB, 8.23 gzipped, against 112.90 and
+19.52) the whole first paint is 482 kB, **148 kB over the wire**: inside the 250 kB the item asked
+for, with the map, the reader, the keyboard, the encoder and the projection library all still on the
+box and all still one tap away.
 
 How: `React.lazy` plus `import()` for `/map`, `/doc/:id`, `/read/:id/*`, `/ai`, `/plan` and
 `/tools/sun`, each behind a plain loading screen that already knows its own title (`Later` in
@@ -691,7 +699,7 @@ Before `round-2/now-power-off-853-field.png`, `round-2/tasks-853-*.png`, `round-
   zone is gone (see item 9). `.notices` now clears the bottom bar as well as the keyboard
   (`bottom: calc(16px + var(--kb-height) + var(--bar-clearance))`), so a toast no longer covers
   Guides, Medical and Map on a 390 px phone — and every notice carries a 48 px dismiss control, which
-  it never had.
+  it never had — and the toast is a toast's width again rather than shrinking around the new button.
 - **5, the box's own machinery on the front door.** "The box" panel now says one thing about the
   machine — "Phones join it over its own WiFi, **SOS**" — and then only what is actually wrong (the
   library drive missing, the chip too hot to run the assistant, each in a sentence). The IP, the

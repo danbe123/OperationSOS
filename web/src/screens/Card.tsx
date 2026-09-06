@@ -64,8 +64,10 @@ export function Card() {
         <Emergency999 compact />
         {loading && <p className="muted">Loading the card…</p>}
         {error && <p className="warning">Could not load this card: {error}</p>}
+        {/* The count is not a live region: how many steps a card has is a fact about the card, and
+            announcing it again every time the frame scrolls is noise over somebody's shoulder. */}
         {count > 0 && (
-          <p className="card-count" role="status">
+          <p className="card-count">
             <span>{count} {count === 1 ? 'step' : 'steps'}</span>
             {more && (
               <button type="button" className="btn btn-small card-more" onClick={down}>

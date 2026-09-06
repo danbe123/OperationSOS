@@ -35,7 +35,7 @@ async function settle(page: Page) {
 }
 
 const SHOTS: Shot[] = [
-  { name: 'now-peacetime', go: async (p, s) => { s.household = [{ id: 1, name: 'Sam', age: 41, needs: '', medications: '', contacts: '', updated_at: hour() }, { id: 2, name: 'Alex', age: 12, needs: 'asthma', medications: 'salbutamol', contacts: '', updated_at: hour() }]; s.stock = [{ id: 1, name: 'Bottled water', category: 'water', quantity: 27, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: hour(), days_left: 4.5 }]; await p.goto('/'); await expect(p.getByRole('region', { name: 'Situation', exact: true })).toBeVisible(); } },
+  { name: 'now-peacetime', go: async (p, s) => { s.household = [{ id: 1, name: 'Sam', age: 41, needs: '', medications: '', contacts: '', updated_at: hour() }, { id: 2, name: 'Alex', age: 12, needs: 'asthma', medications: 'salbutamol', contacts: '', updated_at: hour() }]; s.stock = [{ id: 1, name: 'Bottled water', category: 'water', quantity: 27, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: hour(), days_left: 4.5 }]; await p.goto('/'); await expect(p.getByRole('region', { name: 'How ready you are', exact: true })).toBeVisible(); } },
   { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
   { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByTestId('status-strip')).toBeVisible(); } },
   { name: 'now-drill', go: async (p, s) => { off(s, 'power'); s.drill = true; s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/'); await expect(p.getByRole('group', { name: 'Situation now' })).toBeVisible(); } },
@@ -59,7 +59,7 @@ const SHOTS: Shot[] = [
   { name: 'medical-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/medical'); await expect(p.getByText('999 will not connect')).toBeVisible(); } },
   { name: 'quick-card', go: async (p) => { await p.goto('/medical/card/cpr-adult'); await expect(p.getByRole('heading', { level: 1, name: 'CPR (adult)' })).toBeVisible(); } },
   // The card's own step 1 says "call 999", so the card with the phones down is a state of its own.
-  { name: 'quick-card-phones-off', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/medical/card/cpr-adult'); await expect(p.getByText('999 will not connect')).toBeVisible(); } },
+  { name: 'quick-card-phones-off', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/medical/card/cpr-adult'); await expect(p.locator('.emergency-999')).toContainText('999 will not connect'); } },
   { name: 'childrens-doses', go: async (p) => { await p.goto('/medical/dose'); await p.getByLabel('Years').fill('4'); await expect(p.getByRole('region', { name: 'Dose' })).toBeVisible(); } },
   { name: 'map', go: async (p) => { await p.goto('/map'); await expect(p.getByRole('toolbar', { name: 'Map tools' })).toBeVisible(); await p.waitForTimeout(1200); } },
   { name: 'map-layers', go: async (p) => { await p.goto('/map'); await p.getByRole('button', { name: 'Layers' }).click(); await expect(p.getByRole('dialog', { name: 'Layers' })).toBeVisible(); await p.waitForTimeout(800); } },

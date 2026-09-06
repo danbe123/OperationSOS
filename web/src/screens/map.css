@@ -3,7 +3,11 @@
 /* One toolbar with all eight tools in it, including Print. The strip scrolls where it must, and it
    says so: a fade at the right edge and a chevron that scrolls it, rather than "Ho" cut in half. */
 .map-toolbar { position: relative; display: flex; align-items: center; padding: 0 var(--gutter) 6px; flex: 0 0 auto; }
+/* The chevron sits over the right-hand end of the strip, so the strip carries the room for it: with
+   the kiosk's 18 px small print the last tool scrolled to exactly under the chevron and could not be
+   tapped at all. */
 .map-tools { display: flex; gap: 6px; overflow-x: auto; scroll-behavior: smooth; flex: 1 1 auto; scrollbar-width: thin; }
+.map-toolbar-scrolls .map-tools { padding-right: 46px; }
 .map-tools .btn { flex-shrink: 0; gap: 4px; padding: 4px 8px; }
 /* The chevron sits over the fading right-hand end rather than taking a slice of the row: in the flow
    it took exactly the width that made it necessary, and a strip that fits would still show it. */

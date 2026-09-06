@@ -175,8 +175,9 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .card-count { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; }
 .card-more { margin-left: auto; }
 .card-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-/* The fade is the standing cue; the button beside the count is the one you can press. */
-.card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
+/* The fade is the standing cue; the button beside the count is the one you can press. It is short on
+   purpose: the last line of a step a reader can still see must stay a line they can read. */
+.card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 14px), transparent); }
 /* On paper there is no frame to scroll and no cue to give: the whole card prints, at once. */
 @media print {
   .card-body, .card-scroll { display: block; overflow: visible; padding: 0; mask-image: none; }
