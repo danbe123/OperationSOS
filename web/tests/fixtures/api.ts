@@ -382,6 +382,7 @@ export const events: Note[] = [
 
 export const stockResponse: StockResponse = {
   people: 3,
+  days: { water: 1.5, food: 4.6, medicine: 0 },
   items: [
     { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5, kit_item: 'power-and-light/torch', kit_title: 'Power and light' },
     { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6, kit_item: null, kit_title: null },

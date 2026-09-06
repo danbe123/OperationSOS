@@ -99,7 +99,7 @@ export const routes: RouteObject[] = [
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'radio', element: <Radio /> },
       { path: 'p/:slug', element: <Page /> },
-      { path: 'plan', element: <Later title="The plan"><Plan /></Later> },
+      { path: 'plan', element: <Later title="Household"><Plan /></Later> },
       { path: 'plan/people', element: <Later title="People"><People /></Later> },
       { path: 'plan/neighbours', element: <Later title="Neighbours"><NeighboursScreen /></Later> },
       { path: 'plan/notes', element: <Later title="Notes and pins"><NotesScreen /></Later> },

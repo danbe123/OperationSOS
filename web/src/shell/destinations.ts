@@ -6,6 +6,8 @@ const starts = (...prefixes: string[]) => (pathname: string) => prefixes.some((p
 
 /** The six places the box goes. The order never changes, on the rail or on the bar. */
 export const DESTINATIONS: Destination[] = [
+  /* `starts` matches a path and everything under it, so Household's sub-screens (`/plan/people` and
+     the rest) light Now with the hub itself. */
   { to: '/', icon: 'home', label: 'Now', match: (p) => p === '/' || p === '/now' || starts('/situation', '/tasks', '/board', '/plan')(p) },
   { to: '/guides', icon: 'book', label: 'Guides', match: starts('/guides', '/s', '/m', '/p', '/fieldcraft', '/radio', '/tools') },
   { to: '/kit', icon: 'boot', label: 'Kit', match: starts('/kit') },

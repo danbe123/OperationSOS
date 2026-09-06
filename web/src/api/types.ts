@@ -69,7 +69,7 @@ export type StockItem = {
    * box built before the field existed, where the screen falls back to the slug. */
   kit_title?: string | null;
 };
-export type StockResponse = { people: number; items: StockItem[] };
+export type StockResponse = { people: number; days: { water: number; food: number; medicine: number }; items: StockItem[] };
 export type SituationPhase = 'right-now' | 'first-72-hours' | 'first-month' | 'long-term';
 export type Situation = { slug: string; title: string | null; started_at: string; elapsed_s: number; phase: SituationPhase } | { slug: null };
 export type Passage = { n: number; title: string; url: string; source: string; text: string };

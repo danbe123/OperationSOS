@@ -21,6 +21,8 @@
 .meter-warn .meter-fill { background: var(--warn); }
 .meter-danger .meter-fill { background: var(--danger); }
 
+/* The hub is worth printing: six rows and where each stands is the household's own front sheet. The
+   chevron is a control, not a fact, so it is the only part the printer does not get. */
 @media print {
-  .hub-rows { display: none; }
+  .hub-row-go { display: none; }
 }
