@@ -1,4 +1,5 @@
 import type { MapConfig } from '../api/types';
+import { MapPanel } from './MapPanel';
 import { coverageNote } from './overlays';
 
 export function LayerPanel({ config, baseId, onBase, overlaysOn, onToggle, terrainOn, onTerrain, onClose }: {
@@ -8,8 +9,7 @@ export function LayerPanel({ config, baseId, onBase, overlaysOn, onToggle, terra
 }) {
   const hasTerrain = Boolean(config.terrain.contours || config.terrain.hillshade);
   return (
-    <div className="map-panel" role="dialog" aria-label="Layers">
-      <div className="row"><h2>Layers</h2><button type="button" className="btn" onClick={onClose}>Close</button></div>
+    <MapPanel label="Layers" title="Layers" onClose={onClose}>
       <h3>Base map</h3>
       {config.bases.map((b) => (
         <label key={b.id} className="check-row">
@@ -37,6 +37,6 @@ export function LayerPanel({ config, baseId, onBase, overlaysOn, onToggle, terra
           </div>
         );
       })}
-    </div>
+    </MapPanel>
   );
 }

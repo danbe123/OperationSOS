@@ -238,6 +238,18 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .log { max-height: 240px; overflow: auto; padding: 8px; background: var(--sunken); border-radius: var(--radius); font-size: var(--t-meta); white-space: pre-wrap; }
 .ok { color: var(--ok); font-weight: 600; }
 
+/* --- the document viewer's own chrome -------------------------------------------------------- */
+/* PDF.js's toolbar is hidden and this replaces it, so the one vendor surface left in the box now
+   wears the app's tokens, its 48 px targets and a word beside every icon, in all three themes. */
+.doc-tools { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 6px var(--gutter) 8px; background: var(--panel); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+.doc-tools-row { gap: 6px; align-items: flex-end; }
+.doc-tools .field > span { white-space: nowrap; }
+.doc-page { flex: 0 0 auto; }
+.doc-page input { width: 6ch; text-align: center; }
+.doc-of { padding-bottom: 12px; white-space: nowrap; }
+.doc-find { flex: 1 1 200px; min-width: 160px; max-width: 320px; }
+@media (max-width: 699px), (max-height: 439px) { .doc-tools { gap: 6px 10px; } .doc-find { flex-basis: 140px; } }
+
 /* --- content frames ------------------------------------------------------------------------- */
 
 .frame-wrap { flex: 1; min-height: 0; display: flex; }

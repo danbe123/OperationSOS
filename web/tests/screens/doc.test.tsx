@@ -73,6 +73,36 @@ describe('Doc', () => {
     expect(mocks.rendition.themes.fontSize).toHaveBeenLastCalledWith('125%');
   });
 
+  it('wears the app\'s chrome, not the viewer\'s: page x of n, Previous, Next, Find and the size', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(pdfItem);
+    renderRoute('/doc/nrr-2025');
+    const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
+    await act(async () => { fireEvent.load(frame); });
+    // PDF.js's own toolbar is hidden; nothing of the vendor's is on the screen
+    const injected = frame.contentDocument!.getElementById(READER_STYLE_ID)!.textContent!;
+    expect(injected).toContain('#toolbarContainer,#sidebarContainer');
+    expect(injected).toContain('--toolbar-height:0px');
+    expect(screen.queryByText('Automatic Zoom')).toBeNull();
+    // and every control is an app button with a word on it
+    for (const name of ['Previous', 'Next', 'Find', 'Smaller', 'Bigger']) {
+      expect(screen.getByRole('button', { name: new RegExp(name) })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('textbox', { name: 'Page number' })).toHaveValue('1');
+    expect(screen.getByText(/of an unknown number|of \d+/)).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Find in this document' })).toBeInTheDocument();
+  });
+
+  it('says the box does not have the document, and what to do, when the file is not on the drive', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(pdfItem);
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 404 }));
+    renderRoute('/doc/nrr-2025');
+    expect(await screen.findByText('The box does not have this document.')).toBeInTheDocument();
+    expect(screen.queryByTitle('Document')).toBeNull();
+    expect(screen.getByRole('link', { name: /Open the library entry/ })).toHaveAttribute('href', '/library');
+    expect(screen.getByRole('link', { name: /Search the box for this/ })).toHaveAttribute('href', '/search?q=National%20Risk%20Register%202025');
+    fetchMock.mockRestore();
+  });
+
   it('explains when the document is on a missing drive or is not a document', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValueOnce({ ...pdfItem, available: false, url: null, tier: 'extended', drive_label: 'On external drive (not connected)' });
     const a = renderRoute('/doc/nrr-2025');

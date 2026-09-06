@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { gridRef } from '../map/grid';
 import { floodZoneAt } from '../map/home';
 import { LayerPanel } from '../map/LayerPanel';
+import { MapPanel } from '../map/MapPanel';
 import { MapView } from '../map/MapView';
 import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
 import { describeNearby, describeRoute, nearbyGap, nearbyIcon } from '../map/nearby';
@@ -143,6 +144,18 @@ export function MapScreen() {
     );
   };
 
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const scrollTools = () => toolbarRef.current?.scrollBy({ left: 200, behavior: 'smooth' });
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      notify('The link is on the clipboard.');
+    } catch {
+      notify('This browser will not copy for us. Press and hold the link to copy it.');
+    }
+  };
+
   const print = () => {
     const map = mapRef.current;
     if (!map) return;
@@ -158,8 +171,11 @@ export function MapScreen() {
   const legend = (config?.overlays ?? []).filter((o) => overlaysOn?.includes(o.id));
 
   return (
-    <Screen title="Map" search={false} back={false} fill className="map-screen" actions={<PrintButton onPrint={print} />}>
-      <div className="map-tools no-print" role="toolbar" aria-label="Map tools">
+    <Screen title="Map" search={false} back={false} fill className="map-screen">
+      {/* Print was a non-scrolling row of its own above the tools; it is the eighth tool, and the
+          strip fades and offers a chevron at its right edge rather than clipping "Ho" mid-word. */}
+      <div className="map-toolbar no-print">
+      <div className="map-tools" role="toolbar" aria-label="Map tools" ref={toolbarRef}>
         <button type="button" className={panel === 'layers' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'layers'} onClick={() => setPanel(panel === 'layers' ? 'none' : 'layers')}><Icon name="layers" size={18} /><span>Layers</span></button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>
         <button type="button" className={panel === 'pins' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'pins'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" size={18} /><span>Pins</span></button>
@@ -167,6 +183,9 @@ export function MapScreen() {
         <button type="button" className={panel === 'nearby' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'nearby'} onClick={() => (panel === 'nearby' ? setPanel('none') : openNearby())}><Icon name="locate" size={18} /><span>Nearby</span></button>
         <button type="button" className={measuring ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={measuring} onClick={() => { setMeasuring(!measuring); if (measuring) setMeasure([]); }}><Icon name="measure" size={18} /><span>Measure</span></button>
         <button type="button" className={panel === 'share' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'share'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" size={18} /><span>Share</span></button>
+        <PrintButton onPrint={print} />
+      </div>
+      <button type="button" className="btn btn-small map-tools-more" aria-label="More map tools" onClick={scrollTools}><Icon name="forward" size={18} /></button>
       </div>
       <div className="map-host">
         {loading && <p className="map-note muted">Loading map…</p>}
@@ -184,8 +203,7 @@ export function MapScreen() {
           <LayerPanel config={config} baseId={baseId} onBase={setBaseId} overlaysOn={overlaysOn} onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))} terrainOn={terrainOn} onTerrain={setTerrainOn} onClose={() => setPanel('none')} />
         )}
         {panel === 'search' && (
-          <div className="map-panel" role="dialog" aria-label="Find place">
-            <div className="row"><h2>Find a place</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
+          <MapPanel label="Find place" title="Find a place" onClose={() => setPanel('none')}>
             {canLocate ? (
               <button type="button" className="btn" onClick={locate}><Icon name="locate" size={18} /><span>Locate me</span></button>
             ) : (
@@ -193,11 +211,10 @@ export function MapScreen() {
             )}
             <PlaceSearch onPick={onPick} onGrid={onGrid} />
             {!canLocate && config?.packs_index_url && <p>For GPS on your phone, install the offline <a href={config.packs_index_url}>Phone map packs</a>.</p>}
-          </div>
+          </MapPanel>
         )}
         {panel === 'pins' && (
-          <div className="map-panel" role="dialog" aria-label="Pins">
-            <div className="row"><h2>Pins</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
+          <MapPanel label="Pins" title="Pins" onClose={() => setPanel('none')}>
             {pendingPin || pinTitle ? (
               <form className="stack" onSubmit={(e) => { e.preventDefault(); void savePin(); }}>
                 <label className="field"><span>Pin name</span><input type="text" aria-label="Pin name" value={pinTitle} onChange={(e) => setPinTitle(e.target.value)} maxLength={80} /></label>
@@ -217,11 +234,13 @@ export function MapScreen() {
                 </li>
               ))}
             </ul>
-          </div>
+          </MapPanel>
         )}
         {panel === 'home' && (
-          <div className="map-panel" role="dialog" aria-label="Home">
-            <div className="row"><h2>Home</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
+          <MapPanel
+            label="Home" title="Home" onClose={() => setPanel('none')}
+            actions={<button type="button" className="btn btn-primary" disabled={savingHome} onClick={() => void saveHome()}>Set as home</button>}
+          >
             {homePoint ? (
               <>
                 <p><strong>{homePoint.label}</strong><br /><span className="muted">{gridRef(homePoint.lat, homePoint.lon).text}</span></p>
@@ -229,20 +248,22 @@ export function MapScreen() {
                 <button type="button" className="btn" onClick={() => flyTo(homePoint.lon, homePoint.lat, 15)}>Go to home</button>
               </>
             ) : (
-              <p className="muted">No home set. Centre the map on where you live, then set it: the box uses it for the sun times, the facilities near you and every distance it quotes.</p>
+              <p className="muted">No home set. The box uses it for the sun times, the facilities near you and every distance it quotes.</p>
             )}
             <label className="field"><span>Name</span><input type="text" aria-label="Home name" value={homeLabel} maxLength={60} onChange={(e) => setHomeLabel(e.target.value)} /></label>
-            <p className="muted">Centre: {centreRef.text}</p>
-            <button type="button" className="btn btn-primary" disabled={savingHome} onClick={() => void saveHome()}>Set as home</button>
+            {/* The instruction reads while the map is still visible above it, and this line follows
+                the map as it moves, so you can see what "Set as home" is about to save. */}
+            <p role="status">Set as home will use the centre of the map, <strong>{centreRef.text}</strong>. Move the map and this line follows it.</p>
             <p className="muted">{overlaysOn?.includes('flood-zones') ? 'The flood zone under the centre is saved with it.' : 'Turn the flood zones layer on first to record the flood zone too.'}</p>
             {homeQ.error && <p className="warning">Home unavailable: {homeQ.error}</p>}
-          </div>
+          </MapPanel>
         )}
         {panel === 'nearby' && (
-          <div className="map-panel" role="dialog" aria-label="Nearby">
-            <div className="row"><h2>Nearby</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
+          <MapPanel
+            label="Nearby" title="Nearby" onClose={() => setPanel('none')}
+            actions={<button type="button" className="btn btn-small" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>}
+          >
             <p className="muted">Nearest to the centre of the map, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
-            <button type="button" className="btn btn-small" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>
             {nearbyQ.loading && <p className="muted">Looking…</p>}
             {nearbyQ.error && <p className="warning">Nearby facilities unavailable: {nearbyQ.error}</p>}
             <ul className="list nearby-list" aria-label="Nearby facilities">
@@ -283,15 +304,17 @@ export function MapScreen() {
                 <button type="button" className="btn btn-small" onClick={() => setRouteTo(null)}>Clear the line</button>
               </div>
             )}
-          </div>
+          </MapPanel>
         )}
         {panel === 'share' && (
-          <div className="map-panel" role="dialog" aria-label="Share">
-            <div className="row"><h2>Share this place</h2><button type="button" className="btn btn-small" onClick={() => setPanel('none')}>Close</button></div>
-            <textarea aria-label="Link to this place" readOnly rows={3} value={shareUrl} onFocus={(e) => e.target.select()} />
+          <MapPanel
+            label="Share" title="Share this place" onClose={() => setPanel('none')}
+            actions={<button type="button" className="btn btn-primary" onClick={() => void copyLink()}><Icon name="share" size={18} /><span>Copy the link</span></button>}
+          >
+            <textarea className="share-link" aria-label="Link to this place" readOnly rows={2} value={shareUrl} onFocus={(e) => e.target.select()} />
             <QrCode text={shareUrl} size={220} label="Scan to open this place" />
             <p className="muted">Centre: {centreRef.text} ({centreRef.system})</p>
-          </div>
+          </MapPanel>
         )}
       </div>
       <div className="map-readout chrome" data-testid="map-readout">

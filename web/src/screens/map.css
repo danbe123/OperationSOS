@@ -1,17 +1,43 @@
 /* The map: one toolbar, one panel at a time, and a readout that never moves. */
 .map-screen { display: flex; flex-direction: column; }
-.map-tools { display: flex; gap: 6px; padding: 0 var(--gutter) 6px; overflow-x: auto; flex: 0 0 auto; }
+/* One toolbar with all eight tools in it, including Print. The strip scrolls where it must, and it
+   says so: a fade at the right edge and a chevron that scrolls it, rather than "Ho" cut in half. */
+.map-toolbar { position: relative; display: flex; align-items: center; padding: 0 var(--gutter) 6px; flex: 0 0 auto; }
+.map-tools { display: flex; gap: 6px; overflow-x: auto; scroll-behavior: smooth; flex: 1 1 auto; scrollbar-width: thin; }
 .map-tools .btn { flex-shrink: 0; }
+.map-tools-more { display: none; flex: 0 0 auto; margin-left: 4px; padding: 4px 8px; }
+.map-toolbar::after {
+  content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 40px); width: 24px;
+  pointer-events: none; background: linear-gradient(to right, transparent, var(--ground));
+}
+@media (min-width: 700px) and (min-height: 440px) { .map-toolbar::after { display: none; } }
+@media (max-width: 699px), (max-height: 439px) { .map-tools-more { display: inline-flex; } }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
+/* The panel's head and its actions are pinned; only its middle scrolls, so the primary action is
+   never the sliver at the bottom edge of a 480 px screen with nothing to say it is there. */
 .map-panel {
   position: absolute; top: 0; right: 0; bottom: 0; width: min(340px, 100%);
-  overflow: auto; z-index: 10; padding: 12px;
+  z-index: 10; overflow: hidden;
   background: var(--ground); border-left: 1px solid var(--line-strong);
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column;
 }
+.map-panel-head { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.map-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.map-panel-body > * { flex: 0 0 auto; }
+.map-panel-actions { flex: 0 0 auto; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel); }
 .map-panel h2 { flex: 1; margin: 0; font-size: var(--t-lead); }
 .map-panel h3 { margin: 8px 0 4px; }
+.share-link { min-height: 0; resize: vertical; }
+/* On a phone the panel is a bottom sheet: the map an instruction asks you to aim stays live above
+   the instruction, instead of the panel covering every pixel but a 45 px sliver. */
+@media (max-width: 699px), (max-height: 439px) {
+  .map-panel {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 55%;
+    border-left: 0; border-top: 2px solid var(--line-strong);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+}
 .map-readout { flex: 0 0 auto; padding: 6px var(--gutter); font-size: var(--t-meta); color: var(--ink-muted); background: var(--panel); border-top: 1px solid var(--line); }
 .map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid var(--line-strong); }
