@@ -129,7 +129,7 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 - [Protect and Survive, the fall-out room](doc:protect-and-survive-1980#page=4)
 - [FEMA, damage zones by yield](doc:fema-nuclear-detonation-2022#page=27)
 - [FEMA, the 7:10 rule and Table 1.4](doc:fema-nuclear-detonation-2022#page=35)
-- [NWSS, expedient shelters](doc:nwss#page=38)
+- [NWSS, expedient shelters](doc:nwss#page=42)
 - [Nuclear fallout (Wikipedia)](kiwix:wikipedia_en_all_maxi/Nuclear_fallout)
 - [Fallout shelter (Wikipedia)](kiwix:wikipedia_en_all_maxi/Fallout_shelter)
 - [Effects of nuclear explosions (Wikipedia)](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)

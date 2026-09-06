@@ -93,7 +93,7 @@ Markdown may contain `{{#if <cond>}} … {{else}} … {{/if}}` and `{{#unless <c
 
 ## 7. Readiness and drills
 
-`POST /drill` starts a drill: a scenario plus a set of conditions with `since` in the past, flagged `drill`. The engine runs as normal; the board says DRILL; tasks tick as normal into `task_state` with `drill: true`; `DELETE /drill` ends it and writes a summary event (tasks done, time taken). The readiness score is recomputed nightly and on every stock or household change: 40 points stock (water, food, medicine days against 3, 7 and 14), 30 points household coverage (each need with a task template and a stock item), 20 points plan (home set, meeting point in the plan page, contacts), 10 points practice (a drill in the last 6 months).
+`POST /drill` starts a drill: a scenario plus a set of conditions with `since` in the past, flagged `drill`. The engine runs as normal; the board says DRILL; tasks tick as normal into `task_state` with `drill: true`; `DELETE /drill` ends it and writes a summary event (tasks done, time taken). The readiness score is recomputed nightly and on every stock or household change: 30 points stock (water, food, medicine days against 3, 7 and 14), 30 points household coverage (each need with a task template and a stock item), 15 points plan (home set, meeting point in the plan page, contacts), 10 points practice (a drill in the last 6 months) and 15 points kits (the basic tier of every relevant kit). The kits spec (`2026-09-06-kits-design.md`, section 4) owns these weights and rebalanced them from the original 40/30/20/10.
 
 ## 8. Community
 

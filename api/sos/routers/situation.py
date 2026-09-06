@@ -133,11 +133,13 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                            "(lower(title) LIKE '%meeting point%' OR lower(body) LIKE '%meeting point%') LIMIT 1").fetchone()
     from sos import kits as kits_mod
 
+    # Every kit's ticks in one read, not one query per kit: fifteen kits is fifteen round trips on a screen refresh.
+    ticked: dict[str, set[str]] = {}
+    for row in conn.execute("SELECT playbook, item_id FROM checklist_state WHERE checked=1 AND playbook LIKE 'kit:%'"):
+        ticked.setdefault(row["playbook"][len("kit:"):], set()).add(row["item_id"])
     kit_rows: list[dict] = []
     for kit in content.kits():
-        checked = {r["item_id"] for r in conn.execute(
-            "SELECT item_id FROM checklist_state WHERE playbook=? AND checked=1", (f"kit:{kit.id}",))}
-        done, total = kits_mod.basic_progress(kit, checked)
+        done, total = kits_mod.basic_progress(kit, ticked.get(kit.id, set()))
         kit_rows.append({"slug": kit.id, "title": kit.title, "relevant": kits_mod.relevant(kit, household),
                          "basic_done": done, "basic_total": total})
     return engine.Model(

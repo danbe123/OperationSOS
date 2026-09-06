@@ -477,9 +477,13 @@ def readiness(model: Model, rules: Rules) -> dict:
             earned += share * frac
             if k["basic_done"] < k["basic_total"]:
                 gaps.append({"title": f"{k['title']} kit: {k['basic_done']} of {k['basic_total']} basic items",
-                             "link": f"/kit/{k['slug']}", "points": int(round(share * (1 - frac)))})
+                             "link": f"/kit/{k['slug']}", "points": int(round(share * (1 - frac))),
+                             "remaining": share * (1 - frac)})
         score += int(round(earned))
-    gaps.sort(key=lambda g: (-g["points"], g["title"]))
+    # Points round to whole numbers, so two kits often tie; the emptier one is the one to go and fill.
+    gaps.sort(key=lambda g: (-g["points"], -g.get("remaining", 0.0), g["title"]))
+    for gap in gaps:
+        gap.pop("remaining", None)
     return {"score": max(0, min(100, score)), "gaps": gaps}
 
 

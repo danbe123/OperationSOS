@@ -1,4 +1,6 @@
-"""The readiness score (spec section 7), kept in the settings table so `/status` is a cheap read.
+"""The readiness score, kept in the settings table so `/status` is a cheap read.
+
+The weights are the kits spec section 4: 30 stock, 30 household coverage, 15 plan, 10 practice, 15 kits.
 
 It is recomputed whenever anything it counts changes — a stock item, a person in the household, the home on the
 map, the end of a drill — and once a night for the parts that only time moves (the six-month practice window and

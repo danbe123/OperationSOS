@@ -85,6 +85,19 @@ def test_readiness_counts_the_basic_tier_of_relevant_kits(peacetime, ruleset):
     assert view["readiness"]["gaps"] == [{"title": "Water kit: 1 of 2 basic items", "link": "/kit/water", "points": 4}]
 
 
+def test_equal_kit_gaps_put_the_emptiest_kit_first(peacetime, ruleset):
+    """Two kits worth the same rounded points: the one with the most left to do is the one to go and fill."""
+    kitted = engine.Model(now=peacetime.now, household=peacetime.household, stock=peacetime.stock, home=dict(HOME),
+                          meeting_point=True, last_drill_at=peacetime.last_drill_at,
+                          kits=({"slug": "food", "title": "Food", "relevant": True, "basic_done": 1, "basic_total": 4},
+                                {"slug": "water", "title": "Water", "relevant": True, "basic_done": 1, "basic_total": 5}))
+    gaps = engine.compute(kitted, ruleset)["readiness"]["gaps"]
+    # share 7.5: water has 80 % left (6.0), food 75 % (5.625); both round to 6, and "Food" would win on title alone
+    assert [g["points"] for g in gaps] == [6, 6]
+    assert [g["link"] for g in gaps] == ["/kit/water", "/kit/food"]
+    assert all("remaining" not in g for g in gaps)
+
+
 def test_readiness_without_kit_content_keeps_the_full_kit_points(peacetime, ruleset):
     assert engine.compute(peacetime, ruleset)["readiness"]["score"] == 100
 
