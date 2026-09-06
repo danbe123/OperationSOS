@@ -3,65 +3,64 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { makeView, neighbours, page, powerOffView, stockResponse, view } from '../fixtures/api';
+import { makeView, neighbours, powerOffView, view } from '../fixtures/api';
 
-function mockPlan(over: { neighbours?: typeof neighbours } = {}) {
-  vi.spyOn(api, 'page').mockResolvedValue(page);
-  vi.spyOn(api, 'household').mockResolvedValue([]);
-  vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
-  vi.spyOn(api, 'notes').mockResolvedValue([]);
+function mockStreet(over: { neighbours?: typeof neighbours } = {}) {
   vi.spyOn(api, 'neighbours').mockResolvedValue(over.neighbours ?? neighbours);
 }
 
 describe('Neighbours', () => {
   it('lists the street with what each one needs and can do, and the printable list', async () => {
-    mockPlan();
-    renderRoute('/plan');
-    const section = await screen.findByRole('region', { name: 'Neighbours' });
-    const rows = within(section).getByRole('list', { name: 'Neighbours' });
-    // The plan is one of the screens the shell fetches on demand, so the street arrives after it.
+    mockStreet();
+    renderRoute('/plan/neighbours');
+    expect(await screen.findByRole('heading', { name: 'Neighbours', level: 1 })).toBeInTheDocument();
+    const rows = await screen.findByRole('list', { name: 'Neighbours' });
+    // The street screen is fetched on demand, so the street arrives after the screen does.
     const items = await within(rows).findAllByRole('listitem');
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent('Joan Reeve');
     expect(items[0]).toHaveTextContent('14 Mill Lane');
     expect(items[0]).toHaveTextContent('oxygen concentrator');
     expect(items[1]).toHaveTextContent('nurse, has a petrol generator');
-    expect(within(section).getByRole('link', { name: /Printable street list/ })).toHaveAttribute('href', '/api/street-list');
+    expect(screen.getByRole('link', { name: /Printable street list/ })).toHaveAttribute('href', '/api/street-list');
+    expect(screen.queryByRole('form', { name: 'Add a neighbour' })).toBeNull();
   });
 
-  it('says so when nobody is on the list yet', async () => {
-    mockPlan({ neighbours: [] });
-    renderRoute('/plan');
-    const section = await screen.findByRole('region', { name: 'Neighbours' });
-    expect(section).toHaveTextContent('Nobody on the street list yet');
+  it('says so when nobody is on the list yet, with the button to add the first one', async () => {
+    mockStreet({ neighbours: [] });
+    renderRoute('/plan/neighbours');
+    const rows = await screen.findByRole('list', { name: 'Neighbours' });
+    expect(await within(rows).findByText(/Nobody on the street list yet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add a neighbour' })).toBeInTheDocument();
   });
 
-  it('adds, edits and removes a neighbour', async () => {
-    mockPlan({ neighbours: [] });
+  it('adds, edits and removes a neighbour, with the form behind the button', async () => {
+    mockStreet({ neighbours: [] });
     const add = vi.spyOn(api, 'addNeighbour').mockResolvedValue(neighbours[0]);
     const update = vi.spyOn(api, 'updateNeighbour').mockResolvedValue(neighbours[0]);
     const remove = vi.spyOn(api, 'deleteNeighbour').mockResolvedValue({ ok: true });
     const user = userEvent.setup();
-    renderRoute('/plan');
-    const section = await screen.findByRole('region', { name: 'Neighbours' });
-    const form = within(section).getByRole('form', { name: 'Add a neighbour' });
+    renderRoute('/plan/neighbours');
+    await user.click(await screen.findByRole('button', { name: 'Add a neighbour' }));
+    const form = screen.getByRole('form', { name: 'Add a neighbour' });
     await user.type(within(form).getByRole('textbox', { name: 'Neighbour name' }), 'Joan Reeve');
     await user.type(within(form).getByRole('textbox', { name: 'Neighbour address' }), '14 Mill Lane');
     vi.mocked(api.neighbours).mockResolvedValue(neighbours);
     await user.click(within(form).getByRole('button', { name: 'Add neighbour' }));
     expect(add).toHaveBeenCalledWith(expect.objectContaining({ name: 'Joan Reeve', address: '14 Mill Lane' }));
+    expect(screen.queryByRole('form', { name: 'Add a neighbour' })).toBeNull();
 
-    await user.click(await within(section).findByRole('button', { name: 'Edit Joan Reeve' }));
-    await user.click(within(section).getByRole('button', { name: 'Save' }));
+    await user.click(await screen.findByRole('button', { name: 'Edit Joan Reeve' }));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(update).toHaveBeenCalledWith(1, expect.objectContaining({ name: 'Joan Reeve' }));
 
-    await user.click(within(section).getByRole('button', { name: 'Remove Joan Reeve' }));
-    await user.click(within(section).getByRole('button', { name: 'Confirm remove' }));
+    await user.click(screen.getByRole('button', { name: 'Remove Joan Reeve' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm remove' }));
     expect(remove).toHaveBeenCalledWith(1);
   });
 
   it('flags who to check on, and lists what the street can do, from the View', async () => {
-    mockPlan();
+    mockStreet();
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       ...powerOffView,
       neighbours: {
@@ -69,12 +68,11 @@ describe('Neighbours', () => {
         skills: [{ name: 'Ade Okafor', address: '18 Mill Lane', skill: 'nurse', text: 'a nurse two doors down', contacts: '07700 900456', why: 'On the street list.', rule: 'neighbour-skill-ade-okafor', link: null }],
       },
     }));
-    renderRoute('/plan');
-    const section = await screen.findByRole('region', { name: 'Neighbours' });
-    const items = within(within(section).getByRole('list', { name: 'Neighbours' })).getAllByRole('listitem');
+    renderRoute('/plan/neighbours');
+    const items = within(await screen.findByRole('list', { name: 'Neighbours' })).getAllByRole('listitem');
     expect(items[0]).toHaveTextContent('check on');
     expect(items[1]).not.toHaveTextContent('check on');
-    expect(within(section).getByRole('region', { name: 'What the street can do' })).toHaveTextContent('a nurse two doors down');
+    expect(screen.getByRole('region', { name: 'What the street can do' })).toHaveTextContent('a nurse two doors down');
   });
 
   it('renders the knock-on-the-door job once, on the task list', async () => {

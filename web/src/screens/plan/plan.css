@@ -1,0 +1,26 @@
+/* The household screens: the hub's rows, and the meters they carry.
+
+   A hub row is a quick card that says what it is and where that stands — "People", "3 registered" —
+   so the answer to "is there anything to do here" is on the hub, not one tap inside it. */
+.hub-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hub-row {
+  display: flex; align-items: center; gap: 12px;
+  min-height: var(--touch); padding: 10px 14px;
+  border-radius: var(--radius); background: var(--panel); color: var(--ink); text-decoration: none;
+}
+.hub-row > svg { flex: 0 0 auto; }
+.hub-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hub-row-title { font-size: var(--t-lead); font-weight: 700; line-height: 1.2; }
+.hub-row-state { font-size: var(--t-meta); color: var(--ink-muted); line-height: 1.3; }
+.hub-row-go { margin-left: auto; flex: 0 0 auto; color: var(--ink-muted); }
+
+/* Days left, as a bar a glance can read: full is a fortnight, and the colour is the state, not the
+   decoration. The number is always beside it — a bar on its own is not a figure. */
+.meter { height: 8px; border-radius: var(--radius-pill); background: var(--sunken); overflow: hidden; }
+.meter-fill { height: 100%; background: var(--ok); }
+.meter-warn .meter-fill { background: var(--warn); }
+.meter-danger .meter-fill { background: var(--danger); }
+
+@media print {
+  .hub-rows { display: none; }
+}

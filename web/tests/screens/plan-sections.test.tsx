@@ -45,7 +45,8 @@ describe('Plan sections', () => {
     const addStock = vi.spyOn(api, 'addStock').mockResolvedValue({ ...water, id: 3, name: 'Diesel', category: 'fuel', per_person_day: null });
     renderRoute('/plan');
     const user = userEvent.setup();
-    const personForm = await screen.findByRole('form', { name: 'Add a person' });
+    await user.click(await screen.findByRole('button', { name: 'Add a person' }));
+    const personForm = screen.getByRole('form', { name: 'Add a person' });
     await user.type(within(personForm).getByLabelText('Name'), 'Jo');
     await user.type(within(personForm).getByLabelText('Age'), '34');
     await user.click(within(personForm).getByRole('button', { name: 'Add person' }));
