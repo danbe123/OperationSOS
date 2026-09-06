@@ -103,15 +103,41 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
   const setAt = condition.set_by && ukWhen(condition.updated_at);
   return (
     <li className={`cond-row cond-row-${tone}`} id={condition.id}>
+      {/* Two lines and no more: the title (with how long, when it is not working), then the buttons.
+          The state used to be said twice on the first line — a badge reading "✓ working" beside a
+          pressed button reading "✓ Working" — and Details sat between them, which on a 390 px phone
+          wrapped onto a line of its own and made every one of the ten rows three lines tall. */}
       <div className="cond-row-head">
         <h3><Icon name={info.icon} size={22} /> {info.title}</h3>
-        <span className={`badge badge-${tone}`}><span aria-hidden="true">{STATE_SYMBOL[condition.state]}</span> {STATE_LABEL[condition.state]}</span>
         {condition.state !== 'working' && <span className="muted">for {describeDuration(elapsedFrom(condition))}</span>}
+      </div>
+      <div className="row cond-states">
+        <div className="row cond-state-btns" role="group" aria-label={info.title}>
+          {STATES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              /* The chosen state wears its own colour, never the accent: an "off" that reads as the
+                 primary action is exactly the misreading this screen cannot afford. */
+              className={s === condition.state ? `btn state-btn state-set state-${STATE_TONE[s]}` : 'btn state-btn'}
+              aria-pressed={s === condition.state}
+              disabled={busy}
+              onClick={() => ask(s)}
+            >
+              {/* The symbol marks the choice, not the option: three ticks and crosses shown at once
+                  told the reader nothing about which one the box is holding. The word carries the
+                  accessible name either way, so a screen reader hears "Off, pressed" as before. */}
+              {s === condition.state && <span className="state-glyph" aria-hidden="true">{STATE_SYMBOL[s]}</span>}
+              <span>{BUTTON_LABEL[s]}</span>
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           className="btn btn-small cond-details-toggle no-print"
           /* Ten rows carry this button; without the service's name a screen reader hears "Details"
-             ten times over and cannot tell which service it is about to open. */
+             ten times over and cannot tell which service it is about to open. It rides the end of
+             the buttons line, outside the group, so the group is the three states and nothing else. */
           aria-label={`Details: ${info.title}`}
           aria-expanded={open}
           onClick={() => onOpen?.(open ? null : condition.id)}
@@ -119,26 +145,6 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
           <Icon name={open ? 'up' : 'down'} size={18} />
           <span>Details</span>
         </button>
-      </div>
-      <div className="row cond-states" role="group" aria-label={info.title}>
-        {STATES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            /* The chosen state wears its own colour, never the accent: an "off" that reads as the
-               primary action is exactly the misreading this screen cannot afford. */
-            className={s === condition.state ? `btn state-btn state-set state-${STATE_TONE[s]}` : 'btn state-btn'}
-            aria-pressed={s === condition.state}
-            disabled={busy}
-            onClick={() => ask(s)}
-          >
-            {/* The symbol marks the choice, not the option: three ticks and crosses shown at once
-                told the reader nothing about which one the box is holding. The word carries the
-                accessible name either way, so a screen reader hears "Off, pressed" as before. */}
-            {s === condition.state && <span className="state-glyph" aria-hidden="true">{STATE_SYMBOL[s]}</span>}
-            <span>{BUTTON_LABEL[s]}</span>
-          </button>
-        ))}
       </div>
       {pending && (
         <div className="row cond-since" role="group" aria-label={`${info.title}: since when?`}>

@@ -36,6 +36,32 @@ describe('The situation sheet', () => {
     expect(screen.getByRole('link', { name: 'Print report' })).toHaveAttribute('target', '_blank');
   });
 
+  it('says the state once, and keeps the row to two lines', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    renderRoute('/situation');
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    const power = rowFor(rows, 'power');
+    // The head is the title and how long, and nothing else: the badge said "✕ off" beside a pressed
+    // button already saying "✕ Off", and Details wrapped onto a third line on a 390 px phone.
+    const head = power.querySelector('.cond-row-head') as HTMLElement;
+    expect(head.querySelector('.badge')).toBeNull();
+    expect(head).toHaveTextContent('Mains power');
+    expect(head).toHaveTextContent(/for \d/);
+    expect(within(head).queryByRole('button')).toBeNull();
+    // Details rides the end of the buttons line, after the three states and outside their group.
+    const states = power.querySelector('.cond-states') as HTMLElement;
+    const buttons = within(states).getAllByRole('button');
+    expect(buttons.map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim()))
+      .toEqual(['Working', 'Patchy', '✕Off', 'Details: Mains power']);
+    expect(buttons[3]).toHaveClass('cond-details-toggle');
+    expect(within(states).getByRole('group', { name: 'Mains power' })).not.toContainElement(buttons[3]);
+    // A working row says its state on the pressed button alone, with no duration beside the title.
+    const water = rowFor(rows, 'water');
+    expect(water.querySelector('.cond-row-head')).not.toHaveTextContent('for ');
+    expect(water.querySelector('.cond-row-head .badge')).toBeNull();
+  });
+
   it('asks when it started on the row that was changed, and nowhere else', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);

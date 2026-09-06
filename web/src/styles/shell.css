@@ -149,8 +149,11 @@
 
 .band-scenario { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--ink); text-decoration: none; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .band-scenario .muted { font-weight: 400; }
-/* A count of jobs is not a condition: it gets the small button, not the amber pill. */
+/* A count of jobs is not a condition: it gets the small button, not the amber pill. Both carried the
+   auto margin, which split the free space between them and left one chip stranded in the middle of
+   the band; the margin belongs to whichever of the two comes first, so the pair travels together. */
 .band-off, .band-jobs { flex-shrink: 0; margin-left: auto; }
+.band-off + .band-jobs { margin-left: 0; }
 
 /* --- the screen head ------------------------------------------------------------------------ */
 
