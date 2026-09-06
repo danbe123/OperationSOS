@@ -105,11 +105,13 @@ def _item(r, people: int, content=None) -> dict:
 
 
 def stock_days_by_category(items: list[dict], people: int) -> dict[str, float]:
-    """One figure per counted category: the sum of days over rows that have a rate and are not expired."""
+    """One figure per counted category: the raw (unrounded) days summed over rows that have a rate and are
+    not expired, rounded once at the end — rounding each row first and then summing compounds the error."""
     out = {c: 0.0 for c in COUNTED}
     for i in items:
-        if i["category"] in out and i["days_left"] is not None and not i["expired"]:
-            out[i["category"]] += i["days_left"]
+        rate = i["per_person_day"]
+        if i["category"] in out and not i["expired"] and rate and rate > 0:
+            out[i["category"]] += i["quantity"] / (rate * people)
     return {c: round(v, 1) for c, v in out.items()}
 
 

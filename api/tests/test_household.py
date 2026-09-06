@@ -38,6 +38,20 @@ def test_stock_days_sum_per_category_and_ignore_expired(client):
     assert rows["Gas"]["days_left"] is None and rows["Gas"]["per_person_day"] is None
 
 
+def test_stock_days_sums_raw_quotients_before_rounding(client):
+    """Rounding each row's days_left first and then summing compounds the error: 0.75 + 0.75 rounds to
+    0.8 + 0.8 = 1.6, but the true total is 1.5. The category total must round the sum, not sum the rounded."""
+    client.post("/api/household", json={"name": "Dan"})
+    client.post("/api/household", json={"name": "Sam"})
+    client.post("/api/household", json={"name": "Ali"})
+    client.post("/api/household", json={"name": "Jo"})
+    client.post("/api/stock", json={"name": "Tins", "category": "food", "quantity": 3, "unit": "person-days"})
+    client.post("/api/stock", json={"name": "More tins", "category": "food", "quantity": 3, "unit": "person-days"})
+    body = client.get("/api/stock").json()
+    assert body["people"] == 4
+    assert body["days"]["food"] == 1.5
+
+
 def test_readiness_ignores_expired_stock(client):
     client.post("/api/household", json={"name": "Dan"})
     client.post("/api/stock", json={"name": "Old pills", "category": "medicine", "quantity": 140, "unit": "days of supply", "expires": "2020-01-01"})
