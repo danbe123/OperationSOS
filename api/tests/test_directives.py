@@ -19,6 +19,7 @@ def tree(tmp_path):
     root = tmp_path / "playbooks"
     shutil.copytree(FIXTURES / "playbooks", root)
     shutil.copy(REPO / "playbooks" / "schema.json", root / "schema.json")
+    shutil.copy(REPO / "playbooks" / "kits" / "schema.json", root / "kits" / "schema.json")
     (root / "pages" / "no-phones.md").write_text(
         "---\nid: no-phones\ntitle: Getting help without phones\nicon: phone\norder: 9\n"
         "summary: What to do when no number will connect.\ncategory: comms\n---\n\n## Go on foot\nSend a runner.\n",

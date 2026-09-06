@@ -64,3 +64,62 @@ def test_basic_progress_counts_only_basic_items():
     kit = kits.load_kit(FIXTURES / "water.yaml")
     assert kits.basic_progress(kit, set()) == (0, 2)
     assert kits.basic_progress(kit, {"stored-water", "tablets", "filter"}) == (1, 2)
+
+
+import shutil
+
+from sos import content
+from sos.manifest import load_manifests
+
+REPO = Path(__file__).resolve().parents[2]
+FIXTURE_ROOT = Path(__file__).parent / "fixtures"
+OVERLAYS = {"health", "water", "fuel", "flood", "nuclear-sites"}
+
+
+@pytest.fixture
+def tree(tmp_path):
+    root = tmp_path / "playbooks"
+    shutil.copytree(FIXTURE_ROOT / "playbooks", root)
+    shutil.copy(REPO / "playbooks" / "schema.json", root / "schema.json")
+    shutil.copy(REPO / "playbooks" / "kits" / "schema.json", root / "kits" / "schema.json")
+    return root
+
+
+@pytest.fixture
+def items():
+    return load_manifests(FIXTURE_ROOT / "manifest")
+
+
+def test_validate_tree_accepts_fixture_kits(tree, items):
+    assert [e for e in content.validate_tree(tree, items, OVERLAYS) if not e.startswith("warning:")] == []
+
+
+def test_validate_tree_reports_kit_problems(tree, items):
+    (tree / "kits" / "water.yaml").write_text((tree / "kits" / "water.yaml").read_text(encoding="utf-8")
+        .replace("link: module:water\n  - id: containers", "link: module:nowhere\n  - id: containers")
+        .replace("id: filter\n", "id: tablets\n"), encoding="utf-8")
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert any("kits/water.yaml: link module:nowhere: module 'nowhere' does not exist" in line for line in out), out
+    assert any("kits/water.yaml: item 'tablets': duplicate id" in line for line in out), out
+
+
+def test_validate_tree_reports_kit_schema_and_tier_order(tree, items):
+    text = (tree / "kits" / "water.yaml").read_text(encoding="utf-8").replace("days: 90", "days: 2").replace("icon: water\n", "")
+    (tree / "kits" / "water.yaml").write_text(text, encoding="utf-8")
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert any("kits/water.yaml: tiers: days must increase" in line for line in out), out
+    assert any("kits/water.yaml: file: 'icon' is a required property" in line for line in out), out
+
+
+def test_content_cache_serves_kits(tree):
+    cache = content.ContentCache(tree)
+    assert [k.id for k in cache.kits()] == ["water", "baby-child"]
+    assert cache.kit("water").title == "Water"
+    assert cache.kit("nope") is None and cache.kit("../water") is None
+    first = cache.kit("water")
+    assert cache.kit("water") is first                      # cached while the file is unchanged
+    path = tree / "kits" / "water.yaml"
+    path.write_text(path.read_text(encoding="utf-8").replace("title: Water", "title: Water (edited)"), encoding="utf-8")
+    import os
+    os.utime(path, (path.stat().st_atime, path.stat().st_mtime + 5))
+    assert cache.kit("water").title == "Water (edited)"

@@ -97,7 +97,10 @@ def cmd_validate(settings: Settings, args) -> int:
     if errors:
         print(f"FAILED {len(errors)} error{'s' if len(errors) != 1 else ''}")
         return 1
-    count = sum(len(list((settings.playbooks / d).glob("*.md"))) for d in KIND_BY_DIR) if settings.playbooks.is_dir() else 0
+    count = 0
+    if settings.playbooks.is_dir():
+        count = sum(len(list((settings.playbooks / d).glob("*.md"))) for d in KIND_BY_DIR)
+        count += len(list((settings.playbooks / "kits").glob("*.yaml")))
     print(f"OK {count} documents")
     return 0
 

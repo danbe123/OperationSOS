@@ -18,6 +18,7 @@ def tree(tmp_path):
     root = tmp_path / "playbooks"
     shutil.copytree(FIXTURES / "playbooks", root)
     shutil.copy(REPO / "playbooks" / "schema.json", root / "schema.json")
+    shutil.copy(REPO / "playbooks" / "kits" / "schema.json", root / "kits" / "schema.json")
     return root
 
 

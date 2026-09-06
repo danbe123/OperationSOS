@@ -33,3 +33,4 @@ items:
   - id: filter
     tier: full
     name: Gravity filter with spare elements
+    why: Turns any water into drinking water once tablets run out.

@@ -16,3 +16,4 @@ items:
     name: Nappies
     qty: {amount: 6, unit: '', per: person-day}
     stock: {category: other, unit: nappies}
+    why: Nappies run out first once the shops shut.

@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass, field, replace
 from html import escape
 from pathlib import Path
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 from urllib.parse import parse_qs
 
 import frontmatter
@@ -16,6 +16,9 @@ from markdown_it import MarkdownIt
 from mdit_py_plugins.tasklists import tasklists_plugin
 
 from sos import directives
+
+if TYPE_CHECKING:
+    from sos.kits import Kit
 
 KIND_BY_DIR = {"scenarios": "scenario", "modules": "module", "cards": "card", "pages": "page"}
 DIR_BY_KIND = {v: k for k, v in KIND_BY_DIR.items()}
@@ -506,6 +509,10 @@ def validate_tree(playbooks_dir: Path, manifest_items: list, overlay_ids: set[st
             errors += _check_sources(rel, doc, zim_ids, doc_ids)
             if kiwix_check or doc_check:
                 errors += _deep_checks(rel, doc, items_by_id, kiwix_check, doc_check)
+    from sos import kits as kits_mod  # deferred: kits imports content for the link checks
+
+    errors += kits_mod.validate_kits(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids)
+
     if require_all_scenarios:
         errors += [f"scenarios/{s}.md: missing" for s in SCENARIO_SLUGS if s not in tree["scenario"]]
     return errors
@@ -520,6 +527,7 @@ class ContentCache:
         self.resolver = resolver
         self._docs: dict[tuple[str, str], Document] = {}
         self._rendered: dict[tuple, RenderedDocument] = {}
+        self._kits: dict[str, Kit] = {}
 
     def _path(self, kind: str, slug: str) -> Path:
         return self.root / DIR_BY_KIND[kind] / f"{slug}.md"
@@ -545,6 +553,29 @@ class ContentCache:
         folder = self.root / DIR_BY_KIND[kind]
         docs = [self.document(kind, p.stem) for p in sorted(folder.glob("*.md"))] if folder.is_dir() else []
         return sorted([d for d in docs if d is not None], key=lambda d: (d.order, d.title))
+
+    def kit(self, slug: str):
+        """One kit, parsed on demand and cached by mtime, like documents."""
+        from sos import kits as kits_mod
+
+        if "/" in slug or slug.startswith(".") or not slug:
+            return None
+        path = self.root / "kits" / f"{slug}.yaml"
+        if not path.is_file():
+            self._kits.pop(slug, None)
+            return None
+        mtime = path.stat().st_mtime
+        cached = self._kits.get(slug)
+        if cached is not None and cached.mtime == mtime:
+            return cached
+        kit = kits_mod.load_kit(path)
+        self._kits[slug] = kit
+        return kit
+
+    def kits(self) -> list:
+        folder = self.root / "kits"
+        found = [self.kit(p.stem) for p in sorted(folder.glob("*.yaml"))] if folder.is_dir() else []
+        return sorted([k for k in found if k is not None], key=lambda k: (k.order, k.title))
 
     def rendered(self, kind: str, slug: str, flags: dict[str, bool] | None = None) -> RenderedDocument | None:
         """The rendered document for one situation. The cache key carries the mtimes and the flags it reads."""

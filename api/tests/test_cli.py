@@ -16,6 +16,7 @@ def tree(tmp_path, monkeypatch):
     root = tmp_path / "playbooks"
     shutil.copytree(FX / "playbooks", root)
     shutil.copy(REPO / "playbooks" / "schema.json", root / "schema.json")
+    shutil.copy(REPO / "playbooks" / "kits" / "schema.json", root / "kits" / "schema.json")
     monkeypatch.setenv("SOS_PLAYBOOKS_DIR", str(root))
     from sos.config import get_settings
 
@@ -25,7 +26,7 @@ def tree(tmp_path, monkeypatch):
 
 def test_validate_playbooks_ok(env, tree, capsys):
     assert cli.main(["validate-playbooks"]) == 0
-    assert capsys.readouterr().out.strip().endswith("OK 4 documents")
+    assert capsys.readouterr().out.strip().endswith("OK 6 documents")
 
 
 def test_validate_playbooks_reports_errors(env, tree, capsys):
