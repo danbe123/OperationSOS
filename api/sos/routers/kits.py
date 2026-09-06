@@ -62,8 +62,8 @@ def _get_kit(request: Request, slug: str):
 
 
 def kit_view(kit, conn, request: Request) -> dict:
-    people = people_count(conn)
     household = _household(conn)
+    people = kits_mod.matching_people(kit, household)   # a gated kit scales by the people it is for, not the register
     ticks = _ticks(conn, kit.id)
     stock_rows = _stock_rows(conn, kit.id, people)
     flags = current_flags(request, conn)

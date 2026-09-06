@@ -14,8 +14,9 @@ intro: |
   one part of 5% bleach to nine parts of water gives the 0.5% solution used on surfaces after
   vomit or faeces ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
   Thickened, scented and "splash-less" bleaches are for cleaning only and must never go anywhere
-  near drinking water. If you end up digging, the pit goes at least 30 metres from any well,
-  spring or stream, and downhill of it ([Pit latrine](kiwix:wikipedia_en_all_maxi/Pit_latrine)).
+  near drinking water. The bottle itself is bought in the water kit, which holds the doses for
+  drinking water as well, so it is not listed twice. If you end up digging, the pit goes at least
+  30 metres from any well, spring or stream, and downhill of it ([Pit latrine](kiwix:wikipedia_en_all_maxi/Pit_latrine)).
 sources:
   - {title: Pit latrine (Wikipedia), kiwix: wikipedia_en_all_maxi/Pit_latrine, as_at: 2026-02-15}
   - {title: Sodium hypochlorite (Wikipedia), kiwix: wikipedia_en_all_maxi/Sodium_hypochlorite, as_at: 2026-02-15}
@@ -66,14 +67,6 @@ items:
     name: Bar soap and washing-up liquid
     qty: {amount: 6, unit: bars, per: household}
     why: Twenty seconds of soap and water after the toilet and before food is the whole of hand hygiene ([Hand washing](kiwix:wikipedia_en_all_maxi/Hand_washing)).
-  - id: thin-bleach
-    tier: basic
-    name: Thin unscented bleach, 5% sodium hypochlorite
-    qty: {amount: 2, unit: L, per: household}
-    stock: {category: other, unit: L}
-    why: One part to nine parts water gives the 0.5% surface solution after vomit or faeces ([Sodium hypochlorite](kiwix:wikipedia_en_all_maxi/Sodium_hypochlorite)).
-    note: Thickened, scented or splash-less bleach is for cleaning only. Never use it to treat drinking water; the table is on the water disinfection page.
-    link: page:water-disinfection
   - id: period-products
     tier: basic
     name: Period products

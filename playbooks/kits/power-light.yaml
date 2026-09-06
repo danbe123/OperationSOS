@@ -132,9 +132,9 @@ items:
   - id: generator-fuel
     tier: full
     name: Stored petrol, within the legal household limit, with stabiliser
-    qty: {amount: 30, unit: L, per: household}
+    qty: {amount: 20, unit: L, per: household}
     stock: {category: fuel, unit: L}
-    why: A household may keep up to 30 litres of petrol without telling anyone, in plastic containers of up to 10 litres, metal containers of up to 20, or a demountable tank of up to 30 ([Petroleum Regulations](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)).
+    why: A generator runs out of fuel long before it wears out; how much petrol you may keep at home, in what containers and when you must notify the Petroleum Enforcement Authority are all set out in the [Vehicles and fuel module](module:vehicles-fuel), and stabiliser plus rotating the cans through the car keeps the stock usable.
     link: module:vehicles-fuel
   - id: spare-panels
     tier: full

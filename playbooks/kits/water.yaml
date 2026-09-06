@@ -66,8 +66,9 @@ items:
     link: page:water-disinfection
   - id: psr-registration
     tier: basic
-    name: Everyone eligible signed on to the Priority Services Register
-    why: The register is free and gets bottled water delivered to the door when the mains fails, for anyone medically dependent on water, disabled, older or with a child under five ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
+    name: A printed copy of your Priority Services Register confirmation, kept with the kit
+    qty: {amount: 1, unit: copies, per: household}
+    why: The register is free and gets bottled water delivered to the door when the mains fails, for anyone medically dependent on water, disabled, older or with a child under five; the paper copy carries the account and the number to ring when the app will not load ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
     link: module:water
   - id: gravity-filter
     tier: serious

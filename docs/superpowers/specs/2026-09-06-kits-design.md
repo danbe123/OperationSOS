@@ -44,7 +44,7 @@ Rules:
 - `id`, `title`, `icon`, `order`, `summary`, `tiers`, `items` and `sources` are required; `intro` and `relevant_when` optional. `sources` entries follow the playbook schema (`title` plus `doc:` or `kiwix:`; `as_at`).
 - `tiers` has exactly the keys `basic`, `serious`, `full`, each with `title`, `days` (integer, basic < serious < full) and `why`.
 - An item has `id` (unique within the kit, `^[a-z0-9]+(-[a-z0-9]+)*$`), `tier` (one of the three), `name`, optional `qty`, `stock`, `why`, `link`, `note`.
-- `qty.per` is `person`, `person-day`, `household` or absent (a single object with `amount` defaulting to 1). `qty.unit` is free text. The scaled amount is `amount × people` for `person`, `amount × people × tier.days` for `person-day`, `amount` otherwise, where `people` is the household register count or 1.
+- `qty.per` is `person`, `person-day`, `household` or absent (a single object with `amount` defaulting to 1). `qty.unit` is free text. The scaled amount is `amount × people` for `person`, `amount × people × tier.days` for `person-day`, `amount` otherwise. `people` is the household register count for an ungated kit, and for a kit with a `relevant_when` it is the number of people on the register who match that gate, so the baby and child kit scales by the babies rather than by the whole household; never less than 1.
 - `stock.category` is one of the Stock categories (`water`, `food`, `fuel`, `medicine`, `other`); `stock.unit` is the Stock unit. An item with `qty` but no `stock` is a tick-only item.
 - `link` uses the existing link scheme (`module:`, `page:`, `card:`, `playbook:`, `doc:`, `kiwix:`, `map:`) and is checked by the validator like every other link. Links inside `intro` are checked too.
 - Tiers nest: the serious tier means everything in basic plus the serious items; completion of a tier counts only that tier's own items.
@@ -70,6 +70,7 @@ Endpoints, on the `/api` prefix, in a new `routers/kits.py`:
 - `qty.text` is the sentence the screens show: "168 L for 4 people over 14 days", "4 for 4 people", "1". `href` is the resolved route for `link`.
 - `PUT` with `stock` creates a Stock row (name = item name, category and unit from the item, `per_person_day` from `qty` when `per` is `person-day`, `kit_item` set) and ticks the item. `PUT` with `stock` on an item whose `stock_item` already exists returns 409. Unticking never touches Stock. Deleting a Stock row from the Household screen leaves the tick alone.
 - The relevance test uses the household register only: `age_under` compares `age`; `needs_any` does a case-insensitive substring match against `needs` and `medications`, the same match the rules engine uses.
+- `GET /kits/{slug}` reports `people` as the number the kit is scaled by, which for a gated kit is the count of matching people (`kits.matching_people`), so its quantities, its `qty.text` and the days-left figure on a Stock hand-off all use that count. `GET /kits` keeps the plain register count as its top-level `people`.
 - Every change to a tick or to Stock calls `readiness.refresh`, as the household router does today.
 
 ## 4. Readiness

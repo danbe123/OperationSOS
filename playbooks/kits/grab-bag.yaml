@@ -100,8 +100,8 @@ items:
     link: page:fieldcraft-shelter
   - id: bag-stove
     tier: serious
-    name: Small gas or meths stove with fuel
-    qty: {amount: 1, unit: stoves, per: household}
+    name: Small gas or meths stove with spare fuel
+    qty: {amount: 2, unit: canisters, per: household}
     stock: {category: fuel, unit: canisters}
     why: A hot drink is the fastest way to bring a cold, frightened person back to themselves, and it makes untreated water safe.
     link: page:fieldcraft-fire

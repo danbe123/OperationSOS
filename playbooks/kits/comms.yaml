@@ -70,8 +70,9 @@ items:
     link: page:pmr446
   - id: alerts-switched-on
     tier: basic
-    name: Emergency Alerts switched on, checked on every phone in the house
-    why: The cell broadcast needs no number, no app and no data, but it never reaches a phone that is off, on 2G or 3G only, or older than iOS 14.5 or Android 11 ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
+    name: A printed Emergency Alerts check sheet, one line per phone in the house
+    qty: {amount: 1, unit: sheets, per: household}
+    why: The cell broadcast needs no number, no app and no data, but it never reaches a phone that is off, on 2G or 3G only, or older than iOS 14.5 or Android 11, so the sheet records which handset was checked and when ([how alerts work](kiwix:govuk_resilience/www.gov.uk/alerts/how-alerts-work)).
     link: page:what-still-works
   - id: household-plan-printed
     tier: serious

@@ -43,7 +43,7 @@ items:
     name: Potassium iodate tablets, UK 85 mg or 170 mg packs
     qty: {amount: 1, unit: packs, per: person}
     stock: {category: medicine, unit: packs}
-    why: The UK stocks iodate rather than iodide; the NRPB doses are 168.9 mg for adults and over-12s, 84.4 mg for ages 3 to 12, 42.2 mg from one month to three years and 21.1 mg for newborns ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
+    why: The UK stocks iodate rather than iodide; the NRPB doses are 168.9 mg for adults and over-12s, 84.4 mg for ages 3 to 12, 42.2 mg from one month to three years and 21.1 mg for newborns ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)). A tablet holds 50 mg of iodine, roughly 85 mg of potassium iodate, and is meant to be subdivided for the younger bands, so a neonate under one month is given a quarter of one ([NRPB, p. 22](doc:nrpb-stable-iodine#page=22); [NRPB, p. 25](doc:nrpb-stable-iodine#page=25)).
     note: Only take these when the authorities say so. They protect the thyroid alone, do nothing for radiation sickness, and matter most for children, pregnant women and adults under 40.
     link: module:radiation
   - id: plastic-sheeting
@@ -112,7 +112,7 @@ items:
     tier: full
     name: Sandbags, earth, or filled boxes and books for shielding
     qty: {amount: 100, unit: sandbags, per: household}
-    why: Halving thicknesses are roughly 9 cm of packed earth, 6 cm of concrete, 18 cm of water or 22 cm of wood, so each layer you add halves the gamma dose again ([NWSS, p. 19](doc:nwss#page=19); [Sandbag](kiwix:wikipedia_en_all_maxi/Sandbag)).
+    why: A halving thickness is the depth of a material that cuts the gamma dose in half, and for packed earth it is about 9 cm, so every extra layer halves the dose again ([NWSS, p. 19](doc:nwss#page=19); [Sandbag](kiwix:wikipedia_en_all_maxi/Sandbag)).
   - id: expedient-shelter-tools
     tier: full
     name: Spades, poles, rope and sheeting for an expedient shelter

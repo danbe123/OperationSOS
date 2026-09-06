@@ -41,7 +41,7 @@ items:
     tier: basic
     name: The food your animals already eat, unopened
     qty: {amount: 14, unit: days of feed, per: household}
-    stock: {category: food, unit: kg}
+    stock: {category: food, unit: days of feed}
     why: Changing an animal's food suddenly causes the diarrhoea you can least afford, so store the brand they are on and rotate it.
   - id: animal-water
     tier: basic
@@ -61,8 +61,8 @@ items:
   - id: animal-medicines
     tier: basic
     name: Prescription medicines, flea and tick treatment
-    qty: {amount: 30, unit: days of any prescribed medicine, per: household}
-    stock: {category: medicine, unit: doses}
+    qty: {amount: 30, unit: days, per: household}
+    stock: {category: medicine, unit: days}
     why: Veterinary prescriptions are dispensed in short courses, so ask for the repeat early rather than in the week it runs out.
     link: kiwix:wikivet.net_en_all/New_Front_Page
   - id: animal-paperwork
@@ -81,7 +81,7 @@ items:
   - id: feed-store
     tier: serious
     name: Bulk feed in vermin-proof bins
-    qty: {amount: 1, unit: 25 kg sack per large animal, per: household}
+    qty: {amount: 25, unit: kg, per: household}
     stock: {category: food, unit: kg}
     why: Feed merchants close with the markets, and an open sack in a shed feeds the rats before it feeds the stock.
   - id: hay-and-forage
@@ -96,8 +96,8 @@ items:
   - id: wormer-and-parasite
     tier: serious
     name: Wormer and external parasite treatment
-    qty: {amount: 2, unit: courses per animal, per: household}
-    stock: {category: medicine, unit: doses}
+    qty: {amount: 2, unit: courses, per: household}
+    stock: {category: medicine, unit: courses}
     why: >-
       Worm burdens build quietly and kill young stock, and anthelmintics are the only practical answer without a vet
       ([Anthelmintic](kiwix:wikipedia_en_all_maxi/Anthelmintic)).

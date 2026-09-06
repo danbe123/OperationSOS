@@ -135,6 +135,31 @@ def scaled(item: KitItem, days: int, people: int) -> dict | None:
     return {"amount": item.qty.get("amount", 1), "unit": unit, "scaled": total, "text": " ".join(text.split())}
 
 
+def _matches(person: dict, when: dict) -> bool:
+    """Does this one person satisfy every clause of a `relevant_when` gate?"""
+    if "age_under" in when:
+        age = person.get("age")
+        if age is None or int(age) >= int(when["age_under"]):
+            return False
+    if "needs_any" in when:
+        text = f"{person.get('needs', '')} {person.get('medications', '')}".lower()
+        if not any(str(term).lower() in text for term in when["needs_any"]):
+            return False
+    return True
+
+
+def matching_people(kit: Kit, household: Iterable[dict]) -> int:
+    """How many people this kit is actually for: everyone on the register, or only those its gate matches.
+
+    A gated kit (baby and child) scales by the babies, not by the whole household, so six nappies a day
+    for a one-year-old stays six a day when three adults live in the same house. Never less than one, so a
+    kit still shows a quantity before anyone is on the register."""
+    people = list(household)
+    if not kit.relevant_when:
+        return max(1, len(people))
+    return max(1, sum(1 for p in people if _matches(p, kit.relevant_when)))
+
+
 def relevant(kit: Kit, household: Iterable[dict]) -> bool:
     """A kit with no `relevant_when` is for everyone; otherwise every clause must hold for someone on the register."""
     if not kit.relevant_when:

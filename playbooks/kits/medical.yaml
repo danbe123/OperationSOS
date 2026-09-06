@@ -153,7 +153,7 @@ items:
     name: Antibiotic courses held lawfully on prescription
     qty: {amount: 1, unit: courses, per: person}
     stock: {category: medicine, unit: courses}
-    why: Never bought from unregulated sellers; most antibiotics keep much of their potency past the printed date, and the rules for using an old course are written down ([Survival and Austere Medicine, p. 46](doc:survival-austere-medicine-2017#page=46); [WTIND, p. 381](doc:where-there-is-no-doctor#page=381)).
+    why: Never bought from unregulated sellers; most antibiotics keep much of their potency past the printed date, and the one group always named as the exception, the tetracyclines, is now thought to have been toxic on degrading because of the citric acid once used in the tablet rather than the drug itself ([Survival and Austere Medicine, p. 46](doc:survival-austere-medicine-2017#page=46); [WTIND, p. 381](doc:where-there-is-no-doctor#page=381)).
   - id: dental-kit
     tier: full
     name: Dental kit with temporary filling material, oil of cloves and extraction forceps
@@ -168,7 +168,7 @@ items:
   - id: pulse-oximeter
     tier: full
     name: Pulse oximeter
-    qty: {amount: 1, unit: '', per: household}
+    qty: {amount: 1, unit: oximeter, per: household}
     why: A fingertip reading of oxygen saturation separates breathlessness from an emergency ([Pulse oximetry](kiwix:wikipedia_en_medicine_maxi/Pulse_oximetry)).
     link: card:asthma-attack
   - id: printed-references

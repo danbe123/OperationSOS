@@ -9,8 +9,8 @@ intro: |
   constraint: pumps need mains electricity, and in September 2021 it was panic buying rather than
   any shortage of fuel that emptied the forecourts
   ([2021 UK fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)).
-  Keep the tank above half in winter and store spare fuel lawfully, which for petrol means the
-  30 litre and 275 litre thresholds set out in the
+  Keep the tank above half in winter and store spare fuel lawfully: the household limits, the
+  containers allowed and when you must notify are all set out in the
   [Vehicles and fuel module](module:vehicles-fuel). The second constraint is water on the road:
   never drive through it, because 30 cm will float a car
   ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Everything here is
@@ -39,10 +39,16 @@ tiers:
 items:
   - id: warning-triangle
     tier: basic
-    name: Warning triangle and hi-vis vests
+    name: Warning triangle, one per car
+    qty: {amount: 1, unit: triangles, per: household}
+    why: A triangle set well back up the road buys an approaching driver the seconds needed to see a stopped car rather than hit it.
+    note: Do not put a triangle out on a motorway. Get behind the barrier and well back from the vehicle.
+  - id: hi-vis-vests
+    tier: basic
+    name: Hi-vis vests, one for every seat
     qty: {amount: 1, unit: vests, per: person}
     why: Being seen is the whole of roadside safety, and hi-vis works because retroreflective material throws headlights straight back at the driver ([high-visibility clothing](kiwix:wikipedia_en_all_maxi/High-visibility_clothing)).
-    note: Do not put a triangle out on a motorway. Get behind the barrier and well back from the vehicle.
+    note: Keep the vests inside the cabin rather than in the boot, because you want them on before you get out.
   - id: car-torch
     tier: basic
     name: Torch with spare batteries, kept in the glovebox
@@ -78,10 +84,10 @@ items:
     qty: {amount: 1, unit: sets, per: household}
     why: A flat battery is the commonest breakdown of all, and a jump pack works when no second car will stop ([jumper cables](kiwix:wikipedia_en_all_maxi/Jumper_cable)).
   - id: shovel-scraper
-    tier: basic
+    tier: serious
     name: Folding shovel, ice scraper and de-icer
     qty: {amount: 1, unit: sets, per: household}
-    why: Digging the wheels clear and clearing the glass is usually the difference between stuck and moving.
+    why: Digging the wheels clear and clearing the glass is usually the difference between stuck and moving, and no gritter is coming to a lane in a fortnight of hard weather.
   - id: tyre-repair
     tier: serious
     name: Tyre inflator, sealant and a pressure gauge

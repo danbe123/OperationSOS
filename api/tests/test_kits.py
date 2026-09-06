@@ -60,6 +60,19 @@ def test_relevance_age_and_needs():
     assert kits.relevant(pets, [person(needs="asthma")]) is False
 
 
+def test_matching_people_counts_only_the_people_a_kit_is_for():
+    house = [person(age=40), person(age=38), person(age=1)]
+    always = kits.load_kit(FIXTURES / "water.yaml")
+    assert kits.matching_people(always, house) == 3            # no relevant_when: everyone on the register
+    baby = kits.load_kit(FIXTURES / "baby-child.yaml")
+    assert kits.matching_people(baby, house) == 1              # age_under: the baby only
+    assert kits.matching_people(baby, [person(age=40)]) == 1   # never less than one, so a quantity still shows
+    assert kits.matching_people(always, []) == 1
+    pets = kits.Kit(id="p", title="Pets", icon="heart", order=1, summary="x" * 20, intro="", sources=[],
+                    relevant_when={"needs_any": ["dog", "cat"]}, tiers=always.tiers, items=[], path=always.path, mtime=0.0)
+    assert kits.matching_people(pets, [person(needs="Walks the DOG daily"), person(needs="asthma")]) == 1
+
+
 def test_basic_progress_counts_only_basic_items():
     kit = kits.load_kit(FIXTURES / "water.yaml")
     assert kits.basic_progress(kit, set()) == (0, 2)
@@ -154,6 +167,19 @@ def test_kit_detail_scales_to_the_household(client):
     assert serious["items"][0]["qty"]["text"] == "1 pack" and serious["days"] == 14
     assert full["items"][0]["qty"] is None and full["items"][0]["href"] is None
     assert client.get("/api/kits/nope").status_code == 404
+
+
+def test_gated_kit_scales_by_its_own_people_not_the_register(client):
+    for name in ("Dan", "Sam", "Ali"):
+        client.post("/api/household", json={"name": name, "age": 40})
+    client.post("/api/household", json={"name": "Bea", "age": 1})
+    kit = client.get("/api/kits/baby-child").json()
+    assert kit["relevant"] is True and kit["people"] == 1
+    nappies = kit["tiers"][0]["items"][0]
+    assert nappies["id"] == "nappies"
+    assert nappies["qty"]["scaled"] == 18 and nappies["qty"]["text"] == "18 for 1 person over 3 days"
+    assert client.get("/api/kits/water").json()["people"] == 4          # an ungated kit still scales by everyone
+    assert client.get("/api/kits").json()["people"] == 4                # the list keeps the register count
 
 
 def test_tick_and_add_to_stock(client):

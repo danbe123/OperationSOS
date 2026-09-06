@@ -49,7 +49,7 @@ items:
   - id: formula
     tier: basic
     name: First-stage infant formula, if your baby is formula fed
-    qty: {amount: 4, unit: 900 g tins, per: person}
+    qty: {amount: 4, unit: tins, per: person}
     stock: {category: food, unit: tins}
     why: >-
       Formula is the one item here that cannot be improvised, and it must be made up with water boiled and cooled to
@@ -58,8 +58,8 @@ items:
     note: First-stage formula suits any age under one year; ready-to-feed liquid needs no water at all.
   - id: child-medicines
     tier: basic
-    name: Child paracetamol and ibuprofen liquid
-    qty: {amount: 2, unit: bottles of each, per: household}
+    name: Child paracetamol and ibuprofen liquid, two bottles of each
+    qty: {amount: 4, unit: bottles, per: household}
     stock: {category: medicine, unit: bottles}
     why: >-
       Doses go by age and by the strength of the liquid, so keep the strengths you already use and the chart with them

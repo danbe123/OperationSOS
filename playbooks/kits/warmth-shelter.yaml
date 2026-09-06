@@ -6,14 +6,18 @@ summary: One warm room, bedding that works without heating, and the materials to
 intro: |
   Cold is the British emergency. A house with no heating loses temperature over hours rather than
   minutes, so the plan is not to heat the house but to heat one room and the people in it: the box
-  aims at 18 °C in that room where anyone is over 65, under five or has a long-term condition
-  ([Shelter and heat](module:shelter-heat)). Hypothermia develops indoors in a cold house as
+  aims at the 18 °C the NHS asks for in the rooms you use where anyone is over 65, under five or has
+  a long-term condition
+  ([Keep warm, keep well (NHS)](kiwix:nhs_uk/www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/);
+  [Shelter and heat](module:shelter-heat)). Hypothermia develops indoors in a cold house as
   readily as it does on a hill, and wet clothing plus draught strips warmth far faster than still
   cold air does ([Hypothermia](kiwix:wikipedia_en_all_maxi/Hypothermia);
   [Wind chill](kiwix:wikipedia_en_all_maxi/Wind_chill)). Everything in the basic tier works with no
   power and no fuel at all. Once you add a flame for heat, a carbon monoxide alarm stops being
   optional: Approved Document J requires one in the room with any new fixed solid-fuel appliance
-  ([Approved Document J, p. 43](doc:ad-j#page=43)). UKHSA issues Cold-Health Alerts through the
+  ([Approved Document J, p. 43](doc:ad-j#page=43)). That alarm is in the power and light kit, and the
+  tarpaulin, duct tape and chainsaw are in the tools and repair kit, so they are not repeated here.
+  UKHSA issues Cold-Health Alerts through the
   Weather-Health Alert System, and they are the signal to move into the warm room early
   ([AWHP, p. 22](doc:awhp-2026#page=22)).
 sources:
@@ -22,7 +26,6 @@ sources:
   - {title: Firewood (Wikipedia), kiwix: wikipedia_en_all_maxi/Firewood, as_at: 2026-02-15}
   - {title: 'Approved Document J: combustion appliances and fuel storage', doc: ad-j, as_at: 2022-06}
   - {title: Adverse Weather and Health Plan 2026 to 2027 (UKHSA), doc: awhp-2026, as_at: 2026-03-31}
-  - {title: 'HSE INDG317: chainsaws at work', doc: hse-indg317, as_at: 2026-09}
   - {title: FM 31-70 Basic Cold Weather Manual, doc: fm-31-70-cold-weather, as_at: 1968-04}
 tiers:
   basic:
@@ -61,18 +64,6 @@ items:
     qty: {amount: 2, unit: sets, per: person}
     why: Hats indoors and dry socks do more than turning a thermostat up, and wet clothing loses most of its insulation ([Wind chill](kiwix:wikipedia_en_all_maxi/Wind_chill)).
     link: card:hypothermia
-  - id: tarpaulin
-    tier: basic
-    name: Heavy-duty tarpaulin, 4 m by 5 m or larger
-    qty: {amount: 2, unit: tarpaulins, per: household}
-    why: The first repair for a hole in a roof or a blown-out window is a tarpaulin battened down at the edges; never walk on a damaged roof to fit it.
-    link: module:shelter-heat
-  - id: duct-tape
-    tier: basic
-    name: Duct tape and gaffer tape
-    qty: {amount: 3, unit: rolls, per: household}
-    why: Holds sheeting to a frame, seals a cracked pane and patches a torn tarpaulin.
-    link: kiwix:wikipedia_en_all_maxi/Duct_tape
   - id: draught-kit
     tier: basic
     name: Draught excluders, thermal curtains and window film
@@ -95,12 +86,6 @@ items:
     name: Wood or solid-fuel stove, or a paraffin heater
     qty: {amount: 1, unit: heaters, per: household}
     why: A stove needs a proper flue and an air supply; a paraffin heater needs ventilation and is never left burning in a closed room ([Approved Document J, p. 11](doc:ad-j#page=11); [Kerosene heater](kiwix:wikipedia_en_all_maxi/Kerosene_heater)).
-  - id: co-alarm
-    tier: serious
-    name: Carbon monoxide alarm and smoke alarm
-    qty: {amount: 2, unit: alarms, per: household}
-    why: Approved Document J calls for a carbon monoxide alarm in the room holding any new fixed solid-fuel appliance, and the risk only rises when you improvise heat ([Approved Document J, p. 43](doc:ad-j#page=43)).
-    link: card:carbon-monoxide
   - id: stored-heating-fuel
     tier: serious
     name: Seasoned logs, smokeless fuel or paraffin
@@ -124,12 +109,6 @@ items:
     qty: {amount: 5, unit: m³, per: household}
     stock: {category: fuel, unit: m³}
     why: Firewood needs roughly a year of drying under cover before it burns cleanly, so this winter's store is cut in the winter before ([Firewood](kiwix:wikipedia_en_all_maxi/Firewood)).
-  - id: chainsaw-ppe
-    tier: full
-    name: Chainsaw with helmet, visor, gloves, leg protection and boots
-    qty: {amount: 1, unit: sets, per: household}
-    why: HSE lists the kit as a helmet to EN 397, mesh visor to EN 1731 or glasses to EN 166, leg protection to EN 381-5 and chainsaw boots, and warns that no protective equipment gives complete protection against a cutting chain ([HSE INDG317, p. 8](doc:hse-indg317#page=8)).
-    note: Chainsaw work with no ambulance available is one of the sharpest risks in this whole box. Train first, and never cut alone.
   - id: splitting-tools
     tier: full
     name: Splitting axe, maul, wedges and a bow saw
@@ -148,7 +127,7 @@ items:
     why: Boarding a blown-in window keeps the weather and other people out until glass can be got, which may be a long time.
   - id: loft-insulation
     tier: full
-    name: Loft and pipe insulation, brought up to depth
-    qty: {amount: 1, unit: jobs, per: household}
+    name: Loft insulation rolls and pipe lagging
+    qty: {amount: 10, unit: rolls, per: household}
     why: The cheapest heat over a season is the heat you never lose, and lagged pipes are also the ones that do not burst in a freeze.
     link: module:shelter-heat
