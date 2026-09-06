@@ -7,10 +7,15 @@ import { condition, makeView, playbooks, powerOffView, view } from '../fixtures/
 
 const rowFor = (rows: HTMLElement, id: string) => rows.querySelector(`#${id}`) as HTMLElement;
 
-/** What the box knows about a service — who set it, the note, the day-old prompt — is behind Details. */
-async function openDetails(rows: HTMLElement, id: string) {
-  await userEvent.setup().click(within(rowFor(rows, id)).getByRole('button', { name: 'Details' }));
+/** What the box knows about a service — who set it, the note, the day-old prompt — is behind Details.
+ * Ten rows carry the button, so each one names its service. */
+async function openDetails(rows: HTMLElement, id: string, title: string) {
+  await userEvent.setup().click(within(rowFor(rows, id)).getByRole('button', { name: `Details: ${title}` }));
 }
+
+/** An instant whole minutes old and hours away from any round answer, so the box can only carry it
+ * as a typed-in time and `localInput` round-trips it exactly. */
+const HOURS_AGO = new Date(Math.floor((Date.now() - 5 * 3_600_000) / 60_000) * 60_000).toISOString();
 
 describe('The situation sheet', () => {
   it('puts the three states on every row, with the one the box is holding pressed', async () => {
@@ -19,7 +24,7 @@ describe('The situation sheet', () => {
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
     expect(within(rows).getAllByRole('listitem')).toHaveLength(10);
-    expect(rows).toHaveTextContent('Everything is working. Open a service to say it has gone.');
+    expect(rows).toHaveTextContent('Everything is working.');
     // No door in front of the door: the answer is on the row, not one tap behind a "Change" button.
     expect(within(rows).queryByRole('button', { name: /Change/ })).toBeNull();
     for (const name of ['Mains power', 'Water supply', 'Sewage and drains']) {
@@ -103,10 +108,10 @@ describe('The situation sheet', () => {
     expect(row).not.toHaveTextContent('Set from kiosk at');
     expect(within(row).queryByRole('status')).toBeNull();
     expect(within(row).queryByLabelText('Mains power: note')).toBeNull();
-    expect(within(row).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(row).getByRole('button', { name: 'Details: Mains power' })).toHaveAttribute('aria-expanded', 'false');
 
-    await openDetails(rows, 'power');
-    expect(within(row).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'true');
+    await openDetails(rows, 'power', 'Mains power');
+    expect(within(row).getByRole('button', { name: 'Details: Mains power' })).toHaveAttribute('aria-expanded', 'true');
     expect(row).toHaveTextContent('Set from kiosk at');
     expect(within(row).getByLabelText('Mains power: note')).toBeInTheDocument();
     expect(within(row).getByRole('button', { name: 'Save note' })).toBeInTheDocument();
@@ -120,7 +125,7 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    expect(rows).toHaveTextContent('2 of 10 not working. Open a service to say it has changed.');
+    expect(rows).toHaveTextContent('2 of 10 not working.');
     // A tick, a triangle and a cross on all three buttons at once said nothing about which one the
     // box is holding: the symbol belongs to the answer, not to the options.
     for (const [name, symbol] of [['Mains power', '✕'], ['Mobile network', '▲'], ['Water supply', '✓']] as const) {
@@ -144,12 +149,55 @@ describe('The situation sheet', () => {
     }));
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    await openDetails(rows, 'gas');
+    await openDetails(rows, 'gas', 'Gas');
     expect(rowFor(rows, 'gas')).toHaveTextContent('Nobody has set this yet.');
     expect(rowFor(rows, 'gas')).not.toHaveTextContent('Set from');
     // and a row somebody has set still says who and when, in British words
-    await openDetails(rows, 'power');
+    await openDetails(rows, 'power', 'Mains power');
     expect(rowFor(rows, 'power')).toHaveTextContent(/Set from phone at [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+, \d\d:\d\d\./);
+  });
+
+  it('asks when the new state began, not when the old one did', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+      conditions: { power: condition('power', 'off', { since: HOURS_AGO, updated_at: HOURS_AGO }) } as never,
+    }));
+    renderRoute('/situation');
+    const user = userEvent.setup();
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Working' }));
+    // The power came back a moment ago; when it went is a fact about the state being replaced.
+    const when = within(rows).getByRole('group', { name: 'Mains power: since when?' });
+    expect(within(when).getByRole('button', { name: 'Just now' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(when).getByRole('button', { name: 'Earlier' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('leaves the start time alone when a question was asked, backed out of, and a note saved', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+      conditions: { power: condition('power', 'off', { since: HOURS_AGO, updated_at: HOURS_AGO }) } as never,
+    }));
+    const set = vi.spyOn(api, 'setCondition').mockResolvedValue(condition('power', 'off'));
+    renderRoute('/situation');
+    const user = userEvent.setup();
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    const row = rowFor(rows, 'power');
+
+    // Half-answer the question, then back out of it.
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Patchy' }));
+    const when = within(rows).getByRole('group', { name: 'Mains power: since when?' });
+    await user.click(within(when).getByRole('button', { name: 'Just now' }));
+    await user.click(within(when).getByRole('button', { name: 'Cancel' }));
+
+    // A note is a note: it says nothing about when the power went, and must not move it.
+    await openDetails(rows, 'power', 'Mains power');
+    await user.type(within(row).getByLabelText('Mains power: note'), 'The street is dark as far as the shop');
+    await user.click(within(row).getByRole('button', { name: 'Save note' }));
+    expect(set).toHaveBeenCalledTimes(1);
+    const [, body] = set.mock.calls[0];
+    expect(body.state).toBe('off');
+    expect(body.note).toBe('The street is dark as far as the shop');
+    expect(body.since).toBe(HOURS_AGO);
   });
 
   it('warns instead of overwriting when another phone got there first', async () => {
@@ -197,9 +245,9 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation#water');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    expect(within(rowFor(rows, 'water')).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'true');
+    expect(within(rowFor(rows, 'water')).getByRole('button', { name: 'Details: Water supply' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(rowFor(rows, 'water')).getByLabelText('Water supply: note')).toBeInTheDocument();
-    expect(within(rowFor(rows, 'power')).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(rowFor(rows, 'power')).getByRole('button', { name: 'Details: Mains power' })).toHaveAttribute('aria-expanded', 'false');
     expect(rowFor(rows, 'power')).toHaveClass('cond-row-danger');
   });
 });

@@ -21,7 +21,7 @@ export async function setCondition(page: Page, id: string, state: string, since 
 export async function openDetails(page: Page, id: string) {
   const row = page.locator(`#${id}`);
   await row.waitFor();
-  const details = row.getByRole('button', { name: 'Details' });
+  const details = row.getByRole('button', { name: /^Details/ });
   if ((await details.getAttribute('aria-expanded')) !== 'true') await details.click();
 }
 export type { FixtureState };

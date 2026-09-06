@@ -26,14 +26,15 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
   onOpen?: (id: string | null) => void;
 }) {
   const info = CONDITION_INFO[condition.id];
-  // What the box has stored for this condition, and the answer it would have come from. A condition
-  // that is working has no interesting "since" — the time on the row is whenever somebody last said
-  // so — and the picker is there for the change about to be made, so it opens on "Just now". A
-  // condition that is off or patchy opens on the time the box is already telling everyone about.
+  // The instant the box is holding, and the answer that reproduces it. Anything saved from this row
+  // that is not itself a change of state — a note, most of all — must send this back untouched: a
+  // household that types "the street is dark" into an outage that began at three in the morning has
+  // said nothing about when it began, and the box must not quietly rewrite it to now.
   const stored = condition.since ?? condition.updated_at;
   const storedChoice = condition.state === 'working' ? 'now' : sinceChoiceFor(stored);
+  const storedInput = localInput(stored);
   const [choice, setChoice] = useState<SinceChoice>(storedChoice);
-  const [custom, setCustom] = useState(() => localInput(stored));
+  const [custom, setCustom] = useState(storedInput);
   const [note, setNote] = useState(condition.note);
   const [busy, setBusy] = useState(false);
   // The state somebody has tapped and not yet answered "since when?" for. Null until they do.
@@ -44,7 +45,7 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
   if (stamp !== `${condition.state}|${stored}`) {
     setStamp(`${condition.state}|${stored}`);
     setChoice(storedChoice);
-    setCustom(localInput(stored));
+    setCustom(storedInput);
     setPending(null);
   }
 
@@ -76,14 +77,25 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
     }
   };
 
-  /** Tapping the state the box already holds asks nothing; tapping any other one asks when. */
+  /** Put the question away and the picker back on what the box is holding. A half-answered question
+   * that is backed out of must leave nothing behind: the answer lived on in `choice` and the next
+   * "Save note" sent it, moving a start time nobody had touched. */
+  const forget = () => {
+    setPending(null);
+    setChoice(storedChoice);
+    setCustom(storedInput);
+  };
+
+  /** Tapping the state the box already holds asks nothing; tapping any other one asks when it began.
+   * When, for the state about to be set — so the question opens on "Just now", not on the time the
+   * state being replaced started. */
   const ask = (state: ConditionState) => {
     if (state === condition.state) {
-      setPending(null);
+      forget();
       return;
     }
-    setChoice(storedChoice);
-    setCustom(localInput(stored));
+    setChoice('now');
+    setCustom(localInput(new Date().toISOString()));
     setPending(state);
   };
 
@@ -98,6 +110,9 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
         <button
           type="button"
           className="btn btn-small cond-details-toggle no-print"
+          /* Ten rows carry this button; without the service's name a screen reader hears "Details"
+             ten times over and cannot tell which service it is about to open. */
+          aria-label={`Details: ${info.title}`}
           aria-expanded={open}
           onClick={() => onOpen?.(open ? null : condition.id)}
         >
@@ -159,9 +174,9 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
             type="button"
             className="btn btn-primary"
             disabled={busy}
-            onClick={() => { setPending(null); void save(pending, choice, custom); }}
+            onClick={() => { const state = pending; forget(); void save(state, choice, custom); }}
           >Save</button>
-          <button type="button" className="btn" disabled={busy} onClick={() => setPending(null)}>Cancel</button>
+          <button type="button" className="btn" disabled={busy} onClick={forget}>Cancel</button>
         </div>
       )}
       {open && (
@@ -171,7 +186,8 @@ export function ConditionRow({ condition, onSaved, open = false, onOpen }: {
               <span>Note</span>
               <input type="text" aria-label={`${info.title}: note`} value={note} maxLength={200} disabled={busy} onChange={(e) => setNote(e.target.value)} placeholder="The street is dark as far as the shop" />
             </label>
-            <button type="button" className="btn" disabled={busy || note.trim() === condition.note} onClick={() => void save(condition.state)}>Save note</button>
+            {/* The state and the instant the box already holds, said out loud: a note is a note. */}
+            <button type="button" className="btn" disabled={busy || note.trim() === condition.note} onClick={() => void save(condition.state, storedChoice, storedInput)}>Save note</button>
           </div>
           <p className="muted cond-meta">
             {condition.source === 'inferred' && <span className="badge badge-warn">worked out by the box</span>}

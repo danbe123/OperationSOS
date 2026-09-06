@@ -90,8 +90,8 @@ export function Situation() {
         <div className="panel-head"><h2>What is working</h2></div>
         <p className="muted">
           {broken.length === 0
-            ? 'Everything is working. Open a service to say it has gone.'
-            : `${broken.length} of ${conditions.length} not working. Open a service to say it has changed.`}
+            ? 'Everything is working.'
+            : `${broken.length} of ${conditions.length} not working.`}
         </p>
         <ul className="list cond-rows">
           {conditions.map((c) => (
