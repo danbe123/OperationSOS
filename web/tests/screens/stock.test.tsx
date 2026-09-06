@@ -54,6 +54,14 @@ describe('The Stock screen', () => {
     expect(bar).toHaveClass('progress-line');
   });
 
+  it('holds only what the category is measured in', () => {
+    // Forty-two meals and twelve person-days do not add up to fifty-four of anything. The rows in
+    // another unit still count towards the API's days; they just cannot be added to this total.
+    const mixed = { ...stock, items: [...stock.items, row({ id: 9, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, days_left: 7 })] };
+    expect(meter('food', mixed).held).toBe('12 person-days');
+    expect(meter('food', mixed).days).toBe(6);
+  });
+
   it('works the meter out from the rows that still count', () => {
     expect(meter('water', stock)).toEqual({ title: 'Water', held: '12 L', days: 4, need: 'two weeks needs 84 L', fraction: 4 / 14 });
     // A month of water is still a full bar: the meter is against two weeks, and no further.
@@ -94,6 +102,22 @@ describe('The Stock screen', () => {
     await user.click(within(water).getByRole('button', { name: 'Save' }));
     expect(updateStock).toHaveBeenCalledWith(1, { quantity: 18 });
     expect(within(water).queryByLabelText('Quantity of Bottled water')).toBeNull();
+  });
+
+  it('clears a use-by date rather than quietly keeping it', async () => {
+    mockStock();
+    const updateStock = vi.spyOn(api, 'updateStock').mockResolvedValue(stock.items[2]);
+    renderRoute('/plan/stock');
+    const list = await screen.findByRole('list', { name: 'Stock items' });
+    const old = within(list).getAllByRole('listitem')[0];
+    const user = userEvent.setup();
+    await user.click(within(old).getByRole('button', { name: 'Change Old bottles' }));
+    const useBy = within(old).getByLabelText('Use by for Old bottles');
+    expect(useBy).toHaveValue('01/01/2020');
+    await user.clear(useBy);
+    await user.click(within(old).getByRole('button', { name: 'Save' }));
+    // An empty string, not null: a missing key tells the API to keep the date it has.
+    expect(updateStock).toHaveBeenCalledWith(3, { expires: '' });
   });
 
   it('adds an item behind a button, at the rate its type carries', async () => {

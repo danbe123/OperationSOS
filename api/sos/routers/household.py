@@ -183,7 +183,7 @@ def add_stock(body: StockIn, request: Request, conn=Depends(get_db)):
     rate = body.per_person_day if body.per_person_day is not None else DEFAULT_PER_PERSON_DAY.get(body.category)
     cur = conn.execute(
         "INSERT INTO stock(name, category, quantity, unit, per_person_day, expires, notes, updated_at) VALUES (?,?,?,?,?,?,?,?)",
-        (body.name.strip(), body.category, body.quantity, body.unit, rate, body.expires, body.notes, now_iso()))
+        (body.name.strip(), body.category, body.quantity, body.unit, rate, body.expires or None, body.notes, now_iso()))
     conn.commit()
     readiness.refresh(request, conn)
     return _item(_get_item(conn, cur.lastrowid), people_count(conn), request.app.state.content)
@@ -194,6 +194,9 @@ def update_stock(item_id: int, body: StockPatch, request: Request, conn=Depends(
     current = _get_item(conn, item_id)
     merged = {k: (getattr(body, k) if getattr(body, k) is not None else current[k])
               for k in ("name", "category", "quantity", "unit", "per_person_day", "expires", "notes")}
+    # A key left out of the patch means "leave it as it was", so the only way a household can say
+    # "there is no use-by" is the empty string: it is a date being cleared, not a date being kept.
+    merged["expires"] = merged["expires"] or None
     _check_stock(merged["name"] or "", merged["quantity"])
     conn.execute("UPDATE stock SET name=?, category=?, quantity=?, unit=?, per_person_day=?, expires=?, notes=?, updated_at=? WHERE id=?",
                  (merged["name"].strip(), merged["category"], merged["quantity"], merged["unit"], merged["per_person_day"],

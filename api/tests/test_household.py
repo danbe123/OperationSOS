@@ -38,6 +38,23 @@ def test_stock_days_sum_per_category_and_ignore_expired(client):
     assert rows["Gas"]["days_left"] is None and rows["Gas"]["per_person_day"] is None
 
 
+def test_stock_use_by_can_be_cleared_with_an_empty_string(client):
+    """A missing key means "leave the date alone", so there has to be a way to say "there is no date":
+    the empty string. Without it a household could never take a use-by off a row it had mistyped."""
+    item = client.post("/api/stock", json={"name": "Old pills", "category": "medicine", "quantity": 14,
+                                           "unit": "days of supply", "expires": "2020-01-01"}).json()
+    assert item["expired"] is True
+    cleared = client.put(f"/api/stock/{item['id']}", json={"expires": ""}).json()
+    assert cleared["expires"] is None and cleared["expired"] is False
+    # A patch that says nothing about the date leaves the date as it was.
+    dated = client.put(f"/api/stock/{item['id']}", json={"expires": "2030-01-01"}).json()
+    assert client.put(f"/api/stock/{dated['id']}", json={"quantity": 3}).json()["expires"] == "2030-01-01"
+    # An empty string on the way in is no date either, rather than a row that is expired by nonsense.
+    added = client.post("/api/stock", json={"name": "Tins", "category": "food", "quantity": 6,
+                                            "unit": "person-days", "expires": ""}).json()
+    assert added["expires"] is None and added["expired"] is False
+
+
 def test_stock_days_sums_raw_quotients_before_rounding(client):
     """Rounding each row's days_left first and then summing compounds the error: 0.75 + 0.75 rounds to
     0.8 + 0.8 = 1.6, but the true total is 1.5. The category total must round the sum, not sum the rounded."""

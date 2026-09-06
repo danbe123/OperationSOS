@@ -65,10 +65,12 @@ export function daysBadge(item: StockItem, today = new Date()): { text: string; 
 
 /** One meter: what is held, how long the API says it lasts, and what a fortnight would take.
  * The days figure is the API's — the screen never counts a second one of its own — but the quantity
- * held is the rows', and an expired row holds nothing. */
+ * held is the rows', and an expired row holds nothing. Only rows kept in the category's own unit are
+ * added up: forty-two meals and twelve person-days are not fifty-four of anything. A row in some
+ * other unit still counts towards the days; it just cannot be added to this total. */
 export function meter(c: MeteredCategory, stock: StockResponse): { title: string; held: string; days: number; need: string; fraction: number } {
   const { rate, unit } = RATE_BY_CATEGORY[c];
-  const rows = stock.items.filter((i) => i.category === c && !i.expired);
+  const rows = stock.items.filter((i) => i.category === c && !i.expired && i.unit === unit);
   const held = rows.reduce((n, i) => n + i.quantity, 0);
   const days = stock.days[c];
   const needQty = rate * stock.people * TARGET_DAYS;
@@ -132,20 +134,28 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
   const rate = item.per_person_day !== null
     ? { amount: item.per_person_day, unit: item.unit || 'units' }
     : byCategory ? { amount: byCategory.rate, unit: byCategory.unit } : null;
-  const close = () => {
+  // Seeded when the edit opens, not once at mount: a row the box has read again since — from
+  // another phone, or a kit — must not be saved back with what it said ten minutes ago.
+  const open = () => {
     setQuantity(String(item.quantity));
     setUseBy(item.expires ? isoToUkDate(item.expires) : '');
+    setConfirm(false);
+    setEditing(true);
+  };
+  const close = () => {
     setConfirm(false);
     setEditing(false);
   };
   const save = async () => {
     const q = Number(quantity);
     if (!Number.isFinite(q) || q < 0) { notify(`Write the quantity of ${item.name} as a number of zero or more.`); return; }
-    const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
+    // The empty string, not null: a key left out of the request tells the API to keep the date it
+    // has, so null would clear the field on the screen and nothing in the box.
+    const expires = useBy.trim() === '' ? '' : ukDateToIso(useBy);
     if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
     const patch: Partial<StockItem> = {};
     if (q !== item.quantity) patch.quantity = q;
-    if (expires !== item.expires) patch.expires = expires;
+    if ((expires || null) !== item.expires) patch.expires = expires;
     if (Object.keys(patch).length === 0) { close(); return; }
     try {
       await api.updateStock(item.id, patch);
@@ -176,7 +186,7 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
           <Link className="muted" to={`/kit/${item.kit_item.split('/')[0]}`}>From the {kitTitle(item)} kit</Link>
         )}
         {!editing && (
-          <button type="button" className="btn btn-small no-print" aria-label={`Change ${item.name}`} onClick={() => setEditing(true)}>Change</button>
+          <button type="button" className="btn btn-small no-print" aria-label={`Change ${item.name}`} onClick={open}>Change</button>
         )}
       </div>
       {item.notes && <p className="note-body">{item.notes}</p>}

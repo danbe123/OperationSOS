@@ -258,18 +258,24 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (method === 'PUT') { state.household[idx] = { ...state.household[idx], ...body() } as Person; return json(route, state.household[idx]); }
       if (method === 'DELETE') { state.household.splice(idx, 1); return json(route, { ok: true }); }
     }
-    /** The API's own arithmetic in miniature: an expired row lasts nought days, and the category's
-     * figure is the shortest run in it. */
+    /** The API's own arithmetic in miniature (`api/sos/routers/household.py`): an expired row lasts
+     * nought days, and a category's figure is the runs of its rows added up and rounded once at the
+     * end — not the shortest of them, and not the rounded ones summed. */
+    const stockPeople = () => Math.max(1, state.household.length);
+    const stockRun = (i: StockItem): number | null => (i.per_person_day ? i.quantity / (i.per_person_day * stockPeople()) : null);
     const withDays = (i: StockItem): StockItem => {
-      const expired = i.expires !== null && i.expires < new Date().toISOString().slice(0, 10);
-      const run = i.per_person_day ? Math.round((i.quantity / (i.per_person_day * Math.max(1, state.household.length))) * 10) / 10 : null;
-      return { ...i, expired, days_left: expired ? 0 : run };
+      const expired = i.expires !== null && i.expires !== '' && i.expires < new Date().toISOString().slice(0, 10);
+      const run = stockRun(i);
+      return { ...i, expired, days_left: expired ? 0 : run === null ? null : Math.round(run * 10) / 10 };
     };
     const categoryDays = (items: StockItem[]) => {
-      const runs = (c: StockItem['category']) => items.filter((i) => i.category === c && i.days_left !== null).map((i) => i.days_left as number);
-      const shortest = (c: StockItem['category']) => (runs(c).length ? Math.min(...runs(c)) : 0);
-      return { water: shortest('water'), food: shortest('food'), medicine: shortest('medicine') };
+      const total = (c: StockItem['category']) => Math.round(items
+        .filter((i) => i.category === c && !i.expired)
+        .reduce((n, i) => n + (stockRun(i) ?? 0), 0) * 10) / 10;
+      return { water: total('water'), food: total('food'), medicine: total('medicine') };
     };
+    /** A use-by the client sent as an empty string is no use-by, the way the API stores it. */
+    const stockDate = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v : null);
     if (p === '/neighbours' && method === 'GET') return json(route, state.neighbours);
     if (p === '/neighbours' && method === 'POST') {
       const b = body();
@@ -320,7 +326,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (p === '/stock' && method === 'POST') {
       const b = body();
-      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: (b.expires as string | null) ?? null, notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, expired: false, kit_item: null };
+      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: stockDate(b.expires), notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, expired: false, kit_item: null };
       state.stock.push(item);
       return json(route, withDays(item));
     }
@@ -328,7 +334,13 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     if (stockItem) {
       const idx = state.stock.findIndex((x) => x.id === Number(stockItem[1]));
       if (idx === -1) return detail(route, 404, 'Stock item not found');
-      if (method === 'PUT') { state.stock[idx] = { ...state.stock[idx], ...body() } as StockItem; return json(route, withDays(state.stock[idx])); }
+      if (method === 'PUT') {
+        const b = body();
+        const merged = { ...state.stock[idx], ...b } as StockItem;
+        if ('expires' in b) merged.expires = stockDate(b.expires);
+        state.stock[idx] = merged;
+        return json(route, withDays(merged));
+      }
       if (method === 'DELETE') { state.stock.splice(idx, 1); return json(route, { ok: true }); }
     }
     // The situation engine (spec 2026-09-06): an in-memory View over the fixture state.
