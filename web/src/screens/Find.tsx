@@ -41,7 +41,7 @@ export function Find() {
   const ai = status?.ai.state ?? 'off';
 
   return (
-    <Screen title="Find" search={false}>
+    <Screen title="Find" search={false} back={false}>
       <Body>
         <SearchBar initial={q} autoFocus />
         {!q.trim() && <p className="muted">Search Wikipedia, the NHS pages, the manuals, the maps and the guides. A place name or a postcode opens the map.</p>}

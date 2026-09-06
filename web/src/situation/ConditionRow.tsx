@@ -59,7 +59,9 @@ export function ConditionRow({ condition, onSaved }: { condition: Condition; onS
           <button
             key={s}
             type="button"
-            className={s === condition.state ? 'btn btn-primary' : 'btn'}
+            /* The chosen state wears its own colour, never the accent: an "off" that reads as the
+               primary action is exactly the misreading this screen cannot afford. */
+            className={s === condition.state ? `btn state-btn state-set state-${STATE_TONE[s]}` : 'btn state-btn'}
             aria-pressed={s === condition.state}
             disabled={busy}
             onClick={() => void save(s)}

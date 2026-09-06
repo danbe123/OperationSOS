@@ -19,6 +19,11 @@ const only = process.argv[3] ?? '';
 const out = resolve(web, '..', 'docs/superpowers/critique', round);
 mkdirSync(out, { recursive: true });
 
+// `vite preview` serves dist from disk and Playwright reuses a server that is already up, so the
+// build has to be refreshed here or a later round quietly photographs an older interface.
+const built = spawnSync('pnpm', ['exec', 'vite', 'build'], { cwd: web, stdio: 'inherit' });
+if (built.status !== 0) process.exit(built.status ?? 1);
+
 const result = spawnSync(
   'pnpm',
   ['exec', 'playwright', 'test', 'e2e/screenshots.spec.ts', '--workers=2', '--reporter=line'],

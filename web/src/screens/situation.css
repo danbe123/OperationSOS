@@ -6,6 +6,11 @@
 .cond-row-danger { border-left: 3px solid var(--danger); padding-left: 10px; }
 .cond-row-warn { border-left: 3px solid var(--warn); padding-left: 10px; }
 .cond-states .btn { flex: 0 0 auto; }
+.state-btn { border-width: 2px; }
+.state-set { font-weight: 700; background: var(--sunken); }
+.state-set.state-ok { border-color: var(--ok); color: var(--ok); }
+.state-set.state-warn { border-color: var(--warn); color: var(--warn); }
+.state-set.state-danger { border-color: var(--danger); color: var(--danger); }
 .cond-since { align-items: flex-end; gap: 10px; }
 .cond-since .field { flex: 0 1 auto; }
 .cond-since select, .cond-since input { width: auto; min-width: 12ch; }

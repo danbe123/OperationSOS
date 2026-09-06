@@ -1,2 +1,5 @@
 /* Guides: one filter field, then a section of tiles per kind of guide. */
 .guides-filter { max-width: 480px; }
+
+/* A scenario tile is an icon, a name and one line; the line is clamped so twenty of them stay a grid. */
+.tiles .tile-sub { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

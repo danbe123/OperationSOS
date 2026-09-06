@@ -12,8 +12,10 @@ export function SearchBar({
   initial = '',
   compact = false,
   autoFocus = false,
-  placeholder = 'Search Wikipedia, NHS, manuals, maps, playbooks',
+  placeholder,
 }: { initial?: string; compact?: boolean; autoFocus?: boolean; placeholder?: string }) {
+  // The compact field lives in the screen head, where there is no room for the long line.
+  const hint = placeholder ?? (compact ? 'Search the box' : 'Search Wikipedia, NHS, manuals, maps, guides');
   const navigate = useNavigate();
   const follow = useAppLink();
   const [q, setQ] = useState(initial);
@@ -91,7 +93,7 @@ export function SearchBar({
         aria-autocomplete="list"
         autoComplete="off"
         enterKeyHint="search"
-        placeholder={placeholder}
+        placeholder={hint}
         value={q}
         autoFocus={autoFocus}
         onChange={(e) => setQ(e.target.value)}

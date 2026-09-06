@@ -28,7 +28,7 @@ export function TaskRow({ task, people, onChanged }: { task: Task; people?: Pers
       </label>
       {task.why && <p className="task-why muted">{task.why}</p>}
       <div className="row task-meta">
-        {href && <Link className="btn task-link" to={href} aria-label={`Read more: ${task.title}`}>Read more</Link>}
+        {href && <Link className="btn btn-small task-link" to={href} aria-label={`Read more: ${task.title}`}>Read more</Link>}
         {people && (
           <label className="field task-person">
             <span className="muted">Who</span>

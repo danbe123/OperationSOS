@@ -159,7 +159,7 @@ export function MapScreen() {
   const legend = (config?.overlays ?? []).filter((o) => overlaysOn?.includes(o.id));
 
   return (
-    <Screen title="Map" search={false} fill className="map-screen" actions={<PrintButton onPrint={print} />}>
+    <Screen title="Map" search={false} back={false} fill className="map-screen" actions={<PrintButton onPrint={print} />}>
       <div className="map-tools no-print" role="toolbar" aria-label="Map tools">
         <button type="button" className={panel === 'layers' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'layers'} onClick={() => setPanel(panel === 'layers' ? 'none' : 'layers')}><Icon name="layers" size={18} /><span>Layers</span></button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>

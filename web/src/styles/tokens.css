@@ -55,7 +55,7 @@
   --line-strong: #47764d;
   --focus: #ffb000;
   --font-heading: var(--font-body);
-  --glow: 0 0 6px rgba(108, 240, 140, 0.45);
+  --glow: 0 0 4px rgba(108, 240, 140, 0.3);
 }
 
 /* Field manual: paper and ink, serif headings, dark ochre warnings. Also the print palette. */

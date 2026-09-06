@@ -36,7 +36,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     const tasks = page.getByRole('complementary', { name: 'Checklist' });
     const guidance = await page.getByRole('tabpanel').boundingBox();
     const checklist = await tasks.boundingBox();
-    if (viewport.width >= 900) expect(checklist!.x).toBeGreaterThan(guidance!.x + guidance!.width);
+    if (viewport.width >= 800) expect(checklist!.x).toBeGreaterThan(guidance!.x + guidance!.width);
     else expect(checklist!.y).toBeGreaterThan(guidance!.y);
 
     // Now remembers the guide this device last opened

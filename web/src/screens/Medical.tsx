@@ -42,7 +42,7 @@ export function Medical() {
   const people = (householdQ.data ?? []).filter((p) => p.needs || p.medications);
   const callsHidden = useCallsHidden();
   return (
-    <Screen title="Medical">
+    <Screen title="Medical" back={false}>
       <Body>
         <CallsNotice />
         {callsHidden ? (
