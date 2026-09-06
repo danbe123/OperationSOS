@@ -30,6 +30,9 @@ from sos.buildnhs import EXCLUDE as NHS_EXCLUDE
 from sos.buildnhs import EXT_SCRIPT_RE, MIN_ARTICLES, SECTIONS, VIDEO_RE
 
 USER_AGENT = "OperationSOS/0.1 (offline UK emergency knowledge box; +https://github.com/OperationSOS)"
+# NHS (and other) pages embed JSON payloads whose escaped quotes wget parses as relative links,
+# producing thousands of 404s like /conditions/x/%5C%22https://example.org%5C%22. Never request those.
+JUNK = r"%5C%22|%22|%5C|/mailto:|/tel:"
 ASSET_EXT = r"css|js|mjs|png|jpe?g|svg|gif|ico|webp|woff2?|ttf|eot"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LINK_RE = re.compile(r"""(?:href|src)\s*=\s*["']([^"'#>]+)""", re.IGNORECASE)
@@ -42,7 +45,7 @@ class Crawl:
     id: str
     home: str                      # reader_home: the ZIM entry that is the main page
     home_url: str                  # the URL that entry came from
-    title: str                     # {date} is substituted with the crawl date
+    title: str                     # {date} is substituted; must be <= 30 chars formatted
     description: str               # <= 80 chars (openZIM metadata convention)
     long_description: str
     creator: str
@@ -84,7 +87,7 @@ CRAWLS: dict[str, Crawl] = {
         id="prepare_uk",
         home="prepare.campaign.gov.uk/",
         home_url="https://prepare.campaign.gov.uk/",
-        title="Prepare: UK emergency preparedness (as at {date})",
+        title="Prepare UK as at {date}",
         description="UK government Prepare campaign advice",
         long_description=(
             "The government's own advice on kits, stored water, emergency alerts and power cuts, "
@@ -94,7 +97,7 @@ CRAWLS: dict[str, Crawl] = {
         seed_file="prepare_uk.txt",
         domains=("prepare.campaign.gov.uk",),
         recursive=True,
-        reject_regex=r"(wp-json|xmlrpc|wp-admin|wp-login|/feed/|\?(p|s|replytocom|share)=)",
+        reject_regex=r"(wp-json|xmlrpc|wp-admin|wp-login|/feed/|\?(p|s|replytocom|share)=)|" + JUNK,
         wait=1.0,
         min_entries=20,
         article_re=r"^prepare\.campaign\.gov\.uk/[^?]*$",
@@ -103,7 +106,7 @@ CRAWLS: dict[str, Crawl] = {
         id="govuk_resilience",
         home="www.gov.uk/alerts",
         home_url="https://www.gov.uk/alerts",
-        title="GOV.UK emergency guidance (as at {date})",
+        title="GOV.UK as at {date}",
         description="GOV.UK and devolved emergency guidance",
         long_description=(
             "CMO power-outage advice, UKHSA flooding, heat, radiation and chemical guidance, FSA "
@@ -117,7 +120,7 @@ CRAWLS: dict[str, Crawl] = {
             "ready.campaign.gov.scot", "www.dwi.gov.uk", "www.hse.gov.uk", "www.thepsr.co.uk",
         ),
         recursive=False,
-        reject_regex=r"(/print$|/search/|/email-signup|\.atom$|/api/)",
+        reject_regex=r"(/print$|/search/|/email-signup|\.atom$|/api/)|" + JUNK,
         follow_regex=(
             r"^https://(assets\.publishing\.service\.gov\.uk/[^?#]+\.pdf"
             r"|www\.gov\.uk/government/publications/[^/?#]+/[^/?#]+"
@@ -134,7 +137,7 @@ CRAWLS: dict[str, Crawl] = {
         id="legislation_uk",
         home="www.legislation.gov.uk/ukpga/1988/33/section/139",
         home_url="https://www.legislation.gov.uk/ukpga/1988/33/section/139",
-        title="UK legislation extracts (as at {date})",
+        title="Legislation as at {date}",
         description="Extracts from legislation.gov.uk",
         long_description=(
             "Theft Act, Wildlife and Countryside Act, CRoW, Deer Act, Firearms Acts, CJA 1988 s139, "
@@ -145,7 +148,7 @@ CRAWLS: dict[str, Crawl] = {
         seed_file="legislation_uk.txt",
         domains=("www.legislation.gov.uk",),
         recursive=False,
-        reject_regex=r"(/data\.(pdf|docx|xml|rdf|xht|htm)$|/defralex|\?view=|/changes/|/resources/|/made/data)",
+        reject_regex=r"(/data\.(pdf|docx|xml|rdf|xht|htm)$|/defralex|\?view=|/changes/|/resources/|/made/data)|" + JUNK,
         follow_regex=r"^https://www\.legislation\.gov\.uk/[a-z]+/[^/?#]+/[^/?#]+/(section|part|schedule|chapter|crossheading)/[^?#]+$",
         follow_limit=900,
         wait=4.0,          # legislation.gov.uk robots.txt asks for Crawl-delay: 5
@@ -156,7 +159,7 @@ CRAWLS: dict[str, Crawl] = {
         id="nhs_uk",
         home="www.nhs.uk/conditions/",
         home_url="https://www.nhs.uk/conditions/",
-        title="NHS conditions and medicines (as at {date})",
+        title="NHS website as at {date}",
         description="NHS website conditions and medicines",
         long_description=(
             "NHS website: conditions, symptoms, medicines, mental health, tests and treatments, "
@@ -172,7 +175,7 @@ CRAWLS: dict[str, Crawl] = {
         ),
         reject_regex=(
             NHS_EXCLUDE + r"|/service-search|/nhs-services/|/using-the-nhs/|/start4life"
-            r"|/common-health-questions/|/contact-us/|/about-us/|/tools/"
+            r"|/common-health-questions/|/contact-us/|/about-us/|/tools/|" + JUNK
         ),
         wait=1.0,
         zimit_exclude=NHS_EXCLUDE,
@@ -418,6 +421,8 @@ def build(crawl_id: str, out: str | Path | None = None, run: Callable = subproce
 
 def main(crawl_id: str = "nhs_uk", out: str | None = None, run: Callable = subprocess.run,
          date: str | None = None, playbooks: Path | None = None, skip_crawl: bool = False) -> int:
+    """`date` defaults to today; pass the crawl date when re-packing WARCs fetched earlier, because
+    warc2zim takes the ZIM Date from the WARC records rather than from the day it runs."""
     if crawl_id not in CRAWLS:
         print(f"unknown crawl {crawl_id}; known: {', '.join(sorted(CRAWLS))}", file=sys.stderr)
         return 2

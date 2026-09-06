@@ -144,6 +144,7 @@ def cmd_build_crawl(settings: Settings, args) -> int:
 
     playbooks = settings.playbooks if settings.playbooks.is_dir() else buildcrawl.REPO_ROOT / "playbooks"
     return buildcrawl.main(getattr(args, "id", "nhs_uk"), args.out, playbooks=playbooks,
+                           date=getattr(args, "date", None),
                            skip_crawl=getattr(args, "skip_crawl", False))
 
 
@@ -183,10 +184,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("id", choices=sorted(_crawl_ids()), help="manifest item id")
     p.add_argument("--out")
     p.add_argument("--skip-crawl", action="store_true", help="reuse the WARCs already in --out")
+    p.add_argument("--date", help="crawl date to stamp (default today; use the WARC date when re-packing)")
     p.set_defaults(func=cmd_build_crawl)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")
     p.add_argument("--skip-crawl", action="store_true")
+    p.add_argument("--date")
     p.set_defaults(func=cmd_build_crawl, id="nhs_uk")
     p = sub.add_parser("eval", help="AI evaluation (plan 05)")
     p.add_argument("--retrieval-only", action="store_true")

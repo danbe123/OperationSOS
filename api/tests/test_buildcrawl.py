@@ -44,6 +44,9 @@ def test_crawl_home_matches_the_manifest_reader_home_and_dest(crawl_id):
     assert crawl.home == item["reader_home"]
     assert item["dest"] == f"zim/{crawl_id}.zim"
     assert len(crawl.description) <= 80
+    # zimscraperlib refuses a ZIM Title longer than 30 characters
+    assert len(crawl.title.format(date="2026-09-05")) <= 30
+    assert "as at 2026-09-05" in crawl.title.format(date="2026-09-05")
 
 
 @pytest.mark.parametrize("crawl_id", sorted(buildcrawl.CRAWLS))
