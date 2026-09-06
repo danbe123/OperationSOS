@@ -85,7 +85,11 @@ export function Scenario() {
   const { slug = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { data, error, loading, setData } = useQuery(() => api.playbook(slug), [slug], { intervalMs: 15_000, refetchOnFocus: true });
-  const [printing, setPrinting] = useState(false);
+  // Print is not only the Print button: a PDF export, a browser's own print command and a kiosk's
+  // "save as PDF" all arrive as the print medium with no `beforeprint` we can hear. Whenever the
+  // medium is paper, every phase is rendered and every module is open — a printed guide with one
+  // tab's content and a row of dead tab buttons is not the guide.
+  const [printing, setPrinting] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('print')?.matches === true);
   const situationQ = useQuery<Situation>(() => api.situation(), [slug], { intervalMs: 30_000, refetchOnFocus: true });
   const situation = situationQ.data ?? null;
   const nowPhase = situation && situation.slug === slug ? phaseFor(elapsedSince(situation.started_at)).id : null;
@@ -107,9 +111,13 @@ export function Scenario() {
     const after = () => setPrinting(false);
     window.addEventListener('beforeprint', before);
     window.addEventListener('afterprint', after);
+    const paper = window.matchMedia?.('print');
+    const onMedium = (e: MediaQueryListEvent) => setPrinting(e.matches);
+    paper?.addEventListener?.('change', onMedium);
     return () => {
       window.removeEventListener('beforeprint', before);
       window.removeEventListener('afterprint', after);
+      paper?.removeEventListener?.('change', onMedium);
     };
   }, []);
 
@@ -149,7 +157,7 @@ export function Scenario() {
       <div className="screen-body">
         <Emergency999 onlyWhenHidden />
         <p className="muted measure">{data.summary}</p>
-        <div className="tabs" role="tablist" aria-label="Sections">
+        <div className="tabs no-print" role="tablist" aria-label="Sections">
           {data.sections.map((s) => (
             <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
               {s.title}{s.id === nowPhase && <span className="badge badge-warn tab-now">now</span>}

@@ -83,6 +83,6 @@ test('every screen has a title, a way back and a way to search', async ({ page }
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Find' })).toBeVisible();
     // one theme button, wherever the shell put it
-    await expect(page.getByRole('button', { name: /^Theme:/ })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /^Change the theme/ })).toHaveCount(1);
   }
 });

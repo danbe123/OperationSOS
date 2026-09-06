@@ -8,12 +8,20 @@
 .cond-states .btn { flex: 0 0 auto; }
 /* The set state is the loudest of the three and wears its own colour: an "off" drawn in the accent
    green is the one misreading this screen cannot afford. The two unset states stay on the plain
-   border. The generic pressed style excludes .state-btn (components.css) so this is not a fight. */
+   border. The generic pressed style excludes .state-btn (components.css) so this is not a fight.
+
+   `.state-set` alone is one class, exactly as heavy as `.btn`, so which of the two grounds won came
+   down to which stylesheet the build happened to put last — and `.btn` won, leaving the chosen
+   state differing from the other two by colour alone on the one screen whose whole job is state.
+   Two classes settle it in any order. The inset edge is a 3 px band drawn inside the button's own
+   box in the state's colour, not a shadow: nothing is offset, blurred, or drawn outside the button,
+   so a reader who cannot separate the three colours still has the fill, the symbol and the edge. */
 .state-btn { border-width: 2px; border-color: var(--line); background: var(--panel); font-weight: 600; }
-.state-set { font-weight: 700; background: var(--sunken); }
-.state-set.state-ok { border-color: var(--ok); color: var(--ok); }
-.state-set.state-warn { border-color: var(--warn); color: var(--warn); }
-.state-set.state-danger { border-color: var(--danger); color: var(--danger); }
+.state-btn.state-set { font-weight: 700; background: var(--sunken); }
+.state-btn.state-set.state-ok { border-color: var(--ok); color: var(--ok); box-shadow: inset 0 -3px 0 var(--ok); }
+.state-btn.state-set.state-warn { border-color: var(--warn); color: var(--warn); box-shadow: inset 0 -3px 0 var(--warn); }
+.state-btn.state-set.state-danger { border-color: var(--danger); color: var(--danger); box-shadow: inset 0 -3px 0 var(--danger); }
+.state-glyph { font-weight: 700; }
 .cond-since { align-items: flex-end; gap: 10px; }
 .cond-since .field { flex: 0 1 auto; }
 .cond-since select, .cond-since input { width: auto; min-width: 12ch; }
@@ -27,6 +35,9 @@
 .sensor-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 40px; }
 .sensor-name { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; font-weight: 600; }
 .export-codes { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+/* A refused import is said where the person who pressed "Bring it in" is looking: right under
+   the button. It used to be one line at the top of the panel, half a screen above it. */
+.cond-trouble { margin: 6px 0 0; max-width: var(--measure); }
 @media (max-width: 699px) {
   .cond-since { flex-direction: column; align-items: stretch; }
   .cond-since .field, .cond-since select, .cond-since input { width: 100%; }

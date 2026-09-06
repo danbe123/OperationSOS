@@ -17,7 +17,7 @@ test('the keyboard costs the content column its height, never the rail', async (
   for (const name of ['Now', 'Guides', 'Medical', 'Map', 'Find', 'AI', 'System']) {
     await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
   }
-  await expect(nav.getByRole('button', { name: /^Theme:/ })).toBeVisible();
+  await expect(nav.getByRole('button', { name: /^Change the theme/ })).toBeVisible();
 
   // The keyboard starts where the rail ends, so it covers the content column and nothing else.
   const kb = (await keyboard.boundingBox())!;
@@ -49,5 +49,5 @@ test('a landscape phone gets the bottom bar, so no destination is off the bottom
     expect(dest.y + dest.height, name).toBeLessThanOrEqual(391);
   }
   // the theme button moves to the screen head when there is no rail footer to hold it
-  await expect(page.getByRole('button', { name: /^Theme:/ })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: /^Change the theme/ })).toHaveCount(1);
 });

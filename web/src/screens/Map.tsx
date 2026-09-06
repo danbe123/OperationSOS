@@ -12,10 +12,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { gridRef } from '../map/grid';
 import { floodZoneAt } from '../map/home';
 import { LayerPanel } from '../map/LayerPanel';
-import { MapPanel } from '../map/MapPanel';
+import { MapPanel, type PanelBodySize } from '../map/MapPanel';
 import { MapView } from '../map/MapView';
 import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
-import { describeNearby, describeRoute, nearbyGap, nearbyIcon } from '../map/nearby';
+import { describeNearby, describeRoute, leadFacility, nearbyGap, nearbyIcon } from '../map/nearby';
 import { PlaceSearch } from '../map/PlaceSearch';
 import { mapQueryString, parseMapQuery } from '../map/query';
 import { PrintButton } from '../components/PrintButton';
@@ -61,6 +61,12 @@ export function MapScreen() {
   // The facilities list is for one point, captured when the panel opens, so it does not chase the map.
   const [nearbyAt, setNearbyAt] = useState<LngLat | null>(null);
   const nearbyQ = useQuery(() => (nearbyAt ? api.nearby(nearbyAt.lat, nearbyAt.lon) : Promise.resolve(null)), [nearbyAt]);
+  // Which kind of place the panel is answering for. It survives a fresh search from a new centre, so
+  // somebody looking for a pharmacy is still shown a pharmacy after they move the map.
+  const [nearbyKind, setNearbyKind] = useState<string | null>(null);
+  // The share code is sized to the panel it sits in rather than to a number, so it is never the
+  // picture whose bottom third is under the edge of a phone sheet.
+  const [shareBody, setShareBody] = useState<PanelBodySize | null>(null);
   const [routeTo, setRouteTo] = useState<{ title: string; lat: number; lon: number } | null>(null);
   const labelPoint = useMemo(() => (query.label && query.lat !== null && query.lon !== null ? { lat: query.lat, lon: query.lon, label: query.label } : null), [query]);
 
@@ -186,6 +192,14 @@ export function MapScreen() {
   const shareUrl = `http://${status?.hotspot.ip ?? window.location.host}/map${mapQueryString({ lat: view.lat, lon: view.lon, z: view.zoom, overlays: overlaysOn ?? [], label: query.label })}`;
   const legend = (config?.overlays ?? []).filter((o) => overlaysOn?.includes(o.id));
 
+  const nearbyFacilities = nearbyQ.data?.facilities ?? [];
+  const nearbyLead = leadFacility(nearbyFacilities, nearbyKind);
+  const nearbyNearest = nearbyLead?.nearest ?? null;
+  // The code takes whatever the body can show whole: its width, and its height less the address, the
+  // line under it and the caption. Under about 130 px no camera reads a link this long, so that is
+  // the floor and the body scrolls the last few pixels instead.
+  const shareQrSize = shareBody ? Math.max(132, Math.min(220, shareBody.width - 8, shareBody.height - 116)) : 220;
+
   return (
     <Screen title="Map" search={false} back={false} fill className="map-screen">
       {/* Print was a non-scrolling row of its own above the tools; it is the eighth tool, and the
@@ -255,11 +269,20 @@ export function MapScreen() {
         {panel === 'home' && (
           <MapPanel
             label="Home" title="Home" onClose={() => setPanel('none')}
+            /* Two grid references for two different places, each said out loud. Unlabelled and four
+               lines apart, nobody could tell which one was their house and which one the map. Both
+               are pinned, because the second of them follows the map you are being asked to aim. */
+            lead={
+              <>
+                <p className="map-ref">Your home: <strong>{homePoint ? gridRef(homePoint.lat, homePoint.lon).text : 'not set yet'}</strong>{homePoint ? ` — ${homePoint.label}` : ''}</p>
+                <p className="map-ref" role="status">The map is on: <strong>{centreRef.text}</strong></p>
+                <p className="map-lead-line">Set as home saves the point the map is on. Move the map and this line follows it.</p>
+              </>
+            }
             actions={<button type="button" className="btn btn-primary" disabled={savingHome} onClick={() => void saveHome()}>Set as home</button>}
           >
             {homePoint ? (
               <>
-                <p><strong>{homePoint.label}</strong><br /><span className="muted">{gridRef(homePoint.lat, homePoint.lon).text}</span></p>
                 <p>{home?.flood_zone ? <span className="badge badge-warn">▲ Flood zone {home.flood_zone}</span> : <span className="muted">No flood zone recorded.</span>}</p>
                 <button type="button" className="btn" onClick={() => flyTo(homePoint.lon, homePoint.lat, 15)}>Go to home</button>
               </>
@@ -267,9 +290,6 @@ export function MapScreen() {
               <p className="muted">No home set. The box uses it for the sun times, the facilities near you and every distance it quotes.</p>
             )}
             <label className="field"><span>Name</span><input type="text" aria-label="Home name" value={homeLabel} maxLength={60} onChange={(e) => setHomeLabel(e.target.value)} /></label>
-            {/* The instruction reads while the map is still visible above it, and this line follows
-                the map as it moves, so you can see what "Set as home" is about to save. */}
-            <p role="status">Set as home will use the centre of the map, <strong>{centreRef.text}</strong>. Move the map and this line follows it.</p>
             <p className="muted">{overlaysOn?.includes('flood-zones') ? 'The flood zone under the centre is saved with it.' : 'Turn the flood zones layer on first to record the flood zone too.'}</p>
             {homeQ.error && <p className="warning">Home unavailable: {homeQ.error}</p>}
           </MapPanel>
@@ -277,11 +297,35 @@ export function MapScreen() {
         {panel === 'nearby' && (
           <MapPanel
             label="Nearby" title="Nearby" onClose={() => setPanel('none')}
-            actions={<button type="button" className="btn btn-small" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>}
+            /* The one thing this panel exists to say — the nearest place of the kind you need — is
+               pinned above the list. It used to sit below a caveat paragraph and behind the action
+               row, so on a phone the nearest hospital was the one line you could not read. */
+            lead={
+              <>
+                {nearbyFacilities.length > 0 && (
+                  <select aria-label="Which kind of place do you need?" value={nearbyLead?.id ?? ''} onChange={(e) => setNearbyKind(e.target.value)}>
+                    {nearbyFacilities.map((f) => <option key={f.id} value={f.id}>{f.nearest ? f.title : `${f.title} — nothing found`}</option>)}
+                  </select>
+                )}
+                {nearbyQ.loading && <p className="map-lead-line">Looking…</p>}
+                {nearbyQ.error && <p className="warning">Nearby facilities unavailable: {nearbyQ.error}</p>}
+                {nearbyNearest && (
+                  <>
+                    <p className="map-lead-answer">{nearbyNearest.name}</p>
+                    <p className="map-lead-line">{describeNearby(nearbyNearest)}</p>
+                  </>
+                )}
+                {nearbyLead && !nearbyLead.nearest && <p className="map-lead-line"><span aria-hidden="true">✕</span> {nearbyGap(nearbyLead)}</p>}
+                {!nearbyQ.loading && !nearbyQ.error && !nearbyLead && <p className="map-lead-line">Nothing found near here.</p>}
+              </>
+            }
+            actions={
+              <>
+                {nearbyNearest && <button type="button" className="btn btn-small" onClick={() => flyTo(nearbyNearest.lon, nearbyNearest.lat, 15)}>Show it on the map</button>}
+                <button type="button" className="btn btn-small" onClick={() => setNearbyAt({ lat: view.lat, lon: view.lon })}>Search from this centre</button>
+              </>
+            }
           >
-            <p className="muted">Nearest to the centre of the map, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
-            {nearbyQ.loading && <p className="muted">Looking…</p>}
-            {nearbyQ.error && <p className="warning">Nearby facilities unavailable: {nearbyQ.error}</p>}
             <ul className="list nearby-list" aria-label="Nearby facilities">
               {(nearbyQ.data?.facilities ?? []).map((f) => (
                 <li key={f.id} className="nearby-facility">
@@ -313,23 +357,30 @@ export function MapScreen() {
                 </li>
               ))}
             </ul>
-            {nearbyQ.data && nearbyQ.data.facilities.length === 0 && <p className="muted">Nothing found near here.</p>}
             {route && (
               <div className="nearby-route" role="status">
                 <p><strong>{route.text}</strong></p>
                 <button type="button" className="btn btn-small" onClick={() => setRouteTo(null)}>Clear the line</button>
               </div>
             )}
+            {/* The small print about how the distances were worked out is worth reading once, so it
+                sits under the list rather than in front of the answer. */}
+            <p className="muted">Nearest to the centre of the map, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
           </MapPanel>
         )}
         {panel === 'share' && (
           <MapPanel
             label="Share" title="Share this place" onClose={() => setPanel('none')}
+            onBodySize={setShareBody}
+            /* One place, written down once. The panel used to give the grid reference in a footer
+               and the same place again as latitude and longitude inside a box of link text, which is
+               two notations to read for one point on the ground. The link is now a link. */
+            lead={<p className="map-ref">The map is on: <strong>{centreRef.text}</strong></p>}
             actions={<button type="button" className="btn btn-primary" onClick={() => void copyLink()}><Icon name="share" size={18} /><span>Copy the link</span></button>}
           >
-            <textarea className="share-link" aria-label="Link to this place" readOnly rows={2} value={shareUrl} onFocus={(e) => e.target.select()} />
-            <QrCode text={shareUrl} size={220} label="Scan to open this place" />
-            <p className="muted">Centre: {centreRef.text} ({centreRef.system})</p>
+            <QrCode text={shareUrl} size={shareQrSize} label="Scan to open this place" />
+            <a className="share-link" href={shareUrl}>{shareUrl}</a>
+            <p className="muted">Point the other phone's camera at the code, or type that address into it.</p>
           </MapPanel>
         )}
       </div>

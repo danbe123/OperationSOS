@@ -65,7 +65,7 @@ describe('Now: the briefing', () => {
   it('links the reading and names the next bulletin', async () => {
     mockNow();
     renderRoute('/');
-    const reading = await screen.findByRole('region', { name: 'Read this' });
+    const reading = await screen.findByRole('region', { name: 'Read' });
     expect(within(reading).getByRole('link', { name: 'Right now' })).toHaveAttribute('href', '/s/grid-collapse#right-now');
     expect(within(reading).getByRole('link', { name: 'Power' })).toHaveAttribute('href', '/m/power');
     expect(reading).toHaveTextContent('Next bulletin: BBC Radio 4, 198 kHz LW');

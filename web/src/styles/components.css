@@ -104,6 +104,9 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .emergency-999-off { border: 2px solid var(--warn); border-left-width: 6px; background: var(--sunken); }
 .emergency-999-off strong, .emergency-999-mark { color: var(--warn); }
 .emergency-999-mark { font-size: var(--t-lead); }
+/* The quick card's version: one line, the type it is read at, and none of the padding. */
+.emergency-999-compact { padding: 4px 10px; font-size: var(--t-body); line-height: 1.3; }
+.emergency-999-compact .emergency-999-mark { font-size: var(--t-body); }
 
 /* --- chips and badges: colour plus a symbol, never colour alone ----------------------------- */
 
@@ -142,9 +145,13 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .list > li { border-bottom: 1px solid var(--line); padding: 10px 0; }
 .list > li:last-child { border-bottom: 0; }
 .results > li { padding: 0; }
-.result-row { display: block; min-height: var(--touch); padding: 10px 0; color: var(--ink); text-decoration: none; }
+.result-row { display: flex; flex-direction: column; gap: 2px; min-height: var(--touch); padding: 10px 0; color: var(--ink); text-decoration: none; }
+/* The source is its own line above the title: run together they read as one long sentence. */
+.result-source { display: block; }
 .result-title { font-weight: 700; text-decoration: underline; }
 .result-snippet { display: block; color: var(--ink-muted); }
+.results-group { display: flex; flex-direction: column; gap: 4px; }
+.results-group h2 { margin: 8px 0 0; font-size: var(--t-body); color: var(--ink-muted); }
 
 /* 10. The quick cards are the loudest thing on Medical after 999: full-width rows, lead type, the
    same red edge the 999 panel wears. */
@@ -157,6 +164,19 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
   font-size: var(--t-lead); font-weight: 700;
 }
 .quick-card .quick-card-go { margin-left: auto; color: var(--ink-muted); }
+
+/* --- the quick card: the steps scroll, and the card says how many there are ------------------- */
+
+/* The card is the whole screen: the title, one 999 line, the count, and then the steps in a frame of
+   their own. It used to be a long page inside the app's scroller, so a card that carried on past the
+   bottom edge looked exactly like a card that ended — and the compression rate was under the edge. */
+.card-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; padding: 0 var(--gutter) 8px; }
+.card .screen-head h1 { font-size: var(--t-title); }
+.card-count { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; }
+.card-more { margin-left: auto; }
+.card-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The fade is the standing cue; the button beside the count is the one you can press. */
+.card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
 
 /* --- the one task row: engine tasks, playbook checklists and drill jobs all look like this --- */
 
@@ -218,6 +238,13 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
 .tabs .btn { flex-shrink: 0; white-space: nowrap; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: var(--ink-muted); }
 .tabs .btn.active { border-bottom-color: var(--signal); color: var(--ink); background: var(--sunken); }
+
+/* On paper every phase is printed, so a strip of tab buttons is a row of dead controls at the top
+   of a 29-page document. */
+@media print {
+  .tabs { display: none !important; }
+  .section > summary::before { content: ''; }
+}
 
 /* --- the search field and its suggestions --------------------------------------------------- */
 

@@ -31,3 +31,38 @@ export function sinceIso(choice: SinceChoice, custom = '', now: number = Date.no
     }
   }
 }
+
+/** How far a stored time may sit from one of the four answers and still be read as that answer.
+ * Five minutes: a household picks "1 hour ago" and the box writes the instant it was tapped, so the
+ * two are never exactly equal, but nothing further out should be dressed up as a round answer. */
+const CLOSE_ENOUGH_MS = 300_000;
+
+/** The instant a condition carries, read back as the answer that would have produced it. The picker
+ * used to open on "Just now" whatever the box had stored, so a row headed "off for 1 h" sat two
+ * lines above a control saying the power went a moment ago — the screen contradicting itself at the
+ * one moment nobody can afford to wonder which half is true. Anything that fits none of the four
+ * answers is the typed-in time, and the field beside it shows what the box has. */
+export function sinceChoiceFor(stored: string | null | undefined, now: number = Date.now()): SinceChoice {
+  const at = stored ? Date.parse(stored) : Number.NaN;
+  if (Number.isNaN(at)) return 'now';
+  let best: SinceChoice = 'custom';
+  let closest = CLOSE_ENOUGH_MS;
+  for (const option of ['now', 'hour', 'morning', 'yesterday'] as const) {
+    const iso = sinceIso(option, '', now);
+    const away = iso ? Math.abs(Date.parse(iso) - at) : Number.POSITIVE_INFINITY;
+    // Ties go to the earlier answer in the list, so 07:00 exactly is "just now" at 07:00.
+    if (away < closest) {
+      closest = away;
+      best = option;
+    }
+  }
+  return best;
+}
+
+/** An instant as a `datetime-local` field wants it: the box's own time zone, to the minute. */
+export function localInput(iso: string | null | undefined): string {
+  const at = iso ? Date.parse(iso) : Number.NaN;
+  if (Number.isNaN(at)) return '';
+  const local = new Date(at - new Date(at).getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}

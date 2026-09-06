@@ -29,7 +29,7 @@ describe('Plan sections', () => {
     mockAll();
     renderRoute('/plan');
     const household = await screen.findByRole('list', { name: 'Household' });
-    expect(within(household).getByText('Sam')).toBeInTheDocument();
+    expect(await within(household).findByText('Sam')).toBeInTheDocument();
     expect(within(household).getByText('salbutamol inhaler')).toBeInTheDocument();
     const summary = await screen.findByRole('list', { name: 'Stock summary' });
     expect(summary).toHaveTextContent('Water 4 days');

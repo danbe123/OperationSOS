@@ -3,7 +3,7 @@ import type { BrowserContext, Route } from '@playwright/test';
 import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Neighbour, Note, Person, StockItem } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
-import { aiEvents, cards, fieldcraftPage, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
@@ -202,7 +202,10 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (method === 'GET' && p === '/cards') return json(route, cards);
     if (method === 'GET' && p.startsWith('/cards/')) {
-      const card = cards.find((c) => c.slug === p.slice('/cards/'.length));
+      // The engine resolves the card's own call directives against the situation, so a card asked
+      // for while both networks are down is not the same card.
+      const set = computeView(state).modes.calls === 'hidden' ? cardsNoPhones : cards;
+      const card = set.find((c) => c.slug === p.slice('/cards/'.length));
       return card ? json(route, card) : detail(route, 404, 'no such card');
     }
     if (method === 'GET' && p === '/pages') return json(route, pages);
@@ -384,7 +387,8 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       state.conditions = conditions;
       state.situation = { slug, title: summary.title, started_at: at, elapsed_s: 0, phase: phaseFor(0).id };
       state.drill = true;
-      logEvent(state, `Drill started: ${summary.title}`);
+      // The engine tags everything that happens inside a drill; the debrief filters on the tag.
+      logEvent(state, `Drill started: ${summary.title} (drill)`);
       return json(route, computeView(state));
     }
     if (p === '/drill' && method === 'DELETE') {

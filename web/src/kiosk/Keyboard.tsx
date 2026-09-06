@@ -2,39 +2,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import SimpleKeyboard from 'simple-keyboard';
 import 'simple-keyboard/build/css/index.css';
 import { useKiosk } from './KioskProvider';
+import { attachKeyboardTo, focusedEditable, focusListeners, isEditable, KEYBOARD_HEIGHT, layoutFor, typeInto, type Editable, type FocusListener } from './editable';
 
-export const KEYBOARD_HEIGHT = 224;
-export type Editable = HTMLInputElement | HTMLTextAreaElement;
+/* The panel and the vendor library only. Everything the rest of the app needs to know about a text
+ * field — what one is, how to type into it, who to tell when one takes focus — lives in
+ * `editable.ts`, so a box that never touches a field never parses `simple-keyboard`. The names are
+ * re-exported here because the reader, the shell and the tests have always asked this module for
+ * them. */
+export { attachKeyboardTo, isEditable, layoutFor, typeInto, KEYBOARD_HEIGHT } from './editable';
+export type { Editable } from './editable';
+
 type LayoutName = 'default' | 'shift' | 'numbers' | 'numeric';
-
-const TEXT_TYPES = new Set(['text', 'search', 'password', 'email', 'url', 'tel', 'number', '']);
-
-/** Duck-typed so elements from another document (the reader iframe) qualify; `instanceof` fails across realms. */
-export function isEditable(el: unknown): el is Editable {
-  const node = el as { tagName?: unknown; type?: unknown; readOnly?: unknown; disabled?: unknown } | null;
-  if (!node || typeof node.tagName !== 'string') return false;
-  if (node.readOnly === true || node.disabled === true) return false;
-  if (node.tagName === 'TEXTAREA') return true;
-  if (node.tagName === 'INPUT') return TEXT_TYPES.has(String(node.type ?? '').toLowerCase());
-  return false;
-}
-
-export function layoutFor(el: Editable): 'default' | 'numeric' {
-  const mode = (el.inputMode || '').toLowerCase();
-  if (mode === 'numeric' || mode === 'decimal' || mode === 'tel') return 'numeric';
-  if (el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'number') return 'numeric';
-  return 'default';
-}
-
-/** Set the value through the element's own realm's native setter, then fire `input` so React controlled inputs update. */
-export function typeInto(el: Editable, next: string): void {
-  const win = el.ownerDocument.defaultView ?? window;
-  const proto = el.tagName === 'TEXTAREA' ? win.HTMLTextAreaElement.prototype : win.HTMLInputElement.prototype;
-  const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-  if (setter) setter.call(el, next);
-  else el.value = next;
-  el.dispatchEvent(new win.Event('input', { bubbles: true }));
-}
 
 function editAtCaret(el: Editable, insert: string, deleteBack: number): void {
   let start = el.value.length;
@@ -55,20 +33,6 @@ function editAtCaret(el: Editable, insert: string, deleteBack: number): void {
   } catch {
     // unsupported for this input type
   }
-}
-
-type FocusListener = (el: Editable | null) => void;
-const focusListeners = new Set<FocusListener>();
-
-/** Report focus changes from any same-origin document (the app's own, or a reader iframe's). Returns a detach function. */
-export function attachKeyboardTo(doc: Document): () => void {
-  const onFocusIn = (e: Event) => {
-    const t = e.target;
-    const el = isEditable(t) ? t : null;
-    focusListeners.forEach((l) => l(el));
-  };
-  doc.addEventListener('focusin', onFocusIn);
-  return () => doc.removeEventListener('focusin', onFocusIn);
 }
 
 const LAYOUTS: Record<LayoutName, string[]> = {
@@ -101,8 +65,11 @@ export function Keyboard() {
     const detach = attachKeyboardTo(document);
     // A field focused before the listener attached (Find's autoFocus, the PIN pad) never fires a
     // focusin we can hear, and the keyboard would wait for a second tap that nobody knows to make.
+    // The focus that fetched this panel counts too, and it may be in the reader's own frame, where
+    // this document's `activeElement` is only the iframe.
     const active = document.activeElement;
     if (isEditable(active)) setTarget(active);
+    else if (focusedEditable()) setTarget(focusedEditable());
     return () => {
       focusListeners.delete(listener);
       detach();
@@ -194,3 +161,7 @@ export function Keyboard() {
     </div>
   );
 }
+
+/* The shell loads this module the first time a field takes focus, so the default export is the
+ * panel itself. */
+export default Keyboard;

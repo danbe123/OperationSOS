@@ -4,7 +4,7 @@ import { Screen } from '../shell/Screen';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
-import { attachKeyboardTo } from '../kiosk/Keyboard';
+import { attachKeyboardTo } from '../kiosk/editable';
 import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';

@@ -156,6 +156,21 @@ export const cards: Card[] = [
   },
 ];
 
+/* The box resolves a card's `[[call 999]]` against the situation before it renders the Markdown, so
+ * with both networks down the card that arrives is a different card: the step that says to ring
+ * says who to send instead. The fixture has to do the same, or the calls-off screenshots photograph
+ * a card telling a household to do the one thing the banner above it says will not work. */
+export const cardsNoPhones: Card[] = [
+  {
+    ...cards[0],
+    html: '<ol><li>Check for danger, then check for a response.</li><li>Send someone to a landline, a neighbour or a payphone: 999 will not connect from here.</li><li>Push hard and fast in the centre of the chest, 100 to 120 a minute.</li><li>After 30 compressions give 2 breaths if you are trained.</li></ol><p class="warning">Do not stop until help arrives or the person breathes.</p>',
+  },
+  {
+    ...cards[1],
+    html: '<ol><li>Press hard on the wound with a clean cloth.</li><li>Send someone for help: 999 will not connect from here.</li><li>Keep pressing; do not lift to look.</li></ol>',
+  },
+];
+
 /* The ten field craft pages. `/fieldcraft` renders whatever the box has in this category, and the
    fixture used to have none, so every field-craft screenshot was a title and one sentence. */
 const FIELDCRAFT: [string, string, string, string][] = [

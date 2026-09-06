@@ -65,7 +65,7 @@ describe('Now', () => {
     expect(screen.queryByRole('region', { name: 'Situation' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
     expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network is probably off');
-    expect(screen.getByRole('region', { name: 'Read this' })).toHaveTextContent('Right now');
+    expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');
   });
 
   it('says so, and keeps the rest of the box, when the engine cannot be read', async () => {

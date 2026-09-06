@@ -50,6 +50,14 @@ export function describeNearby(place: Pick<NearbyPlace, 'distance_m' | 'walk_min
   return `${formatDistance(place.distance_m / 1000)}${way ? ` to the ${way}` : ''}, about ${formatWalk(place.walk_minutes)} on foot`;
 }
 
+/** The one facility the panel leads with: the kind somebody chose, or — until they choose — the
+ * first kind the box actually found something for, so the head of the panel is never a gap while
+ * there are answers in the list underneath it. */
+export function leadFacility(facilities: NearbyFacility[], chosenId: string | null): NearbyFacility | null {
+  const chosen = chosenId ? facilities.find((f) => f.id === chosenId) : undefined;
+  return chosen ?? facilities.find((f) => f.nearest) ?? facilities[0] ?? null;
+}
+
 /** What a facility with nothing found should say, in one line. */
 export function nearbyGap(f: NearbyFacility): string {
   return f.why ?? `Nothing matching on this box.`;

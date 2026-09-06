@@ -105,3 +105,44 @@ test('hovering a health feature shows what it is; a tap pins it and a tap elsewh
   await page.mouse.click(canvas.x + 20, canvas.y + 20);
   await expect(tip).toBeHidden();
 });
+
+test('share gives one grid reference, the address as a link, and a code sized to the panel', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/map?lat=50.93790&lon=-1.47080&z=14');
+  await page.getByRole('button', { name: 'Share' }).click();
+  const panel = page.getByRole('dialog', { name: 'Share' });
+  await expect(panel.locator('.map-panel-lead')).toContainText(/The map is on: SU \d{4} \d{4}/);
+
+  // one notation for one place: the grid reference. The address is a link, not a second reading of it.
+  await expect(panel.getByRole('link')).toHaveAttribute('href', /\/map\?lat=50\.93790&lon=-1\.47080/);
+  expect(await panel.locator('textarea').count()).toBe(0);
+  await expect(panel.getByText(/Centre:/)).toHaveCount(0);
+
+  // the code sits inside the body it was drawn for, top edge and bottom edge
+  const code = panel.locator('.qr img');
+  await expect(code).toBeVisible();
+  const bodyBox = (await panel.locator('.map-panel-body').boundingBox())!;
+  const codeBox = (await code.boundingBox())!;
+  expect(codeBox.y).toBeGreaterThanOrEqual(bodyBox.y - 1);
+  expect(codeBox.y + codeBox.height).toBeLessThanOrEqual(bodyBox.y + bodyBox.height + 1);
+  expect(codeBox.width).toBeLessThanOrEqual(bodyBox.width);
+});
+
+test('the share code keeps its quiet zone dark in blackout until somebody asks for a bright one', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sos.theme', 'blackout'));
+  await page.goto('/map?lat=50.93790&lon=-1.47080&z=14');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'blackout');
+  await page.getByRole('button', { name: 'Share' }).click();
+
+  const frame = page.locator('.qr-frame');
+  const panelColour = await page.locator('.map-panel-actions').evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(panelColour).not.toBe('rgb(255, 255, 255)');
+  // the white stops at the edge of the code; the panel's own colour carries on around it
+  await expect.poll(() => frame.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(panelColour);
+
+  const brighten = page.getByRole('button', { name: 'Make it brighter to scan' });
+  expect((await brighten.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+  await brighten.click();
+  await expect.poll(() => frame.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe('rgb(255, 255, 255)');
+  await expect(page.getByRole('button', { name: 'Dim it again' })).toBeVisible();
+});

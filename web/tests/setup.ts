@@ -59,10 +59,12 @@ if (typeof window !== 'undefined') {
 }
 
 // qrcode draws on a canvas; unit tests only check that an image is rendered with the right payload.
+// Plain functions, not `vi.fn`: the encoder is now fetched on demand, so a second code drawn later
+// in the same test would meet a mock that `restoreMocks` had already emptied.
 vi.mock('qrcode', () => ({
   default: {
-    toDataURL: vi.fn(async (text: string) => `data:image/png;base64,${btoa(text)}`),
-    toString: vi.fn(async (text: string) => `<svg data-text="${text}"></svg>`),
+    toDataURL: async (text: string) => `data:image/png;base64,${btoa(text)}`,
+    toString: async (text: string) => `<svg data-text="${text}"></svg>`,
   },
 }));
 

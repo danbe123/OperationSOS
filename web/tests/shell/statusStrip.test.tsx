@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, act, within } from '@testing-library/react';
+import { render, screen, act, waitFor, within } from '@testing-library/react';
 import { api } from '../../src/api/client';
 import { StatusProvider } from '../../src/api/status';
 import { StatusStrip } from '../../src/components/StatusStrip';
@@ -36,8 +36,9 @@ describe('StatusStrip', () => {
     const button = await screen.findByRole('button', { name: 'Connect a phone' });
     await act(async () => { button.click(); });
     const dialog = screen.getByRole('dialog', { name: 'Connect a phone' });
-    const imgs = await within(dialog).findAllByRole('img');
-    expect(imgs).toHaveLength(2);
+    // The encoder itself is fetched on demand, so both codes are drawn a tick after the panel.
+    await waitFor(() => expect(within(dialog).getAllByRole('img')).toHaveLength(2));
+    const imgs = within(dialog).getAllByRole('img');
     expect(imgs[0]).toHaveAttribute('src', `data:image/png;base64,${btoa('WIFI:T:nopass;S:SOS;;')}`);
     expect(imgs[1]).toHaveAttribute('src', `data:image/png;base64,${btoa('http://10.42.0.1/')}`);
     expect(imgs[0]).toHaveAttribute('width', '220');

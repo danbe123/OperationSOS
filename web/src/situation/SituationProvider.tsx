@@ -5,6 +5,17 @@ import type { SituationView } from '../api/types';
 
 export const SITUATION_POLL_MS = 30_000;
 
+/** Two Views that say the same thing. The engine stamps every answer with its own clock, so the raw
+ * JSON is never byte-identical; everything else — the conditions, the jobs, the forecast, how long
+ * each thing has been off — is compared as it stands. A box in peacetime therefore polls every
+ * 30 seconds and re-renders nobody, instead of replacing the context object (and every screen
+ * reading it) twice a minute for a timestamp nothing shows. */
+export function sameView(a: SituationView | null, b: SituationView): boolean {
+  if (!a) return false;
+  const strip = (v: SituationView) => JSON.stringify({ ...v, meta: { ...v.meta, now: '' } });
+  return strip(a) === strip(b);
+}
+
 type SituationContextValue = {
   view: SituationView | null;
   error: string | null;
@@ -27,7 +38,7 @@ export function SituationProvider({ children, intervalMs = SITUATION_POLL_MS }: 
     try {
       const v = await api.situationView();
       if (!alive.current) return;
-      setView(v);
+      setView((prev) => (sameView(prev, v) ? prev : v));
       setError(null);
     } catch (e) {
       if (!alive.current) return;

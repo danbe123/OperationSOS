@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { describeNearby, describeRoute, nearbyGap, nearbyIcon } from '../../src/map/nearby';
+import { describeNearby, describeRoute, leadFacility, nearbyGap, nearbyIcon } from '../../src/map/nearby';
 import { nearby } from '../fixtures/api';
 
 describe('nearby', () => {
@@ -19,6 +19,17 @@ describe('nearby', () => {
     const rest = nearby.facilities.find((f) => f.id === 'rest-centre')!;
     expect(nearbyGap(rest)).toBe(rest.why);
     expect(nearbyGap({ id: 'x', title: 'X', found: false, nearest: null, also: [] })).toContain('Nothing matching');
+  });
+
+  it('leads with the kind you chose, or with the first kind it found anything for', () => {
+    const empty = { id: 'rest-centre', title: 'Rest centre', found: false, nearest: null, also: [] };
+    expect(leadFacility(nearby.facilities, null)!.id).toBe('pharmacy');
+    expect(leadFacility(nearby.facilities, 'emergency-department')!.id).toBe('emergency-department');
+    // a kind chosen before a search from a new centre that no longer carries it falls back rather than blanking
+    expect(leadFacility(nearby.facilities, 'gone')!.id).toBe('pharmacy');
+    // nothing found anywhere still leads with a kind, so the head can say why it is empty
+    expect(leadFacility([empty], null)).toBe(empty);
+    expect(leadFacility([], null)).toBeNull();
   });
 
   it('describes a straight line, naming where it starts', () => {

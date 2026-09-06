@@ -1,25 +1,20 @@
+import { lazy, Suspense, type ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
-import { Ai } from './screens/Ai';
 import { Board } from './screens/Board';
 import { Card } from './screens/Card';
-import { Doc } from './screens/Doc';
 import { Now } from './screens/Now';
 import { Guides } from './screens/Guides';
 import { Library } from './screens/Library';
-import { MapScreen } from './screens/Map';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Page } from './screens/Page';
-import { Plan } from './screens/Plan';
 import { Tools } from './screens/Tools';
 import { Fieldcraft } from './screens/Fieldcraft';
 import { Timers } from './screens/tools/Timers';
-import { SunMoon } from './screens/tools/SunMoon';
 import { Calculators } from './screens/tools/Calculators';
 import { Log } from './screens/tools/Log';
 import { Dose } from './screens/tools/Dose';
 import { Radio } from './screens/Radio';
-import { Reader } from './screens/Reader';
 import { Scenario } from './screens/Scenario';
 import { Find } from './screens/Find';
 import { Situation } from './screens/Situation';
@@ -27,6 +22,30 @@ import { Tasks } from './screens/Tasks';
 import { System } from './screens/System';
 import { Screen, Body } from './shell/Screen';
 import { Shell } from './shell/Shell';
+
+/* Four things in this box are large and rarely opened: the map (MapLibre and the tile reader), the
+ * document viewer (the PDF frame and the EPUB reader), and the assistant. A kiosk booting to Now
+ * used to parse all of them before it painted a single job. They are fetched when somebody asks for
+ * them instead, behind one plain line of text — on a box with no network the chunk is on the same
+ * disk as the page, so the wait is a blink. */
+const MapScreen = lazy(() => import('./screens/Map').then((m) => ({ default: m.MapScreen })));
+const Doc = lazy(() => import('./screens/Doc').then((m) => ({ default: m.Doc })));
+const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })));
+const Ai = lazy(() => import('./screens/Ai').then((m) => ({ default: m.Ai })));
+/* The other two that carry weight: the plan's pins and the sun times both read grid references, and
+ * `proj4` is 108 kB of the front door for two screens nobody opens in the first minute. */
+const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
+const SunMoon = lazy(() => import('./screens/tools/SunMoon').then((m) => ({ default: m.SunMoon })));
+
+/** What a screen looks like while its own code is being read off the disk. It is a screen, not a
+ * spinner: the title is already the answer to "where am I", and the rail never went anywhere. */
+function Loading({ title, children }: { title: string; children?: ReactNode }) {
+  return <Screen title={title} search={false}><Body><p className="muted">{children ?? 'Opening…'}</p></Body></Screen>;
+}
+
+function Later({ title, children }: { title: string; children: ReactNode }) {
+  return <Suspense fallback={<Loading title={title} />}>{children}</Suspense>;
+}
 
 export { useScrollToTop } from './shell/Shell';
 
@@ -67,28 +86,28 @@ export const routes: RouteObject[] = [
       { path: 'search', element: <Find /> },
       { path: 'find', element: <Find /> },
       { path: 'library', element: <Library /> },
-      { path: 'map', element: <MapScreen /> },
+      { path: 'map', element: <Later title="Map"><MapScreen /></Later> },
       { path: 'medical', element: <Medical /> },
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'radio', element: <Radio /> },
       { path: 'p/:slug', element: <Page /> },
-      { path: 'plan', element: <Plan /> },
+      { path: 'plan', element: <Later title="The plan"><Plan /></Later> },
       { path: 'tools', element: <Tools /> },
       { path: 'fieldcraft', element: <Fieldcraft /> },
       { path: 'tools/timers', element: <Timers /> },
-      { path: 'tools/sun', element: <SunMoon /> },
+      { path: 'tools/sun', element: <Later title="Sun and moon"><SunMoon /></Later> },
       { path: 'tools/calc', element: <Calculators /> },
       { path: 'tools/log', element: <Log /> },
       { path: 'medical/dose', element: <Dose /> },
-      { path: 'doc/:id', element: <Doc /> },
-      { path: 'read/:id/*', element: <Reader /> },
+      { path: 'doc/:id', element: <Later title="Document"><Doc /></Later> },
+      { path: 'read/:id/*', element: <Later title="Reading"><Reader /></Later> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },
       { path: 'situation', element: <Situation /> },
       { path: 'tasks', element: <Tasks /> },
       { path: 'board', element: <Board /> },
       { path: 'system', element: <System /> },
-      { path: 'ai', element: <Ai /> },
+      { path: 'ai', element: <Later title="Assistant"><Ai /></Later> },
       { path: '*', element: <NotFound /> },
     ],
   },

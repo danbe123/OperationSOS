@@ -32,7 +32,14 @@
 .app-board { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "main"; }
 .app-board > .content { grid-area: main; }
 .app-drill { grid-area: drill; }
-.app-main { grid-area: main; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.app-main { grid-area: main; position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* The one cue that says the screen goes on. It is a fade in the ground colour along the bottom edge
+   of the content column, drawn only while there is something below it, and it takes no taps. */
+.app-main[data-more="yes"]::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: var(--kb-height); height: 24px; z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--ground));
+}
 .content { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
 .screen { display: flex; flex-direction: column; min-height: 100%; }
 .screen-fill { height: 100%; }
@@ -101,12 +108,15 @@
     border-radius: var(--radius);
   }
   .rail-dest[aria-current="page"] { border-top-color: transparent; border-left-color: var(--signal); }
-  .rail-theme { flex-direction: column; gap: 2px; width: 100%; min-height: var(--touch); padding: 6px 2px; font-size: var(--t-meta); line-height: 1.2; }
+  /* Not a destination: the five rows above it are an icon over a word with a signal-coloured left
+     edge when they are the place you are, and this is a bordered control with a verb on it. */
+  .rail-theme { width: 100%; min-height: var(--touch); padding: 4px 6px; gap: 6px; }
 }
 
 /* --- the situation band --------------------------------------------------------------------- */
 
 .band {
+  order: -1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -115,6 +125,11 @@
   background: var(--panel);
   border-bottom: 1px solid var(--line-strong);
 }
+/* The theme control: a verb and the theme it is on now, in two lines where there is room. */
+.theme-btn { justify-content: flex-start; text-align: left; border-color: var(--line); background: transparent; }
+.theme-btn > span { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.theme-btn small { color: var(--ink-muted); font-weight: 400; }
+
 .band-scenario { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); text-decoration: none; font-weight: 700; }
 .band-scenario .muted { font-weight: 400; }
 .band-open { margin-left: auto; flex-shrink: 0; }
@@ -147,7 +162,11 @@
   .screen-head h1 { flex: 1 1 100%; order: 2; font-size: var(--t-lead); }
   .screen-head-noback h1 { flex: 1 1 auto; order: 1; }
   .screen-head-actions { order: 3; flex: 1 1 100%; }
-  .screen-head-search { display: none; }
+  /* The brief says search is on every screen. On a phone it was on none of them: the field costs a
+     row under the title, and the row is worth more than the twenty-three screens that had no way to
+     search at all. */
+  .screen-head-find { order: 1; }
+  .screen-head-search { order: 4; flex: 1 1 100%; min-width: 0; }
 }
 @media (min-width: 700px) and (min-height: 440px) { .screen-head-theme { display: none; } }
 /* The kiosk is 480 px tall: the title keeps its rank but gives the content back its lines. */
@@ -159,10 +178,33 @@
 .screen-body { padding: 0 var(--gutter) 24px; display: flex; flex-direction: column; gap: 16px; }
 .screen-body > .measure, .screen-body > p { max-width: var(--measure); }
 
+/* --- the skip link: the first focusable thing in the box ------------------------------------ */
+
+/* Off the screen until it takes focus, then a plain panel in the top-left corner of the content.
+   It is the one control that must never be styled away: it is how a keyboard gets past the
+   furniture to the first job. */
+.skip-link {
+  position: fixed; top: 8px; left: 8px; z-index: 90;
+  transform: translateY(-200%);
+  display: inline-flex; align-items: center;
+  min-height: var(--touch); padding: 10px 16px;
+  background: var(--panel); color: var(--ink);
+  border: 2px solid var(--signal); border-radius: var(--radius);
+  font: 700 var(--t-body)/1.2 var(--font-body); text-decoration: none;
+}
+.skip-link:focus { transform: none; }
+.content:focus { outline: none; }
+.content:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+
 /* --- overlays ------------------------------------------------------------------------------- */
 
-.notices { position: fixed; left: 50%; bottom: calc(16px + var(--kb-height)); transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; max-width: min(90vw, 480px); }
-.notice { display: flex; align-items: flex-start; gap: 8px; padding: 12px 16px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: var(--radius); font-weight: 600; }
+/* Clear of the bottom bar as well as the keyboard: at 390 the toast sat over Guides, Medical and
+   Map, which are the three ways out of whatever it was talking about. */
+.notices { position: fixed; left: 50%; bottom: calc(16px + var(--kb-height) + var(--bar-clearance, 0px)); transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; max-width: min(90vw, 480px); }
+@media (max-width: 699px), (max-height: 439px) { :root { --bar-clearance: var(--bar); } }
+.notice { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: var(--radius); font-weight: 600; }
+.notice-text { flex: 1 1 auto; min-width: 0; }
+.notice-close { flex: 0 0 auto; min-width: var(--touch); }
 
 .modal-backdrop { position: fixed; top: 0; left: 0; right: 0; bottom: var(--kb-height); z-index: 80; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.7); padding: 16px; }
 .modal { width: min(420px, 100%); padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; gap: 12px; }
@@ -173,7 +215,10 @@
 .connect-cols section { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .connect-big { font-size: var(--t-lead); margin: 0; }
 .qr { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.qr img, .qr-blank { background: #fff; border-radius: 4px; }
+/* The quiet zone is the component's own business now: on a dark theme it paints the panel colour
+   around the code so blackout never shows a slab of white paper (QrCode.tsx), and a flat #fff here
+   would put it back. The radius is the system's one radius. */
+.qr img, .qr-blank { border-radius: var(--radius); }
 .qr figcaption { font-size: var(--t-meta); color: var(--ink-muted); text-align: center; }
 
 /* The kiosk keyboard reduces the layout viewport rather than overlaying it. */
@@ -193,18 +238,29 @@
 /* simple-keyboard's own stylesheet gives every key in the numeric layout `width: 33.3%`, and that
    layout has four keys a row: each row came out a third too wide and the left column fell off the
    screen. The keys share the row instead. */
-.sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; flex-grow: 1; }
+/* Its buttons are 60 px tall in the vendor's stylesheet too, and four rows of those plus their
+   margins do not fit the 224 px panel: the fourth row (". 0 -") was sliced by the 480 px screen edge,
+   so a parent could not type 0 — no 10 months, no 20 kg, no decimal point — on the children's doses
+   screen, and a fixed panel cannot be scrolled to reach it. Every key is the touch target and no
+   more. */
+.sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; flex-grow: 1; height: var(--touch); }
 
 .idle-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: var(--t-title); font-weight: 700; cursor: pointer; }
 .idle-overlay-dark { background: rgba(0, 0, 0, 0.9); }
 /* The idle kiosk shows the board instead of a dim screen while anything is off. */
 .idle-board { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: var(--ground); cursor: pointer; overflow: hidden; }
 
-/* DRILL: the band carries the chip and the way out; this is the debrief when it ends. */
+/* DRILL: the band carries the chip and the way out; this is the debrief when it ends. It is a modal
+   because it behaves like one — as a 326 px panel in the flow it took two thirds of a 480 px kiosk
+   and pushed the five destinations off the rail. */
 .band-drill-end { flex-shrink: 0; }
-.drill-summary { padding: 10px var(--gutter); background: var(--panel); border-bottom: 1px solid var(--line); }
-.drill-summary p { margin: 0 0 6px; }
-.drill-events { list-style: none; margin: 0 0 8px; padding: 0; font-size: var(--t-meta); }
+.drill-summary { width: min(520px, 100%); max-height: 80vh; overflow-y: auto; }
+.drill-summary h2 { margin: 0; }
+.drill-summary p { margin: 0; }
+.drill-summary h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.drill-events { list-style: none; margin: 0; padding: 0; font-size: var(--t-meta); }
+.drill-events > li { border-bottom: 1px solid var(--line); padding: 6px 0; }
+.drill-events > li:last-child { border-bottom: 0; }
 
 /* --- print ---------------------------------------------------------------------------------- */
 

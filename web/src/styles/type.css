@@ -48,7 +48,10 @@ small { font-size: var(--t-meta); }
 }
 
 /* Quick cards are read at arm's length in bad light, by someone kneeling over a body: the steps are
-   the display size, one to a line, and the step's number is the same size and weight as its words. */
+   the display size, one to a line, and the step's number is the same size and weight as its words.
+   A step that is a whole sentence takes the lead size instead (`Card.tsx` marks them): at 40 px,
+   "Push hard and fast in the centre of the chest, 100 to 120 a minute" is four lines, and the rate —
+   the answer the card exists for — was under the bottom edge of a 390 px phone. */
 .card-html { font-size: var(--t-lead); line-height: 1.45; }
 .card-html li { margin: 0.4em 0; }
 .card-html ol { counter-reset: card-step; list-style: none; margin: 0 0 16px; padding: 0; }
@@ -60,14 +63,24 @@ small { font-size: var(--t-meta); }
 }
 .card-html ol > li::before { content: counter(card-step); flex: 0 0 auto; min-width: 1.2em; color: var(--ink-muted); }
 .card-html ol > li:last-child { margin-bottom: 0; }
+.card-html ol > li.card-step-long { font-size: var(--t-lead); line-height: 1.3; margin-bottom: 14px; }
 .card-html .warning { display: block; margin: 0.6em 0; font-size: var(--t-lead); }
-@media print { .card-html ol > li { font-size: 18pt; margin-bottom: 10px; } }
-
 @media print {
-  body { font-size: 11pt; }
+  .card-html ol > li { font-size: 18pt; margin-bottom: 10px; }
+  .card-html ol > li.card-step-long { font-size: 14pt; }
+  /* On paper there is no scrolling frame and no cue to give: the whole card prints. */
+  .card-scroll, .card-body { overflow: visible !important; display: block; padding: 0; mask-image: none; }
+  .card-count { display: none; }
+}
+
+/* Paper. 11 pt measured 14.67 px, under the 16 px floor the box holds itself to on a screen — and
+   a printed card is read in worse light than a screen, by torchlight, folded in a pocket. 12 pt is
+   16 px exactly. */
+@media print {
+  body { font-size: 12pt; line-height: 1.4; }
   h1 { font-size: 20pt; }
   h2 { font-size: 15pt; }
-  h3 { font-size: 12pt; }
+  h3 { font-size: 13pt; }
   a { color: inherit; text-decoration: none; }
   .print-only { display: block; }
 }

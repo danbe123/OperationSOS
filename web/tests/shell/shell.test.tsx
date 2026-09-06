@@ -32,7 +32,7 @@ describe('the shell', () => {
     const { router } = renderRoute('/p/pmr446');
     expect(await screen.findByRole('heading', { level: 1, name: 'PMR446 radio' })).toBeInTheDocument();
     await waitFor(() => expect(document.title).toBe('PMR446 radio · SOS'));
-    expect(screen.getAllByRole('button', { name: /Theme: Vault/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /Change the theme. Vault now/ })).toHaveLength(1);
     await act(async () => { screen.getByRole('button', { name: /Back/ }).click(); });
     expect(router.state.location.pathname).toBe('/');
   });

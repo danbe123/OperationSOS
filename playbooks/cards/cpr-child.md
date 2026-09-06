@@ -17,7 +17,7 @@ A child or baby does not respond and is not breathing normally.
 3. Baby: seal your mouth over mouth and nose. Child: pinch the nose.
 4. Press the centre of the chest 30 times at 100 to 120 a minute: a baby with two fingers about 4 cm deep, a child with the heel of one hand about 5 cm deep (a third of the chest).
 5. Give 2 breaths, then 30 more presses. Keep going 30 to 2.
-6. After the first minute, if nobody else has, [[call 999]]. Use a defibrillator if one arrives (paediatric pads or setting if available; adult pads if not).
+6. After the first minute, if nobody else has, {{#if phones}}[[call 999]]{{else}}send someone to a landline, a neighbour or a payphone: 999 will not connect from here{{/if}}. Use a defibrillator if one arrives (paediatric pads or setting if available; adult pads if not).
 7. Do not stop until the child breathes normally or help takes over.
 
 ## Warnings

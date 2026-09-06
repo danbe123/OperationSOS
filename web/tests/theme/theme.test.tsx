@@ -70,13 +70,13 @@ describe('ThemeButton', () => {
   it('cycles vault -> field -> blackout -> vault and names the current theme', async () => {
     const user = userEvent.setup();
     render(<ThemeProvider><ThemeButton /></ThemeProvider>);
-    const button = screen.getByRole('button', { name: /theme: vault/i });
+    const button = screen.getByRole('button', { name: /vault now/i });
     await user.click(button);
-    expect(screen.getByRole('button', { name: /theme: field/i })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /theme: field/i }));
-    expect(screen.getByRole('button', { name: /theme: blackout/i })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /theme: blackout/i }));
-    expect(screen.getByRole('button', { name: /theme: vault/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /field now/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /field now/i }));
+    expect(screen.getByRole('button', { name: /blackout now/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /blackout now/i }));
+    expect(screen.getByRole('button', { name: /vault now/i })).toBeInTheDocument();
     expect(localStorage.getItem(THEME_KEY)).toBe('vault');
   });
 });

@@ -11,13 +11,14 @@ describe('Search screen', () => {
     const { router } = renderRoute('/search?q=water');
     expect(await screen.findByText('Water is an inorganic compound.')).toBeInTheDocument();
     expect(spy).toHaveBeenCalledWith('water', { sources: undefined });
-    const list = screen.getByRole('list', { name: 'Results' });
-    const items = within(list).getAllByRole('listitem');
+    // Every result is in the group of the source it came from, the box's own first.
+    const items = screen.getAllByRole('listitem').filter((li) => li.closest('.results'));
     expect(items).toHaveLength(5);
     // "Playbook" is the box's word; a household reads "Guide".
     expect(within(items[0]).getByText('Guide')).toHaveClass('badge');
-    expect(within(items[4]).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
-    await act(async () => { within(items[1]).getByRole('link').click(); });
+    expect(within(screen.getByRole('region', { name: 'UK official' })).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
+    const wiki = within(screen.getByRole('region', { name: 'Wikipedia' })).getByRole('link');
+    await act(async () => { wiki.click(); });
     expect(router.state.location.pathname).toBe('/read/wikipedia_en_100_mini_2026-01/A/Water');
   });
 
@@ -26,7 +27,8 @@ describe('Search screen', () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/search?q=water');
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Guides (1)', 'Wikipedia (1)', 'NHS (1)', 'Places (1)', 'UK official (1)']);
+    // The chips count the very rows underneath them, and the box's own group leads.
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (1)', 'Place (1)', 'UK official (1)', 'NHS (1)', 'Wikipedia (1)']);
     await user.click(within(chips).getByRole('button', { name: 'NHS (1)' }));
     expect(router.state.location.search).toBe('?q=water&sources=nhs');
     expect(spy).toHaveBeenLastCalledWith('water', { sources: ['nhs'] });

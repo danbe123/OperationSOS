@@ -18,7 +18,7 @@ Someone is unresponsive but breathing normally, or is drowsy after a seizure, dr
 4. With your other hand, pull the far knee up so the foot is flat on the floor.
 5. Keeping the hand against the cheek, pull the knee towards you to roll them onto their side.
 6. Tilt the head back and lift the chin so the airway is open; adjust the top leg so hip and knee are at right angles.
-7. If nobody has raised the alarm yet, [[call 999]]. Check breathing every minute until help arrives; turn them onto the other side after 30 minutes.
+7. If nobody has raised the alarm yet, {{#if phones}}[[call 999]]{{else}}send someone to a landline, a neighbour or a payphone: 999 will not connect from here{{/if}}. Check breathing every minute until help arrives; turn them onto the other side after 30 minutes.
 
 ## Warnings
 

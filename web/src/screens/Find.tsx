@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { SearchResponse } from '../api/types';
 import { useQuery } from '../api/useQuery';
-import { sourceWord } from '../api/words';
+import { chipsFor, dedupe, groupResults } from '../api/results';
 import { Icon } from '../icons';
 import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
@@ -22,12 +22,15 @@ export function Find() {
     [q, sourcesParam],
   );
   const libQ = useQuery(() => api.library(), []);
-  // Keep the unfiltered groups so the chips stay visible while a filter is on.
-  const [groups, setGroups] = useState<{ q: string; groups: SearchResponse['groups'] } | null>(null);
+  // One row per target, the box's own first, and the chips counted from the very rows below them.
+  const shown = useMemo(() => (data ? dedupe(data.results) : []), [data]);
+  const grouped = useMemo(() => groupResults(shown), [shown]);
+  // Keep the unfiltered chips so they stay visible, and stay countable, while a filter is on.
+  const [unfiltered, setUnfiltered] = useState<{ q: string; chips: ReturnType<typeof chipsFor> } | null>(null);
   useEffect(() => {
-    if (data && sources.length === 0) setGroups({ q: data.q, groups: data.groups });
+    if (data && sources.length === 0) setUnfiltered({ q: data.q, chips: chipsFor(groupResults(dedupe(data.results))) });
   }, [data, sources.length]);
-  const chips = groups?.q === q ? groups.groups : (data?.groups ?? []);
+  const chips = unfiltered?.q === q ? unfiltered.chips : chipsFor(grouped);
   // On the kiosk the on-screen keyboard covers the bottom of the screen, so an answer that arrives
   // under it has not arrived. Scrolling the count line up instead pushed the field off the top, so
   // the screen showed "5 results." and two results with no way to see or edit what was typed. The
@@ -39,8 +42,9 @@ export function Find() {
     if (kb > 0) found.current?.closest('.content')?.scrollTo({ top: 0 });
   }, [data]);
 
-  const toggle = (source: string) => {
-    const next = sources.includes(source) ? sources.filter((s) => s !== source) : [...sources, source];
+  const toggle = (group: string[]) => {
+    const on = group.every((g) => sources.includes(g));
+    const next = on ? sources.filter((s) => !group.includes(s)) : [...new Set([...sources, ...group])];
     const p = new URLSearchParams(params);
     if (next.length) p.set('sources', next.join(','));
     else p.delete('sources');
@@ -58,26 +62,37 @@ export function Find() {
         {!q.trim() && <p className="muted">Search Wikipedia, the NHS pages, the manuals, the maps and the guides. A place name or a postcode opens the map.</p>}
         {chips.length > 0 && (
           <div className="chips" role="group" aria-label="Filter by source">
-            {chips.map((g) => (
-              <button key={g.source} type="button" className={sources.includes(g.source) ? 'chip active' : 'chip'} aria-pressed={sources.includes(g.source)} onClick={() => toggle(g.source)}>
-                {sourceWord(g.badge)} ({g.count})
-              </button>
-            ))}
+            {chips.map((g) => {
+              const on = g.sources.every((x) => sources.includes(x));
+              return (
+                <button key={g.key} type="button" className={on ? 'chip active' : 'chip'} aria-pressed={on} onClick={() => toggle(g.sources)}>
+                  {g.title} ({g.count})
+                </button>
+              );
+            })}
           </div>
         )}
         {data?.partial && <p className="warning">Some sources timed out, so these results may be incomplete. Try again in a moment.</p>}
         {loading && q.trim() && <p className="muted">Searching…</p>}
         {error && <p className="warning">Search failed: {error}</p>}
-        {data && !loading && data.results.length === 0 && (
+        {data && !loading && shown.length === 0 && (
           <p>Nothing found for “{data.q}”. Try fewer words, or a place name or postcode for the map.</p>
         )}
-        {data && data.results.length > 0 && (
+        {shown.length > 0 && data && (
           <p className="muted" ref={found}>
-            {data.results.length === 1 ? '1 result' : `${data.results.length} results`}
+            {shown.length === 1 ? '1 result' : `${shown.length} results`}
             {data.query !== data.q ? ` for “${data.query}”` : ''}.
           </p>
         )}
-        {data && <ResultList results={data.results} />}
+        {/* The box's own guides, quick cards, modules and pages first, under their own heading: they
+            are what this box was built to answer with, and the engine's one ranked list put them
+            below a mirror of the NHS medicines A to Z. */}
+        {grouped.map((g) => (
+          <section key={g.key} className="results-group" aria-label={g.title}>
+            <h2>{g.title}</h2>
+            <ResultList results={g.results} label={g.title} />
+          </section>
+        ))}
 
         {(ai === 'ready' || ai === 'busy') && (
           <section className="panel" aria-label="The assistant">

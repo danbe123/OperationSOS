@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import { test, expect } from './test';
 
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
@@ -101,7 +102,7 @@ test('the situation carries to another box as codes, and comes back in', async (
   await expect(codes.getByRole('button', { name: 'Previous' })).toBeDisabled();
   await codes.getByRole('button', { name: 'Next' }).click();
   await expect(codes).toContainText('Code 2 of');
-  await carry.getByRole('button', { name: 'Copy as text instead' }).click();
+  await carry.getByRole('button', { name: 'Copy the codes as text' }).click();
   await expect(carry.getByRole('textbox', { name: /Situation code 2 as text/ })).not.toBeEmpty();
 
   await carry.getByRole('textbox', { name: 'Situation to bring in' }).fill('{"i":0,"n":1,"d":"x"}');
@@ -109,4 +110,92 @@ test('the situation carries to another box as codes, and comes back in', async (
   const summary = carry.getByRole('status', { name: 'What came in' });
   await expect(summary).toContainText('Brought in from the other box.');
   await expect(summary).toContainText('conditions: 2 updated, 8 kept');
+});
+
+/** The value a token really computes to in the palette on the screen, whatever it was written as:
+ * a probe element takes `var(--x)` as its ground and the browser hands back the resolved colour. */
+async function token(page: Page, name: string): Promise<string> {
+  return page.evaluate((n) => {
+    const probe = document.createElement('div');
+    probe.style.background = `var(${n})`;
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  }, name);
+}
+
+const PALETTES = ['vault', 'field', 'blackout'].flatMap((theme) => [{ theme, dim: false }, { theme, dim: true }]);
+
+test('the chosen state is filled and marked, not merely coloured, in all six palettes', async ({ page }) => {
+  await page.setViewportSize({ width: 853, height: 480 });
+  for (const { theme, dim } of PALETTES) {
+    const where = `${theme}${dim ? ' dim' : ''}`;
+    await page.addInitScript((t) => localStorage.setItem('sos.theme', t as string), theme);
+    await page.goto('/situation');
+    if (dim) await page.evaluate(() => { document.documentElement.dataset.dim = 'on'; });
+    const group = page.getByRole('group', { name: 'Mains power' });
+    await group.getByRole('button', { name: 'Off' }).click();
+    const chosen = group.getByRole('button', { name: 'Off' });
+    await expect(chosen).toHaveAttribute('aria-pressed', 'true');
+
+    // The ground of the chosen button is the sunken one it always asked for, and not the panel the
+    // other two sit on: without it the only difference between the three was a colour.
+    const [sunken, panel] = [await token(page, '--sunken'), await token(page, '--panel')];
+    const ground = await chosen.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(ground, `${where}: the chosen state's ground`).toBe(sunken);
+    expect(ground, `${where}: the chosen state against the other two`).not.toBe(panel);
+    const others = await group.getByRole('button', { name: 'Working' }).evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(others, `${where}: an unchosen state's ground`).toBe(panel);
+
+    // and it carries the 3 px inset edge in the state's own colour
+    const edge = await chosen.evaluate((el) => getComputedStyle(el).boxShadow);
+    expect(edge, `${where}: the inset edge`).toContain('inset');
+    expect(edge, `${where}: the inset edge is the danger colour`).toContain(await token(page, '--danger'));
+
+    // and exactly one of the three buttons wears a symbol: the one the box is holding
+    await expect(group.locator('.state-glyph'), `${where}: symbols in the group`).toHaveCount(1);
+    await expect(chosen.locator('.state-glyph')).toHaveText('✕');
+
+    await group.getByRole('button', { name: 'Working' }).click();
+    await expect(group.getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
+  }
+});
+
+test('the since picker opens on the time the box has stored, not on "Just now"', async ({ page }) => {
+  await page.goto('/situation');
+  await page.getByLabel('Mains power: since').selectOption('hour');
+  await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
+  // Come back to the row from cold: the control must be read out of the box, not left over from a tap.
+  await page.reload();
+  await expect(page.getByLabel('Mains power: since')).toHaveValue('hour');
+  await expect(page.locator('#power')).toContainText('for 1 h');
+  // A condition nobody has touched offers "Just now" for the change about to be made.
+  await expect(page.getByLabel('Gas: since')).toHaveValue('now');
+});
+
+test('carrying a situation describes the paste, and says its trouble under the button', async ({ page }) => {
+  await page.setViewportSize({ width: 853, height: 480 });
+  await page.goto('/situation');
+  const carry = page.getByRole('region', { name: 'Carry the situation' });
+  // There is no camera in the box, so nothing on the panel may ask for a photograph or a scan.
+  await expect(carry).toContainText('type or paste each code’s text in order');
+  expect(await carry.textContent()).not.toMatch(/scan|photograph|JSON/i);
+
+  const box = carry.getByRole('textbox', { name: 'Situation to bring in' });
+  await box.fill('{"i":0,"n":3,"d":"one"}');
+  await expect(carry).toContainText('Code 1 of 3 read.');
+
+  await page.route('**/api/situation/import', (route) => route.fulfill({
+    status: 422, contentType: 'application/json',
+    body: JSON.stringify({ detail: 'a scanned chunk is not a QR chunk: expected {"i", "n", "d"}' }),
+  }));
+  const button = carry.getByRole('button', { name: 'Bring it in' });
+  await button.click();
+  const said = carry.getByRole('alert');
+  await expect(said).toContainText('That is not one of this box’s codes.');
+  // Under the button that caused it: the developer sentence used to be half a screen above it.
+  const [pressed, trouble] = [(await button.boundingBox())!, (await said.boundingBox())!];
+  expect(trouble.y).toBeGreaterThanOrEqual(pressed.y);
+  expect(trouble.y - (pressed.y + pressed.height)).toBeLessThan(48);
 });

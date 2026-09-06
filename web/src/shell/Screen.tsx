@@ -1,9 +1,9 @@
 import { useEffect, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Icon } from '../icons';
 import { SearchBar } from '../components/SearchBar';
 import { ThemeButton } from '../theme/ThemeButton';
-import { useWide } from './useWide';
+import { useReportScreenTitle } from './screenTitle';
 
 /** Every screen is a `Screen`: a title as the first line, its own actions, Back to where you came
  * from, and the search field that is on every screen. Navigation lives in the shell, so no screen
@@ -21,16 +21,20 @@ export function Screen({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const wide = useWide();
+  const reportTitle = useReportScreenTitle();
   useEffect(() => {
     document.title = title === 'Operation SOS' ? title : `${title} · SOS`;
-  }, [title]);
+    reportTitle(title);
+  }, [title, reportTitle]);
   const goBack = () => {
     // 'default' is the key of the first entry in this history; there is nothing to go back to.
     if (location.key === 'default') navigate('/');
     else navigate(-1);
   };
   const classes = ['screen', fill ? 'screen-fill' : '', className ?? ''].filter(Boolean).join(' ');
+  // Find is the search: it does not need a field in its head above the field in its body, or a
+  // button to itself.
+  const onFind = location.pathname === '/search' || location.pathname === '/find';
   return (
     <div className={classes}>
       {/* With no Back button the theme button had a phone row to itself above the title; it shares
@@ -43,8 +47,16 @@ export function Screen({
         )}
         <h1>{title}</h1>
         {actions && <div className="screen-head-actions no-print">{actions}</div>}
-        {!wide && <ThemeButton className="screen-head-theme no-print" />}
-        {search && wide && <div className="screen-head-search no-print"><SearchBar compact /></div>}
+        <ThemeButton className="screen-head-theme no-print" />
+        {/* Search is on every screen, phones included: the field where the screen has room for it,
+            and the way to Find where it has not. A phone had neither, on twenty-three screens. */}
+        {!onFind && (search
+          ? <div className="screen-head-search no-print"><SearchBar compact /></div>
+          : (
+            <Link className="btn btn-quiet btn-small screen-head-find no-print" to="/search">
+              <Icon name="search" size={18} /><span>Find</span>
+            </Link>
+          ))}
       </header>
       {children}
     </div>

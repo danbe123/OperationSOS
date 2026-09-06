@@ -18,7 +18,7 @@ Someone with diabetes is shaky, sweaty, pale, confused or drowsy; blood glucose 
 4. Once recovered, give a slower carbohydrate: a sandwich, biscuits, or their next meal.
 5. Do not leave them alone until they are fully back to normal.
 6. If drowsy or unconscious: nothing by mouth. Put them in the [recovery position](card:recovery-position).
-7. If a glucagon injection kit is available and someone is trained, give it, then [[call 999]].
+7. If a glucagon injection kit is available and someone is trained, give it, then {{#if phones}}[[call 999]]{{else}}send someone to a landline, a neighbour or a payphone: 999 will not connect from here{{/if}}.
 
 ## Warnings
 

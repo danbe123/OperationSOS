@@ -23,12 +23,25 @@
   display: flex; flex-direction: column;
 }
 .map-panel-head { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-.map-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+/* The answer the panel was opened for, pinned between the title and the list. Nearby's nearest
+   hospital and Home's two grid references belong here: they are what somebody came for, and a body
+   that scrolls them away or an action row that sits over them has answered nothing. */
+.map-panel-lead { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.map-lead-answer { margin: 0; font-size: var(--t-lead); line-height: 1.2; font-weight: 700; overflow-wrap: anywhere; }
+.map-lead-line { margin: 0; font-size: var(--t-meta); color: var(--ink-muted); }
+/* A grid reference is a short string that must never be cut: "The map is on: NY" is not an answer. */
+.map-ref { margin: 0; overflow-wrap: anywhere; }
+/* The gutter is held open whether or not the body scrolls, so nothing inside it is measured against
+   a width that changes the moment a scrollbar arrives. */
+.map-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .map-panel-body > * { flex: 0 0 auto; }
-.map-panel-actions { flex: 0 0 auto; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel); }
+.map-panel-actions { flex: 0 0 auto; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--panel); }
 .map-panel h2 { flex: 1; margin: 0; font-size: var(--t-lead); }
 .map-panel h3 { margin: 8px 0 4px; }
-.share-link { min-height: 0; resize: vertical; }
+/* The address to type into the other phone, as a link rather than a box of text pretending to be a
+   second way of writing down where you are. */
+.share-link { overflow-wrap: anywhere; }
+.map-panel .qr { align-self: center; }
 /* On a phone the panel is a bottom sheet: the map an instruction asks you to aim stays live above
    the instruction, instead of the panel covering every pixel but a 45 px sliver. */
 @media (max-width: 699px), (max-height: 439px) {
@@ -37,6 +50,10 @@
     border-left: 0; border-top: 2px solid var(--line-strong);
     border-radius: var(--radius) var(--radius) 0 0;
   }
+  /* A sheet holding more than it can show takes 70 % of the map instead of 55 %, and keeps it: a
+     sheet that drops back the moment its body fits would flap while somebody was reading it. Thirty
+     per cent of the map is still live above it, which is what the sheet was for. */
+  .map-panel-tall { height: 70%; }
 }
 .map-readout { flex: 0 0 auto; padding: 6px var(--gutter); font-size: var(--t-meta); color: var(--ink-muted); background: var(--panel); border-top: 1px solid var(--line); }
 .map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }

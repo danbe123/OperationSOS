@@ -5,7 +5,7 @@ import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { clockTime, CONDITION_INFO, describeDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
-import { SINCE_OPTIONS, sinceIso, type SinceChoice } from './since';
+import { localInput, SINCE_OPTIONS, sinceChoiceFor, sinceIso, type SinceChoice } from './since';
 
 const STATES: ConditionState[] = ['working', 'degraded', 'off'];
 const BUTTON_LABEL: Record<ConditionState, string> = { working: 'Working', degraded: 'Patchy', off: 'Off' };
@@ -13,10 +13,24 @@ const BUTTON_LABEL: Record<ConditionState, string> = { working: 'Working', degra
 /** One condition on the sheet: three state buttons, when it started, a note, and who said so. */
 export function ConditionRow({ condition, onSaved }: { condition: Condition; onSaved: (c: Condition) => void }) {
   const info = CONDITION_INFO[condition.id];
-  const [choice, setChoice] = useState<SinceChoice>('now');
-  const [custom, setCustom] = useState('');
+  // What the box has stored for this condition, and the answer it would have come from. A condition
+  // that is working has no interesting "since" — the time on the row is whenever somebody last said
+  // so — and the picker is there for the change about to be made, so it opens on "Just now". A
+  // condition that is off or patchy opens on the time the box is already telling everyone about.
+  const stored = condition.since ?? condition.updated_at;
+  const storedChoice = condition.state === 'working' ? 'now' : sinceChoiceFor(stored);
+  const [choice, setChoice] = useState<SinceChoice>(storedChoice);
+  const [custom, setCustom] = useState(() => localInput(stored));
   const [note, setNote] = useState(condition.note);
   const [busy, setBusy] = useState(false);
+  // Another phone in the house can change this row while it is on the screen. When the stored answer
+  // moves under us the picker follows it rather than sitting on the reader's last choice.
+  const [shown, setShown] = useState(`${condition.state}|${stored}`);
+  if (shown !== `${condition.state}|${stored}`) {
+    setShown(`${condition.state}|${stored}`);
+    setChoice(storedChoice);
+    setCustom(localInput(stored));
+  }
 
   const save = async (state: ConditionState, sinceChoice: SinceChoice = choice, customValue = custom) => {
     setBusy(true);
@@ -47,6 +61,7 @@ export function ConditionRow({ condition, onSaved }: { condition: Condition; onS
   };
 
   const tone = STATE_TONE[condition.state];
+  const setAt = condition.set_by && clockTime(condition.updated_at);
   return (
     <li className={`cond-row cond-row-${tone}`} id={condition.id}>
       <div className="cond-row-head">
@@ -66,7 +81,11 @@ export function ConditionRow({ condition, onSaved }: { condition: Condition; onS
             disabled={busy}
             onClick={() => void save(s)}
           >
-            <span aria-hidden="true">{STATE_SYMBOL[s]}</span> {BUTTON_LABEL[s]}
+            {/* The symbol marks the choice, not the option: three ticks and crosses shown at once
+                told the reader nothing about which one the box is holding. The word carries the
+                accessible name either way, so a screen reader hears "Off, pressed" as before. */}
+            {s === condition.state && <span className="state-glyph" aria-hidden="true">{STATE_SYMBOL[s]}</span>}
+            <span>{BUTTON_LABEL[s]}</span>
           </button>
         ))}
       </div>
@@ -108,7 +127,10 @@ export function ConditionRow({ condition, onSaved }: { condition: Condition; onS
       <p className="muted cond-meta">
         {condition.source === 'inferred' && <span className="badge badge-warn">worked out by the box</span>}
         {condition.source === 'detected' && <span className="badge">detected by the box</span>}
-        {' '}Set from {condition.set_by} at {clockTime(condition.updated_at)}.
+        {/* On a box hung on the wall this morning nobody has touched nine of these ten rows, and the
+            line read "Set from at ." — a sentence with its two facts missing. Say the plain thing
+            instead, and only claim a person and a time when the box has both. */}
+        {' '}{setAt ? `Set from ${condition.set_by} at ${setAt}.` : 'Nobody has set this yet.'}
         {condition.note && ` Note: ${condition.note}`}
       </p>
       {condition.stale && (

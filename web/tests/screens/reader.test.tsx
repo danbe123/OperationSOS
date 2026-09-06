@@ -16,9 +16,14 @@ const MAIN = `/read/${WIKI}/A/Main_Page`;
 function frame(): HTMLIFrameElement {
   return screen.getByTitle('Article') as HTMLIFrameElement;
 }
+/** The reader is one of the routes the shell fetches on demand, so the first look at any of its
+ * screen waits for the chunk. */
+async function reader(): Promise<HTMLIFrameElement> {
+  return await screen.findByTitle('Article') as HTMLIFrameElement;
+}
 /** Simulate the frame having loaded an article: fill the about:blank document and fire `load`. */
 async function loadArticle(title: string, html: string) {
-  const doc = frame().contentDocument!;
+  const doc = (await reader()).contentDocument!;
   doc.title = title;
   doc.body.innerHTML = html;
   await act(async () => { fireEvent.load(frame()); });
@@ -67,7 +72,7 @@ describe('Reader', () => {
 
   it('renders a sandboxed same-origin iframe whose src is set once', async () => {
     renderRoute(MAIN);
-    const f = frame();
+    const f = await reader();
     expect(f).toHaveAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-modals');
     expect(f).toHaveAttribute('src', `/kiwix/content/${WIKI}/A/Main_Page`);
   });
@@ -81,7 +86,7 @@ describe('Reader', () => {
     await act(async () => { screen.getByRole('button', { name: /Text size/ }).click(); });
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:125% !important}');
     expect(localStorage.getItem('sos.textSize')).toBe('125');
-    await act(async () => { screen.getByRole('button', { name: /Theme: Vault/ }).click(); });
+    await act(async () => { screen.getByRole('button', { name: /Change the theme. Vault now/ }).click(); });
     expect(doc.getElementById(READER_STYLE_ID)?.textContent).toBe('');
   });
 
@@ -136,12 +141,18 @@ describe('Reader', () => {
     screen.getByRole('link', { name: /Open in library/ });
   });
 
-  it('hides Print in kiosk mode and attaches the keyboard to the frame document', async () => {
+  // 20 seconds because this is the one test that waits for a lazily fetched chunk (the keyboard's),
+  // and a loaded run transforms `simple-keyboard` and its stylesheet on the way.
+  it('hides Print in kiosk mode and attaches the keyboard to the frame document', { timeout: 20_000 }, async () => {
     renderRoute(MAIN, { kiosk: true });
     const doc = await loadArticle('Main Page', ARTICLE);
     expect(screen.queryByRole('button', { name: /Print/ })).toBeNull();
     const input = doc.getElementById('q') as HTMLInputElement;
     await act(async () => { input.dispatchEvent(new (doc.defaultView!.FocusEvent)('focusin', { bubbles: true })); });
-    expect(screen.getByTestId('keyboard')).toBeInTheDocument();
+    // The pad itself is fetched by the first field anybody focuses, so the box never parses
+    // `simple-keyboard` for a screen nobody types on.
+    // Fetching the pad's own chunk is a disk read, and under a loaded test run it can outlast the
+    // default timeout; the box shows it the moment it lands.
+    expect(await screen.findByTestId('keyboard', {}, { timeout: 5_000 })).toBeInTheDocument();
   });
 });

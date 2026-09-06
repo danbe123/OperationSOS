@@ -19,7 +19,8 @@ describe('Neighbours', () => {
     renderRoute('/plan');
     const section = await screen.findByRole('region', { name: 'Neighbours' });
     const rows = within(section).getByRole('list', { name: 'Neighbours' });
-    const items = within(rows).getAllByRole('listitem');
+    // The plan is one of the screens the shell fetches on demand, so the street arrives after it.
+    const items = await within(rows).findAllByRole('listitem');
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent('Joan Reeve');
     expect(items[0]).toHaveTextContent('14 Mill Lane');

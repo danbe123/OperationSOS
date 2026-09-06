@@ -9,8 +9,12 @@ import { TickedLine, UndoTick, useTickUndo } from './Tick';
 
 /** A job with a tick box, the reason it is here, where to read more, and who has it. A ticked job
  * stays where it is, struck through, with an Undo for ten seconds: the same behaviour on Now, on
- * Things to do and on a guide. */
-export function TaskRow({ task, people, onChanged }: { task: Task; people?: Person[]; onChanged: (t: Task) => void }) {
+ * Things to do and on a guide.
+ *
+ * `why` is three lines of explanation, and four of them are most of a 480 px screen. The front door
+ * shows it for the job at the top and turns it off for the rest, where "Read more" and Things to do
+ * still carry it; every other list shows it as before. */
+export function TaskRow({ task, people, why = true, onChanged }: { task: Task; people?: Person[]; why?: boolean; onChanged: (t: Task) => void }) {
   const [busy, setBusy] = useState(false);
   const { armed, arm, disarm } = useTickUndo();
   const href = contentHref(task.link);
@@ -32,7 +36,7 @@ export function TaskRow({ task, people, onChanged }: { task: Task; people?: Pers
         <input type="checkbox" checked={task.done} disabled={busy} onChange={(e) => void save({ done: e.target.checked })} />
         <span className="task-title">{task.title}</span>
       </label>
-      {task.why && <p className="task-why muted">{task.why}</p>}
+      {why && task.why && <p className="task-why muted">{task.why}</p>}
       <div className="row task-meta">
         {/* The "who and when" line is never struck through; only the title is. */}
         {task.done && <TickedLine at={task.done_at} person={people ? null : task.person} />}

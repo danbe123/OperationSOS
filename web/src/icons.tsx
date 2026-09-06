@@ -30,6 +30,8 @@ const P = {
   home: <><path d="M3 11l9-8 9 8" /><path d="M5 10v10h5v-6h4v6h5V10" /></>,
   back: <path d="M15 5l-7 7 7 7" />,
   forward: <path d="M9 5l7 7-7 7" />,
+  down: <path d="M5 9l7 7 7-7" />,
+  up: <path d="M5 15l7-7 7 7" />,
   settings: <><circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" /><circle cx="12" cy="12" r="7" /></>,
   ai: <><path d="M12 2l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" /><path d="M19 15l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" /></>,
   print: <><path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="2" /><path d="M6 14h12v7H6z" /></>,

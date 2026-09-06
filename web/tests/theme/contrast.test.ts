@@ -37,7 +37,10 @@ describe('theme contrast', () => {
   for (const [name, vars] of Object.entries(themes)) {
     // Every colour a reader has to read a word in, on both the page and a raised surface.
     for (const token of ['--ink', '--ink-muted', '--link', '--signal', '--danger', '--warn', '--ok']) {
-      for (const bg of ['--ground', '--panel']) {
+      // --sunken as well as the page and the panel: inputs, table headers and the situation sheet's
+      // chosen state button are all filled with it, and a state read on the wrong ground is a state
+      // nobody measured.
+      for (const bg of ['--ground', '--panel', '--sunken']) {
         it(`${name}: ${token} on ${bg} is at least 7:1`, () => {
           expect(vars[token], `${token} defined`).toMatch(/^#[0-9a-f]{6}$/);
           expect(vars[bg], `${bg} defined`).toMatch(/^#[0-9a-f]{6}$/);

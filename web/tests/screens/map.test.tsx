@@ -201,14 +201,14 @@ describe('Map screen', () => {
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Tapped:');
   });
 
-  it('share shows a selectable URL and a QR; print is hidden in kiosk', async () => {
+  it('share shows the address as a link and a QR; print is hidden in kiosk', async () => {
     mockApis();
     const user = userEvent.setup();
     const a = renderRoute('/map?lat=50.9379&lon=-1.4708&z=14&label=OS+HQ');
     await act(async () => {}); // let /api/status resolve so the share URL uses the hotspot IP
     await user.click(screen.getByRole('button', { name: /Share/ }));
-    const box = screen.getByLabelText('Link to this place') as HTMLTextAreaElement;
-    expect(box.value).toBe('http://10.42.0.1/map?lat=50.93790&lon=-1.47080&z=14&overlay=footpaths&label=OS+HQ');
+    const url = 'http://10.42.0.1/map?lat=50.93790&lon=-1.47080&z=14&overlay=footpaths&label=OS+HQ';
+    expect(screen.getByRole('link', { name: url })).toHaveAttribute('href', url);
     expect(screen.getByRole('img', { name: /QR code/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Print/ })).toBeInTheDocument();
     a.unmount();

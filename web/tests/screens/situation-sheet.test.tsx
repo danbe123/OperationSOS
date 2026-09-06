@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api, ApiError } from '../../src/api/client';
 import { condition, makeView, playbooks, powerOffView, view } from '../fixtures/api';
+import { localInput } from '../../src/situation/since';
 
 describe('The situation sheet', () => {
   it('lists all ten conditions with three states each, and a print link', async () => {
@@ -13,8 +14,8 @@ describe('The situation sheet', () => {
     const rows = await screen.findByRole('region', { name: 'Conditions' });
     expect(within(rows).getAllByRole('listitem')).toHaveLength(10);
     const power = within(rows).getByRole('group', { name: 'Mains power' });
-    expect(within(power).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['✓ Working', '▲ Patchy', '✕ Off']);
-    expect(within(power).getByRole('button', { name: /Working/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(power).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['✓Working', 'Patchy', 'Off']);
+    expect(within(power).getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(rows).getByRole('group', { name: 'Sewage and drains' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Print report' })).toHaveAttribute('href', '/api/situation/report');
     expect(screen.getByRole('link', { name: 'Print report' })).toHaveAttribute('target', '_blank');
@@ -48,6 +49,61 @@ describe('The situation sheet', () => {
     expect(within(row).getByRole('status')).toHaveTextContent('Still off?');
     await userEvent.setup().click(within(row).getByRole('button', { name: 'Confirm, still off' }));
     expect(confirm).toHaveBeenCalledWith('power');
+  });
+
+
+  it('marks the chosen state with the symbol, and puts it on nothing else', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    renderRoute('/situation');
+    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    // A tick, a triangle and a cross on all three buttons at once said nothing about which one the
+    // box is holding: the symbol belongs to the answer, not to the options.
+    for (const [name, symbol] of [['Mains power', '✕'], ['Mobile network', '▲'], ['Water supply', '✓']] as const) {
+      const group = within(rows).getByRole('group', { name });
+      const glyphs = group.querySelectorAll('.state-glyph');
+      expect(glyphs, name).toHaveLength(1);
+      expect(glyphs[0].textContent).toBe(symbol);
+      expect(glyphs[0].closest('button')).toHaveAttribute('aria-pressed', 'true');
+      // and the glyph is decoration: a screen reader still hears the bare word.
+      expect(within(group).getByRole('button', { name: 'Off' })).toBeInTheDocument();
+    }
+    // The chosen button also carries the classes the sunken fill and the inset edge hang on.
+    const off = within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Off' });
+    expect(off.className.split(' ')).toEqual(expect.arrayContaining(['state-btn', 'state-set', 'state-danger']));
+  });
+
+  it('opens the since picker on the time the box is already telling everyone about', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    const anHourAgo = new Date(Date.now() - 3_600_000).toISOString();
+    const oddly = new Date(Date.now() - 3 * 3_600_000 - 2_220_000).toISOString();
+    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+      conditions: {
+        power: condition('power', 'off', { since: anHourAgo, updated_at: anHourAgo }),
+        water: condition('water', 'off', { since: oddly, updated_at: oddly }),
+      } as never,
+    }));
+    renderRoute('/situation');
+    // The heading two lines above says "off for 1 h"; the control used to say "Just now".
+    expect(await screen.findByLabelText('Mains power: since')).toHaveValue('hour');
+    // Nothing round fits the water, so the box offers the time itself rather than a near-enough lie.
+    expect(screen.getByLabelText('Water supply: since')).toHaveValue('custom');
+    expect(screen.getByLabelText('Water supply: time it started')).toHaveValue(localInput(oddly));
+    // A condition nobody has changed opens on "Just now": the picker is for the change about to be made.
+    expect(screen.getByLabelText('Gas: since')).toHaveValue('now');
+  });
+
+  it('says nobody has set a condition nobody has set, rather than "Set from at ."', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+      conditions: { gas: condition('gas', 'working', { set_by: '', updated_at: '', since: null }) } as never,
+    }));
+    renderRoute('/situation');
+    const rows = await screen.findByRole('region', { name: 'Conditions' });
+    expect(rows.querySelector('#gas')).toHaveTextContent('Nobody has set this yet.');
+    expect(rows.querySelector('#gas')).not.toHaveTextContent('Set from');
+    // and a row somebody has set still says who and when
+    expect(rows.querySelector('#power')).toHaveTextContent(/Set from phone at \d\d:\d\d\./);
   });
 
   it('warns instead of overwriting when another phone got there first', async () => {
