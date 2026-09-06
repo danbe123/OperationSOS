@@ -18,6 +18,18 @@ describe('splitCard', () => {
   it('keeps a card with no headings whole', () => {
     expect(splitCard('<p>Just prose.</p>')).toEqual({ when: '', steps: [], warnings: '', escalate: '', source: '', rest: '<p>Just prose.</p>' });
   });
+  it('keeps a heading it has no section for, rather than dropping it', () => {
+    const parts = splitCard('<h2>Steps</h2><ol><li>One</li></ol><h2>After</h2><p>Write it down.</p>');
+    expect(parts.steps).toEqual(['One']);
+    expect(parts.rest).toBe('<h2>After</h2><p>Write it down.</p>');
+  });
+  it('takes the one numbered list as the steps when the card has no Steps heading', () => {
+    const parts = splitCard('<h2>When to use</h2><p>Collapsed.</p><ol><li>One</li><li>Two</li></ol>');
+    expect(parts.steps).toEqual(['One', 'Two']);
+    expect(parts.when).toBe('<p>Collapsed.</p>');
+    // Two lists are ambiguous: neither is claimed, and both stay where the card put them.
+    expect(splitCard('<ol><li>One</li></ol><ol><li>Two</li></ol>').steps).toEqual([]);
+  });
 });
 
 describe('Card', () => {

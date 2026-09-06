@@ -31,10 +31,21 @@ export function splitCard(html: string): CardParts {
   if (!root) return parts;
   let key: keyof CardParts | null = null;
   const warnings: string[] = [];
+  // A card written without a "Steps" heading still has steps: the one numbered list is them.
+  const headings = Array.from(root.children).filter((e) => /^H[1-6]$/.test(e.tagName));
+  const lists = root.querySelectorAll('ol');
+  const lone = !headings.some((h) => sectionFor(h.textContent ?? '') === 'steps') && lists.length === 1 ? lists[0] : null;
   for (const node of Array.from(root.childNodes)) {
     const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : null;
     if (el && /^H[1-6]$/.test(el.tagName)) {
       key = sectionFor(el.textContent ?? '');
+      // A heading this screen has no section for is the card's own writing, not a boundary to swallow:
+      // it keeps its words and its content follows it into `rest`.
+      if (key === null) parts.rest += el.outerHTML;
+      continue;
+    }
+    if (el && el === lone) {
+      parts.steps.push(...Array.from(el.children, (li) => li.innerHTML.trim()));
       continue;
     }
     if (key === 'steps') {
@@ -53,11 +64,6 @@ export function splitCard(html: string): CardParts {
   }
   parts.warnings = warnings.map((w) => `<p class="card-warning"><strong>Warning</strong> ${w}</p>`).join('');
   return parts;
-}
-
-/** How many steps the card has, counted from the card's own HTML rather than from the screen. */
-export function countSteps(html: string): number {
-  return splitCard(html).steps.length;
 }
 
 /** A quick card is read at arm's length in bad light, often by someone kneeling over a body.
