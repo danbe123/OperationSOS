@@ -59,6 +59,29 @@ def test_the_view_reacts_to_a_power_cut(client):
                                 {"title": "Water", "kind": "module", "ref": "water"}]
 
 
+def test_the_model_reads_the_stock_without_opening_a_kit_file(client, monkeypatch):
+    """The engine reads a row's category, name, notes, days_left and days_raw, and nothing else -- so
+    the model is built without the content cache, and without a `kit()` lookup (a file stat) per row."""
+    from sos.routers import situation as situation_mod
+
+    client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}})
+    conn = db.connect(client.app.state.settings.db_path)
+    rows = situation_mod._stock(conn)
+    row = next(r for r in rows if r["kit_item"])
+    # The unrounded run is what the engine adds rows by, and it is still on every row.
+    assert row["days_raw"] is not None and row["days_left"] == round(row["days_raw"], 1)
+    assert row["kit_title"] is None                       # the one thing the content cache was for
+
+    cache = client.app.state.content
+    opened = []
+    real = cache.kit
+    monkeypatch.setattr(cache, "kit", lambda slug: opened.append(slug) or real(slug))
+    situation_mod._stock(conn)
+    assert opened == []                                   # no kit file stat'd per kit-sourced row
+    # And the View the engine builds off those rows is still built.
+    assert client.get("/api/situation/view").status_code == 200
+
+
 # --- conditions ------------------------------------------------------------------------------------------
 
 def test_conditions_endpoint_lists_all_ten(client):

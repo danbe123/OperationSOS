@@ -65,12 +65,17 @@ def _home(conn: sqlite3.Connection) -> dict:
             "label": get_setting(conn, "home_label", "Home"), "flood_zone": get_setting(conn, "home_flood_zone")}
 
 
-def _stock(conn: sqlite3.Connection, content) -> tuple[dict, ...]:
-    """The same rows and the same days_left as `GET /stock`, so the engine never disagrees with the API."""
+def _stock(conn: sqlite3.Connection) -> tuple[dict, ...]:
+    """The same rows and the same days_left as `GET /stock`, so the engine never disagrees with the API.
+
+    Without the kit titles, though: `_item` only uses `content` to name the kit a row came from, and
+    the engine reads a row's category, name, notes, days_left and days_raw and nothing else. Passing
+    the cache in made every model build stat one kit file per kit-sourced row for a string nobody
+    downstream reads, so this takes no content cache at all."""
     from sos.routers.household import _item, people_count
 
     people = people_count(conn)
-    return tuple(_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
+    return tuple(_item(r, people, None) for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
 
 
 def _titles(content, ruleset: rules_mod.Rules, scenario: Optional[str]) -> dict[str, str]:
@@ -143,7 +148,7 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                          "basic_done": done, "basic_total": total})
     return engine.Model(
         now=now, conditions=cond.load(conn), scenario=scenario, household=household, neighbours=tuple(nb.listing(conn)),
-        stock=_stock(conn, content), home=home,
+        stock=_stock(conn), home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
         titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
         last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),

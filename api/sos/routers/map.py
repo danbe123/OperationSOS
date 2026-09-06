@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends
 
 from sos.db import get_setting
 from sos.routers import get_db
+from sos.system import THEMES
 
 router = APIRouter(tags=["map"])
 BASES = [("osm", "OpenStreetMap", "uk-ie"), ("os", "Ordnance Survey", "os-zoomstack")]
-THEMES = ("field", "mono")
 
 
 def _maps_url(row) -> str:

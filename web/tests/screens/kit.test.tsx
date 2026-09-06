@@ -68,6 +68,35 @@ describe('Kit', () => {
     expect(screen.getByRole('checkbox', { name: /Drinking water/ })).not.toBeChecked();
   });
 
+  it('refuses a hand-off of nothing, in the words the API would have used', async () => {
+    vi.spyOn(api, 'kit').mockResolvedValue(kitWater);
+    const ticked = { ...kitWater, tiers: kitWater.tiers.map((t) => t.id !== 'serious' ? t : { ...t, done: 1, items: t.items.map((i) => ({ ...i, checked: true })) }) };
+    const set = vi.spyOn(api, 'setKitItem').mockResolvedValue(ticked);
+    renderRoute('/kit/water');
+    const serious = await screen.findByRole('group', { name: /Two weeks/ });
+    await act(async () => { within(serious).getByText('Two weeks').click(); });
+    await act(async () => { within(serious).getByRole('checkbox', { name: /Water purification tablets/ }).click(); });
+    await act(async () => { (await within(serious).findByRole('button', { name: /Add to Stock/ })).click(); });
+    const form = within(serious).getByRole('form', { name: 'Add to Stock' });
+    set.mockClear();
+    // The field's own floor is the first line: the browser will not submit a nought against it.
+    expect(within(form).getByLabelText(/^Quantity/)).toHaveAttribute('min', '0.01');
+    // The guard behind it is the second, for a form submitted past the field's validity. The API
+    // rejects a zero row outright, so a nought never leaves the screen; it used to, because the
+    // guard read `< 0`, and the household got the box's 400 for an answer.
+    for (const bad of ['0', '-1']) {
+      fireEvent.change(within(form).getByLabelText(/^Quantity/), { target: { value: bad } });
+      await act(async () => { fireEvent.submit(form); });
+      expect(set).not.toHaveBeenCalled();
+    }
+    // One notice per refusal, in the screen's own words rather than the box's 400.
+    expect(await screen.findAllByText('Give a quantity of more than zero.')).toHaveLength(2);
+
+    fireEvent.change(within(form).getByLabelText(/^Quantity/), { target: { value: '2' } });
+    await act(async () => { within(form).getByRole('button', { name: 'Save to Stock' }).click(); });
+    expect(set).toHaveBeenCalledWith('water', 'tablets', { checked: true, stock: { quantity: 2, expires: null } });
+  });
+
   it('says when the kit cannot be loaded', async () => {
     vi.spyOn(api, 'kit').mockRejectedValue(new Error('gone'));
     renderRoute('/kit/water');

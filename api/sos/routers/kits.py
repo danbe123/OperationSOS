@@ -56,11 +56,15 @@ def _tier_counts(kit, ticks: dict[str, dict]) -> dict[str, dict]:
 
 def _inline(text: str, request: Request) -> str:
     """A why or a note as inline HTML, so its `[Prepare](kiwix:...)` becomes a link the screen can render.
-    Markdown gives a whole paragraph back; the row wants what is inside it."""
+    Markdown gives a whole paragraph back; the row wants what is inside it.
+
+    Only when there is exactly one paragraph to unwrap. Stripping the first `<p>` and the last `</p>`
+    off a two-paragraph why leaves `first</p><p>second` -- a row of broken markup on the screen -- so
+    a why that really is two paragraphs comes back as the block HTML it is."""
     if not text:
         return ""
     html = content_mod.render_markdown(text, request.app.state.content.resolver).strip()
-    if html.startswith("<p>") and html.endswith("</p>"):
+    if html.startswith("<p>") and html.endswith("</p>") and "<p>" not in html[3:]:
         html = html[3:-4]
     return html.strip()
 

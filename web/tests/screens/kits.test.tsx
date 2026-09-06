@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { kitsResponse } from '../fixtures/api';
+import { kitsResponse, kitWater } from '../fixtures/api';
 import { tierLine } from '../../src/screens/Kits';
 
 describe('tierLine', () => {
@@ -22,6 +22,28 @@ describe('Kits', () => {
     const rest = screen.getByRole('navigation', { name: 'Not needed for this household' });
     expect(within(rest).getByRole('link', { name: /Baby and child/ })).toHaveAttribute('href', '/kit/baby-child');
     expect(screen.getByText(/Ticks are shared/)).toBeInTheDocument();
+  });
+
+  it('offers Print every kit only once there are kits to print', async () => {
+    let release: (r: typeof kitsResponse) => void = () => {};
+    vi.spyOn(api, 'kits').mockReturnValue(new Promise((resolve) => { release = resolve; }));
+    const kit = vi.spyOn(api, 'kit').mockImplementation(async (slug) => ({ ...kitWater, slug, title: slug }));
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    renderRoute('/kit');
+    const button = await screen.findByRole('button', { name: /Print every kit/ });
+    // Nothing has arrived: the button used to sit there live and do nothing at all when tapped.
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    await act(async () => { button.click(); });
+    expect(kit).not.toHaveBeenCalled();
+
+    await act(async () => { release(kitsResponse); });
+    await waitFor(() => expect(button).toBeEnabled());
+    expect(button).toHaveAttribute('aria-disabled', 'false');
+    await act(async () => { button.click(); });
+    expect(kit).toHaveBeenCalledTimes(kitsResponse.kits.length);
+    await waitFor(() => expect(print).toHaveBeenCalled());
+    print.mockRestore();
   });
 
   it('says when kits cannot be loaded', async () => {

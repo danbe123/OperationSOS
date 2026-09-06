@@ -105,6 +105,7 @@ def test_basic_progress_counts_only_basic_items():
 import shutil
 
 from sos import content
+from sos import content as content_mod
 from sos.manifest import load_manifests
 
 REPO = Path(__file__).resolve().parents[2]
@@ -145,6 +146,41 @@ def test_validate_tree_reports_kit_schema_and_tier_order(tree, items):
     out = content.validate_tree(tree, items, OVERLAYS)
     assert any("kits/water.yaml: tiers: days must increase" in line for line in out), out
     assert any("kits/water.yaml: file: 'icon' is a required property" in line for line in out), out
+
+
+def test_validate_deep_checks_kit_links_and_sources(tree, items):
+    seen = []
+
+    def kiwix_check(book, path):
+        seen.append((book, path))
+        return path != "A/Water"
+
+    def doc_check(item):
+        return item.id != "sos-test-pdf"
+
+    # A doc: link in a kit's why, and a doc: source, so both halves of the deep check have something
+    # to bite on: the fixture kit cites only kiwix.
+    path = tree / "kits" / "water.yaml"
+    path.write_text(path.read_text(encoding="utf-8")
+                    .replace("why: Turns any water into drinking water once tablets run out.",
+                             "why: Turns any water into drinking water ([the guide](doc:sos-test-pdf))."),
+                    encoding="utf-8")
+    out = content.validate_tree(tree, items, OVERLAYS, kiwix_check=kiwix_check, doc_check=doc_check)
+    # Both fixture kits cite the article, and the water kit cites it twice -- in a why and in its own
+    # sources -- so it is asked for once per kit, not once per mention.
+    assert seen.count(("wikipedia_en_100_mini_2026-01", "A/Water")) == 2
+    assert "kits/water.yaml: kiwix:wikipedia_en_100_mini_2026-01/A/Water returned non-200" in out
+    assert "kits/baby-child.yaml: kiwix:wikipedia_en_100_mini_2026-01/A/Water returned non-200" in out
+    assert any("kits/water.yaml: doc 'sos-test-pdf' file missing" in e for e in out), out
+
+
+def test_validate_without_deep_checkers_asks_nothing_of_the_kits(tree, items):
+    asked = []
+    out = content.validate_tree(tree, items, OVERLAYS, kiwix_check=None,
+                                doc_check=lambda item: asked.append(item) or True)
+    # No kiwix checker, so no kiwix line -- and the doc checker is the only one that ran.
+    assert not [e for e in out if "returned non-200" in e]
+    assert asked
 
 
 def test_content_cache_serves_kits(tree):
@@ -260,6 +296,24 @@ def test_why_and_note_come_back_as_inline_html(client):
                                    '(<a href="/read/wikipedia_en_100_mini_2026-01/A/Water">Prepare</a>).')
     assert tablets["note_html"] == "Check the use-by date."                 # no paragraph wrapper around a row
     assert client.get("/api/kits/water").json()["tiers"][0]["items"][1]["why_html"] == ""
+
+
+def test_a_two_paragraph_why_comes_back_whole(client, tmp_path, monkeypatch):
+    """A row's why is unwrapped only when there is one paragraph to unwrap: stripping the outer tags
+    off two of them by position leaves `first</p><p>second` on the screen."""
+    from sos.routers import kits as kits_router
+
+    class FakeRequest:
+        class app:
+            class state:
+                class content:
+                    resolver = staticmethod(content_mod.resolve_link)
+
+    one = kits_router._inline("One line ([Prepare](kiwix:wikipedia_en_100_mini_2026-01/A/Water)).", FakeRequest)
+    assert one == 'One line (<a href="/read/wikipedia_en_100_mini_2026-01/A/Water">Prepare</a>).'
+    two = kits_router._inline("First paragraph.\n\nSecond paragraph.", FakeRequest)
+    assert two == "<p>First paragraph.</p>\n<p>Second paragraph.</p>"
+    assert kits_router._inline("", FakeRequest) == ""
 
 
 def test_adding_to_stock_ticks_the_item_whatever_the_body_said(client):

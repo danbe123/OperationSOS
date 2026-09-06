@@ -16,22 +16,27 @@ export function tierLine(tiers: KitSummary['tiers']): string {
 }
 
 /** Every kit as one packing list. `beforeprint` is too late to fetch anything, so the button fetches
- * the kits first and prints once they are on the page. */
-function usePrintEveryKit(kits: KitSummary[]): { sheets: Kit[]; printAll: () => Promise<void> } {
+ * the kits first and prints once they are on the page. `busy` is what the button reads while those
+ * fetches are in flight: tapping again would gather every kit a second time. */
+function usePrintEveryKit(kits: KitSummary[]): { sheets: Kit[]; busy: boolean; printAll: () => Promise<void> } {
   const [sheets, setSheets] = useState<Kit[]>([]);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     if (!sheets.length) return;
     window.print();
     setSheets([]);
   }, [sheets]);
   const printAll = async () => {
+    setBusy(true);
     try {
       setSheets(await Promise.all(kits.map((k) => api.kit(k.slug))));
     } catch (e) {
       notify(`Could not gather the kits to print: ${errorMessage(e)}`);
+    } finally {
+      setBusy(false);
     }
   };
-  return { sheets, printAll };
+  return { sheets, busy, printAll };
 }
 
 function PackingList({ sheets }: { sheets: Kit[] }) {
@@ -71,9 +76,14 @@ export function Kits() {
   const relevant = kits.filter((k) => k.relevant);
   const rest = kits.filter((k) => !k.relevant);
   const people = q.data?.people ?? 1;
-  const { sheets, printAll } = usePrintEveryKit(kits);
+  const { sheets, busy, printAll } = usePrintEveryKit(kits);
+  // Nothing to print until the list of kits is on the screen: the button used to sit there through
+  // the whole load and do nothing at all when a household tapped it.
   return (
-    <Screen title="Kit" back={false} search={false} actions={<PrintButton label="Print every kit" onPrint={() => void printAll()} />}>
+    <Screen
+      title="Kit" back={false} search={false}
+      actions={<PrintButton label="Print every kit" disabled={!q.data || busy} onPrint={() => void printAll()} />}
+    >
       <Body>
         <p className="muted">
           What to have before anything happens, in three tiers: three days, two weeks, and no help coming.

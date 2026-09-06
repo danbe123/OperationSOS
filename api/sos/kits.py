@@ -192,9 +192,40 @@ def basic_progress(kit: Kit, checked: set[str]) -> tuple[int, int]:
 
 # --- validation (called by content.validate_tree) ---------------------------------------------------------------
 
+def _deep_checks(rel: str, kit: Kit, items_by_id: dict, kiwix_check, doc_check) -> list[str]:
+    """`--deep` for a kit: every kiwix: link and source actually fetched, every doc: file actually there.
+
+    The same two questions `content._deep_checks` asks of a playbook, asked of the text a kit carries:
+    an item's why and link, the intro, and the kit's own sources."""
+    from sos import content  # deferred: content imports this module
+
+    errors: list[str] = []
+    # The same text the shallow check reads: the intro, each item's why, and each item's link.
+    bodies = [kit.intro] + [i.why for i in kit.items] + [f"[x]({i.link})" for i in kit.items if i.link]
+    hrefs = [href for body in bodies if body for href in content._links(body)]
+    targets = [(href[6:].partition("/")[0], href[6:].partition("/")[2]) for href in hrefs if href.startswith("kiwix:")]
+    targets += [(str(s["kiwix"]).partition("/")[0], str(s["kiwix"]).partition("/")[2]) for s in kit.sources if "kiwix" in s]
+    if kiwix_check:
+        for book, path in dict.fromkeys(targets):
+            if book in items_by_id and not kiwix_check(book, path):
+                errors.append(f"{rel}: kiwix:{book}/{path} returned non-200")
+    if doc_check:
+        ids = {href[4:].partition("#")[0] for href in hrefs if href.startswith("doc:")}
+        ids |= {str(s["doc"]) for s in kit.sources if "doc" in s}
+        for doc_id in sorted(ids):
+            item = items_by_id.get(doc_id)
+            if item is not None and not doc_check(item):
+                errors.append(f"{rel}: doc '{doc_id}' file missing ({item.dest})")
+    return errors
+
+
 def validate_kits(playbooks_dir: Path | str, zim_ids: set[str], doc_ids: set[str], slugs: dict[str, set[str]],
-                  overlay_ids: set[str]) -> list[str]:
-    """One line per problem, in the validator's `kits/<slug>.yaml: <problem>` form."""
+                  overlay_ids: set[str], items_by_id: dict | None = None,
+                  kiwix_check=None, doc_check=None) -> list[str]:
+    """One line per problem, in the validator's `kits/<slug>.yaml: <problem>` form.
+
+    `kiwix_check` and `doc_check` are `content.validate_tree`'s own deep checkers, threaded through so
+    `sos validate-playbooks --deep` reaches the kits as well as the playbooks."""
     from sos import content, directives   # deferred: content imports this module
 
     folder = Path(playbooks_dir) / "kits"
@@ -250,4 +281,6 @@ def validate_kits(playbooks_dir: Path | str, zim_ids: set[str], doc_ids: set[str
                 errors.append(f"warning: {rel}: source '{title}' is url-only (provenance only, not linked)")
             else:
                 errors.append(f"{rel}: source '{title}' needs doc, kiwix or url")
+        if kiwix_check or doc_check:
+            errors += _deep_checks(rel, kit, items_by_id or {}, kiwix_check, doc_check)
     return list(dict.fromkeys(errors))

@@ -28,7 +28,9 @@ function AddToStock({ slug, item, onSaved }: { slug: string; item: KitItem; onSa
   const save = async (e: FormEvent) => {
     e.preventDefault();
     const q = Number(quantity);
-    if (!Number.isFinite(q) || q < 0) { notify('Give a quantity of zero or more.'); return; }
+    // The API refuses a zero row outright (a nought in Stock locks the item behind a 409), so the
+    // screen asks the same question rather than sending one to be rejected.
+    if (!Number.isFinite(q) || q <= 0) { notify('Give a quantity of more than zero.'); return; }
     const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
     if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
     try {
@@ -42,7 +44,7 @@ function AddToStock({ slug, item, onSaved }: { slug: string; item: KitItem; onSa
   return (
     <form className="row no-print kit-add-stock" onSubmit={(e) => void save(e)} aria-label="Add to Stock">
       <label className="field"><span>Quantity ({unit})</span>
-        <input type="number" inputMode="decimal" min={0} step="any" aria-label={`Quantity (${unit})`} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        <input type="number" inputMode="decimal" min={0.01} step="any" aria-label={`Quantity (${unit})`} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
       </label>
       <label className="field"><span>Use by</span>
         <input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label="Use by" value={useBy} onChange={(e) => setUseBy(e.target.value)} />

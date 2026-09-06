@@ -45,9 +45,13 @@ def test_validate_playbooks_all_scenarios_flag(env, tree, capsys):
 @respx.mock
 def test_validate_playbooks_deep(respx_mock, env, tree, capsys):
     respx_mock.get("http://kiwix.test/kiwix/raw/wikipedia_en_100_mini_2026-01/content/Precipitation").mock(return_value=httpx.Response(404))
+    # --deep reaches the kits as well as the playbooks: the water kit cites this article in a why and
+    # again in its sources, and both are fetched.
+    water = respx_mock.get("http://kiwix.test/kiwix/raw/wikipedia_en_100_mini_2026-01/content/A/Water").mock(return_value=httpx.Response(200))
     assert cli.main(["validate-playbooks", "--deep"]) == 1
     out = capsys.readouterr().out
     assert "returned non-200" in out and "doc 'sos-test-pdf' file missing" in out
+    assert water.called
 
 
 def test_pin_set_and_reset(env):

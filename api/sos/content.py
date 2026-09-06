@@ -511,7 +511,8 @@ def validate_tree(playbooks_dir: Path, manifest_items: list, overlay_ids: set[st
                 errors += _deep_checks(rel, doc, items_by_id, kiwix_check, doc_check)
     from sos import kits as kits_mod  # deferred: kits imports content for the link checks
 
-    errors += kits_mod.validate_kits(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids)
+    errors += kits_mod.validate_kits(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids,
+                                     items_by_id, kiwix_check=kiwix_check, doc_check=doc_check)
 
     if require_all_scenarios:
         errors += [f"scenarios/{s}.md: missing" for s in SCENARIO_SLUGS if s not in tree["scenario"]]
