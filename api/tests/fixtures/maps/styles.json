@@ -1,7 +1,7 @@
 {
   "output": "styles",
   "built_at": "2026-09-05T16:45:45+00:00",
-  "size_bytes": 705997,
+  "size_bytes": 457125,
   "step": "styles",
   "base": "test.pmtiles",
   "height_field": "property_value",

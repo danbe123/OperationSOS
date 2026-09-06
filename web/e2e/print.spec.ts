@@ -2,12 +2,12 @@ import { test, expect } from './test';
 
 /* Print is a state, not a stylesheet: it is what the box looks like when a household takes a CPR
  * card, a scenario or the situation report to a printer — which is most likely at 03:00, in a power
- * cut, with the box in blackout and dim on. That was exactly the case that printed three solid black
+ * cut, with the box in mono and dim on. That was exactly the case that printed three solid black
  * A4 pages, because the dim palette (0,3,0) outranked the print palette (0,2,0). */
 
 const PAPER = 'rgb(243, 239, 228)';
 const INK = 'rgb(27, 27, 27)';
-const THEMES = ['vault', 'field', 'blackout'];
+const THEMES = ['field', 'mono'];
 const PRINTABLE = ['/medical/card/cpr-adult', '/s/grid-collapse', '/p/pmr446', '/m/water', '/situation'];
 
 async function palette(page: import('@playwright/test').Page) {

@@ -6,11 +6,11 @@ import type { FixtureState } from './fixtures/state';
 import { WIKI } from '../tests/fixtures/api';
 
 /* Every entry in the redesign brief's coverage inventory, captured at 853x480 (the kiosk) and 390
- * wide (a phone) in vault, field and blackout. Run it with `node scripts/screenshots.mjs <round>`;
+ * wide (a phone) in field and mono. Run it with `node scripts/screenshots.mjs <round>`;
  * it is skipped by the ordinary browser suite unless SOS_SHOTS is set. */
 
 const OUT = process.env.SOS_SHOTS_DIR ?? resolve('..', 'docs/superpowers/critique/round-0');
-const THEMES = (process.env.SOS_SHOTS_THEMES ?? 'vault,field,blackout').split(',');
+const THEMES = (process.env.SOS_SHOTS_THEMES ?? 'field,mono').split(',');
 /** A comma-separated list of substrings: `node scripts/screenshots.mjs round-0 map,keyboard`. */
 const ONLY = (process.env.SOS_SHOTS_ONLY ?? '').split(',').map((x) => x.trim()).filter(Boolean);
 const SIZES = [

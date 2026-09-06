@@ -288,7 +288,7 @@ Each hit appears in exactly one source list, so there is nothing to fuse: `score
 | OS base | OS Open Zoomstack MBTiles (2,853MB) via the OS downloads API, `pmtiles convert` | `os-zoomstack.pmtiles` (GB only) |
 | Contours | GB: OS Terrain 50 vector tiles (`terr50_mbtiles_gb.zip`, 1,071MB, layers `contour_line`, `spot_height`, `land_water_boundary`), `pmtiles convert`. NI, RoI, IoM, CI: `gdal_contour -i 10` over the EPSG:4326 warp of the non-GB DTMs, tippecanoe with the same layer and attribute names, merged with `tile-join` | `contours.pmtiles` |
 | Hillshade | Mosaic in one CRS first: OS Terrain 50 ASCII grids (EPSG:27700), OSNI 50m DTM (Irish Grid), Copernicus DEM GLO-30 COGs for RoI, IoM and CI (later inputs win) → `gdalwarp -t_srs EPSG:3857 -tr 30 30` → `gdaldem hillshade -compute_edges -z 1 -az 315 -alt 45` → `gdal_translate -of MBTILES -co TILE_FORMAT=PNG8` → `gdaladdo` → `pmtiles convert` | `hillshade.pmtiles` |
-| Styles, sprites, glyphs | Protomaps styles generated with `@protomaps/basemaps` (`light`, `dark`, and a custom Vault flavour), the package major pinned to the tile schema of the pinned build; `protomaps/basemaps-assets` sprites and Noto Sans glyphs vendored. OS Open Zoomstack Outdoor and Night styles rewritten with jq to the local PMTiles source, local sprites and glyphs, and `Arial Unicode MS Regular` removed from every `text-font` stack; the repo's Source Sans Pro and Open Sans glyphs vendored; every `source-layer` in the style asserted present in the tiles | `styles/`, `sprites/`, `fonts/` |
+| Styles, sprites, glyphs | Protomaps styles generated with `@protomaps/basemaps` (`light` for Field and `black` for Mono), the package major pinned to the tile schema of the pinned build; `protomaps/basemaps-assets` sprites and Noto Sans glyphs vendored. OS Open Zoomstack Outdoor (Field) and Night (Mono) styles rewritten with jq to the local PMTiles source, local sprites and glyphs, and `Arial Unicode MS Regular` removed from every `text-font` stack; the repo's Source Sans Pro and Open Sans glyphs vendored; every `source-layer` in the style asserted present in the tiles | `styles/`, `sprites/`, `fonts/` |
 | Places | OS Open Names CSV (GB) with `LOCAL_TYPE` in City, Town, Village, Hamlet, Other Settlement, Postcode, Named Road, road sections collapsed to one row per name and populated place, `GEOMETRY_X/Y` transformed from EPSG:27700 with pyproj; plus `osmium tags-filter n/place=city,town,village,hamlet,suburb,locality` over the Britain and Ireland PBF for NI, RoI, IoM and CI | `places.csv.gz` (`name, kind, lat, lon, region, postcode`) |
 | Phone packs | Organic Maps `.mwm` for all 24 ids (17 `UK_*`, 4 `Ireland_*`, Isle of Man, Jersey, Guernsey) from `https://cdn.organicmaps.app/maps/<v>/<id>.mwm`, `<v>` and the id list read from `data/countries.json` at build time and pinned in `install/versions.env` with the matching Android APK from GitHub Releases | `packs/` with an index page that says: install the APK first; copy `.mwm` files from a PC over USB into `Android/data/app.organicmaps/files/<v>/` (Android 11+ blocks browser writes there); the ethernet direct-laptop link is the intended route; iOS is not supported |
 
@@ -384,15 +384,14 @@ React 19 with Vite, TypeScript, React Router. Static build served by Caddy over 
 
 ### Themes
 
-CSS custom properties on `:root[data-theme]`, chosen from a theme button on every screen, stored in `localStorage` per device, with a box-wide default in settings. All fonts bundled locally (OFL: VT323 for the Vault display face, Inter for body, Source Serif 4 for Field headings).
+CSS custom properties on `:root[data-theme]`, chosen from a theme button on every screen, stored in `localStorage` per device, with a box-wide default in settings. Two themes, on the owner's direction of 2026-09-06 ("i only want the light theme, and a black and white power saving one"); the dark-green `vault` and the red `blackout` are gone. All fonts bundled locally (OFL: VT323 for the display face, Inter for body, Source Serif 4 for Field headings).
 
 | Theme | Look |
 |---|---|
-| `vault` (default) | Vault-Tec inspired: phosphor green on near-black, amber accent, faint scanlines and glow on chrome, bevelled buttons, retro display face for headings. Original artwork only |
-| `field` | Field manual: paper and khaki, black text, red warnings, serif headings. Sunlight-readable and used as the print stylesheet |
-| `blackout` | Dim red on black, minimal chrome. Night vision and lowest screen power |
+| `field` (default) | Field manual: paper and khaki, black text, red warnings, serif headings. Sunlight-readable and used as the print stylesheet |
+| `mono` | White on pure black, no hue anywhere: the three states are separated by luminance and each carries its symbol. Night vision, and an OLED phone draws nothing for a black pixel — the cheapest screen the box has to read |
 
-The reader injects a per-theme stylesheet into the Kiwix document on every load: `blackout` sets a black background, dim red text and links and `img{filter:brightness(.5)}`; `vault` sets near-black with green text; `field` leaves the ZIM's own light styling. The PDF viewer chrome follows the theme (inverted page background in `blackout`).
+The reader injects a per-theme stylesheet into the Kiwix document on every load: `mono` sets a black background, white text, underlined links and `img{filter:brightness(.55)}` (`.35` in dim); `field` leaves the ZIM's own light styling. The PDF viewer chrome follows the theme (inverted page in `mono`).
 
 ### Kiosk mode
 

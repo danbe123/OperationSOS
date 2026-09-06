@@ -38,7 +38,7 @@ describe('overlaySpec and layers', () => {
 describe('addOverlay and setOverlayVisible', () => {
   it('adds a geojson overlay hidden or visible and toggles it', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     addOverlay(asMap(map), health, false);
     expect(map.getLayer('sos-overlay-health-point')).toBeDefined();
     expect(map.visibility('sos-overlay-health-point')).toBe('none');
@@ -48,7 +48,7 @@ describe('addOverlay and setOverlayVisible', () => {
   });
   it('waits for a pmtiles source to report its vector layers', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     addOverlay(asMap(map), footpaths, true);
     expect(map.style.sources[overlaySourceId('footpaths')]).toBeDefined();
     expect(map.getLayer('sos-overlay-footpaths-footpaths-line')).toBeUndefined();
@@ -58,7 +58,7 @@ describe('addOverlay and setOverlayVisible', () => {
   });
   it('toggles a style-layer overlay by its layer_id', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     map.addLayer({ id: 'contour_label', type: 'symbol', source: 'base' });
     addOverlay(asMap(map), contourLabels, false);
     expect(map.visibility('contour_label')).toBe('none');
@@ -67,7 +67,7 @@ describe('addOverlay and setOverlayVisible', () => {
   });
   it('uses the latest toggle when vector metadata arrives later', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     addOverlay(asMap(map), footpaths, false);
     setOverlayVisible(asMap(map), footpaths, true);
     map.vectorLayers[overlaySourceId('footpaths')] = ['footpaths'];

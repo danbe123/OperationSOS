@@ -127,7 +127,7 @@ async function token(page: Page, name: string): Promise<string> {
   }, name);
 }
 
-const PALETTES = ['vault', 'field', 'blackout'].flatMap((theme) => [{ theme, dim: false }, { theme, dim: true }]);
+const PALETTES = ['field', 'mono'].flatMap((theme) => [{ theme, dim: false }, { theme, dim: true }]);
 
 test('the chosen state is filled and marked, not merely coloured, in all six palettes', async ({ page }) => {
   await page.setViewportSize({ width: 853, height: 480 });

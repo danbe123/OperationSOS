@@ -15,7 +15,7 @@ export const status: Status = {
   eth_mode: 'client', power_mode: 'normal',
   ai: { state: 'off', model: null, message: null },
   thermal_ai_off_c: 80, idle_minutes: 5, home_minutes: 30,
-  pin_required: false, dev: true, default_theme: 'vault',
+  pin_required: false, dev: true, default_theme: 'field',
   conditions: Object.fromEntries(CONDITION_IDS.map((id) => [id, 'working' as ConditionState])) as Record<ConditionId, ConditionState>,
   modes: { theme: null, dim: false, calls: 'shown', map_first: false, board: false },
   drill: false, readiness_score: 62,
@@ -273,8 +273,8 @@ export const householdPlan: Page = {
 
 export const mapConfig: MapConfig = {
   bases: [
-    { id: 'osm', title: 'OpenStreetMap', styles: { vault: '/maps/styles/osm-vault.json', field: '/maps/styles/osm-field.json', blackout: '/maps/styles/osm-blackout.json' }, available: true },
-    { id: 'os', title: 'OS Open Zoomstack', styles: { vault: '/maps/styles/os-vault.json', field: '/maps/styles/os-field.json', blackout: '/maps/styles/os-blackout.json' }, available: true },
+    { id: 'osm', title: 'OpenStreetMap', styles: { field: '/maps/styles/osm-field.json', mono: '/maps/styles/osm-mono.json' }, available: true },
+    { id: 'os', title: 'OS Open Zoomstack', styles: { field: '/maps/styles/os-field.json', mono: '/maps/styles/os-mono.json' }, available: true },
   ],
   terrain: { contours: '/maps/contours.pmtiles', hillshade: '/maps/hillshade.pmtiles' },
   overlays: [

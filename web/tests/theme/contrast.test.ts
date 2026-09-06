@@ -22,25 +22,26 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+// Two themes: Field, the light one and the box default, and Mono, white on pure black with no hue
+// anywhere. The bare `:root` carries Field, so a document nobody has stamped yet is light.
 const themes: Record<string, Record<string, string>> = {
-  vault: block(':root,\n:root[data-theme="vault"]'),
-  field: block(':root[data-theme="field"]'),
-  blackout: block(':root[data-theme="blackout"]'),
+  field: block(':root,\n:root[data-theme="field"]'),
+  mono: block(':root[data-theme="mono"]'),
   // Dim is the state the engine raises when the power is off at night, so it is a palette in its own
   // right and carries the same 7:1 floor. It used to be a brightness filter, which broke both.
-  'vault dim': block(':root[data-dim="on"],\n:root[data-theme="vault"][data-dim="on"]'),
-  'field dim': block(':root[data-theme="field"][data-dim="on"]'),
-  'blackout dim': block(':root[data-theme="blackout"][data-dim="on"]'),
+  'field dim': block(':root[data-dim="on"],\n:root[data-theme="field"][data-dim="on"]'),
+  'mono dim': block(':root[data-theme="mono"][data-dim="on"]'),
 };
 
 describe('theme contrast', () => {
   for (const [name, vars] of Object.entries(themes)) {
-    // Every colour a reader has to read a word in, on both the page and a raised surface.
+    // Every colour a reader has to read a word in, on every surface the system paints behind words.
     for (const token of ['--ink', '--ink-muted', '--link', '--signal', '--danger', '--warn', '--ok']) {
-      // --sunken as well as the page and the panel: inputs, table headers and the situation sheet's
-      // chosen state button are all filled with it, and a state read on the wrong ground is a state
-      // nobody measured.
-      for (const bg of ['--ground', '--panel', '--sunken']) {
+      // --sunken and --raised as well as the page and the panel: inputs, table headers and the
+      // situation sheet's chosen state button are filled with --sunken, and every button, tile and
+      // chip is filled with --raised. A state read on a ground nobody measured is a state nobody
+      // measured.
+      for (const bg of ['--ground', '--panel', '--sunken', '--raised']) {
         it(`${name}: ${token} on ${bg} is at least 7:1`, () => {
           expect(vars[token], `${token} defined`).toMatch(/^#[0-9a-f]{6}$/);
           expect(vars[bg], `${bg} defined`).toMatch(/^#[0-9a-f]{6}$/);
@@ -53,24 +54,43 @@ describe('theme contrast', () => {
     });
   }
 
-  for (const name of ['blackout', 'blackout dim']) {
-    it(`${name} separates its three states by luminance, since it has one hue`, () => {
+  it('mono carries no hue at all: every colour it states is a grey', () => {
+    for (const name of ['mono', 'mono dim']) {
+      for (const [token, value] of Object.entries(themes[name])) {
+        if (!/^#[0-9a-f]{6}$/.test(value)) continue;
+        const [r, g, b] = [1, 3, 5].map((i) => value.slice(i, i + 2));
+        expect(`${name} ${token}: ${value}`).toBe(`${name} ${token}: #${r}${r}${r}`);
+        expect([g, b]).toEqual([r, r]);
+      }
+    }
+  });
+
+  for (const name of ['mono', 'mono dim']) {
+    it(`${name} separates its three states by luminance, since it has no hue`, () => {
       const { '--danger': off, '--warn': patchy, '--ok': working } = themes[name];
-      expect(luminance(off)).toBeLessThan(luminance(patchy));
-      expect(luminance(patchy)).toBeLessThan(luminance(working));
+      // The louder the trouble the brighter the grey; the symbols (✓ ▲ ✕) beside each one carry the
+      // meaning, and this only has to make the three tell apart at a glance.
+      expect(luminance(working)).toBeLessThan(luminance(patchy));
+      expect(luminance(patchy)).toBeLessThan(luminance(off));
+      expect(contrast(working, off)).toBeGreaterThanOrEqual(1.5);
     });
   }
 
   it('dim actually dims: every dim ground is darker than the theme it dims', () => {
-    for (const [name, base] of [['vault', 'vault'], ['field', 'field'], ['blackout', 'blackout']] as const) {
+    for (const name of ['field', 'mono'] as const) {
       const dim = themes[`${name} dim`];
-      expect(luminance(dim['--ground'])).toBeLessThanOrEqual(luminance(themes[base]['--ground']));
-      expect(luminance(dim['--panel'])).toBeLessThanOrEqual(luminance(themes[base]['--panel']));
+      expect(luminance(dim['--ground'])).toBeLessThanOrEqual(luminance(themes[name]['--ground']));
+      expect(luminance(dim['--panel'])).toBeLessThanOrEqual(luminance(themes[name]['--panel']));
     }
   });
 
   it('dim never dims with a filter: a filtered body becomes the containing block for every overlay', () => {
     expect(css).not.toMatch(/data-dim[^{]*\{[^}]*filter:/);
+  });
+
+  it('the only themes the token file states are field and mono', () => {
+    const stated = new Set([...css.matchAll(/data-theme="([a-z]+)"/g)].map((m) => m[1]));
+    expect([...stated].sort()).toEqual(['field', 'mono']);
   });
 
   it('print forces the field palette', () => {
@@ -79,6 +99,7 @@ describe('theme contrast', () => {
     const printBlock = css.slice(printAt, css.indexOf('/* end print */', printAt));
     expect(printBlock).toContain('--ground: #f3efe4');
     expect(printBlock).toContain('--ink: #1b1b1b');
+    expect(printBlock).toContain(`--signal: ${themes.field['--signal']}`);
   });
 
   it('body text never carries the display face or a text shadow', () => {

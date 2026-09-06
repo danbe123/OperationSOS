@@ -41,7 +41,7 @@ describe('Map screen', () => {
     await screen.findByRole('button', { name: /Layers/ });
     await act(async () => {});
     const map = lastMap();
-    expect(map.style.name).toBe('/maps/styles/osm-vault.json');
+    expect(map.style.name).toBe('/maps/styles/osm-field.json');
     expect(map.getLayer('sos-hillshade')).toBeDefined();
     expect(map.getLayer('sos-contours')).toBeDefined();
     expect(map.visibility('sos-overlay-health-point')).toBe('none');
@@ -76,9 +76,9 @@ describe('Map screen', () => {
     const map = lastMap();
     expect(map.visibility('sos-overlay-health-point')).toBe('visible');
     await user.click(within(panel).getByLabelText('OS Open Zoomstack'));
-    expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/os-vault.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
+    expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/os-field.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
     await act(async () => {});
-    expect(map.style.name).toBe('/maps/styles/os-vault.json');
+    expect(map.style.name).toBe('/maps/styles/os-field.json');
     expect(map.getLayer('land')).toBeDefined();
     expect(map.visibility('sos-overlay-health-point')).toBe('visible');
     expect(map.getLayer('sos-hillshade')).toBeDefined();
@@ -193,7 +193,7 @@ describe('Map screen', () => {
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
     await user.click(within(screen.getByRole('dialog', { name: 'Layers' })).getByLabelText('OS Open Zoomstack'));
     await act(async () => {});
-    expect(map.style.name).toBe('/maps/styles/os-vault.json');
+    expect(map.style.name).toBe('/maps/styles/os-field.json');
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
     map.renderedFeatures = [];
     await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });

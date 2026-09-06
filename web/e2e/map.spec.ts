@@ -128,10 +128,10 @@ test('share gives one grid reference, the address as a link, and a code sized to
   expect(codeBox.width).toBeLessThanOrEqual(bodyBox.width);
 });
 
-test('the share code keeps its quiet zone dark in blackout until somebody asks for a bright one', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('sos.theme', 'blackout'));
+test('the share code keeps its quiet zone dark in mono until somebody asks for a bright one', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sos.theme', 'mono'));
   await page.goto('/map?lat=50.93790&lon=-1.47080&z=14');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'blackout');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'mono');
   await page.getByRole('button', { name: 'Share' }).click();
 
   const frame = page.locator('.qr-frame');

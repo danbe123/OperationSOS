@@ -79,14 +79,13 @@ def test_vendor_sprites_copies_only_named_sets(tmp_path):
 
 def test_style_index_and_fragment_rendering():
     # Ruling R1: styles live at /maps/styles/<base>-<theme>.json (api/sos/routers/map.py's own contract,
-    # read by pure convention - no index.json is consumed). os-vault and os-blackout both point at the
-    # OS Night style, since OS only ships one dark style covering both SOS themes.
+    # read by pure convention - no index.json is consumed). os-mono points at the OS Night style, the
+    # only dark style OS ships.
     index = styles.style_index("test.pmtiles")
-    assert index["osm"] == {"vault": "/maps/styles/osm-vault.json", "field": "/maps/styles/osm-field.json",
-                            "blackout": "/maps/styles/osm-blackout.json", "tiles": "/maps/test.pmtiles"}
+    assert index["osm"] == {"field": "/maps/styles/osm-field.json", "mono": "/maps/styles/osm-mono.json",
+                            "tiles": "/maps/test.pmtiles"}
     assert index["os"]["field"] == "/maps/styles/os-field.json"
-    assert index["os"]["vault"] == "/maps/styles/os-vault.json"
-    assert index["os"]["blackout"] == "/maps/styles/os-blackout.json"
+    assert index["os"]["mono"] == "/maps/styles/os-mono.json"
     assert index["os"]["tiles"] == "/maps/os-zoomstack.pmtiles"
     assert set(index["layers"]) == set(styles.FRAGMENTS)
     text = (REPO / "tools/map-styles/layers/contours.json").read_text()
@@ -137,9 +136,9 @@ def _fake_node(cmd):
     out = Path(cmd[cmd.index("--out") + 1])
     out.mkdir(parents=True, exist_ok=True)
     tiles = cmd[cmd.index("--tiles") + 1]
-    # Ruling R1: the Node generator writes osm-field/osm-blackout/osm-vault.json (not the internal
-    # light/dark flavour names) so the fake mirrors the real build-styles.mjs output filenames.
-    for name in ("osm-field.json", "osm-blackout.json", "osm-vault.json"):
+    # Ruling R1: the Node generator writes osm-field.json and osm-mono.json (not the internal
+    # light/dark/black flavour names) so the fake mirrors the real build-styles.mjs output filenames.
+    for name in ("osm-field.json", "osm-mono.json"):
         (out / name).write_text(json.dumps({"version": 8, "sources": {"protomaps": {"type": "vector", "url": tiles}},
                                             "sprite": "/maps/sprites/v4/light", "glyphs": styles.GLYPHS_URL,
                                             "layers": [{"id": "l", "type": "symbol", "source": "protomaps", "source-layer": "places",
@@ -166,14 +165,12 @@ def test_styles_step_generates_rewrites_vendors_and_indexes(tmp_path):
     assert not runner.find("aria2c"), "assets already in the cache must not be downloaded"
     out = ctx.out
     assert json.loads((out / "styles" / "index.json").read_text())["osm"]["tiles"] == "/maps/test.pmtiles"
-    # Ruling R1: exactly six load-bearing style files, named for the map router's convention.
+    # Ruling R1: exactly four load-bearing style files, named for the map router's convention.
     field = json.loads((out / "styles" / "os-field.json").read_text())
     assert field["sources"]["os"]["url"] == "pmtiles:///maps/os-zoomstack.pmtiles"
-    assert (out / "styles" / "os-vault.json").exists() and (out / "styles" / "os-blackout.json").exists()
-    assert (out / "styles" / "osm-vault.json").exists() and (out / "styles" / "osm-field.json").exists() \
-        and (out / "styles" / "osm-blackout.json").exists()
-    # os-vault.json and os-blackout.json must be byte-identical copies of the rewritten OS Night style.
-    assert (out / "styles" / "os-vault.json").read_bytes() == (out / "styles" / "os-blackout.json").read_bytes()
+    assert (out / "styles" / "os-mono.json").exists() and (out / "styles" / "osm-mono.json").exists() \
+        and (out / "styles" / "osm-field.json").exists()
+    assert not (out / "styles" / "os-vault.json").exists() and not (out / "styles" / "os-blackout.json").exists()
     contours = json.loads((out / "styles" / "layers" / "contours.json").read_text())
     assert "PROP_VALUE" in json.dumps(contours)
     overlays = json.loads((out / "styles" / "layers" / "overlays.json").read_text())

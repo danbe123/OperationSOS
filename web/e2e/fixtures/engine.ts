@@ -147,7 +147,7 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
     tasks,
     briefing,
     modes: {
-      theme: off('power') && state.dark ? 'blackout' : null,
+      theme: off('power') && state.dark ? 'mono' : null,
       dim: off('power') && state.dark,
       calls: callsHidden ? 'hidden' : 'shown',
       map_first: state.situation.slug === 'storms-flooding',

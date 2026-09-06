@@ -1,6 +1,6 @@
 # Interface redesign: one box, one situation, one manual
 
-Approved brief 2026-09-06: a complete redesign of the frontend for intuitiveness, followed by five rounds of critique and improvement. Constraints from the application spec stand: three themes (vault default, field, blackout), kiosk at 853x480 and phones at 360 to 430 wide, 48 px targets, 18 px body on the kiosk and 16 px on phones, an icon always has a word, colour plus a symbol for any state, every quick card and every scenario's Right now within two taps of Home, search on every screen, no network fonts (the bundled Inter, Source Serif 4 and VT323 only), no new dependencies.
+Approved brief 2026-09-06: a complete redesign of the frontend for intuitiveness, followed by five rounds of critique and improvement. Constraints from the application spec stand: two themes (field default, mono; superseded 2026-09-06 — the brief was written when there were three), kiosk at 853x480 and phones at 360 to 430 wide, 48 px targets, 18 px body on the kiosk and 16 px on phones, an icon always has a word, colour plus a symbol for any state, every quick card and every scenario's Right now within two taps of Home, search on every screen, no network fonts (the bundled Inter, Source Serif 4 and VT323 only), no new dependencies.
 
 ## 1. What is wrong today
 
@@ -10,12 +10,11 @@ Twenty-one screens grew by accretion. Home is a long scroll of unrelated bands (
 
 **Subject**: a household's emergency box on a wall, used by frightened people, often in poor light, often one-handed on a phone. Its job is to answer "what do I do now" and then let people read deeper. The interface should feel like a well-kept instrument, not a website.
 
-**Colour** (per theme, tokens on `:root[data-theme]`; the values below are the vault set, field and blackout carry the same roles):
-- `--ground` #0B120C (the panel), `--panel` #121B14 (raised surfaces), `--ink` #DCEFDD (text), `--ink-muted` #8FAF93, `--signal` #6CF08C (the one accent: live state, primary action), `--warn` #F2C14E, `--danger` #FF6B57.
-- Field: paper #F3EFE4, panel #FFFFFF, ink #1B1B1B, muted #5C5C55, signal #1F6F3F, warn #B7791F, danger #B3261E.
-- Blackout: #000000, #0A0000, ink #C9463B, muted #7A2E27, signal #E0574A, warn #C9463B, danger #FF5A4A (single hue by design; state is always carried by a symbol).
+**Colour** (per theme, tokens on `:root[data-theme]`; both themes carry the same roles. The shipped values are in `web/src/styles/tokens.css`, which is the authority; the sets below are the two that survived the 2026-09-06 cut to Field and Mono):
+- Field (the default, and the bare `:root`): paper #F3EFE4, panel #FFFFFF, sunken #EBE5D6, raised #E7E1D2, ink #1B1B1B, muted #474740, link #1A3F8A, signal #144E2B, warn #603C00, danger #8A1209.
+- Mono: ground #000000, panel #0A0A0A, sunken #111111, raised #1C1C1C, ink #F2F2F2, muted #B9B9B9, link/signal/danger #FFFFFF, warn #DEDEDE, ok #BDBDBD. No hue anywhere: the three states are separated by luminance and the state is always carried by a symbol.
 
-**Type**: Inter for everything on phones and for body on the kiosk; VT323 only for the two places that are the box's voice (the app name in the rail and the board's big clocks) in vault, Source Serif 4 for headings in field. One scale: 16, 18, 22, 28, 40, 64 (the board). Sentence case throughout; no tracked-out uppercase labels; no eyebrows except the single situation band label.
+**Type**: Inter for everything on phones and for body on the kiosk; VT323 only for the two places that are the box's voice (the app name in the rail and a card's step numerals), Source Serif 4 for headings in field. One scale: 16, 18, 22, 28, 40, 64 (the board). Sentence case throughout; no tracked-out uppercase labels; no eyebrows except the single situation band label.
 
 **Layout concept**: a persistent navigation rail on the kiosk (left, 96 px, five destinations) and a bottom bar on phones (five destinations), with the situation band always visible at the top of the content area when anything is off or a scenario is active. Content is left-aligned on a single column with a 72-character measure; the kiosk uses the width for a two-pane layout only where the content is genuinely two things (playbook guidance beside its checklist, map beside its panel).
 
@@ -69,7 +68,7 @@ Five rounds. Each round: a critic agent reviews screenshots of Now (peacetime an
 
 ## 6. Coverage inventory
 
-The redesign is not done until every entry below has been restyled inside the shell, checked at 853x480 and 390 wide, in vault, field and blackout, and appears in the critique screenshots. Nothing is out of scope.
+The redesign is not done until every entry below has been restyled inside the shell, checked at 853x480 and 390 wide, in field and mono, and appears in the critique screenshots. Nothing is out of scope.
 
 ### Routes (all keep their paths)
 

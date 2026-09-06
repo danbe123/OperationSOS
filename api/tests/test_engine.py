@@ -189,7 +189,7 @@ def test_blackout_at_night_dims_the_screen(blackout, ruleset):
     blackout.conditions["power"] = off("power", "2026-12-21T15:00:00+00:00")
     view = engine.compute(blackout, ruleset)
     assert view["meta"]["dark"] is True
-    assert view["modes"]["theme"] == "blackout" and view["modes"]["dim"] is True
+    assert view["modes"]["theme"] == "mono" and view["modes"]["dim"] is True
 
 
 # --- (c) storms and flooding, phones down, at night ----------------------------------------------------------

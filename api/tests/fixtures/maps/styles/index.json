@@ -1,14 +1,12 @@
 {
   "osm": {
-    "vault": "/maps/styles/osm-vault.json",
     "field": "/maps/styles/osm-field.json",
-    "blackout": "/maps/styles/osm-blackout.json",
+    "mono": "/maps/styles/osm-mono.json",
     "tiles": "/maps/test.pmtiles"
   },
   "os": {
-    "vault": "/maps/styles/os-vault.json",
     "field": "/maps/styles/os-field.json",
-    "blackout": "/maps/styles/os-blackout.json",
+    "mono": "/maps/styles/os-mono.json",
     "tiles": "/maps/os-zoomstack.pmtiles"
   },
   "layers": {

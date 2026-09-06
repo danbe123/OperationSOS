@@ -93,15 +93,15 @@ describe('System', () => {
 
   it('settings form posts thresholds, minutes and the default theme', async () => {
     vi.spyOn(api, 'status').mockResolvedValue(status);
-    const settings = vi.spyOn(api, 'settings').mockResolvedValue({ ...status, idle_minutes: 7, default_theme: 'field' });
+    const settings = vi.spyOn(api, 'settings').mockResolvedValue({ ...status, idle_minutes: 7, default_theme: 'mono' });
     const user = userEvent.setup();
     renderRoute('/system');
     const idle = await screen.findByLabelText('Dim after (minutes)');
     await user.clear(idle);
     await user.type(idle, '7');
-    await user.selectOptions(screen.getByLabelText('Default theme'), 'field');
+    await user.selectOptions(screen.getByLabelText('Default theme'), 'mono');
     await user.click(screen.getByRole('button', { name: 'Save settings' }));
-    expect(settings).toHaveBeenCalledWith({ thermal_ai_off_c: 80, idle_minutes: 7, home_minutes: 30, default_theme: 'field' });
+    expect(settings).toHaveBeenCalledWith({ thermal_ai_off_c: 80, idle_minutes: 7, home_minutes: 30, default_theme: 'mono' });
   });
 
   it('backlight slider posts the level (debounced) and explains a 501', async () => {

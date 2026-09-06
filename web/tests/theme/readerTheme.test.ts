@@ -3,18 +3,18 @@ import { readerCss, textSizeCss, pdfViewerCss, injectStyle, READER_STYLE_ID, vie
 
 describe('readerCss', () => {
   it('paints an article in the app\u2019s own tokens rather than a second set of colours', () => {
-    const css = readerCss('blackout', { ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17', link: '#ffc4bc' });
+    const css = readerCss('mono', { ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' });
     expect(css).toContain('background:#000000');
-    expect(css).toContain('color:#ff9d93');
+    expect(css).toContain('color:#f2f2f2');
     // a body link in the ink colour is not a link
-    expect(css).toContain('color:#ffc4bc');
+    expect(css).toContain('color:#ffffff');
     expect(css).toContain('text-decoration:underline');
   });
   it('follows the dim palette it is handed, and dims photographs further with it', () => {
-    const lit = readerCss('vault', { ground: '#0b120c', panel: '#121b14', ink: '#dcefdd', line: '#2c4a30', link: '#6cf08c' });
-    const dim = readerCss('vault', { ground: '#050805', panel: '#0a0f0b', ink: '#b6d2b8', line: '#223a26', link: '#57c274' }, true);
-    expect(lit).toContain('background:#0b120c');
-    expect(dim).toContain('background:#050805');
+    const lit = readerCss('mono', { ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' });
+    const dim = readerCss('mono', { ground: '#000000', panel: '#000000', ink: '#c8c8c8', line: '#232323', link: '#d4d4d4' }, true);
+    expect(lit).toContain('color:#f2f2f2');
+    expect(dim).toContain('color:#c8c8c8');
     expect(lit).toContain('brightness(0.55)');
     expect(dim).toContain('brightness(0.35)');
   });
@@ -32,20 +32,19 @@ describe('textSizeCss', () => {
 
 describe('pdfViewerCss', () => {
   it('hides the viewer\'s own toolbar in every theme, so the app can draw the chrome itself', () => {
-    for (const theme of ['vault', 'field', 'blackout'] as const) {
+    for (const theme of ['field', 'mono'] as const) {
       expect(pdfViewerCss(theme)).toContain('#toolbarContainer,#sidebarContainer');
       expect(pdfViewerCss(theme)).toContain('display:none !important');
       expect(pdfViewerCss(theme)).toContain('--toolbar-height:0px');
     }
   });
   it('paints the viewer in the tokens it is given, so dim reaches it too', () => {
-    const css = pdfViewerCss('vault', { ground: '#050805', panel: '#0a0f0b', ink: '#b6d2b8', line: '#223a26', link: '#57c274' });
-    expect(css).toContain('background:#050805');
-    expect(css).toContain('color:#b6d2b8');
+    const css = pdfViewerCss('mono', { ground: '#000000', panel: '#000000', ink: '#c8c8c8', line: '#232323', link: '#d4d4d4' });
+    expect(css).toContain('background:#000000');
+    expect(css).toContain('color:#c8c8c8');
   });
-  it('inverts the page in blackout only: a white page at 03:00 is a torch in the face', () => {
-    expect(pdfViewerCss('blackout')).toContain('filter:invert(1)');
-    expect(pdfViewerCss('vault')).not.toContain('filter:invert(1)');
+  it('inverts the page in mono only: a white page at 03:00 is a torch in the face', () => {
+    expect(pdfViewerCss('mono')).toContain('filter:invert(1)');
     expect(pdfViewerCss('field')).not.toContain('filter:invert(1)');
   });
 });
@@ -55,8 +54,9 @@ describe('viewerTokens', () => {
     const root = document.createElement('div');
     root.style.setProperty('--ground', '#123456');
     document.body.appendChild(root);
-    expect(viewerTokens(root, 'vault').ground).toBe('#123456');
-    expect(viewerTokens(null, 'blackout')).toEqual({ ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17', link: '#ffc4bc' });
+    expect(viewerTokens(root, 'mono').ground).toBe('#123456');
+    expect(viewerTokens(null, 'mono')).toEqual({ ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' });
+    expect(viewerTokens(null, 'field')).toEqual({ ground: '#f3efe4', panel: '#ffffff', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' });
     root.remove();
   });
 });

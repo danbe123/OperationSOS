@@ -44,19 +44,17 @@ def _synthetic_out(out: Path, base="test.pmtiles") -> None:
                                       "layers": [{"id": "l", "type": "symbol", "source": "s", "source-layer": "x", "layout": {"text-font": [face]}}]}
     # Real style filenames (StylesStep Ruling R1): osm-<theme>.json and os-<theme>.json, not osm-light.json etc.
     _write(out / "styles" / "osm-field.json", style(base, "/maps/sprites/v4/light", "Noto Sans Regular"))
-    _write(out / "styles" / "osm-blackout.json", style(base, "/maps/sprites/v4/dark", "Noto Sans Regular"))
-    _write(out / "styles" / "osm-vault.json", style(base, "/maps/sprites/v4/dark", "Noto Sans Regular"))
+    _write(out / "styles" / "osm-mono.json", style(base, "/maps/sprites/v4/dark", "Noto Sans Regular"))
     _write(out / "styles" / "os-field.json", style("os-zoomstack.pmtiles", "/maps/sprites/os/sprites", "Source Sans Pro Regular"))
-    _write(out / "styles" / "os-blackout.json", style("os-zoomstack.pmtiles", "/maps/sprites/os/sprites", "Source Sans Pro Regular"))
-    _write(out / "styles" / "os-vault.json", style("os-zoomstack.pmtiles", "/maps/sprites/os/sprites", "Source Sans Pro Regular"))
+    _write(out / "styles" / "os-mono.json", style("os-zoomstack.pmtiles", "/maps/sprites/os/sprites", "Source Sans Pro Regular"))
     _write(out / "styles" / "layers" / "contours.json", {"sources": {"contours": {"type": "vector", "url": "pmtiles:///maps/contours.pmtiles"}}, "layers": []})
     _write(out / "styles" / "layers" / "hillshade.json", {"sources": {"hillshade": {"type": "raster", "url": "pmtiles:///maps/hillshade.pmtiles"}}, "layers": []})
     _write(out / "styles" / "layers" / "footpaths.json", {"sources": {"footpaths": {"type": "vector", "url": "pmtiles:///maps/overlays/footpaths.pmtiles"}}, "layers": []})
     _write(out / "styles" / "layers" / "flood-zones.json", {"sources": {"flood-zones": {"type": "vector", "url": "pmtiles:///maps/overlays/flood-zones.pmtiles"}}, "layers": []})
     _write(out / "styles" / "layers" / "overlays.json", {"sources": {"water": {"type": "vector", "url": "pmtiles:///maps/overlays/water.pmtiles"}}, "layers": []})
     _write(out / "styles" / "index.json", {
-        "osm": {"vault": "/maps/styles/osm-vault.json", "field": "/maps/styles/osm-field.json", "blackout": "/maps/styles/osm-blackout.json", "tiles": f"/maps/{base}"},
-        "os": {"vault": "/maps/styles/os-vault.json", "field": "/maps/styles/os-field.json", "blackout": "/maps/styles/os-blackout.json", "tiles": "/maps/os-zoomstack.pmtiles"},
+        "osm": {"field": "/maps/styles/osm-field.json", "mono": "/maps/styles/osm-mono.json", "tiles": f"/maps/{base}"},
+        "os": {"field": "/maps/styles/os-field.json", "mono": "/maps/styles/os-mono.json", "tiles": "/maps/os-zoomstack.pmtiles"},
         "layers": {"contours": "/maps/styles/layers/contours.json", "hillshade": "/maps/styles/layers/hillshade.json",
                    "footpaths": "/maps/styles/layers/footpaths.json", "flood-zones": "/maps/styles/layers/flood-zones.json",
                    "overlays": "/maps/styles/layers/overlays.json"}})

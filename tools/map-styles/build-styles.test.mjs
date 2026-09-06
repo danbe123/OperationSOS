@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateStyleMin } from "@maplibre/maplibre-gl-style-spec";
-import { buildAll, GLYPHS, VAULT, STYLES } from "./build-styles.mjs";
+import { buildAll, GLYPHS, STYLES } from "./build-styles.mjs";
 
 // The pinned @protomaps/basemaps@5.7.2 hardcodes a Devanagari fallback face inside its multi-script
 // place-name formatting, alongside the three Latin faces set via the flavour's regular/bold/italic keys.
@@ -42,11 +42,22 @@ function findTextFontFaces(node, out) {
   }
 }
 
-test("three styles are generated in the expected order", () => {
+function colours(node, out) {
+  if (Array.isArray(node)) {
+    for (const item of node) colours(item, out);
+  } else if (node && typeof node === "object") {
+    for (const value of Object.values(node)) colours(value, out);
+  } else if (typeof node === "string" && /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(node)) {
+    const hex = node.slice(1);
+    out.add(hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex);
+  }
+}
+
+test("two styles are generated in the expected order", () => {
   // Ruling R1: filenames follow the map router's `/maps/styles/<base>-<theme>.json` convention
-  // (api/sos/routers/map.py), not the generator's internal light/dark flavour names.
+  // (api/sos/routers/map.py), not the generator's internal light/black flavour names.
   assert.deepEqual(buildAll("pmtiles:///maps/uk-ie.pmtiles").map(([file]) => file),
-    ["osm-field.json", "osm-blackout.json", "osm-vault.json"]);
+    ["osm-field.json", "osm-mono.json"]);
 });
 
 test("every generated style is a valid MapLibre style that only references local assets", () => {
@@ -71,9 +82,24 @@ test("every generated style is a valid MapLibre style that only references local
   }
 });
 
-test("vault flavour is dark-based with the phosphor palette and Noto fonts", () => {
-  assert.equal(VAULT.background, "#05090a");
-  assert.equal(VAULT.regular, "Noto Sans Regular");
-  const vault = STYLES.find((s) => s.file === "osm-vault.json");
-  assert.equal(vault.sprite, "/maps/sprites/v4/dark");
+test("the mono style carries no hue: every colour in it is a grey", () => {
+  const hues = (file) => {
+    const [, style] = buildAll("pmtiles:///maps/test.pmtiles").find(([f]) => f === file);
+    const found = new Set();
+    colours(style.layers, found);
+    assert.ok(found.size > 10, `${file}: only ${found.size} colours found — the walk is not reaching the paint`);
+    return [...found].filter((hex) => !(hex.slice(0, 2) === hex.slice(2, 4) && hex.slice(2, 4) === hex.slice(4, 6)));
+  };
+  // Field is the control: the same walk over the light style finds plenty of hues, so an empty list
+  // for mono means mono has none, not that the walk missed the paint.
+  assert.ok(hues("osm-field.json").length > 5, "the walk found no hues in the light style either");
+  assert.deepEqual(hues("osm-mono.json"), [], "osm-mono.json states a hue");
+});
+
+test("mono is the black flavour on the dark sprite, and field the light one", () => {
+  const mono = STYLES.find((s) => s.file === "osm-mono.json");
+  assert.equal(mono.sprite, "/maps/sprites/v4/dark");
+  assert.equal(mono.flavor.regular, "Noto Sans Regular");
+  const field = STYLES.find((s) => s.file === "osm-field.json");
+  assert.equal(field.sprite, "/maps/sprites/v4/light");
 });

@@ -70,7 +70,7 @@ test('every phone screen carries a search, and the theme control is not a destin
   await page.goto('/');
   const theme = page.getByRole('button', { name: /^Change the theme/ });
   await expect(theme).toBeVisible();
-  await expect(theme).toHaveAttribute('aria-label', /Vault now; next is Field/);
+  await expect(theme).toHaveAttribute('aria-label', /Field now; next is Mono/);
 });
 
 test('a section is named by its own heading, and the map has words on its controls', async ({ page, state }) => {

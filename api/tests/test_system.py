@@ -176,11 +176,11 @@ def test_update_runner_rejects_concurrent_start():
 
 
 def test_apply_settings_validation(conn):
-    system.apply_settings(conn, {"default_theme": "field", "thermal_ai_off_c": 75, "idle_minutes": 3,
+    system.apply_settings(conn, {"default_theme": "mono", "thermal_ai_off_c": 75, "idle_minutes": 3,
                                  "home_minutes": 20})
-    assert db.get_setting(conn, "default_theme") == "field" and db.get_setting(conn, "thermal_ai_off_c") == "75"
+    assert db.get_setting(conn, "default_theme") == "mono" and db.get_setting(conn, "thermal_ai_off_c") == "75"
     with pytest.raises(ValueError):
-        system.apply_settings(conn, {"default_theme": "neon"})
+        system.apply_settings(conn, {"default_theme": "blackout"})
     with pytest.raises(ValueError):
         system.apply_settings(conn, {"thermal_ai_off_c": 120})
     with pytest.raises(ValueError):
@@ -196,5 +196,15 @@ def test_status_shape(conn, env):
     assert s["disks"]["core"]["mounted"] is True and s["disks"]["extended"]["mounted"] is False
     assert s["disks"]["extended"] == {"mounted": False, "path": str(env.ext), "total_gb": 0.0, "free_gb": 0.0}
     assert s["ai"] == {"state": "off", "model": env.model, "message": None}
-    assert s["default_theme"] == "vault" and s["idle_minutes"] == 5 and s["home_minutes"] == 30
+    assert s["default_theme"] == "field" and s["idle_minutes"] == 5 and s["home_minutes"] == 30
     assert len(s["load"]) == 3 and s["mem"]["total_mb"] > 0
+
+
+def test_status_ignores_a_theme_left_over_from_the_three_theme_world(conn, env):
+    # A box that was set to vault or blackout before the cut still holds it in its settings row.
+    # Serving it would stamp <html> with a theme that has no palette and no map style.
+    db.set_setting(conn, "default_theme", "vault")
+    assert system.status(conn, env)["default_theme"] == "field"
+    system.apply_settings(conn, {"default_theme": "mono"})
+    assert system.status(conn, env)["default_theme"] == "mono"
+

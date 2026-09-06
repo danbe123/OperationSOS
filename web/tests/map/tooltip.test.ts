@@ -18,7 +18,7 @@ const path: FakeFeature = { id: 3, source: 'sos-overlay-footpaths', sourceLayer:
 
 function mapWithOverlays(): FakeMap {
   const map = new FakeMap();
-  map.setStyle('/maps/styles/osm-vault.json');
+  map.setStyle('/maps/styles/osm-field.json');
   map.addLayer({ id: 'sos-overlay-health-point', type: 'circle', source: 'sos-overlay-health' });
   map.addLayer({ id: 'sos-overlay-flood-zones-flood_england-fill', type: 'fill', source: 'sos-overlay-flood-zones', layout: { visibility: 'none' } });
   map.addLayer({ id: 'sos-overlay-footpaths-footpaths-line', type: 'line', source: 'sos-overlay-footpaths' });
@@ -125,7 +125,7 @@ describe('attachFeatureTooltip', () => {
 
   it('does nothing when no overlay layer is on', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
     map.renderedFeatures = [hospital];
     move(map);

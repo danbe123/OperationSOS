@@ -141,8 +141,8 @@ def test_map_config_and_overlays(client, env):
     cfg = client.get("/api/map/config").json()
     assert [b["id"] for b in cfg["bases"]] == ["osm", "os"]
     osm = cfg["bases"][0]
-    assert osm["available"] is True and osm["styles"] == {"vault": "/maps/styles/osm-vault.json", "field": "/maps/styles/osm-field.json",
-                                                          "blackout": "/maps/styles/osm-blackout.json"}
+    assert osm["available"] is True and osm["styles"] == {"field": "/maps/styles/osm-field.json",
+                                                          "mono": "/maps/styles/osm-mono.json"}
     assert cfg["bases"][1]["available"] is False
     assert cfg["terrain"] == {"contours": None, "hillshade": None}
     assert cfg["packs"] == [] and cfg["packs_index_url"] is None
@@ -276,9 +276,9 @@ def test_unhandled_exception_returns_json_500(app, monkeypatch):
 
 
 def test_system_settings_hotspot_eth_and_update(client, app):
-    r = client.post("/api/system/settings", json={"default_theme": "field", "thermal_ai_off_c": 70})
-    assert r.status_code == 200 and r.json()["default_theme"] == "field" and r.json()["thermal_ai_off_c"] == 70
-    r = client.post("/api/system/settings", json={"default_theme": "neon"})
+    r = client.post("/api/system/settings", json={"default_theme": "mono", "thermal_ai_off_c": 70})
+    assert r.status_code == 200 and r.json()["default_theme"] == "mono" and r.json()["thermal_ai_off_c"] == 70
+    r = client.post("/api/system/settings", json={"default_theme": "blackout"})
     assert r.status_code == 400 and "default_theme" in r.json()["detail"]
     r = client.post("/api/system/hotspot", json={"ssid": "Bunker", "passphrase": "letmein123"})
     assert r.status_code == 200 and r.json()["hotspot"]["ssid"] == "Bunker"

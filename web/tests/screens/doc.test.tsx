@@ -22,8 +22,8 @@ const replaceMock = vi.mocked(replaceFrameLocation);
 
 describe('pdfViewerUrl', () => {
   it('encodes the file URL, adds the theme and passes the page fragment through', () => {
-    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'blackout', '#page=12')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=blackout#page=12');
-    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'vault', '')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
+    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'mono', '#page=12')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=mono#page=12');
+    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'field', '')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=field');
   });
 });
 
@@ -32,7 +32,7 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(pdfItem);
     renderRoute('/doc/nrr-2025#page=12');
     const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault#page=12');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=field#page=12');
     await act(async () => { fireEvent.load(frame); });
     expect(frame.contentDocument!.getElementById(READER_STYLE_ID)?.textContent).toContain('#toolbarContainer');
     expect(screen.getByRole('heading', { name: 'National Risk Register 2025' })).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockImplementation(async (id: string) => (id === otherPdf.id ? otherPdf : pdfItem));
     const { router } = renderRoute('/doc/nrr-2025');
     const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=field');
     expect(replaceMock).not.toHaveBeenCalled();
 
     await act(async () => { await router.navigate('/doc/other-pdf'); });
@@ -52,9 +52,9 @@ describe('Doc', () => {
     // Same iframe instance (Doc route never unmounted) reused for the new document, via replaceFrameLocation
     // rather than a stale `src`.
     expect(screen.getByTitle('Document')).toBe(frame);
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=field');
     expect(replaceMock).toHaveBeenCalledTimes(1);
-    expect(replaceMock).toHaveBeenCalledWith(frame.contentWindow, '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fother-pdf.pdf&theme=vault');
+    expect(replaceMock).toHaveBeenCalledWith(frame.contentWindow, '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fother-pdf.pdf&theme=field');
   });
 
   it('opens an EPUB with epubjs, with next/previous and text size controls', async () => {
@@ -66,8 +66,8 @@ describe('Doc', () => {
     expect(mocks.book.renderTo).toHaveBeenCalled();
     // The palette is the app's own tokens, rebuilt per theme and per dim state, not one of three
     // hard-coded sets living in the reader.
-    expect(mocks.rendition.themes.register).toHaveBeenCalledWith('sos-vault-lit', expect.objectContaining({ body: expect.anything() }));
-    expect(mocks.rendition.themes.select).toHaveBeenCalledWith('sos-vault-lit');
+    expect(mocks.rendition.themes.register).toHaveBeenCalledWith('sos-field-lit', expect.objectContaining({ body: expect.anything() }));
+    expect(mocks.rendition.themes.select).toHaveBeenCalledWith('sos-field-lit');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Previous' }));
     expect(mocks.rendition.next).toHaveBeenCalledTimes(1);

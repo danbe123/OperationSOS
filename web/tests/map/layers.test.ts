@@ -27,28 +27,42 @@ describe('carryStyleAcross', () => {
 
 describe('terrain', () => {
   it('builds hillshade and contour sources from the config and adds them below labels', () => {
-    const spec = terrainSpec(mapConfig, 'vault');
+    const spec = terrainSpec(mapConfig, 'mono');
     expect(Object.keys(spec.sources)).toEqual(['sos-hillshade', 'sos-contours']);
     expect(spec.layers.map((l) => l.id)).toEqual(['sos-hillshade', 'sos-contours']);
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
-    addTerrain(asMap(map), mapConfig, 'vault');
+    map.setStyle('/maps/styles/osm-field.json');
+    addTerrain(asMap(map), mapConfig, 'mono');
     expect(map.style.layers.map((l) => l.id)).toEqual(['land', 'roads', 'sos-hillshade', 'sos-contours', 'labels']);
     setTerrainVisible(asMap(map), false);
     expect(map.visibility('sos-contours')).toBe('none');
-    addTerrain(asMap(map), mapConfig, 'vault'); // idempotent
+    addTerrain(asMap(map), mapConfig, 'mono'); // idempotent
     expect(map.style.layers).toHaveLength(5);
   });
   it('skips terrain the box does not have', () => {
     const spec = terrainSpec({ ...mapConfig, terrain: { contours: null, hillshade: null } }, 'field');
     expect(spec.layers).toEqual([]);
   });
+  it('draws its own colours in the theme: ochre contours on paper, a plain grey in mono', () => {
+    const paint = (theme: 'field' | 'mono') => {
+      const spec = terrainSpec(mapConfig, theme);
+      const contours = spec.layers.find((l) => l.id === 'sos-contours') as { paint: Record<string, unknown> };
+      const hillshade = spec.layers.find((l) => l.id === 'sos-hillshade') as { paint: Record<string, unknown> };
+      return { contour: contours.paint['line-color'] as string, shade: hillshade.paint['raster-opacity'] as number };
+    };
+    expect(paint('field').contour).toBe('#b08050');
+    // Mono states no hue anywhere, the map included.
+    const mono = paint('mono').contour;
+    expect(mono).toMatch(/^#([0-9a-f]{2})\1\1$/);
+    // Hillshade sits lighter on the black theme, where the relief is the only thing carrying shape.
+    expect(paint('mono').shade).toBeLessThan(paint('field').shade);
+  });
 });
 
 describe('recreateSource', () => {
   it('removes and re-adds the source and its layers in their original positions', () => {
     const map = new FakeMap();
-    map.setStyle('/maps/styles/osm-vault.json');
+    map.setStyle('/maps/styles/osm-field.json');
     map.addSource('sos-overlay-health', { type: 'geojson', data: '/maps/overlays/health.geojson' });
     map.addLayer({ id: 'sos-overlay-health-point', type: 'circle', source: 'sos-overlay-health' }, 'labels');
     recreateSource(asMap(map), 'sos-overlay-health');

@@ -80,18 +80,19 @@ describe('Reader', () => {
   it('injects the theme and text-size styles on load and shows the article title', async () => {
     renderRoute(MAIN);
     const doc = await loadArticle('Main Page', ARTICLE);
-    // The injected sheet is the app's own tokens, not a second palette: the vault ground, and links
-    // in the accent so a body link is a link.
-    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('html,body{background:#0b120c');
-    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('a,a *{color:#6cf08c');
-    expect(doc.getElementById(READER_STYLE_ID)?.textContent).not.toContain('#0a0f0a');
+    // Field is the box default and leaves the ZIM's own light styling alone.
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toBe('');
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:100% !important}');
     expect(screen.getByRole('heading', { name: 'Main Page' })).toBeInTheDocument();
     await act(async () => { screen.getByRole('button', { name: /Text size/ }).click(); });
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:125% !important}');
     expect(localStorage.getItem('sos.textSize')).toBe('125');
-    await act(async () => { screen.getByRole('button', { name: /Change the theme. Vault now/ }).click(); });
-    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toBe('');
+    // In mono the sheet is the app's own tokens, not a second palette: the black ground, and links
+    // in the accent so a body link is a link.
+    await act(async () => { screen.getByRole('button', { name: /Change the theme. Field now/ }).click(); });
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('html,body{background:#000000');
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('a,a *{color:#ffffff');
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('text-decoration:underline');
   });
 
   it('turns content links into app navigation plus a location.replace in the frame, keeping src unchanged', async () => {

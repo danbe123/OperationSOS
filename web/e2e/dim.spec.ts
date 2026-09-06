@@ -20,7 +20,7 @@ function contrast(a: string, b: string): number {
 
 test('dim keeps the 7:1 floor in every theme, and dims nothing with a filter', async ({ page }) => {
   await page.setViewportSize({ width: 853, height: 480 });
-  for (const theme of ['vault', 'field', 'blackout']) {
+  for (const theme of ['field', 'mono']) {
     await page.addInitScript((t) => localStorage.setItem('sos.theme', t as string), theme);
     await goDim(page, '/');
     // A filter on body is what broke the overlays; nothing in dim is drawn with one.
