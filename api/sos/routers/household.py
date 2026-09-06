@@ -70,10 +70,11 @@ def people_count(conn) -> int:
     return max(1, conn.execute("SELECT COUNT(*) FROM household").fetchone()[0])
 
 
-def days_left(quantity: float, per_person_day: Optional[float], people: int) -> Optional[float]:
+def days_raw(quantity: float, per_person_day: Optional[float], people: int) -> Optional[float]:
+    """How long the row lasts, unrounded. None when the row has no rate: a torch runs out of nothing."""
     if not per_person_day or per_person_day <= 0:
         return None
-    return round(quantity / (per_person_day * people), 1)
+    return quantity / (per_person_day * people)
 
 
 def _kit_title(content, kit_item) -> str | None:
@@ -95,23 +96,31 @@ def is_expired(expires: Optional[str], today: Optional[date] = None) -> bool:
 
 
 def _item(r, people: int, content=None) -> dict:
+    """One stock row as every reader of it sees it.
+
+    It carries the run twice on purpose. `days_left` is what a screen prints on the row, rounded to
+    the tenth a household can read; `days_raw` is the same figure unrounded, and is what anything
+    summing rows must add — three rows of 0.05 days each print as "0.1 days" apiece and are a tenth
+    of a day between them, not three tenths. An unrated row (a torch) has neither; an expired row
+    holds nothing, so both are zero."""
     expired = is_expired(r["expires"])
-    dl = days_left(r["quantity"], r["per_person_day"], people)
+    raw = days_raw(r["quantity"], r["per_person_day"], people)
+    if raw is not None and expired:
+        raw = 0.0
     return {"id": r["id"], "name": r["name"], "category": r["category"], "quantity": r["quantity"], "unit": r["unit"],
             "per_person_day": r["per_person_day"], "expires": r["expires"], "notes": r["notes"] or "",
             "kit_item": r["kit_item"], "kit_title": _kit_title(content, r["kit_item"]),
             "updated_at": r["updated_at"], "expired": expired,
-            "days_left": (0.0 if expired and dl is not None else dl)}
+            "days_left": (None if raw is None else round(raw, 1)), "days_raw": raw}
 
 
-def stock_days_by_category(items: list[dict], people: int) -> dict[str, float]:
-    """One figure per counted category: the raw (unrounded) days summed over rows that have a rate and are
-    not expired, rounded once at the end — rounding each row first and then summing compounds the error."""
+def stock_days_by_category(items: list[dict]) -> dict[str, float]:
+    """One figure per counted category: each row's unrounded run summed, and rounded once at the end —
+    rounding each row first and then summing compounds the error."""
     out = {c: 0.0 for c in COUNTED}
     for i in items:
-        rate = i["per_person_day"]
-        if i["category"] in out and not i["expired"] and rate and rate > 0:
-            out[i["category"]] += i["quantity"] / (rate * people)
+        if i["category"] in out and i.get("days_raw"):
+            out[i["category"]] += i["days_raw"]
     return {c: round(v, 1) for c, v in out.items()}
 
 
@@ -174,7 +183,7 @@ def list_stock(request: Request, conn=Depends(get_db)):
     people = people_count(conn)
     content = request.app.state.content
     items = [_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id")]
-    return {"people": people, "days": stock_days_by_category(items, people), "items": items}
+    return {"people": people, "days": stock_days_by_category(items), "items": items}
 
 
 @router.post("/stock")

@@ -45,7 +45,7 @@ class Model:
     scenario: Optional[dict] = None                       # {slug, title, started_at, elapsed_s, phase}
     household: tuple[dict, ...] = ()
     neighbours: tuple[dict, ...] = ()                     # the street list: name, address, needs, skills, contacts
-    stock: tuple[dict, ...] = ()                          # rows with category and days_left
+    stock: tuple[dict, ...] = ()                          # rows with category, days_left and days_raw
     home: dict = field(default_factory=lambda: dict(DEFAULT_HOME))
     drill: bool = False
     checklist: tuple[dict, ...] = ()                      # {id, text} for the active scenario
@@ -183,13 +183,27 @@ def stock_matches(rule: Rule, model: Model) -> bool:
     if "days_lt" in predicate:
         if not items:
             return True                       # nothing at all is certainly less than the target
-        days = sum(float(i.get("days_left") or 0.0) for i in items)
-        return days < float(predicate["days_lt"])
+        return _days(items) < float(predicate["days_lt"])
     return bool(items)
 
 
+def _row_days(item: dict) -> float:
+    """One row's run. `days_raw` is the API's unrounded figure and is what rows are added by; a row
+    built by hand in a test carries only `days_left`, and falls back to it."""
+    value = item.get("days_raw")
+    if value is None:
+        value = item.get("days_left")
+    return float(value or 0.0)
+
+
+def _days(items: Iterable[dict]) -> float:
+    """Rows summed unrounded and rounded once, so the engine's figure is the one `GET /stock` sends:
+    two food rows of three at a rate of one for four people are 1.5 days, not 0.8 twice over."""
+    return round(sum(_row_days(i) for i in items), 1)
+
+
 def stock_days(model: Model, category: str) -> float:
-    return sum(float(i.get("days_left") or 0.0) for i in model.stock if i.get("category") == category)
+    return _days(i for i in model.stock if i.get("category") == category)
 
 
 # --- the parts of the View ----------------------------------------------------------------------------------

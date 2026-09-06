@@ -67,6 +67,12 @@ def test_stock_days_sums_raw_quotients_before_rounding(client):
     body = client.get("/api/stock").json()
     assert body["people"] == 4
     assert body["days"]["food"] == 1.5
+    # Each row still prints its own rounded run on the screen; only the total is summed unrounded.
+    assert [i["days_left"] for i in body["items"]] == [0.8, 0.8]
+    assert [i["days_raw"] for i in body["items"]] == [0.75, 0.75]
+    # And the engine says the same thing: one days figure, computed once, read everywhere.
+    gaps = client.get("/api/situation/view").json()["readiness"]["gaps"]
+    assert any(g["title"] == "Food: 1.5 days for 4 people" for g in gaps), gaps
 
 
 def test_readiness_ignores_expired_stock(client):
