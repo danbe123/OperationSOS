@@ -273,8 +273,10 @@ under `round-1/`.
 which undoes simple-keyboard's own `width: 33.3%` on a four-key row. Every digit and `done ▾` is on
 the screen and at least 48 px wide. While there: a field can name what has to stay in sight
 (`data-kb-reveal`), and the keyboard brings that up instead of the field, so the dose the pad was
-asked to compute sits above the pad; every other field is scrolled to the top of what is left rather
-than centred. New spec `e2e/keypad.spec.ts`.
+asked to compute sits above the pad; every other field is left where it is when it is already above
+the pad rather than being centred, so opening the keyboard no longer scrolls a screen's own title out
+of sight. The panel is 224 px, which is what four rows of 48 px keys and their gaps need — at 210 it
+clipped the bottom row. New spec `e2e/keypad.spec.ts`.
 
 Before `round-0/childrens-doses-853-{vault,field}.png` · after `round-1/childrens-doses-853-*.png`.
 
@@ -296,8 +298,12 @@ Before `round-0/medical-phones-down-853-vault.png`, `round-0/medical-853-vault.p
 `components.css` no longer hides `.cond-chip-compact .cond-for`; the chip says "Power ✕ off 1 h" and
 drops its icon under 700 px before it drops the duration (`shortDuration` in `situation/conditions.ts`).
 The chips are `min-height: var(--touch)`. The jobs link is no longer a condition pill: it is the small
-button style the "Situation" link already uses, reading "3 things to do". The band's tracked-out
-"SITUATION" eyebrow is gone with it.
+button style the "Situation" link already uses, reading "3 to do" — the same words the list itself
+uses in "3 to do, 1 done." — and the band still fits one row on a 757 px content column; the phone
+band spends less on padding than the rest of the screen so that it fits what it can. On a 390 px
+phone carrying a broken condition, a count of jobs and the way to the sheet it now takes two rows,
+which is three facts rather than the decoration round 0 took out of it.
+The tracked-out "SITUATION" eyebrow is gone with it.
 
 Before `round-0/now-power-off-853-vault.png`, `round-0/now-power-off-390-vault.png`,
 `round-0/situation-sheet-853-vault.png`, `round-0/now-drill-853-vault.png` · after the same under
@@ -307,7 +313,8 @@ Before `round-0/now-power-off-853-vault.png`, `round-0/now-power-off-390-vault.p
 
 `situation/nowTitle.ts` makes the `h1` the answer: "National grid collapse · 1 h in" while a scenario
 runs, "Power off" or "Power off, mobile patchy" when only conditions are off, "Everything is working"
-in peacetime. The word "Now" is gone from the content; the rail still says it. `Readiness.tsx` drops
+in peacetime. The word "Now" is gone from the content; the rail still says it, and the peacetime panel
+is headed "How ready you are" so the state is not said twice on one screen. `Readiness.tsx` drops
 the score and the points for a plain sentence — "You have water for 1.5 days. One thing would help
 most." — renders each gap as the same row shape as a job (48 px, no underline), and shows
 "New box? Add who lives here, then your water and food." while nobody is registered. The engine-down
@@ -385,7 +392,8 @@ Taken:
    CC BY-SA 4.0.", the phone numbers a list. "◀ Day before" and "Day after ▶" are icon-and-word
    buttons. "5 results in 120 ms" is "5 results.". The uppercase "SITUATION" eyebrow is deleted.
 3. **System words in front of a household.** "Load 0.30 / 0.20 / 0.10" is "Working lightly"; "Memory
-   2100 of 8000 MB" is "26% used of 7.8 GB"; the `zim` badge is "Offline copy"; the engine-down line
+   2100 of 8000 MB" is "26% used of 7.8 GB"; the hotspot's two addresses are on two lines rather than
+   joined by a dot; the `zim` badge is "Offline copy"; the engine-down line
    says "The box cannot read the situation" with a **Try again** button; the suggestion badges read
    "Wikipedia", "Page" and "Search for this"; the nearby panel says "as the crow flies. The walking
    time is a rough one; the box has no route planner." instead of naming Naismith's rule.

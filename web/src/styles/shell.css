@@ -121,6 +121,11 @@
 .screen-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .screen-head-search { flex: 0 1 300px; min-width: 220px; }
 @media (max-width: 699px) {
+  /* One chip, the count of jobs and the way to the sheet have to share 390 pixels, so the band
+     spends less on padding than the rest of the screen does. */
+  .band { gap: 6px; padding-left: 10px; padding-right: 10px; }
+  .band-jobs, .band-open { padding: 4px 8px; }
+  .cond-chip-compact { gap: 4px; padding: 2px 8px; }
   /* Back and the theme button share the top line; the title has the next line to itself. */
   .screen-head { padding: 8px var(--gutter) 4px; }
   .screen-head-back { order: 1; }
