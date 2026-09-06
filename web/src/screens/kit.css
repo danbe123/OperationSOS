@@ -1,0 +1,8 @@
+/* Kit screens: the overview tiles reuse .tiles; the kit page adds tier panels and the item row's quantity line. */
+.kit-tier { margin-top: 12px; }
+.kit-tier > summary { cursor: pointer; min-height: var(--touch); display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.kit-tier > summary .muted { font-weight: 400; }
+.kit-qty { display: block; color: var(--ink-muted); }
+.kit-stock-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: calc(var(--touch) + 12px); }
+.kit-add-stock { margin-left: calc(var(--touch) + 12px); }
+@media print { .kit-tier { break-inside: avoid; } .kit-tier[open] > summary { list-style: none; } }

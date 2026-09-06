@@ -4,6 +4,7 @@ import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Now } from './screens/Now';
 import { Guides } from './screens/Guides';
+import { Kits } from './screens/Kits';
 import { Library } from './screens/Library';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
@@ -83,6 +84,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Now /> },
       { path: 'now', element: <Now /> },
       { path: 'guides', element: <Guides /> },
+      { path: 'kit', element: <Kits /> },
       { path: 'search', element: <Find /> },
       { path: 'find', element: <Find /> },
       { path: 'library', element: <Library /> },
