@@ -65,6 +65,8 @@ test('a drill runs the whole thing without touching the real conditions', async 
   await band.getByRole('link', { name: 'Situation', exact: true }).click();
   await page.getByRole('button', { name: 'End drill' }).click();
   await expect(page.getByRole('button', { name: 'End drill' })).toBeHidden();
+  // The debrief is a modal now, and a modal is answered before the box carries on.
+  await page.getByRole('dialog', { name: 'How the drill went' }).getByRole('button', { name: 'Close' }).click();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });

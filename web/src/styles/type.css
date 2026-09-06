@@ -64,6 +64,10 @@ small { font-size: var(--t-meta); }
 .card-html ol > li::before { content: counter(card-step); flex: 0 0 auto; min-width: 1.2em; color: var(--ink-muted); }
 .card-html ol > li:last-child { margin-bottom: 0; }
 .card-html ol > li.card-step-long { font-size: var(--t-lead); line-height: 1.3; margin-bottom: 14px; }
+/* Two steps down from the display size, for a card whose first three steps will not otherwise fit
+   the screen it is being read on (`Card.tsx` measures and sets these). The floor is the body size. */
+.card-steps-tight .card-html ol > li { font-size: var(--t-lead); line-height: 1.3; margin-bottom: 14px; }
+.card-steps-tighter .card-html ol > li { font-size: var(--t-body); line-height: 1.4; margin-bottom: 10px; }
 .card-html .warning { display: block; margin: 0.6em 0; font-size: var(--t-lead); }
 @media print {
   .card-html ol > li { font-size: 18pt; margin-bottom: 10px; }

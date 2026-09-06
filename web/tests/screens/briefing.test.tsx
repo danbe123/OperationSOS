@@ -16,7 +16,7 @@ describe('Now: the briefing', () => {
     const accept = vi.spyOn(api, 'acceptInferred').mockResolvedValue(condition('mobile', 'off'));
     renderRoute('/');
     const block = await screen.findByRole('region', { name: 'The box thinks' });
-    expect(block).toHaveTextContent('Mobile network is probably off');
+    expect(block).toHaveTextContent('Mobile network — probably off');
     expect(block).toHaveTextContent('Masts run about 8 hours on battery.');
     await userEvent.setup().click(within(block).getByRole('button', { name: 'Accept' }));
     expect(accept).toHaveBeenCalledWith('mobile', 'power-off-mobile-off');

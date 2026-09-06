@@ -59,7 +59,11 @@ function HouseholdSummary() {
   );
 }
 
-/** The box itself: how a phone joins it, how hot it is, and the way into System. */
+/** The box itself: how a phone joins it, and the way into System. The front door used to carry the
+ * hotspot's IP, a second bare URL, the free space on the drive and "CPU 45°C" — the box talking
+ * about itself, in its own words, above the household's own jobs. What is left is the two things a
+ * household does here (join a phone, put the board up) and anything that is actually wrong; the
+ * numbers live one tap away on System, where they belong. */
 function BoxPanel() {
   const { status, error } = useStatus();
   const callsHidden = useCallsHidden();
@@ -72,24 +76,23 @@ function BoxPanel() {
       ) : (
         <>
           <ul className="row now-box" aria-label="Box status">
-            <li><Icon name="wifi" size={18} /> WiFi <strong>{status.hotspot.ssid}</strong></li>
-            <li>http://{status.hotspot.ip}</li>
-            <li>http://sos.box</li>
-            <li><Icon name="drive" size={18} /> {status.disks.extended.mounted ? `External drive: ${status.disks.extended.free_gb} GB free` : 'External drive: not connected'}</li>
-            <li className={status.cpu_temp_c !== null && status.cpu_temp_c >= status.thermal_ai_off_c ? 'warning' : undefined}>
-              <Icon name="thermometer" size={18} /> {status.cpu_temp_c === null ? 'CPU: not readable' : `CPU ${Math.round(status.cpu_temp_c)}°C`}
-            </li>
+            <li><Icon name="wifi" size={18} /> Phones join it over its own WiFi, <strong>{status.hotspot.ssid}</strong>.</li>
+            {/* Only what is wrong. A drive that is there and a chip that is cool are not news. */}
+            {!status.disks.extended.mounted && <li className="warning"><Icon name="drive" size={18} /> The extra library drive is not connected.</li>}
+            {status.cpu_temp_c !== null && status.cpu_temp_c >= status.thermal_ai_off_c && (
+              <li className="warning"><Icon name="thermometer" size={18} /> The box is hot ({Math.round(status.cpu_temp_c)}°C), so the assistant is off until it cools.</li>
+            )}
           </ul>
           <div className="row">
-            {callsHidden ? (
-              <Link className="btn" to="/p/no-phones"><Icon name="alert" size={18} /><span>Phones down: what to do</span></Link>
-            ) : (
-              <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="phone" size={18} /><span>Connect a phone</span></button>
-            )}
+            {/* A phone joins the box over the box's own WiFi, which has nothing to do with whether
+                the mobile network is up: with the networks down this was the one button that
+                disappeared, and the address a second phone needs went with it. */}
+            {callsHidden && <Link className="btn" to="/p/no-phones"><Icon name="alert" size={18} /><span>Phones down: what to do</span></Link>}
+            <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="phone" size={18} /><span>Connect a phone</span></button>
             <Link className="btn" to="/board"><Icon name="plan" size={18} /><span>Show the board</span></Link>
             <Link className="btn" to="/ai"><Icon name="ai" size={18} /><span>Assistant</span></Link>
           </div>
-          {open && !callsHidden && <ConnectPanel ssid={status.hotspot.ssid} ip={status.hotspot.ip} onClose={() => setOpen(false)} />}
+          {open && <ConnectPanel ssid={status.hotspot.ssid} ip={status.hotspot.ip} onClose={() => setOpen(false)} />}
         </>
       )}
     </section>

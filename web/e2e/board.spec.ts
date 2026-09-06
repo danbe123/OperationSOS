@@ -27,8 +27,12 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
 
   // and the drill ends with what happened in it
   await page.getByRole('button', { name: 'End drill' }).click();
-  await expect(page.getByText(/jobs ticked/)).toContainText('Drill ended: National grid collapse.');
-  await expect(page.getByRole('list', { name: 'What happened in the drill' })).toContainText('Drill started');
+  // The debrief is a dialog: as a panel in the flow it took 326 px of a 480 px kiosk and pushed the
+  // five destinations off the rail.
+  const debrief = page.getByRole('dialog', { name: 'How the drill went' });
+  await expect(debrief).toContainText('National grid collapse, ');
+  await expect(debrief.getByRole('list', { name: 'What happened in the drill' })).toContainText('Drill started');
+  await debrief.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });
 

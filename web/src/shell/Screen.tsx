@@ -4,6 +4,7 @@ import { Icon } from '../icons';
 import { SearchBar } from '../components/SearchBar';
 import { ThemeButton } from '../theme/ThemeButton';
 import { useReportScreenTitle } from './screenTitle';
+import { useWide } from './useWide';
 
 /** Every screen is a `Screen`: a title as the first line, its own actions, Back to where you came
  * from, and the search field that is on every screen. Navigation lives in the shell, so no screen
@@ -22,6 +23,7 @@ export function Screen({
   const navigate = useNavigate();
   const location = useLocation();
   const reportTitle = useReportScreenTitle();
+  const wide = useWide();
   useEffect(() => {
     document.title = title === 'Operation SOS' ? title : `${title} · SOS`;
     reportTitle(title);
@@ -47,7 +49,8 @@ export function Screen({
         )}
         <h1>{title}</h1>
         {actions && <div className="screen-head-actions no-print">{actions}</div>}
-        <ThemeButton className="screen-head-theme no-print" />
+        {/* One theme control on the screen: the rail carries it where there is a rail. */}
+        {!wide && <ThemeButton className="screen-head-theme no-print" />}
         {/* Search is on every screen, phones included: the field where the screen has room for it,
             and the way to Find where it has not. A phone had neither, on twenty-three screens. */}
         {!onFind && (search

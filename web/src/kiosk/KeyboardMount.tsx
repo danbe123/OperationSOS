@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { attachKeyboardTo, focusListeners, type FocusListener } from './editable';
+import { attachKeyboardTo, focusedEditable, focusListeners, isEditable, type FocusListener } from './editable';
 import { useKiosk } from './KioskProvider';
 
 /* `simple-keyboard` and its stylesheet are a third of a second of parsing on a Pi 5, and a box
@@ -14,6 +14,10 @@ export function KeyboardMount() {
 
   useEffect(() => {
     if (!kiosk || wanted) return;
+    // A field focused before this mounted — Find's own field autofocuses, and the PIN pad does the
+    // same — fires no `focusin` anybody can hear, and tapping a field that already has focus fires
+    // none either. So the current focus counts as the first focus.
+    if (isEditable(document.activeElement) || focusedEditable()) { setWanted(true); return; }
     const listener: FocusListener = (el) => { if (el) setWanted(true); };
     focusListeners.add(listener);
     const detach = attachKeyboardTo(document);

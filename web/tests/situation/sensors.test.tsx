@@ -62,6 +62,6 @@ describe('the briefing: a proposal the sensors raised', () => {
     renderRoute('/');
     const block = await screen.findByRole('region', { name: 'The box thinks' });
     expect(block).toHaveTextContent('detected by the box');
-    expect(block).toHaveTextContent('Internet is probably off');
+    expect(block).toHaveTextContent('Internet — probably off');
   });
 });

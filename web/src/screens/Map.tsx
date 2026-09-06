@@ -228,6 +228,15 @@ export function MapScreen() {
             onMoveEnd={setView} onClick={onMapClick} onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
           />
         )}
+        {/* The map's own three controls, in the app's shape: an icon and a word, 48 px, in the
+            theme, and a compass that says what pressing it does. */}
+        {config && overlaysOn && (
+          <div className="map-nav no-print" role="group" aria-label="Move the map">
+            <button type="button" className="btn btn-small" onClick={() => mapRef.current?.zoomIn()}><Icon name="plus" size={18} /><span>Zoom in</span></button>
+            <button type="button" className="btn btn-small" onClick={() => mapRef.current?.zoomOut()}><Icon name="minus" size={18} /><span>Zoom out</span></button>
+            <button type="button" className="btn btn-small" onClick={() => mapRef.current?.resetNorth()}><Icon name="compass" size={18} /><span>Face north</span></button>
+          </div>
+        )}
         {labelPoint && <div className="map-label">{labelPoint.label}</div>}
         {panel === 'layers' && config && overlaysOn && (
           <LayerPanel config={config} baseId={baseId} onBase={setBaseId} overlaysOn={overlaysOn} onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))} terrainOn={terrainOn} onTerrain={setTerrainOn} onClose={() => setPanel('none')} />

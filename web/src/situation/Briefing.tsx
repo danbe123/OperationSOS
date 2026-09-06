@@ -125,9 +125,13 @@ export function Briefing() {
               const href = contentHref(f.link);
               return (
                 <li key={f.id} className={`forecast forecast-${SEVERITY_TONE[f.severity]}`}>
+                  {/* The thing first, then when: "due Fridge food unsafe in 2 h" was not a sentence
+                      in any register. */}
                   <p className="briefing-title">
-                    <span className={`badge badge-${SEVERITY_TONE[f.severity]}`}><span aria-hidden="true">{SEVERITY_SYMBOL[f.severity]}</span> {f.passed ? 'passed' : 'due'}</span>
-                    {' '}{f.title} <span className="forecast-when">{countdown(f.due_at, now)}</span>
+                    {f.title}{' '}
+                    <span className={`badge badge-${SEVERITY_TONE[f.severity]}`}>
+                      <span aria-hidden="true">{SEVERITY_SYMBOL[f.severity]}</span> {f.passed ? 'passed' : 'due'} {countdown(f.due_at, now)}
+                    </span>
                   </p>
                   {f.why && <p className="muted">{f.why}</p>}
                   {href && <Link className="btn btn-small" to={href}>Read more</Link>}
@@ -144,8 +148,11 @@ export function Briefing() {
           <ul className="list briefing-list">
             {inferred.map((i) => (
               <li key={i.rule}>
+                {/* Half the condition names are compound ("Landline and 999", "Shops and cash"), so
+                    a verb between the name and the state disagreed with the subject on every other
+                    row. The dash does the same job and agrees with everything. */}
                 <p className="briefing-title">
-                  {CONDITION_INFO[i.condition].title} is probably {STATE_LABEL[i.state]}
+                  {CONDITION_INFO[i.condition].title} — probably {STATE_LABEL[i.state]}
                   {i.detected && <> <span className="badge badge-warn"><span aria-hidden="true">▲</span> detected by the box</span></>}
                 </p>
                 <p className="muted">{i.why}</p>

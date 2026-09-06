@@ -21,7 +21,12 @@ describe('Now', () => {
     // Who the box counts for is said once, on this panel and nowhere else on the screen.
     expect(household).toHaveTextContent('Nobody is registered yet, so the box counts stock for one person.');
     expect(within(household).getByRole('list', { name: 'Days of stock left' })).toHaveTextContent('Water 1.5 days');
-    expect(await screen.findByTestId('status-strip')).toHaveTextContent('http://sos.box');
+    // The front door says how a phone joins the box and nothing else about the machine: the address,
+    // the drive's free space and the chip's temperature are on System.
+    const box = await screen.findByTestId('status-strip');
+    expect(box).toHaveTextContent('Phones join it over its own WiFi, SOS.');
+    expect(box).not.toHaveTextContent('http://sos.box');
+    expect(box).not.toHaveTextContent('CPU');
   });
 
   it('/now is the same screen as /', async () => {
@@ -64,7 +69,7 @@ describe('Now', () => {
     expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
     expect(screen.queryByRole('region', { name: 'Situation' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
-    expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network is probably off');
+    expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
     expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');
   });
 

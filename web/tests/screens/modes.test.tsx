@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { Shell as Layout } from '../../src/shell/Shell';
 import { Html } from '../../src/components/Html';
@@ -13,14 +13,16 @@ const phonesDown = makeView({
 });
 
 describe('modes: calls hidden', () => {
-  it('swaps the chrome Connect-a-phone for the no-phones link, and keeps the WiFi way in', async () => {
+  it('adds the no-phones link and keeps the way a phone joins the box', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(phonesDown);
     renderRoute('/');
     const box = await screen.findByTestId('status-strip');
-    expect(within(box).queryByRole('button', { name: /Connect a phone/ })).toBeNull();
     expect(within(box).getByRole('link', { name: /Phones down: what to do/ })).toHaveAttribute('href', '/p/no-phones');
-    expect(box).toHaveTextContent('http://10.42.0.1');
+    // Joining the box's own WiFi has nothing to do with the mobile network, so the way in stays,
+    // and the address a second phone types is inside it.
+    await act(async () => { within(box).getByRole('button', { name: /Connect a phone/ }).click(); });
+    expect(screen.getByRole('dialog', { name: 'Connect a phone' })).toHaveTextContent('http://10.42.0.1');
   });
 
   it('keeps Connect-a-phone while the networks are up', async () => {

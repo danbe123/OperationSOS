@@ -130,7 +130,10 @@ export function MapView(props: MapViewProps) {
       attributionControl: false,
       canvasContextAttributes: { preserveDrawingBuffer: true }, // needed for the print snapshot
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+    // MapLibre's own navigation control is three wordless icons whose compass announces itself as an
+    // instruction ("Drag to rotate map, click to reset north"). Every other control in the box is an
+    // icon and a word, so the map draws its own (`screens/Map.tsx`) and the vendor's stays off. The
+    // scale bar has no buttons and no words to miss, so it stays.
     map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
     map.on('style.load', () => {
       const exposed = map as ExposedMap;

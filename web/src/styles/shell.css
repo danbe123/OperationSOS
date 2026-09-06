@@ -226,15 +226,21 @@
    filters `body` any more it measures from the viewport in dim mode as well. */
 .kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 224px; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); border-left: 1px solid var(--line); padding: 5px; }
 @media (min-width: 700px) and (min-height: 440px) { .kb-panel { left: var(--rail); } }
-.sos-kb.hg-theme-default { background: transparent; padding: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+/* Every rule here is written from `.kb-panel` down. The vendor's stylesheet used to be bundled with
+   ours and lost the ordering fight; now that the pad is fetched on demand its stylesheet arrives
+   after the app's, so a rule of the same weight would win and the keys would go back to the
+   vendor's 40 px — under the 48 px floor. An ancestor class settles it whatever the order. */
+.kb-panel .sos-kb.hg-theme-default { background: transparent; padding: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
 /* The keys share the row rather than claiming a fixed width: the panel is now the width of the
    content column (the rail keeps its 96 px), and eleven 64 px keys did not fit it — "shift" read
    "ift" and the delete key fell off the right-hand end. */
-.sos-kb .hg-row { display: flex; gap: 5px; justify-content: center; }
-.sos-kb .hg-button { height: var(--touch); flex: 1 1 0; min-width: 0; padding: 0 4px; font: 600 18px/1 var(--font-body); border-radius: var(--radius); background: var(--sunken); color: var(--ink); border: 1px solid var(--line); box-shadow: none; white-space: nowrap; overflow: hidden; }
-.sos-kb .hg-button.hg-activeButton { background: var(--signal); color: var(--on-signal); }
-.sos-kb .hg-button[data-skbtn="{space}"] { flex-grow: 6; }
-.sos-kb .hg-button[data-skbtn="{enter}"], .sos-kb .hg-button[data-skbtn="{bksp}"], .sos-kb .hg-button[data-skbtn="{shift}"], .sos-kb .hg-button[data-skbtn="{done}"], .sos-kb .hg-button[data-skbtn="{numbers}"], .sos-kb .hg-button[data-skbtn="{abc}"] { flex-grow: 2; }
+.kb-panel .sos-kb .hg-row { display: flex; gap: 5px; justify-content: center; }
+/* The gap is the gap: the vendor puts a 5 px right margin on every key as well, which doubles it. */
+.kb-panel .sos-kb .hg-row .hg-button { margin-right: 0; }
+.kb-panel .sos-kb .hg-button { height: var(--touch); flex: 1 1 0; min-width: 0; padding: 0 4px; font: 600 18px/1 var(--font-body); border-radius: var(--radius); background: var(--sunken); color: var(--ink); border: 1px solid var(--line); box-shadow: none; white-space: nowrap; overflow: hidden; }
+.kb-panel .sos-kb .hg-button.hg-activeButton { background: var(--signal); color: var(--on-signal); }
+.kb-panel .sos-kb .hg-button[data-skbtn="{space}"] { flex-grow: 6; }
+.kb-panel .sos-kb .hg-button[data-skbtn="{enter}"], .kb-panel .sos-kb .hg-button[data-skbtn="{bksp}"], .kb-panel .sos-kb .hg-button[data-skbtn="{shift}"], .kb-panel .sos-kb .hg-button[data-skbtn="{done}"], .kb-panel .sos-kb .hg-button[data-skbtn="{numbers}"], .kb-panel .sos-kb .hg-button[data-skbtn="{abc}"] { flex-grow: 2; }
 /* simple-keyboard's own stylesheet gives every key in the numeric layout `width: 33.3%`, and that
    layout has four keys a row: each row came out a third too wide and the left column fell off the
    screen. The keys share the row instead. */
@@ -243,7 +249,7 @@
    so a parent could not type 0 — no 10 months, no 20 kg, no decimal point — on the children's doses
    screen, and a fixed panel cannot be scrolled to reach it. Every key is the touch target and no
    more. */
-.sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; flex-grow: 1; height: var(--touch); }
+.kb-panel .sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; flex-grow: 1; height: var(--touch); }
 
 .idle-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: var(--t-title); font-weight: 700; cursor: pointer; }
 .idle-overlay-dark { background: rgba(0, 0, 0, 0.9); }

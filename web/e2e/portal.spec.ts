@@ -11,22 +11,20 @@ test('captive-portal probe paths redirect to the welcome page (dev stack)', asyn
   }
 });
 
-test('/welcome and /starting load with no app JavaScript', async ({ page }) => {
+test('/welcome and /starting load with no app JavaScript', async ({ page, request }) => {
   const suffix = MODE === 'dev' ? '' : '.html';
+  // Read the served bodies over HTTP rather than by navigating: /starting redirects itself the
+  // moment the box answers, and a pending redirect interrupts the next navigation in the loop.
   for (const path of ['/welcome', '/starting']) {
-    const scripts: string[] = [];
-    page.on('request', (r) => { if (r.resourceType() === 'script') scripts.push(r.url()); });
-    // Read the served body straight off the navigation response, not the live DOM: /starting redirects itself
-    // (via a fetch that a fixture route answers almost immediately), and by the time a follow-up page.content()
-    // would run the page can already be mid-navigation.
-    const response = await page.goto(path + suffix, { waitUntil: 'domcontentloaded' });
-    expect(scripts.filter((s) => s.includes('/assets/') || s.includes('/src/'))).toEqual([]);
-    const html = await response!.text();
-    expect(html).not.toMatch(/<script[^>]+src=/);
+    const html = await (await request.get(path + suffix)).text();
+    expect(html, path).not.toMatch(/<script[^>]+src=/);
   }
+  const scripts: string[] = [];
+  page.on('request', (r) => { if (r.resourceType() === 'script') scripts.push(r.url()); });
   await page.goto('/welcome' + suffix);
   await expect(page.getByText('Open http://10.42.0.1 in your browser (or http://sos.box)')).toBeVisible();
   await expect(page.locator('svg')).toBeVisible();
+  expect(scripts.filter((s) => s.includes('/assets/') || s.includes('/src/'))).toEqual([]);
   await page.goto('/starting' + suffix);
   // /starting polls /api/status every two seconds until the box answers; under a full parallel run
   // the first poll can lose the race with everything else starting up, so allow a few rounds.

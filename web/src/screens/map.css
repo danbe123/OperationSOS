@@ -56,6 +56,11 @@
   .map-panel-tall { height: 70%; }
 }
 .map-readout { flex: 0 0 auto; padding: 6px var(--gutter); font-size: var(--t-meta); color: var(--ink-muted); background: var(--panel); border-top: 1px solid var(--line); }
+/* The map's own controls: a column in the top-right corner of the map, over the map, in the theme.
+   It sits above the panel's edge on the kiosk and above the bottom sheet on a phone. */
+.map-nav { position: absolute; top: 8px; right: 8px; z-index: 9; display: flex; flex-direction: column; gap: 4px; align-items: stretch; }
+.map-nav .btn { justify-content: flex-start; gap: 6px; background: var(--panel); }
+
 .map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid var(--line-strong); }
 .small { font-size: var(--t-meta); margin: 0 0 6px 36px; color: var(--ink-muted); }
