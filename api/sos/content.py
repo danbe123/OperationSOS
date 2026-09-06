@@ -37,7 +37,9 @@ TASK_RE = re.compile(r"^\s*[-*+] \[([ xX])\] (.*?)(?:\s*\{#([A-Za-z0-9][A-Za-z0-
 INCLUDE_RE = re.compile(r"^\s*\{\{module:([a-z0-9-]+)\}\}\s*$")
 H2_RE = re.compile(r"^## (.+?)\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
-LINK_RE = re.compile(r"\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+# A link target may carry one level of balanced parentheses (Wikipedia titles such as
+# 999_(emergency_telephone_number)); the old pattern stopped at the first ")" and checked a truncated path.
+LINK_RE = re.compile(r"\[[^\]]*\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?\)")
 # the `{#id}` marker is checklist-id syntax, not prose: it is stripped before rendering
 TASK_ID_MARKER_RE = re.compile(r"^(\s*[-*+] \[[ xX]\] .*?)\s*\{#[A-Za-z0-9][A-Za-z0-9_/-]*\}\s*$")
 _TASK_LI = '<li class="task-list-item">'

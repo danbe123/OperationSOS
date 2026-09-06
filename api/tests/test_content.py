@@ -185,3 +185,13 @@ def test_content_cache_reloads_on_mtime(tree):
     assert r2 is not r1 and "Snowmelt" in r2.modules[0]["html"]
     assert [d.id for d in cache.list("card")] == ["bleeding"]
     assert cache.list("nonexistent-kind") == []
+
+
+def test_links_keep_one_level_of_parentheses():
+    body = ("see ([Sphere](kiwix:wikipedia_en_all_maxi/Sphere_(organization))) and "
+            "[999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number)), [p](doc:nrr-2025#page=45), [q](page:foo).")
+    assert content._links(body) == [
+        "kiwix:wikipedia_en_all_maxi/Sphere_(organization)",
+        "kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number)",
+        "doc:nrr-2025#page=45", "page:foo",
+    ]
