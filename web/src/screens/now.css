@@ -3,11 +3,13 @@
 .now-box { list-style: none; margin: 0 0 12px; padding: 0; gap: 6px 18px; font-size: var(--t-meta); color: var(--ink-muted); }
 .now-box li { display: inline-flex; align-items: center; gap: 4px; }
 .now-box strong { color: var(--ink); }
-/* A gap is a thing to do, so it is drawn as one: the same row as "Right now", not an underlined
-   link with a score beside it. */
+/* A gap is something to go and read, not something to tick: it gets its own row shape — a full-width
+   48 px target with the chevron on the right — and never the tick box's shape with a chevron where
+   the box goes. */
 .now-gaps { margin: 8px 0 0; }
-.gap-row { align-items: center; color: var(--ink); text-decoration: none; }
-.gap-row .task-title { flex: 1; }
+.gap-row { display: flex; align-items: center; gap: 12px; min-height: var(--touch); padding: 4px 0; color: var(--ink); text-decoration: none; }
+.gap-row .task-title { flex: 1; font-weight: 600; }
+.gap-row svg { flex-shrink: 0; color: var(--ink-muted); }
 .briefing-block { display: flex; flex-direction: column; gap: 8px; }
 .briefing-list > li { display: flex; flex-direction: column; gap: 6px; }
 .briefing-title { margin: 0; font-weight: 600; }

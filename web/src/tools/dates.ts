@@ -21,3 +21,17 @@ export function isoToUkDate(iso: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((iso ?? '').trim());
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
+
+/** How long ago, in a household's words. Used by every tick's "who and when" line. */
+export function relativeTime(iso: string | null, now: number = Date.now()): string {
+  if (!iso) return '';
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '';
+  const s = Math.max(0, Math.round((now - t) / 1000));
+  if (s < 60) return 'just now';
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 48) return `${h} h ago`;
+  return `${Math.round(h / 24)} days ago`;
+}

@@ -70,27 +70,28 @@ export const library: LibraryResponse = {
 };
 
 /* The twenty situations, with the first line of each guide's own summary: a tile's line is the
-   guide's own words, never its title said twice. */
+   guide's own words, never its title said twice. Each is written to fit two lines at 390 px — about
+   60 characters — so nothing has to be clamped and cut mid-word. */
 const scenarioRows: [string, string, string, string][] = [
   ['nuclear-war', 'Nuclear war', 'radiation', 'A nuclear strike on the UK.'],
-  ['nuclear-accident', 'Nuclear accident', 'plume', 'A radiation release from a UK or nearby site, a lost source, or a dirty bomb.'],
+  ['nuclear-accident', 'Nuclear accident', 'plume', 'A radiation release from a UK or nearby site.'],
   ['pandemic', 'Pandemic', 'virus', 'A respiratory pandemic that overwhelms the NHS.'],
-  ['grid-collapse', 'National grid collapse', 'power', 'A nationwide or regional blackout lasting days to weeks.'],
+  ['grid-collapse', 'National grid collapse', 'power', 'A nationwide blackout lasting days to weeks.'],
   ['solar-storm', 'Solar superstorm', 'sun', 'A Carrington-class geomagnetic storm.'],
-  ['emp', 'EMP attack', 'bolt', 'A high-altitude nuclear burst kills electronics, some vehicles and radios nationwide.'],
-  ['cyber-attack', 'Cyber attack', 'lock', 'Ransomware or sabotage takes out the NHS, banks, telecoms, water or the grid for days to weeks.'],
-  ['invasion', 'Invasion or occupation', 'shield', 'Conventional war on UK soil: missile strikes, fighting, occupation.'],
-  ['civil-unrest', 'Civil unrest', 'fire', 'Rioting, looting and arson, police that cannot answer, curfews and emergency regulations.'],
-  ['economic-collapse', 'Economic collapse', 'coins', 'Banks closed, cards dead, the pound failing, prices doubling monthly.'],
+  ['emp', 'EMP attack', 'bolt', 'A nuclear burst kills electronics nationwide.'],
+  ['cyber-attack', 'Cyber attack', 'lock', 'Sabotage takes out the NHS, banks or the grid.'],
+  ['invasion', 'Invasion or occupation', 'shield', 'War on UK soil: strikes, fighting, occupation.'],
+  ['civil-unrest', 'Civil unrest', 'fire', 'Rioting and arson, and police that cannot come.'],
+  ['economic-collapse', 'Economic collapse', 'coins', 'Banks closed, cards dead, prices doubling.'],
   ['supply-chain', 'Supply chain collapse', 'truck', 'Fuel, food and medicine stop arriving.'],
-  ['storms-flooding', 'Storms and flooding', 'wave', 'Storm-force winds, river and surface-water floods and a North Sea surge.'],
-  ['severe-winter', 'Severe winter', 'snowflake', 'A week or more of deep snow and hard frost with heating fuel short.'],
-  ['heat-drought', 'Heat and drought', 'thermometer', 'Five days over 35 degrees, three dry winters, hosepipe bans, then standpipes and bowsers.'],
-  ['volcanic', 'Volcanic ash', 'volcano', 'An Icelandic eruption sends ash and sulphur over Britain for weeks.'],
-  ['chemical', 'Chemical disaster', 'flask', 'A toxic plume from a refinery, chemical works, tanker or attack.'],
+  ['storms-flooding', 'Storms and flooding', 'wave', 'Storm winds, river floods and a North Sea surge.'],
+  ['severe-winter', 'Severe winter', 'snowflake', 'Deep snow and hard frost, with heating fuel short.'],
+  ['heat-drought', 'Heat and drought', 'thermometer', 'Days over 35 degrees, hosepipe bans, standpipes.'],
+  ['volcanic', 'Volcanic ash', 'volcano', 'Icelandic ash and sulphur over Britain for weeks.'],
+  ['chemical', 'Chemical disaster', 'flask', 'A toxic plume from a works, a tanker or an attack.'],
   ['famine', 'Famine', 'wheat', 'Blight, livestock disease, no fertiliser, no imports.'],
-  ['impact-winter', 'Impact winter', 'moon', 'Years of cold, dark summers after a nuclear exchange, supervolcano or asteroid.'],
-  ['terrorism', 'Terrorism', 'alert', 'A bombing, a marauding knife or vehicle attack, or a poisoning.'],
+  ['impact-winter', 'Impact winter', 'moon', 'Years of cold, dark summers after a nuclear war.'],
+  ['terrorism', 'Terrorism', 'alert', 'A bombing, a vehicle attack, or a poisoning.'],
   ['long-rebuild', 'The long rebuild', 'hammer', 'No state, no grid, no supply chain, for years.'],
 ];
 export const playbooks: PlaybookSummary[] = scenarioRows.map(([slug, title, icon, summary], i) => ({

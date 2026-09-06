@@ -3,6 +3,7 @@ import { api } from '../../api/client';
 import type { Note } from '../../api/types';
 import { errorMessage, useQuery } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
+import { eventTitle } from '../../api/words';
 
 export function formatStamp(iso: string): string {
   const d = new Date(iso);
@@ -41,7 +42,7 @@ function EventRow({ event, onChanged }: { event: Note; onChanged: () => Promise<
         </>
       ) : (
         <>
-          <span className="event-text">{event.title}</span>
+          <span className="event-text">{eventTitle(event.title)}</span>
           <span className="row no-print">
             <button type="button" className="btn" onClick={() => setEditing(true)} aria-label={`Edit entry ${event.title}`}>Edit</button>
             <button type="button" className="btn btn-danger" onClick={() => void remove()} aria-label={`Delete entry ${event.title}`}>Delete</button>

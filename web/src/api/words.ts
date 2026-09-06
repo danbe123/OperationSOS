@@ -54,3 +54,13 @@ export function tileLine(title: string, summary?: string | null): string | undef
   if (rest.length < 8) return undefined;
   return rest[0].toUpperCase() + rest.slice(1);
 }
+
+/** The log's own suffixes. The engine tags every entry with where it came from — "(kiosk)",
+ * "(phone)", "(drill)" — which is the box talking about itself. A household reads the same fact as
+ * a place: on the box, on a phone, in the drill. */
+export function eventTitle(title: string): string {
+  return (title ?? '')
+    .replace(/\s*\(kiosk\)\s*$/i, ' on the box')
+    .replace(/\s*\(phone\)\s*$/i, ' on a phone')
+    .replace(/\s*\(drill\)\s*$/i, ' in the drill');
+}

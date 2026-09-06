@@ -82,7 +82,7 @@ describe('The situation sheet', () => {
     await user.selectOptions(screen.getByLabelText('Drill started'), '12');
     await user.click(screen.getByRole('button', { name: 'Start drill' }));
     expect(start).toHaveBeenCalledWith({ scenario: 'grid-collapse', conditions: { power: 'off' }, hours_ago: 12 });
-    expect(await screen.findByText(/Drill in progress/)).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('Drill');
     await user.click(screen.getByRole('button', { name: 'End drill' }));
     expect(end).toHaveBeenCalled();
   });

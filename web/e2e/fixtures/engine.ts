@@ -32,6 +32,21 @@ function task(id: string, title: string, bucket: Task['bucket'], why: string, li
   return { id, title, bucket, why, link, person: saved?.person ?? null, done: saved?.done ?? false, done_at: saved?.done_at ?? null, source: `rule:${id}` };
 }
 
+/** The gaps come from the same register and the same stock the household summary counts, so the
+ * front door cannot say two different things about the same water. */
+function readinessGaps(state: FixtureState): { title: string; link: string; points: number }[] {
+  const gaps: { title: string; link: string; points: number }[] = [];
+  const people = Math.max(1, state.household.length);
+  const water = state.stock.filter((s) => s.category === 'water');
+  const food = state.stock.filter((s) => s.category === 'food');
+  const daysOf = (items: typeof state.stock) => items.reduce((n, i) => n + (i.days_left ?? 0), 0);
+  if (state.household.length === 0) gaps.push({ title: 'Say who lives here', link: '/plan#household', points: 12 });
+  if (water.length === 0) gaps.push({ title: 'No water recorded: add what you have', link: '/plan#stock', points: 12 });
+  else if (daysOf(water) < 3) gaps.push({ title: `Water: ${daysOf(water).toFixed(1)} days for ${people} ${people === 1 ? 'person' : 'people'}`, link: '/plan#stock', points: 12 });
+  if (food.length === 0) gaps.push({ title: 'No food recorded: add what you have', link: '/plan#stock', points: 8 });
+  return gaps;
+}
+
 export function computeView(state: FixtureState, now = Date.now()): SituationView {
   const conditions = Object.fromEntries(CONDITION_IDS.map((id) => [id, aged(state.conditions[id], now)])) as Conditions;
   const off = (id: ConditionId) => conditions[id].state === 'off';
@@ -138,7 +153,7 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
       map_first: state.situation.slug === 'storms-flooding',
       board: Boolean(state.situation.slug),
     },
-    readiness: { score: 62, gaps: [{ title: 'Water: 1.5 days for 3 people', link: '/plan#stock', points: 12 }] },
+    readiness: { score: 62, gaps: readinessGaps(state) },
     bulletins: { next: { station: 'BBC Radio 4', frequency: '198 kHz LW', at: '2026-09-06T18:00:00.000Z' } },
     neighbours: { check_on: checkOn, skills },
   };

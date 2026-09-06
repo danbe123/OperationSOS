@@ -11,12 +11,12 @@ import { useSituation } from '../situation/SituationProvider';
 import { TOOL_TILES } from './Tools';
 import './guides.css';
 
-type Group = { id: string; title: string; note: string; entries: { to: string; icon: string; title: string; sub?: string }[] };
+type Group = { id: string; title: string; unit: string; note: string; entries: { to: string; icon: string; title: string; sub?: string }[] };
 
-const PAGE_GROUPS: { id: string; title: string; note: string; categories: string[] }[] = [
-  { id: 'fieldcraft', title: 'Field craft', note: 'Shelter, fire, water, wild food, moving about.', categories: ['fieldcraft'] },
-  { id: 'comms', title: 'Phone and radio', note: 'Numbers, PMR446, what still works.', categories: ['comms'] },
-  { id: 'reference', title: 'Reference', note: 'The pages the guides link to.', categories: ['reference', 'plan', 'about'] },
+const PAGE_GROUPS: { id: string; title: string; unit: string; note: string; categories: string[] }[] = [
+  { id: 'fieldcraft', title: 'Field craft', unit: 'pages', note: 'Shelter, fire, water, wild food, moving about.', categories: ['fieldcraft'] },
+  { id: 'comms', title: 'Phone and radio', unit: 'pages', note: 'Numbers, PMR446, what still works.', categories: ['comms'] },
+  { id: 'reference', title: 'Reference', unit: 'pages', note: 'The pages the guides link to.', categories: ['reference', 'plan', 'about'] },
 ];
 
 function matches(term: string, ...text: (string | undefined)[]): boolean {
@@ -39,19 +39,19 @@ export function Guides() {
 
   const groups: Group[] = [
     {
-      id: 'scenarios', title: 'Situations', note: 'Twenty situations: what to do right now and over the months after.',
+      id: 'scenarios', title: 'Situations', unit: 'situations', note: 'What to do right now, and over the months after.',
       entries: scenarios.map((p) => ({ to: `/s/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
     },
     ...PAGE_GROUPS.map((g) => ({
-      id: g.id, title: g.title, note: g.note,
+      id: g.id, title: g.title, unit: g.unit, note: g.note,
       entries: pages.filter((p) => g.categories.includes(p.category)).map((p) => ({ to: `/p/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
     })),
-    { id: 'tools', title: 'Tools', note: 'Small offline tools. Nothing here needs the internet.', entries: TOOL_TILES.map((t) => ({ to: t.to, icon: t.icon, title: t.title, sub: t.subtitle })) },
+    { id: 'tools', title: 'Tools', unit: 'tools', note: 'Small offline tools. Nothing here needs the internet.', entries: TOOL_TILES.map((t) => ({ to: t.to, icon: t.icon, title: t.title, sub: t.subtitle })) },
   ];
 
   const shown = groups
     .filter((g) => !only || g.id === only)
-    .map((g) => ({ ...g, entries: g.entries.filter((e) => matches(term, e.title, e.sub)) }))
+    .map((g) => ({ ...g, total: g.entries.length, entries: g.entries.filter((e) => matches(term, e.title, e.sub)) }))
     .filter((g) => g.entries.length > 0);
   const found = shown.reduce((n, g) => n + g.entries.length, 0);
 
@@ -86,7 +86,13 @@ export function Guides() {
         {shown.map((g) => (
           <section key={g.id} aria-label={g.title}>
             <h2>{g.title}</h2>
-            <p className="muted">{g.note}</p>
+            {/* The line under a heading says what is on the screen, not what would be on it with no
+                filter: a section that shows two tiles never claims twenty. */}
+            <p className="muted">
+              {term
+                ? `${g.entries.length} ${g.unit} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
+                : `${g.total} ${g.unit}. ${g.note}`}
+            </p>
             <nav className={g.id === 'scenarios' ? 'tiles' : 'tiles tiles-wide'} aria-label={g.title === 'Situations' ? 'Scenarios' : g.title}>
               {g.entries.map((e) => <Tile key={e.to} to={e.to} icon={e.icon} title={e.title} subtitle={e.sub} />)}
             </nav>

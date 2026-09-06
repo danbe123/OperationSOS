@@ -14,11 +14,16 @@
   font: 600 var(--t-body)/1.2 var(--font-body); text-decoration: none; cursor: pointer;
 }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+/* A disabled primary was a filled accent slab at 55 % — a low-contrast green in vault and close to
+   invisible in blackout. It gives up the fill instead of its legibility. */
+.btn-primary:disabled, .btn-primary[aria-disabled="true"] { opacity: 1; background: var(--panel); color: var(--ink-muted); border-color: var(--line-strong); }
 .btn-primary { background: var(--signal); color: var(--on-signal); border-color: var(--signal); }
 .btn-danger { color: var(--danger); border-color: var(--danger); background: var(--panel); }
 .btn-quiet { background: transparent; border-color: transparent; }
 .btn-big { min-height: 64px; font-size: var(--t-lead); padding: 12px 24px; }
-.btn-small { min-height: 40px; padding: 4px 10px; font-size: var(--t-meta); }
+/* Small is the type and the padding, never the target: 48 px is the floor and .btn-small is most of
+   the box's secondary controls — the map toolbar, Back, the band, every "Read more", every Close. */
+.btn-small { min-height: var(--touch); padding: 4px 10px; font-size: var(--t-meta); }
 .btn.active:not(.state-btn), .btn[aria-pressed="true"]:not(.state-btn) { background: var(--sunken); border-color: var(--signal); color: var(--ink); }
 .btn.active.btn-primary, .btn[aria-pressed="true"].btn-primary { background: var(--signal); color: var(--on-signal); }
 
@@ -31,7 +36,20 @@ input[type="date"], input[type="datetime-local"], textarea, select {
   background: var(--sunken); color: var(--ink); font: 400 var(--t-body)/1.4 var(--font-body);
 }
 input[type="range"] { width: 100%; min-height: var(--touch); accent-color: var(--signal); }
-input[type="radio"] { width: 26px; height: 26px; accent-color: var(--signal); flex-shrink: 0; }
+/* A radio is drawn the way a checkbox now is. Left to the browser, the *unselected* base map was a
+   solid grey disc in vault and blackout and the selected one a thin ring: the filled control was the
+   one that was off. Outline when unchosen, a filled dot inside the accent ring when chosen. */
+input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  width: 26px; height: 26px; flex-shrink: 0; margin: 0;
+  border: 2px solid var(--line-strong); border-radius: 50%;
+  background: var(--sunken); cursor: pointer;
+  display: inline-grid; place-content: center;
+}
+input[type="radio"]::before { content: ''; width: 12px; height: 12px; border-radius: 50%; background: var(--signal); visibility: hidden; }
+input[type="radio"]:checked { border-color: var(--signal); }
+input[type="radio"]:checked::before { visibility: visible; }
+input[type="radio"]:disabled { opacity: 0.55; cursor: not-allowed; }
 /* An unticked box is drawn, not left to the browser: in two of the three themes the native control
    is a filled grey square, which reads as disabled. Outline empty, filled with a tick when done. */
 input[type="checkbox"] {
@@ -149,8 +167,11 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .task-meta { margin-left: 38px; gap: 10px; }
 .task-meta .field { flex-direction: row; align-items: center; gap: 6px; }
 .task-meta select { width: auto; min-width: 10ch; }
+/* Only the title is struck through. The "who and when" line is what tells a reader the tick landed,
+   so striking it too would be striking out the answer. */
 .task-done .task-title { text-decoration: line-through; color: var(--ink-muted); }
-.task-time { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 400; }
+.task-time { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 400; text-decoration: none; }
+.task-undo { flex-shrink: 0; }
 @media (max-width: 699px) { .task-why, .task-meta { margin-left: 0; } }
 .task-count { flex-shrink: 0; }
 .progress-line { display: block; width: 100%; height: 6px; border: 0; border-radius: 999px; overflow: hidden; appearance: none; background: var(--sunken); color: var(--signal); }
@@ -202,7 +223,7 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .searchbar { position: relative; display: flex; gap: 8px; }
 .searchbar input { flex: 1; }
-.searchbar-compact input, .searchbar-compact .btn { min-height: 40px; padding: 4px 10px; font-size: var(--t-meta); }
+.searchbar-compact input, .searchbar-compact .btn { min-height: var(--touch); padding: 4px 10px; font-size: var(--t-meta); }
 .suggestions { position: absolute; top: 100%; left: 0; right: 0; z-index: 30; margin: 4px 0 0; padding: 0; list-style: none; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); max-height: 320px; overflow: auto; }
 .suggestions li button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: var(--touch); padding: 8px 12px; border: 0; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .suggestions li.active button, .suggestions li button:hover { background: var(--sunken); }

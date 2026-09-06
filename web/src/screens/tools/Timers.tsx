@@ -116,7 +116,7 @@ export function Timers() {
   return (
     <Screen title="Timers">
       <Body>
-        <Emergency999 />
+        <Emergency999 onlyWhenHidden />
         <p>Someone not breathing normally: start CPR and use the beat below.</p>
         <Countdowns />
         <Cpr />

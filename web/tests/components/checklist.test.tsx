@@ -34,20 +34,23 @@ describe('Checklist', () => {
     const returned = playbook.checklist.map((i) => (i.id === 'fill-bath' ? { ...i, checked: true, updated_at: new Date().toISOString() } : i));
     const spy = vi.spyOn(api, 'setChecklist').mockResolvedValue(returned);
     render(<Host initial={playbook.checklist} />);
-    await user.click(screen.getByLabelText(/Fill the bath/));
+    await user.click(screen.getByRole('checkbox', { name: /Fill the bath/ }));
     expect(spy).toHaveBeenCalledWith('grid-collapse', 'fill-bath', true);
-    expect(screen.getByLabelText(/Fill the bath/)).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
     expect(screen.getByTestId('checklist-summary')).toHaveTextContent(/^2 of 3 done, last change/);
+    // One tick everywhere: the row stays put, the who-and-when line appears and an Undo sits beside it.
     expect(screen.getByText(/ticked just now/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Undo: Fill the bath/ }));
+    expect(spy).toHaveBeenLastCalledWith('grid-collapse', 'fill-bath', false);
   });
 
   it('reverts and shows a notice when the save fails', async () => {
     const user = userEvent.setup();
     vi.spyOn(api, 'setChecklist').mockRejectedValue(new ApiError(500, 'db locked'));
     render(<Host initial={playbook.checklist} />);
-    await user.click(screen.getByLabelText(/Fill the bath/));
+    await user.click(screen.getByRole('checkbox', { name: /Fill the bath/ }));
     expect(await screen.findByText(/Could not save the tick: db locked/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Fill the bath/)).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Fill the bath/ })).not.toBeChecked();
     expect(screen.getByTestId('checklist-summary')).toHaveTextContent(/^1 of 3 done/);
   });
 

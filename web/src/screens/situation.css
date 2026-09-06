@@ -23,7 +23,6 @@
 .cond-stale { gap: 8px; }
 .drill-conditions { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; gap: 14px; }
 .drill-conditions legend { padding: 0 6px; font-weight: 600; }
-.calls-notice { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .sensor-list { padding: 0; }
 .sensor-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 40px; }
 .sensor-name { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; font-weight: 600; }

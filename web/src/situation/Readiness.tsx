@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
-import { stockDays } from './board';
 import { useSituation } from './SituationProvider';
 
 const COUNT_WORDS = ['no', 'one', 'two', 'three', 'four', 'five'];
@@ -12,17 +10,20 @@ function countWord(n: number): string {
   return COUNT_WORDS[n] ?? String(n);
 }
 
-/** Peacetime on Now: nothing is wrong, so the box says how long the household would last and which
- * few things would help most. No score out of a hundred and no points: a number nobody was given the
- * meaning of is not an answer. */
+function sentenceCase(word: string): string {
+  return word[0].toUpperCase() + word.slice(1);
+}
+
+/** Peacetime on Now: nothing is wrong, so the box says which few things would help most and how to
+ * start. Every number on this panel comes from the engine's readiness and is said once — the screen
+ * used to make four statements about the same water, from two sources, with three different counts
+ * of the household. No score out of a hundred and no points: a number nobody was given the meaning
+ * of is not an answer. */
 export function Readiness() {
   const { view } = useSituation();
-  const stock = useQuery(() => api.stock(), []);
   const household = useQuery(() => api.household(), [], { refetchOnFocus: true });
-  const days = useMemo(() => stockDays(stock.data?.items ?? []), [stock.data]);
   if (!view) return null;
   const gaps = view.readiness.gaps.slice(0, 5);
-  const water = days.find((d) => d.category === 'water');
   const firstRun = (household.data?.length ?? 0) === 0;
   return (
     <section className="panel panel-signal" aria-label="Situation">
@@ -31,29 +32,35 @@ export function Readiness() {
         <Link className="btn btn-small" to="/situation">Situation sheet</Link>
       </div>
       <p className="lead">
-        {water ? `You have water for ${water.days} ${water.days === 1 ? 'day' : 'days'}.` : 'No water is recorded yet.'}
-        {' '}
         {gaps.length > 0
-          ? `${countWord(gaps.length)[0].toUpperCase()}${countWord(gaps.length).slice(1)} ${gaps.length === 1 ? 'thing' : 'things'} would help most.`
-          : 'Nothing is outstanding.'}
+          ? `${sentenceCase(countWord(gaps.length))} ${gaps.length === 1 ? 'thing' : 'things'} would help most.`
+          : 'Nothing is outstanding. Everything the box counts is in date and in stock.'}
       </p>
       {firstRun && (
-        <p className="muted">New box? <Link to="/plan#household">Add who lives here</Link>, then your water and food.</p>
+        <>
+          <p className="muted">New box? Start with who lives here, then your water and food.</p>
+          {/* A first-run call to action is not a 20 px underline: it is a button, on its own row. */}
+          <p className="row">
+            <Link className="btn" to="/plan#household"><Icon name="plan" size={18} /><span>Add who lives here</span></Link>
+            <Link className="btn" to="/plan#stock"><Icon name="drop" size={18} /><span>Add water, food and fuel</span></Link>
+          </p>
+        </>
       )}
       {gaps.length > 0 && (
         <ul className="list now-gaps" aria-label="Gaps to close">
           {gaps.map((gap) => (
             <li key={gap.link + gap.title}>
-              <Link className="task-tick gap-row" to={gap.link}>
-                <Icon name="forward" size={22} />
+              {/* A link that navigates does not wear the shape of a job you can tick. */}
+              <Link className="gap-row" to={gap.link}>
                 <span className="task-title">{gap.title}</span>
+                <Icon name="forward" size={22} />
               </Link>
             </li>
           ))}
         </ul>
       )}
       <p className="row">
-        <Link className="btn btn-primary" to="/situation#drill"><Icon name="alert" size={18} /><span>Practise a drill</span></Link>
+        <Link className="btn btn-primary" to="/situation#drill"><Icon name="plan" size={18} /><span>Practise a drill</span></Link>
         <Link className="btn" to="/guides"><Icon name="book" size={18} /><span>Read the guides</span></Link>
       </p>
     </section>

@@ -12,7 +12,7 @@ import { SituationClock } from '../components/SituationClock';
 import { Icon } from '../icons';
 import { Screen } from '../shell/Screen';
 import { withTask } from '../situation/apply';
-import { CallsNotice } from '../situation/CallsNotice';
+import { Emergency999 } from '../situation/Emergency999';
 import { ReadAloudBlock } from '../situation/ReadAloud';
 import { useSituation } from '../situation/SituationProvider';
 import { TaskRow } from '../situation/TaskRow';
@@ -147,7 +147,7 @@ export function Scenario() {
       }
     >
       <div className="screen-body">
-        <CallsNotice />
+        <Emergency999 onlyWhenHidden />
         <p className="muted measure">{data.summary}</p>
         <div className="tabs" role="tablist" aria-label="Sections">
           {data.sections.map((s) => (

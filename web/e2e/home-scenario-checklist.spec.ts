@@ -7,7 +7,7 @@ test('Guides -> scenario -> tick a job; a second phone sees the tick', async ({ 
   await page.getByRole('navigation', { name: 'Scenarios' }).getByRole('link', { name: /National grid collapse/ }).click();
   await expect(page).toHaveURL(/\/s\/grid-collapse$/);
   await expect(page.getByRole('tab', { name: 'Right now', selected: true })).toBeVisible();
-  const box = page.getByLabel(/Fill the bath/);
+  const box = page.getByRole('checkbox', { name: /Fill the bath/ });
   await expect(box).not.toBeChecked();
   await box.check();
   await expect(box).toBeChecked();
@@ -17,6 +17,6 @@ test('Guides -> scenario -> tick a job; a second phone sees the tick', async ({ 
   await withFixtures(other);
   const phone = await other.newPage();
   await phone.goto('/s/grid-collapse');
-  await expect(phone.getByLabel(/Fill the bath/)).toBeChecked();
+  await expect(phone.getByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
   await other.close();
 });

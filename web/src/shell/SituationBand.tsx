@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { CONDITION_IDS } from '../api/types';
 import { Icon } from '../icons';
 import { ConditionChip } from '../situation/ConditionChip';
+import { EndDrillButton } from '../situation/DrillBanner';
 import { useSituation } from '../situation/SituationProvider';
 import { describeElapsed } from '../tools/situation';
 
@@ -23,7 +24,10 @@ export function SituationBand() {
   if (!broken.length && !view.scenario && !view.meta.drill) return null;
   return (
     <div className="band no-print" role="group" aria-label="Situation now">
+      {/* A drill costs one row: the chip that says so and the way out of it, in the band that is on
+          every screen anyway. */}
       {view.meta.drill && <span className="badge badge-warn">⚑ Drill</span>}
+      {view.meta.drill && <EndDrillButton />}
       {view.scenario && (
         <Link className="band-scenario" to={`/s/${view.scenario.slug}`}>
           <Icon name="alert" size={20} />

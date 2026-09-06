@@ -3,19 +3,31 @@
 
 .app {
   display: grid;
-  height: calc(100dvh - var(--kb-height));
+  height: 100dvh;
   overflow: hidden;
   background: var(--ground);
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas: "drill" "main" "nav";
 }
-@media (min-width: 700px) {
+/* The rail needs height as well as width: at 844x390 (a phone on its side) nine rows of rail do not
+   fit 390 px, and System, AI and the theme button were off the bottom of the screen with nothing to
+   say they existed. Under 440 px tall the shell draws the bottom bar instead, which shows all five
+   destinations at any width. `useWide` carries the same query. */
+@media (min-width: 700px) and (min-height: 440px) {
   .app {
     grid-template-columns: var(--rail) minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: "drill drill" "nav main";
   }
+  /* The on-screen keyboard costs the content column its height and nothing else: the rail stays
+     full height, so no destination is unreachable while somebody is typing. */
+  .app-main { padding-bottom: var(--kb-height); }
+}
+/* Where the navigation is a bar along the bottom there is nothing beside the keyboard to keep, so
+   the shell gives it the height instead. */
+@media (max-width: 699px), (max-height: 439px) {
+  .app { height: calc(100dvh - var(--kb-height)); }
 }
 .app-board { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); grid-template-areas: "main"; }
 .app-board > .content { grid-area: main; }
@@ -54,7 +66,7 @@
 }
 .rail-dest[aria-current="page"] { background: var(--sunken); border-top-color: var(--signal); color: var(--signal); }
 
-@media (min-width: 700px) {
+@media (min-width: 700px) and (min-height: 440px) {
   .mainnav {
     flex-direction: column;
     width: var(--rail);
@@ -62,10 +74,12 @@
     gap: 2px;
     border-top: 0;
     border-right: 1px solid var(--line);
-    overflow-y: auto;
+    overflow: hidden;
     overscroll-behavior: contain;
   }
-  .mainnav-list { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
+  /* The five destinations give way before the footer does: System, AI and the theme button are
+     always on the screen, and the list above them scrolls if a short screen ever asks it to. */
+  .mainnav-list { display: flex; flex-direction: column; gap: 2px; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
   .rail-brand {
     display: block;
     padding: 2px 0 6px;
@@ -77,7 +91,7 @@
   }
   :root[data-theme="vault"] .rail-brand { text-shadow: var(--glow); }
   :root[data-theme="field"] .rail-brand { font: 700 20px/1 var(--font-heading); letter-spacing: 0; }
-  .rail-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line); }
+  .rail-foot { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line); }
   /* Seven rows and a theme button have to fit 480 px without the rail scrolling. */
   .rail-dest {
     min-height: var(--touch);
@@ -120,7 +134,7 @@
 .screen-head h1 { flex: 1 1 auto; min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .screen-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .screen-head-search { flex: 0 1 300px; min-width: 220px; }
-@media (max-width: 699px) {
+@media (max-width: 699px), (max-height: 439px) {
   /* One chip, the count of jobs and the way to the sheet have to share 390 pixels, so the band
      spends less on padding than the rest of the screen does. */
   .band { gap: 6px; padding-left: 10px; padding-right: 10px; }
@@ -135,7 +149,7 @@
   .screen-head-actions { order: 3; flex: 1 1 100%; }
   .screen-head-search { display: none; }
 }
-@media (min-width: 700px) { .screen-head-theme { display: none; } }
+@media (min-width: 700px) and (min-height: 440px) { .screen-head-theme { display: none; } }
 /* The kiosk is 480 px tall: the title keeps its rank but gives the content back its lines. */
 @media (max-height: 560px) {
   .screen-head { padding: 6px var(--gutter) 4px; }
@@ -163,7 +177,10 @@
 .qr figcaption { font-size: var(--t-meta); color: var(--ink-muted); text-align: center; }
 
 /* The kiosk keyboard reduces the layout viewport rather than overlaying it. */
-.kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 224px; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); padding: 5px; }
+/* The keyboard is a panel over the content column. It leaves the rail alone, and because nothing
+   filters `body` any more it measures from the viewport in dim mode as well. */
+.kb-panel { position: fixed; left: 0; right: 0; bottom: 0; height: 224px; z-index: 40; background: var(--panel); border-top: 1px solid var(--line); border-left: 1px solid var(--line); padding: 5px; }
+@media (min-width: 700px) and (min-height: 440px) { .kb-panel { left: var(--rail); } }
 .sos-kb.hg-theme-default { background: transparent; padding: 0; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
 .sos-kb .hg-row { display: flex; gap: 5px; justify-content: center; }
 .sos-kb .hg-button { height: var(--touch); min-width: 64px; flex: 0 0 auto; font: 600 20px/1 var(--font-body); border-radius: var(--radius); background: var(--sunken); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
@@ -180,13 +197,8 @@
 /* The idle kiosk shows the board instead of a dim screen while anything is off. */
 .idle-board { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; background: var(--ground); cursor: pointer; overflow: hidden; }
 
-/* DRILL: a bar across the top of every screen, and the debrief when it ends. */
-.drill-bar {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 6px var(--gutter); background: var(--panel);
-  border-bottom: 3px solid var(--warn); font-weight: 600;
-}
-.drill-bar > span { flex: 1 1 220px; min-width: 0; }
+/* DRILL: the band carries the chip and the way out; this is the debrief when it ends. */
+.band-drill-end { flex-shrink: 0; }
 .drill-summary { padding: 10px var(--gutter); background: var(--panel); border-bottom: 1px solid var(--line); }
 .drill-summary p { margin: 0 0 6px; }
 .drill-events { list-style: none; margin: 0 0 8px; padding: 0; font-size: var(--t-meta); }
@@ -195,7 +207,7 @@
 
 @media print {
   .mainnav, .band, .notices, .kb-panel, .idle-overlay, .idle-board, .no-print,
-  .screen-head-search, .screen-head-back, .drill-bar .btn { display: none !important; }
+  .screen-head-search, .screen-head-back { display: none !important; }
   .app, .content { height: auto; overflow: visible; display: block; }
   .screen-head { padding: 0 0 8px; }
   .screen-body { padding: 0; }

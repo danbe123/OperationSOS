@@ -18,7 +18,8 @@ describe('Now', () => {
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     const household = await screen.findByRole('region', { name: 'Household and stock' });
-    expect(household).toHaveTextContent('Nobody registered yet');
+    // Who the box counts for is said once, on this panel and nowhere else on the screen.
+    expect(household).toHaveTextContent('Nobody is registered yet, so the box counts stock for one person.');
     expect(within(household).getByRole('list', { name: 'Days of stock left' })).toHaveTextContent('Water 1.5 days');
     expect(await screen.findByTestId('status-strip')).toHaveTextContent('http://sos.box');
   });
@@ -39,11 +40,15 @@ describe('Now', () => {
     const panel = await screen.findByRole('region', { name: 'Situation' });
     // The heading above already says the state; the panel says what it is about.
     expect(panel).toHaveTextContent('How ready you are');
-    await waitFor(() => expect(panel).toHaveTextContent('You have water for 1.5 days.'));
-    expect(panel).toHaveTextContent('One thing would help most.');
+    // Every number on this panel comes from the engine's readiness: no second count of the same water.
+    await waitFor(() => expect(panel).toHaveTextContent('One thing would help most.'));
+    expect(panel).not.toHaveTextContent('You have water for');
     expect(panel).not.toHaveTextContent('out of 100');
     expect(panel).not.toHaveTextContent('points');
     expect(panel).toHaveTextContent('New box?');
+    // the first-run calls to action are buttons on their own row, not 20 px underlines
+    expect(within(panel).getByRole('link', { name: /Add who lives here/ })).toHaveClass('btn');
+    expect(within(panel).getByRole('link', { name: /Add water, food and fuel/ })).toHaveClass('btn');
     expect(within(panel).getByRole('link', { name: 'Water: 1.5 days for 3 people' })).toHaveAttribute('href', '/plan#stock');
     expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toHaveAttribute('href', '/situation#drill');
     expect(screen.queryByRole('region', { name: 'Right now' })).toBeNull();

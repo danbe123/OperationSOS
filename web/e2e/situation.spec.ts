@@ -56,14 +56,14 @@ test('a drill runs the whole thing without touching the real conditions', async 
   await page.getByLabel('Drill scenario').selectOption('grid-collapse');
   await page.getByLabel('Drill started').selectOption('2');
   await page.getByRole('button', { name: 'Start drill' }).click();
-  await expect(page.getByText('Drill in progress')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('Drill');
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   const band = page.getByRole('group', { name: 'Situation now' });
   await expect(band).toContainText('Drill');
   await expect(band).toContainText('National grid collapse');
   await band.getByRole('link', { name: 'Situation', exact: true }).click();
   await page.getByRole('button', { name: 'End drill' }).click();
-  await expect(page.getByText('Drill in progress')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'End drill' })).toBeHidden();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });

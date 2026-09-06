@@ -5,7 +5,7 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await page.getByLabel('Drill scenario').selectOption('grid-collapse');
   await page.getByLabel('Drill started').selectOption('2');
   await page.getByRole('button', { name: 'Start drill' }).click();
-  await expect(page.getByText('DRILL in progress')).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('Drill');
 
   await page.getByRole('link', { name: 'Board' }).click();
   await expect(page).toHaveURL(/\/board$/);
@@ -41,10 +41,13 @@ test('Home in peacetime says how long the household would last, in plain words',
   await expect(strip).not.toContainText('points');
   await expect(strip).toContainText('would help most');
   const gaps = strip.getByLabel('Gaps to close');
-  await expect(gaps).toContainText('Water: 1.5 days for 3 people');
-  // A gap is a thing to do, so it is a row you can hit, not an underlined link.
-  const row = gaps.getByRole('link', { name: 'Water: 1.5 days for 3 people' });
+  // Every number on this panel comes from one source, the engine's readiness, and is said once.
+  await expect(gaps).toContainText('No water recorded');
+  await expect(strip).not.toContainText('You have water for');
+  // A gap is somewhere to go, so it is a row you can hit — but never the shape of a job you can tick.
+  const row = gaps.getByRole('link', { name: 'No water recorded: add what you have' });
   expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+  await expect(row).not.toHaveClass(/task-tick/);
   await row.click();
   await expect(page).toHaveURL(/\/plan#stock$/);
 });

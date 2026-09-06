@@ -26,6 +26,11 @@ const themes: Record<string, Record<string, string>> = {
   vault: block(':root,\n:root[data-theme="vault"]'),
   field: block(':root[data-theme="field"]'),
   blackout: block(':root[data-theme="blackout"]'),
+  // Dim is the state the engine raises when the power is off at night, so it is a palette in its own
+  // right and carries the same 7:1 floor. It used to be a brightness filter, which broke both.
+  'vault dim': block(':root[data-dim="on"],\n:root[data-theme="vault"][data-dim="on"]'),
+  'field dim': block(':root[data-theme="field"][data-dim="on"]'),
+  'blackout dim': block(':root[data-theme="blackout"][data-dim="on"]'),
 };
 
 describe('theme contrast', () => {
@@ -45,10 +50,24 @@ describe('theme contrast', () => {
     });
   }
 
-  it('blackout separates its three states by luminance, since it has one hue', () => {
-    const { '--danger': off, '--warn': patchy, '--ok': working } = themes.blackout;
-    expect(luminance(off)).toBeLessThan(luminance(patchy));
-    expect(luminance(patchy)).toBeLessThan(luminance(working));
+  for (const name of ['blackout', 'blackout dim']) {
+    it(`${name} separates its three states by luminance, since it has one hue`, () => {
+      const { '--danger': off, '--warn': patchy, '--ok': working } = themes[name];
+      expect(luminance(off)).toBeLessThan(luminance(patchy));
+      expect(luminance(patchy)).toBeLessThan(luminance(working));
+    });
+  }
+
+  it('dim actually dims: every dim ground is darker than the theme it dims', () => {
+    for (const [name, base] of [['vault', 'vault'], ['field', 'field'], ['blackout', 'blackout']] as const) {
+      const dim = themes[`${name} dim`];
+      expect(luminance(dim['--ground'])).toBeLessThanOrEqual(luminance(themes[base]['--ground']));
+      expect(luminance(dim['--panel'])).toBeLessThanOrEqual(luminance(themes[base]['--panel']));
+    }
+  });
+
+  it('dim never dims with a filter: a filtered body becomes the containing block for every overlay', () => {
+    expect(css).not.toMatch(/data-dim[^{]*\{[^}]*filter:/);
   });
 
   it('print forces the field palette', () => {

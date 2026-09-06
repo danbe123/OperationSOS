@@ -5,15 +5,21 @@ import type { Person, Task } from '../api/types';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { contentHref } from './links';
+import { TickedLine, UndoTick, useTickUndo } from './Tick';
 
-/** A job with a tick box, the reason it is here, where to read more, and who has it. */
+/** A job with a tick box, the reason it is here, where to read more, and who has it. A ticked job
+ * stays where it is, struck through, with an Undo for ten seconds: the same behaviour on Now, on
+ * Things to do and on a guide. */
 export function TaskRow({ task, people, onChanged }: { task: Task; people?: Person[]; onChanged: (t: Task) => void }) {
   const [busy, setBusy] = useState(false);
+  const { armed, arm, disarm } = useTickUndo();
   const href = contentHref(task.link);
   const save = async (patch: { done?: boolean; person?: string }) => {
     setBusy(true);
     try {
       onChanged(await api.setTask(task.id, patch));
+      if (patch.done === true) arm();
+      if (patch.done === false) disarm();
     } catch (e) {
       notify(`Could not save "${task.title}": ${errorMessage(e)}`);
     } finally {
@@ -28,6 +34,9 @@ export function TaskRow({ task, people, onChanged }: { task: Task; people?: Pers
       </label>
       {task.why && <p className="task-why muted">{task.why}</p>}
       <div className="row task-meta">
+        {/* The "who and when" line is never struck through; only the title is. */}
+        {task.done && <TickedLine at={task.done_at} person={people ? null : task.person} />}
+        {task.done && armed && <UndoTick label={task.title} busy={busy} onUndo={() => void save({ done: false })} />}
         {href && <Link className="btn btn-small task-link" to={href} aria-label={`Read more: ${task.title}`}>Read more</Link>}
         {people && (
           <label className="field task-person">
@@ -38,7 +47,7 @@ export function TaskRow({ task, people, onChanged }: { task: Task; people?: Pers
             </select>
           </label>
         )}
-        {!people && task.person && <span className="muted">{task.person}</span>}
+        {!people && task.person && !task.done && <span className="muted">{task.person}</span>}
       </div>
     </li>
   );

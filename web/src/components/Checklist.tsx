@@ -2,20 +2,11 @@ import { useEffect, useReducer, useState } from 'react';
 import { api } from '../api/client';
 import type { ChecklistItem } from '../api/types';
 import { errorMessage } from '../api/useQuery';
+import { TickedLine, UndoTick, useTickUndo } from '../situation/Tick';
+import { relativeTime } from '../tools/dates';
 import { notify } from './Notice';
 
-export function relativeTime(iso: string | null, now: number = Date.now()): string {
-  if (!iso) return '';
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return '';
-  const s = Math.max(0, Math.round((now - t) / 1000));
-  if (s < 60) return 'just now';
-  const m = Math.round(s / 60);
-  if (m < 60) return `${m} min ago`;
-  const h = Math.round(m / 60);
-  if (h < 48) return `${h} h ago`;
-  return `${Math.round(h / 24)} days ago`;
-}
+export { relativeTime };
 
 export function checklistSummary(items: ChecklistItem[], now: number = Date.now()): string {
   const done = items.filter((i) => i.checked).length;
@@ -28,6 +19,8 @@ export function checklistSummary(items: ChecklistItem[], now: number = Date.now(
 export function Checklist({ slug, items, onItems }: { slug: string; items: ChecklistItem[]; onItems: (items: ChecklistItem[]) => void }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState<string | null>(null);
+  const { armed, arm, disarm } = useTickUndo();
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
     const id = window.setInterval(tick, 30_000); // keep "n min ago" fresh
@@ -41,6 +34,7 @@ export function Checklist({ slug, items, onItems }: { slug: string; items: Check
     setBusy(item.id);
     try {
       onItems(await api.setChecklist(slug, item.id, next));
+      if (next) { setUndoing(item.id); arm(); } else { setUndoing(null); disarm(); }
     } catch (e) {
       onItems(before);
       notify(`Could not save the tick: ${errorMessage(e)}`);
@@ -67,11 +61,16 @@ export function Checklist({ slug, items, onItems }: { slug: string; items: Check
           <li className={item.checked ? 'task-row task-done' : 'task-row'} key={item.id}>
             <label className="task-tick" htmlFor={`chk-${item.id}`}>
               <input type="checkbox" id={`chk-${item.id}`} checked={item.checked} disabled={busy === item.id} onChange={() => void toggle(item)} />
-              <span className="task-title">
-                {item.text}
-                {item.checked && item.updated_at && <span className="task-time"> · ticked {relativeTime(item.updated_at)}</span>}
-              </span>
+              <span className="task-title">{item.text}</span>
             </label>
+            {/* The same tick everywhere: the row stays put, only the title is struck through, and the
+                who-and-when line sits under it with an Undo for ten seconds. */}
+            {item.checked && (
+              <div className="row task-meta">
+                <TickedLine at={item.updated_at} />
+                {armed && undoing === item.id && <UndoTick label={item.text} busy={busy === item.id} onUndo={() => void toggle(item)} />}
+              </div>
+            )}
           </li>
         ))}
       </ul>

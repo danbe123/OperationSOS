@@ -7,6 +7,7 @@ import { Icon } from '../icons';
 import { ConnectPanel } from '../kiosk/ConnectPanel';
 import { Screen, Body } from '../shell/Screen';
 import { Briefing } from '../situation/Briefing';
+import { Emergency999 } from '../situation/Emergency999';
 import { nowTitle } from '../situation/nowTitle';
 import { Readiness } from '../situation/Readiness';
 import { scenarioMapHref } from '../situation/mapLink';
@@ -30,14 +31,20 @@ function HouseholdSummary() {
         <h2>Household and stock</h2>
         <Link className="btn btn-small" to="/plan">Open the plan</Link>
       </div>
+      {/* The one place the box says who it is counting for. The peacetime panel above says how many
+          things would help most and nothing else about people or water, so the screen no longer makes
+          four statements about the same stock. */}
       <p>
         {count === 0
-          ? 'Nobody registered yet. Stock is counted for one person until you add people.'
-          : `${count} ${count === 1 ? 'person' : 'people'} registered.`}
+          ? 'Nobody is registered yet, so the box counts stock for one person.'
+          : `${count} ${count === 1 ? 'person is' : 'people are'} registered.`}
         {neighbours.data && neighbours.data.length > 0 && ` ${neighbours.data.length} ${neighbours.data.length === 1 ? 'neighbour' : 'neighbours'} on the street list.`}
       </p>
       {days.length === 0 ? (
-        <p className="muted">No stock recorded. <Link to="/plan#stock">Add water, food and fuel</Link> to see how many days you have.</p>
+        <>
+          <p className="muted">No stock recorded yet, so the box cannot say how many days you have.</p>
+          <p className="row"><Link className="btn" to="/plan#stock"><Icon name="drop" size={18} /><span>Add water, food and fuel</span></Link></p>
+        </>
       ) : (
         <ul className="row now-stock" aria-label="Days of stock left">
           {days.map((d) => (
@@ -135,6 +142,9 @@ export function Now() {
   return (
     <Screen title={nowTitle(view)} back={false}>
       <Body>
+        {/* With both networks down this is the most important new fact on the front door, and the
+            box used to say nothing about it here at all. One component, one sentence. */}
+        <Emergency999 onlyWhenHidden />
         {error && (
           <p className="panel panel-warn row" role="status">
             <span className="warning">The box cannot read the situation.</span>

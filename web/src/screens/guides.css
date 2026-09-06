@@ -4,5 +4,15 @@
 .guides-filter { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
 .guides-filter .field { max-width: 480px; }
 
-/* A scenario tile is an icon, a name and one line; the line is clamped so twenty of them stay a grid. */
-.tiles .tile-sub { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* A scenario tile is an icon, a name and one line. The line is not clamped: clamping cut the real
+   first sentences mid-word on exactly the tiles that had something to say ("A radiation release from
+   a UK or…"), which removes the part that tells a reader whether the guide is theirs. Each line is
+   written to fit two lines at 390 px instead, and a guide with no short line shows none. */
+
+/* On the kiosk the filter block took the top 190 px of 480 and left one row of tiles: the field and
+   its chips share a line there. */
+@media (min-width: 700px) and (min-height: 440px) {
+  .guides-filter { flex-direction: row; align-items: flex-end; flex-wrap: wrap; }
+  .guides-filter .field { flex: 1 1 260px; max-width: 360px; }
+  .guides-filter .chips { flex: 1 1 auto; }
+}

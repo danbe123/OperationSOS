@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
 import { Screen, Body } from '../shell/Screen';
@@ -14,15 +14,23 @@ export function Tasks() {
   const [showDone, setShowDone] = useState(false);
   const tasks = view?.tasks ?? [];
   const outstanding = tasks.filter((t) => !t.done).length;
-  const shown = showDone ? tasks : tasks.filter((t) => !t.done);
   const done = tasks.length - outstanding;
+  /* A tick never makes a row vanish under the finger. "Show done" filters the jobs that were already
+     done when this screen was opened (or when the chip was last turned off), so anything ticked here
+     stays where it is, struck through, with its Undo — the same behaviour as Now and as a guide. */
+  const hidden = useRef<Set<string> | null>(null);
+  // Seeded on the render the list first arrives in, not in an effect: an effect would paint the done
+  // jobs once and then take them away, which is the disappearing row this replaces.
+  if (hidden.current === null && view) hidden.current = new Set(view.tasks.filter((t) => t.done).map((t) => t.id));
+  const hideDone = () => { hidden.current = new Set(tasks.filter((t) => t.done).map((t) => t.id)); setShowDone(false); };
+  const shown = showDone ? tasks : tasks.filter((t) => !hidden.current?.has(t.id));
   return (
     <Screen title="Things to do" search={false}>
       <Body>
         <div className="row">
           <p className="muted task-count">{outstanding} to do, {done} done.</p>
           {/* A filter is not a job: it wears the chip, not the same square as a task's tick. */}
-          <button type="button" className={showDone ? 'chip active' : 'chip'} aria-pressed={showDone} onClick={() => setShowDone(!showDone)}>
+          <button type="button" className={showDone ? 'chip active' : 'chip'} aria-pressed={showDone} onClick={() => (showDone ? hideDone() : setShowDone(true))}>
             {showDone ? 'Hide done' : 'Show done'}
           </button>
         </div>

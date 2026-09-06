@@ -4,8 +4,10 @@
 .board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .board-title { margin: 0; font-size: var(--t-display); line-height: 1.05; }
 .board-elapsed { margin: 0; font-size: var(--t-lead); color: var(--ink-muted); }
-.board-now { margin: 0 0 0 auto; font-size: var(--t-display); font-weight: 700; font-variant-numeric: tabular-nums; }
-:root[data-theme="vault"] .board-now { font-family: var(--font-display); font-size: var(--t-board); line-height: 0.9; }
+/* The clock is the across-the-room element: 64 px in every theme. Only the face changes — VT323 is
+   the box's voice in vault, and field and blackout draw the same size in Inter. */
+.board-now { margin: 0 0 0 auto; font-size: var(--t-board); line-height: 0.9; font-weight: 700; font-variant-numeric: tabular-nums; }
+:root[data-theme="vault"] .board-now { font-family: var(--font-display); }
 .board-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
 .board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .board-cond { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius); border: 2px solid var(--line-strong); background: var(--panel); font-weight: 600; }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
@@ -26,6 +26,10 @@ export function Situation() {
   const [busy, setBusy] = useState(false);
   const [drillHours, setDrillHours] = useState('2');
   const [drillOff, setDrillOff] = useState<ConditionId[]>(['power']);
+  // Never a disabled primary with nothing on the screen saying why: Start stays live and says what
+  // is missing when it is tapped.
+  const drillSelect = useRef<HTMLSelectElement>(null);
+  const [drillWhy, setDrillWhy] = useState<string | null>(null);
 
   const saved = (c: Condition) => {
     if (view) apply(withCondition(view, c));
@@ -106,7 +110,7 @@ export function Situation() {
             <div className="row">
               <label className="field">
                 <span>Situation</span>
-                <select aria-label="Drill scenario" value={slug} onChange={(e) => setSlug(e.target.value)}>
+                <select ref={drillSelect} aria-label="Drill scenario" value={slug} onChange={(e) => { setSlug(e.target.value); setDrillWhy(null); }}>
                   <option value="">Choose a situation…</option>
                   {playbooks.map((p) => <option key={p.slug} value={p.slug}>{p.title}</option>)}
                 </select>
@@ -138,13 +142,19 @@ export function Situation() {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={busy || !slug || drillOff.length === 0}
-                onClick={() => void run('start the drill', async () => {
-                  const conditions = Object.fromEntries(drillOff.map((id) => [id, 'off' as ConditionState]));
-                  apply(await api.startDrill({ scenario: slug, conditions, hours_ago: Number(drillHours) }));
-                  await refreshStatus();
-                })}
+                disabled={busy}
+                onClick={() => {
+                  if (!slug) { setDrillWhy('Choose a situation first.'); drillSelect.current?.focus(); return; }
+                  if (drillOff.length === 0) { setDrillWhy('Choose at least one thing that is off in the drill.'); return; }
+                  setDrillWhy(null);
+                  void run('start the drill', async () => {
+                    const conditions = Object.fromEntries(drillOff.map((id) => [id, 'off' as ConditionState]));
+                    apply(await api.startDrill({ scenario: slug, conditions, hours_ago: Number(drillHours) }));
+                    await refreshStatus();
+                  });
+                }}
               >Start drill</button>
+              {drillWhy && <span className="warning" role="alert">{drillWhy}</span>}
             </div>
           </div>
         </section>
