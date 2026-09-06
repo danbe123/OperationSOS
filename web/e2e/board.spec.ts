@@ -32,14 +32,19 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await expect(page.getByRole('region', { name: 'Situation' })).toContainText('Everything is working');
 });
 
-test('Home in peacetime leads with how ready the household is', async ({ page }) => {
+test('Home in peacetime says how long the household would last, in plain words', async ({ page }) => {
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
   const strip = page.getByRole('region', { name: 'Situation' });
-  await expect(strip).toContainText('62');
+  // No score, no points: a number out of a hundred whose meaning is never given is not an answer.
+  await expect(strip).not.toContainText('out of 100');
+  await expect(strip).not.toContainText('points');
+  await expect(strip).toContainText('would help most');
   const gaps = strip.getByLabel('Gaps to close');
   await expect(gaps).toContainText('Water: 1.5 days for 3 people');
-  await expect(gaps).toContainText('worth 12 points');
-  await page.screenshot({ path: '/tmp/sos-home-readiness-853.png' });
-  await gaps.getByRole('link', { name: 'Water: 1.5 days for 3 people' }).click();
+  // A gap is a thing to do, so it is a row you can hit, not an underlined link.
+  const row = gaps.getByRole('link', { name: 'Water: 1.5 days for 3 people' });
+  expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(48);
+  await row.click();
   await expect(page).toHaveURL(/\/plan#stock$/);
 });

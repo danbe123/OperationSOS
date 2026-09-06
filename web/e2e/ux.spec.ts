@@ -32,12 +32,19 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     await expect(page.getByRole('heading', { name: 'Do this first' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Right now', selected: true })).toBeVisible();
 
-    // the checklist is beside the guidance where there is room, and under it where there is not
-    const tasks = page.getByRole('complementary', { name: 'Checklist' });
+    // the jobs sit beside the guidance where there is room, and above it where there is not
+    const tasks = page.getByRole('complementary', { name: 'Things to do for this guide' });
     const guidance = await page.getByRole('tabpanel').boundingBox();
     const checklist = await tasks.boundingBox();
     if (viewport.width >= 800) expect(checklist!.x).toBeGreaterThan(guidance!.x + guidance!.width);
-    else expect(checklist!.y).toBeGreaterThan(guidance!.y);
+    else expect(checklist!.y).toBeLessThan(guidance!.y);
+
+    // every phase tab is reachable: none is scrolled off the end with nothing to say it exists
+    const tabs = page.getByRole('tab');
+    const strip = (await page.locator('.tabs').boundingBox())!;
+    for (const box of await Promise.all((await tabs.all()).map((t) => t.boundingBox()))) {
+      expect(box!.x + box!.width).toBeLessThanOrEqual(strip.x + strip.width + 1);
+    }
 
     // Now remembers the guide this device last opened
     await nav.getByRole('link', { name: 'Now' }).click();
@@ -55,7 +62,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
 
     // the situation clock on a guide, and the card it puts on Now
     await page.goto('/s/grid-collapse');
-    await page.getByRole('button', { name: 'This has started' }).click();
+    await page.getByRole('button', { name: /This has started/ }).click();
     await expect(page.getByRole('status').first()).toContainText('just started, right now');
     await expect(page.getByRole('tab', { name: /Right now/ })).toHaveAttribute('aria-current', 'time');
     await nav.getByRole('link', { name: 'Now' }).click();
@@ -64,7 +71,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     await carryOn.getByRole('link', { name: /Active situation/ }).click();
     await page.getByRole('button', { name: 'End situation' }).click();
     await page.getByRole('button', { name: 'Confirm end' }).click();
-    await expect(page.getByRole('button', { name: 'This has started' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /This has started/ })).toBeVisible();
     await nav.getByRole('link', { name: 'Now' }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }

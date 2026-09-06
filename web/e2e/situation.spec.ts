@@ -5,7 +5,9 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   // peacetime: Now carries the readiness, not chips, and there is no band
   const readiness = page.getByRole('region', { name: 'Situation', exact: true });
   await expect(readiness).toContainText('Everything is working');
-  await expect(readiness).toContainText('62');
+  // A plain sentence, not a score out of a hundred nobody was given the meaning of.
+  await expect(readiness).toContainText('would help most');
+  await expect(readiness).not.toContainText('out of 100');
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
 
   // set the power off, an hour ago, from the sheet
@@ -21,15 +23,18 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   const coming = page.getByRole('region', { name: 'Coming up' });
   await expect(coming).toContainText('Freezer food unsafe');
   await expect(coming).toContainText('in 23 h');
-  const doing = page.getByRole('region', { name: 'Do this now' });
+  const doing = page.getByRole('region', { name: 'Right now' }).first();
   await expect(doing).toContainText('Fill the bath and every container');
 
   // tick the bath off; the box saves it and the tick sticks
   await doing.getByRole('checkbox', { name: /Fill the bath/ }).click();
   await expect(doing.getByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
-  await page.getByRole('link', { name: 'All tasks' }).click();
+  await page.getByRole('link', { name: 'All of them' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Things to do' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Right now' })).toContainText('Keep the fridge and freezer doors shut');
-  await expect(page.locator('.task-count')).toHaveText('3 to do');
+  // The count is said once, in a sentence, not three times.
+  await expect(page.locator('.task-count')).toHaveCount(1);
+  await expect(page.locator('.task-count')).toContainText('3 to do');
 
   // the band follows onto every other screen
   await page.goto('/p/pmr446');
