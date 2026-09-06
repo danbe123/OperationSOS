@@ -13,3 +13,9 @@ def test_household_crud(client):
     assert client.delete("/api/household/2").json() == {"ok": True}
     assert client.delete("/api/household/2").status_code == 404
     assert len(client.get("/api/household").json()) == 1
+
+
+def test_stock_rows_carry_kit_item(client):
+    item = client.post("/api/stock", json={"name": "Bottled water", "category": "water", "quantity": 12, "unit": "L"}).json()
+    assert item["kit_item"] is None
+    assert client.get("/api/stock").json()["items"][0]["kit_item"] is None

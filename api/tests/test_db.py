@@ -82,3 +82,17 @@ def test_settings_helpers():
     assert db.get_setting(conn, "k") == "w"
     db.set_setting(conn, "k", None)
     assert db.get_setting(conn, "k") is None
+
+
+def test_init_schema_adds_kit_item_to_an_old_stock_table(tmp_path):
+    from sos import db
+
+    conn = db.connect(tmp_path / "old.sqlite")
+    conn.execute("CREATE TABLE stock (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, "
+                 "quantity REAL NOT NULL, unit TEXT NOT NULL, per_person_day REAL, expires TEXT, notes TEXT, updated_at TEXT)")
+    conn.commit()
+    db.init_schema(conn)
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(stock)")]
+    assert "kit_item" in cols
+    db.init_schema(conn)          # idempotent
+    assert [r[1] for r in conn.execute("PRAGMA table_info(stock)")].count("kit_item") == 1

@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEX
 CREATE TABLE IF NOT EXISTS household (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER, needs TEXT,
   medications TEXT, contacts TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS stock (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL,
-  quantity REAL NOT NULL, unit TEXT NOT NULL, per_person_day REAL, expires TEXT, notes TEXT, updated_at TEXT);
+  quantity REAL NOT NULL, unit TEXT NOT NULL, per_person_day REAL, expires TEXT, notes TEXT, kit_item TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS conditions (id TEXT PRIMARY KEY, state TEXT NOT NULL, since TEXT, source TEXT NOT NULL DEFAULT 'manual',
   confidence REAL NOT NULL DEFAULT 1.0, note TEXT, set_by TEXT, updated_at TEXT, confirmed_at TEXT);
 CREATE TABLE IF NOT EXISTS task_state (task_id TEXT PRIMARY KEY, done INTEGER NOT NULL DEFAULT 0, done_at TEXT, person TEXT,
@@ -45,8 +45,16 @@ def connect(path: Path | str) -> sqlite3.Connection:
     return conn
 
 
+def _ensure_column(conn: sqlite3.Connection, table: str, column: str, decl: str) -> None:
+    """Add a column to a table created by an older schema. SQLite has no ADD COLUMN IF NOT EXISTS."""
+    cols = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+    if column not in cols:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    _ensure_column(conn, "stock", "kit_item", "TEXT")
     conn.commit()
 
 

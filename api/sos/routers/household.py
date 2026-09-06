@@ -76,6 +76,7 @@ def days_left(quantity: float, per_person_day: Optional[float], people: int) -> 
 def _item(r, people: int) -> dict:
     return {"id": r["id"], "name": r["name"], "category": r["category"], "quantity": r["quantity"], "unit": r["unit"],
             "per_person_day": r["per_person_day"], "expires": r["expires"], "notes": r["notes"] or "",
+            "kit_item": r["kit_item"],
             "updated_at": r["updated_at"], "days_left": days_left(r["quantity"], r["per_person_day"], people)}
 
 
