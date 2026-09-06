@@ -24,7 +24,8 @@ LINK_KINDS = {"playbook": "playbook", "module": "module", "page": "page", "card"
 DEFAULT_MODES = {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
 DEFAULT_HOME: dict[str, Any] = {"lat": None, "lon": None, "label": "Home", "flood_zone": None}
 FALLBACK_LATLON = (54.0, -2.0)               # the middle of the country until the house is set on the map
-STOCK_TARGETS = (("water", "Water", 3.0, 15), ("food", "Food", 7.0, 15), ("medicine", "Medicine", 14.0, 10))
+STOCK_TARGETS = (("water", "Water", 3.0, 12), ("food", "Food", 7.0, 11), ("medicine", "Medicine", 14.0, 7))
+KIT_POINTS = 15
 DRILL_FRESH = timedelta(days=183)            # a drill counts as practice for six months
 WINTER_MONTHS = {11, 12, 1, 2, 3}
 SUMMER_MONTHS = {5, 6, 7, 8, 9}
@@ -49,6 +50,7 @@ class Model:
     drill: bool = False
     checklist: tuple[dict, ...] = ()                      # {id, text} for the active scenario
     checklist_state: dict[str, bool] = field(default_factory=dict)
+    kits: tuple[dict, ...] = ()                           # {slug, title, relevant, basic_done, basic_total}
     task_state: dict[str, dict] = field(default_factory=dict)
     detected: dict[str, dict] = field(default_factory=dict)   # condition id -> {state, at, confidence, sensor}
     titles: dict[str, str] = field(default_factory=dict)      # content link -> title, for the briefing
@@ -417,7 +419,7 @@ def modes(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> dic
 
 
 def readiness(model: Model, rules: Rules) -> dict:
-    """Spec section 7: 40 points stock, 30 household coverage, 20 plan, 10 practice."""
+    """Kits spec section 4: 30 points stock, 30 household coverage, 15 plan, 10 practice, 15 kits (basic tier)."""
     score = 0
     gaps: list[dict] = []
     for category, label, target, points in STOCK_TARGETS:
@@ -448,22 +450,35 @@ def readiness(model: Model, rules: Rules) -> dict:
                              "points": int(round(15 / len(with_needs)))})
         score += int(round(rule_points + stock_points))
     if model.home.get("lat") is not None and model.home.get("lon") is not None:
-        score += 8
+        score += 6
     else:
-        gaps.append({"title": "Home is not set on the map", "link": "/map", "points": 8})
+        gaps.append({"title": "Home is not set on the map", "link": "/map", "points": 6})
     if any((p.get("contacts") or "").strip() for p in model.household):
-        score += 6
+        score += 5
     else:
-        gaps.append({"title": "No contact numbers in the household register", "link": "/plan#household", "points": 6})
+        gaps.append({"title": "No contact numbers in the household register", "link": "/plan#household", "points": 5})
     if model.meeting_point:
-        score += 6
+        score += 4
     else:
-        gaps.append({"title": "No meeting point written down", "link": "/plan", "points": 6})
+        gaps.append({"title": "No meeting point written down", "link": "/plan", "points": 4})
     last = cond.parse_iso(model.last_drill_at)
     if last is not None and model.now - last <= DRILL_FRESH:
         score += 10
     else:
         gaps.append({"title": "No drill in the last six months", "link": "/situation", "points": 10})
+    relevant_kits = [k for k in model.kits if k.get("relevant") and k.get("basic_total")]
+    if not relevant_kits:
+        score += KIT_POINTS                       # no kit content on this box: nothing to hold against it
+    else:
+        share = KIT_POINTS / len(relevant_kits)
+        earned = 0.0
+        for k in relevant_kits:
+            frac = k["basic_done"] / k["basic_total"]
+            earned += share * frac
+            if k["basic_done"] < k["basic_total"]:
+                gaps.append({"title": f"{k['title']} kit: {k['basic_done']} of {k['basic_total']} basic items",
+                             "link": f"/kit/{k['slug']}", "points": int(round(share * (1 - frac)))})
+        score += int(round(earned))
     gaps.sort(key=lambda g: (-g["points"], g["title"]))
     return {"score": max(0, min(100, score)), "gaps": gaps}
 

@@ -181,6 +181,18 @@ def test_tick_and_add_to_stock(client):
     assert item["checked"] is True and item["stock_item"] is None
 
 
+def test_status_readiness_moves_with_kit_ticks(client):
+    client.post("/api/household", json={"name": "Dan", "contacts": "Gran 01703 555"})
+    before = client.get("/api/situation/view").json()["readiness"]
+    assert any(g["link"] == "/kit/water" for g in before["gaps"])
+    client.put("/api/kits/water/items/stored-water", json={"checked": True})
+    client.put("/api/kits/water/items/containers", json={"checked": True})
+    after = client.get("/api/situation/view").json()["readiness"]
+    assert after["score"] > before["score"]
+    assert not any(g["link"] == "/kit/water" for g in after["gaps"])
+    assert not any(g["link"] == "/kit/baby-child" for g in after["gaps"])   # not relevant: no baby on the register
+
+
 def test_reset_clears_ticks_only_for_that_kit(client):
     client.put("/api/kits/water/items/stored-water", json={"checked": True})
     client.put("/api/kits/water/items/tablets", json={"checked": True})

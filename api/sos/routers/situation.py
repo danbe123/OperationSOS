@@ -131,6 +131,15 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                       for r in conn.execute("SELECT * FROM household ORDER BY id"))
     meeting = conn.execute("SELECT 1 FROM notes WHERE kind IN ('note','pin') AND "
                            "(lower(title) LIKE '%meeting point%' OR lower(body) LIKE '%meeting point%') LIMIT 1").fetchone()
+    from sos import kits as kits_mod
+
+    kit_rows: list[dict] = []
+    for kit in content.kits():
+        checked = {r["item_id"] for r in conn.execute(
+            "SELECT item_id FROM checklist_state WHERE playbook=? AND checked=1", (f"kit:{kit.id}",))}
+        done, total = kits_mod.basic_progress(kit, checked)
+        kit_rows.append({"slug": kit.id, "title": kit.title, "relevant": kits_mod.relevant(kit, household),
+                         "basic_done": done, "basic_total": total})
     return engine.Model(
         now=now, conditions=cond.load(conn), scenario=scenario, household=household, neighbours=tuple(nb.listing(conn)),
         stock=_stock(conn), home=home,
@@ -138,6 +147,7 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
         titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
         last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),
         detected=sensors.detected_states(conn, now),
+        kits=tuple(kit_rows),
     )
 
 

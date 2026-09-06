@@ -65,11 +65,28 @@ def test_golden_peacetime(peacetime, ruleset):
 def test_peacetime_gaps_name_what_is_missing(peacetime, ruleset):
     thin = engine.Model(now=peacetime.now, household=(household(name="Dan"),), stock=(stock("Bottled water", "water", 1.5),))
     view = engine.compute(thin, ruleset)
-    assert view["readiness"]["score"] < 40
+    # thin model total under the new weights: 6 (water) + 30 (household, no needs) + 15 (kits, no kit content) = 51
+    assert view["readiness"]["score"] == 51
     assert view["readiness"]["gaps"][0]["points"] >= view["readiness"]["gaps"][-1]["points"]
-    assert {"title": "Water: 1.5 days for 1 person", "link": "/plan#stock", "points": 7} in view["readiness"]["gaps"]
+    assert {"title": "Water: 1.5 days for 1 person", "link": "/plan#stock", "points": 6} in view["readiness"]["gaps"]
     assert any(g["title"] == "Home is not set on the map" for g in view["readiness"]["gaps"])
     assert [t["id"] for t in view["tasks"]] == ["medicine-stock-missing", "water-stock-low"]
+
+
+def test_readiness_counts_the_basic_tier_of_relevant_kits(peacetime, ruleset):
+    kitted = engine.Model(now=peacetime.now, household=peacetime.household, stock=peacetime.stock, home=dict(HOME),
+                          meeting_point=True, last_drill_at=peacetime.last_drill_at,
+                          kits=({"slug": "water", "title": "Water", "relevant": True, "basic_done": 1, "basic_total": 2},
+                                {"slug": "food", "title": "Food", "relevant": True, "basic_done": 3, "basic_total": 3},
+                                {"slug": "baby-child", "title": "Baby and child", "relevant": False, "basic_done": 0, "basic_total": 4}))
+    view = engine.compute(kitted, ruleset)
+    # 85 outside kits; kits: 15 points split over the two relevant kits, water half done = 3.75 + 7.5 = 11.25 -> 11
+    assert view["readiness"]["score"] == 96
+    assert view["readiness"]["gaps"] == [{"title": "Water kit: 1 of 2 basic items", "link": "/kit/water", "points": 4}]
+
+
+def test_readiness_without_kit_content_keeps_the_full_kit_points(peacetime, ruleset):
+    assert engine.compute(peacetime, ruleset)["readiness"]["score"] == 100
 
 
 # --- (b) power off five hours, with insulin and oxygen in the house ------------------------------------------

@@ -48,7 +48,7 @@ def test_household_changes_recompute_the_score(client, env):
     with_need = score(env)
     assert with_need != before                              # a need nothing in the cupboard covers costs points
     client.put(f"/api/household/{person['id']}", json={"contacts": "07700 900000"})
-    assert score(env) == with_need + 6                      # a contact number is six points of the plan
+    assert score(env) == with_need + 5                      # a contact number is five points of the plan
     client.delete(f"/api/household/{person['id']}")
     assert score(env) == before
 
@@ -57,7 +57,7 @@ def test_setting_the_home_recomputes_the_score(client, env):
     client.get("/api/status")
     before = score(env)
     client.put("/api/home", json={"lat": 50.93, "lon": -1.42, "label": "Home"})
-    assert score(env) == before + 8                         # home on the map is eight points
+    assert score(env) == before + 6                         # home on the map is six points
 
 
 def test_a_finished_drill_recomputes_the_score(client, env):
