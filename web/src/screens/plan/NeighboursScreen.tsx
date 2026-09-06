@@ -6,7 +6,7 @@ import './plan.css';
  * doors. The printable list is the screen's own action, at the top where a hand reaches for it. */
 export function NeighboursScreen() {
   return (
-    <Screen title="Neighbours" actions={<StreetListLink />}>
+    <Screen title="Neighbours" actions={<StreetListLink />} backTo="/plan">
       <Body>
         <section className="panel" aria-label="Neighbours">
           <Neighbours />

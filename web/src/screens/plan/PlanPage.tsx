@@ -10,7 +10,7 @@ import './plan.css';
 export function PlanPage() {
   const planQ = useQuery(() => api.page('household-plan'), []);
   return (
-    <Screen title="The plan" actions={<PrintButton />}>
+    <Screen title="The plan" actions={<PrintButton />} backTo="/plan">
       <Body>
         <section className="panel" aria-label="The plan">
           {planQ.error && <p className="warning">The plan is unavailable: {planQ.error}</p>}

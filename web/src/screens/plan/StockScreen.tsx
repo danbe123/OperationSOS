@@ -6,7 +6,7 @@ import './plan.css';
  * beneath them shortest run first, and the form behind a button. */
 export function StockScreen() {
   return (
-    <Screen title="Stock">
+    <Screen title="Stock" backTo="/plan">
       <Body>
         <section className="panel" aria-label="Stock">
           <Stock />

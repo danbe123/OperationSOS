@@ -11,7 +11,7 @@ import { useWide } from './useWide';
  * from, and the search field that is on every screen. Navigation lives in the shell, so no screen
  * draws an app bar of its own. */
 export function Screen({
-  title, actions, children, className, back = true, search = true, fill = false,
+  title, actions, children, className, back = true, search = true, fill = false, backTo,
 }: {
   title: string;
   actions?: ReactNode;
@@ -20,6 +20,9 @@ export function Screen({
   back?: boolean;
   search?: boolean;
   fill?: boolean;
+  /** Where Back goes instead of the history stack. A screen reached by a deep link (a readiness
+      gap, say) has no useful "back" in history — it should return to its parent screen instead. */
+  backTo?: string;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,8 +33,9 @@ export function Screen({
     reportTitle(title);
   }, [title, reportTitle]);
   const goBack = () => {
+    if (backTo) navigate(backTo);
     // 'default' is the key of the first entry in this history; there is nothing to go back to.
-    if (location.key === 'default') navigate('/');
+    else if (location.key === 'default') navigate('/');
     else navigate(-1);
   };
   const classes = ['screen', fill ? 'screen-fill' : '', className ?? ''].filter(Boolean).join(' ');

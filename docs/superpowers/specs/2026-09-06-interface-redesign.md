@@ -76,7 +76,7 @@ The redesign is not done until every entry below has been restyled inside the sh
 | Route | Screen | States to cover |
 |---|---|---|
 | `/` (`/now`) | Now | peacetime (readiness, gaps, drill button), scenario active, conditions off, proposals pending, drill, loading, engine unreachable, empty household and stock |
-| `/situation` | Situation sheet | all ten conditions in each state, stale prompt, conflict (409), note editing, clock controls, drill start and end, sensors present and absent, print report |
+| `/situation` | Situation sheet | all ten conditions in each state, stale prompt, conflict (409), note editing, clock controls, drill start and end, sensors present and absent, print report, the event log beneath the rows (`#log` deep link) with empty and populated states and its entry form |
 | `/tasks` | Tasks | four buckets, empty bucket, done filter, assignment with and without a household, checklist tasks, drill ticks |
 | `/board` | Board | scenario active, conditions off, peacetime, no bulletin, no stock, tap to leave |
 | `/s/:slug` | Scenario | six tabs, current phase marked, modules as accordions, checklist as the task list, sources, reviewed and unreviewed, print (all tabs open), loading, missing |
@@ -91,7 +91,7 @@ The redesign is not done until every entry below has been restyled inside the sh
 | `/read/:id/*` | Reader | article, theme injected, text size, external link notice, missing article |
 | `/doc/:id` | Document | PDF with thumbnails and search, EPUB, `#page=` deep link, missing file |
 | `/ai` | Assistant | off, starting, ready, busy by this screen, busy by another, thermal off, error, streaming answer with citations, refusal |
-| `/plan` | Household | household register, stock with badges, plan page, notes, pins, event log, empty states |
+| `/plan` | Household hub | one row per section (People, Neighbours, Stock, The plan, Notes and pins, What happened) each stating its own state or empty state, old-anchor redirects (`#household`, `#stock`, `#notes`, `#pins`, `#log`) to the sub-screen; `/plan/people`, `/plan/neighbours`, `/plan/stock`, `/plan/plan`, `/plan/notes` each with their list, empty state, add-behind-a-button form, edit and remove, and Back to the hub |
 | `/fieldcraft` | Field craft | the ten pages |
 | `/radio` | Phone and radio | comms pages, calls hidden |
 | `/tools` | Tools | tile list |

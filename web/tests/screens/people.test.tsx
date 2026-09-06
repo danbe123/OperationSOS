@@ -22,6 +22,14 @@ describe('People', () => {
     expect(screen.queryByRole('form', { name: 'Add a person' })).toBeNull();
   });
 
+  it('opened directly, Back lands on the household hub, not further back in history', async () => {
+    vi.spyOn(api, 'household').mockResolvedValue(people);
+    const { router } = renderRoute('/plan/people');
+    await screen.findByRole('heading', { name: 'People', level: 1 });
+    await userEvent.setup().click(screen.getByRole('button', { name: /Back/ }));
+    expect(router.state.location.pathname).toBe('/plan');
+  });
+
   it('says so when nobody is registered, with the button to add the first one', async () => {
     vi.spyOn(api, 'household').mockResolvedValue([]);
     renderRoute('/plan/people');

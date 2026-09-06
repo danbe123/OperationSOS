@@ -6,7 +6,7 @@ import './plan.css';
  * reads for needs and medications, edited in the one place they are kept. */
 export function People() {
   return (
-    <Screen title="People">
+    <Screen title="People" backTo="/plan">
       <Body>
         <section className="panel" aria-label="People">
           <Household />
