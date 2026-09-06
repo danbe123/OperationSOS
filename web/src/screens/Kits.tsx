@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import type { KitSummary, KitTierId } from '../api/types';
-import { useQuery } from '../api/useQuery';
+import type { Kit, KitSummary, KitTierId } from '../api/types';
+import { errorMessage, useQuery } from '../api/useQuery';
+import { notify } from '../components/Notice';
 import { PrintButton } from '../components/PrintButton';
 import { Tile } from '../components/Tile';
 import { Screen, Body } from '../shell/Screen';
@@ -11,6 +13,47 @@ const TIER_LABEL: Record<KitTierId, string> = { basic: 'Basic', serious: 'Seriou
 /** "Basic 1/2 · Serious 0/1 · Full 0/1": the one line a tile has for progress. */
 export function tierLine(tiers: KitSummary['tiers']): string {
   return (['basic', 'serious', 'full'] as KitTierId[]).map((t) => `${TIER_LABEL[t]} ${tiers[t].done}/${tiers[t].total}`).join(' · ');
+}
+
+/** Every kit as one packing list. `beforeprint` is too late to fetch anything, so the button fetches
+ * the kits first and prints once they are on the page. */
+function usePrintEveryKit(kits: KitSummary[]): { sheets: Kit[]; printAll: () => Promise<void> } {
+  const [sheets, setSheets] = useState<Kit[]>([]);
+  useEffect(() => {
+    if (!sheets.length) return;
+    window.print();
+    setSheets([]);
+  }, [sheets]);
+  const printAll = async () => {
+    try {
+      setSheets(await Promise.all(kits.map((k) => api.kit(k.slug))));
+    } catch (e) {
+      notify(`Could not gather the kits to print: ${errorMessage(e)}`);
+    }
+  };
+  return { sheets, printAll };
+}
+
+function PackingList({ sheets }: { sheets: Kit[] }) {
+  return (
+    <div className="print-only kit-sheets">
+      {sheets.map((kit) => (
+        <section key={kit.slug}>
+          <h2>{kit.title}</h2>
+          {kit.tiers.map((tier) => (
+            <div key={tier.id}>
+              <h3>{tier.title} · {tier.days} days</h3>
+              <ul className="list">
+                {tier.items.map((i) => (
+                  <li key={i.id}>{i.checked ? '\u2611' : '\u2610'} {i.name}{i.qty ? ` — ${i.qty.text}` : ''}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
 }
 
 function KitTiles({ kits, label }: { kits: KitSummary[]; label: string }) {
@@ -28,8 +71,9 @@ export function Kits() {
   const relevant = kits.filter((k) => k.relevant);
   const rest = kits.filter((k) => !k.relevant);
   const people = q.data?.people ?? 1;
+  const { sheets, printAll } = usePrintEveryKit(kits);
   return (
-    <Screen title="Kit" back={false} search={false} actions={<PrintButton />}>
+    <Screen title="Kit" back={false} search={false} actions={<PrintButton label="Print every kit" onPrint={() => void printAll()} />}>
       <Body>
         <p className="muted">
           What to have before anything happens, in three tiers: three days, two weeks, and no help coming.
@@ -50,6 +94,7 @@ export function Kits() {
             <KitTiles kits={rest} label="Not needed for this household" />
           </section>
         )}
+        <PackingList sheets={sheets} />
       </Body>
     </Screen>
   );

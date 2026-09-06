@@ -5,4 +5,13 @@
 .kit-qty { display: block; color: var(--ink-muted); }
 .kit-stock-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: calc(var(--touch) + 12px); }
 .kit-add-stock { margin-left: calc(var(--touch) + 12px); }
-@media print { .kit-tier { break-inside: avoid; } .kit-tier[open] > summary { list-style: none; } }
+.kit-why { color: var(--ink-muted); }
+/* On paper every tier is packed, not only the ones somebody opened on the screen: a `details` that is
+   shut renders nothing at all, so the list itself is forced open for the printer. */
+@media print {
+  .kit-tier { break-inside: avoid; }
+  .kit-tier > summary { list-style: none; }
+  .kit-tier > ul { display: block !important; }
+  /* The overview's packing list: one sheet a kit. */
+  .kit-sheets section + section { break-before: page; }
+}

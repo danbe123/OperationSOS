@@ -79,8 +79,8 @@ function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (k
         <span>
           <span className="task-title">{item.name}</span>
           {item.qty && <span className="kit-qty">{item.qty.text}</span>}
-          {item.why && <span className="muted"> {item.why}</span>}
-          {item.note && <span className="muted"> {item.note}</span>}
+          {item.why_html && <Html className="kit-why" html={item.why_html} />}
+          {item.note_html && <Html className="kit-why" html={item.note_html} />}
           {item.href && (
             <> <Link to={item.href} aria-label={`${linkTitle(item)}: ${item.name}`}>{linkTitle(item)}</Link></>
           )}
@@ -143,13 +143,20 @@ export function Kit() {
         {kit && (
           <>
             {!kit.relevant && <p className="panel muted">Nobody on the household register needs this kit yet. It is here for when they do.</p>}
-            {kit.intro_html && <Html html={kit.intro_html} />}
             <p className="muted">Quantities are for {kit.people} {kit.people === 1 ? 'person' : 'people'} on the register. Ticks are shared by everyone on the box.</p>
             {kit.tiers.map((tier) => (
               <div key={tier.id} onToggle={(e) => setOpened((o) => ({ ...o, [tier.id]: (e.target as HTMLDetailsElement).open }))}>
                 <Tier slug={slug} tier={tier} open={isOpen(tier)} onKit={q.setData} />
               </div>
             ))}
+            {/* The list is what the screen is for: the reasoning sits under it, where somebody who
+                wants it will look, rather than between the title and the first thing to pack. */}
+            {kit.intro_html && (
+              <section aria-labelledby="kit-why">
+                <h2 id="kit-why">Why these things</h2>
+                <Html html={kit.intro_html} />
+              </section>
+            )}
             {kit.sources.length > 0 && (
               <p className="muted">Sources: {kit.sources.map((s) => s.title).join('; ')}.</p>
             )}

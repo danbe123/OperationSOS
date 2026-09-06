@@ -59,6 +59,9 @@ export type StockItem = {
   id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
   expires: string | null; notes: string; updated_at: string; days_left: number | null;
   kit_item: string | null;
+  /** The title of the kit `kit_item` names, so the row can say "From the Power and light kit". Absent on a
+   * box built before the field existed, where the screen falls back to the slug. */
+  kit_title?: string | null;
 };
 export type StockResponse = { people: number; items: StockItem[] };
 export type SituationPhase = 'right-now' | 'first-72-hours' | 'first-month' | 'long-term';
@@ -168,6 +171,8 @@ export type KitSummary = {
 export type KitsResponse = { people: number; kits: KitSummary[] };
 export type KitItem = {
   id: string; name: string; why: string; note: string; link: string | null; href: string | null;
+  /** `why` and `note` as inline HTML (no paragraph wrapper), so their citations are links on the row. */
+  why_html: string; note_html: string;
   qty: { amount: number; unit: string; scaled: number; text: string } | null;
   stock: { category: StockCategory; unit: string } | null;
   checked: boolean; updated_at: string | null;

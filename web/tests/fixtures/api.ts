@@ -323,8 +323,8 @@ export const events: Note[] = [
 export const stockResponse: StockResponse = {
   people: 3,
   items: [
-    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5, kit_item: null },
-    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6, kit_item: null },
+    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5, kit_item: 'power-and-light/torch', kit_title: 'Power and light' },
+    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6, kit_item: null, kit_title: null },
   ],
 };
 
@@ -396,18 +396,20 @@ export const kitWater: Kit = {
   relevant: true, people: 2,
   tiers: [
     { id: 'basic', title: 'Three days', days: 3, why: "The government's own baseline.", done: 1, total: 2, items: [
-      { id: 'stored-water', name: 'Drinking water in sealed containers', why: 'Bottled, or filled containers, rotated yearly.', note: '', link: 'module:water', href: '/m/water',
+      { id: 'stored-water', name: 'Drinking water in sealed containers', why: 'Bottled, or filled containers, rotated yearly ([Prepare](kiwix:prepare_uk/prepare)).', note: 'Rotate every year.',
+        why_html: 'Bottled, or filled containers, rotated yearly (<a href="/read/prepare_uk/prepare">Prepare</a>).', note_html: 'Rotate every year.',
+        link: 'module:water', href: '/m/water',
         qty: { amount: 3, unit: 'L', scaled: 18, text: '18 L for 2 people over 3 days' }, stock: { category: 'water', unit: 'L' },
         checked: true, updated_at: '2026-09-06T10:00:00+00:00', stock_item: { id: 7, quantity: 18, unit: 'L', expires: null, days_left: 3 } },
-      { id: 'containers', name: 'Containers with lids, 10 litres or more', why: '', note: '', link: 'module:water', href: '/m/water',
+      { id: 'containers', name: 'Containers with lids, 10 litres or more', why: '', note: '', why_html: '', note_html: '', link: 'module:water', href: '/m/water',
         qty: { amount: 2, unit: '', scaled: 4, text: '4 for 2 people' }, stock: null, checked: false, updated_at: null, stock_item: null },
     ] },
     { id: 'serious', title: 'Two weeks', days: 14, why: 'What every playbook on this box plans for.', done: 0, total: 1, items: [
-      { id: 'tablets', name: 'Water purification tablets', why: 'One pack treats a fortnight of water.', note: '', link: null, href: null,
+      { id: 'tablets', name: 'Water purification tablets', why: 'One pack treats a fortnight of water.', note: '', why_html: 'One pack treats a fortnight of water.', note_html: '', link: null, href: null,
         qty: { amount: 1, unit: 'pack', scaled: 1, text: '1 pack' }, stock: { category: 'other', unit: 'packs' }, checked: false, updated_at: null, stock_item: null },
     ] },
     { id: 'full', title: 'No help coming', days: 90, why: 'A season with no mains and no shops.', done: 0, total: 1, items: [
-      { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', link: null, href: null, qty: null, stock: null, checked: false, updated_at: null, stock_item: null },
+      { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', why_html: 'x', note_html: '', link: null, href: null, qty: null, stock: null, checked: false, updated_at: null, stock_item: null },
     ] },
   ],
 };

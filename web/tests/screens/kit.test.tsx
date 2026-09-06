@@ -5,11 +5,10 @@ import { api } from '../../src/api/client';
 import { kitWater } from '../fixtures/api';
 
 describe('Kit', () => {
-  it('shows the intro, three tiers with basic open, quantities and the stock line', async () => {
+  it('shows three tiers with basic open, quantities and the stock line', async () => {
     vi.spyOn(api, 'kit').mockResolvedValue(kitWater);
     renderRoute('/kit/water');
     expect(await screen.findByRole('heading', { level: 1, name: 'Water' })).toBeInTheDocument();
-    expect(screen.getByText('Three litres a person a day is the planning figure.')).toBeInTheDocument();
     const basic = screen.getByRole('group', { name: /Three days/ });
     expect(basic).toHaveAttribute('open');
     expect(screen.getByRole('group', { name: /Two weeks/ })).not.toHaveAttribute('open');
@@ -17,6 +16,24 @@ describe('Kit', () => {
     expect(within(basic).getByText(/18 L in Stock/)).toBeInTheDocument();
     expect(within(basic).getByRole('link', { name: 'Water module: Drinking water in sealed containers' })).toHaveAttribute('href', '/m/water');
     expect(within(basic).getByRole('checkbox', { name: /Drinking water/ })).toBeChecked();
+  });
+
+  it('puts the list first and the reasoning under it, and links a citation inside a why', async () => {
+    vi.spyOn(api, 'kit').mockResolvedValue(kitWater);
+    renderRoute('/kit/water');
+    await screen.findByRole('heading', { level: 1, name: 'Water' });
+    const quantities = screen.getByText(/Quantities are for 2 people/);
+    const basic = screen.getByRole('group', { name: /Three days/ });
+    const full = screen.getByRole('group', { name: /No help coming/ });
+    const why = screen.getByRole('heading', { level: 2, name: 'Why these things' });
+    // The sentence about who the quantities are for stays above the first tier; the intro moves below the last.
+    expect(quantities.compareDocumentPosition(basic) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(full.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Three litres a person a day is the planning figure.')).toBeInTheDocument();
+    // A why is inline HTML, so its citation is a link on the row rather than raw Markdown.
+    expect(within(basic).getByRole('link', { name: 'Prepare' })).toHaveAttribute('href', '/read/prepare_uk/prepare');
+    expect(within(basic).queryByText(/\[Prepare\]/)).toBeNull();
+    expect(within(basic).getByText('Rotate every year.')).toBeInTheDocument();
   });
 
   it('ticks an item and offers Add to Stock prefilled with the scaled quantity', async () => {

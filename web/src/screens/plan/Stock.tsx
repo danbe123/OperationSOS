@@ -14,9 +14,11 @@ export const CATEGORIES: { id: StockCategory; title: string; unit: string; rate:
   { id: 'other', title: 'Other', unit: '', rate: '' },
 ];
 
-/** "water/stored-water" -> "Water": the kit's slug as a title, until the row carries the kit's real title. */
-export function kitTitle(kitItem: string): string {
-  const slug = kitItem.split('/')[0].replace(/-/g, ' ');
+/** The kit a row came from, by name. The API sends the kit's real title; a row saved by an older box has
+ * only the slug, so "power-and-light/torch" becomes "Power and light" rather than nothing. */
+export function kitTitle(item: Pick<StockItem, 'kit_item' | 'kit_title'>): string {
+  if (item.kit_title) return item.kit_title;
+  const slug = (item.kit_item ?? '').split('/')[0].replace(/-/g, ' ');
   return slug.charAt(0).toUpperCase() + slug.slice(1);
 }
 
@@ -62,7 +64,7 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
         {badge && <span className={badge.cls}>{badge.text}</span>}
         {item.expires && <span className="muted">use by {isoToUkDate(item.expires)}</span>}
         {item.kit_item && (
-          <Link className="muted" to={`/kit/${item.kit_item.split('/')[0]}`}>From the {kitTitle(item.kit_item)} kit</Link>
+          <Link className="muted" to={`/kit/${item.kit_item.split('/')[0]}`}>From the {kitTitle(item)} kit</Link>
         )}
       </div>
       <div className="row no-print">
