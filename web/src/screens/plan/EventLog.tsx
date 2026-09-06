@@ -53,8 +53,22 @@ function EventRow({ event, onChanged }: { event: Note; onChanged: () => Promise<
   );
 }
 
-export function EventLog({ compact = false }: { compact?: boolean }) {
+/** The log, newest first: what happened and when, with a way to correct a mistyped entry. */
+export function EventLogList() {
   const q = useQuery(() => api.notes('event'), [], { refetchOnFocus: true, intervalMs: 30_000 });
+  return (
+    <>
+      {q.error && <p className="warning">Log unavailable: {q.error}</p>}
+      <ul className="list" aria-label="Event log">
+        {(q.data ?? []).map((ev) => <EventRow key={ev.id} event={ev} onChanged={q.refetch} />)}
+        {q.data && q.data.length === 0 && <li className="muted">Nothing logged yet.</li>}
+      </ul>
+    </>
+  );
+}
+
+/** One line, one button: the box stamps the time. */
+export function EventLogForm({ onAdded, onCancel }: { onAdded: () => void; onCancel?: () => void }) {
   const [text, setText] = useState('');
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,24 +76,34 @@ export function EventLog({ compact = false }: { compact?: boolean }) {
     try {
       await api.createNote({ kind: 'event', title: text.trim() });
       setText('');
-      await q.refetch();
+      onAdded();
     } catch (err) {
       notify(`Could not log the entry: ${errorMessage(err)}`);
     }
   };
   return (
-    <section className="panel" id="log" aria-label="Event log">
-      {!compact && <h2>Event log</h2>}
+    <form className="row no-print" onSubmit={(e) => void add(e)} aria-label="Log an event">
+      <input type="text" aria-label="What happened" className="event-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="What happened?" autoFocus />
+      <button type="submit" className="btn btn-primary">Log it</button>
+      {onCancel && <button type="button" className="btn" onClick={onCancel}>Cancel</button>}
+    </form>
+  );
+}
+
+/** The log as a screen shows it: the entries, and the form behind a button. A form standing open
+ * above the entries is a form on every screen the log appears on, and the log is read far more
+ * often than it is written to. The list is keyed on the count of entries added here, so logging
+ * one reads the log back rather than leaving the new line off the screen that just wrote it. */
+export function EventLog() {
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(0);
+  return (
+    <>
       <p className="muted">What happened and when: "water off", "heard sirens", "gave Sam 5ml paracetamol". The time is stamped for you.</p>
-      <form className="row no-print" onSubmit={(e) => void add(e)} aria-label="Log an event">
-        <input type="text" aria-label="What happened" className="event-input" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="What happened?" />
-        <button type="submit" className="btn btn-primary">Log it</button>
-      </form>
-      {q.error && <p className="warning">Log unavailable: {q.error}</p>}
-      <ul className="list" aria-label="Event log">
-        {(q.data ?? []).map((ev) => <EventRow key={ev.id} event={ev} onChanged={q.refetch} />)}
-        {q.data && q.data.length === 0 && <li className="muted">Nothing logged yet.</li>}
-      </ul>
-    </section>
+      {adding
+        ? <EventLogForm onAdded={() => { setAdding(false); setAdded((n) => n + 1); }} onCancel={() => setAdding(false)} />
+        : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add an entry</button>}
+      <EventLogList key={added} />
+    </>
   );
 }

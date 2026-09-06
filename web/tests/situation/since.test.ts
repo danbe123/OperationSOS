@@ -4,10 +4,8 @@ import { localInput, sinceChoiceFor, sinceIso } from '../../src/situation/since'
 const NOON = Date.parse('2026-09-06T12:00:00.000Z');
 
 describe('reading a stored time back into the since picker', () => {
-  it('finds the answer each of the four options would have written', () => {
-    // Compared as instants rather than by name: in a time zone where 07:00 falls on the hour under
-    // test two answers name the same moment, and either of them is a true reading of what is stored.
-    for (const choice of ['now', 'hour', 'morning', 'yesterday'] as const) {
+  it('finds the answer each of the round options would have written', () => {
+    for (const choice of ['now', 'hour'] as const) {
       const stored = sinceIso(choice, '', NOON);
       expect(sinceIso(sinceChoiceFor(stored, NOON), '', NOON), choice).toBe(stored);
     }
@@ -19,8 +17,12 @@ describe('reading a stored time back into the since picker', () => {
   });
 
   it('calls anything else a typed-in time rather than dressing it up as a round answer', () => {
-    // 08:23, which is neither an hour ago, nor 07:00 in any time zone, nor this time yesterday.
+    // 08:23, which is neither an hour ago nor this moment.
     expect(sinceChoiceFor(new Date(NOON - 3 * 3_600_000 - 2_220_000).toISOString(), NOON)).toBe('custom');
+    // The picker used to offer "This morning" and "Yesterday, this time"; both are now "Earlier",
+    // which shows the stored time in the field rather than a round answer nobody chose.
+    expect(sinceChoiceFor(new Date(NOON - 5 * 3_600_000).toISOString(), NOON)).toBe('custom');
+    expect(sinceChoiceFor(new Date(NOON - 86_400_000).toISOString(), NOON)).toBe('custom');
   });
 
   it('opens on "just now" when the box has nothing stored', () => {

@@ -4,75 +4,123 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api, ApiError } from '../../src/api/client';
 import { condition, makeView, playbooks, powerOffView, view } from '../fixtures/api';
-import { localInput } from '../../src/situation/since';
 
-/** A service that is working is one line until somebody asks for its form. */
-async function openRow(rows: HTMLElement, id: string) {
-  await userEvent.setup().click(within(rows.querySelector(`#${id}`) as HTMLElement).getByRole('button', { name: /Change/ }));
+const rowFor = (rows: HTMLElement, id: string) => rows.querySelector(`#${id}`) as HTMLElement;
+
+/** What the box knows about a service — who set it, the note, the day-old prompt — is behind Details. */
+async function openDetails(rows: HTMLElement, id: string) {
+  await userEvent.setup().click(within(rowFor(rows, id)).getByRole('button', { name: 'Details' }));
 }
 
 describe('The situation sheet', () => {
-  it('lists all ten conditions with three states each, and a print link', async () => {
+  it('puts the three states on every row, with the one the box is holding pressed', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
     expect(within(rows).getAllByRole('listitem')).toHaveLength(10);
-    // Ten working services are ten lines, not ten forms: the sheet says so, and no form is open.
     expect(rows).toHaveTextContent('Everything is working. Open a service to say it has gone.');
-    expect(within(rows).queryByRole('group', { name: 'Mains power' })).toBeNull();
-    await openRow(rows, 'power');
-    const power = within(rows).getByRole('group', { name: 'Mains power' });
-    expect(within(power).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['✓Working', 'Patchy', 'Off']);
-    expect(within(power).getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
-    // One open at a time.
-    await openRow(rows, 'sewage');
-    expect(within(rows).getByRole('group', { name: 'Sewage and drains' })).toBeInTheDocument();
-    expect(within(rows).queryByRole('group', { name: 'Mains power' })).toBeNull();
+    // No door in front of the door: the answer is on the row, not one tap behind a "Change" button.
+    expect(within(rows).queryByRole('button', { name: /Change/ })).toBeNull();
+    for (const name of ['Mains power', 'Water supply', 'Sewage and drains']) {
+      const group = within(rows).getByRole('group', { name });
+      expect(within(group).getAllByRole('button').map((b) => b.textContent?.trim()), name).toEqual(['✓Working', 'Patchy', 'Off']);
+      expect(within(group).getByRole('button', { name: 'Working' }), name).toHaveAttribute('aria-pressed', 'true');
+    }
     expect(screen.getByRole('link', { name: 'Print report' })).toHaveAttribute('href', '/api/situation/report');
     expect(screen.getByRole('link', { name: 'Print report' })).toHaveAttribute('target', '_blank');
   });
 
-  it('sets a state with the chosen since time and the row it was based on', async () => {
+  it('asks when it started on the row that was changed, and nowhere else', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     const set = vi.spyOn(api, 'setCondition').mockResolvedValue(condition('power', 'off'));
     renderRoute('/situation');
     const user = userEvent.setup();
-    await openRow(await screen.findByRole('region', { name: 'What is working' }), 'power');
-    await user.selectOptions(screen.getByLabelText('Mains power: since'), 'hour');
-    await user.click(within(screen.getByRole('group', { name: 'Mains power' })).getByRole('button', { name: /Off/ }));
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Off' }));
+
+    const when = within(rows).getByRole('group', { name: 'Mains power: since when?' });
+    expect(within(when).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['Just now', 'About an hour ago', 'Earlier', 'Save', 'Cancel']);
+    // The question is asked about the one service somebody touched, not about all ten.
+    expect(within(rows).queryByRole('group', { name: 'Water supply: since when?' })).toBeNull();
+
+    await user.click(within(when).getByRole('button', { name: 'About an hour ago' }));
+    await user.click(within(when).getByRole('button', { name: 'Save' }));
     expect(set).toHaveBeenCalledTimes(1);
     const [id, body] = set.mock.calls[0];
     expect(id).toBe('power');
     expect(body.state).toBe('off');
+    expect(body.note).toBe('');
     expect(body.expected_updated_at).toBe(view.conditions.power.updated_at);
     expect(Date.now() - Date.parse(body.since as string)).toBeGreaterThan(3_500_000);
+    expect(Date.now() - Date.parse(body.since as string)).toBeLessThan(3_700_000);
+    // and the question goes once it has been answered
+    expect(within(rows).queryByRole('group', { name: 'Mains power: since when?' })).toBeNull();
   });
 
-  it('says who set it and offers Confirm when a state has gone stale', async () => {
+  it('changes nothing when the question is cancelled', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const set = vi.spyOn(api, 'setCondition').mockResolvedValue(condition('power', 'off'));
+    renderRoute('/situation');
+    const user = userEvent.setup();
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Off' }));
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power: since when?' })).getByRole('button', { name: 'Cancel' }));
+    expect(within(rows).queryByRole('group', { name: 'Mains power: since when?' })).toBeNull();
+    expect(set).not.toHaveBeenCalled();
+    expect(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('offers a typed-in time under "Earlier"', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const set = vi.spyOn(api, 'setCondition').mockResolvedValue(condition('power', 'off'));
+    renderRoute('/situation');
+    const user = userEvent.setup();
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    await user.click(within(within(rows).getByRole('group', { name: 'Mains power' })).getByRole('button', { name: 'Off' }));
+    const when = within(rows).getByRole('group', { name: 'Mains power: since when?' });
+    await user.click(within(when).getByRole('button', { name: 'Earlier' }));
+    // In the order this country writes dates in and on a 24-hour clock.
+    const field = within(when).getByLabelText(/Mains power: time it started/);
+    await user.clear(field);
+    await user.type(field, '06/09/2026 09:30');
+    await user.click(within(when).getByRole('button', { name: 'Save' }));
+    expect(set.mock.calls[0][1].since).toBe(new Date('2026-09-06T09:30').toISOString());
+  });
+
+  it('keeps who set it, the note and the stale prompt behind Details', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       conditions: { power: condition('power', 'off', { stale: true, for_s: 90_000, set_by: 'kiosk', updated_at: '2026-09-05T10:00:00.000Z' }) } as never,
     }));
     const confirm = vi.spyOn(api, 'confirmCondition').mockResolvedValue(condition('power', 'off'));
     renderRoute('/situation');
-    const row = (await screen.findByRole('region', { name: 'What is working' })).querySelector('#power') as HTMLElement;
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    const row = rowFor(rows, 'power');
+    expect(row).not.toHaveTextContent('Set from kiosk at');
+    expect(within(row).queryByRole('status')).toBeNull();
+    expect(within(row).queryByLabelText('Mains power: note')).toBeNull();
+    expect(within(row).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
+
+    await openDetails(rows, 'power');
+    expect(within(row).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'true');
     expect(row).toHaveTextContent('Set from kiosk at');
+    expect(within(row).getByLabelText('Mains power: note')).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Save note' })).toBeInTheDocument();
     expect(within(row).getByRole('status')).toHaveTextContent('Still off?');
     await userEvent.setup().click(within(row).getByRole('button', { name: 'Confirm, still off' }));
     expect(confirm).toHaveBeenCalledWith('power');
   });
-
 
   it('marks the chosen state with the symbol, and puts it on nothing else', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    // What is not working is always open; the water, which is, opens on request.
     expect(rows).toHaveTextContent('2 of 10 not working. Open a service to say it has changed.');
-    await openRow(rows, 'water');
     // A tick, a triangle and a cross on all three buttons at once said nothing about which one the
     // box is holding: the symbol belongs to the answer, not to the options.
     for (const [name, symbol] of [['Mains power', '✕'], ['Mobile network', '▲'], ['Water supply', '✓']] as const) {
@@ -89,29 +137,6 @@ describe('The situation sheet', () => {
     expect(off.className.split(' ')).toEqual(expect.arrayContaining(['state-btn', 'state-set', 'state-danger']));
   });
 
-  it('opens the since picker on the time the box is already telling everyone about', async () => {
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    const anHourAgo = new Date(Date.now() - 3_600_000).toISOString();
-    const oddly = new Date(Date.now() - 3 * 3_600_000 - 2_220_000).toISOString();
-    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
-      conditions: {
-        power: condition('power', 'off', { since: anHourAgo, updated_at: anHourAgo }),
-        water: condition('water', 'off', { since: oddly, updated_at: oddly }),
-      } as never,
-    }));
-    renderRoute('/situation');
-    // The heading two lines above says "off for 1 h"; the control used to say "Just now".
-    expect(await screen.findByLabelText('Mains power: since')).toHaveValue('hour');
-    // Nothing round fits the water, so the box offers the time itself rather than a near-enough lie,
-    // in the order this country writes dates in and on a 24-hour clock.
-    expect(screen.getByLabelText('Water supply: since')).toHaveValue('custom');
-    expect(screen.getByLabelText(/Water supply: time it started/)).toHaveValue(localInput(oddly));
-    expect(localInput(oddly)).toMatch(/^\d\d\/\d\d\/\d{4} \d\d:\d\d$/);
-    // A condition nobody has changed opens on "Just now": the picker is for the change about to be made.
-    await openRow(screen.getByRole('region', { name: 'What is working' }), 'gas');
-    expect(screen.getByLabelText('Gas: since')).toHaveValue('now');
-  });
-
   it('says nobody has set a condition nobody has set, rather than "Set from at ."', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
@@ -119,12 +144,12 @@ describe('The situation sheet', () => {
     }));
     renderRoute('/situation');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    await openRow(rows, 'gas');
-    expect(rows.querySelector('#gas')).toHaveTextContent('Nobody has set this yet.');
-    expect(rows.querySelector('#gas')).not.toHaveTextContent('Set from');
+    await openDetails(rows, 'gas');
+    expect(rowFor(rows, 'gas')).toHaveTextContent('Nobody has set this yet.');
+    expect(rowFor(rows, 'gas')).not.toHaveTextContent('Set from');
     // and a row somebody has set still says who and when, in British words
-    await openRow(rows, 'power');
-    expect(rows.querySelector('#power')).toHaveTextContent(/Set from phone at [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+, \d\d:\d\d\./);
+    await openDetails(rows, 'power');
+    expect(rowFor(rows, 'power')).toHaveTextContent(/Set from phone at [A-Z][a-z]+day \d{1,2} [A-Z][a-z]+, \d\d:\d\d\./);
   });
 
   it('warns instead of overwriting when another phone got there first', async () => {
@@ -132,8 +157,10 @@ describe('The situation sheet', () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     vi.spyOn(api, 'setCondition').mockRejectedValue(new ApiError(409, 'conflict'));
     renderRoute('/situation');
-    await openRow(await screen.findByRole('region', { name: 'What is working' }), 'water');
-    await userEvent.setup().click(within(screen.getByRole('group', { name: 'Water supply' })).getByRole('button', { name: /Off/ }));
+    const user = userEvent.setup();
+    const rows = await screen.findByRole('region', { name: 'What is working' });
+    await user.click(within(within(rows).getByRole('group', { name: 'Water supply' })).getByRole('button', { name: 'Off' }));
+    await user.click(within(within(rows).getByRole('group', { name: 'Water supply: since when?' })).getByRole('button', { name: 'Save' }));
     expect(await screen.findByText(/Water supply was changed on another device/)).toBeInTheDocument();
   });
 
@@ -165,12 +192,14 @@ describe('The situation sheet', () => {
     expect(end).toHaveBeenCalled();
   });
 
-  it('opens at the condition the chip named', async () => {
+  it('opens at the condition the chip named, with its details out', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/situation#water');
     const rows = await screen.findByRole('region', { name: 'What is working' });
-    expect(rows.querySelector('#water')).not.toBeNull();
-    expect(rows.querySelector('#power')).toHaveClass('cond-row-danger');
+    expect(within(rowFor(rows, 'water')).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'true');
+    expect(within(rowFor(rows, 'water')).getByLabelText('Water supply: note')).toBeInTheDocument();
+    expect(within(rowFor(rows, 'power')).getByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
+    expect(rowFor(rows, 'power')).toHaveClass('cond-row-danger');
   });
 });

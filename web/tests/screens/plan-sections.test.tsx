@@ -25,7 +25,7 @@ function mockAll() {
 }
 
 describe('Plan sections', () => {
-  it('shows the household, stock days left with badges, and the event log newest first', async () => {
+  it('shows the household and stock days left with badges', async () => {
     mockAll();
     renderRoute('/plan');
     const household = await screen.findByRole('list', { name: 'Household' });
@@ -37,15 +37,12 @@ describe('Plan sections', () => {
     expect(within(items).getByText('4 days')).toHaveClass('badge-warn');
     expect(within(items).getByText('expired')).toHaveClass('badge-danger');
     expect(screen.getByText(/Days left are for 2 people/)).toBeInTheDocument();
-    const log = screen.getByRole('list', { name: 'Event log' });
-    expect(within(log).getAllByRole('listitem').map((li) => li.textContent)).toEqual([expect.stringContaining('Heard sirens'), expect.stringContaining('Water off')]);
   });
 
-  it('adds a person, an item and a log entry through the forms', async () => {
+  it('adds a person and an item through the forms', async () => {
     mockAll();
     const addPerson = vi.spyOn(api, 'addPerson').mockResolvedValue({ ...people[0], id: 3, name: 'Jo' });
     const addStock = vi.spyOn(api, 'addStock').mockResolvedValue({ ...water, id: 3, name: 'Diesel', category: 'fuel', per_person_day: null });
-    const createNote = vi.spyOn(api, 'createNote').mockResolvedValue(events[0]);
     renderRoute('/plan');
     const user = userEvent.setup();
     const personForm = await screen.findByRole('form', { name: 'Add a person' });
@@ -60,11 +57,6 @@ describe('Plan sections', () => {
     await user.type(within(stockForm).getByLabelText('Quantity'), '40');
     await user.click(within(stockForm).getByRole('button', { name: 'Add item' }));
     expect(addStock).toHaveBeenCalledWith({ name: 'Diesel', category: 'fuel', quantity: 40, unit: 'L', per_person_day: null, expires: null });
-
-    const logForm = screen.getByRole('form', { name: 'Log an event' });
-    await user.type(within(logForm).getByLabelText('What happened'), 'Gave Sam 5ml paracetamol');
-    await user.click(within(logForm).getByRole('button', { name: 'Log it' }));
-    expect(createNote).toHaveBeenCalledWith({ kind: 'event', title: 'Gave Sam 5ml paracetamol' });
   });
 });
 

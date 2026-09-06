@@ -5,13 +5,24 @@ import { installFixtureRoutes } from './fixtures/routes';
 
 export { MODE, expect, installFixtureRoutes };
 
-/** A service that is working is one line on the sheet until somebody asks for its form. */
-export async function openCondition(page: Page, id: string) {
+/** Say a service has changed, the way a household does: the state on the row, when it started, Save.
+ * There is no "Change" button in front of the states any more. */
+export async function setCondition(page: Page, id: string, state: string, since = 'Just now') {
   const row = page.locator(`#${id}`);
   await row.waitFor();
-  const change = row.getByRole('button', { name: /Change/ });
-  if (await change.isVisible()) await change.click();
-  await expect(row.getByRole('group')).toBeVisible();
+  await row.getByRole('group').first().getByRole('button', { name: state, exact: true }).click();
+  const when = row.getByRole('group', { name: /since when\?$/ });
+  await when.getByRole('button', { name: since, exact: true }).click();
+  await when.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(row.getByRole('group').first().getByRole('button', { name: state, exact: true })).toHaveAttribute('aria-pressed', 'true');
+}
+
+/** What the box knows beyond the state — who set it, the note, the day-old prompt — is behind Details. */
+export async function openDetails(page: Page, id: string) {
+  const row = page.locator(`#${id}`);
+  await row.waitFor();
+  const details = row.getByRole('button', { name: 'Details' });
+  if ((await details.getAttribute('aria-expanded')) !== 'true') await details.click();
 }
 export type { FixtureState };
 

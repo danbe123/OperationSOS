@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openCondition } from './test';
+import { test, expect, openDetails, setCondition } from './test';
 
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
   await page.goto('/');
@@ -14,10 +14,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
 
   // set the power off, an hour ago, from the sheet
   await readiness.getByRole('link', { name: 'Situation' }).click();
-  await openCondition(page, 'power');
-  await page.getByLabel('Mains power: since').selectOption('hour');
-  await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
-  await expect(page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
+  await setCondition(page, 'power', 'Off', 'About an hour ago');
 
   // Now leads with what to do, and the band says what is off
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
@@ -45,10 +42,10 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await band.getByRole('link', { name: '1 off' }).click();
 
   // end with everything working again
-  await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' }).click();
-  // A service that is working again goes back to one line, with its state on it.
+  await setCondition(page, 'power', 'Working');
+  // The states stay on the row whatever it is holding: no door in front of the door.
   await expect(page.locator('#power')).toContainText('working');
-  await expect(page.locator('#power').getByRole('button', { name: /Change/ })).toBeVisible();
+  await expect(page.locator('#power').getByRole('group', { name: 'Mains power' })).toBeVisible();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
@@ -75,10 +72,8 @@ test('a drill runs the whole thing without touching the real conditions', async 
 
 test('with both phone networks down the pages say the numbers will not connect', async ({ page }) => {
   await page.goto('/situation');
-  for (const [id, name] of [['mobile', 'Mobile network'], ['landline', 'Landline and 999']] as const) {
-    await openCondition(page, id);
-    await page.getByRole('group', { name }).getByRole('button', { name: 'Off' }).click();
-    await expect(page.getByRole('group', { name }).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
+  for (const id of ['mobile', 'landline'] as const) {
+    await setCondition(page, id, 'Off');
   }
   await page.goto('/p/pmr446');
   const notice = page.getByRole('status').filter({ hasText: 'will not connect' });
@@ -90,8 +85,7 @@ test('with both phone networks down the pages say the numbers will not connect',
 test('the sheet and Now fit a phone as well as the kiosk', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/situation');
-  await openCondition(page, 'water');
-  await page.getByRole('group', { name: 'Water supply' }).getByRole('button', { name: 'Off' }).click();
+  await setCondition(page, 'water', 'Off');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   // A phone's band carries the count and the way to the sheet; the heading names the service.
@@ -142,11 +136,9 @@ test('the chosen state is filled and marked, not merely coloured, in all six pal
     await page.addInitScript((t) => localStorage.setItem('sos.theme', t as string), theme);
     await page.goto('/situation');
     if (dim) await page.evaluate(() => { document.documentElement.dataset.dim = 'on'; });
-    await openCondition(page, 'power');
+    await setCondition(page, 'power', 'Off');
     const group = page.getByRole('group', { name: 'Mains power' });
-    await group.getByRole('button', { name: 'Off' }).click();
     const chosen = group.getByRole('button', { name: 'Off' });
-    await expect(chosen).toHaveAttribute('aria-pressed', 'true');
 
     // The chosen button is filled with a tint of its own colour, and the other two sit on the raised
     // control tone: without that the only difference between the three was a colour.
@@ -165,23 +157,26 @@ test('the chosen state is filled and marked, not merely coloured, in all six pal
     await expect(group.locator('.state-glyph'), `${where}: symbols in the group`).toHaveCount(1);
     await expect(chosen.locator('.state-glyph')).toHaveText('✕');
 
-    await group.getByRole('button', { name: 'Working' }).click();
-    await expect(group.getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
+    await setCondition(page, 'power', 'Working');
   }
 });
 
-test('the since picker opens on the time the box has stored, not on "Just now"', async ({ page }) => {
+test('the since answer is the one the box stores, and the row says so', async ({ page }) => {
   await page.goto('/situation');
-  await openCondition(page, 'power');
-  await page.getByLabel('Mains power: since').selectOption('hour');
-  await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
-  // Come back to the row from cold: the control must be read out of the box, not left over from a tap.
+  await setCondition(page, 'power', 'Off', 'About an hour ago');
+  // Come back to the row from cold: the time must be read out of the box, not left over from a tap.
   await page.reload();
-  await expect(page.getByLabel('Mains power: since')).toHaveValue('hour');
   await expect(page.locator('#power')).toContainText('for 1 h');
+  // The question is asked on the row that changed and put away once it is answered.
+  await expect(page.locator('#power').getByRole('group', { name: 'Mains power: since when?' })).toBeHidden();
   // A condition nobody has touched offers "Just now" for the change about to be made.
-  await openCondition(page, 'gas');
-  await expect(page.getByLabel('Gas: since')).toHaveValue('now');
+  await page.locator('#gas').getByRole('group', { name: 'Gas' }).getByRole('button', { name: 'Off', exact: true }).click();
+  const when = page.locator('#gas').getByRole('group', { name: 'Gas: since when?' });
+  await expect(when.getByRole('button', { name: 'Just now' })).toHaveAttribute('aria-pressed', 'true');
+  await when.getByRole('button', { name: 'Cancel' }).click();
+  // and what the box knows beyond the state is behind Details.
+  await openDetails(page, 'gas');
+  await expect(page.locator('#gas')).toContainText('Nobody has set this yet.');
 });
 
 test('carrying a situation describes the paste, and says its trouble under the button', async ({ page }) => {

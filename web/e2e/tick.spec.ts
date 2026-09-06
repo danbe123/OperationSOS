@@ -1,14 +1,12 @@
 import type { Page } from '@playwright/test';
-import { test, expect, openCondition } from './test';
+import { test, expect, setCondition } from './test';
 
 /** One tick everywhere. A ticked job stays exactly where it is, struck through, with an Undo for ten
  * seconds — on Things to do, on Now and on a guide. A row that vanishes under the finger is
  * unrecoverable without finding and clearing a filter nobody knows about. */
 async function powerOff(page: Page) {
   await page.goto('/situation');
-  await openCondition(page, 'power');
-  await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
-  await expect(page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
+  await setCondition(page, 'power', 'Off');
 }
 
 async function tickAndUndo(page: Page, title: RegExp) {

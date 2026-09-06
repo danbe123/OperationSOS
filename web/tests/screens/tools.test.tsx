@@ -10,7 +10,7 @@ describe('Tools', () => {
   it('lists the seven tools', async () => {
     renderRoute('/tools');
     const nav = await screen.findByRole('navigation', { name: 'Tools' });
-    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/fieldcraft', '/tools/timers', '/tools/sun', '/tools/calc', '/tools/log', '/medical/dose', '/plan#stock']);
+    expect(within(nav).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/fieldcraft', '/tools/timers', '/tools/sun', '/tools/calc', '/situation#log', '/medical/dose', '/plan#stock']);
   });
 });
 

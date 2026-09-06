@@ -1,10 +1,7 @@
-import { Screen, Body } from '../../shell/Screen';
-import { EventLog } from '../plan/EventLog';
+import { Navigate } from 'react-router';
 
+/** The log lives under the situation sheet now: what happened belongs beside what is working, not
+ * on a tool screen of its own. Old links, bookmarks and the kiosk's tile all land there. */
 export function Log() {
-  return (
-    <Screen title="Event log">
-      <Body><EventLog compact /></Body>
-    </Screen>
-  );
+  return <Navigate to="/situation#log" replace />;
 }

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { Condition, ConditionId, ConditionState } from '../api/types';
@@ -10,6 +10,7 @@ import { SituationExport } from '../situation/SituationExport';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { ConditionRow } from '../situation/ConditionRow';
+import { EventLog } from './plan/EventLog';
 import { SensorsPanel } from '../situation/SensorsPanel';
 import { CONDITION_INFO, describeDuration, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL } from '../situation/conditions';
 import { ukWhen } from '../tools/dates';
@@ -17,6 +18,12 @@ import { withCondition } from '../situation/apply';
 import { useSituation } from '../situation/SituationProvider';
 import { describeElapsed, phaseFor } from '../tools/situation';
 import './situation.css';
+
+/** The service a `/situation#<id>` link names, if it names one. */
+function conditionInHash(hash: string): string | null {
+  const id = hash.replace(/^#/, '');
+  return (CONDITION_IDS as readonly string[]).includes(id) ? id : null;
+}
 
 /** The situation sheet: everything the engine reads, in one place, editable from any phone. */
 export function Situation() {
@@ -51,8 +58,15 @@ export function Situation() {
 
   const scenario = view?.scenario ?? null;
   const playbooks = playbooksQ.data ?? [];
-  // One condition open at a time: the sheet is a list of ten services, not ten forms.
-  const [open, setOpen] = useState<string | null>(null);
+  // One row's details open at a time: the sheet is a list of ten services, not ten forms. A chip
+  // elsewhere in the box links to /situation#water, and lands with that service's details out.
+  const { hash } = useLocation();
+  const [open, setOpen] = useState<string | null>(() => conditionInHash(hash));
+  const [lastHash, setLastHash] = useState(hash);
+  if (lastHash !== hash) {
+    setLastHash(hash);
+    setOpen(conditionInHash(hash));
+  }
   const conditions = view ? CONDITION_IDS.map((id) => view.conditions[id]).filter(Boolean) : [];
   const broken = conditions.filter((c) => c.state !== 'working');
 
@@ -104,6 +118,13 @@ export function Situation() {
           </tbody>
         </table>
       )}
+
+      {/* What happened sits under what is working: one screen for the situation, read in the order
+          a household reads it. It used to be a tool screen two taps away under Tools. */}
+      <section className="panel" id="log" aria-label="What happened">
+        <h2>What happened</h2>
+        <EventLog />
+      </section>
 
       <div className="no-print"><SensorsPanel /></div>
 
