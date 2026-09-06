@@ -54,6 +54,17 @@ def _tier_counts(kit, ticks: dict[str, dict]) -> dict[str, dict]:
     return out
 
 
+def _inline(text: str, request: Request) -> str:
+    """A why or a note as inline HTML, so its `[Prepare](kiwix:...)` becomes a link the screen can render.
+    Markdown gives a whole paragraph back; the row wants what is inside it."""
+    if not text:
+        return ""
+    html = content_mod.render_markdown(text, request.app.state.content.resolver).strip()
+    if html.startswith("<p>") and html.endswith("</p>"):
+        html = html[3:-4]
+    return html.strip()
+
+
 def _get_kit(request: Request, slug: str):
     kit = request.app.state.content.kit(slug)
     if kit is None:
@@ -79,6 +90,7 @@ def kit_view(kit, conn, request: Request) -> dict:
             stock_row = stock_rows.get(item.id)
             items.append({
                 "id": item.id, "name": item.name, "why": item.why, "note": item.note, "link": item.link,
+                "why_html": _inline(item.why, request), "note_html": _inline(item.note, request),
                 "href": content_mod.resolve_link(item.link) if item.link else None,
                 "qty": kits_mod.scaled(item, days, people),
                 "stock": dict(item.stock) if item.stock else None,
@@ -118,9 +130,10 @@ def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Dep
     if body.stock is not None:
         if not item.stock:
             raise HTTPException(status_code=400, detail="This item is not tracked in Stock")
-        if body.stock.quantity < 0:
-            raise HTTPException(status_code=400, detail="Quantity must be zero or more")
-        key = f"{slug}/{item_id}"
+        if body.stock.quantity <= 0:
+            # A zero row is not a stock row: it locked the item behind a 409 no amount of re-adding could clear.
+            raise HTTPException(status_code=400, detail="Quantity must be more than zero")
+        key = f"{kit.id}/{item_id}"
         if conn.execute("SELECT 1 FROM stock WHERE kit_item=?", (key,)).fetchone():
             raise HTTPException(status_code=409, detail="This item is already in Stock")
         rate = float(item.qty["amount"]) if item.qty and item.qty.get("per") == "person-day" else None
@@ -128,9 +141,11 @@ def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Dep
                      "VALUES (?,?,?,?,?,?,?,?,?)",
                      (item.name, item.stock["category"], body.stock.quantity, item.stock["unit"], rate,
                       body.stock.expires, body.stock.notes, now_iso(), key))
+    # Adding to Stock ticks the item (spec section 3): you have the thing, whatever the checkbox said.
+    checked = True if body.stock is not None else body.checked
     conn.execute("INSERT INTO checklist_state(playbook, item_id, checked, updated_at) VALUES (?,?,?,?) "
                  "ON CONFLICT(playbook, item_id) DO UPDATE SET checked=excluded.checked, updated_at=excluded.updated_at",
-                 (_key(slug), item_id, int(body.checked), now_iso()))
+                 (_key(kit.id), item_id, int(checked), now_iso()))
     conn.commit()
     readiness.refresh(request, conn)
     return kit_view(kit, conn, request)
@@ -139,7 +154,7 @@ def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Dep
 @router.delete("/kits/{slug}/ticks")
 def reset_ticks(slug: str, request: Request, conn=Depends(get_db)):
     kit = _get_kit(request, slug)
-    conn.execute("DELETE FROM checklist_state WHERE playbook=?", (_key(slug),))
+    conn.execute("DELETE FROM checklist_state WHERE playbook=?", (_key(kit.id),))
     conn.commit()
     readiness.refresh(request, conn)
     return kit_view(kit, conn, request)

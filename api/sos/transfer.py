@@ -28,7 +28,7 @@ MAX_CHUNK = 800                # characters in one QR chunk, including the {"i",
 CHUNK_PAYLOAD = 740
 PARTS = ("conditions", "scenario", "tasks", "checklist", "household", "stock", "neighbours", "home", "events")
 _PERSON_FIELDS = ("name", "age", "needs", "medications", "contacts", "updated_at")
-_STOCK_FIELDS = ("name", "category", "quantity", "unit", "per_person_day", "expires", "notes", "updated_at")
+_STOCK_FIELDS = ("name", "category", "quantity", "unit", "per_person_day", "expires", "notes", "updated_at", "kit_item")
 _NEIGHBOUR_FIELDS = ("name", "address", "needs", "skills", "contacts", "notes", "updated_at")
 _TASK_FIELDS = ("task_id", "done", "done_at", "person", "updated_at", "drill")
 

@@ -29,7 +29,8 @@ items:
     name: Water purification tablets
     qty: {amount: 1, unit: pack}
     stock: {category: other, unit: packs}
-    why: One pack treats a fortnight of water.
+    why: One pack treats a fortnight of water ([Prepare](kiwix:wikipedia_en_100_mini_2026-01/A/Water)).
+    note: Check the use-by date.
   - id: filter
     tier: full
     name: Gravity filter with spare elements

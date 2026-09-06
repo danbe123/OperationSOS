@@ -125,6 +125,23 @@ def test_import_takes_the_newer_condition_and_keeps_the_newer_local_one(filled, 
     assert any("Water supply" in line for line in summary["changes"])
 
 
+def test_a_transferred_stock_row_keeps_its_kit_link(client):
+    """A row added from a kit carries `kit_item` out and back in, so the kit screen still owns it after a transfer."""
+    client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}})
+    body = client.get("/api/situation/export").json()
+    assert body["data"]["stock"][0]["kit_item"] == "water/stored-water"
+
+    row_id = client.get("/api/stock").json()["items"][0]["id"]
+    client.delete(f"/api/stock/{row_id}")
+    assert client.get("/api/stock").json()["items"] == []
+
+    assert client.post("/api/situation/import", json=body).status_code == 200
+    rows = client.get("/api/stock").json()["items"]
+    assert [r["kit_item"] for r in rows] == ["water/stored-water"]
+    assert rows[0]["kit_title"] == "Water"
+    assert client.get("/api/kits/water").json()["tiers"][0]["items"][0]["stock_item"]["quantity"] == 9
+
+
 def test_import_matches_people_and_stock_by_name(filled):
     body = filled.get("/api/situation/export").json()
     later = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()

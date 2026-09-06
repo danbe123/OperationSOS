@@ -6,6 +6,7 @@ kit tree for `sos validate-playbooks`. Ticks and Stock live in the router; the r
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
@@ -135,6 +136,20 @@ def scaled(item: KitItem, days: int, people: int) -> dict | None:
     return {"amount": item.qty.get("amount", 1), "unit": unit, "scaled": total, "text": " ".join(text.split())}
 
 
+def _need_words(person: dict) -> list[str]:
+    """The person's needs and medications, split the way the rules engine splits them (`engine.need_words`)."""
+    from sos import engine   # deferred: engine is the owner of the split, and nothing there needs a kit
+
+    return engine.need_words(person)
+
+
+def _term_matches(term: str, words: Iterable[str]) -> bool:
+    """A gate term matches a need as a whole word, with a plural allowed: `cat` catches "two cats" but
+    not "regular medication", and `hen` does not catch "when walking". A term may itself be two words."""
+    pattern = re.compile(rf"\b{re.escape(term.strip().lower())}s?\b")
+    return any(pattern.search(word) for word in words)
+
+
 def _matches(person: dict, when: dict) -> bool:
     """Does this one person satisfy every clause of a `relevant_when` gate?"""
     if "age_under" in when:
@@ -142,8 +157,8 @@ def _matches(person: dict, when: dict) -> bool:
         if age is None or int(age) >= int(when["age_under"]):
             return False
     if "needs_any" in when:
-        text = f"{person.get('needs', '')} {person.get('medications', '')}".lower()
-        if not any(str(term).lower() in text for term in when["needs_any"]):
+        words = _need_words(person)
+        if not any(_term_matches(str(term), words) for term in when["needs_any"]):
             return False
     return True
 
@@ -161,21 +176,13 @@ def matching_people(kit: Kit, household: Iterable[dict]) -> int:
 
 
 def relevant(kit: Kit, household: Iterable[dict]) -> bool:
-    """A kit with no `relevant_when` is for everyone; otherwise every clause must hold for someone on the register."""
+    """A kit with no `relevant_when` is for everyone; otherwise one person must satisfy every clause of the gate.
+
+    One predicate for both questions: a kit gated on `age_under` *and* `needs_any` is for a household with a
+    baby who has a cat, not for one with a baby and, separately, a neighbourly interest in cats."""
     if not kit.relevant_when:
         return True
-    people = list(household)
-    when = kit.relevant_when
-    if "age_under" in when:
-        limit = int(when["age_under"])
-        if not any(p.get("age") is not None and int(p["age"]) < limit for p in people):
-            return False
-    if "needs_any" in when:
-        terms = [str(t).lower() for t in when["needs_any"]]
-        texts = [f"{p.get('needs', '')} {p.get('medications', '')}".lower() for p in people]
-        if not any(term in text for term in terms for text in texts):
-            return False
-    return True
+    return any(_matches(person, kit.relevant_when) for person in household)
 
 
 def basic_progress(kit: Kit, checked: set[str]) -> tuple[int, int]:

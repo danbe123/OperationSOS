@@ -73,10 +73,19 @@ def days_left(quantity: float, per_person_day: Optional[float], people: int) -> 
     return round(quantity / (per_person_day * people), 1)
 
 
-def _item(r, people: int) -> dict:
+def _kit_title(content, kit_item) -> str | None:
+    """The title of the kit a row came from, so the screen can say "From the Power and light kit" rather than
+    guessing it from the slug. None when the row is not from a kit, or the kit has since left the box."""
+    if not kit_item or content is None:
+        return None
+    kit = content.kit(str(kit_item).partition("/")[0])
+    return kit.title if kit is not None else None
+
+
+def _item(r, people: int, content=None) -> dict:
     return {"id": r["id"], "name": r["name"], "category": r["category"], "quantity": r["quantity"], "unit": r["unit"],
             "per_person_day": r["per_person_day"], "expires": r["expires"], "notes": r["notes"] or "",
-            "kit_item": r["kit_item"],
+            "kit_item": r["kit_item"], "kit_title": _kit_title(content, r["kit_item"]),
             "updated_at": r["updated_at"], "days_left": days_left(r["quantity"], r["per_person_day"], people)}
 
 
@@ -135,9 +144,11 @@ def delete_person(person_id: int, request: Request, conn=Depends(get_db)):
 
 
 @router.get("/stock")
-def list_stock(conn=Depends(get_db)):
+def list_stock(request: Request, conn=Depends(get_db)):
     people = people_count(conn)
-    return {"people": people, "items": [_item(r, people) for r in conn.execute("SELECT * FROM stock ORDER BY category, id")]}
+    content = request.app.state.content
+    return {"people": people,
+            "items": [_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id")]}
 
 
 @router.post("/stock")
@@ -149,7 +160,7 @@ def add_stock(body: StockIn, request: Request, conn=Depends(get_db)):
         (body.name.strip(), body.category, body.quantity, body.unit, rate, body.expires, body.notes, now_iso()))
     conn.commit()
     readiness.refresh(request, conn)
-    return _item(_get_item(conn, cur.lastrowid), people_count(conn))
+    return _item(_get_item(conn, cur.lastrowid), people_count(conn), request.app.state.content)
 
 
 @router.put("/stock/{item_id}")
@@ -163,7 +174,7 @@ def update_stock(item_id: int, body: StockPatch, request: Request, conn=Depends(
                   merged["expires"], merged["notes"], now_iso(), item_id))
     conn.commit()
     readiness.refresh(request, conn)
-    return _item(_get_item(conn, item_id), people_count(conn))
+    return _item(_get_item(conn, item_id), people_count(conn), request.app.state.content)
 
 
 @router.delete("/stock/{item_id}")

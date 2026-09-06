@@ -56,8 +56,31 @@ def test_relevance_age_and_needs():
     pets = kits.Kit(id="p", title="Pets", icon="heart", order=1, summary="x" * 20, intro="", sources=[],
                     relevant_when={"needs_any": ["dog", "cat"]}, tiers=always.tiers, items=[], path=always.path, mtime=0.0)
     assert kits.relevant(pets, [person(needs="Walks the DOG daily")]) is True
-    assert kits.relevant(pets, [person(medications="catapres")]) is True   # substring match, as the rules engine does
+    assert kits.relevant(pets, [person(medications="catapres")]) is False  # a whole word, not a substring of a drug
     assert kits.relevant(pets, [person(needs="asthma")]) is False
+
+
+@pytest.mark.parametrize("needs, expected", [
+    ("regular medication", False),          # "cat" is inside "medication", but it is not a word there
+    ("takes a diuretic when walking", False),   # nor is "hen" inside "when"
+    ("two cats", True),                     # a plural still counts
+    ("cat", True),
+    ("one hen and a goat", True),
+    ("CAT", True),                          # case does not matter
+])
+def test_needs_any_matches_whole_words_only(needs, expected):
+    kit = kits.load_kit(FIXTURES / "water.yaml")
+    kit.relevant_when = {"needs_any": ["cat", "hen"]}
+    assert kits.relevant(kit, [person(needs=needs)]) is expected
+
+
+def test_a_two_clause_gate_needs_one_person_who_satisfies_both():
+    kit = kits.load_kit(FIXTURES / "water.yaml")
+    kit.relevant_when = {"age_under": 2, "needs_any": ["cat"]}
+    baby, cat_owner = person(name="Bea", age=1), person(name="Dan", age=40, needs="a cat")
+    assert kits.relevant(kit, [baby, cat_owner]) is False       # a baby and, separately, a cat is not this kit
+    assert kits.relevant(kit, [person(name="Bea", age=1, needs="a cat")]) is True
+    assert kits.matching_people(kit, [baby, cat_owner]) == 1     # never below one, even with nobody matching
 
 
 def test_matching_people_counts_only_the_people_a_kit_is_for():
@@ -227,3 +250,38 @@ def test_reset_clears_ticks_only_for_that_kit(client):
     assert all(not i["checked"] for t in kit["tiers"] for i in t["items"])
     assert client.get("/api/kits/baby-child").json()["tiers"][0]["items"][0]["checked"] is True
     assert client.get("/api/playbooks/grid-collapse").json()["checklist"]     # scenario ticks untouched by kit keys
+
+
+def test_why_and_note_come_back_as_inline_html(client):
+    tablets = client.get("/api/kits/water").json()["tiers"][1]["items"][0]
+    assert tablets["id"] == "tablets"
+    assert tablets["why"].endswith("([Prepare](kiwix:wikipedia_en_100_mini_2026-01/A/Water)).")     # the raw text stays
+    assert tablets["why_html"] == ('One pack treats a fortnight of water '
+                                   '(<a href="/read/wikipedia_en_100_mini_2026-01/A/Water">Prepare</a>).')
+    assert tablets["note_html"] == "Check the use-by date."                 # no paragraph wrapper around a row
+    assert client.get("/api/kits/water").json()["tiers"][0]["items"][1]["why_html"] == ""
+
+
+def test_adding_to_stock_ticks_the_item_whatever_the_body_said(client):
+    r = client.put("/api/kits/water/items/stored-water", json={"checked": False, "stock": {"quantity": 9}})
+    assert r.status_code == 200
+    assert r.json()["tiers"][0]["items"][0]["checked"] is True
+
+
+def test_a_stock_hand_off_of_nothing_is_refused(client):
+    r = client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 0}})
+    assert r.status_code == 400 and r.json()["detail"] == "Quantity must be more than zero"
+    assert client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": -1}}).status_code == 400
+    assert client.get("/api/stock").json()["items"] == []
+    # nothing is locked behind a 409: a real quantity still goes in
+    assert client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}}).status_code == 200
+
+
+def test_stock_rows_carry_the_kit_title(client):
+    client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}})
+    client.put("/api/kits/baby-child/items/nappies", json={"checked": True, "stock": {"quantity": 18}})
+    rows = {r["name"]: r for r in client.get("/api/stock").json()["items"]}
+    assert rows["Drinking water in sealed containers"]["kit_title"] == "Water"
+    assert rows["Nappies"]["kit_title"] == "Baby and child"
+    plain = client.post("/api/stock", json={"name": "Tins", "category": "food", "quantity": 7, "unit": "days"}).json()
+    assert plain["kit_item"] is None and plain["kit_title"] is None
