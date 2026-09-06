@@ -79,6 +79,33 @@ describe('Notes and pins', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('asks the box for notes and pins by kind, never for every note in it', async () => {
+    mockNotes();
+    const notesApi = vi.mocked(api.notes);
+    renderRoute('/plan/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    // The event log is hundreds of rows on a busy day and not one of them belongs on this screen:
+    // two requests for the two kinds shown, and no call that asks for the lot.
+    expect(notesApi.mock.calls.map((c) => c[0]).sort()).toEqual(['note', 'pin']);
+  });
+
+  it('reads the list back after an add, leaving a note that was open for editing open', async () => {
+    mockNotes();
+    const user = userEvent.setup();
+    renderRoute('/plan/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Edit Meeting point' }));
+    expect(screen.getByLabelText('Edit note')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    const form = screen.getByRole('form', { name: 'Add a note' });
+    await user.type(within(form).getByLabelText('Title'), 'Water stash');
+    await user.click(within(form).getByRole('button', { name: 'Add note' }));
+    // The new note is on the screen that wrote it, and the editor beside it was not thrown away.
+    expect(await screen.findByText('Water stash')).toBeInTheDocument();
+    expect(screen.getByLabelText('Edit note')).toBeInTheDocument();
+  });
+
   it('says so when there is nothing written down yet', async () => {
     vi.spyOn(api, 'notes').mockResolvedValue([]);
     renderRoute('/plan/notes');

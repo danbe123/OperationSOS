@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react';
 import { api } from '../../api/client';
 import type { Person } from '../../api/types';
-import { errorMessage, useQuery } from '../../api/useQuery';
+import { errorMessage, useQuery, type Refetchable } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 
 const EMPTY = { name: '', age: '', needs: '', medications: '', contacts: '' };
@@ -73,9 +73,10 @@ function PersonRow({ person, onChanged }: { person: Person; onChanged: () => Pro
 }
 
 /** The register itself: a row a person, each row edited or removed where it stands. */
-export function HouseholdList({ onChanged }: { onChanged?: () => void } = {}) {
+export function HouseholdList({ onChanged, ref }: { onChanged?: () => void; ref?: Ref<Refetchable> } = {}) {
   const q = useQuery(() => api.household(), [], { refetchOnFocus: true });
   const refetch = async () => { await q.refetch(); onChanged?.(); };
+  useImperativeHandle(ref, () => ({ refetch }));
   return (
     <>
       {q.error && <p className="warning">Household unavailable: {q.error}</p>}
@@ -101,17 +102,18 @@ export function HouseholdForm({ onSaved, onCancel }: { onSaved: () => void; onCa
 }
 
 /** The section as a screen shows it: who lives here, and one button. A five-field form standing open
- * under the register is five fields nobody is filling in the other ninety-nine times they look. The
- * list is keyed on the count added here, so a new person is read back rather than left off. */
+ * under the register is five fields nobody is filling in the other ninety-nine times they look.
+ * Adding somebody asks the register to read itself again, rather than remounting it and losing
+ * whatever row was open for editing beside the form. */
 export function Household({ onChanged }: { onChanged?: () => void } = {}) {
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(0);
+  const list = useRef<Refetchable>(null);
   return (
     <>
       <p className="muted">Who lives here, what they need and who to call. Medical needs also show on the Medical screen.</p>
-      <HouseholdList key={added} onChanged={onChanged} />
+      <HouseholdList ref={list} onChanged={onChanged} />
       {adding
-        ? <HouseholdForm onSaved={() => { setAdding(false); setAdded((n) => n + 1); onChanged?.(); }} onCancel={() => setAdding(false)} />
+        ? <HouseholdForm onSaved={() => { setAdding(false); void list.current?.refetch(); }} onCancel={() => setAdding(false)} />
         : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add a person</button>}
     </>
   );

@@ -34,17 +34,24 @@ const ANCHORS: Record<string, string> = {
   '#log': '/situation#log',
 };
 
-/** One line under each row's title: the state of that part, in the household's own words. */
+/** What a row says when the box could not read that part at all. Never the empty sentence: a
+ * household whose register would not load must not read "Nobody registered yet". */
+export const NOT_LOADED = 'Could not load';
+
+/** One line under each row's title: the state of that part, in the household's own words. A part
+ * whose fetch failed says so on its own row, rather than borrowing the empty household's sentence. */
 export function stateLines(d: {
   people: Person[]; neighbours: Neighbour[]; stock: StockResponse | null;
   notes: Note[]; pins: Note[]; events: Note[]; meeting: boolean;
+  failed?: readonly string[];
 }): Record<string, string> {
   const withNeeds = d.people.filter((p) => p.needs || p.medications).length;
   const cat = (c: 'water' | 'food' | 'medicine', label: string) => {
     const days = d.stock?.days[c] ?? 0;
     return `${label} ${days > 0 ? `${days} ${days === 1 ? 'day' : 'days'}` : 'none'}`;
   };
-  return {
+  const failed = new Set(d.failed ?? []);
+  const lines: Record<string, string> = {
     people: d.people.length === 0 ? 'Nobody registered yet' : `${d.people.length} registered${withNeeds ? `, ${withNeeds} with medical needs` : ''}`,
     neighbours: d.neighbours.length === 0 ? 'No neighbours listed' : `${d.neighbours.length} on the street list`,
     stock: !d.stock || d.stock.items.length === 0 ? 'Nothing tracked yet' : `${cat('water', 'Water')} · ${cat('food', 'Food')} · ${cat('medicine', 'Medicine')}`,
@@ -52,6 +59,8 @@ export function stateLines(d: {
     notes: d.notes.length + d.pins.length === 0 ? 'Nothing written down' : `${d.notes.length} ${d.notes.length === 1 ? 'note' : 'notes'}, ${d.pins.length} ${d.pins.length === 1 ? 'pin' : 'pins'}`,
     log: d.events.length === 0 ? 'No entries yet' : `Last entry ${formatStamp(d.events[0].updated_at)}, ${eventTitle(d.events[0].title)}`,
   };
+  for (const key of failed) lines[key] = NOT_LOADED;
+  return lines;
 }
 
 /** The engine's own test for a meeting point: the words in the title or the body of any note or pin
@@ -72,8 +81,19 @@ function Hub() {
   const pins = pinsQ.data ?? [];
   // Six fetches, six chances to fail, and a failed one is indistinguishable from an empty list: a
   // household whose register would not load read "Nobody registered yet" and had no way to know it
-  // was the box talking, not the truth. One line above the rows says so, and names the first fault.
-  const failed = [peopleQ, neighboursQ, stockQ, notesQ, pinsQ, eventsQ].find((q) => q.error);
+  // was the box talking, not the truth. The line above the rows names the parts that did not load,
+  // not just the first fault, and each of those rows says "Could not load" where its state would be.
+  // The plan row reads the notes and the pins, so it fails when either of them does.
+  const reads: { rows: string[]; error: string | null }[] = [
+    { rows: ['people'], error: peopleQ.error },
+    { rows: ['neighbours'], error: neighboursQ.error },
+    { rows: ['stock'], error: stockQ.error },
+    { rows: ['notes', 'plan'], error: notesQ.error },
+    { rows: ['notes', 'plan'], error: pinsQ.error },
+    { rows: ['log'], error: eventsQ.error },
+  ];
+  const failedRows = [...new Set(reads.filter((r) => r.error).flatMap((r) => r.rows))];
+  const failedTitles = ROWS.filter((r) => failedRows.includes(r.key)).map((r) => r.title);
   const lines = stateLines({
     people: peopleQ.data ?? [],
     neighbours: neighboursQ.data ?? [],
@@ -82,11 +102,12 @@ function Hub() {
     pins,
     events: eventsQ.data ?? [],
     meeting: hasMeetingPoint([...notes, ...pins]),
+    failed: failedRows,
   });
   return (
     <Screen title="Household" actions={<PrintButton />}>
       <Body>
-        {failed && <p className="warning">Some of this could not be loaded: {failed.error}</p>}
+        {failedTitles.length > 0 && <p className="warning" role="status">Could not load: {failedTitles.join(', ')}.</p>}
         <nav className="hub-rows" aria-label="Household">
           {ROWS.map((row) => (
             <Link className="hub-row" key={row.key} to={row.to}>

@@ -178,7 +178,9 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
       if (!Number.isFinite(r) || r <= 0) { notify(`Write the rate for ${item.name} as a number greater than zero.`); return; }
       // Compared against what the field was seeded with, not against the stored rate: a row that has
       // never carried one shows the type's default, and leaving that default alone is not a change.
-      if (perDay !== seedRate()) patch.per_person_day = r;
+      // As numbers, not as strings: retyping 3 as "3.0" is the same rate, and sending it would write
+      // a row and refetch the cupboard for nothing.
+      if (r !== Number(seedRate())) patch.per_person_day = r;
     }
     if (Object.keys(patch).length === 0) { close(); return; }
     try {
@@ -229,7 +231,9 @@ function StockRow({ item, onChanged }: { item: StockItem; onChanged: () => Promi
           {byCategory && (
             <label className="field"><span>Counts as ({byCategory.unit} per person a day)</span>
               <input
-                type="number" inputMode="decimal" min={0} step="any"
+                /* Save refuses a rate of zero — nothing is got through at no litres a day — so the
+                   field's own floor says the same thing rather than promising an accepted nought. */
+                type="number" inputMode="decimal" min={0.01} step="any"
                 aria-label={`Counts as, in ${byCategory.unit} per person a day, for ${item.name}`}
                 value={perDay} onChange={(e) => setPerDay(e.target.value)}
               />

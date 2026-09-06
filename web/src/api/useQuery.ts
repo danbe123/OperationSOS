@@ -15,6 +15,10 @@ export type QueryState<T> = {
   setData: (t: T) => void;
 };
 
+/** What a list hands the section around it, so an add re-reads the list rather than remounting it:
+ * a remount throws away every open editor and scroll position on the way past. */
+export type Refetchable = { refetch: () => Promise<void> };
+
 /** Fetch on mount and whenever `deps` change; optionally poll and refetch when the window regains focus. */
 export function useQuery<T>(
   fn: () => Promise<T>,

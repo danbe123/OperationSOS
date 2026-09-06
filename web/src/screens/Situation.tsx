@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
@@ -70,6 +70,22 @@ export function Situation() {
   const conditions = view ? CONDITION_IDS.map((id) => view.conditions[id]).filter(Boolean) : [];
   const broken = conditions.filter((c) => c.state !== 'working');
 
+  // A `/situation#log` link lands on a screen whose ten services are still empty, so the browser's
+  // own anchor scroll puts the log where the log is about to stop being: by the time the view
+  // arrives, ten rows have grown above it and the reader is looking at the drill form. The screen
+  // scrolls the log into place itself, once, when there is something above it to push it down.
+  const logRef = useRef<HTMLElement>(null);
+  const scrolledTo = useRef<string | null>(null);
+  useEffect(() => {
+    if (hash.toLowerCase() !== '#log') {
+      scrolledTo.current = null;
+      return;
+    }
+    if (!view || scrolledTo.current === hash) return;
+    scrolledTo.current = hash;
+    logRef.current?.scrollIntoView();
+  }, [view, hash]);
+
   return (
     <Screen
       title="Situation"
@@ -121,7 +137,7 @@ export function Situation() {
 
       {/* What happened sits under what is working: one screen for the situation, read in the order
           a household reads it. It used to be a tool screen two taps away under Tools. */}
-      <section className="panel" id="log" aria-label="What happened">
+      <section className="panel" id="log" ref={logRef} aria-label="What happened">
         <h2>What happened</h2>
         <EventLog />
       </section>

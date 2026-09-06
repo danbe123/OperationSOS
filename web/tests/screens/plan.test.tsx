@@ -98,14 +98,30 @@ describe('The Household hub', () => {
     expect(await screen.findByRole('heading', { name: 'Meeting points' })).toBeInTheDocument();
   });
 
-  it('says so when a list would not load, rather than reading as an empty household', async () => {
+  it('names the parts that would not load, and never lets one read as an empty household', async () => {
     mockHub();
     vi.spyOn(api, 'household').mockRejectedValue(new Error('the box is not answering'));
+    vi.spyOn(api, 'stock').mockRejectedValue(new Error('gone'));
     renderRoute('/plan');
     const nav = await screen.findByRole('navigation', { name: 'Household' });
-    expect(await screen.findByText(/Some of this could not be loaded: the box is not answering/)).toHaveClass('warning');
-    // The row still shows its empty sentence; the line above it is what says not to believe it.
-    expect(within(nav).getByText('Nobody registered yet')).toBeInTheDocument();
+    // Both faults, named, in the order the rows are read — not just whichever failed first.
+    expect(await screen.findByText('Could not load: People, Stock.')).toHaveClass('warning');
+    // And the rows themselves say so: "Nobody registered yet" over a register the box never read is
+    // the box putting words in the household's mouth.
+    const rows = within(nav).getAllByRole('link');
+    expect(within(rows[0]).getByText('Could not load')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('Could not load')).toBeInTheDocument();
+    expect(within(nav).queryByText('Nobody registered yet')).toBeNull();
+    expect(within(nav).queryByText('Nothing tracked yet')).toBeNull();
+    // The parts that did load still say what they say.
+    expect(within(rows[1]).getByText('2 on the street list')).toBeInTheDocument();
+  });
+
+  it('says nothing about loading when everything loaded', async () => {
+    mockHub();
+    renderRoute('/plan');
+    await screen.findByRole('navigation', { name: 'Household' });
+    expect(screen.queryByText(/^Could not load/)).toBeNull();
   });
 
   it('offers Print, and hides it in kiosk mode', async () => {

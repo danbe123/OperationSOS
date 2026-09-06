@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react';
 import { api } from '../../api/client';
 import type { Note } from '../../api/types';
-import { errorMessage, useQuery } from '../../api/useQuery';
+import { errorMessage, useQuery, type Refetchable } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 import { relativeTime } from '../../components/Checklist';
 import { PinRow } from './Pins';
@@ -57,20 +57,30 @@ function NoteRow({ note, onChanged }: { note: Note; onChanged: () => Promise<voi
 }
 
 /** Notes newest first, and on a screen that asks for them the pins alongside: both are somebody
- * writing something down, and reading them in two lists means reading the same day twice. */
-export function NotesList({ pins = false }: { pins?: boolean } = {}) {
-  const q = useQuery(() => (pins ? api.notes() : api.notes('note')), [pins], { refetchOnFocus: true });
-  const rows = (q.data ?? [])
-    .filter((n) => n.kind === 'note' || (pins && n.kind === 'pin' && n.lat !== null && n.lon !== null))
+ * writing something down, and reading them in two lists means reading the same day twice.
+ *
+ * Two requests for the two kinds this list shows, rather than one for every note in the box and a
+ * client-side sieve: the event log on a busy day is hundreds of rows, and none of them belong here. */
+export function NotesList({ pins = false, ref }: { pins?: boolean; ref?: Ref<Refetchable> } = {}) {
+  const notesQ = useQuery(() => api.notes('note'), [], { refetchOnFocus: true });
+  const pinsQ = useQuery(() => (pins ? api.notes('pin') : Promise.resolve<Note[]>([])), [pins], { refetchOnFocus: true });
+  const refetch = async () => {
+    await Promise.all([notesQ.refetch(), pinsQ.refetch()]);
+  };
+  useImperativeHandle(ref, () => ({ refetch }));
+  const error = notesQ.error ?? pinsQ.error;
+  const loaded = notesQ.data !== null && pinsQ.data !== null;
+  const rows = [...(notesQ.data ?? []), ...(pinsQ.data ?? [])]
+    .filter((n) => n.kind === 'note' || (n.kind === 'pin' && n.lat !== null && n.lon !== null))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   return (
     <>
-      {q.error && <p className="warning">Notes unavailable: {q.error}</p>}
+      {error && <p className="warning">Notes unavailable: {error}</p>}
       <ul className="list" aria-label={pins ? 'Notes and pins' : 'Notes'}>
         {rows.map((n) => (n.kind === 'pin'
           ? <PinRow key={`pin-${n.id}`} pin={n} />
-          : <NoteRow key={n.id} note={n} onChanged={q.refetch} />))}
-        {q.data && rows.length === 0 && <li className="muted">Nothing written down yet.</li>}
+          : <NoteRow key={n.id} note={n} onChanged={refetch} />))}
+        {loaded && rows.length === 0 && <li className="muted">Nothing written down yet.</li>}
       </ul>
     </>
   );
@@ -103,17 +113,18 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
   );
 }
 
-/** The section as a screen shows it: what has been written down, and one button. The list is keyed
- * on the count added here, so a new note is read back rather than left off the screen that wrote it. */
+/** The section as a screen shows it: what has been written down, and one button. Adding one asks the
+ * list to read itself again, so the new note is on the screen that wrote it; remounting the list
+ * instead would throw away every note somebody had open for editing beside it. */
 export function Notes({ pins = false }: { pins?: boolean } = {}) {
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(0);
+  const list = useRef<Refetchable>(null);
   return (
     <>
       <p className="muted">Everyone on the hotspot sees these{pins ? ' notes and the pins on the map' : ' notes'}.</p>
-      <NotesList key={added} pins={pins} />
+      <NotesList ref={list} pins={pins} />
       {adding
-        ? <NotesForm onSaved={() => { setAdding(false); setAdded((n) => n + 1); }} onCancel={() => setAdding(false)} />
+        ? <NotesForm onSaved={() => { setAdding(false); void list.current?.refetch(); }} onCancel={() => setAdding(false)} />
         : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add a note</button>}
     </>
   );

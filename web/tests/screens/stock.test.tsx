@@ -126,6 +126,26 @@ describe('The Stock screen', () => {
     expect(within(torch).queryByLabelText(/per person a day/)).toBeNull();
   });
 
+  it('sends nothing when a rate is retyped as the same number, and will not take a rate of nought', async () => {
+    mockStock();
+    const updateStock = vi.spyOn(api, 'updateStock').mockResolvedValue(stock.items[1]);
+    renderRoute('/plan/stock');
+    const list = await screen.findByRole('list', { name: 'Stock items' });
+    const user = userEvent.setup();
+    const water = within(list).getAllByRole('listitem')[1];
+    await user.click(within(water).getByRole('button', { name: 'Change Bottled water' }));
+    const rate = within(water).getByLabelText('Counts as, in L per person a day, for Bottled water');
+    // Three litres written as "3.0" is three litres: a rate compared as text would post it anyway.
+    await user.clear(rate);
+    await user.type(rate, '3.0');
+    await user.click(within(water).getByRole('button', { name: 'Save' }));
+    expect(updateStock).not.toHaveBeenCalled();
+
+    // The field's floor agrees with Save, which refuses anything at or below nought.
+    await user.click(within(water).getByRole('button', { name: 'Change Bottled water' }));
+    expect(within(water).getByLabelText('Counts as, in L per person a day, for Bottled water')).toHaveAttribute('min', '0.01');
+  });
+
   it('shows the use-by beside the days when a rated row is about to go off', async () => {
     const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
     const far = new Date(Date.now() + 400 * 86_400_000).toISOString().slice(0, 10);

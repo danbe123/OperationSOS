@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react';
 import { api } from '../../api/client';
 import type { Note } from '../../api/types';
-import { errorMessage, useQuery } from '../../api/useQuery';
+import { errorMessage, useQuery, type Refetchable } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 import { eventTitle } from '../../api/words';
 
@@ -54,8 +54,9 @@ function EventRow({ event, onChanged }: { event: Note; onChanged: () => Promise<
 }
 
 /** The log, newest first: what happened and when, with a way to correct a mistyped entry. */
-export function EventLogList() {
+export function EventLogList({ ref }: { ref?: Ref<Refetchable> } = {}) {
   const q = useQuery(() => api.notes('event'), [], { refetchOnFocus: true, intervalMs: 30_000 });
+  useImperativeHandle(ref, () => ({ refetch: q.refetch }), [q.refetch]);
   return (
     <>
       {q.error && <p className="warning">Log unavailable: {q.error}</p>}
@@ -92,18 +93,18 @@ export function EventLogForm({ onAdded, onCancel }: { onAdded: () => void; onCan
 
 /** The log as a screen shows it: the entries, and the form behind a button. A form standing open
  * above the entries is a form on every screen the log appears on, and the log is read far more
- * often than it is written to. The list is keyed on the count of entries added here, so logging
- * one reads the log back rather than leaving the new line off the screen that just wrote it. */
+ * often than it is written to. Logging an entry asks the list to read itself again, so the new line
+ * lands on the screen that wrote it without throwing away an entry open for correction. */
 export function EventLog() {
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(0);
+  const list = useRef<Refetchable>(null);
   return (
     <>
       <p className="muted">What happened and when: "water off", "heard sirens", "gave Sam 5ml paracetamol". The time is stamped for you.</p>
       {adding
-        ? <EventLogForm onAdded={() => { setAdding(false); setAdded((n) => n + 1); }} onCancel={() => setAdding(false)} />
+        ? <EventLogForm onAdded={() => { setAdding(false); void list.current?.refetch(); }} onCancel={() => setAdding(false)} />
         : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add an entry</button>}
-      <EventLogList key={added} />
+      <EventLogList ref={list} />
     </>
   );
 }

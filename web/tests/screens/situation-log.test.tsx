@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
@@ -43,6 +43,31 @@ describe('The event log under the situation sheet', () => {
     await user.click(within(form).getByRole('button', { name: 'Log it' }));
     expect(createNote).toHaveBeenCalledWith({ kind: 'event', title: 'Gave Sam 5ml paracetamol' });
     expect(within(log).queryByRole('form', { name: 'Log an event' })).toBeNull();
+  });
+
+  it('scrolls to the log from /situation#log, and only once the rows above it have their data', async () => {
+    mockSheet();
+    // Where the browser's own anchor scroll lands is wrong by ten rows: the sheet is empty when the
+    // link arrives, so what is recorded here is how much had grown above the log by the time it went.
+    const landed: { id: string; rowsAbove: number }[] = [];
+    const spy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function (this: Element) {
+      landed.push({ id: this.id, rowsAbove: document.querySelectorAll('.cond-rows > li').length });
+    });
+    renderRoute('/situation#log');
+    await screen.findByRole('region', { name: 'What happened' });
+    await waitFor(() => expect(landed).toHaveLength(1));
+    expect(landed[0]).toEqual({ id: 'log', rowsAbove: 10 });
+    spy.mockRestore();
+  });
+
+  it('does not move the screen when the link named no log', async () => {
+    mockSheet();
+    const spy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    renderRoute('/situation');
+    await screen.findByRole('region', { name: 'What happened' });
+    await waitFor(() => expect(document.querySelectorAll('.cond-rows > li')).toHaveLength(10));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 
   it('puts the form away again on Cancel', async () => {

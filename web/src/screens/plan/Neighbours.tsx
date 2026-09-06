@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useImperativeHandle, useRef, useState, type FormEvent, type Ref } from 'react';
 import { api } from '../../api/client';
 import type { Neighbour } from '../../api/types';
-import { errorMessage, useQuery } from '../../api/useQuery';
+import { errorMessage, useQuery, type Refetchable } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 import { Icon } from '../../icons';
 import { useSituation } from '../../situation/SituationProvider';
@@ -130,8 +130,9 @@ export function StreetSkills() {
 
 /** The street: who lives near, what they need, what they can do. Whoever the box says to check on is
  * flagged here and appears as a job on the task list. */
-export function NeighboursList() {
+export function NeighboursList({ ref }: { ref?: Ref<Refetchable> } = {}) {
   const q = useQuery(() => api.neighbours(), [], { refetchOnFocus: true });
+  useImperativeHandle(ref, () => ({ refetch: q.refetch }), [q.refetch]);
   const { view } = useSituation();
   // A check_on entry is also a task, ticked on the task list; here it is only a flag on the row.
   const checkOn = new Set((view?.neighbours?.check_on ?? []).map((n) => n.name));
@@ -159,18 +160,20 @@ export function NeighboursForm({ onSaved, onCancel }: { onSaved: () => void; onC
   return <NeighbourForm label="Add a neighbour" submit="Add neighbour" initial={EMPTY} onSave={add} onCancel={onCancel} />;
 }
 
-/** The section as a screen shows it: what the street can do, who is on it, and one button. */
+/** The section as a screen shows it: what the street can do, who is on it, and one button. Adding a
+ * neighbour asks the list to read itself again rather than remounting it, so a row already open for
+ * editing is still open afterwards. */
 export function Neighbours() {
   const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(0);
+  const list = useRef<Refetchable>(null);
   return (
     <>
       <p className="muted">Who is on the street, what they need and what they can do. The box turns this into
         jobs when something goes off, and the street list prints on one page to put through doors.</p>
       <StreetSkills />
-      <NeighboursList key={added} />
+      <NeighboursList ref={list} />
       {adding
-        ? <NeighboursForm onSaved={() => { setAdding(false); setAdded((n) => n + 1); }} onCancel={() => setAdding(false)} />
+        ? <NeighboursForm onSaved={() => { setAdding(false); void list.current?.refetch(); }} onCancel={() => setAdding(false)} />
         : <button type="button" className="btn no-print" onClick={() => setAdding(true)}>Add a neighbour</button>}
     </>
   );
