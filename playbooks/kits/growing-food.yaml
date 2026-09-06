@@ -1,0 +1,148 @@
+id: growing-food
+title: Growing food
+icon: leaf
+order: 15
+summary: Seed, compost and the tools that turn a garden or an allotment into part of the food store.
+intro: >-
+  Growing food is the slowest kit in the box and the only one that adds to the store instead of drawing it down. Start
+  small and start early: a traditional ten-rod allotment, about 250 square metres, was sized to cover a family's
+  vegetable needs for a year, and councils still have a duty to provide allotments to meet demand
+  ([allotment](kiwix:wikipedia_en_all_maxi/Allotment_%28gardening%29)). Potatoes give the most food energy per square
+  metre of any staple, with farm yields averaging around 17 tonnes a hectare worldwide, roughly 1.7 kilograms a square
+  metre ([Potato](kiwix:wikipedia_en_all_maxi/Potato)). Plan for the hungry gap in April and May, when last year's
+  store has run out and this year's crops are not ready
+  ([hungry gap](kiwix:wikipedia_en_all_maxi/Hungry_gap)), and buy open-pollinated seed rather than F1 hybrids so you
+  can save your own. The [growing food module](module:growing-food) has the sowing calendar.
+sources:
+  - {title: 'Allotment (Wikipedia)', kiwix: wikipedia_en_all_maxi/Allotment_%28gardening%29, as_at: '2026-02-15'}
+  - {title: 'Potato (Wikipedia)', kiwix: wikipedia_en_all_maxi/Potato, as_at: '2026-02-15'}
+  - {title: 'Hungry gap (Wikipedia)', kiwix: wikipedia_en_all_maxi/Hungry_gap, as_at: '2026-02-15'}
+  - {title: 'Gardening and Landscaping Q&A (Stack Exchange)', kiwix: gardening.stackexchange.com_en_all/questions, as_at: '2026-08-01'}
+  - {title: 'Seed saving (Wikipedia)', kiwix: wikipedia_en_all_maxi/Seed_saving, as_at: '2026-02-15'}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Nothing grows in three days, so this tier is only the seed, compost and hand tools bought before you need them.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight is long enough to dig a bed, sow it and get water on it, if the tools are already in the shed.
+  full:
+    title: No help coming
+    days: 90
+    why: A season of growing only feeds you if the ground, the cover and the saved seed were all in place first.
+items:
+  - id: open-pollinated-seed
+    tier: basic
+    name: Open-pollinated vegetable seed for a full year
+    qty: {amount: 20, unit: packets, per: household}
+    stock: {category: food, unit: packets}
+    why: >-
+      F1 hybrid seed will not breed true the following year, so open-pollinated varieties are the ones you can save and
+      resow ([seed saving](kiwix:wikipedia_en_all_maxi/Seed_saving)).
+    note: Store cool, dark and dry; most vegetable seed stays viable for several years.
+  - id: compost-and-potting
+    tier: basic
+    name: Peat-free compost and seed-sowing mix
+    qty: {amount: 4, unit: 50 litre bags, per: household}
+    why: Seedlings started in bought compost survive; seedlings started in cold garden soil in March mostly do not.
+  - id: hand-tools-basic
+    tier: basic
+    name: Trowel, hand fork, dibber and a sharp knife
+    qty: {amount: 1, unit: set, per: household}
+    why: Everything in the first season is sowing, transplanting and weeding, and all of it is done kneeling with hand tools.
+  - id: pots-and-trays
+    tier: basic
+    name: Seed trays, modules and pots
+    qty: {amount: 20, unit: trays, per: household}
+    why: Sowing under cover and planting out later beats sowing direct in a cold British spring, and it beats the slugs.
+  - id: cold-frame
+    tier: basic
+    name: Cold frame, cloches or a windowsill propagator
+    qty: {amount: 1, unit: cold frame, per: household}
+    why: >-
+      Nothing tender goes outside before mid-May, and a week of hardening off under cover is what stops one late frost
+      killing the lot ([hardening off](kiwix:gardening.stackexchange.com_en_all/questions/23182/what-is-hardening-off)).
+  - id: watering-can
+    tier: basic
+    name: Watering cans and a rose head
+    qty: {amount: 2, unit: cans, per: household}
+    why: Seedlings need watering daily in warm weather, and a hose is no use once the mains pressure goes.
+  - id: digging-tools
+    tier: serious
+    name: Spade, digging fork, hoe, rake and a wheelbarrow
+    qty: {amount: 1, unit: set, per: household}
+    why: Turning ground over for a new bed is the fortnight-scale job, and it wants full-length tools with sound handles.
+    link: module:tools-repair
+  - id: seed-potatoes
+    tier: serious
+    name: Seed potatoes, chitted, first early and maincrop
+    qty: {amount: 5, unit: kg, per: person}
+    stock: {category: food, unit: kg}
+    why: >-
+      Potatoes give more food energy per square metre than any other staple you can grow here
+      ([Potato](kiwix:wikipedia_en_all_maxi/Potato)), and first earlies are lifted in June and July, before the main crop.
+  - id: water-butt-garden
+    tier: serious
+    name: Water butt, downpipe diverter and a dipping can
+    qty: {amount: 2, unit: butts, per: household}
+    why: Garden watering must never come out of the drinking store, and a roof fills a butt from ordinary British rain.
+    link: module:water
+  - id: netting-and-fleece
+    tier: serious
+    name: Netting, fleece and slug defences
+    qty: {amount: 20, unit: square metres of netting, per: household}
+    why: Slugs, pigeons and rabbits take more of a British vegetable garden than drought or heat ever will.
+  - id: canes-and-string
+    tier: serious
+    name: Canes, string, labels and a pencil
+    why: An unlabelled bed in April is a guess by June, and beans and peas fall over without support.
+  - id: compost-bin
+    tier: serious
+    name: Compost bins and a heap for manure
+    qty: {amount: 2, unit: bins, per: household}
+    why: Fertility comes from compost, manure, wood ash and diluted urine once bagged fertiliser stops arriving.
+    link: module:sanitation
+  - id: gardening-reference
+    tier: serious
+    name: Printed sowing calendar and a gardening reference
+    why: >-
+      Sowing dates are the whole game in a short British season, and the questions you will have are answered in the
+      gardening Q&A ([Gardening Q&A](kiwix:gardening.stackexchange.com_en_all/questions)).
+    link: module:growing-food
+  - id: polytunnel
+    tier: full
+    name: Polytunnel or greenhouse, with spare polythene
+    why: >-
+      Covered ground extends the British season at both ends and is what makes tomatoes, peppers and winter salads
+      possible here ([polytunnel](kiwix:wikipedia_en_all_maxi/Polytunnel)).
+  - id: fruit-trees
+    tier: full
+    name: Fruit trees, soft fruit bushes and a rhubarb crown
+    qty: {amount: 6, unit: trees and bushes, per: household}
+    why: Fruit takes years to come into bearing, so a tree planted this winter is a crop three or four years from now.
+  - id: seed-bank
+    tier: full
+    name: A seed bank, with envelopes, labels and dry storage
+    why: >-
+      Saving your own seed is what makes a garden self-renewing rather than dependent on a seed merchant
+      ([seed saving](kiwix:wikipedia_en_all_maxi/Seed_saving)).
+    link: page:food-storage
+  - id: green-manure
+    tier: full
+    name: Green manure seed, comfrey and a rotation plan
+    why: >-
+      Nitrogen-fixing green manures and a three or four bed rotation keep soil working without bought fertiliser
+      ([green manure](kiwix:wikipedia_en_all_maxi/Green_manure)).
+  - id: storage-and-preserving
+    tier: full
+    name: Clamps, hessian sacks, racks and jars for the harvest
+    why: A harvest you cannot store rots in three weeks, and storing it is a separate job from growing it.
+    link: page:food-storage
+  - id: indoor-growing
+    tier: full
+    name: Sprouting jars and a mushroom growing kit
+    why: >-
+      Sprouted seed and mushrooms produce food indoors with no ground and very little light
+      ([fungiculture](kiwix:wikipedia_en_all_maxi/Fungiculture)).

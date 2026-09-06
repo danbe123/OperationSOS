@@ -1,0 +1,159 @@
+id: baby-child
+title: Baby and child
+icon: baby
+order: 11
+summary: Nappies, feeding and child medicine doses; the things a baby needs that nothing else in the box replaces.
+intro: >-
+  A baby cannot wait a week for the shops. Breast milk is the safest food a baby can have in an emergency:
+  clean, the right temperature, carrying antibodies, and needing no water, fuel or bottles
+  ([Where There Is No Doctor, p. 320](doc:where-there-is-no-doctor#page=320)). If your baby is formula fed,
+  formula is the one thing here you cannot improvise. Powdered formula is not sterile and must be made up with
+  water boiled and then cooled to no lower than 70 °C
+  ([Infant food safety (MDWiki)](kiwix:mdwiki_en_all_maxi/Infant_food_safety)); watering feeds down to make a
+  tin last leaves a hungry baby worse off, not better. Read [infant feeding](page:infant-feeding) before you
+  need it, and keep the child doses to hand: they go by age and by the strength of the liquid, not by guesswork
+  ([fever in a child](card:fever-child)). Everything on this list sits on top of the medical, water and food
+  kits rather than instead of them.
+sources:
+  - {title: 'Where There Is No Doctor (Hesperian)', doc: where-there-is-no-doctor, as_at: '1992-01'}
+  - {title: 'Infant food safety (MDWiki)', kiwix: mdwiki_en_all_maxi/Infant_food_safety, as_at: '2026-02'}
+  - {title: 'Infant formula (WikiMed)', kiwix: wikipedia_en_medicine_maxi/Infant_formula, as_at: '2026-04-11'}
+  - {title: 'NHS paracetamol for children', kiwix: 'nhs_medicines/www.nhs.uk/medicines/paracetamol-for-children/', as_at: '2025-12-14'}
+  - {title: 'Parenting Q&A (Stack Exchange)', kiwix: parenting.stackexchange.com_en_all/questions, as_at: '2026-08'}
+relevant_when: {age_under: 2}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Nappies and feeds run out first, and no neighbour has spares.
+  serious:
+    title: Two weeks
+    days: 14
+    why: Two weeks is longer than a tin of formula lasts, so the fortnight has to be bought before it starts.
+  full:
+    title: No help coming
+    days: 90
+    why: Nothing disposable is coming, so everything a baby needs has to be washable or learnable.
+items:
+  - id: nappies
+    tier: basic
+    name: Nappies in the size your baby wears now
+    qty: {amount: 6, unit: nappies, per: person-day}
+    stock: {category: other, unit: nappies}
+    why: Nappies are the first thing to run out once the shops shut, and a baby grows out of a hoarded size within weeks.
+  - id: wipes-and-sacks
+    tier: basic
+    name: Wipes, nappy sacks and barrier cream
+    qty: {amount: 2, unit: packs of wipes, per: person}
+    why: With the water off you cannot wash a baby at every change, and nappy rash turns into broken skin fast.
+  - id: formula
+    tier: basic
+    name: First-stage infant formula, if your baby is formula fed
+    qty: {amount: 4, unit: 900 g tins, per: person}
+    stock: {category: food, unit: tins}
+    why: >-
+      Formula is the one item here that cannot be improvised, and it must be made up with water boiled and cooled to
+      no lower than 70 °C because the powder is not sterile
+      ([Infant food safety (MDWiki)](kiwix:mdwiki_en_all_maxi/Infant_food_safety)).
+    note: First-stage formula suits any age under one year; ready-to-feed liquid needs no water at all.
+  - id: child-medicines
+    tier: basic
+    name: Child paracetamol and ibuprofen liquid
+    qty: {amount: 2, unit: bottles of each, per: household}
+    stock: {category: medicine, unit: bottles}
+    why: >-
+      Doses go by age and by the strength of the liquid, so keep the strengths you already use and the chart with them
+      ([NHS paracetamol for children](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-children/)).
+    link: card:fever-child
+  - id: feeding-cup
+    tier: basic
+    name: Small open cup and spoon, plus bottles and teats if you use them
+    qty: {amount: 2, unit: cups, per: person}
+    why: >-
+      Bottles and teats are hard to keep clean and cause infections and diarrhoea, so a cup, or a cup and spoon, is the
+      safer way to feed a baby ([Where There Is No Doctor, p. 169](doc:where-there-is-no-doctor#page=169)).
+  - id: sling
+    tier: basic
+    name: Sling or soft carrier
+    qty: {amount: 1, unit: sling, per: person}
+    why: A pushchair is useless on flooded or blocked ground, and a carried baby leaves you both hands free.
+  - id: warm-layers-baby
+    tier: basic
+    name: Hats, blankets and a warm sleep layer for the baby
+    qty: {amount: 2, unit: sets, per: person}
+    why: Babies lose heat far faster than adults do, and an unheated house at night is the risk, not the day.
+  - id: relactation-kit
+    tier: serious
+    name: Hand pump or expressing kit and nursing pads
+    why: >-
+      Relactation is the fortnight-scale answer to formula running out, and supply follows demand: the baby goes to the
+      breast, or the pump does, at least every two hours
+      ([Where There Is No Doctor, p. 320](doc:where-there-is-no-doctor#page=320)).
+    link: page:infant-feeding
+  - id: cloth-nappies
+    tier: serious
+    name: Cloth nappies, liners and pins
+    qty: {amount: 24, unit: nappies, per: person}
+    why: Two dozen washable nappies outlast any pack you can stack, provided you have the water and soap to wash them.
+  - id: nappy-bucket
+    tier: serious
+    name: Lidded nappy bucket, soap flakes and a drying line
+    qty: {amount: 1, unit: bucket, per: household}
+    why: Soiled nappies in an open bin are a sanitation problem in a warm house within a day.
+    link: module:sanitation
+  - id: weaning-food
+    tier: serious
+    name: Baby cereal, oats and soft foods for a baby over six months
+    qty: {amount: 1, unit: kg, per: person}
+    stock: {category: food, unit: kg}
+    why: >-
+      A baby over six months keeps going on cereal porridge with mashed beans, egg or fish beaten in, but cereal water
+      alone will not feed one ([Where There Is No Doctor, p. 169](doc:where-there-is-no-doctor#page=169)).
+  - id: ors-for-children
+    tier: serious
+    name: Oral rehydration sachets sized for children
+    qty: {amount: 12, unit: sachets, per: person}
+    stock: {category: medicine, unit: sachets}
+    why: >-
+      Diarrhoea kills small children through dehydration long before anything else does, and rehydration salts are the
+      treatment ([Oral rehydration therapy](kiwix:wikipedia_en_medicine_maxi/Oral_rehydration_therapy)).
+    link: card:dehydration
+  - id: clothes-next-size
+    tier: serious
+    name: Clothes and shoes in the next size up
+    qty: {amount: 1, unit: set, per: person}
+    why: Children grow through a fortnight of trouble, and nothing in the house will fit them by the end of it.
+  - id: child-comfort
+    tier: serious
+    name: Familiar toy, books and a torch of their own
+    why: A frightened child who sleeps is a household that copes; this is not a luxury item.
+    link: module:mental-health
+  - id: reusable-everything
+    tier: full
+    name: Full set of reusables, washable wipes and terry squares
+    qty: {amount: 36, unit: nappies and squares, per: person}
+    why: Nothing disposable is being restocked, so every consumable a baby needs has to become a washable one.
+  - id: infant-feeding-printed
+    tier: full
+    name: Infant feeding and child dose pages, printed
+    why: The screen may be dead when a baby will not feed at three in the morning, so keep the pages on paper.
+    link: page:infant-feeding
+  - id: milk-fallback-plan
+    tier: full
+    name: A written milk plan, including a wet nurse or relactation
+    why: >-
+      Wet nursing and relactation are how babies without their mother's milk survived for most of history, and both need
+      arranging before the last tin ([Breastfeeding (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Breastfeeding)).
+    link: page:infant-feeding
+  - id: child-dose-reference
+    tier: full
+    name: Printed child dose reference and a 5 ml oral syringe
+    qty: {amount: 2, unit: syringes, per: household}
+    why: >-
+      Guessing a child's dose is the commonest medicine error in a crisis; the printed table removes the guess
+      ([NHS ibuprofen for children](kiwix:nhs_medicines/www.nhs.uk/medicines/ibuprofen-for-children/)).
+    link: card:fever-child
+  - id: schooling-and-play
+    tier: full
+    name: Paper, pencils, games and something to teach from
+    why: Ninety days without school is ninety days you have to fill, and a bored child makes every other job harder.

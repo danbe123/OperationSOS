@@ -1,0 +1,162 @@
+id: tools-repair
+title: Tools and repair
+icon: hammer
+order: 14
+summary: The hand tools and spares that keep the house watertight and the rest of the kit working.
+intro: >-
+  Nothing in this box survives contact with a long emergency unless somebody can fix it. A dead torch, radio, power
+  bank or generator is usually a battery, a switch or a contact, and there is a teardown for almost all of it
+  ([iFixit torches](kiwix:ifixit_en_all/Device/Flashlight); [Restarters: batteries](kiwix:restarters_en_all/Batteries)).
+  Keep hand tools that need no power, and keep spares: a BS 1363 plug carries its own fuse, so 3 A and 13 A cartridge
+  fuses are worth a drawer
+  ([UK plugs and sockets](kiwix:wikipedia_en_all_maxi/AC_power_plugs_and_sockets:_British_and_related_types)). Know
+  the limits too. Do not go out to repair storm damage while the storm is still blowing, and if you use a chainsaw,
+  the helmet, hearing and eye protection are standards, not suggestions, and no protective equipment gives complete
+  protection against a hand-held saw ([HSE INDG317, p. 8](doc:hse-indg317#page=8)). The
+  [tools and repair module](module:tools-repair) has the rest.
+sources:
+  - {title: 'iFixit repair guides', kiwix: ifixit_en_all/home/home, as_at: '2025-12-21'}
+  - {title: 'Home Improvement Q&A (Stack Exchange)', kiwix: diy.stackexchange.com_en_all/questions, as_at: '2026-08-03'}
+  - {title: 'HSE INDG317: Chainsaws at work', doc: hse-indg317, as_at: '2026-09'}
+  - {title: 'Knots Library (zimgit)', kiwix: zimgit-knots_en/home, as_at: '2024-08-29'}
+  - {title: 'Restarters wiki', kiwix: restarters_en_all/Main_Page, as_at: '2026-08'}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: Three days of trouble is a broken window, a leaking pipe and a torch that has stopped working.
+  serious:
+    title: Two weeks
+    days: 14
+    why: Over a fortnight you are cutting wood, patching a roof and keeping bicycles and stoves running yourself.
+  full:
+    title: No help coming
+    days: 90
+    why: With no trades and no deliveries, the workshop and the spares bin are the only repair service there is.
+items:
+  - id: multitool
+    tier: basic
+    name: Multitool or folding pliers, and a fixed-blade utility knife
+    qty: {amount: 1, unit: multitool, per: person}
+    why: >-
+      One tool in a pocket covers most small repairs; carry a folding non-locking blade under three inches in public
+      or you need a good reason for it ([knife and firearms law](page:knife-firearms-law)).
+  - id: tape-and-ties
+    tier: basic
+    name: Duct tape, electrical tape and cable ties
+    qty: {amount: 2, unit: rolls of duct tape, per: household}
+    why: Tape and ties hold a broken window, a split hose and a snapped fixing together for long enough to do the job properly.
+  - id: screwdrivers-and-spanners
+    tier: basic
+    name: Screwdriver set and an adjustable spanner
+    qty: {amount: 1, unit: set, per: household}
+    why: Most things that fail in a house are held together with a screw or a nut, and the right driver stops you rounding them off.
+  - id: hammer-and-saw
+    tier: basic
+    name: Claw hammer and a hand saw
+    qty: {amount: 1, unit: of each, per: household}
+    why: Boarding a window or cutting a batten needs no power tool, and a hand saw works in a blackout.
+  - id: gloves-and-glasses
+    tier: basic
+    name: Work gloves and safety glasses
+    qty: {amount: 1, unit: pair of each, per: person}
+    why: A cut hand or an eye injury with no GP and no minor injuries unit turns a small job into a serious problem.
+    link: card:eye-injury
+  - id: fuses-and-fixings
+    tier: basic
+    name: Spare fuses, screws, nails and picture wire
+    qty: {amount: 10, unit: fuses of each rating, per: household}
+    why: >-
+      A UK plug carries its own cartridge fuse, so a blown 3 A or 13 A fuse can stop an appliance that is otherwise
+      perfectly good ([UK plugs and sockets](kiwix:wikipedia_en_all_maxi/AC_power_plugs_and_sockets:_British_and_related_types)).
+  - id: penetrating-oil
+    tier: basic
+    name: Penetrating oil and general purpose grease
+    qty: {amount: 1, unit: can, per: household}
+    why: Seized stopcocks, locks and hinges are the commonest jam in an old house, and a can frees them without force.
+  - id: tarpaulin-and-sheeting
+    tier: basic
+    name: Tarpaulin, plastic sheeting and battens
+    qty: {amount: 2, unit: tarpaulins, per: household}
+    why: A tarpaulin held by battens screwed through it into the rafters stays put, where one held by bricks blows off in the next gust.
+  - id: axe-and-bow-saw
+    tier: serious
+    name: Axe, bow saw and a splitting maul
+    qty: {amount: 1, unit: of each, per: household}
+    why: Cutting and splitting your own fuel is a fortnight-scale job, and it wants sharp steel rather than a blunt hatchet.
+    link: module:shelter-heat
+  - id: crowbar-and-bolt-cutters
+    tier: serious
+    name: Crowbar, bolt cutters and a lump hammer
+    why: Getting into a jammed door or freeing a trapped person is prying and cutting work, not lifting work.
+    link: page:fieldcraft-rescue
+  - id: hand-drill
+    tier: serious
+    name: Hand brace or geared hand drill and a set of bits
+    qty: {amount: 1, unit: drill, per: household}
+    why: A cordless drill is dead within days of the power going; a brace is not.
+  - id: sealant-and-glue
+    tier: serious
+    name: Silicone sealant, wood glue and epoxy putty
+    qty: {amount: 2, unit: tubes of each, per: household}
+    why: Epoxy putty repairs a leaking pipe or a cracked casing that would otherwise be scrap.
+    link: kiwix:diy.stackexchange.com_en_all/questions
+  - id: sewing-and-canvas
+    tier: serious
+    name: Sewing kit, sailmaker's needles and waxed thread
+    qty: {amount: 1, unit: kit, per: household}
+    why: Boots, rucksacks, tents and coats are worth more mended than replaced when nothing is being delivered.
+  - id: bicycle-tools
+    tier: serious
+    name: Bicycle tools, inner tubes and a pump
+    qty: {amount: 2, unit: inner tubes per bicycle, per: household}
+    why: >-
+      A bicycle is the transport that still works with no fuel, and a puncture is what stops it
+      ([Bicycles Q&A](kiwix:bicycles.stackexchange.com_en_all/questions)).
+    link: module:vehicles-fuel
+  - id: rope-and-knots
+    tier: serious
+    name: Rope, paracord and a printed knots reference
+    qty: {amount: 30, unit: metres of rope, per: household}
+    why: >-
+      A handful of knots and lashings covers improvised shelter, securing loads and safe lifting
+      ([Knots Library](kiwix:zimgit-knots_en/home)).
+    link: page:fieldcraft-rope-tools
+  - id: measuring-and-levels
+    tier: serious
+    name: Tape measure, spirit level, square and clamps
+    why: Anything you build to last has to be square and level, and eyeballing it wastes materials you cannot replace.
+  - id: full-hand-tool-set
+    tier: full
+    name: A complete hand-tool set, indexed and stored dry
+    why: With no trades and no deliveries the household workshop is the only repair service, so the gaps have to be filled now.
+    link: module:tools-repair
+  - id: files-and-stone
+    tier: full
+    name: Files, sharpening stones and a honing guide
+    qty: {amount: 1, unit: set, per: household}
+    why: >-
+      Tools kept sharp last for decades and blunt ones are dangerous, so sharpening is the skill that keeps the rest of
+      the kit alive ([Sharpening stone](kiwix:wikipedia_en_all_maxi/Sharpening_stone)).
+  - id: chainsaw-and-ppe
+    tier: full
+    name: Chainsaw with full protective equipment, or a two-person crosscut saw
+    why: >-
+      Chainsaw PPE is specified to standards, helmet to EN 397, hearing protection to EN 352-1 and eye protection to
+      EN 1731 or EN 166, and no equipment gives complete protection against cut-through
+      ([HSE INDG317, p. 8](doc:hse-indg317#page=8)).
+  - id: spares-bin
+    tier: full
+    name: A spares bin of fixings, pipe fittings, glass, timber and salvaged parts
+    why: In a long rebuild the thing you need is never bought, it is found in the bin you started keeping years earlier.
+    link: playbook:long-rebuild
+  - id: workbench-and-vice
+    tier: full
+    name: Workbench, engineer's vice and a set of taps and dies
+    why: You cannot make or repair a metal part without something to hold it still.
+    link: kiwix:woodworking.stackexchange.com_en_all/questions
+  - id: plumbing-spares
+    tier: full
+    name: Stopcock key, compression fittings, pipe and a pipe cutter
+    why: A burst pipe in a hard frost floods a house in minutes, and the fix is a fitting you either hold or do not.
+    link: playbook:severe-winter

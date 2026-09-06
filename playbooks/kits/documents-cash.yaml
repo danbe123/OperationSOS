@@ -1,0 +1,129 @@
+id: documents-cash
+title: Documents and cash
+icon: coins
+order: 13
+summary: Cash in small notes and paper copies of the documents you cannot prove anything without.
+intro: >-
+  Cards, cash machines and online banking all sit on the same systems. The National Risk Register plans for a
+  systemically important retail bank losing its critical technology, with customers unable to view balances, pay or
+  draw cash from machines and a partial outage for two days after
+  ([NRR 2025, p. 102](doc:nrr-2025#page=102)), and for an attack on a financial market infrastructure leaving systems
+  unavailable for at least a week, with a partial outage for weeks after
+  ([NRR 2025, p. 58](doc:nrr-2025#page=58)). In a power cut the terminals are dead too, and the shops that open take
+  cash. The government asks you to write important numbers on paper and keep them with passports, birth certificates
+  and insurance policies so they can be gathered quickly if you are told to leave
+  ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). This kit is cheap, it fits in
+  one box, and it is the one people skip. Fill in the [household plan](page:household-plan) as you go.
+sources:
+  - {title: 'National Risk Register 2025', doc: nrr-2025, as_at: '2025-01-16'}
+  - {title: 'Prepare: get prepared for emergencies', kiwix: 'prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/', as_at: '2026-09-05'}
+  - {title: 'Financial Services Compensation Scheme (Wikipedia)', kiwix: wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme, as_at: '2026-02-15'}
+  - {title: 'Cash (Wikipedia)', kiwix: wikipedia_en_all_maxi/Cash, as_at: '2026-02-15'}
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: For three days you need notes in your hand and the numbers you would otherwise look up on a dead phone.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight without card payments means a real cash float and a copy of everything kept somewhere else.
+  full:
+    title: No help coming
+    days: 90
+    why: If money itself stops working, what you hold has to be barter goods, a ledger and proof of who owns what.
+items:
+  - id: cash-small-notes
+    tier: basic
+    name: Cash in small notes and coins
+    qty: {amount: 14, unit: days of essential spending, per: household}
+    why: >-
+      Notes remain legal tender, a shop may still refuse them, and a bank may limit withdrawals
+      ([Cash](kiwix:wikipedia_en_all_maxi/Cash)); small denominations matter because nobody will have change.
+    note: Keep it in two places, and do not tell people how much there is.
+  - id: identity-copies
+    tier: basic
+    name: Paper copies of passports, birth certificates and driving licences
+    qty: {amount: 1, unit: set of copies, per: person}
+    why: Proving who you are is what gets you into a rest centre, a bank branch or a replacement prescription.
+  - id: nhs-and-prescriptions
+    tier: basic
+    name: NHS numbers, repeat prescription lists and allergies on paper
+    qty: {amount: 1, unit: sheet, per: person}
+    why: A pharmacist who cannot see the record can still work from an accurate written list of what you take.
+    link: page:chronic-conditions
+  - id: contacts-on-paper
+    tier: basic
+    name: Written list of phone numbers and radio frequencies
+    why: >-
+      Prepare asks you to write down 105 for power cuts, the numbers of anyone you would contact, your medication list,
+      local radio frequencies and your insurance details
+      ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)).
+    link: page:uk-numbers
+  - id: household-plan-printed
+    tier: basic
+    name: The household plan, printed and filled in
+    why: One filled-in sheet does the job of a dozen half-remembered arrangements when the phones are down.
+    link: page:household-plan
+  - id: waterproof-wallet
+    tier: basic
+    name: Waterproof wallet or grip-seal bag for the papers
+    qty: {amount: 1, unit: wallet, per: household}
+    why: Flood and rain ruin paper first, and a soaked document proves nothing.
+  - id: usb-copy
+    tier: serious
+    name: Encrypted USB copy of every document, kept off site
+    qty: {amount: 2, unit: sticks, per: household}
+    why: Two sticks in two places survive the fire or the flood that takes the box; encrypt them because they will be lost eventually.
+  - id: fireproof-box
+    tier: serious
+    name: Fireproof, lockable document box
+    qty: {amount: 1, unit: box, per: household}
+    why: Deeds, share certificates and passports are slow and expensive to replace, and a house fire during a wider emergency gets no fire engine.
+  - id: second-cash-cache
+    tier: serious
+    name: A second cash cache away from the first
+    why: >-
+      Withdrawal limits can appear overnight, as Argentina's corralito showed
+      ([Corralito](kiwix:wikipedia_en_all_maxi/Corralito)), so the money you have already drawn is the money you have.
+  - id: insurance-and-deeds
+    tier: serious
+    name: Insurance policies, tenancy agreement or deeds, and photographs of the house
+    why: Insurers ask for evidence of what you owned; photographs of every room taken today are that evidence.
+  - id: notebook-and-pencils
+    tier: serious
+    name: Notebook, pencils and a pencil sharpener
+    qty: {amount: 2, unit: notebooks, per: household}
+    why: Pencil writes when it is wet and cold and needs no power; a written log of what happened and what you spent settles arguments later.
+  - id: cheque-book
+    tier: serious
+    name: Cheque book and a record of account numbers
+    why: >-
+      Cheques and IOUs between people who know each other keep a village trading when the payment systems are down
+      ([Cheque](kiwix:wikipedia_en_all_maxi/Cheque)).
+  - id: deposit-protection-note
+    tier: serious
+    name: A written note of your banks and the deposit guarantee
+    why: >-
+      Deposits are protected up to a published limit per person per banking group, and knowing the limit stops you
+      joining a queue on a rumour ([Financial Services Compensation Scheme](kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme)).
+  - id: barter-goods
+    tier: full
+    name: Barter goods worth trading
+    why: When the currency stops working, what people want is fuel, batteries, salt, tools, medicines and skills, not more notes.
+    link: playbook:economic-collapse
+  - id: ledger
+    tier: full
+    name: A ledger of debts, credits and shared work
+    why: Trust between neighbours holds only as long as somebody writes down who did what for whom.
+    link: module:community
+  - id: store-inventory
+    tier: full
+    name: A written inventory of the store, with dates
+    why: You cannot ration what you have not counted, and paper survives the outage that hides the spreadsheet.
+    link: module:food
+  - id: spare-keys-and-title
+    tier: full
+    name: Spare keys, land registry title and utility account numbers
+    why: Proving occupation and ownership matters most in the rebuild, when nobody's systems are back yet.
+    link: playbook:long-rebuild

@@ -1,0 +1,148 @@
+id: pets-livestock
+title: Pets and livestock
+icon: heart
+order: 12
+summary: Feed, water, medicines and paperwork for the animals on the register, from one house cat to a few hens.
+intro: >-
+  The Animal Welfare Act 2006 duty of care applies to any animal you keep, whatever else is happening
+  ([Animal Welfare Act 2006](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2006/45/contents)), and a rest centre
+  or a friend's spare room may not take an animal at all, so plan for keeping them where they are. Water is the part
+  people forget: a laying hen drinks about 0.3 litres a day, roughly 30 litres a day per hundred birds
+  ([Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM)),
+  and a goat or a sheep needs 5 to 6 litres a day and cannot digest its fodder without it
+  ([sheep and goats need water (FAO)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/FB12SE/B77_6.HTM)).
+  Paperwork matters too: you must register within one month of keeping birds at any premises in England or Wales, and
+  you are breaking the law if you do not
+  ([register as a bird keeper](kiwix:govuk_resilience/www.gov.uk/government/collections/register-as-a-bird-keeper)).
+  The [livestock module](module:livestock) covers the welfare and disease rules in full.
+sources:
+  - {title: 'Animal Welfare Act 2006', kiwix: 'legislation_uk/www.legislation.gov.uk/ukpga/2006/45/contents', as_at: '2026-09'}
+  - {title: 'Register as a bird keeper (GOV.UK)', kiwix: 'govuk_resilience/www.gov.uk/government/collections/register-as-a-bird-keeper', as_at: '2026-09'}
+  - {title: 'Raising chickens and ducks (VITA, CD3WD)', kiwix: 'cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM', as_at: '2026-09'}
+  - {title: 'Sheep and goats need water (FAO Better Farming, CD3WD)', kiwix: 'cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/FB12SE/B77_6.HTM', as_at: '2026-09'}
+  - {title: 'WikiVet veterinary encyclopedia', kiwix: wikivet.net_en_all/New_Front_Page, as_at: '2026-08'}
+relevant_when:
+  needs_any: [pet, dog, cat, hen, chicken, goat, sheep, horse, rabbit, livestock]
+tiers:
+  basic:
+    title: Three days
+    days: 3
+    why: An animal that cannot be fed or watered for three days becomes a welfare emergency you cannot fix later.
+  serious:
+    title: Two weeks
+    days: 14
+    why: A fortnight is longer than an open sack of feed lasts, and shut markets stop deliveries first.
+  full:
+    title: No help coming
+    days: 90
+    why: With no vet, no feed merchant and no market, the animals have to be fed, bred and treated from what you hold.
+items:
+  - id: animal-food
+    tier: basic
+    name: The food your animals already eat, unopened
+    qty: {amount: 14, unit: days of feed, per: household}
+    stock: {category: food, unit: kg}
+    why: Changing an animal's food suddenly causes the diarrhoea you can least afford, so store the brand they are on and rotate it.
+  - id: animal-water
+    tier: basic
+    name: Stored water and drinkers for the animals
+    qty: {amount: 20, unit: litres, per: household}
+    stock: {category: water, unit: litres}
+    why: >-
+      Animal water comes out of the same store as yours once the mains stop, and a goat or a sheep alone needs 5 to 6
+      litres a day ([sheep and goats need water (FAO)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/FB12SE/B77_6.HTM)).
+    link: module:water
+  - id: leads-and-carrier
+    tier: basic
+    name: Leads, collars, harnesses and a carrier or crate per animal
+    qty: {amount: 1, unit: carrier per animal, per: household}
+    why: An animal that cannot be caught and carried is an animal you leave behind if you have to move in a hurry.
+    link: module:evacuation
+  - id: animal-medicines
+    tier: basic
+    name: Prescription medicines, flea and tick treatment
+    qty: {amount: 30, unit: days of any prescribed medicine, per: household}
+    stock: {category: medicine, unit: doses}
+    why: Veterinary prescriptions are dispensed in short courses, so ask for the repeat early rather than in the week it runs out.
+    link: kiwix:wikivet.net_en_all/New_Front_Page
+  - id: animal-paperwork
+    tier: basic
+    name: Vaccination card, microchip number and bird keeper registration on paper
+    why: >-
+      All dogs in England, Scotland and Wales have had to be microchipped since 6 April 2016
+      ([microchip implant](kiwix:wikipedia_en_all_maxi/Microchip_implant_%28animal%29)), and a chip only reunites you if
+      somebody can read the number you hold.
+  - id: bedding-and-bowls
+    tier: basic
+    name: Bowls, litter, bedding and poo bags
+    qty: {amount: 14, unit: days of litter and bedding, per: household}
+    why: Litter and bedding are the animal half of the sanitation problem, and they run out at the same rate as your own.
+    link: module:sanitation
+  - id: feed-store
+    tier: serious
+    name: Bulk feed in vermin-proof bins
+    qty: {amount: 1, unit: 25 kg sack per large animal, per: household}
+    stock: {category: food, unit: kg}
+    why: Feed merchants close with the markets, and an open sack in a shed feeds the rats before it feeds the stock.
+  - id: hay-and-forage
+    tier: serious
+    name: Hay, straw and forage for the winter ahead
+    why: Grass stops growing from about November to March in most of Britain, so winter forage is bought in summer or not at all.
+    link: module:livestock
+  - id: fencing-and-fox-proofing
+    tier: serious
+    name: Fencing, netting and fox-proofing materials
+    why: Foxes, dogs and thieves are the practical threat to poultry and small stock long before disease is.
+  - id: wormer-and-parasite
+    tier: serious
+    name: Wormer and external parasite treatment
+    qty: {amount: 2, unit: courses per animal, per: household}
+    stock: {category: medicine, unit: doses}
+    why: >-
+      Worm burdens build quietly and kill young stock, and anthelmintics are the only practical answer without a vet
+      ([Anthelmintic](kiwix:wikipedia_en_all_maxi/Anthelmintic)).
+  - id: animal-first-aid
+    tier: serious
+    name: Animal first-aid kit and a veterinary reference
+    why: >-
+      With no vet reachable you will be dressing wounds and judging lameness yourself, so hold the reference before
+      you need it ([WikiVet](kiwix:wikivet.net_en_all/New_Front_Page)).
+    link: kiwix:pets.stackexchange.com_en_all/questions
+  - id: housing-order-plan
+    tier: serious
+    name: A housing plan for birds, with covered runs and disinfectant
+    why: >-
+      Avian influenza housing orders can be imposed at short notice and birds must then be kept under cover
+      ([bird flu latest situation](kiwix:govuk_resilience/www.gov.uk/guidance/bird-flu-avian-influenza-latest-situation-in-england)).
+  - id: rainwater-for-stock
+    tier: serious
+    name: Water butt and troughs filled for the animals
+    qty: {amount: 200, unit: litres, per: household}
+    stock: {category: water, unit: litres}
+    why: A butt on the shed roof keeps drinkers full without touching the drinking store, provided the animals are not drinking from a gutter with lead flashing.
+  - id: breeding-plan
+    tier: full
+    name: A breeding plan, with a cockerel or buck and replacement stock
+    why: Hens stop laying well after their second year and rabbits are the fastest home-reared protein, so replacements have to be bred rather than bought.
+    link: module:livestock
+  - id: home-slaughter-kit
+    tier: full
+    name: Humane despatch and butchery kit
+    why: >-
+      Killing an animal for your own consumption at home is lawful only with proper stunning, under the 2015
+      regulations ([Welfare of Animals at the Time of Killing Regulations 2015](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2015/1782/contents)).
+    link: page:butchery
+  - id: grown-fodder
+    tier: full
+    name: Ground and seed for fodder crops
+    why: Bought feed ends before ninety days do, so fodder beet, kale and surplus vegetables become the ration.
+    link: module:growing-food
+  - id: incubation
+    tier: full
+    name: Broody coop or low-power incubator
+    why: A broody hen needs no electricity and is the only hatching method that survives a long outage.
+  - id: veterinary-library
+    tier: full
+    name: Printed veterinary notes for the species you keep
+    why: The screens may be off when a ewe is lambing badly, so print the pages for the animals you actually have.
+    link: kiwix:wikivet.net_en_all/New_Front_Page
