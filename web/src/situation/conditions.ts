@@ -22,11 +22,27 @@ export const CONDITION_INFO: Record<ConditionId, { title: string; short: string;
 };
 
 export const STATE_LABEL: Record<ConditionState, string> = { working: 'working', degraded: 'patchy', off: 'off' };
-/** Colour is never the only signal: every chip and badge carries its symbol too. */
+
+/* ── The box's symbols. One meaning each, everywhere, and never the only signal: a colour always has
+   a symbol beside it and a symbol always has a word.
+
+     ✓  done, working, in hand
+     ▲  patchy, or something to keep an eye on — a caution short of danger
+     ✕  off, gone, or nothing found
+     ⚠  a warning: something that can hurt you, or that has already gone wrong
+     ⚑  a drill, and nothing else
+     ℹ  a note the box is adding
+     ▸ ▾  a disclosure, and nothing else
+
+   ⚠ used to do eight jobs — danger, the drill chip, the engine-down line, the Timers tile, "AI can be
+   wrong", the empty-form hint "Enter the child's age", the OpenStreetMap caveat and the "passed"
+   marker in Coming up — which is the same as doing none. */
 export const STATE_SYMBOL: Record<ConditionState, string> = { working: '✓', degraded: '▲', off: '✕' };
 export const STATE_TONE: Record<ConditionState, 'ok' | 'warn' | 'danger'> = { working: 'ok', degraded: 'warn', off: 'danger' };
 
-export const SEVERITY_SYMBOL: Record<Severity, string> = { info: 'ℹ', warn: '▲', danger: '⚠', passed: '✕' };
+/* A forecast that has already fallen due is not "off": the fridge food is unsafe now, which is a
+   warning. */
+export const SEVERITY_SYMBOL: Record<Severity, string> = { info: 'ℹ', warn: '▲', danger: '⚠', passed: '⚠' };
 export const SEVERITY_TONE: Record<Severity, 'default' | 'warn' | 'danger'> = { info: 'default', warn: 'warn', danger: 'danger', passed: 'danger' };
 
 export const BUCKET_TITLE: Record<TaskBucket, string> = { now: 'Right now', hour: 'Within the hour', today: 'Today', week: 'This week' };
@@ -57,6 +73,20 @@ export function shortDuration(state: ConditionState, forSeconds: number): string
 export function chipDuration(state: ConditionState, forSeconds: number): string {
   if (state === 'working') return '';
   return forSeconds < MINUTE ? 'just now' : `for ${describeDuration(forSeconds)}`;
+}
+
+/** How long a condition has been as it is, counted from the instant the box stored rather than from
+ * a `for_s` the engine worked out when it last answered. The board tile said "off for 5 h" beside a
+ * clock reading 06:12 and a log line reading "since 00:00": two statements of one fact an hour
+ * apart. Everything on the screen now counts from the same `since`, on the box's own clock. */
+export function elapsedFrom(condition: { since: string | null; for_s: number }, now: number = Date.now()): number {
+  const at = condition.since ? Date.parse(condition.since) : Number.NaN;
+  return Number.isNaN(at) ? condition.for_s : Math.max(0, Math.round((now - at) / 1000));
+}
+
+/** The same second line, counted from the stored instant. */
+export function sinceDuration(condition: { state: ConditionState; since: string | null; for_s: number }, now: number = Date.now()): string {
+  return chipDuration(condition.state, elapsedFrom(condition, now));
 }
 
 /** How long until a forecast item falls due, in words. Past items say so. */

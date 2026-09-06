@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, within, act, waitFor } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { condition, makeView, page, playbooks, powerOffView, view } from '../fixtures/api';
+import { condition, makeView, page, playbooks, powerOffView, view, VIEW_NOW } from '../fixtures/api';
 import { activeDestination, DESTINATIONS } from '../../src/shell/destinations';
 
 describe('the shell', () => {
@@ -41,7 +41,10 @@ describe('the shell', () => {
 });
 
 describe('the situation band', () => {
-  it('carries what is wrong, the clock, the jobs and the way to the sheet', async () => {
+  beforeEach(() => vi.useFakeTimers({ now: Date.parse(VIEW_NOW), toFake: ['Date'] }));
+  afterEach(() => vi.useRealTimers());
+
+  it('carries what is wrong, the clock, the jobs and the way to the sheet, in one row', async () => {
     vi.spyOn(api, 'page').mockResolvedValue(page);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       ...powerOffView,
@@ -50,12 +53,36 @@ describe('the situation band', () => {
     renderRoute('/p/pmr446');
     const band = await screen.findByRole('group', { name: 'Situation now' });
     const links = within(band).getAllByRole('link');
-    // The band says how long, and the count of jobs is not dressed as a condition.
+    // One row at every width: on a phone with a scenario running there is no room for a chip, so
+    // the two conditions fold into one control that says how many and opens the sheet. The count
+    // of jobs is not dressed as a condition.
     expect(links.map((a) => a.textContent?.trim())).toEqual([
-      expect.stringContaining('National grid collapse'), 'Power✕ off1 h', 'Mobile▲ patchy1 h', '3 to do', 'Situation',
+      expect.stringContaining('National grid collapse'), '2 things off', '3 to do', 'Situation',
     ]);
-    expect(within(band).getByRole('link', { name: 'Mains power: off for 1 h' })).toHaveAttribute('href', '/situation#power');
+    expect(within(band).getByRole('link', { name: '2 things off' })).toHaveAttribute('href', '/situation');
     expect(within(band).getByRole('link', { name: 'Situation' })).toHaveAttribute('href', '/situation');
+  });
+
+  it('shows the chips it has room for on the kiosk, and folds the rest', async () => {
+    const narrow = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('min-width: 700px'), media: query, addEventListener: () => {}, removeEventListener: () => {},
+    })) as unknown as typeof window.matchMedia;
+    try {
+      vi.spyOn(api, 'page').mockResolvedValue(page);
+      vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+        ...powerOffView,
+        scenario: { slug: 'grid-collapse', title: 'National grid collapse', started_at: '2026-09-06T12:00:00.000Z', elapsed_s: 7200, phase: 'right-now' },
+      }));
+      renderRoute('/p/pmr446');
+      const band = await screen.findByRole('group', { name: 'Situation now' });
+      // The band says how long, counted from the instant the box stored.
+      expect(within(band).getByRole('link', { name: 'Mains power: off for 1 h' })).toHaveAttribute('href', '/situation#power');
+      expect(within(band).getByRole('link', { name: '+1 more' })).toHaveAttribute('href', '/situation');
+      expect(within(band).queryByRole('link', { name: /Mobile network/ })).toBeNull();
+    } finally {
+      window.matchMedia = narrow;
+    }
   });
 
   it('stays away while everything works', async () => {
@@ -70,7 +97,8 @@ describe('the situation band', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue([]);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/');
-    expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('Power');
+    // On a phone the band carries the count; Now's own heading names the services.
+    expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('2 things off');
   });
 
   it('flies the drill flag on every screen', async () => {

@@ -3,10 +3,11 @@ import { THEMES, useTheme, type Theme } from './ThemeProvider';
 
 const LABELS: Record<Theme, string> = { vault: 'Vault', field: 'Field', blackout: 'Blackout' };
 
-/** The theme button is on every screen: in the rail's footer where there is a rail, and in the
- * screen head where there is not. It used to wear the current theme's name — "Vault", "Blackout" —
- * in the rail's own row style, which made it a sixth place to go rather than something to press.
- * It says what it does: a verb, and the current theme after it. */
+/** The theme button is on every screen: in the rail's footer where there is a rail, and among the
+ * screen's own actions where there is not. One word — "Theme" — in a 20 px icon's company, so the
+ * label fits the 48 px rail row instead of overflowing it by 19 px and being clipped into "Change /
+ * theme" on all 177 kiosk screenshots. Which theme is on now, and which is next, stay in the
+ * accessible name: the screen is already wearing the one it is asking about. */
 export function ThemeButton({ className }: { className?: string } = {}) {
   const { theme, setTheme } = useTheme();
   const next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
@@ -17,8 +18,8 @@ export function ThemeButton({ className }: { className?: string } = {}) {
       onClick={() => setTheme(next)}
       aria-label={`Change the theme. ${LABELS[theme]} now; next is ${LABELS[next]}`}
     >
-      <Icon name="sun" size={18} />
-      <span>Change theme<small>{LABELS[theme]} now</small></span>
+      <Icon name="sun" size={20} />
+      <span>Theme</span>
     </button>
   );
 }

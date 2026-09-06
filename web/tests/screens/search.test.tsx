@@ -9,15 +9,22 @@ describe('Search screen', () => {
   it('searches ?q=, lists results with source badges and navigates on click', async () => {
     const spy = vi.spyOn(api, 'search').mockResolvedValue(search);
     const { router } = renderRoute('/search?q=water');
-    expect(await screen.findByText('Water is an inorganic compound.')).toBeInTheDocument();
+    // The engine's <b> marks render as bold text, never as the tags themselves.
+    const snippet = (await screen.findByText(/is an inorganic compound/)).closest('.result-snippet') as HTMLElement;
+    expect(snippet).toHaveTextContent('Water is an inorganic compound.');
+    expect(within(snippet).getByText('Water').tagName).toBe('B');
+    expect(screen.queryByText(/<b>/)).toBeNull();
+    // A mirrored page's survey prompt and footer are not a snippet: the row prints without one.
+    expect(screen.queryByText(/Help us improve our website/)).toBeNull();
     expect(spy).toHaveBeenCalledWith('water', { sources: undefined });
-    // Every result is in the group of the source it came from, the box's own first.
+    // Every result is in the group of the source it came from, the box's own first, and the three
+    // matches inside one authored page are one row.
     const items = screen.getAllByRole('listitem').filter((li) => li.closest('.results'));
-    expect(items).toHaveLength(5);
+    expect(items).toHaveLength(7);
     // "Playbook" is the box's word; a household reads "Guide".
     expect(within(items[0]).getByText('Guide')).toHaveClass('badge');
     expect(within(screen.getByRole('region', { name: 'UK official' })).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
-    const wiki = within(screen.getByRole('region', { name: 'Wikipedia' })).getByRole('link');
+    const wiki = within(screen.getByRole('region', { name: /^Wikipedia/ })).getByRole('link');
     await act(async () => { wiki.click(); });
     expect(router.state.location.pathname).toBe('/read/wikipedia_en_100_mini_2026-01/A/Water');
   });
@@ -27,12 +34,15 @@ describe('Search screen', () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/search?q=water');
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
-    // The chips count the very rows underneath them, and the box's own group leads.
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (1)', 'Place (1)', 'UK official (1)', 'NHS (1)', 'Wikipedia (1)']);
-    await user.click(within(chips).getByRole('button', { name: 'NHS (1)' }));
+    // The chips count the very rows underneath them, the box's own group leads, and past one row
+    // of them the rest wait behind one control rather than pushing the first result off the screen.
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (2)', 'Place (1)', 'UK official (1)', 'NHS (2)', 'More sources (1)']);
+    await user.click(within(chips).getByRole('button', { name: 'More sources (1)' }));
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (2)', 'Place (1)', 'UK official (1)', 'NHS (2)', 'Wikipedia (1)', 'Fewer sources']);
+    await user.click(within(chips).getByRole('button', { name: 'NHS (2)' }));
     expect(router.state.location.search).toBe('?q=water&sources=nhs');
     expect(spy).toHaveBeenLastCalledWith('water', { sources: ['nhs'] });
-    expect(within(chips).getByRole('button', { name: 'NHS (1)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(chips).getByRole('button', { name: 'NHS (2)' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows the partial notice, the empty state and the error state', async () => {

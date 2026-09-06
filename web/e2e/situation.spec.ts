@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect } from './test';
+import { test, expect, openCondition } from './test';
 
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
   await page.goto('/');
@@ -13,7 +13,8 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
 
   // set the power off, an hour ago, from the sheet
-  await readiness.getByRole('link', { name: 'Situation sheet' }).click();
+  await readiness.getByRole('link', { name: 'Situation' }).click();
+  await openCondition(page, 'power');
   await page.getByLabel('Mains power: since').selectOption('hour');
   await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
   await expect(page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
@@ -45,7 +46,9 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
 
   // end with everything working again
   await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' }).click();
-  await expect(page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Working' })).toHaveAttribute('aria-pressed', 'true');
+  // A service that is working again goes back to one line, with its state on it.
+  await expect(page.locator('#power')).toContainText('working');
+  await expect(page.locator('#power').getByRole('button', { name: /Change/ })).toBeVisible();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
@@ -73,7 +76,8 @@ test('a drill runs the whole thing without touching the real conditions', async 
 
 test('with both phone networks down the pages say the numbers will not connect', async ({ page }) => {
   await page.goto('/situation');
-  for (const name of ['Mobile network', 'Landline and 999']) {
+  for (const [id, name] of [['mobile', 'Mobile network'], ['landline', 'Landline and 999']] as const) {
+    await openCondition(page, id);
     await page.getByRole('group', { name }).getByRole('button', { name: 'Off' }).click();
     await expect(page.getByRole('group', { name }).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
   }
@@ -87,10 +91,13 @@ test('with both phone networks down the pages say the numbers will not connect',
 test('the sheet and Now fit a phone as well as the kiosk', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/situation');
+  await openCondition(page, 'water');
   await page.getByRole('group', { name: 'Water supply' }).getByRole('button', { name: 'Off' }).click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('Water');
+  // A phone's band carries the count and the way to the sheet; the heading names the service.
+  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('1 thing off');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Water off');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
@@ -136,24 +143,24 @@ test('the chosen state is filled and marked, not merely coloured, in all six pal
     await page.addInitScript((t) => localStorage.setItem('sos.theme', t as string), theme);
     await page.goto('/situation');
     if (dim) await page.evaluate(() => { document.documentElement.dataset.dim = 'on'; });
+    await openCondition(page, 'power');
     const group = page.getByRole('group', { name: 'Mains power' });
     await group.getByRole('button', { name: 'Off' }).click();
     const chosen = group.getByRole('button', { name: 'Off' });
     await expect(chosen).toHaveAttribute('aria-pressed', 'true');
 
-    // The ground of the chosen button is the sunken one it always asked for, and not the panel the
-    // other two sit on: without it the only difference between the three was a colour.
-    const [sunken, panel] = [await token(page, '--sunken'), await token(page, '--panel')];
+    // The chosen button is filled with a tint of its own colour, and the other two sit on the raised
+    // control tone: without that the only difference between the three was a colour.
+    const [raised, panel] = [await token(page, '--raised'), await token(page, '--panel')];
     const ground = await chosen.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(ground, `${where}: the chosen state's ground`).toBe(sunken);
-    expect(ground, `${where}: the chosen state against the other two`).not.toBe(panel);
+    expect(ground, `${where}: the chosen state's ground`).not.toBe(raised);
+    expect(ground, `${where}: the chosen state against the panel`).not.toBe(panel);
     const others = await group.getByRole('button', { name: 'Working' }).evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(others, `${where}: an unchosen state's ground`).toBe(panel);
+    expect(others, `${where}: an unchosen state's ground`).toBe(raised);
 
-    // and it carries the 3 px inset edge in the state's own colour
-    const edge = await chosen.evaluate((el) => getComputedStyle(el).boxShadow);
-    expect(edge, `${where}: the inset edge`).toContain('inset');
-    expect(edge, `${where}: the inset edge is the danger colour`).toContain(await token(page, '--danger'));
+    // and it carries a 2 px edge in the state's own colour
+    const edge = await chosen.evaluate((el) => `${getComputedStyle(el).borderTopWidth} ${getComputedStyle(el).borderTopColor}`);
+    expect(edge, `${where}: the edge is the danger colour`).toBe(`2px ${await token(page, '--danger')}`);
 
     // and exactly one of the three buttons wears a symbol: the one the box is holding
     await expect(group.locator('.state-glyph'), `${where}: symbols in the group`).toHaveCount(1);
@@ -166,6 +173,7 @@ test('the chosen state is filled and marked, not merely coloured, in all six pal
 
 test('the since picker opens on the time the box has stored, not on "Just now"', async ({ page }) => {
   await page.goto('/situation');
+  await openCondition(page, 'power');
   await page.getByLabel('Mains power: since').selectOption('hour');
   await page.getByRole('group', { name: 'Mains power' }).getByRole('button', { name: 'Off' }).click();
   // Come back to the row from cold: the control must be read out of the box, not left over from a tap.
@@ -173,6 +181,7 @@ test('the since picker opens on the time the box has stored, not on "Just now"',
   await expect(page.getByLabel('Mains power: since')).toHaveValue('hour');
   await expect(page.locator('#power')).toContainText('for 1 h');
   // A condition nobody has touched offers "Just now" for the change about to be made.
+  await openCondition(page, 'gas');
   await expect(page.getByLabel('Gas: since')).toHaveValue('now');
 });
 

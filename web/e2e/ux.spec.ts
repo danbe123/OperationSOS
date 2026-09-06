@@ -63,7 +63,8 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     // the situation clock on a guide, and the card it puts on Now
     await page.goto('/s/grid-collapse');
     await page.getByRole('button', { name: /This has started/ }).click();
-    await expect(page.getByRole('status').first()).toContainText('just started, right now');
+    // The band and Now's heading say how long it has been running; the control says only that it is on.
+    await expect(page.getByRole('status').first()).toContainText('Active');
     await expect(page.getByRole('tab', { name: /Right now/ })).toHaveAttribute('aria-current', 'time');
     await nav.getByRole('link', { name: 'Now' }).click();
     const carryOn = page.getByRole('region', { name: 'Carry on' });

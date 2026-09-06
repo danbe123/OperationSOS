@@ -48,7 +48,9 @@ export function itemOpenPath(item: LibraryItem): string | null {
 export function LibraryItemCard({ item }: { item: LibraryItem }) {
   const open = itemOpenPath(item);
   const isFile = item.kind === 'mwm' || item.kind === 'apk';
-  const meta = `${formatBytes(item.size_bytes)}${item.as_at ? `, copied ${item.as_at}` : ''}.${item.licence ? ` Licence: ${item.licence}.` : ''}`;
+  /* What a household needs to know about a file is how big it is and how old it is. The licence is
+     the box's own paperwork and belongs on the About page, not on every row of a medical shelf. */
+  const meta = `${formatBytes(item.size_bytes)}${item.as_at ? `, copied ${item.as_at}` : ''}.`;
   return (
     <li className={item.available ? 'item-card' : 'item-card unavailable'} id={`item-${item.id}`}>
       <div className="row">

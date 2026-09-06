@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { events, makeView, powerOffView, stockResponse } from '../fixtures/api';
+import { events, makeView, powerOffView, stockResponse, VIEW_NOW } from '../fixtures/api';
 
 function mockBoard(view = powerOffView) {
   vi.spyOn(api, 'situationView').mockResolvedValue(view);
@@ -12,6 +12,11 @@ function mockBoard(view = powerOffView) {
 }
 
 describe('/board', () => {
+  // Every duration on the board counts from the stored `since` on the box's clock, so the test's
+  // clock is the fixture's: only Date is faked, the timers stay real for user-event.
+  beforeEach(() => vi.useFakeTimers({ now: Date.parse(VIEW_NOW), toFake: ['Date'] }));
+  afterEach(() => vi.useRealTimers());
+
   it('shows the conditions, the next three jobs with names, sunset, the bulletin, the stock and the log', async () => {
     mockBoard();
     renderRoute('/board');
@@ -34,7 +39,9 @@ describe('/board', () => {
 
     const log = await screen.findByRole('region', { name: 'Last events' });
     expect(within(log).getAllByRole('listitem')).toHaveLength(3);
-    expect(log).toHaveTextContent('Mains power off since 13:00 (phone)');
+    // Through the words table: "(phone)" is the engine's suffix, not the household's.
+    expect(log).toHaveTextContent('Mains power off since 13:00 on a phone');
+    expect(log).not.toHaveTextContent('(phone)');
   });
 
   it('flies the drill flag and names the scenario', async () => {

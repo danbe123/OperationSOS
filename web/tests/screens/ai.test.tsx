@@ -94,10 +94,10 @@ describe('Ai screen', () => {
     expect(screen.getByRole('progressbar', { name: 'Answering' })).toBeInTheDocument();
     expect(screen.getByText('Signs include')).toBeInTheDocument();
     await step(); // token 2
-    expect(screen.getByText('Signs include dark urine [1].')).toBeInTheDocument();
+    expect(screen.getByText('Signs include dark urine [1], and stored water helps [2].')).toBeInTheDocument();
     await step(); // done
     expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(screen.getByText('Signs include dark yellow urine and dizziness [1].')).toBeInTheDocument();
+    expect(screen.getByText('Signs include dark yellow urine and dizziness [1], and stored water helps [2].')).toBeInTheDocument();
     const citations = screen.getByRole('list', { name: 'Sources' });
     expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/');
   });
@@ -116,7 +116,7 @@ describe('Ai screen', () => {
     await step(); // token 2
     await step(); // done
     expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(screen.getByText('Signs include dark yellow urine and dizziness [1].')).toBeInTheDocument();
+    expect(screen.getByText('Signs include dark yellow urine and dizziness [1], and stored water helps [2].')).toBeInTheDocument();
     const citations = screen.getByRole('list', { name: 'Sources' });
     expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/');
     expect(input).not.toBeDisabled();
@@ -124,7 +124,7 @@ describe('Ai screen', () => {
     // A stray token event arrives after the turn already reached its terminal phase.
     await step(); // extra token
     expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(screen.getByText('Signs include dark yellow urine and dizziness [1].')).toBeInTheDocument();
+    expect(screen.getByText('Signs include dark yellow urine and dizziness [1], and stored water helps [2].')).toBeInTheDocument();
     expect(screen.queryByText('should not appear')).toBeNull();
     expect(within(citations).getByRole('link', { name: '[1] Dehydration (NHS)' })).toBeInTheDocument();
     expect(input).not.toBeDisabled();

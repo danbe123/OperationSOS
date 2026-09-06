@@ -6,7 +6,9 @@ import { Icon } from '../icons';
 import { describeElapsed, phaseFor } from '../tools/situation';
 import '../screens/board.css';
 import { boardSunset, nextTasks, stockDays } from './board';
-import { ago, chipDuration, clockTime, CONDITION_INFO, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
+import { ago, clockTime, CONDITION_INFO, HOME_CONDITION_IDS, sinceDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
+import { bulletinWords, eventTitle } from '../api/words';
+import { nowTitle } from './nowTitle';
 import { useSituation } from './SituationProvider';
 
 export const BOARD_REFRESH_MS = 30_000;
@@ -38,15 +40,17 @@ export function BoardView() {
   const sunset = boardSunset(view, now);
   const bulletin = view.bulletins.next;
   const days = stockDays(stock.data?.items ?? []);
-  const log = (events.data ?? []).slice(0, 5);
+  // Three lines, not five: the log was the bottom third of the across-the-room screen, in the
+  // smallest type on it, and the tiles above it were being clipped to make room.
+  const log = (events.data ?? []).slice(0, 3);
 
   return (
     <div className="board">
       <header className="board-head">
         {view.meta.drill && <span className="badge badge-warn board-drill"><span aria-hidden="true">⚑</span> Drill</span>}
-        <h1 className="board-title">
-          {scenario ? scenario.title : shown.some((id) => view.conditions[id]?.state !== 'working') ? 'Something is off' : 'Everything is working'}
-        </h1>
+        {/* A glance screen must never say "Something is off" and leave the household to find out
+            what: the headline names it, in the same words the front door uses. */}
+        <h1 className="board-title">{scenario ? scenario.title : nowTitle(view)}</h1>
         {scenario && <p className="board-elapsed">{describeElapsed(scenario.elapsed_s)}, {phaseFor(scenario.elapsed_s).title.toLowerCase()}</p>}
         <p className="board-now">{timeOfDay(now)}</p>
       </header>
@@ -61,7 +65,7 @@ export function BoardView() {
               <div key={id} className={`board-cond cond-${tone}`}>
                 <span className="board-cond-name"><Icon name={CONDITION_INFO[id].icon} size={26} /> {CONDITION_INFO[id].short}</span>
                 <span className="cond-state"><span aria-hidden="true">{STATE_SYMBOL[c.state]}</span> {STATE_LABEL[c.state]}</span>
-                <span className="cond-for">{chipDuration(c.state, c.for_s)}</span>
+                <span className="cond-for">{sinceDuration(c, now)}</span>
               </div>
             );
           })}
@@ -84,8 +88,8 @@ export function BoardView() {
         </section>
 
         <section className="board-facts" aria-label="Today">
-          <p><Icon name="sun" size={22} /> Sunset {sunset ? timeOfDay(sunset.getTime()) : 'not tonight'}</p>
-          <p><Icon name="radio" size={22} /> {bulletin ? `${bulletin.station} ${bulletin.frequency} at ${clockTime(bulletin.at)}` : 'No bulletin scheduled'}</p>
+          <p><Icon name="sun" size={22} /> <span>Sunset {sunset ? timeOfDay(sunset.getTime()) : 'not tonight'}</span></p>
+          <p><Icon name="radio" size={22} /> <span>{bulletin ? `${bulletinWords(bulletin.station)} ${bulletinWords(bulletin.frequency)} at ${clockTime(bulletin.at)}` : 'No bulletin scheduled'}</span></p>
           <ul className="board-stock" aria-label="Stock left">
             {days.length === 0 && <li className="muted">No stock recorded</li>}
             {days.map((d) => (
@@ -100,7 +104,9 @@ export function BoardView() {
       <section className="board-events" aria-label="Last events">
         <ul>
           {log.length === 0 && <li className="muted">Nothing logged yet.</li>}
-          {log.map((e) => <li key={e.id}><strong>{timeOfDay(Date.parse(e.updated_at))}</strong> {e.title} <span className="muted">{ago(e.updated_at, now)}</span></li>)}
+          {/* Through the words table, like every other event line in the box: the board was the one
+              screen still printing "(kiosk)" and "(drill)" at a household. */}
+          {log.map((e) => <li key={e.id}><strong>{timeOfDay(Date.parse(e.updated_at))}</strong> {eventTitle(e.title)} <span className="muted">{ago(e.updated_at, now)}</span></li>)}
         </ul>
       </section>
     </div>

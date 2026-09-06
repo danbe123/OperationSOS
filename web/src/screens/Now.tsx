@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
@@ -14,6 +14,7 @@ import { scenarioMapHref } from '../situation/mapLink';
 import { isEventful, useCallsHidden, useSituation } from '../situation/SituationProvider';
 import { stockDays } from '../situation/board';
 import { situationLine } from '../components/SituationClock';
+import { ReadAloud } from '../situation/ReadAloud';
 import './now.css';
 
 const STOCK_TITLE: Record<string, string> = { water: 'Water', food: 'Food', medicine: 'Medicine', fuel: 'Fuel', other: 'Other' };
@@ -76,7 +77,9 @@ function BoxPanel() {
       ) : (
         <>
           <ul className="row now-box" aria-label="Box status">
-            <li><Icon name="wifi" size={18} /> Phones join it over its own WiFi, <strong>{status.hotspot.ssid}</strong>.</li>
+            {/* One sentence, in one flex item: as three children of an inline-flex row the network's
+                name went to a line of its own and the full stop after it to a third. */}
+            <li><Icon name="wifi" size={18} /> <span>Phones join it over its own Wi-Fi, <strong>{status.hotspot.ssid}</strong>.</span></li>
             {/* Only what is wrong. A drive that is there and a chip that is cool are not news. */}
             {!status.disks.extended.mounted && <li className="warning"><Icon name="drive" size={18} /> The extra library drive is not connected.</li>}
             {status.cpu_temp_c !== null && status.cpu_temp_c >= status.thermal_ai_off_c && (
@@ -141,9 +144,16 @@ export function Now() {
   const { view, error, loading, refresh } = useSituation();
   const eventful = isEventful(view);
   const mapHref = scenarioMapHref(view?.scenario?.slug);
+  // What is read aloud is the briefing itself; the button that reads it belongs in the screen's own
+  // actions, beside Search, not on a row of its own above the first job.
+  const briefing = useRef<HTMLDivElement>(null);
   // The heading is the answer, not the name of the screen: the rail already says this is Now.
   return (
-    <Screen title={nowTitle(view)} back={false}>
+    <Screen
+      title={nowTitle(view)}
+      back={false}
+      actions={eventful ? <ReadAloud id="briefing" target={briefing} label="Read aloud" /> : undefined}
+    >
       <Body>
         {/* With both networks down this is the most important new fact on the front door, and the
             box used to say nothing about it here at all. One component, one sentence. */}
@@ -160,7 +170,7 @@ export function Now() {
           <p><Link className="btn btn-primary btn-big" to={mapHref}><Icon name="map" /><span>Open the map</span></Link></p>
         )}
         <CarryOn />
-        {eventful ? <Briefing /> : <Readiness />}
+        {eventful ? <Briefing blockRef={briefing} /> : <Readiness />}
         <HouseholdSummary />
         <BoxPanel />
       </Body>

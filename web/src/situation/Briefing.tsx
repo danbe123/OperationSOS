@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
+import type { Forecast } from '../api/types';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { clockTime, CONDITION_INFO, countdown, secondsUntil, SEVERITY_SYMBOL, SEVERITY_TONE, STATE_LABEL } from './conditions';
 import { briefingHref, contentHref } from './links';
-import { ReadAloud } from './ReadAloud';
+import { bulletinWords } from '../api/words';
 import { useSituation } from './SituationProvider';
 import { TaskRow } from './TaskRow';
 import { withCondition, withTask } from './apply';
@@ -46,12 +47,34 @@ export function useSunkTasks(tasks: { id: string; done: boolean }[]): Set<string
   return sunk;
 }
 
+/** One line of the forecast: what it is, and when — "Fridge food unsafe ▲ due in 2 h", or, once it
+ * has gone by, "⚠ passed 1 h ago". `countdown` already says "passed" for anything in the past, so
+ * the prefix is only ever added to something still to come; the front door used to print the word
+ * twice. */
+function ForecastRow({ item, now }: { item: Forecast; now: number }) {
+  const href = contentHref(item.link);
+  const passed = item.passed || secondsUntil(item.due_at, now) <= 0;
+  return (
+    <li className={`forecast forecast-${SEVERITY_TONE[item.severity]}`}>
+      <p className="briefing-title">
+        {item.title}{' '}
+        <span className={`badge badge-${SEVERITY_TONE[item.severity]}`}>
+          <span aria-hidden="true">{SEVERITY_SYMBOL[item.severity]}</span> {passed ? '' : 'due '}{countdown(item.due_at, now)}
+        </span>
+      </p>
+      {item.why && <p className="muted">{item.why}</p>}
+      {href && <Link className="btn btn-small" to={href}>Read more</Link>}
+    </li>
+  );
+}
+
 /** Now, while something is happening: what to do, what is coming, what the box is guessing, and what
  * to read. Done jobs stay, struck through, until the engine retires them: a task must not vanish
  * under the finger. */
-export function Briefing() {
+export function Briefing({ blockRef }: { blockRef?: RefObject<HTMLDivElement | null> } = {}) {
   const { view, apply } = useSituation();
-  const block = useRef<HTMLDivElement>(null);
+  const own = useRef<HTMLDivElement>(null);
+  const block = blockRef ?? own;
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
@@ -61,12 +84,27 @@ export function Briefing() {
   const sunk = useSunkTasks(doingNow);
   if (!view) return null;
   const now = Date.parse(view.meta.now) || Date.now();
-  const inferred = view.inferred.filter((i) => !dismissed.includes(i.rule));
-  const soon = view.forecast.filter((f) => secondsUntil(f.due_at, now) < DAY_S);
+  // One guess per service. The engine can raise the same conclusion from a rule and from its own
+  // sensors — "Internet — probably off" twice, each with its own Accept and Not now — which is four
+  // buttons of data entry on the front door for one question.
+  const guesses = new Map<string, typeof view.inferred[number]>();
+  for (const i of view.inferred) {
+    if (dismissed.includes(i.rule)) continue;
+    const held = guesses.get(i.condition);
+    if (!held || i.confidence > held.confidence) guesses.set(i.condition, held ? { ...i, detected: i.detected || held.detected } : i);
+  }
+  const inferred = [...guesses.values()];
+  const forecast = view.forecast.filter((f) => secondsUntil(f.due_at, now) < DAY_S);
+  const soon = forecast.filter((f) => !f.passed && secondsUntil(f.due_at, now) > 0);
+  const gone = forecast.filter((f) => f.passed || secondsUntil(f.due_at, now) <= 0);
   const left = doingNow.filter((t) => !sunk.has(t.id));
   const done = doingNow.filter((t) => sunk.has(t.id));
   const bulletin = view.bulletins.next;
-  const empty = !inferred.length && !soon.length && !doingNow.length && !view.briefing.length && !bulletin;
+  // A page and a module are not siblings: "Power" and "Communications" are the modules the two
+  // pages live in, and as buttons of the same size a first-time reader saw four destinations.
+  const reading = view.briefing.filter((b) => b.kind !== 'module');
+  const inside = view.briefing.filter((b) => b.kind === 'module');
+  const empty = !inferred.length && !forecast.length && !doingNow.length && !view.briefing.length && !bulletin;
 
   const accept = async (condition: typeof view.inferred[number]) => {
     setBusy(condition.rule);
@@ -82,11 +120,7 @@ export function Briefing() {
   return (
     /* Not a landmark of its own: "Briefing" was a region wrapping four regions, named after a word
        that is nowhere on the screen. */
-    <div className="stack" ref={block}>
-      {!empty && (
-        <div className="row no-print"><ReadAloud id="briefing" target={block} label="Read the briefing aloud" /></div>
-      )}
-
+    <div className="stack" ref={block} data-empty={empty ? 'yes' : 'no'}>
       <section className="panel panel-signal briefing-block" aria-label="Right now">
         <div className="panel-head">
           <h2>Right now</h2>
@@ -119,28 +153,14 @@ export function Briefing() {
         )}
       </section>
 
-      {soon.length > 0 && (
-        <section className="panel briefing-block" aria-label="Coming up">
-          <h2>Coming up</h2>
-          <ul className="list briefing-list">
-            {soon.map((f) => {
-              const href = contentHref(f.link);
-              return (
-                <li key={f.id} className={`forecast forecast-${SEVERITY_TONE[f.severity]}`}>
-                  {/* The thing first, then when: "due Fridge food unsafe in 2 h" was not a sentence
-                      in any register. */}
-                  <p className="briefing-title">
-                    {f.title}{' '}
-                    <span className={`badge badge-${SEVERITY_TONE[f.severity]}`}>
-                      <span aria-hidden="true">{SEVERITY_SYMBOL[f.severity]}</span> {f.passed ? 'passed' : 'due'} {countdown(f.due_at, now)}
-                    </span>
-                  </p>
-                  {f.why && <p className="muted">{f.why}</p>}
-                  {href && <Link className="btn btn-small" to={href}>Read more</Link>}
-                </li>
-              );
-            })}
-          </ul>
+      {(soon.length > 0 || gone.length > 0) && (
+        <section className="panel briefing-block" aria-label={soon.length > 0 ? 'Coming up' : 'Already happened'}>
+          {soon.length > 0 && <h2>Coming up</h2>}
+          {soon.length > 0 && <ul className="list briefing-list">{soon.map((f) => <ForecastRow key={f.id} item={f} now={now} />)}</ul>}
+          {/* Something that has already happened is not coming up. It keeps its place on the front
+              door — the fridge is still warm — under a heading that says what it is. */}
+          {gone.length > 0 && <h2>Already happened</h2>}
+          {gone.length > 0 && <ul className="list briefing-list">{gone.map((f) => <ForecastRow key={f.id} item={f} now={now} />)}</ul>}
         </section>
       )}
 
@@ -155,7 +175,9 @@ export function Briefing() {
                     row. The dash does the same job and agrees with everything. */}
                 <p className="briefing-title">
                   {CONDITION_INFO[i.condition].title} — probably {STATE_LABEL[i.state]}
-                  {i.detected && <> <span className="badge badge-warn"><span aria-hidden="true">▲</span> detected by the box</span></>}
+                  {/* Where the guess came from is a note about the box, not a caution about the
+                      world: it wears the plain badge and no symbol. */}
+                  {i.detected && <> <span className="badge">detected by the box</span></>}
                 </p>
                 <p className="muted">{i.why}</p>
                 <div className="row">
@@ -171,13 +193,26 @@ export function Briefing() {
       {(view.briefing.length > 0 || bulletin) && (
         <section className="panel briefing-block" aria-label="Read">
           <h2>Read</h2>
-          {view.briefing.length > 0 && (
+          {reading.length > 0 && (
             <ul className="row briefing-reading">
-              {view.briefing.map((b) => <li key={`${b.kind}:${b.ref}`}><Link className="btn btn-small" to={briefingHref(b)}>{b.title}</Link></li>)}
+              {reading.map((b) => <li key={`${b.kind}:${b.ref}`}><Link className="btn btn-small" to={briefingHref(b)}>{b.title}</Link></li>)}
             </ul>
           )}
+          {/* The module a page belongs to is not a fourth place to go: it is where that page lives.
+              Four buttons of the same size and style for two things to read is what this replaces. */}
+          {inside.length > 0 && (
+            <p className="muted briefing-inside">
+              More detail in{' '}
+              {inside.map((b, i) => (
+                <span key={`${b.kind}:${b.ref}`}>
+                  {i > 0 && (i === inside.length - 1 ? ' and ' : ', ')}
+                  <Link to={briefingHref(b)}>{b.title}</Link>
+                </span>
+              ))}.
+            </p>
+          )}
           {bulletin && (
-            <p className="muted"><Icon name="radio" size={18} /> Next bulletin: {bulletin.station}, {bulletin.frequency}, at {clockTime(bulletin.at)}.</p>
+            <p className="muted"><Icon name="radio" size={18} /> Next bulletin: {bulletinWords(bulletin.station)}, {bulletinWords(bulletin.frequency)}, at {clockTime(bulletin.at)}.</p>
           )}
         </section>
       )}

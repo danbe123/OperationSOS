@@ -11,7 +11,8 @@ import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { ConditionRow } from '../situation/ConditionRow';
 import { SensorsPanel } from '../situation/SensorsPanel';
-import { CONDITION_INFO, HOME_CONDITION_IDS } from '../situation/conditions';
+import { CONDITION_INFO, describeDuration, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL } from '../situation/conditions';
+import { ukWhen } from '../tools/dates';
 import { withCondition } from '../situation/apply';
 import { useSituation } from '../situation/SituationProvider';
 import { describeElapsed, phaseFor } from '../tools/situation';
@@ -50,6 +51,10 @@ export function Situation() {
 
   const scenario = view?.scenario ?? null;
   const playbooks = playbooksQ.data ?? [];
+  // One condition open at a time: the sheet is a list of ten services, not ten forms.
+  const [open, setOpen] = useState<string | null>(null);
+  const conditions = view ? CONDITION_IDS.map((id) => view.conditions[id]).filter(Boolean) : [];
+  const broken = conditions.filter((c) => c.state !== 'working');
 
   return (
     <Screen
@@ -67,17 +72,42 @@ export function Situation() {
       {error && <p className="warning">The situation is unavailable: {error}</p>}
       {loading && !view && <p className="muted">Reading the situation…</p>}
 
-      <section className="panel" aria-label="What is working">
+      <section className="panel no-print" aria-label="What is working">
         <div className="panel-head"><h2>What is working</h2></div>
-        <p className="muted">Tap a state. Everyone on the box sees the change, and the advice follows it.</p>
+        <p className="muted">
+          {broken.length === 0
+            ? 'Everything is working. Open a service to say it has gone.'
+            : `${broken.length} of ${conditions.length} not working. Open a service to say it has changed.`}
+        </p>
         <ul className="list cond-rows">
-          {view && CONDITION_IDS.map((id) => view.conditions[id] && <ConditionRow key={id} condition={view.conditions[id]} onSaved={saved} />)}
+          {conditions.map((c) => (
+            <ConditionRow key={c.id} condition={c} onSaved={saved} open={open === c.id} onOpen={setOpen} />
+          ))}
         </ul>
       </section>
 
-      <SensorsPanel />
+      {/* On paper a form is a row of dead controls. The sheet prints as a sheet: one line per
+          service, what it is, since when, and whatever note somebody wrote on it. */}
+      {view && (
+        <table className="print-only situation-print">
+          <caption>What is working</caption>
+          <thead><tr><th>Service</th><th>State</th><th>Since</th><th>Note</th></tr></thead>
+          <tbody>
+            {conditions.map((c) => (
+              <tr key={c.id}>
+                <td>{CONDITION_INFO[c.id].title}</td>
+                <td>{STATE_SYMBOL[c.state]} {STATE_LABEL[c.state]}</td>
+                <td>{c.state === 'working' ? '—' : `${ukWhen(c.since)} (${describeDuration(c.for_s)})`}</td>
+                <td>{c.note || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
-      <section className="panel" aria-label="Clock" id="clock">
+      <div className="no-print"><SensorsPanel /></div>
+
+      <section className="panel no-print" aria-label="Clock" id="clock">
         <div className="stack">
           <h2>Clock</h2>
           {scenario ? (
@@ -100,10 +130,10 @@ export function Situation() {
         </div>
       </section>
 
-      <SituationExport />
+      <div className="no-print"><SituationExport /></div>
 
       {!view?.meta.drill && (
-        <section className="panel" aria-label="Practise a drill" id="drill">
+        <section className="panel no-print" aria-label="Practise a drill" id="drill">
           <div className="stack">
             <h2>Practise a drill</h2>
             <p className="muted">Pretend a situation is running, without touching the real conditions. Everything says DRILL.</p>

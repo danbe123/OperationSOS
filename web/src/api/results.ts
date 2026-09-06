@@ -37,16 +37,80 @@ export function cleanTitle(title: string): string {
     .trim();
 }
 
-/** One row per target. The engine searches several books at once and the same page can be found in
- * more than one of them, so "Solar panels in a power cut" arrived three times in the top four. */
+/** One row per authored page. The engine searches several books at once and the same page can be
+ * found in more than one of them, and the box's own guides carry a section anchor per match — so
+ * "Severe bleeding" arrived five times, once for each heading inside it. The anchor is not a
+ * different answer, so the key drops it; `#page=` is, because two pages of a 200-page PDF are two
+ * places to turn to. */
+export function documentKey(url: string): string {
+  const hash = url.indexOf('#');
+  if (hash === -1) return url;
+  return url.slice(hash + 1).startsWith('page=') ? url : url.slice(0, hash);
+}
+
 export function dedupe(results: SearchResult[]): SearchResult[] {
   const seen = new Set<string>();
   return results.filter((r) => {
-    const key = r.url || `${r.source}:${r.title}`;
+    const key = r.url ? documentKey(r.url) : `${r.source}:${r.title}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+/* The publisher's own furniture, which a crawl of a website picks up along with the answer: the NHS
+ * survey prompt, its footer navigation and the Crown copyright line filled two of the top results
+ * for "bleeding" with no medicine in them at all. */
+const FURNITURE = [
+  /Help us improve our website[^.]*/gi,
+  /Can you answer a \d+ minute survey[^?]*\?/gi,
+  /Take our survey/gi,
+  /Support links\b[^.]*/gi,
+  /Home Health A to Z NHS services Live Well[^.]*/gi,
+  /©?\s*Crown copyright/gi,
+  /Skip to main content/gi,
+  /Cookies on GOV\.UK[^.]*/gi,
+  /Is this page useful\?[^.]*/gi,
+];
+
+/** A directive the box resolves before it renders a card leaks into the search index as its own
+ * source text: a household must never be shown `[[call 999]]`. */
+const TOKENS = /\[\[[^\]]*\]\]|\{\{[^}]*\}\}/g;
+
+const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&nbsp;': ' ' };
+
+function decode(text: string): string {
+  return text.replace(/&(?:amp|lt|gt|quot|#39|nbsp);/g, (m) => ENTITIES[m] ?? m);
+}
+
+/** A snippet worth printing, or nothing. The engine marks its matches with `<b>`; anything left
+ * after the publisher's furniture and the box's own template tokens have gone is the answer. */
+export function cleanSnippet(snippet: string): string {
+  let text = snippet ?? '';
+  for (const rule of FURNITURE) text = text.replace(rule, ' ');
+  text = text.replace(TOKENS, ' ').replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim();
+  const words = text.replace(/<\/?b>/g, '').trim();
+  // Furniture with no match in it is not a snippet: it is somebody else's navigation bar.
+  if (!text.includes('<b>') && words.length < 24) return '';
+  return text;
+}
+
+export type SnippetPart = { text: string; match: boolean };
+
+/** The engine's `<b>` marks, as parts to render — never as HTML handed to a browser. The screen used
+ * to print the tags themselves: "&lt;b&gt;Adders&lt;/b&gt; The &lt;b&gt;adder&lt;/b&gt; is…". */
+export function highlightParts(snippet: string): SnippetPart[] {
+  const out: SnippetPart[] = [];
+  const re = /<b>([\s\S]*?)<\/b>/gi;
+  let at = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(snippet)) !== null) {
+    if (m.index > at) out.push({ text: decode(snippet.slice(at, m.index)), match: false });
+    out.push({ text: decode(m[1]), match: true });
+    at = m.index + m[0].length;
+  }
+  if (at < snippet.length) out.push({ text: decode(snippet.slice(at)), match: false });
+  return out.filter((p) => p.text !== '');
 }
 
 export type ResultGroup = { key: string; title: string; results: SearchResult[] };
@@ -73,8 +137,19 @@ export function groupResults(results: SearchResult[]): ResultGroup[] {
 export function chipsFor(groups: ResultGroup[]): { key: string; title: string; sources: string[]; count: number }[] {
   return groups.map((g) => ({
     key: g.key,
-    title: g.title,
+    title: chipLabel(g.title),
     sources: g.key === 'own' ? OWN : [g.key],
     count: g.results.length,
   }));
+}
+
+/** A chip is a word, not a catalogue entry. "Wicipedia (Welsh Wikipedia, with images) (8)" and
+   "Motor Vehicle Maintenance and Repair Q&A (Stack Exchange) (2)" filled a 480 px screen with eight
+   chips over four rows, and the first result was 553 px down. */
+export function chipLabel(title: string): string {
+  const text = (title ?? '').replace(/\s*\([^()]*\)\s*$/, '').trim() || (title ?? '').trim();
+  if (text.length <= 22) return text;
+  // Cut at a word, not inside one: "Wikipedia me…" is not a word anybody was looking for.
+  const cut = text.slice(0, 22).replace(/\s+\S*$/, '').trimEnd();
+  return `${cut.length >= 8 ? cut : text.slice(0, 21).trimEnd()}…`;
 }

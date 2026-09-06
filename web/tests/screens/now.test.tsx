@@ -12,9 +12,10 @@ describe('Now', () => {
     vi.spyOn(api, 'household').mockResolvedValue([]);
     vi.spyOn(api, 'neighbours').mockResolvedValue([]);
     renderRoute('/');
-    // The heading is the answer, not the name of the screen: the rail already says this is Now.
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe('Everything is working · SOS'));
+    // The heading is the answer, not the name of the screen: the rail already says this is Now. And
+    // it is the whole answer: the services are fine, and the cupboard is empty.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Nothing stored yet.' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Everything is working. Nothing stored yet. · SOS'));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     const household = await screen.findByRole('region', { name: 'Household and stock' });
@@ -24,7 +25,7 @@ describe('Now', () => {
     // The front door says how a phone joins the box and nothing else about the machine: the address,
     // the drive's free space and the chip's temperature are on System.
     const box = await screen.findByTestId('status-strip');
-    expect(box).toHaveTextContent('Phones join it over its own WiFi, SOS.');
+    expect(box).toHaveTextContent('Phones join it over its own Wi-Fi, SOS.');
     expect(box).not.toHaveTextContent('http://sos.box');
     expect(box).not.toHaveTextContent('CPU');
   });
@@ -33,7 +34,7 @@ describe('Now', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/now');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Nothing stored yet.' })).toBeInTheDocument();
   });
 
   it('says how long the household would last and what would help, with no score and no points', async () => {

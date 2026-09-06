@@ -80,7 +80,11 @@ describe('Reader', () => {
   it('injects the theme and text-size styles on load and shows the article title', async () => {
     renderRoute(MAIN);
     const doc = await loadArticle('Main Page', ARTICLE);
-    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('#0a0f0a');
+    // The injected sheet is the app's own tokens, not a second palette: the vault ground, and links
+    // in the accent so a body link is a link.
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('html,body{background:#0b120c');
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).toContain('a,a *{color:#6cf08c');
+    expect(doc.getElementById(READER_STYLE_ID)?.textContent).not.toContain('#0a0f0a');
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:100% !important}');
     expect(screen.getByRole('heading', { name: 'Main Page' })).toBeInTheDocument();
     await act(async () => { screen.getByRole('button', { name: /Text size/ }).click(); });

@@ -1,6 +1,6 @@
 /* The tools that need a look of their own: the CPR beat, the timer faces and the two small tables. */
 .timer-big { font-size: var(--t-title); font-weight: 700; font-variant-numeric: tabular-nums; min-width: 4ch; }
-.cpr-pulse { width: 28px; height: 28px; border-radius: 50%; background: var(--sunken); border: 1px solid var(--line-strong); }
+.cpr-pulse { width: 28px; height: 28px; border-radius: var(--radius-pill); background: var(--sunken); border: 1px solid var(--line-strong); }
 /* One flash per compression, timed by CSS so it stays on the beat regardless of timer jitter. */
 .cpr-pulse.on { animation-name: cpr-beat; animation-iteration-count: infinite; animation-timing-function: ease-out; }
 @keyframes cpr-beat {

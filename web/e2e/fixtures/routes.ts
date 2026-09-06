@@ -12,6 +12,10 @@ import { PIN, TOKEN, type FixturePlace, type FixtureState } from './state';
 const here = (rel: string) => new URL(rel, import.meta.url);
 const styleJson = JSON.parse(readFileSync(here('./maps/style.json'), 'utf8')) as { name: string; layers: { id: string; paint: Record<string, string> }[] };
 const pmtiles = readFileSync(here('./maps/test.pmtiles'));
+/* A real two-page PDF, so the document viewer is photographed and tested loading a file rather than
+   failing silently behind a vendor toolbar. `/docs/extended/…` answers 404: that is the other state
+   the screen has, and until this round nothing had ever exercised either. */
+const samplePdf = readFileSync(here('./docs/sample.pdf'));
 const healthGeojson = readFileSync(here('./maps/health.geojson'), 'utf8');
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
@@ -86,11 +90,18 @@ export function nearbyFrom(places: FixturePlace[], missing: string[], lat: numbe
         };
       })
       .sort((a, b) => a.distance_m - b.distance_m);
+    // one entry per place name, as `sos.nearby.facility_answer` now does: a hospital mapped as five
+    // buildings is one place to a household.
+    const seen = new Set<string>();
+    const unique = found.filter((f) => { const k = f.name.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
     const facility: NearbyFacility = {
-      id, title: FACILITY_TITLES[id] ?? id, found: found.length > 0,
-      nearest: found[0] ?? null, also: found.slice(1, 3), searched: found.length ? ['health'] : [], note: null,
+      id, title: FACILITY_TITLES[id] ?? id, found: unique.length > 0,
+      nearest: unique[0] ?? null, also: unique.slice(1, 3), searched: unique.length ? ['health'] : [], note: null,
     };
-    if (!found.length) facility.why = `No searchable copy of the ${id} data on this box.`;
+    if (id === 'emergency-department' && unique.length) {
+      facility.note = 'These come from OpenStreetMap and include small hospitals with no A&E.';
+    }
+    if (!unique.length) facility.why = `No searchable copy of the ${id} data on this box.`;
     return facility;
   });
 }
@@ -146,7 +157,13 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     return route.fulfill({ status: 404, contentType: 'text/html', body: '<h1>Not found</h1>' });
   });
 
-  await context.route('**/docs/**', (route) => route.fulfill({ status: 404, body: 'no fixture document' }));
+  await context.route('**/docs/**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.startsWith('/docs/core/') && path.endsWith('.pdf')) {
+      return route.fulfill({ status: 200, headers: { 'Content-Type': 'application/pdf', 'Accept-Ranges': 'none' }, body: samplePdf });
+    }
+    return route.fulfill({ status: 404, body: 'no fixture document' });
+  });
 
   await context.route('**/api/**', async (route) => {
     const req = route.request();

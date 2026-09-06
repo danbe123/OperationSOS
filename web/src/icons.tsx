@@ -62,6 +62,26 @@ const P = {
   compass: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" /></>,
   cloud: <path d="M7 18a4 4 0 0 1 0-8 5.5 5.5 0 0 1 10.5 1.5A3.5 3.5 0 0 1 17 18z" />,
   leaf: <><path d="M4 20C4 10 11 4 20 4c0 9-6 16-16 16z" /><path d="M4 20c4-6 8-9 12-11" /></>,
+  /* The medical cards and the scenarios name these; a card with a question mark on it is a card the
+     box does not seem to understand. */
+  lungs: <><path d="M12 3v9" /><path d="M10 12c0-2-1-3-3-3-3 0-4 3-4 7 0 2 1 3 3 3s4-1 4-3z" /><path d="M14 12c0-2 1-3 3-3 3 0 4 3 4 7 0 2-1 3-3 3s-4-1-4-3z" /></>,
+  waves: <><path d="M2 8c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0 3-2 5 0" /><path d="M2 14c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0 3-2 5 0" /><path d="M2 20c2.5-2.5 5-2.5 7.5 0s5 2.5 7.5 0 3-2 5 0" /></>,
+  water: <><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" /><path d="M9.5 14.5a3 3 0 0 0 2.5 3" /></>,
+  syringe: <><path d="M17 3l4 4M19 5l-9 9-4-4 9-9" /><path d="M10 14l-4 4M8 12l-4.5 4.5L2 21l4.5-1.5L11 15" /><path d="M13 8l2 2" /></>,
+  sugar: <><path d="M4 9l8-5 8 5v8l-8 5-8-5z" /><path d="M4 9l8 5 8-5M12 14v8" /></>,
+  face: <><circle cx="12" cy="12" r="9" /><path d="M9 10h.01M15 10h.01" /><path d="M8.5 15a5 5 0 0 0 7 0" /></>,
+  child: <><circle cx="12" cy="5" r="3" /><path d="M8 11a4 4 0 0 1 8 0v3h-2l-1 7h-2l-1-7H8z" /></>,
+  brain: <><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 4 3h2V4z" /><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-4 3h-2V4z" /><path d="M12 4v16" /></>,
+  bone: <><path d="M6 4a2.5 2.5 0 0 1 3 3l6 6a2.5 2.5 0 1 1 3 3 2.5 2.5 0 1 1-3 3l-6-6a2.5 2.5 0 1 1-3-3 2.5 2.5 0 1 1 0-6z" /></>,
+  blood: <><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" /><path d="M12 10v6M9 13h6" /></>,
+  bed: <><path d="M3 18V8M3 12h18v6M21 12V9a2 2 0 0 0-2-2h-6v5" /><path d="M3 16h18" /><circle cx="7" cy="10" r="1.5" /></>,
+  bandage: <><rect x="2" y="8" width="20" height="8" rx="4" transform="rotate(-45 12 12)" /><path d="M9 12h.01M12 9h.01M12 15h.01M15 12h.01" /></>,
+  baby: <><circle cx="12" cy="6" r="3" /><path d="M7 20v-5a5 5 0 0 1 10 0v5" /><path d="M9 20v-3M15 20v-3" /></>,
+  zap: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
+  mountain: <><path d="M3 20L10 7l4 7 2-3 5 9z" /><path d="M8 11l2 2 2-2" /></>,
+  laptop: <><rect x="4" y="5" width="16" height="11" rx="2" /><path d="M2 19h20" /></>,
+  flag: <><path d="M5 22V3" /><path d="M5 4h12l-2 4 2 4H5" /></>,
+  atom: <><circle cx="12" cy="12" r="1.5" /><ellipse cx="12" cy="12" rx="9" ry="3.5" /><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(-60 12 12)" /></>,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof P;

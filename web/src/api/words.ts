@@ -29,6 +29,18 @@ const WORDS: Record<string, string> = {
   apk: 'Phone app',
   pdf: 'PDF',
   epub: 'Book',
+  /* Source ids as the engine and the assistant name them. Without these `sourceWord` merely
+     capitalised them, so a citation read "[3] Cyber attack on infrastructure (Playbooks)" and a
+     badge read "Nhs". */
+  nhs: 'NHS',
+  medical: 'Medical',
+  wikipedia: 'Wikipedia',
+  wikimed: 'Wikipedia medicine',
+  practical: 'Practical',
+  survival: 'Survival',
+  reference: 'Reference',
+  'uk-official': 'UK official',
+  extended: 'Extra library',
 };
 
 /** The household's word for a source, a badge or a kind. Anything unknown keeps its own words. */
@@ -63,4 +75,13 @@ export function eventTitle(title: string): string {
     .replace(/\s*\(kiosk\)\s*$/i, ' on the box')
     .replace(/\s*\(phone\)\s*$/i, ' on a phone')
     .replace(/\s*\(drill\)\s*$/i, ' in the drill');
+}
+
+/** The bulletin line as a household reads it. The engine names its own screens — "see the comms
+ * module for your station" — on the one screen that is read from a doorway. */
+export function bulletinWords(text: string): string {
+  return (text ?? '')
+    .replace(/,?\s*see the comms module for your station/i, '')
+    .replace(/\bcomms module\b/gi, 'phone and radio pages')
+    .trim();
 }

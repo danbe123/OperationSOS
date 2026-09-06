@@ -16,7 +16,7 @@ export function Page() {
         <Emergency999 onlyWhenHidden />
         {loading && <p className="muted">Loading…</p>}
         {error && <p className="warning">Could not load this page: {error}</p>}
-        {data && <ReadAloudBlock id={`page:${slug}`} label="Read this page aloud"><Html html={data.html} /></ReadAloudBlock>}
+        {data && <ReadAloudBlock id={`page:${slug}`} label="Read aloud"><Html html={data.html} /></ReadAloudBlock>}
       </Body>
     </Screen>
   );

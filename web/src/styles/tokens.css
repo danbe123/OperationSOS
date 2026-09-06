@@ -18,8 +18,16 @@
 @font-face { font-family: 'Source Serif 4'; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/source-serif-4-v14-latin-700.woff2') format('woff2'); }
 
 /* Structure: the same in every theme. */
+/* Two radii and two border weights, and that is the whole vocabulary of shape:
+     --radius       every surface and control — panels, buttons, fields, tiles, the keyboard's keys
+     --radius-pill  the pill things: chips, badges, progress tracks
+     1px  a line: the edge of a panel, a rule between rows
+     2px  emphasis: a state, an accent edge, the thing you are on
+   Round 3 had four border weights (1, 2, 3 and 6–8) and a stated single radius sitting beside
+   `999px` pills on three components. */
 :root {
-  --radius: 6px;
+  --radius: 8px;
+  --radius-pill: 999px;
   --touch: 48px;
   --rail: 96px;
   --bar: 64px;
@@ -50,8 +58,9 @@
 :root[data-theme="vault"] {
   color-scheme: dark;
   --ground: #0b120c;
-  --panel: #121b14;
+  --panel: #141f17;
   --sunken: #18251a;
+  --raised: #223627;
   --ink: #dcefdd;
   --ink-muted: #96b69a;
   --link: #6cf08c;
@@ -60,11 +69,10 @@
   --ok: #6cf08c;
   --warn: #f2c14e;
   --danger: #ff9d8b;
-  --line: #2c4a30;
-  --line-strong: #47764d;
+  --line: #223126;
+  --line-strong: #3a5140;
   --focus: #ffb000;
   --font-heading: var(--font-body);
-  --glow: 0 0 4px rgba(108, 240, 140, 0.3);
 }
 
 /* Field manual: paper and ink, serif headings, dark ochre warnings. Also the print palette. */
@@ -73,6 +81,7 @@
   --ground: #f3efe4;
   --panel: #ffffff;
   --sunken: #ebe5d6;
+  --raised: #e7e1d2;
   --ink: #1b1b1b;
   --ink-muted: #474740;
   --link: #1a3f8a;
@@ -81,11 +90,10 @@
   --ok: #15532e;
   --warn: #603c00;
   --danger: #8a1209;
-  --line: #c3b9a2;
-  --line-strong: #8d846f;
+  --line: #ddd6c6;
+  --line-strong: #a89f8a;
   --focus: #1a3f8a;
   --font-heading: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-  --glow: none;
 }
 
 /* Blackout: one red hue on black for night vision. The three states are separated by luminance, and
@@ -95,6 +103,7 @@
   --ground: #000000;
   --panel: #0a0000;
   --sunken: #150505;
+  --raised: #220807;
   --ink: #ff9d93;
   --ink-muted: #ff7a6e;
   --link: #ffc4bc;
@@ -103,11 +112,10 @@
   --ok: #ffc4bc;
   --warn: #ffa79c;
   --danger: #ff8074;
-  --line: #5a1c17;
-  --line-strong: #8a2b23;
+  --line: #3a1310;
+  --line-strong: #6e2119;
   --focus: #ffc4bc;
   --font-heading: var(--font-body);
-  --glow: none;
 }
 
 /* Dim mode — the 03:00 blackout state the engine raises when the power is off and it is dark.
@@ -124,6 +132,7 @@
   --ground: #050805;
   --panel: #0a0f0b;
   --sunken: #0e150f;
+  --raised: #152016;
   --ink: #b6d2b8;
   --ink-muted: #8aa88e;
   --link: #57c274;
@@ -135,12 +144,12 @@
   --line: #223a26;
   --line-strong: #35583a;
   --focus: #d99400;
-  --glow: none;
 }
 :root[data-theme="field"][data-dim="on"] {
   --ground: #d5cfc0;
   --panel: #e6e0d0;
   --sunken: #cbc5b6;
+  --raised: #c9c2b2;
   --ink: #1b1b1b;
   --ink-muted: #333329;
   --link: #12305c;
@@ -152,12 +161,12 @@
   --line: #a9a08a;
   --line-strong: #7b7360;
   --focus: #12305c;
-  --glow: none;
 }
 :root[data-theme="blackout"][data-dim="on"] {
   --ground: #000000;
   --panel: #050000;
   --sunken: #0a0202;
+  --raised: #170504;
   --ink: #e08d84;
   --ink-muted: #dc8078;
   --link: #e8a29a;
@@ -169,7 +178,6 @@
   --line: #43140f;
   --line-strong: #6e211b;
   --focus: #e8a29a;
-  --glow: none;
 }
 
 /* Printing always uses the field palette on white paper. Written with the same specificity as the
@@ -186,6 +194,7 @@
     --ground: #f3efe4;
     --panel: #ffffff;
     --sunken: #ebe5d6;
+    --raised: #e7e1d2;
     --ink: #1b1b1b;
     --ink-muted: #474740;
     --link: #1a3f8a;
@@ -198,7 +207,6 @@
     --line-strong: #8d846f;
     --focus: #1a3f8a;
     --font-heading: 'Source Serif 4', Georgia, serif;
-    --glow: none;
   }
 }
 /* end print */

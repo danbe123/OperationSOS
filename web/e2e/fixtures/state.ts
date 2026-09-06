@@ -40,7 +40,11 @@ export type FixturePlace = { facility: string; name: string; lat: number; lon: n
 export const FIXTURE_PLACES: FixturePlace[] = [
   { facility: 'pharmacy', name: 'Boots, High Street', lat: 50.9400, lon: -1.4680 },
   { facility: 'pharmacy', name: 'Shirley Pharmacy', lat: 50.9290, lon: -1.4455 },
+  /* OpenStreetMap carries pharmacies with no name on them; "Unnamed" is not a place. */
+  { facility: 'pharmacy', name: '', lat: 50.9260, lon: -1.4400 },
   { facility: 'emergency-department', name: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342 },
+  /* The same hospital mapped twice, a hundred metres apart: the box keeps one. */
+  { facility: 'emergency-department', name: 'Southampton General Hospital', lat: 50.9340, lon: -1.4350 },
   { facility: 'gp', name: 'Shirley Health Centre', lat: 50.9290, lon: -1.4460 },
   { facility: 'water-works', name: 'Testwood water works', lat: 50.9310, lon: -1.4930 },
 ];

@@ -88,10 +88,19 @@ export function Keyboard() {
       // stay in sight (`data-kb-reveal`), and that is brought up instead of the field itself.
       const selector = target.getAttribute?.('data-kb-reveal');
       const answer = selector ? target.ownerDocument.querySelector(selector) : null;
-      if (answer) answer.scrollIntoView({ block: 'end' });
-      // 'nearest' leaves a field that is already above the pad exactly where it is, so opening the
-      // keyboard never scrolls the screen's own title out of sight.
-      else target.scrollIntoView?.({ block: 'nearest' });
+      if (answer) {
+        answer.scrollIntoView({ block: 'end' });
+        // …but never at the cost of the field the pad was opened for. Bringing the children's-doses
+        // answer up scrolled the age box clean off the top of the screen, leaving "Enter the child's
+        // age" over a pad with nowhere to type it. If the field has gone above the fold, it comes
+        // back and the answer takes whatever room is left under it.
+        const box = target.getBoundingClientRect?.();
+        if (box && box.top < 0) target.scrollIntoView?.({ block: 'start' });
+      } else {
+        // 'nearest' leaves a field that is already above the pad exactly where it is, so opening the
+        // keyboard never scrolls the screen's own title out of sight.
+        target.scrollIntoView?.({ block: 'nearest' });
+      }
     } else {
       root.style.setProperty('--kb-height', '0px');
     }

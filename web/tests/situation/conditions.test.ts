@@ -77,7 +77,7 @@ describe('the since picker', () => {
     expect(sinceIso('yesterday', '', now)).toBe('2026-09-05T14:00:00.000Z');
     expect(Date.parse(sinceIso('morning', '', now) as string)).toBeLessThanOrEqual(now);
     expect(sinceIso('custom', 'not a time', now)).toBeUndefined();
-    expect(sinceIso('custom', '2026-09-06T09:30', now)).toBe(new Date('2026-09-06T09:30').toISOString());
+    expect(sinceIso('custom', '06/09/2026 09:30', now)).toBe(new Date('2026-09-06T09:30').toISOString());
   });
 });
 

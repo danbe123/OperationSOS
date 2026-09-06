@@ -11,7 +11,9 @@ export const DESTINATIONS: Destination[] = [
   { to: '/kit', icon: 'boot', label: 'Kit', match: starts('/kit') },
   { to: '/medical', icon: 'medical', label: 'Medical', match: starts('/medical') },
   { to: '/map', icon: 'map', label: 'Map', match: starts('/map') },
-  { to: '/search', icon: 'search', label: 'Find', match: starts('/search', '/find', '/library', '/read', '/doc', '/ai') },
+  /* The assistant is not Find. It has its own row in the rail's footer, which lights itself, and
+     with `/ai` in this list both Find and AI wore the lit style at once. */
+  { to: '/search', icon: 'search', label: 'Find', match: starts('/search', '/find', '/library', '/read', '/doc') },
 ];
 
 /** Which destination is lit for a path, or null when the screen belongs to none of them (System). */

@@ -156,7 +156,7 @@ export function Scenario() {
     >
       <div className="screen-body">
         <Emergency999 onlyWhenHidden />
-        <p className="muted measure">{data.summary}</p>
+        <p className="muted measure scenario-summary">{data.summary}</p>
         <div className="tabs no-print" role="tablist" aria-label="Sections">
           {data.sections.map((s) => (
             <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
@@ -169,7 +169,7 @@ export function Scenario() {
             {sections.map((s) => (
               <section className="scenario-panel" key={s.id} id={`panel-${s.id}`} role="tabpanel" aria-labelledby={`tab-${s.id}`}>
                 <h2>{s.id === 'right-now' ? 'Do this first' : s.title}</h2>
-                <ReadAloudBlock id={`section:${data.slug}#${s.id}`} label="Read this section aloud">
+                <ReadAloudBlock id={`section:${data.slug}#${s.id}`} label="Read aloud">
                   <SectionBody section={s} playbook={data} open={printing} />
                 </ReadAloudBlock>
               </section>

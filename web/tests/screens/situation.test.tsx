@@ -15,7 +15,9 @@ describe('Situation clock', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /This has started/ }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
-    expect(await screen.findByRole('status')).toHaveTextContent('20 h in, first 72 hours');
+    // The band and Now's heading already say how long it has been running; the control says only that it is active and how to end it.
+    expect(await screen.findByRole('status')).toHaveTextContent('Active');
+    expect(screen.getByRole('button', { name: 'End situation' })).toBeInTheDocument();
     const tabs = screen.getByRole('tablist', { name: 'Sections' });
     const now = within(tabs).getByRole('tab', { name: /First 72 hours/ });
     expect(now).toHaveAttribute('aria-current', 'time');

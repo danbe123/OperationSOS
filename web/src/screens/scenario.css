@@ -10,6 +10,8 @@
 .screen-head .situation-clock { gap: 6px; }
 .clock-start-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
 .clock-start-text small { font-weight: 400; color: var(--ink-muted); }
+/* The kiosk is 480 px tall: the verb is enough there, and the sheet's own copy says what the clock does. */
+@media (max-height: 560px) { .clock-start-text small { display: none; } }
 .scenario-guidance { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .scenario-panel { min-width: 0; scroll-margin-top: 80px; }
 .scenario-panel > h2 { margin-top: 0; }
@@ -36,4 +38,11 @@
   .progress-line, .tabs { display: none; }
   .playbook .section[open] > summary::before { content: ''; }
   .playbook .task-row { break-inside: avoid; }
+}
+
+/* The kiosk is 480 px tall: the summary is on the Guides tile that opened this, and the tabs give up
+   two pixels of type so that all six stand on one line and the guidance starts above the fold. */
+@media (max-height: 560px) {
+  .scenario-summary { display: none; }
+  .tabs .btn { font-size: 16px; padding: 6px 10px; }
 }

@@ -7,17 +7,30 @@
    the kiosk's 18 px small print the last tool scrolled to exactly under the chevron and could not be
    tapped at all. */
 .map-tools { display: flex; gap: 6px; overflow-x: auto; scroll-behavior: smooth; flex: 1 1 auto; scrollbar-width: thin; }
-.map-toolbar-scrolls .map-tools { padding-right: 46px; }
+.map-toolbar-scrolls .map-tools { padding-right: 132px; }
 .map-tools .btn { flex-shrink: 0; gap: 4px; padding: 4px 8px; }
 /* The chevron sits over the fading right-hand end rather than taking a slice of the row: in the flow
    it took exactly the width that made it necessary, and a strip that fits would still show it. */
-.map-tools-more { position: absolute; top: 0; right: var(--gutter); z-index: 2; padding: 4px 8px; }
+.map-tools-more { position: absolute; top: 0; right: var(--gutter); z-index: 2; padding: 4px 8px; gap: 4px; background: var(--raised); }
 .map-toolbar-scrolls::after {
-  content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 40px); width: 28px;
+  content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 118px); width: 56px;
   pointer-events: none; background: linear-gradient(to right, transparent, var(--ground));
 }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
+/* The map surface is somebody else's cartography and it arrives at somebody else's brightness: a
+   mid-grey OpenStreetMap sheet is the brightest large area on a blackout screen at night, on the
+   one screen a household reads outdoors in the dark. A wash in the theme's own ground colour sits
+   over the tiles and under every control; field keeps the paper it was drawn as. */
+.map-host::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: var(--ground); opacity: 0;
+}
+:root[data-theme="vault"] .map-host::after { opacity: 0.34; }
+:root[data-theme="blackout"] .map-host::after { opacity: 0.5; }
+:root[data-dim="on"] .map-host::after { opacity: 0.55; }
+:root[data-theme="field"] .map-host::after { opacity: 0; }
+@media print { .map-host::after { display: none; } }
 /* The panel's head and its actions are pinned; only its middle scrolls, so the primary action is
    never the sliver at the bottom edge of a 480 px screen with nothing to say it is there. */
 .map-panel {
@@ -72,7 +85,7 @@
 }
 
 .map-label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -160%); padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: var(--radius); pointer-events: none; font-weight: 600; }
-.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: middle; border: 1px solid var(--line-strong); }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: var(--radius-pill); vertical-align: middle; border: 1px solid var(--line-strong); }
 .small { font-size: var(--t-meta); margin: 0 0 6px 36px; color: var(--ink-muted); }
 .place-search { display: flex; flex-direction: column; gap: 8px; }
 .map-print { display: none; }

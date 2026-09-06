@@ -3,7 +3,7 @@ import { screen, act, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { pdfViewerUrl } from '../../src/screens/Doc';
+import { documentFileUrl, documentTitle, pdfViewerUrl } from '../../src/screens/Doc';
 import { replaceFrameLocation } from '../../src/links';
 import { READER_STYLE_ID } from '../../src/theme/readerTheme';
 import { pdfItem, epubItem, extItem, wikiItem } from '../fixtures/api';
@@ -22,8 +22,8 @@ const replaceMock = vi.mocked(replaceFrameLocation);
 
 describe('pdfViewerUrl', () => {
   it('encodes the file URL, adds the theme and passes the page fragment through', () => {
-    expect(pdfViewerUrl('/docs/core/docs/nrr-2025.pdf', 'blackout', '#page=12')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=blackout#page=12');
-    expect(pdfViewerUrl('/docs/core/docs/nrr-2025.pdf', 'vault', '')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault');
+    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'blackout', '#page=12')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=blackout#page=12');
+    expect(pdfViewerUrl('/docs/core/nrr-2025.pdf', 'vault', '')).toBe('/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
   });
 });
 
@@ -32,18 +32,18 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(pdfItem);
     renderRoute('/doc/nrr-2025#page=12');
     const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault#page=12');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault#page=12');
     await act(async () => { fireEvent.load(frame); });
     expect(frame.contentDocument!.getElementById(READER_STYLE_ID)?.textContent).toContain('#toolbarContainer');
     expect(screen.getByRole('heading', { name: 'National Risk Register 2025' })).toBeInTheDocument();
   });
 
   it('reloads the same iframe (not the wrong document) when navigating to a different PDF without unmounting the Doc route', async () => {
-    const otherPdf = { ...pdfItem, id: 'other-pdf', title: 'Other PDF', url: '/docs/core/docs/other-pdf.pdf' };
+    const otherPdf = { ...pdfItem, id: 'other-pdf', title: 'Other PDF', url: '/doc/other-pdf', file_url: '/docs/core/other-pdf.pdf' };
     vi.spyOn(api, 'libraryItem').mockImplementation(async (id: string) => (id === otherPdf.id ? otherPdf : pdfItem));
     const { router } = renderRoute('/doc/nrr-2025');
     const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
     expect(replaceMock).not.toHaveBeenCalled();
 
     await act(async () => { await router.navigate('/doc/other-pdf'); });
@@ -52,9 +52,9 @@ describe('Doc', () => {
     // Same iframe instance (Doc route never unmounted) reused for the new document, via replaceFrameLocation
     // rather than a stale `src`.
     expect(screen.getByTitle('Document')).toBe(frame);
-    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fnrr-2025.pdf&theme=vault');
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fnrr-2025.pdf&theme=vault');
     expect(replaceMock).toHaveBeenCalledTimes(1);
-    expect(replaceMock).toHaveBeenCalledWith(frame.contentWindow, '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fdocs%2Fother-pdf.pdf&theme=vault');
+    expect(replaceMock).toHaveBeenCalledWith(frame.contentWindow, '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fother-pdf.pdf&theme=vault');
   });
 
   it('opens an EPUB with epubjs, with next/previous and text size controls', async () => {
@@ -62,14 +62,17 @@ describe('Doc', () => {
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
     await screen.findByRole('button', { name: 'Next' });
-    expect(mocks.ePub).toHaveBeenCalledWith('/docs/core/docs/where-there-is-no-doctor.epub');
+    expect(mocks.ePub).toHaveBeenCalledWith('/docs/core/where-there-is-no-doctor.epub');
     expect(mocks.book.renderTo).toHaveBeenCalled();
-    expect(mocks.rendition.themes.select).toHaveBeenCalledWith('vault');
+    // The palette is the app's own tokens, rebuilt per theme and per dim state, not one of three
+    // hard-coded sets living in the reader.
+    expect(mocks.rendition.themes.register).toHaveBeenCalledWith('sos-vault-lit', expect.objectContaining({ body: expect.anything() }));
+    expect(mocks.rendition.themes.select).toHaveBeenCalledWith('sos-vault-lit');
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Previous' }));
     expect(mocks.rendition.next).toHaveBeenCalledTimes(1);
     expect(mocks.rendition.prev).toHaveBeenCalledTimes(1);
-    await user.click(screen.getByRole('button', { name: /Text size 100%/ }));
+    await user.click(screen.getByRole('button', { name: /Text size/ }));
     expect(mocks.rendition.themes.fontSize).toHaveBeenLastCalledWith('125%');
   });
 
@@ -84,11 +87,12 @@ describe('Doc', () => {
     expect(injected).toContain('--toolbar-height:0px');
     expect(screen.queryByText('Automatic Zoom')).toBeNull();
     // and every control is an app button with a word on it
-    for (const name of ['Previous', 'Next', 'Find', 'Smaller', 'Bigger']) {
+    for (const name of ['Previous', 'Next', 'Find', 'Text size']) {
       expect(screen.getByRole('button', { name: new RegExp(name) })).toBeInTheDocument();
     }
     expect(screen.getByRole('textbox', { name: 'Page number' })).toHaveValue('1');
-    expect(screen.getByText(/of an unknown number|of \d+/)).toBeInTheDocument();
+    // Before the file has been read the count is not zero: it is not yet known, and the chrome says so.
+    expect(screen.getByText(/Counting the pages…|of \d+/)).toBeInTheDocument();
     expect(screen.getByRole('searchbox', { name: 'Find in this document' })).toBeInTheDocument();
   });
 
@@ -100,7 +104,23 @@ describe('Doc', () => {
     expect(screen.queryByTitle('Document')).toBeNull();
     expect(screen.getByRole('link', { name: /Open the library entry/ })).toHaveAttribute('href', '/library');
     expect(screen.getByRole('link', { name: /Search the box for this/ })).toHaveAttribute('href', '/search?q=National%20Risk%20Register%202025');
+    // and the probe asked the drive for the file, never the app's own route, which the SPA answers
+    // 200 for whatever you ask it
+    expect(fetchMock).toHaveBeenCalledWith('/docs/core/nrr-2025.pdf', { method: 'HEAD' });
     fetchMock.mockRestore();
+  });
+
+  it('hands the viewer the file on the drive, never the app route', () => {
+    expect(documentFileUrl(pdfItem)).toBe('/docs/core/nrr-2025.pdf');
+    expect(documentFileUrl(epubItem)).toBe('/docs/core/where-there-is-no-doctor.epub');
+    // a box built before the field, and an item the drive does not carry, are both "cannot open"
+    expect(documentFileUrl({ ...pdfItem, file_url: null })).toBeNull();
+    expect(documentFileUrl({ ...pdfItem, available: false })).toBeNull();
+  });
+
+  it('leaves the catalogue\u2019s edition parenthetical off the screen title', () => {
+    expect(documentTitle('Where There Is No Doctor (Hesperian, 1992 revised edition)')).toBe('Where There Is No Doctor');
+    expect(documentTitle('National Risk Register 2025')).toBe('National Risk Register 2025');
   });
 
   it('explains when the document is on a missing drive or is not a document', async () => {

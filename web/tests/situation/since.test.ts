@@ -29,12 +29,14 @@ describe('reading a stored time back into the since picker', () => {
     expect(sinceChoiceFor('not a time', NOON)).toBe('now');
   });
 
-  it('writes a stored instant into a datetime field in the box’s own time zone', () => {
+  it('writes a stored instant the way this country writes one: dd/mm/yyyy on a 24-hour clock', () => {
     const iso = '2026-09-06T09:30:00.000Z';
     const at = new Date(Date.parse(iso));
     const two = (n: number) => String(n).padStart(2, '0');
-    expect(localInput(iso)).toBe(`${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}T${two(at.getHours())}:${two(at.getMinutes())}`);
+    expect(localInput(iso)).toBe(`${two(at.getDate())}/${two(at.getMonth() + 1)}/${at.getFullYear()} ${two(at.getHours())}:${two(at.getMinutes())}`);
     expect(localInput(null)).toBe('');
     expect(localInput('not a time')).toBe('');
+    // and the box reads its own field back, in that order and no other
+    expect(sinceIso('custom', localInput(iso))).toBe(iso);
   });
 });

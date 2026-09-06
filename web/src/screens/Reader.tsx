@@ -6,7 +6,7 @@ import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 import { attachKeyboardTo } from '../kiosk/editable';
 import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl } from '../links';
-import { injectStyle, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss } from '../theme/readerTheme';
+import { injectStyle, isDim, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss, viewerTokens } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
 import { PdfFrame } from './Doc';
 import { api } from '../api/client';
@@ -79,7 +79,8 @@ function ArticleReader() {
     const doc = frameRef.current?.contentDocument;
     // documentElement is briefly null while the frame is mid-navigation (jsdom; harmless no-op elsewhere).
     if (!doc || !doc.documentElement) return;
-    injectStyle(doc, READER_STYLE_ID, readerCss(themeRef.current));
+    const root = document.documentElement;
+    injectStyle(doc, READER_STYLE_ID, readerCss(themeRef.current, viewerTokens(root, themeRef.current), isDim(root)));
     injectStyle(doc, TEXT_SIZE_STYLE_ID, textSizeCss(sizeRef.current));
   }, []);
 
@@ -178,7 +179,9 @@ function ArticleReader() {
       fill
       actions={
         <>
-          <button type="button" className="btn btn-small" onClick={cycleSize}><Icon name="text-size" size={18} /><span>Text size {textSize}%</span></button>
+          {/* A verb and a word, not a reading: "Text size 100%" told a reader a number, not what
+              pressing it would do. The percentage is in the accessible name. */}
+          <button type="button" className="btn btn-small" onClick={cycleSize} aria-label={`Text size, ${textSize} per cent now`}><Icon name="text-size" size={18} /><span>Text size</span></button>
           <Link className="btn btn-small" to={`/library#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>
           {!kiosk && <button type="button" className="btn btn-small" onClick={print}><Icon name="print" size={18} /><span>Print</span></button>}
         </>

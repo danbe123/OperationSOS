@@ -10,7 +10,13 @@
 :root[data-theme="vault"] .board-now { font-family: var(--font-display); }
 .board-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
 .board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.board-cond { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius); border: 2px solid var(--line-strong); background: var(--panel); font-weight: 600; }
+/* Name on the first line, state and duration on the second: three rows of two fit the column, where
+   three-line tiles cut "Internet" in half. */
+.board-cond { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 8px 12px; border-radius: var(--radius); background: var(--panel); font-weight: 600; }
+.board-cond .board-cond-name { flex: 1 1 100%; }
+.board-cond.cond-ok { background: color-mix(in srgb, var(--ok) 12%, var(--panel)); }
+.board-cond.cond-warn { background: color-mix(in srgb, var(--warn) 16%, var(--panel)); }
+.board-cond.cond-danger { background: color-mix(in srgb, var(--danger) 16%, var(--panel)); }
 .board-cond-name { display: flex; align-items: center; gap: 6px; font-size: var(--t-lead); }
 .board-cond .cond-state, .board-cond .cond-for { font-size: var(--t-body); }
 .board-tasks h2, .board-facts h2 { margin: 0 0 6px; font-size: var(--t-lead); }
@@ -18,10 +24,12 @@
 .board-task-list li { margin-bottom: 6px; }
 .board-task-title { font-weight: 600; }
 .board-task-who { display: block; font-size: var(--t-meta); color: var(--ink-muted); }
-.board-facts p { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: var(--t-lead); }
+/* The glyph belongs to the first line of what it marks, not to the middle of a four-line wrap. */
+.board-facts p { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: var(--t-lead); }
+.board-facts p svg { flex: 0 0 auto; margin-top: 3px; }
 .board-stock { list-style: none; margin: 0; padding: 0; font-size: var(--t-lead); font-weight: 600; }
 .board-stock li { margin-bottom: 4px; }
-.board-events { flex: 0 0 auto; border-top: 1px solid var(--line); padding-top: 6px; max-height: 5.5em; overflow: hidden; }
+.board-events { flex: 0 0 auto; border-top: 1px solid var(--line); padding-top: 6px; max-height: 3.6em; overflow: hidden; }
 .board-events ul { list-style: none; margin: 0; padding: 0; font-size: var(--t-meta); }
 .board-hint { flex: 0 0 auto; margin: 0; padding: 2px 16px 6px; text-align: center; font-size: var(--t-meta); color: var(--ink-muted); }
 .board-waiting { align-items: center; justify-content: center; font-size: var(--t-lead); }

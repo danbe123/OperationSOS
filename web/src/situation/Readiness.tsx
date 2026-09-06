@@ -31,7 +31,7 @@ export function Readiness() {
     <section className="panel panel-signal" aria-label="How ready you are">
       <div className="panel-head">
         <h2>How ready you are</h2>
-        <Link className="btn btn-small" to="/situation">Situation sheet</Link>
+        <Link className="btn btn-small" to="/situation"><Icon name="plan" size={18} /><span>Situation</span></Link>
       </div>
       <p className="lead">
         {gaps.length > 0

@@ -10,6 +10,9 @@ import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
 import { Screen, Body } from '../shell/Screen';
 
+/** How many source chips stand on the screen before the rest go behind "More sources". */
+export const CHIP_ROW = 4;
+
 /** Find: one search across everything, then the library behind it, then the assistant when it is on. */
 export function Find() {
   const [params, setParams] = useSearchParams();
@@ -31,6 +34,12 @@ export function Find() {
     if (data && sources.length === 0) setUnfiltered({ q: data.q, chips: chipsFor(groupResults(dedupe(data.results))) });
   }, [data, sources.length]);
   const chips = unfiltered?.q === q ? unfiltered.chips : chipsFor(grouped);
+  // Four chips is one row on the kiosk and two on a phone; the rest are behind one control. Eight
+  // chips over four rows put the first result 553 px down a 480 px screen, before the on-screen
+  // keyboard was even open.
+  const [moreSources, setMoreSources] = useState(false);
+  const shownChips = moreSources ? chips : chips.slice(0, CHIP_ROW);
+  const hiddenChips = chips.length - shownChips.length;
   // On the kiosk the on-screen keyboard covers the bottom of the screen, so an answer that arrives
   // under it has not arrived. Scrolling the count line up instead pushed the field off the top, so
   // the screen showed "5 results." and two results with no way to see or edit what was typed. The
@@ -58,11 +67,13 @@ export function Find() {
   return (
     <Screen title="Find" search={false} back={false}>
       <Body>
-        <SearchBar initial={q} autoFocus />
+        {/* Arriving with a query is arriving to read: on the kiosk an autofocused field brings the
+            keyboard up over the forty results somebody came for. */}
+        <SearchBar initial={q} autoFocus={!q.trim()} />
         {!q.trim() && <p className="muted">Search Wikipedia, the NHS pages, the manuals, the maps and the guides. A place name or a postcode opens the map.</p>}
         {chips.length > 0 && (
           <div className="chips" role="group" aria-label="Filter by source">
-            {chips.map((g) => {
+            {shownChips.map((g) => {
               const on = g.sources.every((x) => sources.includes(x));
               return (
                 <button key={g.key} type="button" className={on ? 'chip active' : 'chip'} aria-pressed={on} onClick={() => toggle(g.sources)}>
@@ -70,6 +81,11 @@ export function Find() {
                 </button>
               );
             })}
+            {(hiddenChips > 0 || moreSources) && (
+              <button type="button" className="chip" aria-expanded={moreSources} onClick={() => setMoreSources((v) => !v)}>
+                {moreSources ? 'Fewer sources' : `More sources (${hiddenChips})`}
+              </button>
+            )}
           </div>
         )}
         {data?.partial && <p className="warning">Some sources timed out, so these results may be incomplete. Try again in a moment.</p>}

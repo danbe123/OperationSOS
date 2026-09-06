@@ -10,16 +10,16 @@ describe('Library', () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     const user = userEvent.setup();
     renderRoute('/library');
-    expect(await screen.findByText('7 items, 6 available on this box.')).toBeInTheDocument();
+    expect(await screen.findByText('8 items, 7 available on this box.')).toBeInTheDocument();
     const chips = screen.getByRole('group', { name: 'Categories' });
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Medical (3)', 'UK official (1)', 'Reference (1)', 'Maps (1)', 'Books (1)']);
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5);
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Medical (3)', 'UK official (1)', 'Practical (1)', 'Reference (1)', 'Maps (1)', 'Books (1)']);
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(6);
     expect(within(screen.getByRole('list', { name: 'Books' })).getByText('On external drive (not connected)')).toBeInTheDocument();
     await user.click(within(chips).getByRole('button', { name: 'Reference (1)' }));
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(1);
     expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/read/wikipedia_en_100_mini_2026-01/A/Main_Page');
     await user.click(within(chips).getByRole('button', { name: 'Reference (1)' }));
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(5);
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(6);
   });
 
   it('scrolls to the item named in the hash', async () => {

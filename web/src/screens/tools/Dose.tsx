@@ -47,7 +47,9 @@ export function Dose() {
               <ul>{result.notes.map((n) => <li key={n}>{n}</li>)}</ul>
             </>
           ) : (
-            <p className="warning">{result.reason}</p>
+            /* An empty form is not a warning: ⚠ means something can hurt you, and the box asking
+               for an age it has not been given yet cannot. */
+            <p className={ageMonths >= 0 && Number.isFinite(ageMonths) ? 'warning' : 'muted'}>{result.reason}</p>
           )}
           <p className="muted">Source: <Link to={sourceUrl(result.source, book)}>{result.source.title}</Link> (as at {result.source.as_at}). Open it to check before giving anything.</p>
         </section>

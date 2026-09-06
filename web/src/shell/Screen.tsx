@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { Icon } from '../icons';
 import { SearchBar } from '../components/SearchBar';
 import { ThemeButton } from '../theme/ThemeButton';
+import { printedOn } from '../tools/printing';
 import { useReportScreenTitle } from './screenTitle';
 import { useWide } from './useWide';
 
@@ -39,8 +40,11 @@ export function Screen({
   const onFind = location.pathname === '/search' || location.pathname === '/find';
   return (
     <div className={classes}>
-      {/* With no Back button the theme button had a phone row to itself above the title; it shares
-          the title's line instead, and the screen keeps the 40 pixels. */}
+      {/* A sheet pulled out of the box has to say what it is and when it was printed, or it cannot be
+          identified or put back in order. Nothing but the printer ever sees this. */}
+      <div className="print-only print-head" aria-hidden="true">
+        <strong>Operation SOS</strong> · {title} · printed {printedOn()}
+      </div>
       <header className={back ? 'screen-head' : 'screen-head screen-head-noback'}>
         {back && (
           <button type="button" className="btn btn-quiet btn-small screen-head-back no-print" onClick={goBack}>
@@ -48,9 +52,15 @@ export function Screen({
           </button>
         )}
         <h1>{title}</h1>
-        {actions && <div className="screen-head-actions no-print">{actions}</div>}
-        {/* One theme control on the screen: the rail carries it where there is a rail. */}
-        {!wide && <ThemeButton className="screen-head-theme no-print" />}
+        {/* The screen's own controls, and on a phone the theme is one of them: it used to have a
+            boxed, two-line row of its own above the search field and above the "999 will not
+            connect" panel — the most prominent control on the front door during a triple outage. */}
+        {(actions || !wide) && (
+          <div className="screen-head-actions no-print">
+            {actions}
+            {!wide && <ThemeButton className="screen-head-theme" />}
+          </div>
+        )}
         {/* Search is on every screen, phones included: the field where the screen has room for it,
             and the way to Find where it has not. A phone had neither, on twenty-three screens. */}
         {!onFind && (search

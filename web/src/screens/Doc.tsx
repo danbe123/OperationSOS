@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
 import ePub, { type Rendition } from 'epubjs';
 import { api } from '../api/client';
@@ -14,6 +14,24 @@ export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): strin
   return `/pdfjs/web/viewer.html?file=${encodeURIComponent(fileUrl)}&theme=${theme}${hash}`;
 }
 
+/** The file on the drive, never the app's own route. `/api/library/<id>` names both: `url` is where
+ * the app opens the document (`/doc/<id>`) and `file_url` is where the bytes are served
+ * (`/docs/core/<file>`). Handing the viewer the route made pdf.js fetch `index.html`, which is not a
+ * PDF, on every document in the library — and the HEAD probe beside it asked the same route, got
+ * 200, and never raised the missing state. A box built before the field carries none, and the item
+ * cannot be opened rather than being opened wrongly. */
+export function documentFileUrl(item: Pick<LibraryItem, 'available' | 'file_url'> | null | undefined): string | null {
+  if (!item?.available) return null;
+  return item.file_url || null;
+}
+
+/** The screen's title for a document: the catalogue's edition parenthetical is cataloguing, not a
+ * title — "Where There Is No Doctor (Hesperian, 1992 revised edition)" is one line of a 480 px
+ * screen spent on a publisher's imprint. */
+export function documentTitle(title: string): string {
+  return (title ?? '').replace(/\s*\((?:[^()]*\b(?:edition|revised|revision|Hesperian|ed\.)\b[^()]*)\)\s*$/i, '').trim() || (title ?? '');
+}
+
 /* The bits of PDF.js's own application object this screen drives. The viewer is bundled and served
  * from the same origin, so the frame's window is readable; every call is guarded because a viewer
  * that has not finished starting (or a jsdom test) has none of it. */
@@ -26,7 +44,7 @@ type PdfApp = {
   pdfViewer?: { currentPageNumber: number; currentScale: number };
 };
 
-const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+const ZOOMS = [0.75, 1, 1.25, 1.5, 2];
 
 function appOf(frame: HTMLIFrameElement | null): PdfApp | null {
   try {
@@ -36,9 +54,10 @@ function appOf(frame: HTMLIFrameElement | null): PdfApp | null {
   }
 }
 
-/** The document viewer's chrome, in the app's own components: where you are in the document, the way
- * forward and back, a page to jump to, a search of the text and the size of the page. PDF.js's own
- * toolbar is hidden (`pdfViewerCss`); this replaces it, at 48 px, with a word beside every icon. */
+/** The document viewer's chrome, in the app's own components and on one row: where you are in the
+ * document, the way forward and back, a page to jump to, a search of the text and the size of the
+ * page. PDF.js's own toolbar is hidden (`pdfViewerCss`); this replaces it, at 48 px, with a word
+ * beside every icon. Three rows of it used to cost a 480 px screen 150 pixels before the book. */
 function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElement | null>; onMissing: () => void }) {
   const [pages, setPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -91,14 +110,12 @@ function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElem
     if (app?.pdfViewer) app.pdfViewer.currentPageNumber = wanted;
     setPage(wanted);
   };
-  const setScale = (next: number) => {
+  const cycleZoom = () => {
+    const at = ZOOMS.findIndex((z) => z > zoom + 0.01);
+    const next = ZOOMS[at === -1 ? 0 : at];
     const app = appOf(frame.current);
     if (app?.pdfViewer) app.pdfViewer.currentScale = next;
     setZoom(next);
-  };
-  const step = (by: number) => {
-    const near = ZOOMS.reduce((best, z) => (Math.abs(z - zoom) < Math.abs(best - zoom) ? z : best), ZOOMS[0]);
-    setScale(ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, ZOOMS.indexOf(near) + by))]);
   };
   const find = (again: boolean) => {
     const query = again ? term : typed.trim();
@@ -109,30 +126,25 @@ function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElem
 
   return (
     <div className="doc-tools no-print">
-      <div className="row doc-tools-row" role="group" aria-label="Pages">
-        <button type="button" className="btn btn-small" disabled={page <= 1} onClick={() => goTo(page - 1)}><Icon name="back" size={18} /><span>Previous</span></button>
-        <label className="field doc-page">
-          <span>Page</span>
-          <input type="text" inputMode="numeric" aria-label="Page number" value={String(page)}
-            onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, '')); if (n > 0) goTo(n); }} />
-        </label>
-        <span className="muted doc-of">{pages > 0 ? `of ${pages}` : 'of an unknown number'}</span>
-        <button type="button" className="btn btn-small" disabled={pages > 0 && page >= pages} onClick={() => goTo(page + 1)}><span>Next</span><Icon name="forward" size={18} /></button>
-      </div>
-      <form className="row doc-tools-row" role="search" aria-label="Find in this document" onSubmit={(e) => { e.preventDefault(); find(false); }}>
-        <label className="field doc-find">
-          <span>Find in this document</span>
-          <input type="search" aria-label="Find in this document" value={typed} placeholder="a word or a phrase" onChange={(e) => setTyped(e.target.value)} />
-        </label>
+      <button type="button" className="btn btn-small" disabled={page <= 1} onClick={() => goTo(page - 1)}><Icon name="back" size={18} /><span>Previous</span></button>
+      {/* "Page 4 of 210", with the number itself the thing you can change. Before the file has been
+          read the count is not zero, it is not yet known, and the screen says so. */}
+      <span className="doc-page">
+        <span>Page</span>
+        <input type="text" inputMode="numeric" aria-label="Page number" value={String(page)}
+          onChange={(e) => { const n = Number(e.target.value.replace(/\D/g, '')); if (n > 0) goTo(n); }} />
+        <span className="muted">{pages > 0 ? `of ${pages}` : 'Counting the pages…'}</span>
+      </span>
+      <button type="button" className="btn btn-small" disabled={pages > 0 && page >= pages} onClick={() => goTo(page + 1)}><span>Next</span><Icon name="forward" size={18} /></button>
+      <form className="doc-find" role="search" aria-label="Find in this document" onSubmit={(e) => { e.preventDefault(); find(false); }}>
+        <input type="search" aria-label="Find in this document" value={typed} placeholder="Find in this document" onChange={(e) => setTyped(e.target.value)} />
         <button type="submit" className="btn btn-small"><Icon name="search" size={18} /><span>Find</span></button>
         {term && <button type="button" className="btn btn-small" onClick={() => find(true)}><Icon name="forward" size={18} /><span>Next match</span></button>}
         {term && <span className="muted" role="status">{matches && matches.total > 0 ? `${matches.current} of ${matches.total}` : 'No matches'}</span>}
       </form>
-      <div className="row doc-tools-row" role="group" aria-label="Page size">
-        <button type="button" className="btn btn-small" onClick={() => step(-1)}><Icon name="minus" size={18} /><span>Smaller</span></button>
-        <span className="muted">{Math.round(zoom * 100)}%</span>
-        <button type="button" className="btn btn-small" onClick={() => step(1)}><Icon name="plus" size={18} /><span>Bigger</span></button>
-      </div>
+      <button type="button" className="btn btn-small" onClick={cycleZoom} aria-label={`Text size, ${Math.round(zoom * 100)} per cent now`}>
+        <Icon name="text-size" size={18} /><span>Text size</span>
+      </button>
     </div>
   );
 }
@@ -189,14 +201,14 @@ function DocumentMissing({ item }: { item: LibraryItem }) {
       <section className="panel panel-warn" aria-label="Not on this box">
         <h2>The box does not have this document.</h2>
         <p>
-          <strong>{item.title}</strong> is listed in the library{item.drive_label ? ` under ${item.drive_label}` : ''}, but the
+          <strong>{documentTitle(item.title)}</strong> is listed in the library{item.drive_label ? ` under ${item.drive_label}` : ''}, but the
           file is not on the drive. Nothing you can do on this screen will bring it back — the file is copied on when the box
           is built or updated.
         </p>
         <p className="muted">What to do next:</p>
         <p className="row">
           <Link className="btn" to="/library"><Icon name="book" size={18} /><span>Open the library entry</span></Link>
-          <Link className="btn" to={`/search?q=${encodeURIComponent(item.title)}`}><Icon name="search" size={18} /><span>Search the box for this</span></Link>
+          <Link className="btn" to={`/search?q=${encodeURIComponent(documentTitle(item.title))}`}><Icon name="search" size={18} /><span>Search the box for this</span></Link>
         </p>
       </section>
     </Body>
@@ -204,6 +216,19 @@ function DocumentMissing({ item }: { item: LibraryItem }) {
 }
 
 const EPUB_SIZES = [100, 125, 150];
+
+/** The EPUB's palette is the app's own tokens, read off the root exactly as the PDF viewer's is, so
+ * a book follows the theme *and* the dim palette. It used to carry three hard-coded palettes of its
+ * own — `#0a0f0a`, `#39ff7a`, `#1a3f8a`, `#ff7070` — none of which are in `tokens.css` and none of
+ * which dimmed at three in the morning. */
+export function epubTheme(tokens: { ground: string; panel: string; ink: string; line: string }, link: string, dark: boolean) {
+  return {
+    body: { background: tokens.ground, color: tokens.ink },
+    a: { color: link },
+    'h1, h2, h3, h4': { color: tokens.ink },
+    ...(dark ? { img: { filter: 'brightness(.6)' } } : {}),
+  };
+}
 
 function EpubReader({ url, theme }: { url: string; theme: Theme }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -218,10 +243,6 @@ function EpubReader({ url, theme }: { url: string; theme: Theme }) {
     const book = ePub(url);
     const rendition = book.renderTo(hostRef.current, { width: '100%', height: '100%', flow: 'paginated' });
     renditionRef.current = rendition;
-    rendition.themes.register('vault', { body: { background: '#0a0f0a', color: '#d7f2cf' }, a: { color: '#39ff7a' } });
-    rendition.themes.register('blackout', { body: { background: '#000000', color: '#ff7070' }, a: { color: '#ff9d9d' }, img: { filter: 'brightness(.5)' } });
-    rendition.themes.register('field', { body: { background: '#f4efe4', color: '#1a1a1a' }, a: { color: '#1a3f8a' } });
-    rendition.themes.select(themeRef.current);
     rendition.display().catch((e: unknown) => setError(errorMessage(e)));
     return () => {
       book.destroy();
@@ -229,15 +250,27 @@ function EpubReader({ url, theme }: { url: string; theme: Theme }) {
     };
   }, [url]);
 
-  useEffect(() => { renditionRef.current?.themes.select(theme); }, [theme]);
-  useEffect(() => { renditionRef.current?.themes.fontSize(`${size}%`); }, [size]);
+  // One palette, rebuilt from the live tokens whenever the theme or the dim mode moves.
+  useEffect(() => {
+    const rendition = renditionRef.current;
+    if (!rendition) return;
+    const root = document.documentElement;
+    const tokens = viewerTokens(root, theme);
+    const link = getComputedStyle(root).getPropertyValue('--link').trim() || tokens.ink;
+    const name = `sos-${theme}-${root.dataset.dim === 'on' ? 'dim' : 'lit'}`;
+    rendition.themes.register(name, { ...epubTheme(tokens, link, theme !== 'field') } as Parameters<typeof rendition.themes.register>[1]);
+    rendition.themes.select(name);
+    rendition.themes.fontSize(`${size}%`);
+  }, [theme, size]);
 
   return (
     <div className="epub">
       <div className="row epub-controls no-print screen-body">
         <button type="button" className="btn" onClick={() => void renditionRef.current?.prev()}><Icon name="back" /><span>Previous</span></button>
         <button type="button" className="btn" onClick={() => void renditionRef.current?.next()}><span>Next</span><Icon name="forward" /></button>
-        <button type="button" className="btn" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])}><Icon name="text-size" /><span>Text size {size}%</span></button>
+        <button type="button" className="btn" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])} aria-label={`Text size, ${size} per cent now`}>
+          <Icon name="text-size" /><span>Text size</span>
+        </button>
       </div>
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
       <div ref={hostRef} className="epub-host" />
@@ -250,29 +283,31 @@ export function Doc() {
   const location = useLocation();
   const { theme } = useTheme();
   const { data: item, error, loading } = useQuery(() => api.libraryItem(id), [id]);
-  // The library can list a document the drive does not carry. Ask the drive before drawing a viewer
-  // that would otherwise say "0 of 0" over a blank grey page.
+  // The library can list a document the drive does not carry. Ask the drive — the file itself, not
+  // the app route, which is served by the SPA and answers 200 for everything — before drawing a
+  // viewer that would otherwise fail silently behind a vendor toolbar.
   const [missing, setMissing] = useState(false);
-  const url = item?.available ? item.url : null;
+  const file = useMemo(() => documentFileUrl(item), [item]);
   useEffect(() => {
     setMissing(false);
-    if (!url) return;
+    if (!file) return;
     let live = true;
-    fetch(url, { method: 'HEAD' })
-      .then((res) => { if (live && (res.status === 404 || res.status === 410)) setMissing(true); })
+    fetch(file, { method: 'HEAD' })
+      .then((res) => { if (live && !res.ok) setMissing(true); })
       .catch(() => undefined); // a probe that cannot be made proves nothing: draw the viewer
     return () => { live = false; };
-  }, [url]);
+  }, [file]);
 
-  const gone = item && (missing || !item.available || !item.url);
+  const isDocument = item?.kind === 'pdf' || item?.kind === 'epub';
+  const gone = Boolean(item) && isDocument && (missing || !item!.available || !file);
   return (
-    <Screen title={item?.title ?? 'Document'} fill={!gone} search={false}>
+    <Screen title={item ? documentTitle(item.title) : 'Document'} fill={Boolean(item) && isDocument && !gone} search={false}>
       {loading && <p className="screen-body muted">Loading…</p>}
       {error && <p className="screen-body warning">Could not load this document: {error}</p>}
-      {gone && <DocumentMissing item={item} />}
-      {item && !gone && item.url && item.kind === 'pdf' && <PdfFrame url={item.url} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
-      {item && !gone && item.url && item.kind === 'epub' && <EpubReader url={item.url} theme={theme} />}
-      {item && !gone && item.kind !== 'pdf' && item.kind !== 'epub' && <p className="screen-body warning">{item.title} is not a PDF or EPUB.</p>}
+      {item && gone && <DocumentMissing item={item} />}
+      {item && !gone && file && item.kind === 'pdf' && <PdfFrame url={file} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
+      {item && !gone && file && item.kind === 'epub' && <EpubReader url={file} theme={theme} />}
+      {item && !isDocument && <p className="screen-body warning">{documentTitle(item.title)} is not a PDF or EPUB.</p>}
     </Screen>
   );
 }

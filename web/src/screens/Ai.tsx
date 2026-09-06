@@ -8,6 +8,7 @@ import { Screen, Body } from '../shell/Screen';
 import { Progress } from '../components/Progress';
 import { Icon } from '../icons';
 import { useAppLink } from '../links';
+import { sourceWord } from '../api/words';
 
 export const MAX_QUESTION = 400;
 export const MAX_TURNS = 4;
@@ -53,7 +54,7 @@ function TurnView({ turn, now }: { turn: Turn; now: number }) {
           turn.done.citations.length > 0 && (
             <ul className="list citations" aria-label="Sources">
               {turn.done.citations.map((c) => (
-                <li key={c.n}><ContentLink href={c.url}>[{c.n}] {c.title} ({c.source})</ContentLink></li>
+                <li key={c.n}><ContentLink href={c.url}>[{c.n}] {c.title} ({sourceWord(c.source)})</ContentLink></li>
               ))}
             </ul>
           )
@@ -63,7 +64,7 @@ function TurnView({ turn, now }: { turn: Turn; now: number }) {
             {turn.passages.length > 0 && (
               <ul className="list passages" aria-label="Passages found">
                 {turn.passages.map((p) => (
-                  <li key={p.n}><ContentLink href={p.url}>[{p.n}] {p.title} ({p.source})</ContentLink><p className="muted">{p.text}</p></li>
+                  <li key={p.n}><ContentLink href={p.url}>[{p.n}] {p.title} ({sourceWord(p.source)})</ContentLink><p className="muted">{p.text}</p></li>
                 ))}
               </ul>
             )}
@@ -171,11 +172,21 @@ export function Ai() {
         {turns.map((t) => <TurnView key={t.id} turn={t} now={Date.now()} />)}
       </div>
       {othersBusy && <p className="notice" role="status">Another phone is asking the assistant a question. It frees up in a moment.</p>}
+      {/* With the on-screen keyboard up the answer is the thing that must stay on the screen, not
+          the field somebody has finished typing into: the pad names what to bring up. */}
       <form className="ask no-print" onSubmit={(e) => void ask(e)}>
-        <input type="text" aria-label="Your question" placeholder="Ask about anything in the library" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION} disabled={busy || othersBusy} enterKeyHint="send" autoComplete="off" />
+        <input type="text" aria-label="Your question" placeholder="Ask about anything in the library" data-kb-reveal=".turns" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={MAX_QUESTION} disabled={busy || othersBusy} enterKeyHint="send" autoComplete="off" />
         <button type="submit" className="btn btn-primary" disabled={busy || othersBusy || !question.trim()}><Icon name="ai" /><span>Ask</span></button>
         <span className="muted count">{question.length}/{MAX_QUESTION}</span>
       </form>
+      {/* A disabled primary always says why it is disabled: the rule round 2 set for "Start drill".
+          When another phone has the slot the notice above already says so, once; a second live
+          region saying it again is the same sentence read out twice. */}
+      {!othersBusy && (busy || !question.trim()) && (
+        <p className="muted ask-why" role="status">
+          {busy ? 'It is answering. One question at a time.' : 'Type a question, then Ask.'}
+        </p>
+      )}
       </Body>
     </Screen>
   );

@@ -30,12 +30,12 @@ describe('Read aloud', () => {
     const speak = vi.spyOn(api, 'speak').mockImplementation(() => new Promise<Blob>((resolve) => { release = resolve; }));
     const user = userEvent.setup();
     renderRoute('/p/pmr446');
-    await user.click(await screen.findByRole('button', { name: 'Read this page aloud' }));
+    await user.click(await screen.findByRole('button', { name: 'Read aloud' }));
     expect(speak).toHaveBeenCalledWith('PMR446 Channel 3 is the calling channel.');
     const stop = await screen.findByRole('button', { name: 'Stop reading' });
     await user.click(stop);
     await act(async () => { release(new Blob(['x'])); });
-    expect(await screen.findByRole('button', { name: 'Read this page aloud' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Read aloud' })).toBeInTheDocument();
   });
 
   it.each([[503, 'Piper is not installed'], [404, 'Not Found']])('takes every read-aloud button away when the box answers %i', async (status, detail) => {
@@ -43,8 +43,8 @@ describe('Read aloud', () => {
     vi.spyOn(api, 'speak').mockRejectedValue(new ApiError(status, detail));
     const user = userEvent.setup();
     renderRoute('/p/pmr446');
-    await user.click(await screen.findByRole('button', { name: 'Read this page aloud' }));
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Read this page aloud' })).toBeNull());
+    await user.click(await screen.findByRole('button', { name: 'Read aloud' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Read aloud' })).toBeNull());
     expect(screen.getByText(/no voice installed/)).toBeInTheDocument();
   });
 
@@ -54,11 +54,11 @@ describe('Read aloud', () => {
     const speak = vi.spyOn(api, 'speak').mockResolvedValue(new Blob(['x']));
     const user = userEvent.setup();
     renderRoute('/');
-    await user.click(await screen.findByRole('button', { name: 'Read the briefing aloud' }));
+    await user.click(await screen.findByRole('button', { name: 'Read aloud' }));
     await waitFor(() => expect(speak).toHaveBeenCalled());
     const spoken = speak.mock.calls.map((c) => c[0]).join(' ');
     expect(spoken).toContain('Freezer food unsafe');
     expect(spoken).toContain('Fill the bath and every container');
-    expect(spoken).not.toContain('Read the briefing aloud');
+    expect(spoken).not.toContain('Read aloud');
   });
 });

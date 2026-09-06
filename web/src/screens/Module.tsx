@@ -16,7 +16,7 @@ export function Module() {
         <Emergency999 onlyWhenHidden />
         {loading && <p className="muted">Loading…</p>}
         {error && <p className="warning">Could not load this module: {error}</p>}
-        {data && <ReadAloudBlock id={`module:${slug}`} label="Read this module aloud"><Html html={data.html} /></ReadAloudBlock>}
+        {data && <ReadAloudBlock id={`module:${slug}`} label="Read aloud"><Html html={data.html} /></ReadAloudBlock>}
       </Body>
     </Screen>
   );

@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Icon } from '../icons';
 import type { Condition } from '../api/types';
-import { chipDuration, CONDITION_INFO, shortDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
+import { chipDuration, CONDITION_INFO, elapsedFrom, shortDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
 
 /** One service, as a chip: green working, amber patchy, red off, always with its symbol, its word
  * and how long it has been that way. The duration is the number that decides whether the freezer is
@@ -10,8 +10,11 @@ import { chipDuration, CONDITION_INFO, shortDuration, STATE_LABEL, STATE_SYMBOL,
 export function ConditionChip({ condition, compact = false }: { condition: Condition; compact?: boolean }) {
   const info = CONDITION_INFO[condition.id];
   const tone = STATE_TONE[condition.state];
-  const full = chipDuration(condition.state, condition.for_s);
-  const duration = compact ? shortDuration(condition.state, condition.for_s) : full;
+  // Counted from the instant the box stored, so the band, the board and the sheet never disagree
+  // about how long the power has been off.
+  const elapsed = elapsedFrom(condition);
+  const full = chipDuration(condition.state, elapsed);
+  const duration = compact ? shortDuration(condition.state, elapsed) : full;
   const label = `${info.title}: ${STATE_LABEL[condition.state]}${full ? ` ${full}` : ''}`;
   return (
     <Link className={`cond-chip cond-${tone}${compact ? ' cond-chip-compact' : ''}`} to={`/situation#${condition.id}`} aria-label={label}>

@@ -1,7 +1,7 @@
 /* Guides: one filter field, then a section of tiles per kind of guide. */
 /* One input, with its chips attached to it: two search fields that looked the same and did
    different things is the fault this replaces. */
-.guides-filter { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.guides-filter { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--radius); background: var(--panel); }
 .guides-filter .field { max-width: 480px; }
 
 /* A scenario tile is an icon, a name and one line. The line is not clamped: clamping cut the real
@@ -16,11 +16,10 @@
   .guides-filter .field { flex: 1 1 260px; max-width: 360px; }
   .guides-filter .chips { flex: 1 1 auto; }
 }
-/* 480 px tall with the on-screen keyboard up leaves the content column about 210 px. The chips take
-   one scrolling row rather than two wrapped ones, so the count line and the first tiles are still on
-   the screen while somebody is typing. */
+/* The chips wrap, at every width. As one scrolling row on the kiosk they were 826 px of chips in a
+   757 px column with no fade and no cue: "Reference" started at x=893 and "Tools" at x=1030, both
+   past the right-hand edge of the screen, and nothing said either existed. Two rows cost 56 px and
+   show all six. */
 @media (min-width: 700px) and (min-height: 440px) and (max-height: 620px) {
-  .guides-filter { flex-wrap: nowrap; padding: 6px 12px; }
-  .guides-filter .chips { flex-wrap: nowrap; overflow-x: auto; min-width: 0; }
-  .guides-filter .chips .chip { flex-shrink: 0; }
+  .guides-filter { padding: 6px 12px; }
 }

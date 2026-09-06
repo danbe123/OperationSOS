@@ -12,11 +12,12 @@ describe('Find', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Find' })).toBeInTheDocument();
     // The box's own guidance comes first, under its own heading, and every other source follows in
     // a group of its own: one ranked list put a mirror of somebody's website above the guides.
+    // Three matches inside one authored page are one row: the anchors are not different answers.
     const own = await screen.findByRole('region', { name: 'From this box' });
-    expect(within(own).getAllByRole('listitem')).toHaveLength(1);
-    expect(screen.getAllByRole('listitem').filter((li) => li.closest('.results'))).toHaveLength(5);
+    expect(within(own).getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getAllByRole('listitem').filter((li) => li.closest('.results'))).toHaveLength(7);
     const lib = await screen.findByRole('region', { name: 'Browse the library' });
-    expect(lib).toHaveTextContent('7 items, 6 available on this box.');
+    expect(lib).toHaveTextContent('8 items, 7 available on this box.');
     expect(within(lib).getByRole('link', { name: /Open the library/ })).toHaveAttribute('href', '/library');
   });
 

@@ -22,6 +22,39 @@ export function isoToUkDate(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
+/** "06/09/2026 03:12" → an instant, read in the box's own time zone. Null when it is not a real
+ * date and time in that order. A native `datetime-local` takes its order and its clock from the
+ * browser's locale, so on this box the one field that decides whether the freezer food is still
+ * safe asked for "09/06/2026, 03:12 AM" on a page marked `lang="en-GB"`. */
+export function ukDateTimeToIso(text: string): string | null {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(\d{1,2}):(\d{2}))?$/.exec((text ?? '').trim());
+  if (!m) return null;
+  const date = ukDateToIso(`${m[1]}/${m[2]}/${m[3]}`);
+  if (!date) return null;
+  const hours = m[4] === undefined ? 0 : Number(m[4]);
+  const minutes = m[5] === undefined ? 0 : Number(m[5]);
+  if (hours > 23 || minutes > 59) return null;
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day, hours, minutes, 0, 0).toISOString();
+}
+
+/** An instant as the box writes it down: "06/09/2026 03:12", 24-hour, in the box's own time zone. */
+export function isoToUkDateTime(iso: string | null | undefined): string {
+  const at = iso ? Date.parse(iso) : Number.NaN;
+  if (Number.isNaN(at)) return '';
+  const d = new Date(at);
+  const two = (n: number) => String(n).padStart(2, '0');
+  return `${two(d.getDate())}/${two(d.getMonth() + 1)}/${d.getFullYear()} ${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+
+/** A stored instant in British words, for a sheet somebody reads: "Sunday 6 September, 03:12". */
+export function ukWhen(iso: string | null | undefined): string {
+  const at = iso ? Date.parse(iso) : Number.NaN;
+  if (Number.isNaN(at)) return '';
+  const d = new Date(at);
+  return `${d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}, ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+}
+
 /** How long ago, in a household's words. Used by every tick's "who and when" line. */
 export function relativeTime(iso: string | null, now: number = Date.now()): string {
   if (!iso) return '';

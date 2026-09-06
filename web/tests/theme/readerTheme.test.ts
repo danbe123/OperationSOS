@@ -2,20 +2,25 @@ import { describe, it, expect } from 'vitest';
 import { readerCss, textSizeCss, pdfViewerCss, injectStyle, READER_STYLE_ID, viewerTokens } from '../../src/theme/readerTheme';
 
 describe('readerCss', () => {
-  it('blackout: black background, dim red text and links, dimmed images', () => {
-    const css = readerCss('blackout');
-    expect(css).toContain('background:#000');
-    expect(css).toContain('color:#ff7070');
-    expect(css).toContain('a{color:#ff9d9d');
-    expect(css).toContain('img{filter:brightness(.5)}');
+  it('paints an article in the app\u2019s own tokens rather than a second set of colours', () => {
+    const css = readerCss('blackout', { ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17', link: '#ffc4bc' });
+    expect(css).toContain('background:#000000');
+    expect(css).toContain('color:#ff9d93');
+    // a body link in the ink colour is not a link
+    expect(css).toContain('color:#ffc4bc');
+    expect(css).toContain('text-decoration:underline');
   });
-  it('vault: near-black with green text', () => {
-    const css = readerCss('vault');
-    expect(css).toContain('background:#0a0f0a');
-    expect(css).toContain('color:#d7f2cf');
+  it('follows the dim palette it is handed, and dims photographs further with it', () => {
+    const lit = readerCss('vault', { ground: '#0b120c', panel: '#121b14', ink: '#dcefdd', line: '#2c4a30', link: '#6cf08c' });
+    const dim = readerCss('vault', { ground: '#050805', panel: '#0a0f0b', ink: '#b6d2b8', line: '#223a26', link: '#57c274' }, true);
+    expect(lit).toContain('background:#0b120c');
+    expect(dim).toContain('background:#050805');
+    expect(lit).toContain('brightness(0.55)');
+    expect(dim).toContain('brightness(0.35)');
   });
-  it('field: leaves the ZIM styling alone', () => {
+  it('field leaves the ZIM styling alone until the box dims', () => {
     expect(readerCss('field')).toBe('');
+    expect(readerCss('field', undefined, true)).toContain('brightness');
   });
 });
 
@@ -34,7 +39,7 @@ describe('pdfViewerCss', () => {
     }
   });
   it('paints the viewer in the tokens it is given, so dim reaches it too', () => {
-    const css = pdfViewerCss('vault', { ground: '#050805', panel: '#0a0f0b', ink: '#b6d2b8', line: '#223a26' });
+    const css = pdfViewerCss('vault', { ground: '#050805', panel: '#0a0f0b', ink: '#b6d2b8', line: '#223a26', link: '#57c274' });
     expect(css).toContain('background:#050805');
     expect(css).toContain('color:#b6d2b8');
   });
@@ -51,7 +56,7 @@ describe('viewerTokens', () => {
     root.style.setProperty('--ground', '#123456');
     document.body.appendChild(root);
     expect(viewerTokens(root, 'vault').ground).toBe('#123456');
-    expect(viewerTokens(null, 'blackout')).toEqual({ ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17' });
+    expect(viewerTokens(null, 'blackout')).toEqual({ ground: '#000000', panel: '#0a0000', ink: '#ff9d93', line: '#5a1c17', link: '#ffc4bc' });
     root.remove();
   });
 });

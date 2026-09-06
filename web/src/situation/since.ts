@@ -1,3 +1,5 @@
+import { isoToUkDateTime, ukDateTimeToIso } from '../tools/dates';
+
 /** The since picker: four sensible answers to "when did this start?" plus a typed-in time. */
 export type SinceChoice = 'now' | 'hour' | 'morning' | 'yesterday' | 'custom';
 
@@ -9,7 +11,7 @@ export const SINCE_OPTIONS: { value: SinceChoice; label: string }[] = [
   { value: 'custom', label: 'Choose a time…' },
 ];
 
-/** Turn a choice into an instant. `custom` is a datetime-local value, read in the box's own time zone. */
+/** Turn a choice into an instant. `custom` is "dd/mm/yyyy hh:mm", read in the box's own time zone. */
 export function sinceIso(choice: SinceChoice, custom = '', now: number = Date.now()): string | undefined {
   const at = new Date(now);
   switch (choice) {
@@ -25,10 +27,8 @@ export function sinceIso(choice: SinceChoice, custom = '', now: number = Date.no
     }
     case 'yesterday':
       return new Date(now - 86_400_000).toISOString();
-    case 'custom': {
-      const t = Date.parse(custom);
-      return Number.isNaN(t) ? undefined : new Date(t).toISOString();
-    }
+    case 'custom':
+      return ukDateTimeToIso(custom) ?? undefined;
   }
 }
 
@@ -59,10 +59,8 @@ export function sinceChoiceFor(stored: string | null | undefined, now: number = 
   return best;
 }
 
-/** An instant as a `datetime-local` field wants it: the box's own time zone, to the minute. */
+/** An instant as the box asks for it and shows it: "06/09/2026 03:12", British order, 24-hour, in
+ * the box's own time zone. */
 export function localInput(iso: string | null | undefined): string {
-  const at = iso ? Date.parse(iso) : Number.NaN;
-  if (Number.isNaN(at)) return '';
-  const local = new Date(at - new Date(at).getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
+  return isoToUkDateTime(iso);
 }

@@ -18,7 +18,13 @@ export type Status = {
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
   scenarios: string[]; size_bytes: number; as_at: string | null; licence: string | null;
-  available: boolean; url: string | null; description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
+  available: boolean;
+  /** The app route the item opens at: `/doc/<id>` or `/read/<id>/<home>`. Never handed to a viewer. */
+  url: string | null;
+  /** Where the file itself is served: `/docs/core/<file>` or `/docs/extended/<file>`. Null for a ZIM,
+   * and null on a box built before the field existed. The PDF and EPUB viewers load this. */
+  file_url?: string | null;
+  description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
 };
 export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
 export type SearchResult = {

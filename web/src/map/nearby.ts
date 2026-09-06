@@ -62,3 +62,31 @@ export function leadFacility(facilities: NearbyFacility[], chosenId: string | nu
 export function nearbyGap(f: NearbyFacility): string {
   return f.why ?? `Nothing matching on this box.`;
 }
+
+/** A place with no name on it in OpenStreetMap is still a place: "Unnamed" is not what it is called,
+ * it is the absence of a name. The kind it was found under says what it is. */
+export function placeName(name: string | null | undefined, facilityTitle: string): string {
+  const text = (name ?? '').trim();
+  if (!text || /^unnamed$/i.test(text)) return `${facilityTitle} (no name recorded)`;
+  return text;
+}
+
+/** A caveat with no map data in it. The box's own note used to print an OpenStreetMap tag name at a
+ * household — "The overlay does not carry the `emergency=yes` tag" — and any note the engine grows
+ * later could do the same, so anything shaped like a raw tag is taken out on the way to the screen
+ * rather than trusted to have been written for a reader. */
+const RAW_TAG = /\s*\b[a-z][a-z0-9_:]*=[A-Za-z0-9_:*-]+\b/g;
+
+export function plainNote(note: string | null | undefined): string {
+  const text = (note ?? '').replace(/`/g, '');
+  if (!RAW_TAG.test(text)) { RAW_TAG.lastIndex = 0; return text.trim(); }
+  RAW_TAG.lastIndex = 0;
+  // Drop whole sentences that only exist to name a tag, then any tag left inside one that does not.
+  const kept = text
+    .split(/(?<=[.;])\s+/)
+    .filter((sentence) => { RAW_TAG.lastIndex = 0; return !RAW_TAG.test(sentence); })
+    .join(' ')
+    .trim();
+  RAW_TAG.lastIndex = 0;
+  return kept || 'These come from OpenStreetMap and are as complete as the map is.';
+}

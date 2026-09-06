@@ -26,43 +26,59 @@ export const WIKI = 'wikipedia_en_100_mini_2026-01';
 export const wikiItem: LibraryItem = {
   id: WIKI, title: 'Wikipedia (100 articles, test)', kind: 'zim', tier: 'core', category: 'reference', scenarios: [],
   size_bytes: 4_700_000, as_at: '2026-01', licence: 'CC BY-SA 4.0', available: true,
-  url: `/read/${WIKI}/A/Main_Page`, description: 'A tiny Wikipedia sample', drive_label: 'Core',
+  url: `/read/${WIKI}/A/Main_Page`, file_url: null, description: 'A tiny Wikipedia sample', drive_label: 'Core',
 };
 export const nhsItem: LibraryItem = {
-  id: 'nhs_uk', title: 'NHS (as at 2026-08)', kind: 'zim', tier: 'core', category: 'medical', scenarios: ['pandemic'],
+  id: 'nhs_uk', title: 'NHS website: conditions, symptoms, medicines', kind: 'zim', tier: 'core', category: 'medical', scenarios: ['pandemic'],
   size_bytes: 1_900_000_000, as_at: '2026-08', licence: 'OGL v3', available: true,
-  url: '/read/nhs_uk/www.nhs.uk/index.html', description: 'Conditions, medicines, symptoms', drive_label: 'Core',
+  url: '/read/nhs_uk/www.nhs.uk/index.html', file_url: null,
+  description: 'The NHS website saved for offline use: conditions A to Z, symptoms, medicines, mental health and healthy living.',
+  drive_label: 'Core',
 };
 export const nhsMedicinesItem: LibraryItem = {
-  id: 'nhs_medicines', title: 'NHS medicines (Kiwix)', kind: 'zim', tier: 'core', category: 'medical', scenarios: [],
+  id: 'nhs_medicines', title: 'NHS Medicines A to Z', kind: 'zim', tier: 'core', category: 'medical', scenarios: [],
   size_bytes: 120_000_000, as_at: '2025-12', licence: 'OGL v3', available: true,
-  url: '/read/nhs_medicines/A/index', description: 'NHS medicines A to Z', drive_label: 'Core',
+  url: '/read/nhs_medicines/A/index', file_url: null, description: 'Every medicine the NHS lists, with doses and side effects.', drive_label: 'Core',
 };
+/* The two shapes the document viewer meets, exactly as `/api/library/<id>` gives them: `url` is the
+   app route the library links to and `file_url` is the file on the drive the viewer must load. The
+   round-3 fixture put the file path in `url` and had no `file_url` at all, which is why 354
+   screenshots never showed the fault that every PDF on the real box failed to open. */
 export const pdfItem: LibraryItem = {
   id: 'nrr-2025', title: 'National Risk Register 2025', kind: 'pdf', tier: 'core', category: 'uk-official', scenarios: [],
   size_bytes: 9_400_000, as_at: '2025-01-16', licence: 'OGL v3', available: true,
-  url: '/docs/core/docs/nrr-2025.pdf', description: 'The government risk register', drive_label: 'Core',
+  url: '/doc/nrr-2025', file_url: '/docs/core/nrr-2025.pdf', description: 'The government risk register', drive_label: 'Core',
 };
 export const epubItem: LibraryItem = {
-  id: 'where-there-is-no-doctor', title: 'Where There Is No Doctor', kind: 'epub', tier: 'core', category: 'medical', scenarios: [],
+  id: 'where-there-is-no-doctor', title: 'Where There Is No Doctor (Hesperian, 1992 revised edition)', kind: 'epub', tier: 'core', category: 'medical', scenarios: [],
   size_bytes: 22_000_000, as_at: '2023', licence: 'CC BY-NC-SA', available: true,
-  url: '/docs/core/docs/where-there-is-no-doctor.epub', description: 'Village health care handbook', drive_label: 'Core',
+  url: '/doc/where-there-is-no-doctor', file_url: '/docs/core/where-there-is-no-doctor.epub',
+  description: 'Village health care handbook', drive_label: 'Core',
+};
+/* A document the catalogue lists and the drive does not carry: the missing state, with a file_url
+   that answers 404. */
+export const missingDocItem: LibraryItem = {
+  id: 'fm-21-76-survival', title: 'FM 21-76 Survival (US Army)', kind: 'pdf', tier: 'extended', category: 'practical', scenarios: [],
+  size_bytes: 12_000_000, as_at: '1992', licence: 'Public domain', available: true,
+  url: '/doc/fm-21-76-survival', file_url: '/docs/extended/fm-21-76-survival.pdf',
+  description: 'The US Army survival manual', drive_label: 'External drive',
 };
 export const extItem: LibraryItem = {
   id: 'gutenberg_en_all', title: 'Project Gutenberg', kind: 'zim', tier: 'extended', category: 'books', scenarios: [],
   size_bytes: 206_000_000_000, as_at: '2025-11', licence: 'Public domain', available: false,
-  url: null, description: '70,000 books', drive_label: 'On external drive (not connected)',
+  url: null, file_url: null, description: '70,000 books', drive_label: 'On external drive (not connected)',
 };
 export const mapsItem: LibraryItem = {
   id: 'uk-ie-base', title: 'Base map (UK and Ireland)', kind: 'pmtiles', tier: 'core', category: 'maps', scenarios: [],
   size_bytes: 3_400_000_000, as_at: '2026-09-02', licence: 'ODbL', available: true,
-  url: '/maps/uk-ie.pmtiles', description: 'Protomaps extract', drive_label: 'Core',
+  url: '/maps/uk-ie.pmtiles', file_url: null, description: 'Protomaps extract', drive_label: 'Core',
 };
 
 export const library: LibraryResponse = {
   categories: [
     { id: 'medical', title: 'Medical', items: [nhsItem, nhsMedicinesItem, epubItem] },
     { id: 'uk-official', title: 'UK official', items: [pdfItem] },
+    { id: 'practical', title: 'Practical', items: [missingDocItem] },
     { id: 'reference', title: 'Reference', items: [wikiItem] },
     { id: 'maps', title: 'Maps', items: [mapsItem] },
     { id: 'books', title: 'Books', items: [extItem] },
@@ -123,18 +139,24 @@ export const playbook: Playbook = {
   reviewed: '2026-09-10',
 };
 
+/* What `/api/search?q=water` really answers: the engine wraps every match in `<b>`, the box's own
+   pages carry section anchors on their URLs, and a mirrored NHS page's snippet can be the site's own
+   furniture rather than an answer. The screen has to cope with all three. */
 export const search: SearchResponse = {
   q: 'water', query: 'water',
   results: [
-    { source: 'playbooks', badge: 'Playbook', title: 'Water', snippet: 'Store 3 litres per person per day.', url: '/m/water', score: 0.32, kind: 'module' },
-    { source: 'wikipedia', badge: 'Wikipedia', title: 'Water', snippet: 'Water is an inorganic compound.', url: `/read/${WIKI}/A/Water`, score: 0.167, kind: 'article' },
-    { source: 'nhs', badge: 'NHS', title: 'Dehydration', snippet: 'Dehydration means your body loses more fluids than you take in.', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', score: 0.15, kind: 'article' },
+    { source: 'playbooks', badge: 'Playbook', title: 'Water', snippet: 'Store 3 litres of <b>water</b> per person per day.', url: '/m/water', score: 0.32, kind: 'module' },
+    { source: 'playbooks', badge: 'Page', title: 'Water disinfection', snippet: 'Boil the <b>water</b> for one minute, or add the tablets and wait.', url: '/p/water-disinfection#dosing', score: 0.3, kind: 'page' },
+    { source: 'playbooks', badge: 'Page', title: 'Water disinfection', snippet: 'Sources of <b>water</b> outdoors, and which ones to leave alone.', url: '/p/water-disinfection#sources', score: 0.24, kind: 'page' },
+    { source: 'wikipedia', badge: 'Wikipedia (100 articles, test) (Kiwix build, December 2025)', title: 'Water', snippet: '<b>Water</b> is an inorganic compound.', url: `/read/${WIKI}/A/Water`, score: 0.167, kind: 'article' },
+    { source: 'nhs', badge: 'NHS', title: 'Dehydration - NHS', snippet: 'Dehydration means your body loses more fluids than you take in.', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', score: 0.15, kind: 'article' },
+    { source: 'nhs', badge: 'NHS', title: 'Anticoagulant medicines – Side effects', snippet: 'Help us improve our website Can you answer a 5 minute survey about your visit today? Take our survey Support links Home Health A to Z NHS services Live Well © Crown copyright', url: '/read/nhs_uk/www.nhs.uk/conditions/anticoagulants/side-effects/', score: 0.14, kind: 'article' },
     { source: 'places', badge: 'Place', title: 'Waterlooville', snippet: 'Town, England', url: '/map?lat=50.88&lon=-1.03&z=13&label=Waterlooville', score: 0.14, kind: 'place', lat: 50.88, lon: -1.03 },
-    { source: 'docs', badge: 'UK official', title: 'National Risk Register 2025, page 12', snippet: 'loss of water supply', url: '/doc/nrr-2025#page=12', score: 0.12, kind: 'doc', page: 12 },
+    { source: 'docs', badge: 'UK official', title: 'National Risk Register 2025, page 12', snippet: 'loss of <b>water</b> supply', url: '/doc/nrr-2025#page=12', score: 0.12, kind: 'doc', page: 12 },
   ],
   groups: [
-    { source: 'playbooks', badge: 'Playbooks', count: 1 }, { source: 'wikipedia', badge: 'Wikipedia', count: 1 },
-    { source: 'nhs', badge: 'NHS', count: 1 }, { source: 'places', badge: 'Places', count: 1 }, { source: 'docs', badge: 'UK official', count: 1 },
+    { source: 'playbooks', badge: 'Playbooks', count: 3 }, { source: 'wikipedia', badge: 'Wikipedia', count: 1 },
+    { source: 'nhs', badge: 'NHS', count: 2 }, { source: 'places', badge: 'Places', count: 1 }, { source: 'docs', badge: 'UK official', count: 1 },
   ],
   took_ms: 120, partial: false,
 };
@@ -145,14 +167,53 @@ export const suggestions: Suggestion[] = [
   { value: 'water purification', label: 'water purification', url: null, source: 'query' },
 ];
 
+/* The real CPR (adult) card, as `/api/cards/cpr-adult` renders it: a "When to use" section, eight
+   steps of which six are whole sentences, two warnings and a "Stop or escalate". Round 3's fixture
+   had four short steps, which is why the shrink ladder looked as though it worked and every real
+   card on the box rendered its steps at 18 px body type. */
+const CPR_WHEN = '<h2>When to use</h2><p>Someone has collapsed, does not respond when you shout and shake them, and is not breathing normally.</p>';
+const CPR_STEPS_TAIL = [
+  'Send someone for a defibrillator (AED) if one is nearby.',
+  'Kneel beside them. Heel of one hand on the centre of the chest.',
+  'Other hand on top, arms straight. Press down 5 to 6 cm, 100 to 120 times a minute (two a second), letting the chest come back up fully each time.',
+  'After 30 presses, tilt the head back, lift the chin, pinch the nose and give 2 breaths, each one second, watching the chest rise. If you cannot or will not give breaths, keep pressing without stopping.',
+  'Carry on 30 presses then 2 breaths. Swap with someone every two minutes if you can.',
+  'When the AED arrives, turn it on and follow its voice instructions; keep pressing while the pads go on.',
+  'Do not stop until they breathe normally, help takes over, or you are exhausted.',
+];
+const CPR_TAIL =
+  '<h2>Warnings</h2><p class="warning">Gasping, snoring or occasional gulps are not normal breathing. Start CPR.</p>'
+  + '<p class="warning">Broken ribs are common and do not mean stop.</p>'
+  + '<h2>Stop or escalate</h2><p>Stop only when the person breathes normally on their own, or a paramedic takes over.</p>';
+const cprHtml = (step1: string) =>
+  `${CPR_WHEN}<h2>Steps</h2><ol><li>${step1}</li>${CPR_STEPS_TAIL.map((t) => `<li>${t}</li>`).join('')}</ol>${CPR_TAIL}`;
+
+const CHOKING_STEPS = [
+  'If they can cough, tell them to keep coughing. Stay with them.',
+  'If not: lean them forward, 5 hard blows between the shoulder blades.',
+  'Check the mouth after each blow and remove anything you can see.',
+  'If still choking: stand behind, fist above the navel, other hand over it, pull sharply inwards and upwards 5 times.',
+  'Keep alternating 5 back blows and 5 abdominal thrusts.',
+  'Baby under one: lay face down along your forearm, head low, 5 back blows; then face up, 5 chest thrusts with two fingers on the breastbone. Never abdominal thrusts on a baby.',
+];
+const chokingHtml = (last: string) =>
+  '<h2>When to use</h2><p>Someone cannot breathe, cough or speak, is clutching their throat, or is turning blue.</p>'
+  + `<h2>Steps</h2><ol>${CHOKING_STEPS.map((t) => `<li>${t}</li>`).join('')}<li>${last}</li></ol>`
+  + '<h2>Warnings</h2><p class="warning">Anyone who has had abdominal thrusts must be checked by a doctor afterwards.</p>';
+
 export const cards: Card[] = [
-  {
-    slug: 'cpr-adult', title: 'CPR (adult)', icon: 'heart', order: 1, summary: 'Collapsed, unresponsive and not breathing normally.',
-    html: '<ol><li>Check for danger, then check for a response.</li><li>Call 999 and put it on speaker.</li><li>Push hard and fast in the centre of the chest, 100 to 120 a minute.</li><li>After 30 compressions give 2 breaths if you are trained.</li></ol><p class="warning">Do not stop until help arrives or the person breathes.</p>',
-  },
+  { slug: 'cpr-adult', title: 'CPR (adult)', icon: 'heart', order: 1, summary: 'Collapsed, unresponsive and not breathing normally.', html: cprHtml('Shout for help, a phone on speaker beside you — call 999.') },
   {
     slug: 'severe-bleeding', title: 'Severe bleeding', icon: 'drop', order: 2, summary: 'Blood that soaks through and does not stop.',
-    html: '<ol><li>Press hard on the wound with a clean cloth.</li><li>Call 999.</li><li>Keep pressing; do not lift to look.</li></ol>',
+    html: '<h2>Steps</h2><ol><li>Press hard on the wound with a clean cloth or your hand, and keep pressing.</li>'
+      + '<li>Call 999 and put the phone on speaker beside you.</li>'
+      + '<li>Lay them down and raise the bleeding part above the heart if you can.</li>'
+      + '<li>Keep pressing; do not lift the cloth to look, and add another on top if it soaks through.</li></ol>'
+      + '<h2>Warnings</h2><p class="warning">A tourniquet is a last resort for a limb that will not stop bleeding. Write the time on it.</p>',
+  },
+  {
+    slug: 'choking', title: 'Choking', icon: 'lungs', order: 3,
+    html: chokingHtml('If they become unresponsive, start CPR, and call 999.'),
   },
 ];
 
@@ -160,15 +221,14 @@ export const cards: Card[] = [
  * with both networks down the card that arrives is a different card: the step that says to ring
  * says who to send instead. The fixture has to do the same, or the calls-off screenshots photograph
  * a card telling a household to do the one thing the banner above it says will not work. */
+const NO_PHONES = '999 will not connect while the phones are down: <a href="/p/no-phones">get help without phones</a>';
 export const cardsNoPhones: Card[] = [
-  {
-    ...cards[0],
-    html: '<ol><li>Check for danger, then check for a response.</li><li>Send someone to a landline, a neighbour or a payphone: 999 will not connect from here.</li><li>Push hard and fast in the centre of the chest, 100 to 120 a minute.</li><li>After 30 compressions give 2 breaths if you are trained.</li></ol><p class="warning">Do not stop until help arrives or the person breathes.</p>',
-  },
+  { ...cards[0], html: cprHtml(`Shout for help, a phone on speaker beside you — ${NO_PHONES}.`) },
   {
     ...cards[1],
-    html: '<ol><li>Press hard on the wound with a clean cloth.</li><li>Send someone for help: 999 will not connect from here.</li><li>Keep pressing; do not lift to look.</li></ol>',
+    html: cards[1].html.replace('Call 999 and put the phone on speaker beside you.', 'Send someone to a landline, a neighbour or a payphone: 999 will not connect from here.'),
   },
+  { ...cards[2], html: chokingHtml(`If they become unresponsive, start CPR, and ${NO_PHONES}.`) },
 ];
 
 /* The ten field craft pages. `/fieldcraft` renders whatever the box has in this category, and the
@@ -244,11 +304,11 @@ export const aiEvents: AiEvent[] = [
   { event: 'verbatim', data: { title: 'Dehydration', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', paragraphs: ['Dehydration means your body loses more fluids than you take in.', 'Drink fluids when you feel any dehydration symptoms.'], as_at: '2026-08' } },
   { event: 'retrieving', data: { query: 'dehydration signs', passages: [
     { n: 1, title: 'Dehydration', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', source: 'NHS', text: 'Signs of dehydration include dark yellow urine and feeling dizzy.' },
-    { n: 2, title: 'Water', url: '/m/water', source: 'Playbook', text: 'Store 3 litres per person per day.' },
+    { n: 2, title: 'Water', url: '/m/water', source: 'playbooks', text: 'Store 3 litres per person per day.' },
   ] } },
   { event: 'token', data: { text: 'Signs include ' } },
-  { event: 'token', data: { text: 'dark urine [1].' } },
-  { event: 'done', data: { answer: 'Signs include dark yellow urine and dizziness [1].', grounded: true, citations: [{ n: 1, title: 'Dehydration', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', source: 'NHS' }] } },
+  { event: 'token', data: { text: 'dark urine [1], and stored water helps [2].' } },
+  { event: 'done', data: { answer: 'Signs include dark yellow urine and dizziness [1], and stored water helps [2].', grounded: true, citations: [{ n: 1, title: 'Dehydration', url: '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', source: 'nhs' }, { n: 2, title: 'Water', url: '/m/water', source: 'playbooks' }] } },
 ];
 
 /** Serialise events as the server does: `event:` + `data:` frames, blank-line separated, with a ping comment. */
@@ -335,11 +395,15 @@ export const nearby: NearbyResponse = {
     {
       id: 'pharmacy', title: 'Pharmacy', found: true, searched: ['health'], note: null,
       nearest: { name: 'Boots, High Street', lat: 50.9345, lon: -1.4331, distance_m: 620, bearing_deg: 92, compass: 'E', walk_minutes: 8, source: 'overlay:health', properties: { amenity: 'pharmacy', opening_hours: 'Mo-Sa 09:00-17:30' } },
-      also: [{ name: 'Shirley Pharmacy', lat: 50.9290, lon: -1.4460, distance_m: 1400, bearing_deg: 200, compass: 'SSW', walk_minutes: 17, source: 'overlay:health', properties: {} }],
+      also: [
+        { name: 'Shirley Pharmacy', lat: 50.9290, lon: -1.4460, distance_m: 1400, bearing_deg: 200, compass: 'SSW', walk_minutes: 17, source: 'overlay:health', properties: {} },
+        /* OpenStreetMap carries plenty of pharmacies with no name on them, and "Unnamed" is not a place. */
+        { name: '', lat: 50.9260, lon: -1.4400, distance_m: 1900, bearing_deg: 150, compass: 'SSE', walk_minutes: 23, source: 'overlay:health', properties: {} },
+      ],
     },
     {
       id: 'emergency-department', title: 'Emergency department', found: true, searched: ['health'],
-      note: 'Hospitals from OpenStreetMap. The overlay does not carry the emergency=yes tag, so a small hospital without an A&E can appear: ring ahead if the phones are up.',
+      note: 'These come from OpenStreetMap and include small hospitals with no A&E: ring ahead if the phones are up.',
       nearest: { name: 'Southampton General Hospital', lat: 50.9331, lon: -1.4342, distance_m: 4300, bearing_deg: 270, compass: 'W', walk_minutes: 52, source: 'overlay:health', properties: { amenity: 'hospital' } },
       also: [],
     },

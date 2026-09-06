@@ -23,19 +23,23 @@ describe('the chosen state button', () => {
   const sheet = read('src/screens/situation.css');
   const components = read('src/styles/components.css');
 
-  it('asks for the sunken ground with a rule that outranks the plain button', () => {
-    expect(rule(sheet, '.state-btn.state-set')).toContain('background: var(--sunken)');
-    expect(classes('.state-btn.state-set')).toBeGreaterThan(classes('.btn'));
-    // and the rule it has to beat really is the one-class one it kept losing to
-    expect(rule(components, '.btn')).toContain('background: var(--panel)');
-  });
-
-  it('carries a 3 px inset edge in its own colour, in all three states', () => {
+  it('fills the chosen state with a tint of its own colour, with a rule that outranks the plain button', () => {
     for (const tone of ['ok', 'warn', 'danger']) {
       const declarations = rule(sheet, `.state-btn.state-set.state-${tone}`);
-      expect(declarations, tone).toContain(`box-shadow: inset 0 -3px 0 var(--${tone})`);
-      expect(declarations, tone).toContain(`border-color: var(--${tone})`);
+      expect(declarations, tone).toContain(`background: color-mix(in srgb, var(--${tone})`);
       expect(classes(`.state-btn.state-set.state-${tone}`)).toBeGreaterThan(classes('.btn'));
+    }
+    // and the rule it has to beat really is the one-class one it kept losing to
+    expect(rule(components, '.btn')).toContain('background: var(--raised)');
+  });
+
+  it('draws a 2 px edge in its own colour, in all three states, so colour is never the only signal', () => {
+    expect(rule(sheet, '.btn.state-btn')).toContain('border-width: 2px');
+    expect(classes('.btn.state-btn')).toBeGreaterThan(classes('.btn'));
+    for (const tone of ['ok', 'warn', 'danger']) {
+      const declarations = rule(sheet, `.state-btn.state-set.state-${tone}`);
+      expect(declarations, tone).toContain(`border-color: var(--${tone})`);
+      expect(declarations, tone).toContain(`color: var(--${tone})`);
     }
   });
 
