@@ -83,7 +83,6 @@ export function Kits() {
         {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
         {relevant.length > 0 && (
           <section aria-label="Kits for this household">
-            <h2>Kits</h2>
             <KitTiles kits={relevant} label="Kits" />
           </section>
         )}
