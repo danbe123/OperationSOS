@@ -12,7 +12,7 @@ from sos.routers import get_db
 
 router = APIRouter(tags=["map"])
 BASES = [("osm", "OpenStreetMap", "uk-ie"), ("os", "Ordnance Survey", "os-zoomstack")]
-THEMES = ("vault", "field", "blackout")
+THEMES = ("field", "mono")
 
 
 def _maps_url(row) -> str:

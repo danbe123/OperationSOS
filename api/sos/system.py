@@ -34,10 +34,10 @@ PIN_WINDOW = 60.0
 MIN_BACKLIGHT_LEVEL = 10
 LOW_POWER_BACKLIGHT = 30
 DEFAULTS = {
-    "default_theme": "vault", "thermal_ai_off_c": "80", "idle_minutes": "5", "home_minutes": "30",
+    "default_theme": "field", "thermal_ai_off_c": "80", "idle_minutes": "5", "home_minutes": "30",
     "power_mode": "normal", "eth_mode": "client", "ssid": "SOS", "passphrase": "", "ai_state": "off",
 }
-THEMES = ("vault", "field", "blackout")
+THEMES = ("field", "mono")
 AI_RUNNING_STATES = ("starting", "ready", "busy")
 
 FAKE_CMD_OUTPUT: dict[tuple[str, ...], str] = {
@@ -227,7 +227,7 @@ def apply_settings(conn: sqlite3.Connection, patch: dict) -> None:
             continue
         if key == "default_theme":
             if value not in THEMES:
-                raise ValueError("default_theme must be vault, field or blackout")
+                raise ValueError("default_theme must be field or mono")
             set_setting(conn, key, value)
         elif key in ("thermal_ai_off_c", "idle_minutes", "home_minutes"):
             lo, hi = {"thermal_ai_off_c": (50, 95), "idle_minutes": (1, 120),
@@ -446,8 +446,15 @@ def status(conn: sqlite3.Connection, settings: Settings) -> dict:
         "home_minutes": int(get_setting(conn, "home_minutes", DEFAULTS["home_minutes"])),
         "pin_required": pin_required(conn),
         "dev": settings.dev,
-        "default_theme": get_setting(conn, "default_theme", DEFAULTS["default_theme"]),
+        # A box upgraded from the three-theme world still holds "vault" or "blackout" in its
+        # settings row. Serving that would stamp <html> with a theme that has no palette and no map
+        # style, so an unknown value reads as the default until somebody saves a new one.
+        "default_theme": known_theme(get_setting(conn, "default_theme", DEFAULTS["default_theme"])),
     }
+
+
+def known_theme(value: str) -> str:
+    return value if value in THEMES else DEFAULTS["default_theme"]
 
 
 def rescan(conn: sqlite3.Connection, settings: Settings) -> dict:

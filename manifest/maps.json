@@ -93,7 +93,7 @@
       "as_at": "2026-09",
       "licence": "BSD-3 (Protomaps basemaps); OGL v3 (OS Open Zoomstack stylesheets)",
       "priority": 56,
-      "description": "MapLibre styles for both base maps in the Vault, Field and Blackout themes, plus terrain and overlay layer fragments."
+      "description": "MapLibre styles for both base maps in the Field and Mono themes, plus terrain and overlay layer fragments."
     },
     {
       "id": "sprites",

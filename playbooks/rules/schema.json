@@ -51,7 +51,7 @@
         "bucket": { "enum": ["now", "hour", "today", "week"] },
         "until": { "$ref": "#/$defs/when" },
         "set": { "type": "object", "additionalProperties": false,
-          "properties": { "theme": { "enum": ["vault", "field", "blackout"] }, "dim": { "type": "boolean" }, "calls": { "enum": ["shown", "hidden"] }, "map_first": { "type": "boolean" }, "board": { "type": "boolean" } } },
+          "properties": { "theme": { "enum": ["field", "mono"] }, "dim": { "type": "boolean" }, "calls": { "enum": ["shown", "hidden"] }, "map_first": { "type": "boolean" }, "board": { "type": "boolean" } } },
         "open": { "type": "array", "items": { "$ref": "#/$defs/link" }, "minItems": 1 }
       },
       "allOf": [

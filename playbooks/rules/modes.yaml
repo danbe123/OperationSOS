@@ -3,8 +3,8 @@ rules:
   - id: blackout-at-night
     kind: mode
     when: {power: "off", dark: true}
-    set: {theme: blackout, dim: true}
-    why: A dark red screen at night keeps night vision, and a dim backlight is most of what the box's power bank is spending.
+    set: {theme: mono, dim: true}
+    why: A black-and-white screen at night keeps night vision, an unlit black pixel costs an OLED phone nothing to draw, and a dim backlight is most of what the box's power bank is spending.
     source: module:power
 
   - id: calls-hidden

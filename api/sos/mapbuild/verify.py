@@ -108,7 +108,7 @@ def check_style_sources(out: Path) -> list[str]:
     else:
         index = json.loads(index_path.read_text())
         for base in ("osm", "os"):
-            for key in ("vault", "field", "blackout", "tiles"):
+            for key in ("field", "mono", "tiles"):
                 url = index.get(base, {}).get(key, "")
                 if not _exists(out, url, LOCAL_URL):
                     problems.append(f"styles/index.json {base}.{key} -> {url!r} is missing")

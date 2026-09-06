@@ -1,12 +1,12 @@
 """Step `styles`: Protomaps styles from Node, OS Open Zoomstack styles rewritten, sprites and glyphs vendored.
 
 Ruling R1: the map router (api/sos/routers/map.py) builds style URLs by pure convention as
-`/maps/styles/<base>-<theme>.json` for base in ("osm", "os") and theme in ("vault", "field", "blackout"). It
-reads no index file, so exactly six style files must exist under `styles/`: osm-vault.json, osm-field.json,
-osm-blackout.json (from the Node Protomaps generator) and os-vault.json, os-field.json, os-blackout.json
-(from the OS style rewrite below, where the OS Night style is written byte-identically to both os-vault.json
-and os-blackout.json since OS ships only one dark style). `style_index` below still writes a
-`styles/index.json` informational side-table, but it is not load-bearing for any consumer.
+`/maps/styles/<base>-<theme>.json` for base in ("osm", "os") and theme in ("field", "mono"). It
+reads no index file, so exactly four style files must exist under `styles/`: osm-field.json and
+osm-mono.json (from the Node Protomaps generator) and os-field.json and os-mono.json (from the OS style
+rewrite below, where os-mono.json is the OS Night style — the only dark style OS ships). `style_index`
+below still writes a `styles/index.json` informational side-table, but it is not load-bearing for any
+consumer.
 """
 from __future__ import annotations
 
@@ -26,11 +26,12 @@ OS_FACES = ("Source Sans Pro Regular", "Source Sans Pro Bold", "Source Sans Pro 
             "Source Sans Pro SemiBold", "Open Sans Regular")
 FIXTURE_GLYPH_RANGES = ("0-255", "256-511")
 # Source OS style file -> the output filename(s) it feeds (Ruling R1). The Outdoor (day/light) style
-# becomes os-field.json; the Night (dark) style is written byte-identically to both os-vault.json and
-# os-blackout.json, since Ordnance Survey ships only one dark style covering both SOS themes.
+# becomes os-field.json and the Night (dark) style becomes os-mono.json. OS ships no greyscale style,
+# so os-mono.json is the nearest thing it has: a dark sheet the map screen washes with the theme's own
+# ground colour (web/src/screens/map.css).
 OS_STYLE_MAP: dict[str, tuple[str, ...]] = {
     "OS Open Zoomstack - Outdoor.json": ("os-field.json",),
-    "OS Open Zoomstack - Night.json": ("os-vault.json", "os-blackout.json"),
+    "OS Open Zoomstack - Night.json": ("os-mono.json",),
 }
 OS_GL_DIR = Path("Vector Tiles") / "Mapbox GL Styles"
 OS_TILES_URL = "pmtiles:///maps/os-zoomstack.pmtiles"
@@ -108,10 +109,10 @@ def style_index(base_name: str) -> dict:
     """Informational side-table only (Ruling R1): no consumer reads this file. The map router builds
     style URLs by convention (`/maps/styles/<base>-<theme>.json`), which is what actually matters."""
     return {
-        "osm": {"vault": "/maps/styles/osm-vault.json", "field": "/maps/styles/osm-field.json",
-                "blackout": "/maps/styles/osm-blackout.json", "tiles": f"/maps/{base_name}"},
-        "os": {"vault": "/maps/styles/os-vault.json", "field": "/maps/styles/os-field.json",
-               "blackout": "/maps/styles/os-blackout.json", "tiles": "/maps/os-zoomstack.pmtiles"},
+        "osm": {"field": "/maps/styles/osm-field.json", "mono": "/maps/styles/osm-mono.json",
+                "tiles": f"/maps/{base_name}"},
+        "os": {"field": "/maps/styles/os-field.json", "mono": "/maps/styles/os-mono.json",
+               "tiles": "/maps/os-zoomstack.pmtiles"},
         "layers": {name: f"/maps/styles/layers/{name}.json" for name in FRAGMENTS},
     }
 
@@ -130,8 +131,8 @@ class StylesStep:
     id = "styles"
 
     def outputs(self, ctx: Context) -> list[str]:
-        return ["styles/index.json", "styles/osm-field.json", "styles/osm-blackout.json", "styles/osm-vault.json",
-                "styles/os-field.json", "styles/os-blackout.json", "styles/os-vault.json",
+        return ["styles/index.json", "styles/osm-field.json", "styles/osm-mono.json",
+                "styles/os-field.json", "styles/os-mono.json",
                 "sprites/v4/light.json", "sprites/os/sprites.json",
                 "fonts/Noto Sans Regular/0-255.pbf", "fonts/Source Sans Pro Regular/0-255.pbf"]
 
