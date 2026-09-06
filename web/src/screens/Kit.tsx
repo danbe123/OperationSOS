@@ -53,7 +53,7 @@ function AddToStock({ slug, item, onSaved }: { slug: string; item: KitItem; onSa
   );
 }
 
-function ItemRow({ slug, item, onKit, showLink }: { slug: string; item: KitItem; onKit: (kit: KitData) => void; showLink: boolean }) {
+function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (kit: KitData) => void }) {
   const [busy, setBusy] = useState(false);
   const [undoing, setUndoing] = useState(false);
   const { armed, arm, disarm } = useTickUndo();
@@ -81,7 +81,9 @@ function ItemRow({ slug, item, onKit, showLink }: { slug: string; item: KitItem;
           {item.qty && <span className="kit-qty">{item.qty.text}</span>}
           {item.why && <span className="muted"> {item.why}</span>}
           {item.note && <span className="muted"> {item.note}</span>}
-          {item.href && showLink && <> <Link to={item.href}>{linkTitle(item)}</Link></>}
+          {item.href && (
+            <> <Link to={item.href} aria-label={`${linkTitle(item)}: ${item.name}`}>{linkTitle(item)}</Link></>
+          )}
         </span>
       </label>
       {item.checked && (
@@ -103,10 +105,6 @@ function ItemRow({ slug, item, onKit, showLink }: { slug: string; item: KitItem;
 }
 
 function Tier({ slug, tier, open, onKit }: { slug: string; tier: KitTier; open: boolean; onKit: (kit: KitData) => void }) {
-  // Several items in a tier can point at the same module or card (a "topped-up" item alongside its
-  // container, say): showing that link on every one of them just repeats itself, so only the first
-  // item with a given link shows it.
-  const seenLinks = new Set<string>();
   return (
     <details className="panel kit-tier" open={open} aria-label={`${tier.title}: ${tier.done} of ${tier.total}`} role="group">
       <summary>
@@ -114,11 +112,7 @@ function Tier({ slug, tier, open, onKit }: { slug: string; tier: KitTier; open: 
         <span className="muted">{tier.days} days · {tier.done} of {tier.total} · {tier.why}</span>
       </summary>
       <ul className="list task-list">
-        {tier.items.map((item) => {
-          const showLink = !item.link || !seenLinks.has(item.link);
-          if (item.link) seenLinks.add(item.link);
-          return <ItemRow key={item.id} slug={slug} item={item} onKit={onKit} showLink={showLink} />;
-        })}
+        {tier.items.map((item) => <ItemRow key={item.id} slug={slug} item={item} onKit={onKit} />)}
       </ul>
     </details>
   );

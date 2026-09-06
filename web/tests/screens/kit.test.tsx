@@ -15,7 +15,7 @@ describe('Kit', () => {
     expect(screen.getByRole('group', { name: /Two weeks/ })).not.toHaveAttribute('open');
     expect(within(basic).getByText('18 L for 2 people over 3 days')).toBeInTheDocument();
     expect(within(basic).getByText(/18 L in Stock/)).toBeInTheDocument();
-    expect(within(basic).getByRole('link', { name: 'Water module' })).toHaveAttribute('href', '/m/water');
+    expect(within(basic).getByRole('link', { name: 'Water module: Drinking water in sealed containers' })).toHaveAttribute('href', '/m/water');
     expect(within(basic).getByRole('checkbox', { name: /Drinking water/ })).toBeChecked();
   });
 
