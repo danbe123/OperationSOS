@@ -14,7 +14,7 @@ from sos import __version__, db, library, manifest, readiness, search as search_
 from sos.config import Settings, get_settings
 from sos.content import ContentCache
 from sos.kiwix import KiwixClient
-from sos.routers import ai, cards, household, kiosk, notes, pages, places, playbooks, search, status
+from sos.routers import ai, cards, household, kiosk, kits, notes, pages, places, playbooks, search, status
 from sos.routers import neighbours as neighbours_router
 from sos.routers import sensors as sensors_router
 from sos.routers import situation as situation_router
@@ -82,7 +82,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     for router in (status.router, library_router.router, search.router, playbooks.router, cards.router, pages.router,
                    map_router.router, places.router, notes.router, ai.router, kiosk.router, system_router.router,
                    household.router, situation_router.router, sensors_router.router,
-                   neighbours_router.router):
+                   neighbours_router.router, kits.router):
         app.include_router(router, prefix="/api")
 
     @app.exception_handler(ValueError)

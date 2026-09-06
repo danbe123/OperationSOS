@@ -123,3 +123,69 @@ def test_content_cache_serves_kits(tree):
     import os
     os.utime(path, (path.stat().st_atime, path.stat().st_mtime + 5))
     assert cache.kit("water").title == "Water (edited)"
+
+
+def test_kits_list_reports_relevance_and_progress(client):
+    r = client.get("/api/kits")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["people"] == 1
+    water, baby = body["kits"]
+    assert water["slug"] == "water" and water["relevant"] is True
+    assert water["tiers"] == {"basic": {"done": 0, "total": 2}, "serious": {"done": 0, "total": 1}, "full": {"done": 0, "total": 1}}
+    assert baby["slug"] == "baby-child" and baby["relevant"] is False
+    client.post("/api/household", json={"name": "Bea", "age": 1})
+    assert client.get("/api/kits").json()["kits"][1]["relevant"] is True
+
+
+def test_kit_detail_scales_to_the_household(client):
+    client.post("/api/household", json={"name": "Dan"})
+    client.post("/api/household", json={"name": "Sam", "age": 7})
+    kit = client.get("/api/kits/water").json()
+    assert kit["slug"] == "water" and kit["people"] == 2 and kit["relevant"] is True
+    assert "module" in kit["intro_html"] and "/m/water" in kit["intro_html"]
+    basic, serious, full = kit["tiers"]
+    assert (basic["id"], basic["days"], basic["total"], basic["done"]) == ("basic", 3, 2, 0)
+    stored = basic["items"][0]
+    assert stored["id"] == "stored-water" and stored["qty"]["text"] == "18 L for 2 people over 3 days"
+    assert stored["stock"] == {"category": "water", "unit": "L"} and stored["checked"] is False and stored["stock_item"] is None
+    assert stored["href"] == "/m/water"
+    assert basic["items"][1]["qty"]["text"] == "4 for 2 people"
+    assert serious["items"][0]["qty"]["text"] == "1 pack" and serious["days"] == 14
+    assert full["items"][0]["qty"] is None and full["items"][0]["href"] is None
+    assert client.get("/api/kits/nope").status_code == 404
+
+
+def test_tick_and_add_to_stock(client):
+    r = client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9, "expires": "2027-01-01"}})
+    assert r.status_code == 200
+    item = r.json()["tiers"][0]["items"][0]
+    assert item["checked"] is True and item["updated_at"]
+    assert item["stock_item"]["quantity"] == 9 and item["stock_item"]["expires"] == "2027-01-01" and item["stock_item"]["days_left"] == 3.0
+    stock = client.get("/api/stock").json()["items"]
+    assert stock[0]["name"] == "Drinking water in sealed containers" and stock[0]["category"] == "water"
+    assert stock[0]["unit"] == "L" and stock[0]["per_person_day"] == 3 and stock[0]["kit_item"] == "water/stored-water"
+    # a second add for the same item is refused; the tick still stands
+    assert client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 1}}).status_code == 409
+    # unticking leaves Stock alone
+    r = client.put("/api/kits/water/items/stored-water", json={"checked": False})
+    assert r.json()["tiers"][0]["items"][0]["checked"] is False
+    assert len(client.get("/api/stock").json()["items"]) == 1
+    # an item without a stock block cannot take a stock body
+    assert client.put("/api/kits/water/items/filter", json={"checked": True, "stock": {"quantity": 1}}).status_code == 400
+    assert client.put("/api/kits/water/items/nothing", json={"checked": True}).status_code == 404
+    # deleting the Stock row clears the stock line but not the tick
+    client.put("/api/kits/water/items/stored-water", json={"checked": True})
+    client.delete(f"/api/stock/{stock[0]['id']}")
+    item = client.get("/api/kits/water").json()["tiers"][0]["items"][0]
+    assert item["checked"] is True and item["stock_item"] is None
+
+
+def test_reset_clears_ticks_only_for_that_kit(client):
+    client.put("/api/kits/water/items/stored-water", json={"checked": True})
+    client.put("/api/kits/water/items/tablets", json={"checked": True})
+    client.put("/api/kits/baby-child/items/nappies", json={"checked": True})
+    kit = client.delete("/api/kits/water/ticks").json()
+    assert all(not i["checked"] for t in kit["tiers"] for i in t["items"])
+    assert client.get("/api/kits/baby-child").json()["tiers"][0]["items"][0]["checked"] is True
+    assert client.get("/api/playbooks/grid-collapse").json()["checklist"]     # scenario ticks untouched by kit keys
