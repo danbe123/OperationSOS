@@ -1,4 +1,5 @@
 """Household register and stock (tools spec sections 3 and 4)."""
+from datetime import date
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -12,7 +13,9 @@ router = APIRouter(tags=["household"])
 
 CATEGORIES = ("water", "food", "fuel", "medicine", "other")
 Category = Literal["water", "food", "fuel", "medicine", "other"]
-DEFAULT_PER_PERSON_DAY = {"water": 3.0}     # litres: drinking plus basic hygiene (UK guidance)
+# litres of water, person-days of food, days of supply of medicine (UK guidance)
+DEFAULT_PER_PERSON_DAY = {"water": 3.0, "food": 1.0, "medicine": 1.0}
+COUNTED = ("water", "food", "medicine")     # categories the readiness score and the Stock/Now screens count in days
 
 
 class PersonIn(BaseModel):
@@ -82,11 +85,32 @@ def _kit_title(content, kit_item) -> str | None:
     return kit.title if kit is not None else None
 
 
+def is_expired(expires: Optional[str], today: Optional[date] = None) -> bool:
+    if not expires:
+        return False
+    try:
+        return date.fromisoformat(expires[:10]) < (today or date.today())
+    except ValueError:
+        return False
+
+
 def _item(r, people: int, content=None) -> dict:
+    expired = is_expired(r["expires"])
+    dl = days_left(r["quantity"], r["per_person_day"], people)
     return {"id": r["id"], "name": r["name"], "category": r["category"], "quantity": r["quantity"], "unit": r["unit"],
             "per_person_day": r["per_person_day"], "expires": r["expires"], "notes": r["notes"] or "",
             "kit_item": r["kit_item"], "kit_title": _kit_title(content, r["kit_item"]),
-            "updated_at": r["updated_at"], "days_left": days_left(r["quantity"], r["per_person_day"], people)}
+            "updated_at": r["updated_at"], "expired": expired,
+            "days_left": (0.0 if expired and dl is not None else dl)}
+
+
+def stock_days_by_category(items: list[dict], people: int) -> dict[str, float]:
+    """One figure per counted category: the sum of days over rows that have a rate and are not expired."""
+    out = {c: 0.0 for c in COUNTED}
+    for i in items:
+        if i["category"] in out and i["days_left"] is not None and not i["expired"]:
+            out[i["category"]] += i["days_left"]
+    return {c: round(v, 1) for c, v in out.items()}
 
 
 def _get_item(conn, item_id: int):
@@ -147,8 +171,8 @@ def delete_person(person_id: int, request: Request, conn=Depends(get_db)):
 def list_stock(request: Request, conn=Depends(get_db)):
     people = people_count(conn)
     content = request.app.state.content
-    return {"people": people,
-            "items": [_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id")]}
+    items = [_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id")]
+    return {"people": people, "days": stock_days_by_category(items, people), "items": items}
 
 
 @router.post("/stock")

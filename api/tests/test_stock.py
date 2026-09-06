@@ -17,7 +17,7 @@ def test_stock_validation_and_updates(client):
     assert client.post("/api/stock", json={"name": "Rice", "category": "food", "quantity": -1, "unit": "kg"}).status_code == 400
     assert client.post("/api/stock", json={"name": "", "category": "food", "quantity": 1, "unit": "kg"}).status_code == 400
     rice = client.post("/api/stock", json={"name": "Rice", "category": "food", "quantity": 5, "unit": "kg", "expires": "2027-01-31"}).json()
-    assert rice["per_person_day"] is None and rice["days_left"] is None and rice["expires"] == "2027-01-31"
+    assert rice["per_person_day"] == 1.0 and rice["days_left"] == 5.0 and rice["expires"] == "2027-01-31"     # UK guidance default for food
     rice = client.put(f"/api/stock/{rice['id']}", json={"per_person_day": 0.25}).json()
     assert rice["days_left"] == 20.0 and rice["quantity"] == 5
     rice = client.put(f"/api/stock/{rice['id']}", json={"quantity": 2.5}).json()

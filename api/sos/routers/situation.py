@@ -65,13 +65,12 @@ def _home(conn: sqlite3.Connection) -> dict:
             "label": get_setting(conn, "home_label", "Home"), "flood_zone": get_setting(conn, "home_flood_zone")}
 
 
-def _stock(conn: sqlite3.Connection) -> tuple[dict, ...]:
-    from sos.routers.household import days_left, people_count
+def _stock(conn: sqlite3.Connection, content) -> tuple[dict, ...]:
+    """The same rows and the same days_left as `GET /stock`, so the engine never disagrees with the API."""
+    from sos.routers.household import _item, people_count
 
     people = people_count(conn)
-    return tuple({"name": r["name"], "category": r["category"], "notes": r["notes"] or "",
-                  "days_left": days_left(r["quantity"], r["per_person_day"], people)}
-                 for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
+    return tuple(_item(r, people, content) for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
 
 
 def _titles(content, ruleset: rules_mod.Rules, scenario: Optional[str]) -> dict[str, str]:
@@ -144,7 +143,7 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                          "basic_done": done, "basic_total": total})
     return engine.Model(
         now=now, conditions=cond.load(conn), scenario=scenario, household=household, neighbours=tuple(nb.listing(conn)),
-        stock=_stock(conn), home=home,
+        stock=_stock(conn, content), home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
         titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
         last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),
