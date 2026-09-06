@@ -35,7 +35,7 @@ kiosk 853x480                                   phone 390
                                                 └──────────────────────┘
 ```
 
-Five destinations: **Now** (the situation, the briefing, the tasks; in peacetime the readiness and a plain "start here"), **Guides** (the manual: scenarios first, then modules, field craft, phone and radio, pages, all searchable and filterable by situation), **Medical** (cards, doses, NHS, medical library), **Map**, **Find** (search across everything with the library behind it). Household, stock, plan, notes, tools, timers, system and the AI assistant live one tap inside the destination they serve (Household and stock under Now; timers, sun, calculators under Guides as tools; system and AI in the rail's footer).
+Six destinations: **Now** (the situation, the briefing, the tasks; in peacetime the readiness and a plain "start here"), **Guides** (the manual: scenarios first, then modules, field craft, phone and radio, pages, all searchable and filterable by situation), **Kit** (tiered lists of what to have, ticked by everyone, feeding Stock), **Medical** (cards, doses, NHS, medical library), **Map**, **Find** (search across everything with the library behind it). Household, stock, plan, notes, tools, timers, system and the AI assistant live one tap inside the destination they serve (Household and stock under Now; timers, sun, calculators under Guides as tools; system and AI in the rail's footer).
 
 **Principles**:
 1. Now is the front door. The first screen answers "what do I do" from the engine, or says "nothing is wrong, here is how to get ready" in peacetime.
