@@ -7,8 +7,8 @@
 .service-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
 .service-btn { flex-direction: column; gap: 2px; min-width: 88px; padding: 8px 10px; line-height: 1.15; }
 .service-btn small { font-size: var(--t-meta); color: var(--ink-muted); }
-.service-btn.service-off { background: var(--ink); color: var(--ground); }
-.service-btn.service-off small { color: var(--ground); opacity: 0.8; }
+.service-row .btn.service-off, .service-row .btn.service-off[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.service-row .btn.service-off small { color: var(--ground); opacity: 0.85; }
 /* One line under the services when something is off: the count, and the way to what the box makes
    of it. The briefing itself is on the sheet, not on the front door. */
 .now-what-to-do { margin: 10px 0 0; }
