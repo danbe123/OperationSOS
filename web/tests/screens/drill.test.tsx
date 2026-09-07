@@ -71,7 +71,7 @@ describe('the drill chrome', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    await screen.findByRole('region', { name: 'Start here' });
+    await screen.findByRole('navigation', { name: 'Scenarios' });
     expect(screen.queryByRole('button', { name: 'End drill' })).toBeNull();
   });
 });

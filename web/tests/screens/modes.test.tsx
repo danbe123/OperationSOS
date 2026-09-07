@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { act, screen, within } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { Shell as Layout } from '../../src/shell/Shell';
 import { Html } from '../../src/components/Html';
@@ -13,24 +13,14 @@ const phonesDown = makeView({
 });
 
 describe('modes: calls hidden', () => {
-  it('adds the no-phones link and keeps the way a phone joins the box', async () => {
+  it('says on the front door that 999 will not connect, and where to go instead', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(phonesDown);
     renderRoute('/');
-    const box = await screen.findByTestId('status-strip');
-    expect(within(box).getByRole('link', { name: /Phones down: what to do/ })).toHaveAttribute('href', '/p/no-phones');
-    // Joining the box's own WiFi has nothing to do with the mobile network, so the way in stays,
-    // and the address a second phone types is inside it.
-    await act(async () => { within(box).getByRole('button', { name: /Connect a phone/ }).click(); });
-    expect(screen.getByRole('dialog', { name: 'Connect a phone' })).toHaveTextContent('http://10.42.0.1');
-  });
-
-  it('keeps Connect-a-phone while the networks are up', async () => {
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    renderRoute('/');
-    const box = await screen.findByTestId('status-strip');
-    expect(within(box).getByRole('button', { name: /Connect a phone/ })).toBeInTheDocument();
+    // With both networks down this is the most important new fact on the front door. How a phone
+    // joins the box has nothing to do with the mobile network and lives on System.
+    expect(await screen.findByText(/999 will not connect/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Getting help without phones' })).toHaveAttribute('href', '/p/no-phones');
   });
 
   it('drops the numbers line on the phone and radio screen for the no-phones route', async () => {
@@ -82,7 +72,7 @@ describe('modes: map first', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    await screen.findByRole('region', { name: 'Start here' });
+    await screen.findByRole('navigation', { name: 'Scenarios' });
     expect(screen.queryByRole('link', { name: /Open the map/ })).toBeNull();
   });
 });

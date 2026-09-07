@@ -19,7 +19,7 @@ const PAGE_GROUPS: { id: string; title: string; unit: string; note: string; cate
   { id: 'reference', title: 'Reference', unit: 'pages', note: 'The pages the guides link to.', categories: ['reference', 'plan', 'about'] },
 ];
 
-/** "1 situation matches", "20 situations". The unit is written in the plural and loses its s. */
+/** "1 page matches", "20 pages". The unit is written in the plural and loses its s. */
 function countable(n: number, unit: string): string {
   return n === 1 ? unit.replace(/s$/, '') : unit;
 }
@@ -30,23 +30,19 @@ function matches(term: string, ...text: (string | undefined)[]): boolean {
   return text.some((x) => (x ?? '').toLowerCase().includes(t));
 }
 
-/** Guides: the manual. Scenarios first, then the pages and the tools, all filterable in one field. */
+/** Guides: the manual — the pages and the tools, filterable in one field. The twenty situations
+ * used to head this screen; they are the front door itself now, under "What's the situation?", so
+ * the guide a household wants in a power cut is on the first screen the box shows. */
 export function Guides() {
-  const playbooksQ = useQuery(() => api.playbooks(), []);
   const pagesQ = useQuery(() => api.pages(), []);
   const { view } = useSituation();
   const [term, setTerm] = useState('');
   const [only, setOnly] = useState<string | null>(null);
   const active = view?.scenario ?? null;
 
-  const scenarios = useMemo(() => (playbooksQ.data ?? []).slice().sort((a, b) => a.order - b.order), [playbooksQ.data]);
   const pages: Page[] = useMemo(() => (pagesQ.data ?? []).slice().sort((a, b) => a.order - b.order), [pagesQ.data]);
 
   const groups: Group[] = [
-    {
-      id: 'scenarios', title: 'Situations', unit: 'situations', note: 'What to do right now, and over the months after.',
-      entries: scenarios.map((p) => ({ to: `/s/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
-    },
     ...PAGE_GROUPS.map((g) => ({
       id: g.id, title: g.title, unit: g.unit, note: g.note,
       entries: pages.filter((p) => g.categories.includes(p.category)).map((p) => ({ to: `/p/${p.slug}`, icon: p.icon, title: p.title, sub: tileLine(p.title, p.summary) })),
@@ -83,8 +79,7 @@ export function Guides() {
             <Link to={`/s/${active.slug}`}>Open its guide</Link>.
           </p>
         )}
-        {playbooksQ.loading && <p className="muted">Loading the guides…</p>}
-        {playbooksQ.error && <p className="warning">Guides unavailable: {playbooksQ.error}</p>}
+        {pagesQ.loading && <p className="muted">Loading the guides…</p>}
         {pagesQ.error && <p className="warning">Pages unavailable: {pagesQ.error}</p>}
         {term && <p className="muted" role="status">{found === 1 ? '1 guide matches' : `${found} guides match`} “{term}”.</p>}
         {term && found === 0 && <p>Nothing matches. Try a shorter word, or <Link to={`/search?q=${encodeURIComponent(term)}`}>search the whole box</Link>.</p>}
@@ -98,7 +93,7 @@ export function Guides() {
                 ? `${g.entries.length} ${countable(g.entries.length, g.unit)} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
                 : `${g.total} ${countable(g.total, g.unit)}. ${g.note}`}
             </p>
-            <nav className={g.id === 'scenarios' ? 'tiles' : 'tiles tiles-wide'} aria-label={g.title === 'Situations' ? 'Scenarios' : g.title}>
+            <nav className="tiles tiles-wide" aria-label={g.title}>
               {g.entries.map((e) => <Tile key={e.to} to={e.to} icon={e.icon} title={e.title} subtitle={e.sub} />)}
             </nav>
           </section>

@@ -33,21 +33,20 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await expect(debrief).toContainText('National grid collapse, ');
   await expect(debrief.getByRole('list', { name: 'What happened in the drill' })).toContainText('Drill started');
   await debrief.getByRole('button', { name: 'Close' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
 });
 
-test('Home in peacetime says where to start, and asks for nothing first', async ({ page }) => {
+test('Home in peacetime asks what the situation is, and asks for nothing else first', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
-  const strip = page.getByRole('region', { name: 'Start here' });
-  // No score, no points: a number out of a hundred whose meaning is never given is not an answer.
-  await expect(strip).not.toContainText('out of 100');
-  await expect(strip).not.toContainText('points');
-  await expect(strip).not.toContainText('register');
-  // The one measure left is the ticks the household has already made, and it opens the kits.
-  const row = strip.getByRole('link', { name: /basic items ticked/ });
-  expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(20);
-  await row.click();
-  await expect(page).toHaveURL(/\/kit$/);
-  await expect(page.getByRole('group', { name: 'How many people' })).toContainText('For 2 people');
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
+  const situations = page.getByRole('navigation', { name: 'Scenarios' });
+  // No score, no points, no register: the front door is the question and its answers.
+  await expect(page.locator('main')).not.toContainText('out of 100');
+  await expect(page.locator('main')).not.toContainText('points');
+  await expect(page.locator('main')).not.toContainText('register');
+  // A tile is a touch target, and it opens that situation's guide.
+  const tile = situations.getByRole('link', { name: /National grid collapse/ });
+  expect((await tile.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await tile.click();
+  await expect(page).toHaveURL(/\/s\/grid-collapse$/);
 });

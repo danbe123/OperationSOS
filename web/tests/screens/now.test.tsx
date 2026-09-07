@@ -1,68 +1,82 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { kitsResponse, playbooks, powerOffView, view } from '../fixtures/api';
+import { playbooks, powerOffView, view } from '../fixtures/api';
 
 describe('Now', () => {
-  it('is the front door: the title, Start here and the box, with no app bar of its own', async () => {
+  it('is the front door: the question and the situations, with no app bar of its own', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/');
-    // The heading is the answer, not the name of the screen: the rail already says this is Now.
-    // Nothing is wrong with the services, and the box asks nobody to describe themselves first.
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe('Everything is working · SOS'));
+    // Nothing is wrong with the services, so the front door asks the household the one question the
+    // box is for, and every answer is on the screen.
+    expect(await screen.findByRole('heading', { level: 1, name: "What's the situation?" })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe("What's the situation? · SOS"));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
-    // Nothing about a register, a cupboard or a score: the box counts the ticks it already has.
+    // Nothing about a register, a cupboard, a score or the machine itself: the kit ticks are on
+    // /kit, the drill on /situation, and how a phone joins the box on /system.
+    expect(screen.queryByRole('region', { name: 'Start here' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'The box' })).toBeNull();
+    expect(screen.queryByTestId('status-strip')).toBeNull();
     expect(screen.queryByRole('region', { name: 'Household and stock' })).toBeNull();
     expect(screen.queryByRole('region', { name: 'How ready you are' })).toBeNull();
-    // The front door says how a phone joins the box and nothing else about the machine: the address,
-    // the drive's free space and the chip's temperature are on System.
-    const box = await screen.findByTestId('status-strip');
-    expect(box).toHaveTextContent('Phones join it over its own Wi-Fi, SOS.');
-    expect(box).not.toHaveTextContent('http://sos.box');
-    expect(box).not.toHaveTextContent('CPU');
   });
 
   it('/now is the same screen as /', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/now');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: "What's the situation?" })).toBeInTheDocument();
   });
 
-  it('says where to start in peacetime: the kit ticks so far, a drill and the guides', async () => {
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+  it('puts every situation on the front door, in order, each a tile into its guide', async () => {
+    // The box hands them back in any order; the screen sorts them by the order it was given.
+    vi.spyOn(api, 'playbooks').mockResolvedValue([...playbooks].reverse());
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/');
-    const panel = await screen.findByRole('region', { name: 'Start here' });
-    expect(panel).toHaveTextContent('Start here');
-    // One line, from the basic tier of every kit added up: 1 of 2 on Water, 0 of 1 on Baby and child.
-    const kits = await within(panel).findByRole('link', { name: 'Kits: 1 of 3 basic items ticked' });
-    expect(kits).toHaveAttribute('href', '/kit');
-    expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toHaveAttribute('href', '/situation#drill');
-    expect(within(panel).getByRole('link', { name: /Read the guides/ })).toHaveAttribute('href', '/guides');
-    expect(within(panel).getByRole('link', { name: /Notes and pins/ })).toHaveAttribute('href', '/notes');
-    // No score, no points, and nothing to fill in before the box is any use.
-    expect(panel).not.toHaveTextContent('out of 100');
-    expect(panel).not.toHaveTextContent('points');
-    expect(panel).not.toHaveTextContent('register');
-    expect(screen.queryByRole('region', { name: 'Right now' })).toBeNull();
+    const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
+    const tiles = within(grid).getAllByRole('link');
+    expect(tiles).toHaveLength(20);
+    expect(tiles[0]).toHaveTextContent('Nuclear war');
+    expect(tiles[0]).toHaveTextContent('A nuclear strike on the UK.');
+    expect(tiles[0]).toHaveAttribute('href', '/s/nuclear-war');
+    expect(tiles[0].querySelector('svg.icon')).not.toBeNull();
+    expect(tiles[3]).toHaveAttribute('href', '/s/grid-collapse');
+    expect(tiles[19]).toHaveTextContent('The long rebuild');
+    expect(tiles[19]).toHaveAttribute('href', '/s/long-rebuild');
   });
 
-  it('still says where to start when the kits cannot be counted', async () => {
+  it('a tile opens the situation guide', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'kits').mockRejectedValue(new Error('boom'));
+    const user = userEvent.setup();
+    const { router } = renderRoute('/');
+    const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
+    await user.click(within(grid).getByRole('link', { name: /Pandemic/ }));
+    expect(router.state.location.pathname).toBe('/s/pandemic');
+  });
+
+  it('says it is reading while the situations are on their way', async () => {
+    vi.spyOn(api, 'playbooks').mockReturnValue(new Promise(() => {}));
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    const panel = await screen.findByRole('region', { name: 'Start here' });
-    expect(await within(panel).findByText(/Kits unavailable: boom/)).toBeInTheDocument();
-    expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toBeInTheDocument();
+    expect(await screen.findByText('Reading…')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Scenarios' })).toBeNull();
+  });
+
+  it('says so, with a way to try again, when the situations cannot be read', async () => {
+    const playbooksQ = vi.spyOn(api, 'playbooks').mockRejectedValue(new Error('boom'));
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const user = userEvent.setup();
+    renderRoute('/');
+    expect(await screen.findByText(/The box cannot read the guides: boom/)).toBeInTheDocument();
+    playbooksQ.mockResolvedValue(playbooks);
+    await user.click(screen.getByRole('button', { name: /Try again/ }));
+    const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
+    expect(within(grid).getAllByRole('link')).toHaveLength(20);
   });
 
   it('leads with what to do once something is off', async () => {
@@ -73,18 +87,21 @@ describe('Now', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
     expect(within(now).getAllByRole('listitem')).toHaveLength(3);
     expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
-    expect(screen.queryByRole('region', { name: 'Start here' })).toBeNull();
+    // The situation itself is the answer to the question, so the tiles that ask it stand down.
+    expect(screen.queryByRole('navigation', { name: 'Scenarios' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
     expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
     expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');
   });
 
-  it('says so, and keeps the rest of the box, when the engine cannot be read', async () => {
+  it('says so, and still offers the situations, when the engine cannot be read', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockRejectedValue(new Error('boom'));
     renderRoute('/');
     expect(await screen.findByText(/The box cannot read the situation/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Try again/ })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
+    // The guides do not need the engine, so the front door still answers the question.
+    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(20);
   });
 });

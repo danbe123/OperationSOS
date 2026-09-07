@@ -35,14 +35,15 @@ async function settle(page: Page) {
 }
 
 const SHOTS: Shot[] = [
-  { name: 'now-peacetime', go: async (p) => { await p.goto('/'); await expect(p.getByRole('region', { name: 'Start here', exact: true })).toBeVisible(); } },
+  { name: 'now-peacetime', go: async (p) => { await p.goto('/'); await expect(p.getByRole('navigation', { name: 'Scenarios' })).toBeVisible(); } },
   { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
-  { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByTestId('status-strip')).toBeVisible(); } },
+  { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByText('999 will not connect')).toBeVisible(); } },
   { name: 'now-drill', go: async (p, s) => { off(s, 'power'); s.drill = true; s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/'); await expect(p.getByRole('group', { name: 'Situation now' })).toBeVisible(); } },
   { name: 'now-engine-down', go: async (p) => { await p.route('**/api/situation/view', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"detail":"the engine is not answering"}' })); await p.goto('/'); await expect(p.getByText(/The box cannot read the situation/)).toBeVisible(); } },
   // Nothing typed in at all: the state a box is in on the day it is hung on the wall, and the state
-  // it is useful in — the front door leads with the kits and the guides, not with a form.
-  { name: 'now-nothing-typed-in', go: async (p) => { await p.goto('/'); await expect(p.getByRole('link', { name: /basic items ticked/ })).toBeVisible(); } },
+  // it is useful in — the front door asks what the situation is and every answer is a tile, with no
+  // form to fill in first.
+  { name: 'now-nothing-typed-in', go: async (p) => { await p.goto('/'); await expect(p.getByRole('link', { name: /National grid collapse/ })).toBeVisible(); } },
   { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('heading', { level: 1, name: 'Situation' })).toBeVisible(); } },
   { name: 'situation-carry', go: async (p) => { await p.goto('/situation'); await p.getByRole('button', { name: 'Export as codes' }).click(); await expect(p.getByRole('group', { name: 'Situation codes' })).toBeVisible(); await p.getByRole('group', { name: 'Situation codes' }).scrollIntoViewIfNeeded(); } },
   { name: 'situation-drill', go: async (p) => { await p.goto('/situation#drill'); await p.getByLabel('Drill scenario').selectOption('grid-collapse'); await p.getByRole('region', { name: 'Practise a drill' }).scrollIntoViewIfNeeded(); } },
@@ -50,7 +51,7 @@ const SHOTS: Shot[] = [
   { name: 'tasks-empty', go: async (p) => { await p.goto('/tasks'); await expect(p.getByText('Nothing to do.')).toBeVisible(); } },
   { name: 'board', go: async (p, s) => { off(s, 'power', 'water'); s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/board'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
   { name: 'board-peacetime', go: async (p) => { await p.goto('/board'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
-  { name: 'guides', go: async (p) => { await p.goto('/guides'); await expect(p.getByRole('navigation', { name: 'Scenarios' })).toBeVisible(); } },
+  { name: 'guides', go: async (p) => { await p.goto('/guides'); await expect(p.getByRole('navigation', { name: 'Phone and radio' })).toBeVisible(); } },
   { name: 'guides-filtered', go: async (p) => { await p.goto('/guides'); await p.getByRole('searchbox', { name: 'Filter these guides' }).fill('water'); await expect(p.getByRole('status')).toBeVisible(); } },
   { name: 'scenario-right-now', go: async (p) => { await p.goto('/s/grid-collapse'); await expect(p.getByRole('heading', { name: 'Do this first' })).toBeVisible(); } },
   { name: 'scenario-later', go: async (p) => { await p.goto('/s/grid-collapse?tab=first-72-hours'); await expect(p.getByRole('heading', { name: 'First 72 hours' })).toBeVisible(); } },
@@ -85,7 +86,8 @@ const SHOTS: Shot[] = [
   { name: 'event-log', go: async (p) => { await p.goto('/tools/log'); await expect(p.getByRole('list', { name: 'Event log' })).toBeVisible(); } },
   { name: 'system', go: async (p) => { await p.goto('/system'); await expect(p.getByRole('heading', { level: 1, name: 'System' })).toBeVisible(); } },
   { name: 'not-found', go: async (p) => { await p.goto('/nowhere'); await expect(p.getByRole('heading', { level: 1, name: 'Not found' })).toBeVisible(); } },
-  { name: 'connect-a-phone', go: async (p) => { await p.goto('/'); await p.getByRole('button', { name: 'Connect a phone' }).click(); await expect(p.getByRole('dialog', { name: 'Connect a phone' })).toBeVisible(); await p.waitForTimeout(400); } },
+  // How a phone joins the box is on System now: the front door is the question and its tiles, and
+  // the box no longer talks about itself there. The QR panel's own shot went with the panel.
   { name: 'keyboard', go: async (p) => { await p.goto('/search?kiosk=1'); await expect(p.getByTestId('keyboard')).toBeVisible(); await p.getByRole('combobox', { name: 'Search' }).first().fill('wat'); } },
   // The toast. It used to be photographed by clicking a link that did not exist, so every `notice`
   // shot was pixel-identical to `reader` and the toast had never been reviewed.

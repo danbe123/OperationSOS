@@ -3,17 +3,16 @@ import { test, expect, openDetails, setCondition } from './test';
 
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
   await page.goto('/');
-  // peacetime: Now says where to start, not how it scores the household, and there is no band
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
-  const start = page.getByRole('region', { name: 'Start here', exact: true });
-  await expect(start).toContainText('Start here');
-  // The ticks already on the kits, not a score out of a hundred nobody was given the meaning of.
-  await expect(start.getByRole('link', { name: /basic items ticked/ })).toBeVisible();
-  await expect(start).not.toContainText('out of 100');
+  // peacetime: Now asks what the situation is and puts every answer on the wall, and there is no band
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
+  const situations = page.getByRole('navigation', { name: 'Scenarios' });
+  await expect(situations.getByRole('link', { name: /National grid collapse/ })).toBeVisible();
+  // No score, no register: the front door asks nobody to describe themselves first.
+  await expect(page.locator('main')).not.toContainText('out of 100');
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
 
   // set the power off, an hour ago, from the sheet
-  await start.getByRole('link', { name: 'Situation' }).click();
+  await page.goto('/situation');
   await setCondition(page, 'power', 'Off', 'About an hour ago');
 
   // Now leads with what to do, and the band says what is off
@@ -47,7 +46,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await expect(page.locator('#power')).toContainText('working');
   await expect(page.locator('#power').getByRole('group', { name: 'Mains power' })).toBeVisible();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
@@ -67,7 +66,7 @@ test('a drill runs the whole thing without touching the real conditions', async 
   // The debrief is a modal now, and a modal is answered before the box carries on.
   await page.getByRole('dialog', { name: 'How the drill went' }).getByRole('button', { name: 'Close' }).click();
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
 });
 
 test('with both phone networks down the pages say the numbers will not connect', async ({ page }) => {

@@ -1,91 +1,50 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import { useQuery } from '../api/useQuery';
+import { tileLine } from '../api/words';
 import { Icon } from '../icons';
-import { ConnectPanel } from '../kiosk/ConnectPanel';
+import { Tile } from '../components/Tile';
 import { Screen, Body } from '../shell/Screen';
 import { Briefing } from '../situation/Briefing';
 import { Emergency999 } from '../situation/Emergency999';
 import { nowTitle } from '../situation/nowTitle';
 import { scenarioMapHref } from '../situation/mapLink';
-import { isEventful, useCallsHidden, useSituation } from '../situation/SituationProvider';
+import { isEventful, useSituation } from '../situation/SituationProvider';
 import { situationLine } from '../components/SituationClock';
 import { ReadAloud } from '../situation/ReadAloud';
 import './now.css';
 
-/** Peacetime on Now: nothing is wrong with the services, so the box says where to start instead.
- * It asks for nothing first — the one line of progress is the ticks already on the kits, and what
- * is worth doing on a quiet evening is a drill, a guide, or writing something down. No score, no
- * gaps, no register: a box nobody has filled in is as useful as one somebody has. */
-function StartHere() {
-  const kits = useQuery(() => api.kits(), [], { refetchOnFocus: true });
-  const basic = (kits.data?.kits ?? []).reduce(
-    (sum, k) => ({ done: sum.done + k.tiers.basic.done, total: sum.total + k.tiers.basic.total }),
-    { done: 0, total: 0 },
+/** Peacetime on Now: the front door asks the one question the box is for, and every answer is a
+ * tile. It used to say "Start here" over a kit count, a drill button and a row of shortcuts, and
+ * carry a panel about the machine itself underneath — the household's own question ("what do I do
+ * about a power cut, a flood, a pandemic") was two taps away on Guides. The tiles are the question's
+ * answers, so they are the front door; the kit ticks are on /kit, the drill on /situation, and how
+ * a phone joins the box on /system. */
+function Situations() {
+  const playbooks = useQuery(() => api.playbooks(), []);
+  const scenarios = useMemo(
+    () => (playbooks.data ?? []).slice().sort((a, b) => a.order - b.order),
+    [playbooks.data],
   );
   return (
-    <section className="panel panel-signal" aria-label="Start here">
-      <div className="panel-head">
-        <h2>Start here</h2>
-        <Link className="btn btn-small" to="/situation"><Icon name="plan" size={18} /><span>Situation</span></Link>
-      </div>
-      <p className="lead">Nothing is wrong. This is the time to read something and put a kit together.</p>
-      {kits.error && <p className="warning">Kits unavailable: {kits.error}</p>}
-      {kits.data && (
-        <p>
-          <Link to="/kit">Kits: {basic.done} of {basic.total} basic items ticked</Link>
+    <>
+      {playbooks.loading && !playbooks.data && <p className="muted">Reading…</p>}
+      {playbooks.error && (
+        <p className="panel panel-warn row" role="status">
+          <span className="warning">The box cannot read the guides: {playbooks.error}</span>
+          <button type="button" className="btn btn-small" onClick={() => void playbooks.refetch()}><Icon name="refresh" size={18} /><span>Try again</span></button>
         </p>
       )}
-      <p className="row">
-        <Link className="btn btn-primary" to="/situation#drill"><Icon name="plan" size={18} /><span>Practise a drill</span></Link>
-        <Link className="btn" to="/guides"><Icon name="book" size={18} /><span>Read the guides</span></Link>
-        <Link className="btn" to="/notes"><Icon name="pin" size={18} /><span>Notes and pins</span></Link>
-      </p>
-    </section>
-  );
-}
-
-/** The box itself: how a phone joins it, and the way into System. The front door used to carry the
- * hotspot's IP, a second bare URL, the free space on the drive and "CPU 45°C" — the box talking
- * about itself, in its own words, above the household's own jobs. What is left is the two things a
- * household does here (join a phone, put the board up) and anything that is actually wrong; the
- * numbers live one tap away on System, where they belong. */
-function BoxPanel() {
-  const { status, error } = useStatus();
-  const callsHidden = useCallsHidden();
-  const [open, setOpen] = useState(false);
-  return (
-    <section className="panel" aria-label="The box" data-testid="status-strip">
-      <div className="panel-head"><h2>The box</h2><Link className="btn btn-small" to="/system"><Icon name="settings" size={18} /><span>System</span></Link></div>
-      {!status ? (
-        <p className="muted">{error ? `Box status unavailable: ${error}` : 'Checking the box…'}</p>
-      ) : (
-        <>
-          <ul className="row now-box" aria-label="Box status">
-            {/* One sentence, in one flex item: as three children of an inline-flex row the network's
-                name went to a line of its own and the full stop after it to a third. */}
-            <li><Icon name="wifi" size={18} /> <span>Phones join it over its own Wi-Fi, <strong>{status.hotspot.ssid}</strong>.</span></li>
-            {/* Only what is wrong. A drive that is there and a chip that is cool are not news. */}
-            {!status.disks.extended.mounted && <li className="warning"><Icon name="drive" size={18} /> The extra library drive is not connected.</li>}
-            {status.cpu_temp_c !== null && status.cpu_temp_c >= status.thermal_ai_off_c && (
-              <li className="warning"><Icon name="thermometer" size={18} /> The box is hot ({Math.round(status.cpu_temp_c)}°C), so the assistant is off until it cools.</li>
-            )}
-          </ul>
-          <div className="row">
-            {/* A phone joins the box over the box's own WiFi, which has nothing to do with whether
-                the mobile network is up: with the networks down this was the one button that
-                disappeared, and the address a second phone needs went with it. */}
-            {callsHidden && <Link className="btn" to="/p/no-phones"><Icon name="alert" size={18} /><span>Phones down: what to do</span></Link>}
-            <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="phone" size={18} /><span>Connect a phone</span></button>
-            <Link className="btn" to="/board"><Icon name="plan" size={18} /><span>Show the board</span></Link>
-            <Link className="btn" to="/ai"><Icon name="ai" size={18} /><span>Assistant</span></Link>
-          </div>
-          {open && <ConnectPanel ssid={status.hotspot.ssid} ip={status.hotspot.ip} onClose={() => setOpen(false)} />}
-        </>
+      {scenarios.length > 0 && (
+        <nav className="tiles" aria-label="Scenarios">
+          {scenarios.map((p) => (
+            <Tile key={p.slug} to={`/s/${p.slug}`} icon={p.icon} title={p.title} subtitle={tileLine(p.title, p.summary)} />
+          ))}
+        </nav>
       )}
-    </section>
+    </>
   );
 }
 
@@ -125,8 +84,8 @@ function CarryOn() {
   );
 }
 
-/** Now is the front door. It answers "what do I do" from the engine, or says nothing is wrong and
- * says where to start. */
+/** Now is the front door. It answers "what do I do" from the engine, or asks the household what the
+ * situation is and lets them pick it off the wall. */
 export function Now() {
   const { view, error, loading, refresh } = useSituation();
   const eventful = isEventful(view);
@@ -134,10 +93,10 @@ export function Now() {
   // What is read aloud is the briefing itself; the button that reads it belongs in the screen's own
   // actions, beside Search, not on a row of its own above the first job.
   const briefing = useRef<HTMLDivElement>(null);
-  // The heading is the answer, not the name of the screen: the rail already says this is Now.
+  // The heading is the answer while something is happening, and the question the rest of the time.
   return (
     <Screen
-      title={nowTitle(view)}
+      title={eventful ? nowTitle(view) : "What's the situation?"}
       back={false}
       actions={eventful ? <ReadAloud id="briefing" target={briefing} label="Read aloud" /> : undefined}
     >
@@ -157,10 +116,10 @@ export function Now() {
           <p><Link className="btn btn-primary btn-big" to={mapHref}><Icon name="map" /><span>Open the map</span></Link></p>
         )}
         <CarryOn />
-        {/* Nothing at all until the engine has answered: painting "Start here" over a situation
-            that is still being read is the front door telling a household the wrong thing first. */}
-        {eventful ? <Briefing blockRef={briefing} /> : view && <StartHere />}
-        <BoxPanel />
+        {/* Nothing at all until the engine has answered: painting the question over a situation that
+            is still being read is the front door telling a household the wrong thing first. With the
+            engine down the tiles are the whole answer, so they come up anyway. */}
+        {eventful ? <Briefing blockRef={briefing} /> : (view || !loading) && <Situations />}
       </Body>
     </Screen>
   );
