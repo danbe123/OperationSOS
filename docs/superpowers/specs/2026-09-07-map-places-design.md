@@ -73,48 +73,25 @@ The Nearby panel's rows link to the same place card (tap a row → card), and th
 - Property completeness in OSM varies; the card must read well with only a name and a type.
 - Two chips more than fit a 390 px width: the chip row scrolls and shows its edge fade as the tools strip already does.
 
-## 10. Survival content and resource overlays (added 2026-09-07, after the owner's review: "insights, useful info for people looking to survive: resources likely, use case")
+## 10. Survival content in the tooltip (added 2026-09-07, after the owner's review: "insights, useful info for people looking to survive: resources likely, use case", and "all the existing tooltip hover-over of places expanded, not more overlays")
 
-### 10.1 The card says more
+### 10.1 Every kind says more
 
 Every kind in `playbooks/map/places.yaml` carries, besides `title`, `expect` and `link`, four lists of short bullets:
 
-| Key | Heading on the card | Content | Count |
+| Key | Heading | Content | Count |
 |---|---|---|---|
-| `have` | What is usually here | the resources a place of this kind normally holds and whether they survive an outage: water, food, fuel, power, heat, shelter, tools, medical, comms, people with skills | 3 to 7 |
+| `have` | Usually here | the resources a place of this kind normally holds and whether they survive an outage: water, food, fuel, power, heat, shelter, tools, medical, comms, people with skills | 3 to 7 |
 | `useful` | Worth going when | the situations in which this place helps, by scenario (blackout, flood, cold, no water, evacuation, injury, war) | 2 to 5 |
 | `avoid` | Stay away when | when it is dangerous, pointless or a target; crowds, looting, contamination, closure | 2 to 5 |
 | `approach` | How to go about it | what to bring, when in the day, who to ask, how to behave, what to offer, the law | 2 to 6 |
 
 Each bullet is 6 to 30 words, plain UK English, present tense, imperative where it is an instruction, inline Markdown allowed (a guide link where a guide carries the point), a figure only where a guide already carries it. `expect` stays the 40 to 120 word framing paragraph. The schema requires all four lists with those counts; `sos validate-playbooks` checks every link in them.
 
-`GET /api/map/places` returns per kind `{title, html, sections: [{id, title, html}], link: {href, title}}`, `sections` in the order have, useful, avoid, approach, each `html` a rendered `<ul>` (the bullets rendered as Markdown list items, links resolved). The card shows the `expect` paragraph, then the four sections with their headings, then the guide button.
+`GET /api/map/places` returns per kind `{title, html, sections: [{id, title, html}], link: {href, title}}`, `sections` in the order have, useful, avoid, approach, each `html` a rendered `<ul>` (the bullets as Markdown list items, links resolved).
 
-### 10.2 Three more overlays, for the places people go to
+### 10.2 The hover tooltip carries it
 
-| id | Title | Chip | Filters (osmium) | Kept tags | Points | Colour | Icon |
-|---|---|---|---|---|---|---|---|
-| `supplies` | Shops for food, tools and fuel cans | Supplies | `nwr/shop=supermarket,convenience,general,hardware,doityourself,farm,chemist` | `name, shop, brand, operator, opening_hours, phone, wheelchair` | yes | `#e91e63` | `wheat` |
-| `shelter` | Halls, churches, schools and leisure centres | Shelter | `nwr/amenity=community_centre,place_of_worship,townhall,school,social_facility` and `nwr/leisure=sports_centre` | `name, amenity, leisure, religion, denomination, operator, opening_hours, phone, wheelchair` | yes | `#00838f` | `home` |
-| `emergency-services` | Fire, police, ambulance stations and defibrillators | Emergency | `nwr/amenity=fire_station,police,ambulance_station` and `nwr/emergency=defibrillator` | `name, amenity, emergency, operator, opening_hours, phone, access, indoor, description, defibrillator:location` | yes | `#212121` | `alert` |
+Section 6's "hover keeps a small tooltip with the name and type" is withdrawn. The hover popup shows the whole description: the name, the type line, the "What it has" rows from the data, then the four sections with their headings from the guidance for the feature's kind, then the guide's title as a line (the popup takes no pointer events, so it holds no links). It is wider (up to 420 px on a wide screen, the viewport less 24 px on a narrow one), its text stays at the app's reading size, and the sections' bullets are tight lists. A kind with no guidance (an unknown overlay) shows the name, the type and the rows as before. The tap still opens the card, which shows the same content with the `expect` paragraph and the actions; the card is the touch path to the same words.
 
-Manifest priorities 81, 82, 83 (after `military`), all seven regions, `default_on` false, `kind` decided by the 5 MB rule at build time (declare geojson; correct after the build if any crosses). Fixtures get an empty FeatureCollection each. `nearby.py`'s `fire-station` facility reads `emergency-services` features with `amenity=fire_station`, and `rest-centre` reads `shelter` features with `amenity` in community_centre, townhall, school or `leisure=sports_centre`, so the Nearby panel stops apologising for both.
-
-### 10.3 The kinds those overlays add
-
-| Kind | From | Title on the card |
-|---|---|---|
-| `supermarket` | `shop=supermarket` | Supermarket |
-| `shop` | `shop=convenience,general,chemist` | Local shop |
-| `hardware` | `shop=hardware,doityourself` | Hardware or DIY store |
-| `farm-shop` | `shop=farm` | Farm shop |
-| `community-hall` | `amenity=community_centre,townhall,social_facility` | Community hall |
-| `church` | `amenity=place_of_worship` | Church or place of worship |
-| `school` | `amenity=school` | School |
-| `leisure-centre` | `leisure=sports_centre` | Leisure centre |
-| `fire-station` | `amenity=fire_station` | Fire station |
-| `police-station` | `amenity=police` | Police station |
-| `ambulance-station` | `amenity=ambulance_station` | Ambulance station |
-| `defibrillator` | `emergency=defibrillator` | Defibrillator |
-
-The type line reads the kind's title, with the brand or operator after a middle dot where there is one (`Supermarket · Tesco`, `Church or place of worship · Church of England`); rows show brand, operator, religion and denomination (humanised), phone, opening hours, wheelchair access, and for a defibrillator its access, whether it is indoors and where it is kept. `NEARBY_KIND` maps `fire-station` → `fire-station` and `rest-centre` → `community-hall`.
+The feature's own values are still text nodes; the guidance HTML is the box's own rendered content and is inserted as HTML.
