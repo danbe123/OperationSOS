@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
+import yaml
 
 from sos import conditions, rules
 from sos.content import ContentCache
@@ -190,10 +191,13 @@ def test_a_rule_that_reads_a_register_is_refused(rules_dir, field, value):
     assert "old.yaml" in str(exc.value) and field in str(exc.value)
 
 
-def test_no_repository_rule_reads_a_register(loaded):
-    for rule in loaded.all:
-        for field in ("needs", "who", "skills", "stock"):
-            assert not hasattr(rule, field), f"{rule.id}: {field}"
+def test_no_repository_rule_reads_a_register():
+    """Read the files themselves, not the loaded rules: the loader drops what it does not know about,
+    so a `who:` left in a YAML file would pass a test that only asked the dataclass."""
+    for path in sorted(RULES_DIR.glob("*.yaml")):
+        for rule in yaml.safe_load(path.read_text(encoding="utf-8")).get("rules") or []:
+            gone = sorted({"needs", "who", "skills", "stock"} & set(rule))
+            assert not gone, f"{path.name}: {rule.get('id')}: {', '.join(gone)}"
 
 
 def test_no_rule_title_has_a_name_shaped_hole_in_it(loaded):

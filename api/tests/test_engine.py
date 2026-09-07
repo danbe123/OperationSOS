@@ -316,3 +316,40 @@ def test_the_two_generic_rules_fire_on_a_power_cut(blackout, ruleset):
     assert check["title"] == "Check on anyone nearby who would struggle on their own"
     assert check["bucket"] == "now" and check["link"] == "module:community"
     assert not any("{" in f["title"] for f in view["forecast"]) and not any("{" in t["title"] for t in view["tasks"])
+
+
+def test_a_dry_tap_asks_the_street_to_carry_water(ruleset):
+    """The water knock stands in for the power one when only the tap has gone: no register, so the two
+    generic rules cover the two ways a neighbour is stuck."""
+    now = at("2026-09-06T14:00:00+00:00")
+    model = engine.Model(now=now, conditions={"water": off("water", "2026-09-06T09:00:00+00:00")}, home=dict(HOME))
+    view = engine.compute(model, ruleset)
+    check = next(t for t in view["tasks"] if t["id"] == "check-on-people-nearby-water")
+    assert check["title"] == "Take water to anyone nearby who would struggle to fetch it"
+    assert check["bucket"] == "hour" and check["link"] == "module:community" and check["why"]
+    assert not any(t["id"] == "check-on-people-nearby" for t in view["tasks"])
+
+
+def test_the_power_knock_is_not_doubled_when_the_water_has_gone_too(ruleset):
+    now = at("2026-09-06T14:00:00+00:00")
+    model = engine.Model(
+        now=now,
+        conditions={"power": off("power", "2026-09-06T09:00:00+00:00"),
+                    "water": off("water", "2026-09-06T09:00:00+00:00")},
+        home=dict(HOME),
+    )
+    view = engine.compute(model, ruleset)
+    ids = [t["id"] for t in view["tasks"]]
+    assert "check-on-people-nearby" in ids and "check-on-people-nearby-water" not in ids
+
+
+def test_a_winter_heating_failure_asks_after_the_old_and_the_young(ruleset):
+    model = engine.Model(now=at("2026-12-21T14:00:00+00:00"),
+                         conditions={"heating": off("heating", "2026-12-21T09:00:00+00:00")}, home=dict(HOME))
+    view = engine.compute(model, ruleset)
+    check = next(t for t in view["tasks"] if t["id"] == "check-on-people-nearby-cold")
+    assert check["title"] == "Check anyone nearby who is old or very young is warm"
+    assert check["bucket"] == "hour" and check["link"] == "module:shelter-heat" and check["why"]
+    # The same failure in September, which the engine counts as summer, does not fire it.
+    model.now = at("2026-09-06T14:00:00+00:00")
+    assert not any(t["id"] == "check-on-people-nearby-cold" for t in engine.compute(model, ruleset)["tasks"])

@@ -120,3 +120,21 @@ rules:
     why: Powered medical equipment, a stairlift and refrigerated medicine all stop with the mains, and the people who depend on them are the ones nobody else will notice; a street that has been round its own doors once knows who is alone, who is away and who has what.
     link: module:community
     source: module:community
+
+  - id: check-on-people-nearby-water
+    kind: task
+    when: {water: "off", power: working}
+    title: Take water to anyone nearby who would struggle to fetch it
+    bucket: hour
+    why: A dry tap means carrying water home from a standpipe or a tanker, and three litres a person a day weighs three kilos; anyone frail, pregnant or on their own goes without rather than asks.
+    link: module:community
+    source: module:community
+
+  - id: check-on-people-nearby-cold
+    kind: task
+    when: {heating: "off", season: winter}
+    title: Check anyone nearby who is old or very young is warm
+    bucket: hour
+    why: Cold kills indoors and slowly, and the very old and the very young stop feeling it before they are in danger; an unheated house is below the safe temperature within a day.
+    link: module:shelter-heat
+    source: module:shelter-heat
