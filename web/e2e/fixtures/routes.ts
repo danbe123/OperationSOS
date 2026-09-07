@@ -257,7 +257,10 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     if (p === '/settings/people' && method === 'GET') return json(route, { people: state.people });
     if (p === '/settings/people' && method === 'PUT') {
       const want = Number(body().people);
-      if (!Number.isInteger(want) || want < 1 || want > 20) return detail(route, 422, 'people must be between 1 and 20');
+      // The API checks the range in apply_settings, not on the request body, so a count outside it comes
+      // back as a 400 naming the setting; only something that is not a whole number is a 422.
+      if (!Number.isInteger(want)) return detail(route, 422, 'people must be a whole number');
+      if (want < 1 || want > 20) return detail(route, 400, 'people must be between 1 and 20');
       state.people = want;
       return json(route, { people: state.people });
     }

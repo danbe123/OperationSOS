@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { splitModules } from '../../src/screens/Scenario';
-import { playbook } from '../fixtures/api';
+import { makeView, playbook } from '../fixtures/api';
 
 afterEach(() => vi.useRealTimers());
 
@@ -75,6 +75,21 @@ describe('Scenario', () => {
     renderRoute('/s/grid-collapse');
     await screen.findByRole('tablist');
     expect(screen.getByRole('button', { name: /Print/ })).toBeInTheDocument();
+  });
+
+  it("does not ask who is doing a guide's job: the name is typed on Things to do", async () => {
+    vi.spyOn(api, 'playbook').mockResolvedValue(playbook);
+    vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
+      tasks: [{
+        id: 'checklist:grid-collapse/sandbags', title: 'Sandbag the doors', bucket: 'today',
+        why: 'Water comes under the door first.', link: 'playbook:grid-collapse#checklist',
+        person: null, done: false, done_at: null, source: 'checklist:grid-collapse',
+      }],
+    }));
+    renderRoute('/s/grid-collapse');
+    const panel = await screen.findByRole('complementary', { name: 'Things to do for this guide' });
+    expect(await within(panel).findByRole('checkbox', { name: /Sandbag the doors/ })).toBeInTheDocument();
+    expect(within(panel).queryByRole('textbox', { name: /Who is doing this/ })).toBeNull();
   });
 
   it('shows an error when the playbook is missing', async () => {

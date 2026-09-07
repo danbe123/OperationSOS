@@ -13,8 +13,6 @@ export type Status = {
   conditions?: Record<ConditionId, ConditionState>;
   modes?: Modes;
   drill?: boolean;
-  /** How many people the kits are scaled for: the one number the box is ever told (1 to 20). */
-  people?: number;
 };
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
@@ -139,10 +137,16 @@ export type SituationView = {
 /** `GET /api/situation/export/qr`: the situation split into chunks of at most 800 characters. */
 export type ExportChunks = { chunks: string[]; total?: number };
 /** What `POST /api/situation/import` brought in, per kind of row. */
-export type ImportCounts = Record<string, Record<string, number>>;
+/** The parts an import counts, and nothing else: the register, the cupboard and the street list are
+ * not among them, and an old export that carries them is noted in `changes` rather than counted. */
+export type ImportPart = 'conditions' | 'tasks' | 'checklist' | 'notes' | 'events';
+export type ImportCounts = Partial<Record<ImportPart, Record<string, number>>>;
 export type ImportSummary = {
   ok: boolean; version?: number; exported_at?: string;
-  counts?: ImportCounts; home?: string; scenario?: string; changes?: string[];
+  counts?: ImportCounts; home?: string; scenario?: string;
+  /** Whether the people count came from the other box or this box kept its own. */
+  settings?: 'set' | 'kept';
+  changes?: string[];
 };
 export type DrillRequest = { scenario: string; conditions: Partial<Record<ConditionId, ConditionState>>; hours_ago?: number };
 

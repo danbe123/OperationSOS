@@ -132,8 +132,9 @@ export const api = {
   mapOverlays: () => request<Overlay[]>('GET', '/map/overlays'),
   places: (q: string, limit?: number, signal?: AbortSignal) => request<Place[]>('GET', `/places${qs({ q, limit })}`, undefined, signal),
   notes: (kind?: 'note' | 'pin' | 'event') => request<Note[]>('GET', `/notes${qs({ kind })}`),
-  /** The one number the box is ever told: how many people the kit quantities are scaled for. */
-  people: () => request<PeopleSetting>('GET', '/settings/people'),
+  /** The one number the box is ever told: how many people the kit quantities are scaled for. It is read
+   * back from `GET /kits`, which every screen that needs it is already asking for, so there is no
+   * getter here -- only the stepper's save. */
   setPeople: (people: number) => request<PeopleSetting>('PUT', '/settings/people', { people }),
   kits: () => request<KitsResponse>('GET', '/kits'),
   kit: (slug: string) => request<Kit>('GET', `/kits/${enc(slug)}`),

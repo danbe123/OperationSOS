@@ -8,7 +8,7 @@ import type { ExportChunks, ImportSummary } from '../api/types';
 /** "notes: 2 added, 1 kept" — the box's own counts, read out in its own words. */
 export function countLines(summary: ImportSummary): string[] {
   return Object.entries(summary.counts ?? {}).map(([what, how]) => {
-    const parts = Object.entries(how).filter(([, n]) => n > 0).map(([verb, n]) => `${n} ${verb}`);
+    const parts = Object.entries(how ?? {}).filter(([, n]) => n > 0).map(([verb, n]) => `${n} ${verb}`);
     return `${what}: ${parts.length ? parts.join(', ') : 'nothing to do'}`;
   });
 }

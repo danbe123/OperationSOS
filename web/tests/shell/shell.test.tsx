@@ -32,6 +32,13 @@ describe('the shell', () => {
     expect(DESTINATIONS).toHaveLength(6);
   });
 
+  it.each(['/plan', '/plan/notes', '/plan/stock'])('lands the old household address %s on Not found', async (path) => {
+    renderRoute(path);
+    expect(await screen.findByRole('heading', { name: 'Not found' })).toBeInTheDocument();
+    expect(screen.getByText('There is nothing at this address.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Go to Now' })).toHaveAttribute('href', '/');
+  });
+
   it('gives each screen a title, Back to where you came from, and one theme button', async () => {
     vi.spyOn(api, 'page').mockResolvedValue(page);
     const { router } = renderRoute('/p/pmr446');

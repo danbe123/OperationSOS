@@ -51,7 +51,8 @@ describe('carrying the situation to another box', () => {
     expect(result).toHaveTextContent('conditions: 2 updated, 8 kept');
     expect(result).toHaveTextContent('events: 3 added, 1 skipped');
     expect(result).toHaveTextContent('Home kept · Situation started: grid-collapse');
-    expect(result).toHaveTextContent('Mains power set to off');
+    expect(result).toHaveTextContent('Mains power off from the other box');
+    expect(result).toHaveTextContent('People set to 3 from the other box');
   });
 
   it('says a refusal in household words, under the button that caused it', async () => {
@@ -102,8 +103,9 @@ describe('reading what came in', () => {
     // events and the one setting. No register, no cupboard, no street list.
     expect(countLines(importSummary)).toEqual([
       'conditions: 2 updated, 8 kept',
-      'notes: 1 added, 2 kept',
-      'settings: 1 updated',
+      'tasks: 1 updated, 3 kept',
+      'checklist: 2 kept',
+      'notes: 1 added, 2 skipped',
       'events: 3 added, 1 skipped',
     ]);
     expect(countLines({ ok: true, counts: { notes: { added: 0, kept: 0 } } })).toEqual(['notes: nothing to do']);

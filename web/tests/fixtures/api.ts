@@ -413,16 +413,19 @@ export const exportChunks: ExportChunks = {
   chunks: ['{"i":0,"n":2,"d":"H4sIAAAAAAACA61W247bIBD9FcRTq"}', '{"i":1,"n":2,"d":"8ar0iFOzA90K7V9aCv1oapWGHC"}'],
 };
 
+/* The shape `transfer.merge` answers with: one count per part it merged, the home, the scenario and
+   the one setting as words, and a line for everything it actually moved. */
 export const importSummary: ImportSummary = {
   ok: true, version: 1, exported_at: '2026-09-06T13:00:00Z',
   counts: {
     conditions: { updated: 2, kept: 8 },
-    notes: { added: 1, updated: 0, kept: 2 },
-    settings: { updated: 1 },
+    tasks: { updated: 1, kept: 3 },
+    checklist: { updated: 0, kept: 2 },
+    notes: { added: 1, skipped: 2 },
     events: { added: 3, skipped: 1 },
   },
-  home: 'kept', scenario: 'started: grid-collapse',
-  changes: ['Mains power set to off', 'The people count set to 3'],
+  home: 'kept', scenario: 'started: grid-collapse', settings: 'set',
+  changes: ['Mains power off from the other box', 'People set to 3 from the other box'],
 };
 
 export const sensors: Sensors = {

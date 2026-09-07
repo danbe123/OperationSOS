@@ -16,8 +16,13 @@ import { TickedLine, UndoTick, useTickUndo } from './Tick';
  * still carry it; every other list shows it as before.
  *
  * Who is doing it is a name somebody types, not a pick from a register: the box is not told who
- * lives here, and a job handed to "Alex" reads the same whether the box has ever heard of Alex. */
-export function TaskRow({ task, why = true, onChanged }: { task: Task; why?: boolean; onChanged: (t: Task) => void }) {
+ * lives here, and a job handed to "Alex" reads the same whether the box has ever heard of Alex.
+ *
+ * `assign` is off everywhere but Things to do. A briefing of five jobs with five name fields in it
+ * is a form, and the front door in a power cut is not the place to fill one in; the name is typed on
+ * the one screen that is about handing jobs out, and every list shows who has one already. */
+export function TaskRow({ task, why = true, assign = false, onChanged }:
+  { task: Task; why?: boolean; assign?: boolean; onChanged: (t: Task) => void }) {
   const [busy, setBusy] = useState(false);
   const [who, setWho] = useState('');
   const { armed, arm, disarm } = useTickUndo();
@@ -59,7 +64,7 @@ export function TaskRow({ task, why = true, onChanged }: { task: Task; why?: boo
         {task.done && <TickedLine at={task.done_at} person={task.person} />}
         {task.done && armed && <UndoTick label={task.title} busy={busy} onUndo={() => void save({ done: false })} />}
         {href && <Link className="btn btn-small task-link" to={href} aria-label={`Read more: ${task.title}`}>Read more</Link>}
-        {!task.done && !task.person && (
+        {assign && !task.done && !task.person && (
           <label className="field task-person">
             <span className="muted">Who is doing this</span>
             <input

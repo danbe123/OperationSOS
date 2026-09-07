@@ -42,7 +42,7 @@ export function Tasks() {
               <h2>{BUCKET_TITLE[bucket]}</h2>
               <ul className="list task-list">
                 {list.map((t) => (
-                  <TaskRow key={t.id} task={t} onChanged={(saved) => view && apply(withTask(view, saved))} />
+                  <TaskRow key={t.id} task={t} assign onChanged={(saved) => view && apply(withTask(view, saved))} />
                 ))}
               </ul>
             </section>

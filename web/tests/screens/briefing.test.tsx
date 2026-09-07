@@ -62,6 +62,16 @@ describe('Now: the briefing', () => {
     expect(await within(block).findByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
   });
 
+  it('does not ask who is doing a job on the front door', async () => {
+    mockNow();
+    renderRoute('/');
+    const block = await screen.findByRole('region', { name: 'Right now' });
+    // The name is typed on Things to do; a briefing of open jobs is not a form to fill in.
+    expect(within(block).queryByRole('textbox', { name: /Who is doing this/ })).toBeNull();
+    // A job that already has a name on it still says the name, here as everywhere.
+    expect(within(block).getByText('Sam')).toBeInTheDocument();
+  });
+
   it('links the reading and names the next bulletin', async () => {
     mockNow();
     renderRoute('/');

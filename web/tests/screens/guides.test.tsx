@@ -50,6 +50,14 @@ describe('Guides', () => {
     expect(screen.getByRole('navigation', { name: 'Tools' })).toBeInTheDocument();
   });
 
+  it('keeps the household plan as a page in Reference', async () => {
+    mockGuides();
+    renderRoute('/guides');
+    const reference = await screen.findByRole('navigation', { name: 'Reference' });
+    // The plan is content now, not a screen with flags in it: it is read like any other page.
+    expect(within(reference).getByRole('link', { name: /Household plan/ })).toHaveAttribute('href', '/p/household-plan');
+  });
+
   it('shows an error line when the guides fail to load', async () => {
     vi.spyOn(api, 'playbooks').mockRejectedValue(new Error('boom'));
     vi.spyOn(api, 'pages').mockResolvedValue(pages);
