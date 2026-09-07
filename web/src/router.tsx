@@ -34,14 +34,9 @@ const MapScreen = lazy(() => import('./screens/Map').then((m) => ({ default: m.M
 const Doc = lazy(() => import('./screens/Doc').then((m) => ({ default: m.Doc })));
 const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })));
 const Ai = lazy(() => import('./screens/Ai').then((m) => ({ default: m.Ai })));
-/* The other two that carry weight: the plan's pins and the sun times both read grid references, and
+/* The other two that carry weight: the pins and the sun times both read grid references, and
  * `proj4` is 108 kB of the front door for two screens nobody opens in the first minute. */
-const Plan = lazy(() => import('./screens/Plan').then((m) => ({ default: m.Plan })));
-const People = lazy(() => import('./screens/plan/People').then((m) => ({ default: m.People })));
-const NeighboursScreen = lazy(() => import('./screens/plan/NeighboursScreen').then((m) => ({ default: m.NeighboursScreen })));
-const NotesScreen = lazy(() => import('./screens/plan/NotesScreen').then((m) => ({ default: m.NotesScreen })));
-const PlanPage = lazy(() => import('./screens/plan/PlanPage').then((m) => ({ default: m.PlanPage })));
-const StockScreen = lazy(() => import('./screens/plan/StockScreen').then((m) => ({ default: m.StockScreen })));
+const NotesScreen = lazy(() => import('./screens/Notes').then((m) => ({ default: m.NotesScreen })));
 const SunMoon = lazy(() => import('./screens/tools/SunMoon').then((m) => ({ default: m.SunMoon })));
 
 /** What a screen looks like while its own code is being read off the disk. It is a screen, not a
@@ -100,12 +95,7 @@ export const routes: RouteObject[] = [
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'radio', element: <Radio /> },
       { path: 'p/:slug', element: <Page /> },
-      { path: 'plan', element: <Later title="Household"><Plan /></Later> },
-      { path: 'plan/people', element: <Later title="People"><People /></Later> },
-      { path: 'plan/neighbours', element: <Later title="Neighbours"><NeighboursScreen /></Later> },
-      { path: 'plan/stock', element: <Later title="Stock"><StockScreen /></Later> },
-      { path: 'plan/notes', element: <Later title="Notes and pins"><NotesScreen /></Later> },
-      { path: 'plan/plan', element: <Later title="The plan"><PlanPage /></Later> },
+      { path: 'notes', element: <Later title="Notes and pins"><NotesScreen /></Later> },
       { path: 'tools', element: <Tools /> },
       { path: 'fieldcraft', element: <Fieldcraft /> },
       { path: 'tools/timers', element: <Timers /> },

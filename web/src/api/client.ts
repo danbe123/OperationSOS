@@ -1,7 +1,7 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, Neighbour, NearbyResponse, Note, Overlay, Page, Person, Place, Playbook, PlaybookSummary,
-  Recording, SearchResponse, Sensors, Situation, SituationView, Status, StockItem, StockResponse, Suggestion, Task, TaskPatch, UpdateProgress,
+  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, Playbook, PlaybookSummary,
+  Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
 export class ApiError extends Error {
@@ -132,21 +132,12 @@ export const api = {
   mapOverlays: () => request<Overlay[]>('GET', '/map/overlays'),
   places: (q: string, limit?: number, signal?: AbortSignal) => request<Place[]>('GET', `/places${qs({ q, limit })}`, undefined, signal),
   notes: (kind?: 'note' | 'pin' | 'event') => request<Note[]>('GET', `/notes${qs({ kind })}`),
-  household: () => request<Person[]>('GET', '/household'),
-  addPerson: (p: Partial<Person>) => request<Person>('POST', '/household', p),
-  updatePerson: (id: number, p: Partial<Person>) => request<Person>('PUT', `/household/${id}`, p),
-  deletePerson: (id: number) => request<{ ok: true }>('DELETE', `/household/${id}`),
-  neighbours: () => request<Neighbour[]>('GET', '/neighbours'),
-  addNeighbour: (n: Partial<Neighbour>) => request<Neighbour>('POST', '/neighbours', n),
-  updateNeighbour: (id: number, n: Partial<Neighbour>) => request<Neighbour>('PUT', `/neighbours/${id}`, n),
-  deleteNeighbour: (id: number) => request<{ ok: true }>('DELETE', `/neighbours/${id}`),
-  stock: () => request<StockResponse>('GET', '/stock'),
-  addStock: (item: Partial<StockItem>) => request<StockItem>('POST', '/stock', item),
-  updateStock: (id: number, item: Partial<StockItem>) => request<StockItem>('PUT', `/stock/${id}`, item),
-  deleteStock: (id: number) => request<{ ok: true }>('DELETE', `/stock/${id}`),
+  /** The one number the box is ever told: how many people the kit quantities are scaled for. */
+  people: () => request<PeopleSetting>('GET', '/settings/people'),
+  setPeople: (people: number) => request<PeopleSetting>('PUT', '/settings/people', { people }),
   kits: () => request<KitsResponse>('GET', '/kits'),
   kit: (slug: string) => request<Kit>('GET', `/kits/${enc(slug)}`),
-  setKitItem: (slug: string, itemId: string, body: { checked: boolean; stock?: { quantity: number; expires?: string | null; notes?: string } }) =>
+  setKitItem: (slug: string, itemId: string, body: { checked: boolean }) =>
     request<Kit>('PUT', `/kits/${enc(slug)}/items/${enc(itemId)}`, body),
   resetKit: (slug: string) => request<Kit>('DELETE', `/kits/${enc(slug)}/ticks`),
   situation: () => request<Situation>('GET', '/situation'),

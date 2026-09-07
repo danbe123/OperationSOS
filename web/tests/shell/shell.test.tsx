@@ -23,6 +23,9 @@ describe('the shell', () => {
     expect(activeDestination('/tools/timers')?.label).toBe('Guides');
     expect(activeDestination('/medical/card/cpr-adult')?.label).toBe('Medical');
     expect(activeDestination('/tasks')?.label).toBe('Now');
+    expect(activeDestination('/notes')?.label).toBe('Now');
+    // The household hub is gone: /plan belongs to nothing and lands on the Not found screen.
+    expect(activeDestination('/plan')).toBeNull();
     expect(activeDestination('/library')?.label).toBe('Find');
     expect(activeDestination('/kit/water')?.label).toBe('Kit');
     expect(activeDestination('/system')).toBeNull();

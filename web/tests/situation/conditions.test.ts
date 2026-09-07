@@ -56,7 +56,7 @@ describe('links', () => {
     expect(contentHref('module:water')).toBe('/m/water');
     expect(contentHref('page:no-phones')).toBe('/p/no-phones');
     expect(contentHref('card:cpr-adult')).toBe('/medical/card/cpr-adult');
-    expect(contentHref('/plan#stock')).toBe('/plan#stock');
+    expect(contentHref('/notes')).toBe('/notes');
     expect(contentHref('')).toBeNull();
   });
 

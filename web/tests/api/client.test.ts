@@ -133,7 +133,7 @@ describe('the situation engine endpoints', () => {
   it('reads the View', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(view));
     const v = await api.situationView();
-    expect(v.readiness.score).toBe(62);
+    expect(v.conditions.power.state).toBe('working');
     expect(fetchMock.mock.calls[0][0]).toBe('/api/situation/view');
   });
 

@@ -13,7 +13,8 @@ export type Status = {
   conditions?: Record<ConditionId, ConditionState>;
   modes?: Modes;
   drill?: boolean;
-  readiness_score?: number;
+  /** How many people the kits are scaled for: the one number the box is ever told (1 to 20). */
+  people?: number;
 };
 export type LibraryItem = {
   id: string; title: string; kind: string; tier: 'core' | 'extended'; category: string;
@@ -57,21 +58,8 @@ export type MapConfig = {
 };
 export type Place = { name: string; kind: string; lat: number; lon: number; region: string; postcode: string | null };
 export type Note = { id: number; kind: 'note' | 'pin' | 'event'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
-export type Person = { id: number; name: string; age: number | null; needs: string; medications: string; contacts: string; updated_at: string };
-/** Phase 4: the street. Who lives near, what they need, what they can do and how to reach them. */
-export type Neighbour = { id: number; name: string; address: string; needs: string; skills: string; contacts: string; notes: string; updated_at: string };
-export type StockCategory = 'water' | 'food' | 'fuel' | 'medicine' | 'other';
-export type StockItem = {
-  id: number; name: string; category: StockCategory; quantity: number; unit: string; per_person_day: number | null;
-  expires: string | null; notes: string; updated_at: string; days_left: number | null;
-  /** Past its use-by date: it is still in the cupboard, but it counts for nothing and `days_left` is 0. */
-  expired: boolean;
-  kit_item: string | null;
-  /** The title of the kit `kit_item` names, so the row can say "From the Power and light kit". Absent on a
-   * box built before the field existed, where the screen falls back to the slug. */
-  kit_title?: string | null;
-};
-export type StockResponse = { people: number; days: { water: number; food: number; medicine: number }; items: StockItem[] };
+/** `GET/PUT /api/settings/people`: how many people the kits are scaled for, 1 to 20. */
+export type PeopleSetting = { people: number };
 export type SituationPhase = 'right-now' | 'first-72-hours' | 'first-month' | 'long-term';
 export type Situation = { slug: string; title: string | null; started_at: string; elapsed_s: number; phase: SituationPhase } | { slug: null };
 export type Passage = { n: number; title: string; url: string; source: string; text: string };
@@ -135,8 +123,6 @@ export type SensorReading = { value: number; unit: string; at: string };
 /** Whatever the box can sense, by sensor id (`internet`, `mains`, `temp_in`, `co_ppm`, `broadcast`, ...). */
 export type Sensors = Record<string, SensorReading | null>;
 export type Recording = { file: string; station: string; at: string; url: string };
-export type ReadinessGap = { title: string; link: string; points: number };
-export type Readiness = { score: number; gaps: ReadinessGap[] };
 export type Bulletin = { station: string; frequency: string; at: string; note?: string };
 export type SituationScenario = { slug: string; title: string; started_at: string; elapsed_s: number; phase: SituationPhase };
 export type SituationView = {
@@ -148,19 +134,8 @@ export type SituationView = {
   tasks: Task[];
   briefing: BriefingItem[];
   modes: Modes;
-  readiness: Readiness;
   bulletins: { next: Bulletin | null };
-  /** Phase 4: who on the street to check on, and who can do what. Absent on a box built before it. */
-  neighbours?: { check_on: NeighbourCheck[]; skills: NeighbourSkill[] };
 };
-/** A "knock on their door" job. Its `id` is also a task id, so it is ticked like any other job and
- * rendered once, on the task list, rather than twice. */
-export type NeighbourCheck = {
-  id: string; name: string; address: string; needs: string; contacts: string;
-  title: string; why: string; rule: string; link: string | null; bucket: TaskBucket; done: boolean;
-};
-/** Something a neighbour can do that the household cannot. */
-export type NeighbourSkill = { name: string; address: string; skill: string; text: string; contacts: string; why: string; rule: string; link: string | null };
 /** `GET /api/situation/export/qr`: the situation split into chunks of at most 800 characters. */
 export type ExportChunks = { chunks: string[]; total?: number };
 /** What `POST /api/situation/import` brought in, per kind of row. */
@@ -182,9 +157,7 @@ export type KitItem = {
   /** `why` and `note` as inline HTML (no paragraph wrapper), so their citations are links on the row. */
   why_html: string; note_html: string;
   qty: { amount: number; unit: string; scaled: number; text: string } | null;
-  stock: { category: StockCategory; unit: string } | null;
   checked: boolean; updated_at: string | null;
-  stock_item: { id: number; quantity: number; unit: string; expires: string | null; days_left: number | null } | null;
 };
 export type KitTier = { id: KitTierId; title: string; days: number; why: string; done: number; total: number; items: KitItem[] };
 export type Kit = {

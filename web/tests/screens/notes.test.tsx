@@ -29,7 +29,7 @@ function mockNotes() {
 describe('Notes and pins', () => {
   it('lists the notes and the pins together, newest first, pins linking to the map', async () => {
     mockNotes();
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     expect(await screen.findByRole('heading', { name: 'Notes and pins', level: 1 })).toBeInTheDocument();
     const list = await screen.findByRole('list', { name: 'Notes and pins' });
     const items = await within(list).findAllByRole('listitem');
@@ -44,7 +44,7 @@ describe('Notes and pins', () => {
   it('adds, edits and deletes a note, with the form behind the button', async () => {
     const { create, update, del } = mockNotes();
     const user = userEvent.setup();
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     await screen.findByRole('list', { name: 'Notes and pins' });
     await user.click(screen.getByRole('button', { name: 'Add a note' }));
     const form = screen.getByRole('form', { name: 'Add a note' });
@@ -72,7 +72,7 @@ describe('Notes and pins', () => {
   it('cancels the form without writing anything', async () => {
     const { create } = mockNotes();
     const user = userEvent.setup();
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     await user.click(await screen.findByRole('button', { name: 'Add a note' }));
     await user.click(within(screen.getByRole('form', { name: 'Add a note' })).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('form', { name: 'Add a note' })).toBeNull();
@@ -82,7 +82,7 @@ describe('Notes and pins', () => {
   it('asks the box for notes and pins by kind, never for every note in it', async () => {
     mockNotes();
     const notesApi = vi.mocked(api.notes);
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     await screen.findByRole('list', { name: 'Notes and pins' });
     // The event log is hundreds of rows on a busy day and not one of them belongs on this screen:
     // two requests for the two kinds shown, and no call that asks for the lot.
@@ -92,7 +92,7 @@ describe('Notes and pins', () => {
   it('reads the list back after an add, leaving a note that was open for editing open', async () => {
     mockNotes();
     const user = userEvent.setup();
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     await screen.findByRole('list', { name: 'Notes and pins' });
     await user.click(screen.getByRole('button', { name: 'Edit Meeting point' }));
     expect(screen.getByLabelText('Edit note')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('Notes and pins', () => {
 
   it('says so when there is nothing written down yet', async () => {
     vi.spyOn(api, 'notes').mockResolvedValue([]);
-    renderRoute('/plan/notes');
+    renderRoute('/notes');
     const list = await screen.findByRole('list', { name: 'Notes and pins' });
     expect(await within(list).findByText(/Nothing written down yet/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a note' })).toBeInTheDocument();
