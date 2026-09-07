@@ -25,6 +25,13 @@ SCENARIOS = [
 ]
 
 CORE_REQUIRED = {
+    # education: the science library the rebuild guides lean on (moved from extended 2026-09-07 so a box
+    # with no extended drive still carries chemistry, physics, biology, medicine and maths)
+    "openstax-biology-2e", "openstax-concepts-of-biology", "openstax-anatomy-physiology-2e", "openstax-microbiology",
+    "openstax-chemistry-2e", "openstax-college-physics-2e", "openstax-prealgebra-2e", "openstax-introductory-statistics-2e",
+    "openstax-astronomy-2e", "openstax-nutrition", "libretexts.org_en_bio", "libretexts.org_en_chem", "libretexts.org_en_eng",
+    "libretexts.org_en_geo", "libretexts.org_en_k12", "libretexts.org_en_math", "libretexts.org_en_med", "libretexts.org_en_phys",
+    "libretexts.org_en_workforce",
     # uk-official
     "prepare_uk", "nrr-2025", "resilience-action-plan-2025", "wales-resilience-framework-2025",
     "awhp-2026", "govuk_resilience", "legislation_uk", "ukhsa-radiation-decontamination",
@@ -95,7 +102,7 @@ def test_core_ids_are_all_expected():
 def test_core_tier_and_categories():
     for it in items("core.json"):
         assert it["tier"] == "core", it["id"]
-        assert it["category"] in {"uk-official", "medical", "survival", "reference", "practical", "ai"}, it["id"]
+        assert it["category"] in {"uk-official", "medical", "survival", "reference", "practical", "ai", "education"}, it["id"]
         assert set(it["scenarios"]) <= set(SCENARIOS), it["id"]
 
 
@@ -199,8 +206,7 @@ OVERLAY_IDS = [
 REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
 EXTENDED_REQUIRED = {
     "gutenberg_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
-    "wikipedia_cy_all_maxi", "libretexts.org_en_med", "libretexts.org_en_bio", "openstax-biology-2e",
-    "openstax-anatomy-physiology-2e", "s2underground_en_all",
+    "wikipedia_cy_all_maxi", "s2underground_en_all",
     "media-films", "media-music", "media-audiobooks", "owner-books",
 }
 
