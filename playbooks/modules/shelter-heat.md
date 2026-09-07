@@ -20,6 +20,15 @@ sources:
   - title: Hypothermia (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Hypothermia
     as_at: 2026-02-15
+  - title: National Risk Register 2025
+    doc: nrr-2025
+    as_at: 2025-01-16
+  - title: Approved Document L volume 1
+    doc: ad-l1
+    as_at: 2026-03
+  - title: Condensing boiler (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Condensing_boiler
+    as_at: 2026-02-15
 ---
 
 ## Key facts
@@ -37,6 +46,22 @@ sources:
 5. A tent or den pitched inside a room traps body heat further; watch for the signs of hypothermia, especially in children and older people ([Hypothermia card](card:hypothermia)).
 6. In heat: shade windows in the day, ventilate at night, use wet sheets, and sleep on the ground floor on the north side of the house ([Heat stroke card](card:heat-stroke)).
 7. After storm damage, cover a hole in the roof with a tarpaulin battened down at the edges; never walk on a damaged roof. Have a fire escape plan, and get the fire brigade for anything beyond a small fire — [[call 999]].
+
+{{#unless power}}
+**The boiler has stopped even if the gas has not.** A gas boiler and a heat pump both need electricity for the pump, fan and ignition ([What still works](page:what-still-works)); a gas hob still lights with a match. Move everyone into the one warm room tonight rather than heating rooms nobody is in, and work by torch, because candles in a powered-down house are a fire risk rather than a light source. Test the carbon monoxide alarm in the room you are heating now, before you start relying on flame and flue ([Approved Document J, p. 43](doc:ad-j#page=43)).
+{{/unless}}
+
+{{#unless gas}}
+**Turn every gas appliance off at its own tap and leave it off** until the network says it is safe to relight, so that nothing is burning unattended when supply comes back. A regional loss of gas is planned for as taking about three months to put right, with three-hour rolling power cuts in the meantime; homes take longer than industry to reconnect, which is why domestic supply is protected first ([NRR 2025, p. 43](doc:nrr-2025#page=43)). Never heat a room with an oven or an unflued hob. If you smell gas, turn it off at the meter, open the windows and [[call 0800 111 999]] in Great Britain, or [[call 0800 002 001]] in Northern Ireland.
+{{/unless}}
+
+{{#if scenario:severe-winter}}
+**Read the alert, then heat one room.** Cold-Health Alerts run from 1 November to 30 March, and red means "significant risk to life for even the healthy population" ([AWHP, p. 34](doc:awhp-2026#page=34)); the register's winter scenario is snow over 30 cm lying for at least seven days across lowland Britain, with daily means below minus 3 °C and nights below minus 10 °C ([NRR 2025, p. 143](doc:nrr-2025#page=143)). Lag every pipe you can reach and the loft tank, open the loft hatch in a hard frost, and know where the stopcock is. A boiler that locks out on a freezing night has usually frozen its outside condensate pipe: thaw it with warm, never boiling, water ([Condensing boiler](kiwix:wikipedia_en_all_maxi/Condensing_boiler)).
+{{/if}}
+
+{{#if scenario:impact-winter}}
+**Plan for cold that lasts years rather than a season.** Wood is cut a year ahead so that it dries, because green wood burns badly and no delivery is coming; stack it under cover and off the ground. Heat the one room this winter, then bring the house up to the current insulation standard as materials allow, loft first, then walls, floors and windows ([Approved Document L volume 1](doc:ad-l1)). Sweep the chimney before you depend on it and check the flue and the air supply ([Approved Document J, p. 11](doc:ad-j#page=11)); a carbon monoxide alarm goes in every room with a fire in it.
+{{/if}}
 
 ## UK specifics
 

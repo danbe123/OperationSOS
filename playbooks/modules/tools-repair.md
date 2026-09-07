@@ -20,6 +20,15 @@ sources:
   - title: Approved Document A
     doc: ad-a
     as_at: 2013-04
+  - title: HSE INDG231 Electrical safety and you
+    doc: hse-indg231
+    as_at: 2026-09
+  - title: Restarters wiki
+    kiwix: restarters_en_all/Main_Page
+    as_at: 2026-04-25
+  - title: FM 5-125 Rigging Techniques
+    doc: fm-5-125-rigging
+    as_at: 1995-01
 ---
 
 ## Key facts
@@ -35,6 +44,26 @@ sources:
 3. If you must use a chainsaw, wear chaps, a helmet and gloves, never cut above shoulder height, and stay clear of the kickback zone ([HSE INDG317, p. 1](doc:hse-indg317#page=1)).
 4. Do not go outside to repair storm damage while the storm is still blowing ([Prepare, storms](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/storms/)). Afterwards, cover a damaged roof from a ladder or inside the loft with a tarpaulin held by battens screwed through it into the rafters, never by bricks that blow off, and board broken windows with plywood screwed to the frame; leave anything that means standing on the roof to a roofer with scaffolding.
 5. Learn a handful of knots and lashings for improvised shelters and securing loads ([Knots Library](kiwix:zimgit-knots_en/home)).
+
+{{#unless power}}
+**Hand tools only.** A brace and bit, a hand drill, a panel saw and a sharp chisel do everything a cordless tool does, more slowly and more quietly, and the battery packs are a finite store to be spent on the jobs nothing else can do. Work in daylight where you can and by head torch where you cannot, so that both hands stay free. Never assume a circuit is dead because the power is off: supply can come back without warning, so isolate at the consumer unit and prove dead before touching anything ([HSE INDG231, p. 3](doc:hse-indg231#page=3)).
+{{/unless}}
+
+{{#unless shops}}
+**Repair rather than replace, and keep the carcass.** With nothing to buy, a dead appliance is a store of screws, wire, switches, bearings and a good mains lead: strip it, label the parts and keep them dry ([iFixit](kiwix:ifixit_en_all/home/home); [Restarters](kiwix:restarters_en_all/Main_Page)). Standardise on the fixings and battery sizes you already hold so that parts move between tools. Consumables run out long before tools do — blades, drill bits, fuses, tape, sealant, screws and glue — so ration them, and sharpen what can be sharpened ([woodworking Q&A](kiwix:woodworking.stackexchange.com_en_all/questions)).
+{{/unless}}
+
+{{#if scenario:grid-collapse}}
+**What fails in a blackout is the small equipment you have suddenly started depending on:** torches, radios, power banks and the generator. Most of those failures are the battery or the power supply rather than the device, so open them before writing them off ([Restarters: batteries](kiwix:restarters_en_all/Batteries)). Keep a stock of the cells your torches and radio actually take. Check the generator before you need it, oil, fuel and air filter, and run it occasionally under load, because a generator that has stood unused for a year is the one that will not start on the night ([iFixit generator guides](kiwix:ifixit_en_all/Device/Generator)).
+{{/if}}
+
+{{#if scenario:supply-chain}}
+**Buy the consumables, not more tools.** What stops a repair is rarely the tool: it is the blade, the fuse, the sealant, the tarpaulin or the right screw. Fill those gaps early and in ordinary quantities while deliveries are still running, and buy the spares specific to what you own, the boiler's seals, the pump's impeller, the bicycle's tubes and brake blocks. Keep tarpaulin, plastic sheeting, timber, screws and rope in hand, because a storm-damaged roof gets covered with whatever is already in the shed ([Post Disaster Resource Library](kiwix:zimgit-post-disaster_en/home)).
+{{/if}}
+
+{{#if scenario:long-rebuild}}
+**Treat tools as capital.** Sharpen with a stone rather than replacing, re-handle rather than discarding, keep steel oiled and out of the damp, and teach whoever will learn: the household that can sharpen, solder, sew and splice still has working things in year two. Pool the heavy and rarely used tools in one place, with a written register and a borrowing book ([Community module](module:community)). Move heavy loads with rope, tackle and levers instead of machines ([Rigging Techniques, FM 5-125](doc:fm-5-125-rigging)), and salvage carefully: pre-2000 buildings are full of asbestos, which is never cut or sanded.
+{{/if}}
 
 ## UK specifics
 

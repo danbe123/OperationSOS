@@ -26,6 +26,15 @@ sources:
   - title: Citizen's arrest (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Citizen's_arrest
     as_at: 2026-02-15
+  - title: National Risk Register 2025
+    doc: nrr-2025
+    as_at: 2025-01-16
+  - title: Run, hide, tell (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Run,_hide,_tell
+    as_at: 2026-02-15
+  - title: Ofcom amateur radio licence conditions
+    doc: ofcom-amateur-licence-2024
+    as_at: 2024-02-21
 ---
 
 ## Key facts
@@ -40,6 +49,18 @@ sources:
 2. Know what force the law allows: reasonable force is lawful under the Criminal Law Act 1967 s3, and for a householder confronting an intruder in their own home in England and Wales, force is unlawful only if it is grossly disproportionate ([s76](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2008/4/section/76); [self-defence in English law](kiwix:wikipedia_en_all_maxi/Self-defence_in_English_law)).
 3. Taking goods from a shop or house during a disaster is theft or burglary, not an exception to the law; the courts treated looting harshly after the 2011 riots ([2011 England riots](kiwix:wikipedia_en_all_maxi/2011_England_riots)).
 4. Do not keep or acquire a prohibited weapon "just in case": s141 of the 1988 Act and the Offensive Weapons Act 2019 ban even home possession of zombie knives, knuckledusters and the rest of the prohibited list, and restrict corrosive substances ([Offensive Weapons Act 2019](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2019/17/contents)).
+
+{{#if scenario:civil-unrest}}
+**Go in and stay in.** The register's own advice to the public in disorder is that, unless the building itself is at risk, going inside and seeking information is usually the safest thing to do ([NRR 2025, p. 22](doc:nrr-2025#page=22)), and that turning up at the scene "could be dangerous and overwhelm the emergency services" ([NRR 2025, p. 23](doc:nrr-2025#page=23)). Lock up, close the curtains, move the car off the street if you can do it quietly, and keep supplies, generator noise and full shelves out of sight. Do not stand guard over a shop and do not form a patrol. Fire is what still gets answered — [[call 999]].
+{{/if}}
+
+{{#if scenario:invasion}}
+**Emergency powers, not martial law.** Regulations under the Civil Contingencies Act 2004 can restrict movement and assembly, requisition property and create offences, and they lapse after 30 days unless Parliament renews them ([Civil Contingencies Act 2004](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2004/36/contents)). Obey checkpoints and curfews, carry identification, and keep a written, dated record of anything requisitioned, with the name and unit of whoever took it. Do not photograph or approach military positions, and leave unexploded ordnance where it lies. A licensed amateur may be ordered off the air by Ofcom notice once a state of emergency is declared ([Ofcom licence, p. 8](doc:ofcom-amateur-licence-2024#page=8)).
+{{/if}}
+
+{{#if scenario:terrorism}}
+**Run, hide, tell.** Run if there is a route away from the danger, leaving your belongings; hide if there is not, out of sight, phone silent, door barricaded; tell the police what you saw, where and when, once you are safe — [[call 999]] ([Run, hide, tell](kiwix:wikipedia_en_all_maxi/Run,_hide,_tell)). Do not stop to film and do not gather to watch: after an explosion, move well away and out of sight of the scene, because bombers plan for the crowd that gathers and for the responders. Armed police go in first and ambulances wait for the scene to be declared safe, so the first aid in between is yours ([Severe bleeding card](card:severe-bleeding)).
+{{/if}}
 
 ## UK specifics
 

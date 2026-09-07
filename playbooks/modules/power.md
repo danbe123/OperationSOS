@@ -23,6 +23,12 @@ sources:
   - title: iFixit generator guides
     kiwix: ifixit_en_all/Device/Generator
     as_at: 2025-12-21
+  - title: Electromagnetic pulse (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Electromagnetic_pulse
+    as_at: 2026-02-15
+  - title: Coronal mass ejection (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Coronal_mass_ejection
+    as_at: 2026-02-15
 ---
 
 ## Key facts
@@ -40,6 +46,22 @@ sources:
 5. {{#if power}}Use LED lighting wherever possible and treat candles as a last resort, not a first one; charge the power bank, the torches and the phones now, while the mains is on.{{else}}Light the house with LED torches and lanterns and treat candles as a last resort, not a first one; the power bank goes to phones and this box, not to lighting.{{/if}} Torches are safer than candles ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
 6. Keep away from fallen or damaged power lines: high voltage jumps gaps with no warning; report them on 105 ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/); [Mains electricity](page:mains-electricity)).
 7. Claim compensation for a prolonged outage from your network operator under Ofgem's guaranteed standards once power is restored.
+
+{{#if scenario:grid-collapse}}
+**Plan in days, not hours.** The register's worst case is a total failure of the transmission system in winter, every customer off without warning, restoration taking up to seven days and rota disconnection after that ([NRR 2025, p. 90](doc:nrr-2025#page=90)). Water, sewage, fuel pumps, cash machines and card terminals go with it. Ration the power bank from the first hour: this box and one phone, screens dim, phones off between check-ins. Listen to BBC local radio on FM at agreed times rather than leaving the set running, and expect the mobile network to fail area by area as the mast batteries run down ([What still works](page:what-still-works)).
+{{/if}}
+
+{{#if scenario:emp}}
+**Assume no restoration date at all.** What was switched off, unplugged and away from long wires is the likely survivor; what was on and connected to the mains, a phone line or an aerial is the likely casualty ([Electromagnetic pulse](kiwix:wikipedia_en_all_maxi/Electromagnetic_pulse)). Do not throw a dead device away: many failures are the power supply or the battery rather than the device, and the repair guides are in the [tools and repair module](module:tools-repair). Unplug computers, the router and chargers now, because the surge when supply returns is what finishes them off ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+{{/if}}
+
+{{#if scenario:solar-storm}}
+**You get warning; use it.** A coronal mass ejection takes one to three days to reach Earth, fifteen to twenty hours for the fastest ([Coronal mass ejection](kiwix:wikipedia_en_all_maxi/Coronal_mass_ejection)). Charge everything, fill the tank, draw cash, then unplug computers, the TV, the router and chargers before it arrives ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). The planning case is a Carrington-scale event running one to two weeks, with regional power disruption and loss of GPS, satellite communications and HF radio, each phenomenon likely to happen several times in that fortnight ([NRR 2025, p. 137](doc:nrr-2025#page=137)), so a grid brought back on day two may fall again on day four.
+{{/if}}
+
+{{#if scenario:cyber-attack}}
+**A restoration estimate is not a repair time.** The planning case for the grid is pockets back within hours and up to seven days for full restoration, longer if the attack damaged the systems themselves, and the attacker may still be inside them ([NRR 2025, p. 45](doc:nrr-2025#page=45); [NRR 2025, p. 55](doc:nrr-2025#page=55)). Act on nothing that arrives as a text or an email claiming to be your supplier: report the cut and hear the official picture on 105 — [[call 105]] — and take the rest from BBC local radio on FM. A smart prepay meter cannot be topped up while the systems behind it are down, so treat the credit you hold as fixed ([Mains electricity](page:mains-electricity)).
+{{/if}}
 
 ## UK specifics
 

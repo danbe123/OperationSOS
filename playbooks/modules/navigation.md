@@ -42,6 +42,18 @@ sources:
 4. In an emergency ask for the police, who call out mountain rescue, or the coastguard on the coast — [[call 999]]; the distress signal is six blasts or flashes a minute, and the whole procedure is on [Getting found](page:fieldcraft-rescue).
 5. Check the weather and remaining daylight before setting out, and treat every beach and estuary as a tidal trap: this box carries no tide tables, since the UK Hydrographic Office's tidal data is not openly licensed, so work the tide out from the moon and the strand line as [Map, compass and tides](page:fieldcraft-navigation) describes.
 
+{{#unless roads}}
+**Plan the journey on foot or by bicycle.** With the roads blocked, closed or under water, boots and a bicycle get through where a car does not, and the footpaths and access-land overlays show the ways that do not depend on tarmac ([map](map:?overlay=footpaths&overlay=access-land)). Work the time out with Naismith's rule first, set it against the daylight you actually have, and leave your route and a grid reference with someone at home. Use rivers, railways, walls and ridges as handrails. Never walk a flooded or drifted road: the water and the snow hide open manholes, ditches and the edge of the carriageway.
+{{/unless}}
+
+{{#if dark}}
+**In the dark, navigate by bearing, pacing and time.** Take the bearing while you can still see the ground, then count paces between features, because distance is now measured in paces and minutes rather than in what you can see ([FM 3-25.26](doc:fm-3-25-26-map-reading)). Use the dimmest light that does the job, red if you have it, so that your eyes stay adapted and the whole party is not blinded. Find north from the Pole Star when the sky is clear ([Map, compass and tides](page:fieldcraft-navigation)). Cliffs, quarries, water and old workings are what kill at night: a night spent sheltering costs less than a fall.
+{{/if}}
+
+{{#unless phones}}
+**Nobody can call mountain rescue out for you.** Send two people to the nearest occupied house, farm or police station with the position written down as a grid reference, what is wrong, and how many you are; two go so that one can stay with whoever they find ([Getting help without phones](page:no-phones)). Whoever stays keeps the casualty warm, insulated from the ground and out of the wind. The distress signal is six blasts, flashes or shouts spread over a minute, a minute's silence, then six again; the reply is three ([Getting found](page:fieldcraft-rescue)).
+{{/unless}}
+
 ## UK specifics
 
 - England and Wales have public rights of way and CRoW open access land ([CRoW s2](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2000/37/section/2)); Scotland has a right of responsible access to almost all land ([Land Reform (Scotland) Act s1](kiwix:legislation_uk/www.legislation.gov.uk/asp/2003/2/section/1)); Northern Ireland has very few rights of way. Where you may walk and camp, in full, is on [Moving across country](page:fieldcraft-moving).

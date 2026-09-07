@@ -29,6 +29,24 @@ sources:
   - title: Emergency War Surgery
     doc: emergency-war-surgery-2018
     as_at: 2018-01
+  - title: Insulin (NHS)
+    kiwix: nhs_medicines/www.nhs.uk/medicines/insulin/
+    as_at: 2025-12-14
+  - title: Removing radioactive material from your skin and clothes (UKHSA)
+    doc: ukhsa-radiation-decontamination
+    as_at: 2023-11-28
+  - title: Chemical emergencies, information for the public (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public
+    as_at: 2026-09
+  - title: Ship Captain's Medical Guide, chapter 2
+    doc: scmg-ch02
+    as_at: 2019-10
+  - title: HSE INDG258 Confined spaces
+    doc: hse-indg258
+    as_at: 2026-09
+  - title: Stable iodine prophylaxis (NRPB 2001)
+    doc: nrpb-stable-iodine
+    as_at: 2001-01
 ---
 
 ## Key facts
@@ -47,6 +65,30 @@ sources:
 5. If a source in this library uses American terms, translate them: acetaminophen is paracetamol, epinephrine is adrenaline, albuterol is salbutamol.
 6. In a mass-casualty situation, sort the injured before treating anyone, using the triage method in [Emergency War Surgery, p. 38](doc:emergency-war-surgery-2018#page=38).
 7. Use the WHO essential medicines list as a shopping list for a community pharmacy or first-aid store ([WHO EML, p. 12](doc:who-eml-2025#page=12)).
+
+{{#unless phones}}
+**Send, do not wait.** For anything life-threatening, send two people on foot or by bicycle to the nearest crewed place — a fire station, an ambulance or police station, or a hospital with an emergency department, all marked on [the map's health layer](map:?overlay=health) — carrying a written note: who, how old, what happened and when, what you have found (breathing, pulse, bleeding, whether they are awake) and what you have already done. Keep treating while they are gone, and send a second runner if anything changes. Move the patient yourself only if the treatment can travel with them ([Getting help without phones](page:no-phones)).
+{{/unless}}
+
+{{#unless power}}
+**Settle the electrical dependencies before dark.** An oxygen concentrator, a nebuliser, a CPAP machine and home dialysis all stop with the mains, so anyone using one needs a cylinder, a charged battery, a manual alternative or somewhere to go, decided now rather than at three in the morning ([Chronic conditions](page:chronic-conditions)). Work by head torch and never bring a naked flame near oxygen. Insulin out of the fridge is still usable: keep the pen in use cool and dark and go by its in-use life ([Insulin (NHS)](kiwix:nhs_medicines/www.nhs.uk/medicines/insulin/)). Boil water for cleaning on a gas hob or a camping stove.
+{{/unless}}
+
+{{#if scenario:pandemic}}
+**Isolate before you treat.** One room, one carer, the door shut and a window open; the carer wears the best mask in the house and keeps a separate cup, plate, towel and bedding for the sick person, washing their hands for 20 seconds after every contact. Fluids matter more than anything else you hold: small sips of oral rehydration solution, often, aiming for pale urine. The signs that still justify a hospital however long the wait are breathing too hard to finish a sentence, blue or grey lips, confusion, a rash that does not fade under a glass, or no urine for a day — [[call 999]] ([NHS sepsis](kiwix:nhs_uk/www.nhs.uk/conditions/sepsis/); [Sepsis card](card:sepsis)).
+{{/if}}
+
+{{#if scenario:nuclear-war}}
+**Shelter first, contamination second, the injury third** — unless it is bleeding that will kill in minutes, which is treated where the person lies ([Severe bleeding card](card:severe-bleeding)). Do not go out to fetch a casualty while fallout is still falling. Once under cover, outer clothing comes off and is bagged at the door and the person washes: that takes off up to about 90% of the contamination, and someone who has been decontaminated is not radioactive and is safe to nurse ([UKHSA decontamination, p. 1](doc:ukhsa-radiation-decontamination#page=1)). Write down the time anyone starts vomiting: it is the field measure of the dose ([Radiation sickness card](card:radiation-sickness)).
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+**Get the patient inside before you treat anything that is not urgent**, into the nearest solid building rather than driving them across the plume. Outer clothing off at the door and into a bag, then wash; a person who has washed is not radioactive and is safe to nurse ([UKHSA decontamination, p. 1](doc:ukhsa-radiation-decontamination#page=1)). A dirty bomb is a bomb first, so treat blast injuries and bleeding and leave the radiation to the [radiation module](module:radiation). Stable iodine is taken only when the authorities say so: it protects the thyroid alone and does nothing for radiation sickness ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
+{{/if}}
+
+{{#if scenario:chemical}}
+**Decontaminate before anything else: remove, remove, remove.** Get the person away from the source, take the clothing off, cutting it rather than pulling it over the head, blot the skin dry, then wash with plenty of water and bag the clothes ([UKHSA chemical emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public); [Chemical exposure card](card:chemical-exposure)). Never go into a cellar, tank or pit after someone who has collapsed: the gas that dropped them drops you ([HSE INDG258](doc:hse-indg258)). Rinse chemical burns and eyes for 20 minutes or more, make nobody vomit, and tell whoever you reach what the substance was ([Ship Captain's Medical Guide ch. 2](doc:scmg-ch02)).
+{{/if}}
 
 ## UK specifics
 

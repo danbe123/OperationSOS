@@ -24,6 +24,15 @@ sources:
   - title: Bug-out bag (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Bug-out_bag
     as_at: 2026-02-15
+  - title: National Risk Register 2025
+    doc: nrr-2025
+    as_at: 2025-01-16
+  - title: Chemical emergencies, information for the public (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public
+    as_at: 2026-09
+  - title: What to do in a radiation emergency (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public/what-to-do-in-a-radiation-emergency
+    as_at: 2026-09
 ---
 
 ## Key facts
@@ -38,6 +47,30 @@ sources:
 2. Before leaving, turn off gas, electricity and water if it is safe to do so, lock up, leave a note saying where you have gone, and tell someone your plan.
 3. At a rest centre, run by the council with the Red Cross, register on arrival and keep the family together.
 4. Keep the fuel tank at least half full in case you need to move; motorways jam quickly in a mass evacuation, and bicycles often get through when cars cannot.
+
+{{#unless phones}}
+**No alert will reach you and nobody can tell you to go.** Decide from what you can see and hear: water rising, fire, smoke, a wall or roof that has moved, or word brought by a neighbour or a police loudhailer. Send someone to the police or fire station for the official picture before you move a household ([Getting help without phones](page:no-phones)). If you do go, leave a note on the door saying who has left, when and where to, tell a neighbour the same, and take the household plan with you so that the meeting point and the out-of-area contact travel with you ([Household plan](page:household-plan)).
+{{/unless}}
+
+{{#if scenario:storms-flooding}}
+**Once the water has arrived, go up rather than out.** At a flood warning move people, pets, medicines and documents upstairs or to higher ground; at a severe flood warning stay somewhere safe, be ready to leave, and do as the emergency services tell you ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Move the car to higher ground early, before the roads go. Turn off gas, electricity and water at the mains if water is coming in, take medicines, documents and dry clothes, and register at the rest centre on arrival so that you can be found.
+{{/if}}
+
+{{#if scenario:chemical}}
+**Do not evacuate yourself.** For a chemical release the instruction is to go in, stay in and tune in: indoors, doors and windows shut, fans, extractors and the boiler off, into the room with the fewest openings, radio on ([UKHSA chemical emergencies](kiwix:govuk_resilience/www.gov.uk/government/publications/chemical-emergencies-information-for-the-public)). Leave only when the police or an Emergency Alert say so and by the route you are given, moving upwind or across the wind, never through the plume. If you were caught in it, the clothing comes off and you wash before you go into a rest centre, so that you do not carry it in with you ([Chemical exposure card](card:chemical-exposure)).
+{{/if}}
+
+{{#if scenario:nuclear-war}}
+**Shelter first: leaving early is the mistake that kills.** Get inside, stay inside for at least 48 hours, and evacuate only when you are told to and along the route you are given ([FEMA, p. 33](doc:fema-nuclear-detonation-2022#page=33); [FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)). A car gives a protection factor of only about 2, so it is neither a shelter nor a way out through fallout ([Radiation module](module:radiation)). Do not drive home through fallout in order to shelter there: use the nearest solid building instead, and pack the grab bag while you wait rather than while you decide.
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+**Sheltering is usually advised over evacuation.** Get into the nearest building rather than the one you would rather be in, and expect to be asked to stay in for one to two days; a vehicle gives no useful shelter and leaving early can increase your dose ([UKHSA, what to do](kiwix:govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public/what-to-do-in-a-radiation-emergency)). Do not drive to the school: children are kept in and told what to do. If an evacuation is ordered it comes by zone and by route; take medicines, documents and the grab bag, and expect to be checked and asked to change before you go into a centre.
+{{/if}}
+
+{{#if scenario:invasion}}
+**Staying put in a prepared house is the default.** The state's plan for this scenario is to fight, not to move the population, and the roads jam and become targets in their own right; in 1939 children were moved by organised train, not by families driving ([NRR 2025, p. 184](doc:nrr-2025#page=184)). Go only if you are beside a target — power station, substation, fuel depot, port, airfield, barracks, bridge or mast, all on [the map](map:?overlay=military&overlay=airports&overlay=rail) — or if you are told to, and then do not delay it ([NRR 2025, p. 22](doc:nrr-2025#page=22)). Documents, cash and medicines travel with you.
+{{/if}}
 
 ## UK specifics
 

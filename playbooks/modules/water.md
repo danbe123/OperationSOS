@@ -30,6 +30,15 @@ sources:
   - title: Nuclear War Survival Skills
     doc: nwss
     as_at: 1987-01
+  - title: Flooding and health advice for the public (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public
+    as_at: 2026-09
+  - title: 2007 United Kingdom floods (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/2007_United_Kingdom_floods
+    as_at: 2026-02-15
+  - title: Cyanobacteria (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Cyanobacteria
+    as_at: 2026-02-15
 ---
 
 ## Key facts
@@ -50,6 +59,18 @@ sources:
 6. Never drink floodwater, water from radiators (corrosion inhibitor), swimming pools, or anything downstream of farms, sewage works or an industrial site.
 7. Babies: make up formula with water that has boiled and cooled for no more than 30 minutes, so it is still at least 70 °C.
 8. Watch for dehydration, especially in children and older people: [Dehydration and rehydration](card:dehydration).
+
+{{#unless power}}
+**Do not count on the tap.** A treatment works holds up to about 24 hours of treated water, and many sites have no standby generator: gravity-fed areas may run on, but pumped areas and high-rise flats on booster pumps can lose supply within hours ([CMO outage advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage)). Fill everything the moment supply returns, even briefly. Boiling now means a gas hob or a stove in a ventilated space, so tablets or thin unscented bleach may be the practical answer ([Water disinfection](page:water-disinfection)). Bowser and bottled-water station locations come over BBC local radio on FM, and the Priority Services Register gets deliveries to the door ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
+{{/unless}}
+
+{{#if scenario:storms-flooding}}
+**In a flood, treat every supply as contaminated until told otherwise.** Floodwater carries sewage: wash anything it has touched and throw away food and bottles it reached ([UKHSA flooding advice](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). A boil notice or a "do not drink" notice from the water company overrides everything on this page, and where it says do not drink, boiling will not make it safe. Works flood too: in 2007 the Mythe treatment works went under and left 350,000 people in Gloucestershire without mains water for up to 17 days ([2007 United Kingdom floods](kiwix:wikipedia_en_all_maxi/2007_United_Kingdom_floods)).
+{{/if}}
+
+{{#if scenario:heat-drought}}
+**In a drought the restrictions arrive in steps.** A hosepipe ban comes first, then a ban on non-essential use, then drought orders under the Water Industry Act 1991 that allow rota cuts and standpipes in the street ([Water Industry Act 1991](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1991/56/contents)). Keep containers you can actually carry full to a standpipe and back, ration in the order above, and put washing water on the garden rather than down the drain. Drink more in heat, not less, and never drink from ponds, rivers or reservoirs in a hot dry spell: they carry blue-green algae ([Cyanobacteria](kiwix:wikipedia_en_all_maxi/Cyanobacteria)).
+{{/if}}
 
 ## UK specifics
 

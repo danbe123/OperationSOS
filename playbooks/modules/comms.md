@@ -42,6 +42,22 @@ sources:
 4. Fill in the household communications plan on [Household plan](page:household-plan): meeting point, out-of-area contact, every number on paper, and the "come now" signal.
 5. Listening to any radio service needs no licence; transmitting on the amateur or marine bands does ([Amateur bands](page:amateur-bands)). When nothing connects, [Getting help without phones](page:no-phones) covers runners, radios and satellite, and the whistle rescue signal is on [Getting found](page:fieldcraft-rescue).
 
+{{#unless mobile}}
+**An emergency call is the last thing to go.** A 999 call roams onto any network that has coverage, so a phone showing no bars on your own network, or "emergency calls only", may still get through — [[call 999]] ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). Move before you give up: higher ground, an upstairs window, the far side of the building, a main road. A text often gets through where a call will not, and 999 by text works from a phone registered in advance. Emergency Alerts ride on 4G and 5G masts, so they stop when the masts do ([What still works](page:what-still-works)).
+{{/unless}}
+
+{{#unless landline}}
+**The landline is broadband now.** A Digital Voice line stops with the power or the broadband, and a provider must give a vulnerable customer a free battery back-up unit that holds the line up for at least an hour, often longer: ask for it before you need it ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/); [What still works](page:what-still-works)). With the line dead, what is left is a mobile, a neighbour's phone on a different network, or a walk to a fire station, which stays crewed and keeps its own radio to control ([Getting help without phones](page:no-phones)).
+{{/unless}}
+
+{{#unless internet}}
+**Nothing that needs the internet will work:** messaging, email, Wi-Fi calling, video calls and every instruction that says check the website ([What still works](page:what-still-works)). This box needs none of it and serves everything over its own Wi-Fi. Take the official picture from BBC local radio on FM and from Emergency Alerts, which are broadcast by the masts and need no data at all. Put what the street needs to know on a noticeboard at a place everyone passes, the hall door or the shop window, with the date and time written on every notice.
+{{/unless}}
+
+{{#unless phones}}
+**Fall back to runners, radio and a board.** Send messages in pairs, on foot or by bicycle, written down: who, what, where as a grid reference from the map, when, and how many ([Getting help without phones](page:no-phones)). Agree one PMR446 channel for the street and a listening schedule, a few minutes on the hour, so that nobody flattens a battery listening all day ([PMR446 channels](page:pmr446)). Keep one household by the radio to write down each bulletin, and put the summary on the noticeboard so the same question is not asked at forty doors.
+{{/unless}}
+
 ## UK specifics
 
 - CB radio is licence-free in the UK, FM at 4 W around 27 MHz; the amateur licence has had three levels since February 2024; RAYNET is the volunteer emergency network: all on [Amateur bands](page:amateur-bands) ([CB radio in the United Kingdom](kiwix:wikipedia_en_all_maxi/CB_radio_in_the_United_Kingdom); [Ofcom amateur licence conditions](doc:ofcom-amateur-licence-2024); [RSGB Band Plans 2026](doc:rsgb-band-plan-2026)).

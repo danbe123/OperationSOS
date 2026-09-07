@@ -23,6 +23,15 @@ sources:
   - title: National Risk Register 2025
     doc: nrr-2025
     as_at: 2025-01-16
+  - title: UK CMOs' advice during a national power outage, food and nutrition
+    kiwix: govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media
+    as_at: 2025-12-16
+  - title: Rationing in the United Kingdom (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Rationing_in_the_United_Kingdom
+    as_at: 2026-02-15
+  - title: Agriculture in the United Kingdom (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Agriculture_in_the_United_Kingdom
+    as_at: 2026-02-15
 ---
 
 ## Key facts
@@ -38,6 +47,22 @@ sources:
 3. {{#if power}}Work out now how you would cook without mains power: a gas hob lit with a match, or a camping stove used only in a ventilated space; never a barbecue or a generator indoors, even in a doorway or open window ([Carbon monoxide card](card:carbon-monoxide)).{{else}}Cook on a gas hob lit with a match if the gas is still on, or on a camping stove used only in a ventilated space; never a barbecue or a generator indoors, even in a doorway or open window ([Carbon monoxide card](card:carbon-monoxide)).{{/if}}
 4. Home-canning low-acid vegetables and meat needs a pressure canner; water-bath canning them risks botulism, which grows unseen in low-acid, low-oxygen jars ([USDA Complete Guide to Home Canning](kiwix:usda-2015_en/home); [Botulism](kiwix:wikipedia_en_all_maxi/Botulism)).
 5. Never eat a wild fungus you cannot name with certainty, and never identify one from a photo on this box.
+
+{{#unless power}}
+**Eat in this order while the cold lasts:** the fridge first, then the freezer as it softens, then the cupboard. Cook one big pot for everyone rather than reheating twice. Food that has thawed but is still cold can be cooked and eaten at once, but raw food that has thawed is never refrozen ([FSA chill, freeze and defrost](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)). In winter an unheated porch or shed is a cold store; in summer nothing is, so open a tin rather than gamble on a thawed one ([CMO food and nutrition advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media)).
+{{/unless}}
+
+{{#unless shops}}
+**With the shops shut, the cupboard is the ration.** Count what you hold in days rather than in tins: at roughly 2,000 kcal a day for women and 2,500 for men ([Eatwell Guide](kiwix:nhs_uk/www.nhs.uk/live-well/eat-well/food-guidelines-and-food-labels/the-eatwell-guide/)) a household can work out in an hour how long it can eat. Write that figure on the cupboard door, ration from today rather than when the shelves are bare, and feed children, pregnant women, the sick and anyone working outdoors first ([Food storage](page:food-storage)).
+{{/unless}}
+
+{{#if scenario:famine}}
+**Ration from the first day, not the last.** A store spent in the first month is gone long before the first harvest, so set a weekly allowance for each person and write it down; British rationing ran from 1940 to 1954 on exactly that principle, with registration at one shop and fair shares for all ([Rationing in the United Kingdom](kiwix:wikipedia_en_all_maxi/Rationing_in_the_United_Kingdom)). Set next year's seed aside before anyone eats it ([Growing food module](module:growing-food)), and preserve every glut by drying, salting, pickling or jam rather than eating it at once.
+{{/if}}
+
+{{#if scenario:supply-chain}}
+**Do not join the queue.** The UK produces about 60% of the food it eats and runs its shops on daily deliveries ([Agriculture in the United Kingdom](kiwix:wikipedia_en_all_maxi/Agriculture_in_the_United_Kingdom)), so shelves empty from panic buying long before the country is short: fresh produce goes first, then bread and milk, then tins. Buy the gaps in your list in ordinary quantities from ordinary shops, and buy them early rather than in the rush. A baby on formula is the tightest supply line in the house; the fallback when the tin runs out is on [Infant feeding](page:infant-feeding).
+{{/if}}
 
 ## UK specifics
 

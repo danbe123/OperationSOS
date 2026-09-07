@@ -29,6 +29,15 @@ sources:
   - title: Potato (Wikipedia)
     kiwix: wikipedia_en_all_maxi/Potato
     as_at: 2026-02-15
+  - title: Victory garden (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Victory_garden
+    as_at: 2026-02-15
+  - title: Year Without a Summer (Wikipedia)
+    kiwix: wikipedia_en_all_maxi/Year_Without_a_Summer
+    as_at: 2026-02-15
+  - title: Water Industry Act 1991
+    kiwix: legislation_uk/www.legislation.gov.uk/ukpga/1991/56/contents
+    as_at: 2026-09
 ---
 
 ## Key facts
@@ -44,6 +53,26 @@ sources:
 3. Build fertility without bought fertiliser: compost, manure, urine diluted one part to ten of water, wood ash, comfrey, and nitrogen-fixing beans and green manures.
 4. Save your own open-pollinated seed rather than F1 hybrids, which will not breed true the following year ([seed saving](kiwix:wikipedia_en_all_maxi/Seed_saving)).
 5. Extend the season with cloches, cold frames or a polytunnel, and ask specific questions of the gardening Q&A as they come up ([gardening Q&A](kiwix:gardening.stackexchange.com_en_all/questions)).
+
+{{#unless water}}
+**Water the roots, not the leaves, and only what earns it.** Every litre is carried now, so put a butt under every downpipe, keep them covered against evaporation and mosquitoes, and water in the evening ([Water module](module:water)). Seedlings and anything flowering or fruiting come first; established shrubs and lawns come nowhere and will recover on their own. Mulch bare soil with compost, grass cuttings, straw or cardboard to hold what is already down there. Cooled washing-up water goes on the soil rather than on leaves you intend to eat.
+{{/unless}}
+
+{{#if scenario:heat-drought}}
+**A hosepipe ban applies to the garden, and a drought order can stop garden watering altogether** ([Water Industry Act 1991](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1991/56/contents)). Water at the roots in the evening, mulch everything, and shade seedlings through the middle of the day. Leafy crops bolt first in heat, potatoes stop swelling and fruit sets badly, so sow again in late summer for an autumn crop rather than fighting for the one that has failed ([gardening Q&A](kiwix:gardening.stackexchange.com_en_all/questions)). Keep the butts covered and put grey water on the soil, never on the leaves.
+{{/if}}
+
+{{#if scenario:famine}}
+**Grow calories, not salad.** Put the ground into potatoes and other roots, beans and grain rather than into crops that fill a plate without feeding anybody ([Potato](kiwix:wikipedia_en_all_maxi/Potato)). Turn lawns, borders, tubs and verges into growing ground, as Dig for Victory did when it made some 1.4 million allotments out of gardens and parks ([Victory garden](kiwix:wikipedia_en_all_maxi/Victory_garden)). Set next year's seed aside before anyone eats this year's crop, and plan now for the April and May hungry gap, when the store is gone and nothing is ready ([hungry gap](kiwix:wikipedia_en_all_maxi/Hungry_gap)).
+{{/if}}
+
+{{#if scenario:impact-winter}}
+**Assume a short, cold, dim season and a harvest that may fail.** Give up tender crops altogether and grow what stands frost: potatoes, kale, leeks, swede, turnip, cabbage and broad beans. Put everything you can under cover, because a few degrees and a little shelter are the difference between a crop and nothing. Save seed from whatever does ripen, keep two years of it cool and dry, and store the harvest as though it must last two winters ([seed saving](kiwix:wikipedia_en_all_maxi/Seed_saving); [Food storage](page:food-storage)). Tambora's 1815 eruption brought frosts in July 1816 and famine across Europe ([Year Without a Summer](kiwix:wikipedia_en_all_maxi/Year_Without_a_Summer)).
+{{/if}}
+
+{{#if scenario:long-rebuild}}
+**Seed and fertility are the two things that must never run out.** Save open-pollinated seed every year, dry it properly, and keep a share of it at a neighbour's house so that one damp shed does not end a variety ([seed saving](kiwix:wikipedia_en_all_maxi/Seed_saving)). Feed the soil only from what the place itself makes, since no fertiliser is coming: compost, manure, urine, ash, comfrey and nitrogen-fixing beans and green manures. Hold the rotation, whatever the temptation of one good bed ([crop rotation](kiwix:wikipedia_en_all_maxi/Crop_rotation)), and write down each year what was sown where and what worked.
+{{/if}}
 
 ## UK specifics
 

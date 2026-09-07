@@ -29,6 +29,12 @@ sources:
   - title: REPPIR 2019
     kiwix: legislation_uk/www.legislation.gov.uk/uksi/2019/703/contents
     as_at: 2026-09
+  - title: What to do in a radiation emergency (UKHSA)
+    kiwix: govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public/what-to-do-in-a-radiation-emergency
+    as_at: 2026-09
+  - title: Protect and Survive
+    doc: protect-and-survive-1980
+    as_at: 1980-05
 ---
 
 ## Key facts
@@ -46,6 +52,14 @@ sources:
 4. {{#if water}}Decontaminate by removing outer clothing and bagging it, then showering with soap, no conditioner, without scrubbing; this removes up to about 90% of contamination{{else}}Decontaminate by removing outer clothing and bagging it, then washing with soap and stored water poured from a jug, hair last, no conditioner and no scrubbing, or wiping down with a damp cloth if water is short; this removes up to about 90% of contamination{{/if}} ([UKHSA decontamination, p. 1](doc:ukhsa-radiation-decontamination#page=1); [FEMA, p. 40](doc:fema-nuclear-detonation-2022#page=40)). A person who has been decontaminated is not radioactive and is safe to nurse.
 5. Only take stable iodine tablets when the authorities say so: they protect the thyroid alone, and only against radioactive iodine, mattering most for children, pregnant women and adults under 40; they do nothing for radiation sickness ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
 6. Without a proper detector, a Kearny fallout meter can be built from a tin and foil to give a rough read on fallout gamma levels ([NWSS, p. 221](doc:nwss#page=221)).
+
+{{#if scenario:nuclear-war}}
+**Fallout comes down within minutes to hours wherever the wind carries it, so shelter beats everything else in the first hours.** Stay in the fall-out room, and in the inner refuge, for at least 48 hours before reassessing, and take that decision from the radio rather than by looking outside ([Protect and Survive, p. 15](doc:protect-and-survive-1980#page=15); [FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)). While fallout is still falling on you, do not strip: dust yourself down without breathing the dust, and take the outer layer off once you are under cover ([FEMA, p. 116](doc:fema-nuclear-detonation-2022#page=116)). Trips outside in the first days are minutes long and made by adults over 40, whose thyroid risk is negligible ([NRPB, p. 16](doc:nrpb-stable-iodine#page=16)).
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+**This is a plume, not a battlefield: go in, stay in, tune in.** Shelter in the nearest solid building rather than driving home or to the school; children are kept in and told what to do ([UKHSA, what to do](kiwix:govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public/what-to-do-in-a-radiation-emergency)). Sheltering is usually advised over evacuation and may last one to two days, a vehicle gives no useful shelter, and leaving shelter early can increase your dose. Inside the Detailed Emergency Planning Zone around a licensed site the tablets and instructions are already distributed ([REPPIR 2019](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2019/703/contents)), and you still take the iodine only when the authorities say ([NRPB, p. 9](doc:nrpb-stable-iodine#page=9)).
+{{/if}}
 
 ## UK specifics
 
