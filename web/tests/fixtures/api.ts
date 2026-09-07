@@ -1,5 +1,5 @@
 import type {
-  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, PlaceGuidance,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, PlaceGuidance,
   ExportChunks, ImportSummary, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
@@ -522,6 +522,25 @@ export const kitWater: Kit = {
     ] },
     { id: 'full', title: 'No help coming', days: 90, why: 'A season with no mains and no shops.', done: 0, total: 1, items: [
       { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', why_html: 'x', note_html: '', link: null, href: null, qty: null, checked: false, updated_at: null },
+    ] },
+  ],
+};
+
+/** `GET /kits/have`: what this household has ticked, kits in their order and items in the kit's own
+ * (basic before serious before full). The water kit's rows are the ticks in `kitWater` plus one more,
+ * so the two fixtures tell the same story. */
+export const kitsHave: KitsHaveResponse = {
+  people: 2,
+  kits: [
+    { slug: 'water', title: 'Water', icon: 'water', items: [
+      { id: 'stored-water', name: 'Drinking water in sealed containers', tier: 'basic',
+        qty: { amount: 3, unit: 'L', scaled: 18, text: '18 L for 2 people over 3 days' }, updated_at: '2026-09-06T10:00:00+00:00' },
+      { id: 'tablets', name: 'Water purification tablets', tier: 'serious',
+        qty: { amount: 1, unit: 'pack', scaled: 1, text: '1 pack' }, updated_at: '2026-09-06T11:00:00+00:00' },
+    ] },
+    { slug: 'baby-child', title: 'Baby and child', icon: 'baby', items: [
+      { id: 'nappies', name: 'Nappies', tier: 'basic',
+        qty: { amount: 6, unit: '', scaled: 36, text: '36 for 2 people over 3 days' }, updated_at: '2026-09-06T12:00:00+00:00' },
     ] },
   ],
 };

@@ -174,6 +174,12 @@ export type KitItem = {
   qty: { amount: number; unit: string; scaled: number; text: string } | null;
   checked: boolean; updated_at: string | null;
 };
+/** One ticked thing on the "What you have" tab: the name, which tier it belongs to, and the same
+ * scaled quantity `GET /kits/{slug}` gives. */
+export type KitHaveItem = { id: string; name: string; tier: KitTierId; qty: KitItem['qty']; updated_at: string | null };
+export type KitHave = { slug: string; title: string; icon: string; items: KitHaveItem[] };
+/** `GET /kits/have`: everything ticked across every kit, kits with nothing ticked left out. */
+export type KitsHaveResponse = { people: number; kits: KitHave[] };
 export type KitTier = { id: KitTierId; title: string; days: number; why: string; done: number; total: number; items: KitItem[] };
 export type Kit = {
   slug: string; title: string; icon: string; order: number; summary: string; intro_html: string;

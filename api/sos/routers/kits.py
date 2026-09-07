@@ -93,6 +93,32 @@ def list_kits(request: Request, conn=Depends(get_db)):
     return {"people": system.people_count(conn), "kits": out}
 
 
+@router.get("/kits/have")
+def kits_have(request: Request, conn=Depends(get_db)):
+    """Everything ticked, across every kit: the "what you have" list, kits in their order and items in
+    the kit's own (basic, then serious, then full). A kit with nothing ticked is left out rather than
+    printed as an empty heading. Declared before `/kits/{slug}` so `have` is never read as a slug."""
+    people = system.people_count(conn)
+    out = []
+    for kit in request.app.state.content.kits():
+        ticks = _ticks(conn, kit.id)
+        if not any(t["checked"] for t in ticks.values()):
+            continue
+        scale = kits_mod.matching_people(kit, people)
+        items = []
+        for tier_id in kits_mod.TIERS:
+            days = int(kit.tiers.get(tier_id, {}).get("days", kits_mod.TIER_DAYS[tier_id]))
+            for item in kit.items_in(tier_id):
+                tick = ticks.get(item.id)
+                if not (tick and tick["checked"]):
+                    continue
+                items.append({"id": item.id, "name": item.name, "tier": tier_id,
+                              "qty": kits_mod.scaled(item, days, scale), "updated_at": tick["updated_at"]})
+        if items:
+            out.append({"slug": kit.id, "title": kit.title, "icon": kit.icon, "items": items})
+    return {"people": people, "kits": out}
+
+
 @router.get("/kits/{slug}")
 def get_kit(slug: str, request: Request, conn=Depends(get_db)):
     return kit_view(_get_kit(request, slug), conn, request)

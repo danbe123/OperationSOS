@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { api } from '../api/client';
-import type { Kit, KitSummary, KitTierId } from '../api/types';
+import type { Kit, KitHave, KitSummary, KitTierId } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
+import { Icon } from '../icons';
 import { notify } from '../components/Notice';
 import { PrintButton } from '../components/PrintButton';
 import { Tile } from '../components/Tile';
@@ -13,9 +15,20 @@ const TIER_LABEL: Record<KitTierId, string> = { basic: 'Basic', serious: 'Seriou
 const MIN_PEOPLE = 1;
 const MAX_PEOPLE = 20;
 
+/** The two ways to read the same ticks: the kits as they are worked through, and the flat list of
+ * what is already in the house. The tab is the URL's hash, so `/kit#have` is a link somebody can
+ * send or bookmark rather than a state that only exists once the screen is tapped. */
+type TabId = 'kits' | 'have';
+const TABS: { id: TabId; title: string }[] = [{ id: 'kits', title: 'Kits' }, { id: 'have', title: 'What you have' }];
+
 /** "Basic 1/2 · Serious 0/1 · Full 0/1": the one line a tile has for progress. */
 export function tierLine(tiers: KitSummary['tiers']): string {
   return (['basic', 'serious', 'full'] as KitTierId[]).map((t) => `${TIER_LABEL[t]} ${tiers[t].done}/${tiers[t].total}`).join(' · ');
+}
+
+/** "For 2 people", the one number every quantity on these screens is scaled by. */
+function peopleLine(people: number): string {
+  return `For ${people} ${people === 1 ? 'person' : 'people'}`;
 }
 
 /** Every kit as one packing list. `beforeprint` is too late to fetch anything, so the button fetches
@@ -53,7 +66,7 @@ function PackingList({ sheets }: { sheets: Kit[] }) {
               <h3>{tier.title} · {tier.days} days</h3>
               <ul className="list">
                 {tier.items.map((i) => (
-                  <li key={i.id}>{i.checked ? '\u2611' : '\u2610'} {i.name}{i.qty ? ` — ${i.qty.text}` : ''}</li>
+                  <li key={i.id}>{i.checked ? '☑' : '☐'} {i.name}{i.qty ? ` — ${i.qty.text}` : ''}</li>
                 ))}
               </ul>
             </div>
@@ -84,7 +97,7 @@ function PeopleStepper({ people, onSaved }: { people: number; onSaved: () => Pro
   return (
     <div className="row kit-people" role="group" aria-label="How many people">
       <button type="button" className="btn" disabled={busy || people <= MIN_PEOPLE} onClick={() => void step(people - 1)}>Fewer</button>
-      <strong>For {people} {people === 1 ? 'person' : 'people'}</strong>
+      <strong>{peopleLine(people)}</strong>
       <button type="button" className="btn" disabled={busy || people >= MAX_PEOPLE} onClick={() => void step(people + 1)}>More</button>
     </div>
   );
@@ -98,8 +111,59 @@ function KitTiles({ kits, label }: { kits: KitSummary[]; label: string }) {
   );
 }
 
+/** One kit's ticked things, as a table: what it is and how much of it this household needs. The
+ * heading is the way into the kit itself, so a row that looks wrong is one tap from being changed. */
+function HaveKit({ kit }: { kit: KitHave }) {
+  return (
+    <section className="kit-have-kit">
+      <h3><Link to={`/kit/${kit.slug}`}><Icon name={kit.icon} size={22} />{kit.title}</Link></h3>
+      <table className="kit-have-table">
+        <thead>
+          <tr><th scope="col">Item</th><th scope="col">Quantity</th></tr>
+        </thead>
+        <tbody>
+          {kit.items.map((i) => (
+            <tr key={i.id}>
+              <th scope="row">{i.name}<span className="kit-have-tier">{i.tier}</span></th>
+              <td>{i.qty ? i.qty.text : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+/** What you have: every tick on the box in one place, kit by kit. It is its own read rather than a
+ * count taken from `GET /kits`, which knows how many are ticked but not which. */
+function HaveTab() {
+  const q = useQuery(() => api.kitsHave(), [], { refetchOnFocus: true });
+  const kits = q.data?.kits ?? [];
+  const items = kits.reduce((n, k) => n + k.items.length, 0);
+  return (
+    <section id="panel-have" role="tabpanel" aria-labelledby="tab-have">
+      <h2>What you have marked</h2>
+      {q.data && <p className="muted">{peopleLine(q.data.people)}. Quantities are what this household needs, not what is in the cupboard.</p>}
+      {q.loading && <p className="muted">Loading what you have…</p>}
+      {q.error && <p className="warning">What you have is unavailable: {q.error}</p>}
+      {q.data && kits.length === 0 && (
+        <p className="muted">Nothing ticked yet. Open a kit and tick what you have. <Link to="/kit">Back to the kits</Link></p>
+      )}
+      {kits.map((k) => <HaveKit key={k.slug} kit={k} />)}
+      {items > 0 && (
+        <p className="muted kit-have-total">
+          {items} {items === 1 ? 'item' : 'items'} across {kits.length} {kits.length === 1 ? 'kit' : 'kits'}
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** Kit: what to have in the house, in three tiers, ticked by everyone on the box. */
 export function Kits() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tab: TabId = location.hash === '#have' ? 'have' : 'kits';
   const q = useQuery(() => api.kits(), [], { refetchOnFocus: true });
   const kits = q.data?.kits ?? [];
   const people = q.data?.people ?? 1;
@@ -109,17 +173,33 @@ export function Kits() {
   return (
     <Screen
       title="Kit" back={false} search={false}
-      actions={<PrintButton label="Print every kit" disabled={!q.data || busy} onPrint={() => void printAll()} />}
+      actions={tab === 'have'
+        ? <PrintButton label="Print" />
+        : <PrintButton label="Print every kit" disabled={!q.data || busy} onPrint={() => void printAll()} />}
     >
       <Body>
-        <p className="muted">
-          What to have before anything happens, in three tiers: three days, two weeks, and no help coming.
-          Ticks are shared by everyone on the box.
-        </p>
-        {q.data && <PeopleStepper people={people} onSaved={q.refetch} />}
-        {q.loading && <p className="muted">Loading the kits…</p>}
-        {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
-        {kits.length > 0 && <KitTiles kits={kits} label="Kits" />}
+        <div className="tabs no-print" role="tablist" aria-label="Kit">
+          {TABS.map((t) => (
+            <button
+              key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={t.id === tab} aria-controls={`panel-${t.id}`}
+              className={t.id === tab ? 'btn active' : 'btn'} onClick={() => navigate(t.id === 'have' ? '/kit#have' : '/kit', { replace: true })}
+            >
+              {t.title}
+            </button>
+          ))}
+        </div>
+        {tab === 'have' ? <HaveTab /> : (
+          <section id="panel-kits" role="tabpanel" aria-labelledby="tab-kits">
+            <p className="muted">
+              What to have before anything happens, in three tiers: three days, two weeks, and no help coming.
+              Ticks are shared by everyone on the box.
+            </p>
+            {q.data && <PeopleStepper people={people} onSaved={q.refetch} />}
+            {q.loading && <p className="muted">Loading the kits…</p>}
+            {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
+            {kits.length > 0 && <KitTiles kits={kits} label="Kits" />}
+          </section>
+        )}
         <PackingList sheets={sheets} />
       </Body>
     </Screen>

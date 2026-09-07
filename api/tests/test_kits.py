@@ -206,6 +206,42 @@ def test_reset_clears_ticks_only_for_that_kit(client):
     assert client.get("/api/playbooks/grid-collapse").json()["checklist"]     # scenario ticks untouched by kit keys
 
 
+def test_have_lists_every_ticked_item_in_kit_and_tier_order(client):
+    """`GET /kits/have`: the one list of what this household has, kits in their order and items in the
+    kit's own -- basic, then serious, then full -- whatever order the ticks were made in."""
+    client.put("/api/kits/water/items/tablets", json={"checked": True})       # serious, ticked first
+    client.put("/api/kits/water/items/stored-water", json={"checked": True})  # basic, ticked second
+    body = client.get("/api/kits/have").json()
+    assert body["people"] == 2
+    # A kit with nothing ticked is left out rather than shown as an empty heading.
+    assert [k["slug"] for k in body["kits"]] == ["water"]
+    water = body["kits"][0]
+    assert water["title"] == "Water" and water["icon"] == "water"
+    assert [(i["id"], i["tier"]) for i in water["items"]] == [("stored-water", "basic"), ("tablets", "serious")]
+    assert water["items"][0]["name"] == "Drinking water in sealed containers"
+    assert all(i["updated_at"] for i in water["items"])
+    # The same scaled sentence the kit's own page gives, so the two screens never disagree.
+    detail = client.get("/api/kits/water").json()
+    assert water["items"][0]["qty"] == detail["tiers"][0]["items"][0]["qty"] == {
+        "amount": 3, "unit": "L", "scaled": 18, "text": "18 L for 2 people over 3 days"}
+    assert water["items"][1]["qty"]["text"] == "1 pack"
+
+    client.put("/api/kits/baby-child/items/nappies", json={"checked": True})
+    body = client.get("/api/kits/have").json()
+    assert [k["slug"] for k in body["kits"]] == ["water", "baby-child"]       # kits in their own order
+    assert [i["qty"]["text"] for i in body["kits"][1]["items"]] == ["36 for 2 people over 3 days"]
+
+
+def test_have_drops_a_row_the_moment_it_is_unticked(client):
+    client.put("/api/kits/water/items/stored-water", json={"checked": True})
+    client.put("/api/kits/water/items/tablets", json={"checked": True})
+    client.put("/api/kits/water/items/tablets", json={"checked": False})
+    body = client.get("/api/kits/have").json()
+    assert [i["id"] for i in body["kits"][0]["items"]] == ["stored-water"]
+    client.delete("/api/kits/water/ticks")
+    assert client.get("/api/kits/have").json()["kits"] == []
+
+
 def test_why_and_note_come_back_as_inline_html(client):
     tablets = client.get("/api/kits/water").json()["tiers"][1]["items"][0]
     assert tablets["id"] == "tablets"

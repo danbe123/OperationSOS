@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -140,6 +140,8 @@ export const api = {
    * getter here -- only the stepper's save. */
   setPeople: (people: number) => request<PeopleSetting>('PUT', '/settings/people', { people }),
   kits: () => request<KitsResponse>('GET', '/kits'),
+  /** Everything ticked, across every kit: the "What you have" tab's one read. */
+  kitsHave: () => request<KitsHaveResponse>('GET', '/kits/have'),
   kit: (slug: string) => request<Kit>('GET', `/kits/${enc(slug)}`),
   setKitItem: (slug: string, itemId: string, body: { checked: boolean }) =>
     request<Kit>('PUT', `/kits/${enc(slug)}/items/${enc(itemId)}`, body),

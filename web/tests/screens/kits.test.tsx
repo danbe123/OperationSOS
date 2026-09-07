@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { kitsResponse, kitWater } from '../fixtures/api';
+import { kitsHave, kitsResponse, kitWater } from '../fixtures/api';
 import { tierLine } from '../../src/screens/Kits';
 
 describe('tierLine', () => {
@@ -80,6 +80,72 @@ describe('Kits', () => {
     expect(kit).toHaveBeenCalledTimes(kitsResponse.kits.length);
     await waitFor(() => expect(print).toHaveBeenCalled());
     print.mockRestore();
+  });
+
+  it('keeps the stepper and the kit tiles on the Kits tab, with Kits the tab that is open', async () => {
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
+    const have = vi.spyOn(api, 'kitsHave').mockResolvedValue(kitsHave);
+    renderRoute('/kit');
+    const tabs = await screen.findByRole('tablist', { name: 'Kit' });
+    expect(within(tabs).getByRole('tab', { name: 'Kits' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(tabs).getByRole('tab', { name: 'What you have' })).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByRole('group', { name: 'How many people' })).toHaveTextContent('For 2 people');
+    expect(screen.getByRole('navigation', { name: 'Kits' })).toBeInTheDocument();
+    // The other tab is not read until it is opened: the overview is one request, as it always was.
+    expect(have).not.toHaveBeenCalled();
+  });
+
+  it('shows every ticked thing on the What you have tab, kit by kit, with its quantity', async () => {
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
+    vi.spyOn(api, 'kitsHave').mockResolvedValue(kitsHave);
+    const { router } = renderRoute('/kit');
+    const tab = await screen.findByRole('tab', { name: 'What you have' });
+    await act(async () => { tab.click(); });
+    expect(await screen.findByRole('heading', { name: 'What you have marked' })).toBeInTheDocument();
+    // The tab is the hash, so this screen can be linked to and comes back where it was left.
+    expect(router.state.location.hash).toBe('#have');
+    expect(screen.queryByRole('group', { name: 'How many people' })).toBeNull();
+    expect(screen.getByText(/For 2 people/)).toBeInTheDocument();
+
+    const [water, baby] = screen.getAllByRole('table');
+    expect(screen.getByRole('link', { name: /Water/ })).toHaveAttribute('href', '/kit/water');
+    expect(within(water).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Item', 'Quantity']);
+    expect(within(water).getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell').map((c) => c.textContent)))
+      .toEqual([['18 L for 2 people over 3 days'], ['1 pack']]);
+    expect(within(water).getByRole('rowheader', { name: /Drinking water in sealed containers/ })).toHaveTextContent('basic');
+    expect(within(water).getByRole('rowheader', { name: /Water purification tablets/ })).toHaveTextContent('serious');
+    expect(within(baby).getByRole('rowheader', { name: /Nappies/ })).toBeInTheDocument();
+    expect(within(baby).getByRole('cell', { name: '36 for 2 people over 3 days' })).toBeInTheDocument();
+    expect(screen.getByText('3 items across 2 kits')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument();
+  });
+
+  it('opens on What you have when the link carries the hash', async () => {
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
+    vi.spyOn(api, 'kitsHave').mockResolvedValue(kitsHave);
+    renderRoute('/kit#have');
+    expect(await screen.findByRole('heading', { name: 'What you have marked' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'What you have' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('says what to do when nothing is ticked, and links back to the kits', async () => {
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
+    vi.spyOn(api, 'kitsHave').mockResolvedValue({ people: 2, kits: [] });
+    renderRoute('/kit#have');
+    expect(await screen.findByText(/Nothing ticked yet\. Open a kit and tick what you have\./)).toBeInTheDocument();
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.queryByText(/items across/)).toBeNull();
+    const back = screen.getByRole('link', { name: 'Back to the kits' });
+    expect(back).toHaveAttribute('href', '/kit');
+    await act(async () => { back.click(); });
+    expect(await screen.findByRole('group', { name: 'How many people' })).toBeInTheDocument();
+  });
+
+  it('says when what you have cannot be loaded', async () => {
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
+    vi.spyOn(api, 'kitsHave').mockRejectedValue(new Error('boom'));
+    renderRoute('/kit#have');
+    expect(await screen.findByText(/What you have is unavailable: boom/)).toBeInTheDocument();
   });
 
   it('says when kits cannot be loaded', async () => {

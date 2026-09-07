@@ -17,3 +17,29 @@
   /* The overview's packing list: one sheet a kit. */
   .kit-sheets section + section { break-before: page; }
 }
+
+/* --- "What you have": every tick on the box, kit by kit, as a table ------------------------- */
+
+.kit-have-kit { margin: 20px 0; }
+.kit-have-kit h3 { margin: 0 0 8px; }
+.kit-have-kit h3 a { display: inline-flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; min-height: var(--touch); }
+.kit-have-kit h3 a:hover, .kit-have-kit h3 a:focus-visible { text-decoration: underline; }
+/* A table rather than a grid of cards: a list somebody reads down a column, and the same shape on
+   paper as on the screen. It fits the column instead of scrolling: there are only two of them. */
+.kit-have-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.kit-have-table th, .kit-have-table td { padding: 10px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.kit-have-table thead th { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.kit-have-table tbody th { font-weight: 600; }
+.kit-have-table tbody tr:last-child th, .kit-have-table tbody tr:last-child td { border-bottom: 0; }
+/* Which tier the thing belongs to, under its name: a word, not a column of its own. */
+.kit-have-tier { display: block; color: var(--ink-muted); font-weight: 400; font-size: var(--t-meta); text-transform: capitalize; }
+.kit-have-total { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* On paper it is a plain list: the rail and the tab strip are gone already (shell and components
+   print rules), and a kit is never split across a page break halfway down its table. */
+@media print {
+  .kit-have-kit { break-inside: avoid; margin: 0 0 14px; }
+  .kit-have-kit h3 a { text-decoration: none; }
+  .kit-have-table th, .kit-have-table td { padding: 4px 6px; }
+  .kit-have-table tr { break-inside: avoid; }
+}
