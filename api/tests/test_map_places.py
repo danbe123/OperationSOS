@@ -36,8 +36,15 @@ def test_every_kind_carries_the_four_lists_within_their_counts_and_word_limits()
             bullets = place.bullets(key)
             assert low <= len(bullets) <= high, (kind, key, len(bullets))
             for n, bullet in enumerate(bullets):
-                assert 6 <= len(bullet.split()) <= 30, (kind, key, n, bullet)
+                assert 6 <= map_places.count_words(bullet) <= 30, (kind, key, n, bullet)
                 assert 20 <= len(bullet) <= 220, (kind, key, n, bullet)
+
+
+def test_word_count_reads_a_links_text_and_not_its_target():
+    plain = "Never drive into a cloud ([Chemical exposure](card:chemical-exposure))."
+    assert map_places.count_words(plain) == 7
+    titled = 'Boil it ([Water disinfection](page:water-disinfection "the table")).'
+    assert map_places.count_words(titled) == 4 < len(titled.split())
 
 
 def test_places_validate_clean_against_the_real_tree():

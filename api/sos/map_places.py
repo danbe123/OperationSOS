@@ -5,6 +5,7 @@ GET /api/map/places as HTML the frontend never has to parse."""
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -20,6 +21,14 @@ SECTIONS = (("have", "Usually here"), ("useful", "Worth going when"),
             ("avoid", "Stay away when"), ("approach", "How to go about it"))
 
 MIN_WORDS, MAX_WORDS = 6, 30
+
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+
+
+def count_words(bullet: str) -> int:
+    """The words a reader sees: a Markdown link counts as its text, never as its target, so citing a
+    guide with a long slug does not push a short bullet over the limit."""
+    return len(_MD_LINK.sub(r"\1", bullet).split())
 
 
 @dataclass(frozen=True)
@@ -89,7 +98,7 @@ def validate_places(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids,
                 where = f"{rel}: {kind}: {key}[{n}]"
                 errors += [e.replace(rel, where, 1)
                            for e in content._check_links(rel, bullet, zim_ids, doc_ids, slugs, overlay_ids)]
-                words = len(bullet.split())
+                words = count_words(bullet)
                 if not MIN_WORDS <= words <= MAX_WORDS:
                     errors.append(f"{where}: {words} words, not {MIN_WORDS} to {MAX_WORDS}")
     return errors

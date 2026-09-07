@@ -18,10 +18,11 @@ places:
       - "Water comes off the mains like everyone else's, and the site has tanks, not a spring."
       - "Staff trained in triage, midwifery and mental health, and a switchboard with its own radios and landlines."
       - "Toilets, hot drinks, chairs and a waiting area that stays lit and warm through the night."
+      - "One of the few buildings still lit, warm and staffed through a long blackout ([PMR446](page:pmr446))."
     useful:
       - "Go for anything life-threatening: heavy bleeding, chest pain, stroke, a bad burn, a birth going wrong."
-      - "In a long blackout it is one of the few buildings still lit, warm and staffed ([PMR446](page:pmr446))."
-      - "In a flood or a house fire, casualties and anyone on oxygen or dialysis are moved here."
+      - "In a long blackout, for anyone whose oxygen concentrator or home dialysis has lost power ([PMR446](page:pmr446))."
+      - "In a flood or a house fire, for smoke inhalation, crush injuries and anyone pulled from water."
       - "After a freeze, for hypothermia, frostbite and the falls that come with ice."
     avoid:
       - "Not for repeat prescriptions, dressings, minor illness or a bed for the night; those services stop first."
@@ -64,7 +65,7 @@ places:
       - "Bring the labelled box or repeat slip, and cash: the card machine fails with the network ([PMR446](page:pmr446))."
       - "Go early in the day and ask for the pharmacist by name rather than the counter assistant."
       - "Say what the medicine is for, not only its name, so an alternative can be suggested."
-      - "Take one week's worth rather than three, so the person behind you also gets some."
+      - "Ask for a week's supply rather than a month, so the person behind you gets some too."
       - "Offer to collect a neighbour's prescription while you are there, and tell them what you did."
   gp:
     title: GP surgery
@@ -83,7 +84,7 @@ places:
       - "No beds, no emergency department, and no fuel, water or food for anyone."
     useful:
       - "Inside surgery hours in a small emergency: a wound review, a repeat prescription, a sick note."
-      - "As a message point for the practice's own arrangements once the phones are down."
+      - "To read the door notice naming where the practice is working from and which numbers still answer."
       - "For anyone whose insulin, steroids or epilepsy tablets are running out ([PMR446](page:pmr446))."
     avoid:
       - "One of the first buildings to close in a serious emergency and one of the last to reopen."
@@ -93,7 +94,7 @@ places:
       - "Ring 111 for urgent advice in England, Scotland and Wales; Northern Ireland uses GP out-of-hours numbers ([PMR446](page:pmr446))."
       - "Go inside surgery hours, with your NHS number, your medicines list and any letters you hold."
       - "Ask what the practice has agreed to do if it stays shut, and write it down."
-      - "Read the noticeboard and the door before knocking; it usually names the covering practice."
+      - "Knock once, wait, and leave a note with your name and address if nobody answers."
   clinic:
     title: Walk-in or urgent treatment centre
     expect: >-
@@ -169,7 +170,7 @@ places:
       - "Staff, radios and the company's own vehicles, and bulk chlorine or hypochlorite at some sites."
       - "It is the address the company works from when it sets up bowsers and bottled-water stations."
     useful:
-      - "As a landmark, and to see whether tankers and crews are moving after a supply failure."
+      - "To see whether tankers and crews are moving, which tells you a supply is coming back."
       - "In a water cut, as a place a company notice or a delivery point may appear ([Water module](module:water))."
       - "To learn now where your supply comes from, before you ever need to ask."
     avoid:
@@ -200,8 +201,8 @@ places:
       - "Run-off from fields, roads, birds and livestock collects here, so nothing in it is safe raw."
     useful:
       - "Once the mains has gone and the stored water is running out, this is a real source ([Water module](module:water))."
-      - "For washing, flushing and cooking water, which matters less than drinking water does."
-      - "As an obvious meeting point and a landmark on a route out of town."
+      - "When flushing, washing and cooking water are running short; cooking water is treated exactly as drinking water ([PMR446](page:pmr446))."
+      - "In a long drought or a rota supply, when standpipes and bowsers cannot keep up ([Water module](module:water))."
     avoid:
       - "Never go in after anything: the water is colder than it looks and the banks are steep."
       - "In a freeze keep off the ice; British ice rarely reaches the 10 cm that bears a person ([PMR446](page:pmr446))."
@@ -260,10 +261,10 @@ places:
       - "Step-free routes, a waiting room and, at bigger stations, a first-aid room and a defibrillator."
       - "Electric trains stop with the grid and diesel services run only in part ([PMR446](page:pmr446))."
     useful:
-      - "As a known, dry, lit meeting point for people walking towards you ([PMR446](page:pmr446))."
+      - "When the household is scattered and the phones are down, it is the one address everyone can find ([PMR446](page:pmr446))."
       - "In a flood, stations often sit on an embankment above the streets around them."
       - "For information: staff hear more, and sooner, than anyone holding a dead phone."
-      - "As a handrail to follow out of town on foot, from the far side of the fence."
+      - "Walking out of town, follow the line to the next town from outside the fence, never the track."
     avoid:
       - "Do not build a plan around trains: they stop early in almost every emergency."
       - "Crowds build fast at stations when people try to leave a city; expect a crush."
@@ -292,7 +293,7 @@ places:
       - "A small airfield has far less: a clubhouse, a windsock, avgas and a locked hangar."
     useful:
       - "Only when officials tell you to go, and give you a route and a time ([Water module](module:water))."
-      - "As a large open landmark for navigation, seen from a distance and from outside the fence."
+      - "If a relative is stranded there, arrange to meet them at a car park outside the perimeter."
       - "In a flood, airfields are flat, drained, and often where aid is flown in first."
     avoid:
       - "In a war an airfield is a target: put distance between it and where you sleep."
@@ -321,8 +322,8 @@ places:
       - "Radios and a chain of command that answers to the police in a civil emergency ([Water module](module:water))."
     useful:
       - "Almost never; the exception is a soldier on a cordon who can pass a message on."
-      - "As a fixed landmark to navigate by and, more usefully, to keep well away from."
-      - "Troops sent to help work under police control at rest centres, not here ([Water module](module:water))."
+      - "Knowing where the perimeter runs is what lets you plan a route that keeps well clear of it."
+      - "Troops helping in an emergency work under police control, not on their own authority ([Water module](module:water))."
     avoid:
       - "In an invasion or a nuclear exchange these are targets; move away and sleep elsewhere ([Water module](module:water))."
       - "Being on military land is a criminal offence, unlike ordinary trespass ([PMR446](page:pmr446))."
@@ -350,20 +351,20 @@ places:
       - "Nothing at the gate for the public: no shelter, no water, no aid."
       - "Some sites are defuelled or decommissioning and hold waste rather than a running reactor."
     useful:
-      - "As a place to know the distance to, and the usual wind direction from, before anything happens."
-      - "In an incident, only as the thing you move away from, across the wind and then upwind."
-      - "Not as a destination at all: the instruction is get inside, stay inside, stay tuned ([Water module](module:water))."
+      - "Find out now whether home, school and work sit inside the detailed emergency planning zone ([Water module](module:water))."
+      - "A siren or an Emergency Alert means go indoors and turn the radio on, not go and look ([PMR446](page:pmr446))."
+      - "Choose now which inner room or cellar the household shelters in, and stock it with water."
     avoid:
       - "Never drive towards a release, and never drive out to collect children; schools keep them in."
       - "Do not take iodine tablets until the authorities say so; they protect the thyroid alone ([Water module](module:water))."
       - "The site is a target in a war and a security area at every other time."
       - "Rumour spreads faster than fallout: act on the radio and Emergency Alerts, not hearsay ([PMR446](page:pmr446))."
     approach:
-      - "Go into the nearest solid building, shut doors and windows, and turn off fans and extractors."
+      - "Take the radio, torches, water and medicines into the shelter room before you shut it up."
       - "Tune a battery or wind-up radio to BBC local radio and wait for instructions ([PMR446](page:pmr446))."
       - "If you were outdoors, bag the outer clothing and wash without scrubbing ([Water module](module:water))."
+      - "Know where the iodine tablets are kept and which dose each person takes ([Water module](module:water))."
       - "Leave only when told, along the route given, and take medicines and documents with you."
-      - "Find out now whether home sits inside the detailed planning zone, and where the tablets are."
   chemical:
     title: Chemical site
     expect: >-
@@ -380,19 +381,19 @@ places:
       - "Nothing here for a household: no aid, no water, no shelter, and a locked gate."
       - "Heavy tanker traffic and a rail siding at larger sites, so the hazard moves on the roads."
     useful:
-      - "Only as a hazard to know the bearing of: which way is upwind of it from home."
-      - "As a landmark for navigation, from a safe distance and from the upwind side."
-      - "Never as a destination in an incident: the plume, not the fence, is the danger."
+      - "Work out now which way the prevailing wind carries from it, and which roads run crosswind."
+      - "If the site alarm sounds, decide at once whether you are upwind; the smell comes later."
+      - "Pick the room to shelter in now, on the side of the house away from the works."
     avoid:
       - "Never drive into a cloud, and never go closer to see what is burning."
       - "Downwind and downhill of a release is the worst place to be; move across the wind."
       - "Smoke from a chemical fire carries for miles, so stay indoors when it drifts your way."
       - "In flooding, drums and tanks float and burst; treat floodwater near a works as contaminated."
     approach:
-      - "Indoors, stay in: shut doors and windows, turn off fans and extractors, and listen ([Bleeding](card:bleeding))."
-      - "Outside, move across the wind, then upwind and uphill, away from the smell."
-      - "Anyone splashed has their clothing cut off and the chemical blotted, not rubbed ([Bleeding](card:bleeding))."
-      - "Move casualties away from the site before treating them, and leave contaminated clothing outdoors."
+      - "Take the radio, a torch and drinking water into the room you seal, and stay off the phone."
+      - "Anyone splashed has clothing cut off outside, is blotted dry, then washed for 15 to 20 minutes ([Bleeding](card:bleeding))."
+      - "Keep the wash water away from you and from any drinking water, and bag the clothing ([Bleeding](card:bleeding))."
+      - "Never go into a cellar or tank after someone: the gas that dropped them will drop you ([Bleeding](card:bleeding))."
       - "Report a leak or a strange smell to 999 and the Environment Agency hotline ([PMR446](page:pmr446))."
   flood-zone:
     title: Flood zone
@@ -481,7 +482,7 @@ places:
       - "Bog, peat hags and cliffs in mist; go round them rather than through ([PMR446](page:pmr446))."
       - "Access can be closed for shooting, lambing or fire risk, so read the notices at the gate."
     approach:
-      - "Uprooting a wild plant is an offence, and picking to sell is not covered ([PMR446](page:pmr446))."
+      - "Uprooting a wild plant is an offence, and picking to sell can be theft ([PMR446](page:pmr446))."
       - "Carry map, compass, water, food and a shelter; there is nothing out here to buy."
       - "Walk on a bearing in poor visibility, and treat every edge as a drop."
       - "Shut every gate, keep dogs close, and give cattle with calves a wide berth."
