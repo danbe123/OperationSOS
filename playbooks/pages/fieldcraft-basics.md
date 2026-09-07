@@ -19,6 +19,10 @@ The order of priorities is the same everywhere but the weights are British:
 4. **Water**: you have a day or two, more in cold weather, and Britain is rarely short of it ([Water outdoors](page:fieldcraft-water)).
 5. **Food**: you have weeks. Foraging is a skill for the long rebuild, not for the first night ([Wild food](page:fieldcraft-food)).
 
+{{#if dark}}
+In the dark that order tightens: stop, shelter and wait for light rather than press on. Walking on in poor visibility is what causes most accidents here, and a night out in a group shelter is survivable in a way a fall is not ([Shelter and staying warm](page:fieldcraft-shelter)). If you must move, keep the party within talking distance, follow a wall, track or stream rather than a bearing across open ground, use the torch on its lowest useful setting to save night vision and cells, and expect to cover half the distance you planned ([Map, compass and tides](page:fieldcraft-navigation)).
+{{/if}}
+
 ## Weather is the enemy and the timetable
 
 Fronts arrive from the south-west, so a falling barometer, a wind backing from west to south, and high thin cloud thickening from the west all mean rain within hours; the tops are colder, windier and wetter than the valley, and mist on them is the real hazard. How to read the sky, and what the hills do to temperature and wind, are on [Reading the weather and exposure](page:fieldcraft-weather). Plan every move with a turn-back time, and turn back when you reach it.
@@ -37,6 +41,14 @@ Law matters less once society has stopped functioning, but the habits it builds 
 ## Rescue in Britain
 
 The number is **999** or **112** — [[call 999]]: police for anything inland (they call out the volunteer mountain and lowland rescue teams), coastguard for the shore and the sea. Who to ask for, what to say, the six-blast whistle signal and what to do when the phones are down are on [Getting found](page:fieldcraft-rescue).
+
+{{#unless roads}}
+With the roads blocked, no ambulance or team vehicle reaches the road head and any help that comes is on foot, so the wait is far longer than usual. Plan every trip so the party can walk itself out: fewer miles, an earlier turn-back time, the warm layers and food for a night out rather than for the day, and a route card left with someone. Moving a casualty then becomes your job, and the carries and improvised stretcher are on [Rope, knots and tools](page:fieldcraft-rope-tools) and [Getting found](page:fieldcraft-rescue).
+{{/unless}}
+
+{{#if scenario:severe-winter}}
+**Halve the plan.** In a hard winter the daylight is short, the ground is frozen or drifted, and the wet cold that kills here is joined by real cold ([Reading the weather and exposure](page:fieldcraft-weather); [Severe winter](playbook:severe-winter)). Take the day's route and cut it, add a hat, gloves, spare socks and a hot drink, carry a group shelter, tell someone the route and the time you will be back, and turn back at the first sign of the weather closing in rather than at the top.
+{{/if}}
 
 ## Kit that earns its place
 

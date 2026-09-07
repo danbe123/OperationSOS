@@ -34,6 +34,10 @@ British rivers are small until it rains, and then they are not. A beck you stepp
 
 If you are swept away: feet up and downstream, on your back, steer to the bank, and get out of wet clothes at once ([Cold shock](kiwix:wikipedia_en_all_maxi/Cold_shock_response); [Military Mountaineering, TC 3-97.61, the river-crossing chapter](doc:tc-3-97-61-military-mountaineering)).
 
+{{#if scenario:storms-flooding}}
+**Cross nothing.** An upland beck rises within an hour of heavy rain, and floodwater hides open manholes, sewage and washed-out ground ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Go round, wait for the level to drop, or use a bridge whose far side you can see. Keep off flood plains, riverbanks and the foot of cliffs, expect the footbridge you used yesterday to be gone, and take the high ground even when it is the long way round ([Storms and flooding](playbook:storms-flooding)).
+{{/if}}
+
 ## Bog, moor and mountain
 
 Bright green sphagnum, cotton grass and pools mean deep bog; heather and bilberry mean firm ground. Test with a pole, walk on the tussocks, and if you sink to the thigh, spread your weight backwards and crawl out ([Bog](kiwix:wikipedia_en_all_maxi/Bog)). Peat hags, the eroded trenches of the Pennines and the Cairngorms, hide you from the wind and swallow hours. On the tops, the danger is the weather and the cliff in the mist: in poor visibility, walk on a bearing, count paces, and treat every edge as a drop ([Map, compass and tides](page:fieldcraft-navigation); [Reading the weather and exposure](page:fieldcraft-weather)).
@@ -50,9 +54,21 @@ Cows with calves are the danger, and nearly always because of a dog. Keep dogs o
 
 Move at night only with a reason: heat, pursuit, or a road you dare not use by day. Red light keeps night vision; a head torch on full ruins it for a while. Follow linear features, walls, tracks, rivers and field edges, count paces (your night pace is shorter, so measure it separately, [FM 3-25.26, p. 141](doc:fm-3-25-26-map-reading#page=141)), and stop every hour to listen. A British night in summer never gets fully dark in the north; in winter the dark lasts most of the day, and the box's Sun and moon tool gives the times. Fog on low ground and moor is the real hazard: in fog, stop.
 
+{{#if dark}}
+It is dark now, so moving needs a reason better than impatience. Red light keeps night vision and a head torch on full ruins it; follow linear features, walls, tracks, rivers and field edges, count paces with your measured night figure rather than the day one ([FM 3-25.26, p. 141](doc:fm-3-25-26-map-reading#page=141)), keep everyone within talking distance, and stop every hour to listen. Treat every edge as a drop, cross no water you cannot see the bottom of, and if fog comes down, stop where you are ([Map, compass and tides](page:fieldcraft-navigation)).
+{{/if}}
+
+{{#if scenario:severe-winter}}
+Snow changes the arithmetic: the daylight is short, drifts hide walls, ditches and streams, and a track under snow is a guess. Halve the distance you plan, start early and stop early, break trail in turns at the front, and follow walls and fence lines rather than open ground. A sledge or a plastic sheet drags a load over snow that no barrow will cross, and the party moves at the pace of its slowest member ([Severe winter](playbook:severe-winter); [Reading the weather and exposure](page:fieldcraft-weather)).
+{{/if}}
+
 ## Carrying
 
 A load you can carry all day is smaller than the one you can lift, and the pack that fits your back matters more than its size ([Camping and Woodcraft, the pack chapter](doc:kephart-camping-and-woodcraft)). Weight high and close to the back, hip belt taking most of it, water and waterproofs on top, the heaviest things nearest the spine. A wheelbarrow, a pram, a bicycle pushed with panniers, or a sledge on snow moves far more than a back does, and the roads and canal towpaths of Britain are made for wheels ([Evacuation module](module:evacuation); [Vehicles and fuel module](module:vehicles-fuel)).
+
+{{#unless roads}}
+Blocked roads make this page the way everyone moves. The footpath, bridleway, byway, towpath and disused railway network reaches most of Britain and takes wheels: a barrow, a pram, a bicycle with panniers or a sledge carries far more than a back ([Evacuation module](module:evacuation)). Work the timings from Naismith's rule and then slow them for the load, the party and the ground ([Naismith's rule](kiwix:wikipedia_en_all_maxi/Naismith's_rule)). Keep off carriageways where vehicles are being recovered, take the path alongside, and leave gates as you find them.
+{{/unless}}
 
 ## Go deeper
 

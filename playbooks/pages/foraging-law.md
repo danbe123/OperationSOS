@@ -18,6 +18,18 @@ This is the home page for foraging, fishing and hunting law; the field-craft pag
 
 Before eating anything foraged, check it is correctly identified, cooked if it needs to be, and not from a contaminated spot: a roadside verge, a dog-walking area, or a field that has recently been sprayed ([FSA safe foraging](kiwix:govuk_resilience/www.gov.uk/government/publications/guidance-for-safe-foraging/guidance-for-safe-foraging)). What is safe and what kills is on [Wild food in Britain and Ireland](page:fieldcraft-food).
 
+{{#unless shops}}
+The law does not lapse because the shops are shut. Picking wild fruit, foliage, fungi and flowers for your own use is still not theft in England and Wales, uprooting any wild plant without the landowner's permission is still an offence across Great Britain, and the rod licence and the close season still apply ([Theft Act s4](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1968/60/section/4); [WCA s13](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/13)). Ask the landowner rather than assume: a hedge you have permission to pick is worth far more over a season than one you are chased off.
+{{/unless}}
+
+{{#if scenario:famine}}
+Hunger is not a defence, and the rules worth keeping are the ones that leave the hedge producing next year: take a share and leave the rest, never uproot, leave the rare Schedule 8 plants alone, and keep off the reserves and forests whose byelaws forbid picking entirely ([WCA s13](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/13)). Eggs and nesting birds are protected everywhere in the UK, whatever the species, and a snare is unlawful unless you have checked the current law where you are ([WCA s1](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/1); [WCA Part I](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/part/I)).
+{{/if}}
+
+{{#if scenario:long-rebuild}}
+Over years the question stops being what the law allows and becomes what the land can stand and what the neighbours have agreed, so settle it in the open: who gathers where, which woods are left to recover, what is taken in which season, and who holds the fishing ([Community module](module:community); [Long rebuild](playbook:long-rebuild)). Deer, game and fish seasons exist so that breeding stock survives the winter, so keep them even when nobody is enforcing them, and expect the licences and the wardens to come back.
+{{/if}}
+
 ## The coast
 
 More than half of the UK's foreshore, the strip between high and low water, belongs to the Crown Estate, and gathering seaweed or shellfish there in quantity needs permission ([Crown Estate](kiwix:wikipedia_en_all_maxi/Crown_Estate)). Shellfish taken from water of unknown quality carry a real risk of norovirus, E. coli and shellfish poisoning, and should not be relied on without knowing the water is clean ([Paralytic shellfish poisoning](kiwix:wikipedia_en_all_maxi/Paralytic_shellfish_poisoning)).

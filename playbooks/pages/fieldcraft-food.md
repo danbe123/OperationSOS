@@ -11,6 +11,14 @@ category: fieldcraft
 
 Eat nothing you cannot name with certainty, and do not learn to name things from a book in a crisis. Wild food is a skill to build in good years, one plant at a time, with someone who knows. In the first days of an emergency it is not worth the risk; over months and years it is the difference between a hungry winter and a fed one. There is no test, no rule of thumb and no animal behaviour that tells you a plant or a fungus is safe. Universal edibility tests from survival manuals are written for other continents and will not protect you from what grows here.
 
+{{#unless shops}}
+With the shops shut the temptation is to eat the countryside, and that is exactly when people poison themselves. The rule does not change: eat nothing you cannot name with certainty, and pick the common plants on this page in quantity rather than experimenting with new ones. Nettles, blackberries, hazelnuts and greens are a supplement to the food store and the garden, not a replacement for either ([Food module](module:food); [Growing food module](module:growing-food)). Where the effort pays is the glut: gather heavily in season and dry, salt or pickle it.
+{{/unless}}
+
+{{#if scenario:famine}}
+**Hunger is when foragers take the risk they would not take fed.** Hemlock water dropwort, the most poisonous plant in Britain, grows in ditches and wet meadows everywhere and has killed people who took it for wild celery or parsnip ([Hemlock water dropwort](kiwix:wikipedia_en_all_maxi/Oenanthe_crocata)). So keep the rule, and spend the effort where the calories are: hazelnuts and sweet chestnuts in autumn, acorns leached in many changes of water, shellfish and seaweed from a clean shore, and roots only if someone genuinely knows them ([Famine](playbook:famine)). Have a second person confirm every identification.
+{{/if}}
+
 ## Plants that are common, easy and safe
 
 - **Nettle** (spring to early summer, then the new growth after cutting): leaves cooked as greens or soup, rich in protein and iron; wear gloves, cook for a minute and the sting is gone ([Nettle](kiwix:wikipedia_en_all_maxi/Urtica_dioica)).

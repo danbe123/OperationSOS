@@ -28,6 +28,10 @@ This page follows the sections of the government's Household Emergency Plan ([Pr
 
 Choose places that are easy to find and open to the public, or a relative's home if it is safe to reach ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/)).
 
+{{#unless roads}}
+Check both meeting points again: with the roads blocked the out-of-area one may be unreachable, so agree a nearer one everyone can walk to, and write down how long that walk takes for the slowest person in the house ([Evacuation module](module:evacuation)). Add who collects the children on foot and by which route, where the barrow, bicycle or pram is kept, and which neighbours have a vehicle that could get out if the road clears ([Moving across country](page:fieldcraft-moving)).
+{{/unless}}
+
 ## Our out-of-area contact
 
 {{#if phones}}Someone less likely to be caught up in the same event, who everyone can call or text: name, number.{{else}}Someone less likely to be caught up in the same event: name, number and address. With the phones down the address is the useful half, because the only way to reach them is to go ([getting help without phones](page:no-phones)).{{/if}}
@@ -61,6 +65,14 @@ The "come now" signal is a car horn, a bell or a light left on, never a whistle 
 | Grab bags | |
 | This box | |
 
+{{#unless power}}
+Fill this in by torch and work from the paper copy. With the power off the fridge holds about four hours and the freezer 48 hours full, or 24 half full ([What still works](page:what-still-works)). Note who here depends on electrical medical equipment, and tell the network operator's engineers, the rest centre or the police in person if the Priority Services Register was never joined ([UK numbers](page:uk-numbers)). Write down what the power bank is for: this box and one phone, not lighting ([Power module](module:power)).
+{{/unless}}
+
+{{#unless heating}}
+Add the warm room to the plan: which room everybody sleeps in, who has the spare blankets and sleeping bags, and who gets checked on twice a day because cold is dangerous to them, the very old, the very young and anyone ill ([Shelter and heat module](module:shelter-heat)). Write down what you are heating and cooking with, and the rule that nothing burning fuel is used in a closed room without ventilation ([carbon monoxide card](card:carbon-monoxide)).
+{{/unless}}
+
 ## Insurance and documents
 
 Policy numbers, and where the passports, birth certificates and other documents are kept.
@@ -72,6 +84,14 @@ Carriers, food, medication, microchip details, and where they go if the house is
 ## Water and food
 
 Store at least 3 litres of drinking water per person per day: the government asks every household for three days' worth, and every playbook in this box plans for 14 ([Water module](module:water)). Litres stored: _____. Date to rotate: _____. Food that needs no cooking for the same period ([Food module](module:food)).
+
+{{#unless water}}
+Write down where the stored water is, how many litres are left, how many days that is at 3 litres a person a day, and where the household is collecting more: the bottled-water point your water company sets up, a neighbour's butt, or a stream to be treated ([Water module](module:water); [Water disinfection](page:water-disinfection)). Add who carries it, because water is heavy and it is a two-person job for most households, and who checks that the neighbours on the list below have some.
+{{/unless}}
+
+{{#unless shops}}
+With the shops shut the plan needs numbers rather than intentions: days of food in the house, days of each prescribed medicine, nappies and formula for a baby, pet food, and the cash to hand, because card readers and cash machines go down with the network ([Food module](module:food); [What still works](page:what-still-works)). Write the date each of those runs out, who is going to the distribution point, and what this household is willing to share with the neighbours listed below ([Community module](module:community)).
+{{/unless}}
 
 ## Neighbours who may need help
 

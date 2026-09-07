@@ -32,6 +32,10 @@ When the cord runs out, Britain grows it. **Nettle** stems, stripped of leaves, 
 
 A fixed blade of 10 to 12 cm with a full tang, or a stout folding knife, does everything from feather sticks to butchery. Cut away from the body and away from the hand holding the work, with the elbows on the knees for a stable cut; never cut towards the thigh's femoral artery, and never catch a falling knife. Use the spine on the ferro rod and keep the edge for wood. What you may carry, and what counts as a good reason for a fixed or locking blade, is on [Knife and firearms law](page:knife-firearms-law).
 
+{{#if dark}}
+Knife, saw and axe injuries happen at the end of the day, in bad light, to tired people. Do the cutting and splitting while there is light and leave only the knots for the dark, which is why the six knots are worth practising until your hands know them without your eyes. If you must cut by torch light, put the torch on your head, sit down, brace your elbows on your knees, cut away from your thigh, and never grab at a falling blade.
+{{/if}}
+
 ## Saw and axe
 
 A folding saw cuts more wood per hour, more safely, than any axe and is the tool to carry. An axe splits, and splitting is where the axe earns its place: on a chopping block, the wood on the far side of the block from your legs, a short controlled swing, the axe stopping in the block, never in the air behind you. Carry an axe masked, and never chop with anyone within two axe lengths. A hatchet used one-handed above the knee sends people to hospital every winter.
@@ -39,6 +43,14 @@ A folding saw cuts more wood per hour, more safely, than any axe and is the tool
 ## Keeping an edge
 
 A blunt tool is the dangerous one. A small stone or a diamond card, a little water, the blade at the angle the maker set (a matchbook thickness at the spine for a knife), a dozen strokes each side, then a strop on the back of a leather belt. Axes are sharpened with a round puck in circles; saws are replaced, not sharpened. The repair guides in the library cover sharpening step by step ([iFixit: how to sharpen knives](kiwix:ifixit_en_all/Guide/How+to+Sharpen+Knives/6098)).
+
+{{#unless shops}}
+Nothing is being replaced now, so the tools have to outlast the emergency. A saw blade cannot be resharpened and is the thing to spare; an axe head is wedged tight before it works loose; every edge is touched up on a stone before it is blunt, because the blunt tool is the one that slips ([iFixit: how to sharpen knives](kiwix:ifixit_en_all/Guide/How+to+Sharpen+Knives/6098)). Cord is the same: whip and reuse rather than cut and discard, and start making nettle, bramble and willow cordage now, not when the paracord has gone.
+{{/unless}}
+
+{{#if scenario:long-rebuild}}
+Over years the hedgerow becomes the rope shop: nettle stems for fine cord, willow and lime inner bark soaked and peeled for rope, bramble runners and ivy for binding a frame, straw and rushes plaited for rough work. Cut and dry it in season, store it dry, and teach the two-strand twist to whoever will sit and do it. Keep one good knife, one axe, one saw and the stones to sharpen them, and repair rather than replace ([Tools and repair module](module:tools-repair)).
+{{/if}}
 
 ## Improvised tools
 

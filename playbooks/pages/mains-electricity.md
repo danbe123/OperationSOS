@@ -19,17 +19,29 @@ The consumer unit holds a main switch, residual current devices (RCDs) that trip
 
 Under Part P of the Building Regulations in England, a new circuit, a replacement consumer unit, and any addition or alteration in a "special location" such as a bathroom are notifiable work that must be certified as complying, in practice by a registered electrician ([Approved Document P, p. 14](doc:ad-p#page=14)). Before touching any wiring: isolate the circuit at the consumer unit, then prove it is dead with a proper voltage tester; never work on anything live ([HSE INDG231, p. 3](doc:hse-indg231#page=3)). Run extension leads unwound, not daisy-chained together. Water and electricity do not mix: never touch switches, sockets or appliances with wet hands, and keep heaters and lamps well away from flooded areas.
 
+{{#unless power}}
+Treat the whole installation as live and as likely to come back without warning. Leave the main switch and the breakers as they are unless something is damaged or has been under water, but switch off and unplug the electric heaters, the cooker and anything that would be dangerous if it started up while the house is empty or asleep ([HSE INDG231, p. 3](doc:hse-indg231#page=3)). Leave one lamp switched on so you know the moment it returns, report the cut to your network operator — [[call 105]] — and never run a generator or a stove indoors ([Power module](module:power)).
+{{/unless}}
+
 ## Generators and batteries
 
 A generator or battery system may only feed the house wiring through a transfer switch that disconnects the property from the grid first ([Emergency power system](kiwix:wikipedia_en_all_maxi/Emergency_power_system)). Plugging a generator into a socket with a "suicide lead" back-feeds the street cables and can kill a lineman working on what they believe is a dead network, and it is a new circuit, so notifiable work under Part P ([Approved Document P, p. 14](doc:ad-p#page=14)). Run the set outdoors, well away from doors and windows: the distance and the carbon monoxide rules are in the [Power module](module:power). Solar and batteries are on [Solar panels in a power cut](page:solar-islanding).
 
 ## Fallen power lines
 
-If a storm brings a line down, keep as far away as possible: electricity at high voltage can jump gaps with no warning ([Prepare, storms](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/storms/)). Over half of the UK's fatal electrical accidents each year come from contact with overhead lines ([HSE INDG231, p. 4](doc:hse-indg231#page=4)). Treat every line as live even in a power cut, keep vehicles and animals clear, and report it on 105 to the network operator, the same number as for a power cut ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+If a storm brings a line down, keep as far away as possible: electricity at high voltage can jump gaps with no warning ([Prepare, storms](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/storms/)). Over half of the UK's fatal electrical accidents each year come from contact with overhead lines ([HSE INDG231, p. 4](doc:hse-indg231#page=4)). Treat every line as live even in a power cut, keep vehicles and animals clear, and report it to the network operator, the same number as for a power cut — [[call 105]] ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).
+
+{{#if scenario:storms-flooding}}
+Assume lines are down across the area and stay well away from all of them: high voltage jumps gaps with no warning, and a line is treated as live even in a power cut ([Prepare, storms](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/storms/); [HSE INDG231, p. 4](doc:hse-indg231#page=4)). Keep vehicles, animals and children clear, warn the neighbours in person, and report it — [[call 105]]. If water has reached sockets, an appliance or the consumer unit, switch off at the main switch only if you can reach it from a dry position, and have the installation checked before it is used again.
+{{/if}}
 
 ## Prepayment and smart meters
 
 A prepayment meter, or a smart meter in prepay mode, cuts the supply when the credit runs out even though the grid is fine. Every meter has an emergency credit you can switch on from the meter or the in-home display when the balance is gone, and most suppliers will not disconnect overnight, at weekends or on bank holidays ("friendly credit"); the amounts and hours are set by your supplier and shown on the meter. If you cannot top up, ring the supplier's number on the bill and ask for help before the credit runs out. A smart meter switched to prepay mode works the same way, and suppliers can make that switch remotely ([Smart meter](kiwix:wikipedia_en_all_maxi/Smart_meter)).
+
+{{#if scenario:grid-collapse}}
+**Plan for the restoration as well as the outage.** Power is likely to come back area by area and may go again under rota disconnection, so keep the fridge and freezer shut, keep computers, the router and chargers unplugged against the surge when supply returns, and expect a prepayment meter to want topping up the moment it has power again ([Grid collapse](playbook:grid-collapse); [Power module](module:power)). If a generator is to feed the house wiring it needs a transfer switch fitted by an electrician, never a lead into a socket, which can kill a lineman working on a network they believe is dead ([Approved Document P, p. 14](doc:ad-p#page=14)).
+{{/if}}
 
 ## Go deeper
 

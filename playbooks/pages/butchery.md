@@ -17,6 +17,10 @@ The practical rule that sits under all the law: the animal must be unconscious b
 
 Sharp knife, a second knife, a rope or hook to hang the carcass, two buckets, clean water, a table you can scrub, and gloves: rabbits and hares can carry tularaemia, which passes through cuts in the skin when skinning and through undercooked meat, and gloves and thorough cooking are the protection ([Tularemia](kiwix:wikipedia_en_all_maxi/Tularemia)). Never eat an animal that was sick or found dead ([Wild food in Britain and Ireland](page:fieldcraft-food)). Rabbits fed on grass taste better if given a week on grain or pellets before killing ([Rabbit production (FAO)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/CD3WD/AGRIC/R0041E/B181_18.HTM)).
 
+{{#unless water}}
+With the taps off you still need clean water, so draw it before you start: one bucket of treated water for hands, knives and carcass and a second for rinsing ([Water disinfection](page:water-disinfection)). Gloves matter more than ever, because tularaemia passes through cuts in the skin while skinning rabbits and hares ([Tularemia](kiwix:wikipedia_en_all_maxi/Tularemia)). Scrub the table and the knives afterwards, and pour the dirty water and bury the gut contents well away from any well or watercourse ([Sanitation module](module:sanitation)).
+{{/unless}}
+
 ## Rabbits
 
 1. **Kill.** Hold the rabbit by the hind legs in one hand; put the thumb of the other hand on the neck just behind the ears with the fingers round the neck; press down hard with the thumb while pulling the rabbit sharply upwards, which dislocates the neck. The alternative is a hard chopping blow with a heavy stick to the back of the neck just behind the ears ([Raising rabbits (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/RABBITS.HTM)). Done fast and firmly, dislocation separates the spinal cord from the brain at once and is the accepted humane method for small animals ([Cervical dislocation](kiwix:wikipedia_en_all_maxi/Cervical_dislocation)). If in doubt that it is dead, strike again immediately.
@@ -40,6 +44,14 @@ A sheep or goat is a two-person job and a legal one: it must be stunned first, b
 ## Hanging
 
 Meat stiffens after death and then softens as its own enzymes work; hanging develops flavour and tenderness, but only in the cold. Beef is hung at 1 to 3 °C and about 85% humidity for a minimum of eleven days and rarely more than 20 to 30; warmer and it spoils, colder and it freezes and the process stops ([Meat hanging](kiwix:wikipedia_en_all_maxi/Meat_hanging)). Game was traditionally hung until "high" ([Meat hanging](kiwix:wikipedia_en_all_maxi/Meat_hanging)). Without a fridge, that means: hang in the coldest airy place you have, out of sun, in a muslin bag against flies, for a day or two in winter and not at all in summer, when rabbits and poultry are cooked the day they are killed and larger carcasses are salted, smoked or dried at once ([Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM)). Whatever the animal, cook meat to 74 °C right through; this kills the parasites that pork and wild game can carry and that freezing does not ([Trichinosis](kiwix:wikipedia_en_all_maxi/Trichinosis)).
+
+{{#unless power}}
+No fridge and no freezer means nothing is stored cold, so kill only what the household will eat that day, and hang only in genuinely cold weather, in the coldest airy place you have, in a muslin bag against flies ([Meat hanging](kiwix:wikipedia_en_all_maxi/Meat_hanging); [Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM)). Anything bigger than a rabbit or a bird is salted, smoked or dried the same day, so have the salt weighed out and the smoker built before the animal is killed.
+{{/unless}}
+
+{{#if scenario:heat-drought}}
+**Nothing hangs in this heat.** In warm weather rabbits and poultry are cooked the day they are killed and larger carcasses are salted, smoked or dried at once ([Chickens and ducks (VITA)](kiwix:cd3wdproject.org_en_all/www.cd3wdproject.org/VITAHTML/SUBLEV/EN1/CHICDUCK.HTM); [Meat hanging](kiwix:wikipedia_en_all_maxi/Meat_hanging)). Kill at first light, work in the shade, get the guts out and the carcass cooling at once, and keep everything under muslin, because blowflies find meat in minutes. Cook to 74 °C right through whatever the weather ([Trichinosis](kiwix:wikipedia_en_all_maxi/Trichinosis)).
+{{/if}}
 
 ## Smoking, salting and drying
 

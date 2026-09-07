@@ -20,6 +20,10 @@ British cold rarely goes far below freezing, but it comes with rain and wind, an
 - Near materials: dead wood, bracken, leaf litter, a dry stone wall.
 - Where you can be found: near the path you told someone you would take, unless you are hiding.
 
+{{#if scenario:storms-flooding}}
+**Choose for the water, not the wind.** Get off the valley floor, off the flood plain and away from streams and drainage lines: British rivers rise by metres in a night of rain, and the flat grass beside a beck is the first thing to flood ([Storms and flooding](playbook:storms-flooding)). Do not pitch under trees in a gale, or in the lee of anything that can come down. Keep a bag packed so you can move higher in the dark, and check where the water has got to before you sleep, not after ([Reading the weather and exposure](page:fieldcraft-weather)).
+{{/if}}
+
 ## The bothy and the wall
 
 Britain is full of ready-made shelter. Mountain bothies are unlocked huts left open for anyone, mostly in Scotland, northern England and Wales, with a fireplace and a sleeping platform ([Mountain Bothies Association](kiwix:wikipedia_en_all_maxi/Mountain_Bothies_Association)). Barns, sheepfolds, ruined cottages, church porches, bus shelters, the lee of a dry stone wall with a tarp over it: in an emergency, any of these beats the best debris hut you could build in the dark.
@@ -41,9 +45,21 @@ A **debris bed** matters more than the roof. The ground takes heat far faster th
 
 In snow, which is rare and short-lived below the Scottish tops, a trench with a roof of branches and snow is warmer than the open, and any shelter must keep an air hole.
 
+{{#if dark}}
+Find or build it now rather than later: everything on this page takes far longer by torch light, and a party still gathering bracken at midnight is a cold party. Take the ready-made option, a bothy, a barn, a wall with a tarp over it, over anything you would have to build. Get the insulation under everybody first and the roof second, keep the head torch on your head, and keep the spare cells in an inside pocket where the cold cannot flatten them.
+{{/if}}
+
+{{#if scenario:severe-winter}}
+In hard frost the ground takes the heat and the wind does the rest, so double the insulation under you before you improve the roof, and use the snow: banked against the windward side, or as a trench with a roof of branches, it is warmer than the open, and every shelter keeps an air hole ([FM 31-70, the shelter chapters](doc:fm-31-70-cold-weather); [Severe winter](playbook:severe-winter)). Keep one dry set of clothes untouched for sleeping, change into it, and get food and a warm drink into everyone before they lie down ([hypothermia card](card:hypothermia)).
+{{/if}}
+
 ## Clothing and the body's own shelter
 
 Wool and synthetics stay warm when wet; cotton and denim do not, and a wet cotton hoodie is a cause of hypothermia in British summers. Layers: a wicking base, an insulating middle, a wind and waterproof shell; vent before you sweat, add a layer the moment you stop ([Layered clothing](kiwix:wikipedia_en_all_maxi/Layered_clothing)). Hat and gloves first when cold, because the head and hands lose heat fastest. Keep one dry layer in a bag for the night. Eat: the body cannot make heat from nothing, and a cold person who has not eaten for hours will not warm up in any shelter.
+
+{{#unless heating}}
+Indoors with the heating off the same rules apply to a house. Pick one small room out of the wind, close the doors, hang blankets over the windows and the door, and sleep everybody in it. Insulate from the floor as you would from the ground, with cardboard, a foam mat, cushions or a mattress; wear the layers you would wear outside, hat included; and eat before bed ([Shelter and heat module](module:shelter-heat)). Watch the very old and the very young for the early signs of hypothermia, which start as clumsiness and unusual quiet ([hypothermia card](card:hypothermia)).
+{{/unless}}
 
 ## Hypothermia and wet feet
 

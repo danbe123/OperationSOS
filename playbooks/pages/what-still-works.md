@@ -50,6 +50,18 @@ Emergency Alerts are the UK's national warning system. They are cell broadcasts 
 - Fill in the [household plan](page:household-plan): meeting point, out-of-area contact, numbers on paper.
 - If anyone in the house relies on the landline, ask the provider for a battery back-up unit before it is needed, and see the Priority Services Register on [UK numbers](page:uk-numbers).
 
+{{#if scenario:grid-collapse}}
+**Read the table as a timetable.** The register's reasonable worst case is a total loss with restoration over several days, up to seven, and rota disconnection afterwards ([NRR 2025, p. 45](doc:nrr-2025#page=45)), so the mast batteries go in the first hours, the freezer over the first days, and the water follows wherever the pumping needs electricity ([Grid collapse](playbook:grid-collapse)). Move to a listening schedule on FM rather than leaving the radio running, keep the power bank for this box and one phone, and expect fuel and food to be cash and queue rather than card and pump.
+{{/if}}
+
+{{#if scenario:emp}}
+**Assume the whole column is "no", with no restoration date**, and that Emergency Alerts, which need a 4G or 5G mast, have gone with everything else ([EMP](playbook:emp)). What comes through is what was short, unplugged and ideally inside a metal tin: a handheld radio, a torch, a spare phone, this box's spare drive ([Nuclear electromagnetic pulse](kiwix:wikipedia_en_all_maxi/Nuclear_electromagnetic_pulse)). A surviving FM receiver is the one national link if the transmitters are still on air, so listen at agreed times rather than continuously, and expect cars to be mostly fine.
+{{/if}}
+
+{{#if scenario:solar-storm}}
+The failures come in an order here: GPS timing in the mobile networks and the payment systems first, then satellite services, then HF shortwave, then regional power ([NRR 2025, p. 137](doc:nrr-2025#page=137); [Solar storm](playbook:solar-storm)). So a phone may show bars and still fail, and satellite SOS is unreliable, while FM radio, PMR446 and the VHF and UHF amateur bands keep working because they do not use the ionosphere ([PMR446 channels](page:pmr446)). Cash, paper records and a wind-up radio are the fallbacks the register itself assumes.
+{{/if}}
+
 ## Go deeper
 
 - [UK numbers](page:uk-numbers)

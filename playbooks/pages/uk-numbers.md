@@ -19,6 +19,10 @@ category: reference
 | 18000 | Relay UK | Text relay to the emergency services ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number))) |
 | 101 | Police non-emergency | Crime that has already happened, no danger to life |
 
+{{#unless phones}}
+Every number on this page is dead while the network is: 999, 112, 111, 101 and 105 all need a mast or a line ([getting help without phones](page:no-phones)). What replaces them is legs and radio. For police, fire or ambulance, send a pair of runners with a written note, who, what, where, when, how many, to the nearest fire station, police station or ambulance station; fire stations stay crewed and have their own radio to control. For a medical emergency, take the patient to the nearest emergency department or open pharmacy, marked on [the map's health layer](map:?overlay=health).
+{{/unless}}
+
 ## Health
 
 | Number | For | Notes |
@@ -26,6 +30,10 @@ category: reference
 | 111 | Urgent but not life-threatening | England, Scotland and Wales. Northern Ireland has no 111: ring your GP practice in hours, your trust's Phone First number before going to an emergency department, and the GP out-of-hours number at night and at weekends |
 | — | NHS 111 online | Needs the internet |
 | — | Pharmacy First | England: a pharmacist can treat some conditions without a GP. Scotland has NHS Pharmacy First Scotland; Wales and Northern Ireland run their own common-ailments schemes |
+
+{{#unless internet}}
+The routes that need the internet have gone: NHS 111 online, the 999 BSL video relay and any app or website ([What still works](page:what-still-works)). 111 by voice, 999 by voice and 999 by text still work over the mobile or landline network, and Relay UK on 18000 is text relay over the phone network rather than the internet. Anyone who has registered for emergency SMS should use it now rather than hunting for a working video service.
+{{/unless}}
 
 ## Utilities
 
@@ -36,12 +44,17 @@ category: reference
 | 1800 372 999 | Power cut, Republic of Ireland | ESB Networks |
 | — | Power cut, Isle of Man, Jersey, Guernsey | The number on your bill |
 | 105 | Fallen or damaged power lines | Keep well away and report them ([Mains electricity](page:mains-electricity)) |
+
 | 0800 111 999 | Gas emergency, Great Britain | Smell gas: call this |
 | 0800 002 001 | Gas emergency, Northern Ireland | |
 | — | Water, England | Your regional company; the number is on the bill |
 | — | Water, Scotland | Scottish Water covers the whole country; the number is on the bill ([Scottish Water](kiwix:wikipedia_en_all_maxi/Scottish_Water)) |
 | — | Water, Wales | Dŵr Cymru Welsh Water for most of Wales; the number is on the bill ([Welsh Water](kiwix:wikipedia_en_all_maxi/Dŵr_Cymru_Welsh_Water)) |
 | — | Water, Northern Ireland | NI Water; the number is on the bill ([Northern Ireland Water](kiwix:wikipedia_en_all_maxi/Northern_Ireland_Water)) |
+
+{{#unless phones}}
+None of the utility numbers connect either. Tell the network operator's engineers, the council's rest centre or the police in person that the power is off here and that someone in the house depends on electrical medical equipment ([Mains electricity](page:mains-electricity)). If you smell gas, get everyone out, leave the doors open, turn the gas off at the meter if you can reach it safely, and send someone to the fire station. For water, the company opens bottled-water points and the local radio says where they are ([Water module](module:water)).
+{{/unless}}
 
 ## Flooding
 
@@ -60,6 +73,8 @@ category: reference
 | 0800 58 58 58 | CALM | |
 | 0800 1111 | Childline | |
 | 111 | Urgent mental health | NHS, England, Scotland and Wales |
+
+These are helplines, so they need a working phone or text network. When the lines are down the alternative is a person rather than a number: stay with them, remove the means, and walk with them to a neighbour, a rest centre, a GP surgery or an emergency department ([Mental health module](module:mental-health); [getting help without phones](page:no-phones)).
 
 ## Animals and other
 

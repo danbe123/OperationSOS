@@ -15,6 +15,18 @@ category: reference
 4. **No air.** An oxygen absorber is a sachet of iron powder and salt that rusts inside a sealed container and takes the oxygen down below 0.01%, which stops insects and slows rancidity; it works only in a container that is genuinely airtight and needs some humidity to start ([Oxygen scavenger](kiwix:wikipedia_en_all_maxi/Oxygen_scavenger)). Sealed buckets or heat-sealed foil bags of white rice, wheat, oats or pulses with an absorber inside are the long-term store; the working store is smaller jars you open.
 5. **Rotate.** Date every container, put new stock at the back and eat from the front, and open the long-term store one container at a time.
 
+{{#unless power}}
+The dry store is untouched by a power cut, but the cold store is now on a clock: a closed fridge holds about four hours and a freezer about 48 hours full, or 24 hours half full ([CMO food advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media); [What still works](page:what-still-works)). Keep both shut, eat the fridge down first and the freezer in the order it thaws, cook what has thawed thoroughly and do not refreeze it. Wheat becomes flour by hand now, so know where the mill or the quern is ([Grain mill (Appropedia)](kiwix:appropedia_en_all/Grain_mill)).
+{{/unless}}
+
+{{#unless shops}}
+The store is now the whole supply, so count it before you eat into it: work out how many days it covers from the 2,000 kcal table below, write that number on the cupboard door, and ration to it rather than to appetite ([Food module](module:food)). Open one sealed container at a time and keep the rest sealed against damp and weevils. Remember that dried staples give nothing until you have the water and the fuel to cook them, so count those too ([Water disinfection](page:water-disinfection)).
+{{/unless}}
+
+{{#if scenario:heat-drought}}
+Heat is the enemy of a store: oils and fats turn rancid faster the warmer they are, and tins keep indefinitely only if they are never frozen and never kept above 32 °C ([Rancidification](kiwix:wikipedia_en_all_maxi/Rancidification); [Canning](kiwix:wikipedia_en_all_maxi/Canning)). Move the store to the coolest place you have, a cellar or a north-facing cupboard at floor level rather than a loft or a sunny outbuilding, keep oil in dark glass or metal, check more often for insects, and freeze or heat any new stock before it joins the long-term store ([Rice weevil](kiwix:wikipedia_en_all_maxi/Rice_weevil)).
+{{/if}}
+
 ## Weevils, moths and rats
 
 - Grain and rice weevils lay eggs inside kernels, so a clean-looking bag can already be infested. Every stage of the rice weevil dies below −18 °C for three days or at 60 °C for 15 minutes ([Rice weevil](kiwix:wikipedia_en_all_maxi/Rice_weevil)); the Indian-meal moth, whose webbing you find in flour and oats, dies after a week of freezing or brief heating in an oven ([Indian-meal moth](kiwix:wikipedia_en_all_maxi/Indianmeal_moth)). Freeze or heat new stock before it goes into the long-term store, sieve anything that shows insects, and use it: weevils are a nuisance, not a poison.

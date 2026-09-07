@@ -24,6 +24,22 @@ This is the home page for making water safe; the water module and the field-craf
 
 {{#if power}}Boiling is the surest of these, on the hob or in the kettle.{{else}}Boiling is still the surest of these, but with the power off it means a gas hob lit with a match or a stove used outdoors, so the tablets and the bleach doses may be the practical answer ([Power module](module:power)).{{/if}}
 
+{{#unless water}}
+With the mains off, treat everything you collect, whatever it looks like: rain from a clean sheet or butt, a stream, a spring, a private borehole, the hot water tank, the cistern above the toilet ([Water outdoors](page:fieldcraft-water); [Water module](module:water)). Boil where you have the fuel and use the tablet or bleach doses where you do not. Keep treated and untreated containers apart and labelled, store the treated water covered, cool and dark, use it within a day or two, and re-treat anything that has stood in the warm.
+{{/unless}}
+
+{{#if scenario:storms-flooding}}
+Flooding puts sewage into the mains, into wells and into every stream, so drink stored or bottled water and keep to any boil-water notice until it is lifted ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). If flood-affected water is all there is, let it settle, filter it through cloth and then boil it, because chlorine and NaDCC do not kill Cryptosporidium ([Cryptosporidium](kiwix:wikipedia_en_all_maxi/Cryptosporidium)). Water carrying fuel, chemicals or a lot of sewage cannot be made safe by any method here: leave it.
+{{/if}}
+
+{{#if scenario:nuclear-war}}
+**Covered water, not clear-looking water.** Sealed food and covered water stay safe, so use what was indoors and closed before the fallout came: the tank, the cistern, sealed bottles, anything with a lid ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). Nothing in the table above removes radioactive particles, so stay sheltered rather than fetching from a stream or a butt catching what has fallen. Where open water is all there is, let it stand, pour off the clear water and then treat it for microbes as usual.
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+Use water that was covered and indoors, and keep the containers covered while you carry and store it: sealed food and covered water stay safe ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). The table above deals with microbes and does nothing to radioactive particles, and boiling drives off water and leaves them behind. Follow the broadcast advice about which supplies are affected: a private spring, well or rainwater butt near the site is exactly the water that advice will be about ([Windscale fire](kiwix:wikipedia_en_all_maxi/Windscale_fire)).
+{{/if}}
+
 ## UK bleach
 
 Ordinary UK household bleach comes in two strengths: thin bleach around 4.5 to 5% sodium hypochlorite, used for the doses above, and thick, gelled bleach which is far stronger and unsuitable for dosing this way. Read the label for the percentage of sodium hypochlorite and check it says "no perfume, no thickener, no added cleaning agents". If the label does not state a plain sodium hypochlorite percentage, or you are in any doubt, do not use it to treat drinking water.

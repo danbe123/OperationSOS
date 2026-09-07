@@ -19,9 +19,17 @@ A group living outside a working sewer for a week will meet norovirus, campyloba
 - In a town without working sewers, a bucket with a bin liner and sawdust or soil, emptied into a deep pit well away from wells, is the standard; the [sanitation module](module:sanitation) covers the household version.
 - On sensitive ground (peat, sand dunes, caves, above the treeline) everything is carried out.
 
+{{#unless sewage}}
+With the sewers out, the toilet indoors is a lined bucket rather than a hole dug fresh each day: sawdust, soil or ash after every use, a separate one for urine if you can manage it, a lid, and the contents emptied into a deep pit at least 30 metres from any well, spring or watercourse and downhill of it ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35); [Sanitation module](module:sanitation)). Do not flush into a blocked sewer. Keep the emptying to one person, with gloves and their own washing point.
+{{/unless}}
+
 ## Hands
 
 Wash hands with soap after the latrine and before touching food, every time; a hand-washing point stands outside every latrine ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35)). Where water is short, a "tippy tap": a bottle hung from a stick with a string to tilt it, so the group washes from a litre. Alcohol gel is unreliable against norovirus ([Norovirus](kiwix:wikipedia_en_medicine_maxi/Norovirus)) and does nothing to cryptosporidium, whose spores resist most disinfectants ([Cryptosporidiosis](kiwix:wikipedia_en_medicine_maxi/Cryptosporidiosis)); soap and water do the job. Nails short; one person handles the food.
+
+{{#unless water}}
+No tap means hand washing is rationed, not abandoned. Soap and half a litre poured from a jug or a tippy tap, over a bowl that catches the water for flushing the latrine, still does the job that alcohol gel does not do against norovirus and cryptosporidium ([Norovirus](kiwix:wikipedia_en_medicine_maxi/Norovirus); [Cryptosporidiosis](kiwix:wikipedia_en_medicine_maxi/Cryptosporidiosis)). Wash after the latrine and before food, every time. Give one person the job of keeping the washing point filled from treated water, and treat what you collect before it goes anywhere near hands or food ([Water disinfection](page:water-disinfection)).
+{{/unless}}
 
 ## Food and animals
 
@@ -46,6 +54,14 @@ Wet kit dries in wind, not in a tent; a line under the tarp edge and a fire at a
 ## When someone is ill
 
 Diarrhoea and vomiting: isolate them with their own latrine and bowl, the rest of the group washes hands more, and the patient drinks oral rehydration solution made up with treated water, in the amounts on the [dehydration card](card:dehydration). Most bouts pass in a few days ([Norovirus](kiwix:wikipedia_en_medicine_maxi/Norovirus)); blood in the stool, a high fever, or a child or old person who cannot keep fluids down needs medical help ([Medical module](module:medical)).
+
+{{#if scenario:pandemic}}
+**Everything here counts twice over.** One person handles the food and a different person nurses the sick; the ill person has their own bowl, cup, cloth and latrine or bucket; hands are washed with soap after every contact, and the mask and apron kept for nursing come off and stay outside the sleeping area ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35); [Sanitation module](module:sanitation)). Keep the group spread out and outdoors as much as the weather allows, and let anyone with diarrhoea and vomiting recover apart, on oral rehydration solution ([dehydration card](card:dehydration)).
+{{/if}}
+
+{{#if scenario:storms-flooding}}
+Floodwater is sewage. Keep children and pets out of it, wash hands and any skin it touched, throw away food and tins whose seals were under it, and cover and watch every cut, because a fever with muscle pain about a week later can be leptospirosis ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public); [Leptospirosis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Leptospirosis)). Move the latrine and the camp above the water and off the flooded ground, and treat every local water source as contaminated until it has been boiled ([Water disinfection](page:water-disinfection)).
+{{/if}}
 
 ## Leaving
 

@@ -19,11 +19,27 @@ There is water almost everywhere here, and almost all of it has been through a s
 - **No**: sea water, stagnant ditches, water near dead animals, anything downstream of a sewage works or an industrial site. Sea water can only be distilled, not filtered, and a solar still yields a cupful a day ([Solar still](kiwix:wikipedia_en_all_maxi/Solar_still)).
 - **In town**: hot water tanks, toilet cisterns (the tank, never the bowl), rainwater butts, and the [water module](module:water) for the household picture.
 
+{{#unless water}}
+With the mains off, the sources on this page become the household's water: rain caught off a clean sheet or a butt, a spring or fast upland stream above any grazing or building, and indoors the hot water tank and the cistern ([Water module](module:water)). Collect in the largest clean containers you have, keep them covered, and mark treated and untreated so nobody mixes them up. Treat all of it, because a private spring, well or borehole is untreated and carries Campylobacter, E. coli O157, Cryptosporidium and Giardia ([Private water supplies (DWI)](kiwix:govuk_resilience/www.dwi.gov.uk/private-water-supplies/); [Water disinfection](page:water-disinfection)).
+{{/unless}}
+
 A green patch on a dry hillside, a line of rushes, or the point where a stream begins may mark a spring, but a green flush can equally be surface seepage, so treat it as a hint rather than a test. A dry streambed often has water a few inches under the gravel on the outside of a bend. Old maps mark wells, springs and troughs; the offline map's water overlay marks reservoirs and treatment works ([Water on the map](map:?overlay=water)).
 
 ## Making it safe
 
 Clear it first (let silt settle, then pour through a cloth), then boil it, which kills everything including cryptosporidium, or filter it and then chlorinate: a filter removes mud and parasites but not viruses, and chlorine and NaDCC tablets do not kill cryptosporidium, so the two together cover what either misses. Doses, waiting times, UK bleach and the full table are on [Water disinfection](page:water-disinfection); the water kit is a wide-necked bottle, a filter and a metal cup you can boil in ([Field Hygiene and Sanitation, FM 21-10](doc:fm-21-10-field-hygiene)).
+
+{{#if scenario:storms-flooding}}
+Floodwater is sewage, and a flood puts it into springs, streams, wells and the mains alike ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public)). Drink stored or bottled water while the water is high and for as long as any boil-water notice runs; otherwise let it settle, filter it and then boil it, which is the only treatment that deals with Cryptosporidium ([Water disinfection](page:water-disinfection)). Take nothing that smells of fuel or chemicals, and keep cuts out of the water: leptospirosis starts like flu about a week later ([Leptospirosis](kiwix:wikipedia_en_all_maxi/Leptospirosis)).
+{{/if}}
+
+{{#if scenario:nuclear-war}}
+**Covered water, not clear-looking water.** Sealed food and covered water stay safe, so drink what was indoors and closed before the fallout came: the tank, the cistern, sealed bottles and containers with lids ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). No filter, tablet or rolling boil removes radioactive particles ([Water disinfection](page:water-disinfection)). Stay sheltered rather than going out to collect from a stream or a butt catching what has fallen; where open water is all there is, let it stand, pour off the clear water, and then treat it for microbes as usual.
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+Use water that was covered and indoors, and keep the containers covered while you carry and store it: sealed food and covered water stay safe ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). Treatment deals with microbes and does nothing to radioactive particles, and boiling drives off water and leaves them behind ([Water disinfection](page:water-disinfection)). Follow the broadcast advice about which supplies are affected: a private spring, well or rainwater butt near the site is exactly the water that advice will be about, and milk from animals on contaminated pasture is the main food risk ([Windscale fire](kiwix:wikipedia_en_all_maxi/Windscale_fire)).
+{{/if}}
 
 ## How much
 

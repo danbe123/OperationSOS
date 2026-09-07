@@ -11,6 +11,26 @@ category: reference
 
 Very few chronic conditions become dangerous the day treatment stops, but two do: insulin-dependent diabetes and lung disease that needs oxygen. For everything else there are days or weeks to find a supply or a work-around, so learn your own condition now, keep a written list of every medicine and dose, and stock what you can ([Survival and Austere Medicine, p. 105](doc:survival-austere-medicine-2017#page=105)). Every playbook plans for two weeks of every prescribed medicine, and the time to ask the GP or pharmacist about a longer supply and about "sick day rules" is before the emergency ([Medical module](module:medical)). Never share prescription medicines, and never buy them from unregulated sellers.
 
+{{#unless shops}}
+With the pharmacies shut there is no repeat prescription and no over-the-counter top-up: the store you have is the supply. Write out every medicine, its dose and the date it runs out, and rank them, because insulin, steroids, epilepsy tablets, anticoagulants and heart medicines are the ones that must not be interrupted while most others can be stretched ([Survival and Austere Medicine, p. 105](doc:survival-austere-medicine-2017#page=105)). Ask neighbours and whoever is coordinating the street about the community pharmacy's own stock, and never halve a dose to make a supply last without advice ([Medical module](module:medical)).
+{{/unless}}
+
+{{#unless phones}}
+No GP appointment, no 111 and no ringing round the chemists: it all happens in person now. Send someone with the written list and the empty boxes to the nearest open pharmacy, GP surgery or hospital, marked on [the map's health layer](map:?overlay=health), and ask for an emergency supply; take the patient themselves only if they need to be seen ([getting help without phones](page:no-phones)). Insulin, steroids, anticonvulsants and a dialysis slot are worth the walk that a routine repeat is not.
+{{/unless}}
+
+{{#if scenario:pandemic}}
+**Illness is what turns a controlled condition into an emergency.** Anyone on long-term steroids follows their own sick day rules from the first fever and uses the intramuscular hydrocortisone if they cannot keep tablets down ([adrenal crisis](kiwix:wikipedia_en_medicine_maxi/Adrenal_crisis)). Infection drives blood sugar and ketones up, so someone with diabetes checks more often, not less ([diabetic ketoacidosis](kiwix:wikipedia_en_medicine_maxi/Diabetic_ketoacidosis)). Vomiting and diarrhoea are the danger on metformin and on lithium ([NHS metformin](kiwix:nhs_medicines/www.nhs.uk/medicines/metformin/); [NHS lithium](kiwix:nhs_medicines/www.nhs.uk/medicines/lithium/)). Collect repeat medicines early and keep the shielding person's supply separate.
+{{/if}}
+
+{{#if scenario:supply-chain}}
+**Expect gaps and substitutes rather than a clean stop.** Brands and strengths change, and a pharmacy may hold phenobarbital or phenytoin when it cannot get lamotrigine or levetiracetam ([WTIND, p. 227](doc:where-there-is-no-doctor#page=227)). Take the equivalent the pharmacist offers rather than going without, keep the old boxes so the dose can be matched, and start asking about substitutes before the last packet. Dry tablets and capsules kept cool, dark and dry outlast their printed dates; the tetracyclines are the class to discard ([Survival and Austere Medicine, p. 45](doc:survival-austere-medicine-2017#page=45); [WTIND, p. 381](doc:where-there-is-no-doctor#page=381)).
+{{/if}}
+
+{{#if scenario:famine}}
+**Less food changes the doses.** Someone on insulin or gliclazide who is eating less needs less of it and is at real risk of a hypo, so match doses to what is actually eaten and keep the [low blood sugar card](card:low-blood-sugar) to hand ([NHS gliclazide](kiwix:nhs_medicines/www.nhs.uk/medicines/gliclazide/)). Lithium levels rise when someone is dehydrated ([NHS lithium](kiwix:nhs_medicines/www.nhs.uk/medicines/lithium/)). Do not stop steroids, epilepsy tablets or anticoagulants because food or supplies are short: stopping any of them abruptly is more dangerous than the hunger ([adrenal insufficiency](kiwix:wikipedia_en_medicine_maxi/Adrenal_insufficiency)).
+{{/if}}
+
 ## Insulin and diabetes
 
 Type 1 diabetes needs insulin to survive; many people with type 2 can manage for months on diet, exercise and tablets if insulin runs out ([Survival and Austere Medicine, p. 467](doc:survival-austere-medicine-2017#page=467); [WTIND, p. 176](doc:where-there-is-no-doctor#page=176)). Keep the supply the NHS advises, enough for one or two months with at least one spare pen, cartridge or vial ([NHS insulin](kiwix:nhs_medicines/www.nhs.uk/medicines/insulin/)).
@@ -60,6 +80,10 @@ Opioid withdrawal (heroin, methadone, buprenorphine, strong painkillers) is mise
 Dialysis: haemodialysis is normally three sessions a week of three to four hours each, and a person cannot survive long without it ([haemodialysis](kiwix:wikipedia_en_medicine_maxi/Hemodialysis)). If the unit or the transport fails, the whole household's job is to buy time: keep the renal diet strictly, restrict fluid, and avoid high-potassium foods, because potassium builds up and causes dangerous heart rhythms ([kidney failure](kiwix:wikipedia_en_medicine_maxi/Kidney_failure)). Anyone on dialysis or home oxygen should be on the Priority Services Register with their electricity and water companies, and the unit or the ambulance service will move patients to whichever unit has power ([UK numbers](page:uk-numbers)); with the phones down, send a runner to the unit itself ([getting help without phones](page:no-phones)).
 
 Oxygen: home oxygen comes from cylinders or an electric concentrator ([oxygen therapy](kiwix:wikipedia_en_medicine_maxi/Oxygen_therapy)). A concentrator dies with the mains, so plan a battery or generator supply and how long it lasts ([Power module](module:power)), and keep the cylinders for when it is off; a concentrator delivers 5 to 10 litres a minute ([Survival and Austere Medicine, p. 94](doc:survival-austere-medicine-2017#page=94)). Never smoke or bring a naked flame near oxygen; it feeds fire ferociously ([oxygen therapy](kiwix:wikipedia_en_medicine_maxi/Oxygen_therapy)). For someone with COPD, the target on a pulse oximeter is 88 to 92% if they retain carbon dioxide and 94 to 98% otherwise, so ration oxygen to the target rather than running it flat out ([COPD](kiwix:wikipedia_en_medicine_maxi/Chronic_obstructive_pulmonary_disease)).
+
+{{#unless power}}
+Everything electrical in the sick room has stopped: the oxygen concentrator, the nebuliser, the home dialysis machine, the CPAP and the fridge ([Power module](module:power)). Switch an oxygen patient to cylinders and ration them to the pulse oximeter target rather than running the flow high ([COPD](kiwix:wikipedia_en_medicine_maxi/Chronic_obstructive_pulmonary_disease)). Work by torch: never a candle or any naked flame near oxygen, which feeds fire ferociously ([oxygen therapy](kiwix:wikipedia_en_medicine_maxi/Oxygen_therapy)). On dialysis, keep strictly to the renal diet, restrict fluid and avoid high-potassium foods while a unit with power is found ([kidney failure](kiwix:wikipedia_en_medicine_maxi/Kidney_failure)).
+{{/unless}}
 
 ## Other daily medicines
 

@@ -13,6 +13,22 @@ category: comms
 - **Your phone is dead**: the box charges phones from its power bank, and a car's 12 V socket charges a phone while the engine runs.
 - **The network is down**: most mobile masts have about an hour of battery, some a few hours, and in a long power cut the mobile network goes off area by area ([What still works](page:what-still-works)). Landlines now run over broadband and fail with the power unless the house has a battery back-up unit. Then 999, 112, 111, 105 and 101 will not connect from anything, and the advice on every page that says "call" means "go" ([999](kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number)); [Emergency telephone number](kiwix:wikipedia_en_all_maxi/Emergency_telephone_number)).
 
+{{#unless mobile}}
+The masts are the part that has failed. A landline that still works, or Wi-Fi calling through a router that still has power, will both reach 999; outdoors under open sky a recent iPhone or Pixel can text the emergency services by satellite, and a car built since April 2018 dials 112 through any mast still standing ([What still works](page:what-still-works)). Before walking anywhere, try a call from higher ground, an upstairs window or the far side of the town, because coverage fails in patches rather than everywhere at once.
+{{/unless}}
+
+{{#unless landline}}
+The line in the hall has gone and no amount of patience brings it back: landlines now run over broadband and stop with the power unless the house has a battery back-up unit, which holds the line up for at least an hour ([What still works](page:what-still-works)). Use a mobile, which reaches 999 on any network that has signal, with no credit and even with no SIM, or a neighbour's phone. If nothing connects at all, the runner and the fire station below are the plan.
+{{/unless}}
+
+{{#unless internet}}
+Everything that went through the router has gone with it: Wi-Fi calling, 999 BSL video relay, NHS 111 online, email and messaging ([What still works](page:what-still-works)). Voice and text over the mobile network may still work, and a text often gets through where a call will not; Relay UK on 18000 runs over the phone network rather than the internet ([UK emergency numbers](page:uk-numbers)). Otherwise it is radio and legs, and this box holds the library, the map and the numbers offline, so look things up here rather than hunting for a signal.
+{{/unless}}
+
+{{#unless power}}
+The clock is running: most mobile masts have about an hour of battery and some a few hours, so the network fails area by area rather than all at once ([What still works](page:what-still-works)). Make the calls that matter first, then keep phones off between agreed check-in times. Charge from this box's power bank or a car's 12 V socket with the engine running, and keep the router and fibre box alive on a small UPS if broadband is your route to 999.
+{{/unless}}
+
 ## Raising the alarm on foot
 
 - **Know the nearest crewed places** before you need them: fire station, police station, ambulance station, hospital with an emergency department, lifeboat station, coastguard station. The map's health overlay marks hospitals and pharmacies ([Hospitals on the map](map:?overlay=health)). Fire stations are the most reliable: they stay crewed in a crisis and have their own radio to the control room.
