@@ -83,10 +83,8 @@ def map_overlays(conn=Depends(get_db)):
 def _link_title(request: Request, link: str) -> str:
     """The title of the guide a place card's button opens, or the slug humanised if it has gone."""
     kind, _, slug = link.partition(":")
-    for doc in request.app.state.content.list(kind):
-        if doc.id == slug:
-            return doc.title
-    return slug.replace("-", " ").capitalize()
+    doc = request.app.state.content.document(kind, slug)
+    return doc.title if doc else slug.replace("-", " ").capitalize()
 
 
 @router.get("/map/places")

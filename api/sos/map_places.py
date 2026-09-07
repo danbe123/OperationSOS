@@ -56,7 +56,11 @@ def validate_places(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids,
     places = load_places(path)
     errors += [f"{rel}: places: '{k}' is missing" for k in KINDS if k not in places]
     for kind, place in places.items():
-        body = f"{place.expect}\n\n[{place.title}]({place.link})"
+        # The paragraph almost always ends with a citation to its own `link`, so checking the link separately
+        # would report the same broken target twice; only check it when the paragraph does not carry it.
+        body = place.expect
+        if f"]({place.link})" not in place.expect:
+            body = f"{body}\n\n[{place.title}]({place.link})"
         errors += [e.replace(rel, f"{rel}: {kind}", 1)
                    for e in content._check_links(rel, body, zim_ids, doc_ids, slugs, overlay_ids)]
     return errors
