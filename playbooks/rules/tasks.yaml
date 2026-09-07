@@ -111,3 +111,12 @@ rules:
     why: One room warmed by bodies, a stove or a bottled-gas heater is the whole house's heating; the rest can go cold.
     link: module:shelter-heat
     source: module:shelter-heat
+
+  - id: check-on-people-nearby
+    kind: task
+    when: {power: "off"}
+    title: Check on anyone nearby who would struggle on their own
+    bucket: now
+    why: Powered medical equipment, a stairlift and refrigerated medicine all stop with the mains, and the people who depend on them are the ones nobody else will notice; a street that has been round its own doors once knows who is alone, who is away and who has what.
+    link: module:community
+    source: module:community

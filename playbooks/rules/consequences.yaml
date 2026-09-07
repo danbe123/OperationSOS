@@ -41,6 +41,16 @@ rules:
     link: module:shelter-heat
     source: module:shelter-heat
 
+  - id: powered-medical-kit
+    kind: consequence
+    when: {power: "off"}
+    title: Anyone on powered medical kit or fridge-kept medicine needs a plan now
+    after: 4h
+    severity: warn
+    why: A concentrator, a CPAP machine, a hoist and a stairlift all stop with the mains, and insulin and other fridge-kept medicines lose strength once they warm up; a cold box with ice packs, and a decision about who sleeps where, are both far easier made in the first hours than after them.
+    link: page:chronic-conditions
+    source: module:medical
+
   - id: tank-water
     kind: consequence
     when: {water: "off"}

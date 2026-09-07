@@ -86,7 +86,7 @@ def test_golden_blackout_conditions_and_inferred(blackout, ruleset):
 def test_golden_blackout_forecast_is_ordered_by_due_time(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     ids = [f["id"] for f in view["forecast"]]
-    assert ids == ["fridge", "phone-batteries", "hot-water", "freezer"]
+    assert ids == ["powered-medical-kit", "fridge", "phone-batteries", "hot-water", "freezer"]
     fridge = view["forecast"][0]
     assert fridge["due_at"] == "2026-09-06T13:00:00+00:00" and fridge["passed"] is True and fridge["severity"] == "warn"
     assert view["forecast"][-1]["id"] == "freezer" and view["forecast"][-1]["due_at"] == "2026-09-08T09:00:00+00:00"
@@ -95,7 +95,8 @@ def test_golden_blackout_forecast_is_ordered_by_due_time(blackout, ruleset):
 def test_golden_blackout_tasks_buckets_modes_and_briefing(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     now_tasks = [t["id"] for t in view["tasks"] if t["bucket"] == "now"]
-    assert set(now_tasks) == {"fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power"}
+    assert set(now_tasks) == {"fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power",
+                              "check-on-people-nearby"}
     assert now_tasks == sorted(now_tasks, key=lambda i: next(t["title"] for t in view["tasks"] if t["id"] == i))
     assert not any(t["bucket"] == "week" for t in view["tasks"])
     fill = next(t for t in view["tasks"] if t["id"] == "fill-bath")
@@ -302,3 +303,16 @@ def test_the_view_has_no_readiness_and_no_neighbours(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "briefing", "modes",
                          "bulletins"}
+
+
+def test_the_two_generic_rules_fire_on_a_power_cut(blackout, ruleset):
+    """No register, so the warning and the knock on the door are written for anybody."""
+    view = engine.compute(blackout, ruleset)
+    powered = next(f for f in view["forecast"] if f["id"] == "powered-medical-kit")
+    assert powered["title"] == "Anyone on powered medical kit or fridge-kept medicine needs a plan now"
+    assert powered["severity"] == "warn" and powered["link"] == "page:chronic-conditions"
+    assert powered["due_at"] == "2026-09-06T13:00:00+00:00"       # the power went at 09:00, and this is four hours on
+    check = next(t for t in view["tasks"] if t["id"] == "check-on-people-nearby")
+    assert check["title"] == "Check on anyone nearby who would struggle on their own"
+    assert check["bucket"] == "now" and check["link"] == "module:community"
+    assert not any("{" in f["title"] for f in view["forecast"]) and not any("{" in t["title"] for t in view["tasks"])
