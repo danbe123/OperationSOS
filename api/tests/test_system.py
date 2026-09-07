@@ -185,18 +185,24 @@ def test_apply_settings_validation(conn):
         system.apply_settings(conn, {"thermal_ai_off_c": 120})
     with pytest.raises(ValueError):
         system.apply_settings(conn, {"bogus": 1})
+    system.apply_settings(conn, {"people": 20})
+    assert db.get_setting(conn, "people") == "20"
+    for bad in (0, 21, "lots"):
+        with pytest.raises(ValueError):
+            system.apply_settings(conn, {"people": bad})
 
 
 def test_status_shape(conn, env):
     s = system.status(conn, env)
     assert set(s) == {"version", "uptime_s", "cpu_temp_c", "load", "mem", "disks", "hotspot", "eth_mode",
                       "power_mode", "ai", "thermal_ai_off_c", "idle_minutes", "home_minutes", "pin_required",
-                      "dev", "default_theme"}
+                      "dev", "default_theme", "people"}
     assert s["dev"] is True and s["cpu_temp_c"] == 45.0 and s["thermal_ai_off_c"] == 80
     assert s["disks"]["core"]["mounted"] is True and s["disks"]["extended"]["mounted"] is False
     assert s["disks"]["extended"] == {"mounted": False, "path": str(env.ext), "total_gb": 0.0, "free_gb": 0.0}
     assert s["ai"] == {"state": "off", "model": env.model, "message": None}
     assert s["default_theme"] == "field" and s["idle_minutes"] == 5 and s["home_minutes"] == 30
+    assert s["people"] == 2
     assert len(s["load"]) == 3 and s["mem"]["total_mb"] > 0
 
 

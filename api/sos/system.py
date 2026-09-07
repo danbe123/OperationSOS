@@ -36,7 +36,9 @@ LOW_POWER_BACKLIGHT = 30
 DEFAULTS = {
     "default_theme": "field", "thermal_ai_off_c": "80", "idle_minutes": "5", "home_minutes": "30",
     "power_mode": "normal", "eth_mode": "client", "ssid": "SOS", "passphrase": "", "ai_state": "off",
+    "people": "2",
 }
+PEOPLE_RANGE = (1, 20)                       # the only number a household is ever asked for
 THEMES = ("field", "mono")
 AI_RUNNING_STATES = ("starting", "ready", "busy")
 
@@ -229,9 +231,9 @@ def apply_settings(conn: sqlite3.Connection, patch: dict) -> None:
             if value not in THEMES:
                 raise ValueError("default_theme must be field or mono")
             set_setting(conn, key, value)
-        elif key in ("thermal_ai_off_c", "idle_minutes", "home_minutes"):
+        elif key in ("thermal_ai_off_c", "idle_minutes", "home_minutes", "people"):
             lo, hi = {"thermal_ai_off_c": (50, 95), "idle_minutes": (1, 120),
-                      "home_minutes": (1, 600)}[key]
+                      "home_minutes": (1, 600), "people": PEOPLE_RANGE}[key]
             try:
                 number = int(value)
             except (TypeError, ValueError) as exc:
@@ -444,6 +446,7 @@ def status(conn: sqlite3.Connection, settings: Settings) -> dict:
         "thermal_ai_off_c": int(get_setting(conn, "thermal_ai_off_c", DEFAULTS["thermal_ai_off_c"])),
         "idle_minutes": int(get_setting(conn, "idle_minutes", DEFAULTS["idle_minutes"])),
         "home_minutes": int(get_setting(conn, "home_minutes", DEFAULTS["home_minutes"])),
+        "people": people_count(conn),
         "pin_required": pin_required(conn),
         "dev": settings.dev,
         # A box upgraded from the three-theme world still holds "vault" or "blackout" in its
@@ -455,6 +458,16 @@ def status(conn: sqlite3.Connection, settings: Settings) -> dict:
 
 def known_theme(value: str) -> str:
     return value if value in THEMES else DEFAULTS["default_theme"]
+
+
+def people_count(conn: sqlite3.Connection) -> int:
+    """How many people the kits scale for. A stored value from outside the range, or no value at all,
+    reads as the default rather than failing every screen that asks."""
+    lo, hi = PEOPLE_RANGE
+    try:
+        return max(lo, min(hi, int(get_setting(conn, "people", DEFAULTS["people"]))))
+    except (TypeError, ValueError):
+        return int(DEFAULTS["people"])
 
 
 def rescan(conn: sqlite3.Connection, settings: Settings) -> dict:

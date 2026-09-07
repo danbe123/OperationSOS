@@ -33,6 +33,12 @@ class SettingsBody(BaseModel):
     home_minutes: int | None = None
 
 
+class PeopleBody(BaseModel):
+    # Not a range on the field: an out-of-range count must reach system.apply_settings so its ValueError
+    # becomes a 400 naming "people", the same way default_theme's does.
+    people: int
+
+
 class UpdateBody(BaseModel):
     tiers: list[Literal["core", "extended"]] = Field(min_length=1)
 
@@ -76,6 +82,18 @@ def hotspot(body: HotspotBody, request: Request, conn=Depends(get_db)):
 def settings_update(body: SettingsBody, request: Request, conn=Depends(get_db)):
     system.apply_settings(conn, body.model_dump(exclude_none=True))
     return _status(request, conn)
+
+
+@router.get("/settings/people")
+def get_people(conn=Depends(get_db)):
+    """The one number the box asks a household for: how many people the kits are scaled to."""
+    return {"people": system.people_count(conn)}
+
+
+@router.put("/settings/people")
+def put_people(body: PeopleBody, conn=Depends(get_db)):
+    system.apply_settings(conn, {"people": body.people})
+    return {"people": system.people_count(conn)}
 
 
 @router.post("/system/rescan", dependencies=[Depends(require_localhost)])
