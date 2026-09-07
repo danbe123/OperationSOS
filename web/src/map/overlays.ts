@@ -8,6 +8,7 @@ export const REGIONS: Record<string, string> = {
 };
 
 export function coverageNote(overlay: Overlay): string | null {
+  if (overlay.coverage_note) return overlay.coverage_note;
   const missing = Object.keys(REGIONS).filter((r) => !overlay.coverage.includes(r));
   return missing.length ? `No data for ${missing.map((r) => REGIONS[r]).join(', ')}` : null;
 }

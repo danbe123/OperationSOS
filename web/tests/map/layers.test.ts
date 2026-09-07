@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Map as MlMap } from 'maplibre-gl';
 import { FakeMap } from './fakeMap';
-import { annotationPaint, annotations, carryStyleAcross, overlayPaint, terrainSpec, addTerrain, setTerrainVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
+import { annotationPaint, annotations, carryStyleAcross, overlayPaint, terrainSpec, addTerrain, setTerrainLayerVisible, recreateSource, isEtagMismatch, pmtilesUrl } from '../../src/map/layers';
 import { mapConfig } from '../fixtures/api';
 
 vi.mock('maplibre-gl', () => ({ default: { addProtocol: vi.fn() }, addProtocol: vi.fn() }));
@@ -34,10 +34,20 @@ describe('terrain', () => {
     map.setStyle('/maps/styles/osm-field.json');
     addTerrain(asMap(map), mapConfig, 'mono');
     expect(map.style.layers.map((l) => l.id)).toEqual(['land', 'roads', 'sos-hillshade', 'sos-contours', 'labels']);
-    setTerrainVisible(asMap(map), false);
+    setTerrainLayerVisible(asMap(map), 'sos-contours', false);
     expect(map.visibility('sos-contours')).toBe('none');
     addTerrain(asMap(map), mapConfig, 'mono'); // idempotent
     expect(map.style.layers).toHaveLength(5);
+  });
+  it('hides one terrain layer without touching the other: contours and hillshade have a chip each', () => {
+    const map = new FakeMap();
+    map.setStyle('/maps/styles/osm-field.json');
+    addTerrain(asMap(map), mapConfig, 'field');
+    setTerrainLayerVisible(asMap(map), 'sos-hillshade', false);
+    expect(map.visibility('sos-hillshade')).toBe('none');
+    expect(map.visibility('sos-contours')).toBe('visible');
+    setTerrainLayerVisible(asMap(map), 'sos-hillshade', true);
+    expect(map.visibility('sos-hillshade')).toBe('visible');
   });
   it('skips terrain the box does not have', () => {
     const spec = terrainSpec({ ...mapConfig, terrain: { contours: null, hillshade: null } }, 'field');

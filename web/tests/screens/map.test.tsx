@@ -38,7 +38,7 @@ describe('Map screen', () => {
   it('creates the map from config, adds terrain and default overlays, and writes the view to the URL', async () => {
     mockApis();
     const { router } = renderRoute('/map');
-    await screen.findByRole('button', { name: /Layers/ });
+    await screen.findByRole('group', { name: 'Map layers' });
     await act(async () => {});
     const map = lastMap();
     expect(map.style.name).toBe('/maps/styles/osm-field.json');
@@ -51,44 +51,42 @@ describe('Map screen', () => {
     expect(map.getLayer('sos-pins-point')).toBeDefined();
   });
 
-  it('toggles overlays from the layer panel with coverage notes and availability', async () => {
+  it('shows one chip per overlay, in order, and toggles the layer and the URL', async () => {
     mockApis();
     const user = userEvent.setup();
     const { router } = renderRoute('/map');
-    await user.click(await screen.findByRole('button', { name: /Layers/ }));
-    const panel = screen.getByRole('dialog', { name: 'Layers' });
-    await user.click(within(panel).getByLabelText('Hospitals, pharmacies, GP surgeries'));
+    const chips = await screen.findByRole('group', { name: 'Map layers' });
+    const names = within(chips).getAllByRole('button').map((b) => b.textContent);
+    expect(names).toEqual(['Health', 'Footpaths', 'Access land', 'Flood zones', 'Contour labels', 'Contours', 'Hillshade']);
+    const health = within(chips).getByRole('button', { name: 'Health' });
+    expect(health).toHaveAttribute('aria-pressed', 'false');
+    await user.click(health);
+    expect(health).toHaveAttribute('aria-pressed', 'true');
     expect(lastMap().visibility('sos-overlay-health-point')).toBe('visible');
     expect(router.state.location.search).toContain('overlay=footpaths&overlay=health');
-    expect(within(panel).getByText('No data for Scotland, Northern Ireland, Republic of Ireland, Isle of Man, Channel Islands')).toBeInTheDocument();
-    expect(within(panel).getByLabelText('Flood zones')).toBeDisabled();
-    expect(within(panel).getByText('Not installed')).toBeInTheDocument();
-    await user.click(within(panel).getByLabelText('Contours and hillshade'));
+    expect(within(chips).getByRole('button', { name: 'Footpaths' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(chips).getByRole('button', { name: 'Flood zones' })).toBeDisabled();
+    expect(within(chips).getByRole('button', { name: 'Access land' })).toHaveAttribute('title', 'No data for Scotland, Northern Ireland, Republic of Ireland, Isle of Man, Channel Islands');
+    await user.click(within(chips).getByRole('button', { name: 'Hillshade' }));
     expect(lastMap().visibility('sos-hillshade')).toBe('none');
+    expect(lastMap().visibility('sos-contours')).toBe('visible');
+    expect(screen.queryByRole('button', { name: /Layers/ })).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
   });
 
-  it('switching base keeps overlays and terrain across setStyle', async () => {
+  it('always loads the OpenStreetMap style, whatever was stored before', async () => {
     mockApis();
-    const user = userEvent.setup();
-    renderRoute('/map?overlay=health');
-    await user.click(await screen.findByRole('button', { name: /Layers/ }));
-    const panel = screen.getByRole('dialog', { name: 'Layers' });
-    const map = lastMap();
-    expect(map.visibility('sos-overlay-health-point')).toBe('visible');
-    await user.click(within(panel).getByLabelText('OS Open Zoomstack'));
-    expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/os-field.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
+    localStorage.setItem('sos.mapBase', 'os');
+    renderRoute('/map');
+    await screen.findByRole('group', { name: 'Map layers' });
     await act(async () => {});
-    expect(map.style.name).toBe('/maps/styles/os-field.json');
-    expect(map.getLayer('land')).toBeDefined();
-    expect(map.visibility('sos-overlay-health-point')).toBe('visible');
-    expect(map.getLayer('sos-hillshade')).toBeDefined();
-    expect(localStorage.getItem('sos.mapBase')).toBe('os');
+    expect(lastMap().style.name).toBe('/maps/styles/osm-field.json');
   });
 
   it('reads lat/lon/z/label from the query, shows the label and the centre grid reference', async () => {
     mockApis();
     renderRoute('/map?lat=50.9379&lon=-1.4708&z=14&label=OS+HQ');
-    await screen.findByRole('button', { name: /Layers/ });
+    await screen.findByRole('group', { name: 'Map layers' });
     await act(async () => {}); // let api.mapConfig() resolve and the map mount, as the first test also does
     const map = lastMap();
     expect(map.center).toEqual({ lng: -1.4708, lat: 50.9379 });
@@ -188,11 +186,12 @@ describe('Map screen', () => {
     expect(map.getLayer('sos-measure-line')).toBeDefined();
   });
 
-  it('hovering an overlay feature shows a tooltip that survives a base switch; tapping empty map closes a pinned one', async () => {
+  it('hovering an overlay feature shows a tooltip that survives a theme switch; tapping empty map closes a pinned one', async () => {
     mockApis();
     const user = userEvent.setup();
     renderRoute('/map?overlay=health');
-    await user.click(await screen.findByRole('button', { name: /Layers/ }));
+    await screen.findByRole('group', { name: 'Map layers' });
+    await act(async () => {}); // let the style load so the overlay's own layers are there to query
     const map = lastMap();
     map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
     await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
@@ -202,9 +201,12 @@ describe('Map screen', () => {
     expect(tip).toHaveTextContent('Hospital');
     expect(map.getCanvas().style.cursor).toBe('pointer');
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
-    await user.click(within(screen.getByRole('dialog', { name: 'Layers' })).getByLabelText('OS Open Zoomstack'));
+    // The base is fixed now, so the style reload a tooltip has to survive is a theme switch: the
+    // screen's own theme button, the one a household would press.
+    await user.click(screen.getByRole('button', { name: /Change the theme/ }));
+    expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/osm-mono.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
     await act(async () => {});
-    expect(map.style.name).toBe('/maps/styles/os-field.json');
+    expect(map.style.name).toBe('/maps/styles/osm-mono.json');
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
     map.renderedFeatures = [];
     await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });
@@ -224,7 +226,7 @@ describe('Map screen', () => {
     expect(screen.getByRole('button', { name: /Print/ })).toBeInTheDocument();
     a.unmount();
     renderRoute('/map', { kiosk: true });
-    await screen.findByRole('button', { name: /Layers/ });
+    await screen.findByRole('group', { name: 'Map layers' });
     expect(screen.queryByRole('button', { name: /Print/ })).toBeNull();
   });
 });

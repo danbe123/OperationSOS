@@ -16,6 +16,16 @@
   content: ''; position: absolute; top: 0; bottom: 6px; right: calc(var(--gutter) + 118px); width: 56px;
   pointer-events: none; background: linear-gradient(to right, transparent, var(--ground));
 }
+/* Every layer in view: a chip row under the tools, scrolling sideways on a phone with the same edge
+   fade the tools strip has. A pressed chip is filled; a chip the box cannot turn on is dimmed. */
+.map-chips { display: flex; gap: 6px; padding: 0 var(--gutter) 6px; overflow-x: auto; scrollbar-width: thin; flex: 0 0 auto;
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); }
+.map-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-pill); background: var(--panel); color: var(--ink); font: inherit; }
+.map-chip.active { background: var(--ink); color: var(--ground); }
+.map-chip:disabled { opacity: 0.45; }
+.map-chip-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--line-strong); }
+.map-chip.active .map-chip-dot { border-color: var(--ground); }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
 /* The map surface is somebody else's cartography and it arrives at somebody else's brightness: a

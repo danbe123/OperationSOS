@@ -6,10 +6,6 @@ type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers
 async function waitForMap(page: Page) {
   await page.waitForFunction(() => Boolean((window as MapWindow).__sosMap?.loaded()));
 }
-const styleVersion = (page: Page) => page.evaluate(() => (window as MapWindow).__sosMap?.__styleVersion ?? 0);
-async function waitForStyleReload(page: Page, sinceVersion: number) {
-  await page.waitForFunction((v) => ((window as MapWindow).__sosMap?.__styleVersion ?? 0) > v, sinceVersion);
-}
 const layerVisible = (page: Page, id: string) =>
   page.evaluate((layerId) => {
     const m = (window as MapWindow).__sosMap!;
@@ -17,7 +13,7 @@ const layerVisible = (page: Page, id: string) =>
     return Boolean(actual) && (m.getLayoutProperty(actual!, 'visibility') ?? 'visible') === 'visible';
   }, id);
 
-test('renders from PMTiles over range requests, toggles an overlay and keeps it across a base switch', async ({ page }) => {
+test('renders from PMTiles over range requests and toggles an overlay from the chip row', async ({ page }) => {
   const tile = page.waitForResponse((r) => r.url().includes('.pmtiles') && Boolean(r.request().headers()['range']));
   await page.goto('/map?lat=50.92&lon=-1.43&z=12');
   const first = await tile;
@@ -26,18 +22,11 @@ test('renders from PMTiles over range requests, toggles an overlay and keeps it 
   await waitForMap(page);
   await expect(page.getByTestId('map-readout')).toContainText('Centre: SU');
 
-  await page.getByRole('button', { name: 'Layers' }).click();
-  const panel = page.getByRole('dialog', { name: 'Layers' });
-  await panel.getByLabel(/Hospitals, pharmacies.*GP surgeries/).check();
+  const chips = page.getByRole('group', { name: 'Map layers' });
+  await chips.getByRole('button', { name: 'Health' }).click();
   await expect(page).toHaveURL(/overlay=health/);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
-
-  const versionBeforeBaseSwitch = await styleVersion(page);
-  await panel.getByRole('radio', { name: /OS Open Zoomstack|Ordnance Survey/ }).check();
-  await waitForStyleReload(page, versionBeforeBaseSwitch);
-  await waitForMap(page);
-  await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
-  await panel.getByLabel(/Hospitals, pharmacies.*GP surgeries/).uncheck();
+  await chips.getByRole('button', { name: 'Health' }).click();
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(false);
 });
 

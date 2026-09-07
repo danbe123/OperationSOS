@@ -151,8 +151,9 @@ export function addTerrain(map: MlMap, config: MapConfig, theme: Theme): void {
   if (map.getLayer('sos-contours')) map.setPaintProperty('sos-contours', 'line-color', contourColour(theme));
 }
 
-export function setTerrainVisible(map: MlMap, on: boolean): void {
-  for (const id of TERRAIN_LAYER_IDS) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+/** Contours and hillshade have a chip each, so each is shown or hidden on its own. */
+export function setTerrainLayerVisible(map: MlMap, id: 'sos-contours' | 'sos-hillshade', on: boolean): void {
+  if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
 }
 
 export function isEtagMismatch(err: unknown): boolean {

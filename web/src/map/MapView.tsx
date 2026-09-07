@@ -2,23 +2,24 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, { type LayerSpecification, type Map as MlMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { MapConfig, Note } from '../api/types';
+import type { Terrain } from './LayerChips';
 import type { Theme } from '../theme/ThemeProvider';
-import { addTerrain, annotationPaint, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainVisible } from './layers';
+import { addTerrain, annotationPaint, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainLayerVisible } from './layers';
 import { addOverlay, setOverlayVisible } from './overlays';
 import { attachFeatureTooltip } from './tooltip';
 import type { LngLat } from './measure';
 
 // e2e exposure: window.__sosMap is the live map instance; __styleVersion is bumped on every
-// completed style load (base switches included) so tests can observe a reload without relying on
+// completed style load (theme switches included) so tests can observe a reload without relying on
 // a diffed-out setStyle (see the setStyle call below).
 type ExposedMap = MlMap & { __styleVersion?: number };
 
 export type MapViewProps = {
   config: MapConfig;
   theme: Theme;
-  baseId: 'osm' | 'os';
   overlaysOn: string[];
-  terrainOn: boolean;
+  /** Contours and hillshade are two chips, and two answers: either can be on without the other. */
+  terrain: Terrain;
   center: [number, number];
   zoom: number;
   pins: Note[];
@@ -105,7 +106,7 @@ function syncMeasure(map: MlMap, points: LngLat[], theme: Theme): void {
 }
 
 export function MapView(props: MapViewProps) {
-  const { config, theme, baseId, overlaysOn, terrainOn, pins, labelPoint, measurePoints, home, routePoints } = props;
+  const { config, theme, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints } = props;
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const propsRef = useRef(props);
@@ -114,9 +115,11 @@ export function MapView(props: MapViewProps) {
   const currentStyle = useRef<string | null>(null);
 
   const styleUrl = useMemo(() => {
-    const base = config.bases.find((b) => b.id === baseId && b.available) ?? config.bases.find((b) => b.available);
+    // One base map, and it is OpenStreetMap: a household choosing between two renderings of the
+    // same ground is a choice that only ever cost it a tap. Anything else the box has is a fallback.
+    const base = config.bases.find((b) => b.id === 'osm' && b.available) ?? config.bases.find((b) => b.available);
     return base?.styles[theme] ?? null;
-  }, [config, baseId, theme]);
+  }, [config, theme]);
   const hasStyle = styleUrl !== null;
 
   useEffect(() => {
@@ -171,7 +174,7 @@ export function MapView(props: MapViewProps) {
       map.remove();
       mapRef.current = null;
     };
-    // The map is created once; base and theme changes go through setStyle below.
+    // The map is created once; theme changes go through setStyle below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStyle]);
 
@@ -186,7 +189,8 @@ export function MapView(props: MapViewProps) {
     const map = mapRef.current;
     if (!map || styleVersion === 0) return;
     addTerrain(map, config, theme);
-    setTerrainVisible(map, terrainOn);
+    setTerrainLayerVisible(map, 'sos-contours', terrain.contours);
+    setTerrainLayerVisible(map, 'sos-hillshade', terrain.hillshade);
     for (const o of config.overlays) {
       if (!o.available) continue;
       addOverlay(map, o, overlaysOn.includes(o.id), theme);
@@ -196,7 +200,7 @@ export function MapView(props: MapViewProps) {
     syncMeasure(map, measurePoints, theme);
     syncHome(map, home, theme);
     syncRoute(map, routePoints, theme);
-  }, [styleVersion, config, theme, overlaysOn, terrainOn, pins, labelPoint, measurePoints, home, routePoints]);
+  }, [styleVersion, config, theme, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints]);
 
   if (!hasStyle) return <p className="map-note warning">No base map is installed. Run the map build on the PC and copy the outputs to the box.</p>;
   return <div ref={hostRef} className="map-canvas" data-testid="map-canvas" />;

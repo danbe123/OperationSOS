@@ -11,7 +11,7 @@ import { Icon } from '../icons';
 import { useTheme } from '../theme/ThemeProvider';
 import { gridRef } from '../map/grid';
 import { floodZoneAt } from '../map/home';
-import { LayerPanel } from '../map/LayerPanel';
+import { LayerChips, type Terrain } from '../map/LayerChips';
 import { MapPanel, type PanelBodySize } from '../map/MapPanel';
 import { MapView } from '../map/MapView';
 import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
@@ -22,8 +22,7 @@ import { PrintButton } from '../components/PrintButton';
 import { Screen } from '../shell/Screen';
 import './map.css';
 
-const BASE_KEY = 'sos.mapBase';
-type Panel = 'none' | 'layers' | 'search' | 'pins' | 'share' | 'home' | 'nearby';
+type Panel = 'none' | 'search' | 'pins' | 'share' | 'home' | 'nearby';
 const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 
 export function MapScreen() {
@@ -36,7 +35,6 @@ export function MapScreen() {
   const homeQ = useQuery(() => api.home(), [], { refetchOnFocus: true });
   const mapRef = useRef<MlMap | null>(null);
 
-  const [baseId, setBaseId] = useState<'osm' | 'os'>(() => (localStorage.getItem(BASE_KEY) === 'os' ? 'os' : 'osm'));
   // The default set of overlays depends on config (async) plus the initial ?overlay= query, so it can only be
   // computed once config has loaded; overlayOverride holds the user's own toggles from then on. Deriving this
   // with useMemo (rather than a useEffect + setState) lets the map render in the same commit config arrives in.
@@ -47,7 +45,7 @@ export function MapScreen() {
     const wanted = query.overlays.length ? query.overlays : config.overlays.filter((o) => o.default_on).map((o) => o.id);
     return wanted.filter((id) => config.overlays.some((o) => o.id === id && o.available));
   }, [overlayOverride, config, query.overlays]);
-  const [terrainOn, setTerrainOn] = useState(true);
+  const [terrain, setTerrain] = useState<Terrain>({ contours: true, hillshade: true });
   const [panel, setPanel] = useState<Panel>('none');
   const [view, setView] = useState({ lat: query.lat ?? DEFAULT_VIEW.lat, lon: query.lon ?? DEFAULT_VIEW.lon, zoom: query.z ?? DEFAULT_VIEW.zoom });
   const [tapped, setTapped] = useState<LngLat | null>(null);
@@ -81,8 +79,6 @@ export function MapScreen() {
     if (next !== `?${params.toString()}`) setParams(new URLSearchParams(next), { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, overlaysOn]);
-
-  useEffect(() => { localStorage.setItem(BASE_KEY, baseId); }, [baseId]);
 
 
   const flyTo = useCallback((lon: number, lat: number, zoom = 13) => mapRef.current?.flyTo({ center: [lon, lat], zoom }), []);
@@ -250,7 +246,6 @@ export function MapScreen() {
           strip fades and offers a chevron at its right edge rather than clipping "Ho" mid-word. */}
       <div className={toolsScroll ? 'map-toolbar map-toolbar-scrolls no-print' : 'map-toolbar no-print'}>
       <div className="map-tools" role="toolbar" aria-label="Map tools" ref={toolbarRef}>
-        <button type="button" className={panel === 'layers' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'layers'} onClick={() => setPanel(panel === 'layers' ? 'none' : 'layers')}><Icon name="layers" size={18} /><span>Layers</span></button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>
         <button type="button" className={panel === 'pins' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'pins'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" size={18} /><span>Pins</span></button>
         <button type="button" className={panel === 'home' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'home'} onClick={() => setPanel(panel === 'home' ? 'none' : 'home')}><Icon name="home" size={18} /><span>Home</span></button>
@@ -263,12 +258,21 @@ export function MapScreen() {
           mid-word is not a tool a household can find Print behind. */}
       {toolsScroll && <button type="button" className="btn btn-small map-tools-more" onClick={scrollTools}><span>More tools</span><Icon name="forward" size={18} /></button>}
       </div>
+      {/* The layers are the map: they sit under the tools where a household can see what is on,
+          not behind a button and a panel that covered the ground they were drawn on. */}
+      {config && overlaysOn && (
+        <LayerChips
+          config={config} overlaysOn={overlaysOn}
+          onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))}
+          terrain={terrain} onTerrain={setTerrain}
+        />
+      )}
       <div className="map-host">
         {loading && <p className="map-note muted">Loading map…</p>}
         {error && <p className="map-note warning">Map unavailable: {error}</p>}
         {config && overlaysOn && (
           <MapView
-            config={config} theme={theme} baseId={baseId} overlaysOn={overlaysOn} terrainOn={terrainOn}
+            config={config} theme={theme} overlaysOn={overlaysOn} terrain={terrain}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
             home={homePoint} routePoints={routePoints}
             onMoveEnd={setView} onClick={onMapClick} onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
@@ -284,9 +288,6 @@ export function MapScreen() {
           </div>
         )}
         {labelPoint && <div className="map-label">{labelPoint.label}</div>}
-        {panel === 'layers' && config && overlaysOn && (
-          <LayerPanel config={config} baseId={baseId} onBase={setBaseId} overlaysOn={overlaysOn} onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))} terrainOn={terrainOn} onTerrain={setTerrainOn} onClose={() => setPanel('none')} />
-        )}
         {panel === 'search' && (
           <MapPanel label="Find place" title="Find a place" onClose={() => setPanel('none')}>
             {canLocate ? (

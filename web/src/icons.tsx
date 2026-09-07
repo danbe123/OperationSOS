@@ -79,6 +79,8 @@ const P = {
   baby: <><circle cx="12" cy="6" r="3" /><path d="M7 20v-5a5 5 0 0 1 10 0v5" /><path d="M9 20v-3M15 20v-3" /></>,
   zap: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
   mountain: <><path d="M3 20L10 7l4 7 2-3 5 9z" /><path d="M8 11l2 2 2-2" /></>,
+  plane: <path d="M12 2c1 0 1.6 1.1 1.6 3v3.6L22 13.2v2.2l-8.4-2.6v4.3l2.9 2.1V21L12 19.8 7.5 21v-1.8l2.9-2.1v-4.3L2 15.4v-2.2l8.4-4.6V5c0-1.9.6-3 1.6-3z" />,
+  train: <><rect x="5" y="3" width="14" height="12" rx="3" /><path d="M5 9h14M9.5 15L7 21M14.5 15L17 21" /><circle cx="9" cy="11.5" r="1" /><circle cx="15" cy="11.5" r="1" /></>,
   laptop: <><rect x="4" y="5" width="16" height="11" rx="2" /><path d="M2 19h20" /></>,
   flag: <><path d="M5 22V3" /><path d="M5 4h12l-2 4 2 4H5" /></>,
   atom: <><circle cx="12" cy="12" r="1.5" /><ellipse cx="12" cy="12" rx="9" ry="3.5" /><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="9" ry="3.5" transform="rotate(-60 12 12)" /></>,
