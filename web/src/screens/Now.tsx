@@ -16,9 +16,9 @@ import { ReadAloud } from '../situation/ReadAloud';
 import './now.css';
 
 /** Peacetime on Now: nothing is wrong with the services, so the box says where to start instead.
- * It asks for nothing first — the one line of progress is the ticks already on the kits, and the
- * two things worth doing on a quiet evening are a drill and the guides. No score, no gaps, no
- * register: a box nobody has filled in is as useful as one somebody has. */
+ * It asks for nothing first — the one line of progress is the ticks already on the kits, and what
+ * is worth doing on a quiet evening is a drill, a guide, or writing something down. No score, no
+ * gaps, no register: a box nobody has filled in is as useful as one somebody has. */
 function StartHere() {
   const kits = useQuery(() => api.kits(), [], { refetchOnFocus: true });
   const basic = (kits.data?.kits ?? []).reduce(
