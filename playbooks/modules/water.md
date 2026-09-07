@@ -14,6 +14,10 @@ sources:
   - title: Priority Services Register
     kiwix: govuk_resilience/www.thepsr.co.uk/
     as_at: 2026-09
+  - title: Prepare, power cuts
+    kiwix: prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/
+    url: https://prepare.campaign.gov.uk/emergencies/power-cuts/
+    as_at: 2026-09
   - title: UK CMOs' public health advice during a national power outage
     kiwix: govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage
     as_at: 2025-12-16
@@ -33,7 +37,7 @@ sources:
 - Store **2.5 to 3 litres of drinking water per person per day** and keep at least three days' worth; this is the government's own request to every household ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). Four people for three days is 36 litres: six 6-litre supermarket bottles.
 - Add washing and cooking water on top: the humanitarian minimum is 15 litres a person a day in total ([Sphere standards](kiwix:wikipedia_en_all_maxi/Sphere_(organization))), so fill what you have (water butt, buckets, a filled bath).
 - The **Priority Services Register** is free and gets bottled water delivered to your door when supply fails if you are medically dependent on water, disabled, older, or have a child under five; one registration covers your water company and your electricity and gas networks ([Priority Services Register](kiwix:govuk_resilience/www.thepsr.co.uk/)).
-- Mains water usually keeps flowing for hours to days into a power cut because pumping stations have backup, but it stops quickly in high-rise flats when the booster pumps lose power ([CMO outage advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage)).
+- **Do not count on mains water in a power cut.** Government advice is that the mains supply to your home could also be disrupted ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). A treatment works holds up to about 24 hours of treated water and some sites have standby generators while many do not, so a gravity-fed area may run on for a while but pumped areas and high-rise flats on booster pumps can lose supply within hours ([CMO outage advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage)). Store water now.
 - Boiling is the surest disinfection: a **rolling boil for one minute** kills bacteria, viruses and parasites, though it does not remove chemicals, fuel or radioactive particles ([Water Treatment Library](kiwix:zimgit-water_en/home)); every other method, with doses, is on [Water disinfection](page:water-disinfection).
 
 ## What to do

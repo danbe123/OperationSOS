@@ -35,7 +35,7 @@ category: comms
 | Lifts and electric gates | No | | Use the manual release |
 | Grid-tied solar panels | No | | Unless a battery with an islanding switch ([Solar islanding](page:solar-islanding)) |
 | Electric car (vehicle-to-load) | Yes | Days | ([Vehicles and fuel](module:vehicles-fuel)) |
-| Hospitals | Yes | | Generators |
+| Hospitals | Yes | While the generator fuel lasts, then resupply | Standby generators carry A&E, theatres, lifts, IT and essential lighting, not the whole site. A hospital is not a warm place to go to: shelter, warmth and refreshment in an emergency are the council's rest centre ([Evacuation module](module:evacuation)) |
 | This box, on a power bank | Yes | Roughly 8 to 15 hours | On the 20,000 mAh power bank ([About Operation SOS](page:about-sos)) |
 
 ## Emergency Alerts

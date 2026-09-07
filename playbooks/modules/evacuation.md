@@ -11,6 +11,10 @@ sources:
   - title: Advice for disabled people and carers (Prepare)
     kiwix: prepare_uk/prepare.campaign.gov.uk/advice-for-disabled-persons-and-carers/
     as_at: 2026-09
+  - title: Flood alerts and warnings, what they are and what to do (GOV.UK)
+    kiwix: govuk_resilience/www.gov.uk/get-flood-warnings
+    url: https://www.gov.uk/guidance/flood-alerts-and-warnings-what-they-are-and-what-to-do
+    as_at: 2026-09
   - title: Help during a flood (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/help-during-flood
     as_at: 2026-09
@@ -37,6 +41,7 @@ sources:
 
 ## UK specifics
 
+- The flood decision is driven by the warning level, not by the water: at a **flood warning** move people, pets and valuables upstairs or to higher ground; at a **severe flood warning** stay somewhere safe, be ready to evacuate and do as the emergency services tell you ([get flood warnings](kiwix:govuk_resilience/www.gov.uk/get-flood-warnings); [help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Never set off through water that has already arrived: once it is at the door, upstairs is usually safer than the street.
 - Never drive or walk through floodwater: 15 cm of moving water can knock an adult off their feet, 30 cm will float a car, and 60 cm can carry one away ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
 - Anyone with a disability should have a personal evacuation plan in place in advance and be registered on the Priority Services Register ([advice for disabled people and carers](kiwix:prepare_uk/prepare.campaign.gov.uk/advice-for-disabled-persons-and-carers/)).
 - Pets travel with you; livestock arrangements are covered separately in the [Livestock module](module:livestock).

@@ -16,7 +16,7 @@ This is the home page for access law; the other pages only point here.
 - **Scotland**: a right of responsible access to almost all land and inland water under the Land Reform (Scotland) Act 2003, which includes wild camping, and small fires with care under the Scottish Outdoor Access Code ([Land Reform (Scotland) Act s1](kiwix:legislation_uk/www.legislation.gov.uk/asp/2003/2/section/1); [Scottish Outdoor Access Code](kiwix:wikipedia_en_all_maxi/Scottish_Outdoor_Access_Code)).
 - **Northern Ireland and the Republic**: very few public rights of way; walk on waymarked trails, and on hill land by custom and with permission ([Navigation module](module:navigation)).
 
-The offline map shows footpaths and access land as overlays ([Footpaths and access land on the map](map:?overlay=footpaths&overlay=access-land)). In an evacuation nobody will care where you walked, but farmers with livestock and crops will, and a gate left open can lose someone a herd: fasten every gate, keep to the field edge, and keep dogs close ([The Countryside Code](kiwix:wikipedia_en_all_maxi/The_Countryside_Code)). Fires are on [Fire](page:fieldcraft-fire) and taking things on [Foraging and the law](page:foraging-law).
+The offline map shows footpaths and access land as overlays ([Footpaths and access land on the map](map:?overlay=footpaths&overlay=access-land)). In an evacuation nobody will care where you walked, but farmers with livestock and crops will: leave gates and property as you find them or follow the instructions on the sign, because closing a gate a farmer has propped open can cut stock off from water, and shutting one he left shut is just as important. Stay on the marked path across a field, even if it is muddy; walking round the edge instead of along the line of the right of way is trespass. Keep dogs on a lead near stock, and on open access land a short lead near livestock and at all times from 1 March to 31 July, when ground-nesting birds are on the eggs ([The Countryside Code](kiwix:wikipedia_en_all_maxi/The_Countryside_Code); [CRoW s2](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2000/37/section/2)). Fires are on [Fire](page:fieldcraft-fire) and taking things on [Foraging and the law](page:foraging-law).
 
 ## How fast you actually move
 
@@ -44,7 +44,7 @@ Britain has some of the largest tides in the world. Sands and estuaries such as 
 
 ## Livestock
 
-Cows with calves are the danger, and nearly always because of a dog. Keep dogs on a lead near stock, let the dog go if cattle charge, walk quietly round the edge of the field, never between a cow and her calf, never turn your back and run ([The Countryside Code](kiwix:wikipedia_en_all_maxi/The_Countryside_Code)). Treat any bull as dangerous. Horses are curious and heavy; sheep are harmless; pigs and boar are not to be cornered ([Wild boar](kiwix:wikipedia_en_all_maxi/Wild_boar)).
+Cows with calves are the danger, and nearly always because of a dog. Keep dogs on a lead near stock, but let the dog off the lead the moment livestock or horses threaten you and do not risk getting hurt protecting it, walk quietly, never between a cow and her calf, never turn your back and run ([The Countryside Code](kiwix:wikipedia_en_all_maxi/The_Countryside_Code)). Treat any bull as dangerous. Horses are curious and heavy; sheep are harmless; pigs and boar are not to be cornered ([Wild boar](kiwix:wikipedia_en_all_maxi/Wild_boar)).
 
 ## At night
 

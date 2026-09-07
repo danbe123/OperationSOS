@@ -5,179 +5,183 @@ places:
   hospital:
     title: Hospital
     expect: >-
-      The hospital is the last part of the health service to stop, and A&E keeps going when almost
-      everything else has closed. Everything routine goes first: clinics, appointments, planned
-      operations, and the waits get very long. Come here only for something life-threatening, and be
-      ready to make your own way. Bring your medicines and a written list of them with the doses,
-      because nobody can look your record up when the systems are down. For anything smaller, treat it
-      where you are and read the quick cards first ([Water module](module:water)).
+      A&E runs 24 hours a day and is meant to keep going in an emergency, but it can be diverted or
+      moved, so do not assume the nearest one is open. Everything routine goes first: clinics,
+      appointments, planned operations, and the waits get very long. Come here only for something
+      life-threatening, and for chest pain, stroke or heavy bleeding ring 999 first rather than driving
+      yourself. Bring your medicines and a written list with the doses, because staff may not be able to
+      see your record. For anything smaller try 111, a pharmacy or an urgent treatment centre first
+      ([Water module](module:water)).
     link: module:water
     have:
-      - "Generators run A&E, theatres and lighting for days; heating, lifts and IT are cut back to essentials."
+      - "Standby generators carry A&E, theatres, lifts, IT and essential lighting; the fuel is finite and has to be resupplied."
       - "Piped oxygen, blood, drugs and sterile kit are held on site, but stocks depend on deliveries."
-      - "Water comes off the mains like everyone else's, and the site has tanks, not a spring."
-      - "Staff trained in triage, midwifery and mental health, and a switchboard with its own radios and landlines."
-      - "Toilets, hot drinks, chairs and a waiting area that stays lit and warm through the night."
-      - "One of the few buildings still lit, warm and staffed through a long blackout ([PMR446](page:pmr446))."
+      - "Water comes off the mains like everyone else's, and the on-site tanks hold hours, not days."
+      - "Staff trained in triage and mental health, midwifery where there is a maternity unit, and resilient communications."
     useful:
-      - "Go for anything life-threatening: heavy bleeding, chest pain, stroke, a bad burn, a birth going wrong."
-      - "In a long blackout, for anyone whose oxygen concentrator or home dialysis has lost power ([PMR446](page:pmr446))."
-      - "In a flood or a house fire, for smoke inhalation, crush injuries and anyone pulled from water."
-      - "After a freeze, for hypothermia, frostbite and the falls that come with ice."
+      - "Go for anything life-threatening; for chest pain, stroke or heavy bleeding ring 999 rather than travelling."
+      - "In a long blackout: use the back-up oxygen cylinder, ring the supplier's 24-hour line, and come if breathing worsens ([PMR446](page:pmr446))."
+      - "In a flood or a house fire, ring 999 for smoke inhalation, crush injuries and anyone pulled from water."
+      - "After a freeze, for frostbite and the falls that come with ice; for hypothermia ring 999 instead of walking there."
     avoid:
       - "Not for repeat prescriptions, dressings, minor illness or a bed for the night; those services stop first."
-      - "In a mass-casualty event the site is overwhelmed and the walk-in queue lasts many hours."
-      - "A hospital sits at the centre of any epidemic; keep a well household away from the doors."
-      - "In a chemical or radiation release, stay put unless told otherwise: get inside, stay inside, stay tuned ([Water module](module:water))."
+      - "In a mass-casualty event the site is overwhelmed and anyone with a minor problem may wait a very long time."
+      - "Hospitals see the sickest cases in an outbreak, so keep well household members away from the doors."
+      - "In a chemical or radiation release get inside, stay inside, stay tuned; if you were splashed, remove clothing and rinse first ([Water module](module:water))."
+      - "Not a warm place to go to in a blackout: shelter, warmth and refreshment are the council rest centre's job ([Water module](module:water))."
     approach:
-      - "Take your medicines and a written list with doses; nobody can look your record up ([Water module](module:water))."
-      - "Carry ID, water, a warm layer, a phone charger and cash; expect to wait a long time."
-      - "Go with one other adult rather than the whole family, and leave children somewhere warm."
-      - "Give the triage nurse the story in one sentence: what happened, when, and what has been taken."
-      - "Do not queue-jump, but tell staff at once if someone with you is collapsing or bleeding heavily."
+      - "Take your medicines and a written list with doses; staff may not be able to see your record ([Water module](module:water))."
+      - "Carry water, a warm layer and a phone charger, and expect to wait a long time."
+      - "Bring only the people who need to be there, and a child must come with a parent or guardian."
+      - "It helps to give the triage nurse the story in one sentence: what happened, when, and what was taken."
+      - "Tell reception at once if someone with you is collapsing, bleeding heavily or struggling to breathe."
   pharmacy:
     title: Pharmacy
     expect: >-
-      A pharmacy needs power, deliveries and staff, so it shuts early in a serious emergency and the
-      one nearest you may already be dark. While it is open it is the easiest medical help there is to
-      reach, and a pharmacist can advise on the medicines you take every day. Bring the labelled box or
-      the repeat slip, because no record can be seen, and bring cash, because the card machine fails
-      with the network. Ask about a longer supply before you need one, never at the counter on the day
+      A pharmacy needs power, deliveries and staff. Most stay open in an emergency, but the one nearest
+      you may be shut, so check before a long walk. While it is open it is the easiest medical help
+      there is to reach, and a pharmacist can advise on the medicines you take every day. Bring the
+      labelled box or the repeat slip. In England a prescription is charged for and an emergency supply
+      may be a private sale, so bring cash; prescriptions are free in Scotland, Wales and Northern
+      Ireland. Ask your prescriber, well before you run out, whether a longer supply is right for you
       ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
       - "Prescription medicines, dressings, painkillers, rehydration salts, inhalers and a pharmacist who advises without an appointment."
-      - "Baby formula, nappies, sanitary items, thermometers and reading glasses, while the shelves last."
-      - "A till that needs power and a card machine that needs the network; the shutters may stay down."
-      - "In England a pharmacist can treat some minor conditions under Pharmacy First without a GP ([PMR446](page:pmr446))."
-      - "Fridge stock, insulin among it, spoils once the power has been off a while ([PMR446](page:pmr446))."
+      - "Many pharmacies also stock baby formula, nappies, sanitary items, thermometers and reading glasses, while the shelves last."
+      - "Without power the till, the card machine and the pharmacy's own patient records go down, so it may not dispense at all."
+      - "In England Pharmacy First lets a pharmacist treat some minor conditions; Scotland, Wales and Northern Ireland run their own schemes ([PMR446](page:pmr446))."
+      - "Insulin in use keeps at room temperature below 25°C for about 28 days; vaccines are the fridge stock that is lost ([PMR446](page:pmr446))."
     useful:
       - "When a prescription is running out and the surgery is shut, to ask for an emergency supply."
       - "For an infection, a rash, a burn or a cough that needs judgement rather than an ambulance."
-      - "Early in a blackout, before the stock goes and while staff are still on the premises."
-      - "To ask, before you need it, about a longer supply of anything the household takes daily."
+      - "Go while the pharmacy still has power: it may not be able to dispense once its systems are down."
+      - "To ask your prescriber, before you need it, about a longer supply of anything the household takes daily."
     avoid:
-      - "Days into a crisis the shelves are stripped and deliveries have stopped; the walk wastes daylight."
-      - "Do not go for a medicine somebody else takes, and never buy prescription drugs off anyone."
-      - "Steer clear during looting: pharmacies are targeted for controlled drugs and get boarded up early."
-      - "A queue of coughing people is the wrong place for a frail or newborn member of the family."
+      - "Deliveries may have stopped and the shelves may be bare, so ring ahead if you can."
+      - "You may collect a prescription for someone else, but never take their medicine yourself or buy prescription drugs off anyone."
+      - "Do not travel to a pharmacy through public disorder."
+      - "Leave a frail or newborn household member at home rather than in a queue indoors."
     approach:
-      - "Bring the labelled box or repeat slip, and cash: the card machine fails with the network ([PMR446](page:pmr446))."
-      - "Go early in the day and ask for the pharmacist by name rather than the counter assistant."
+      - "Bring the labelled box or repeat slip, and cash: in England there is a charge and the card machine may be down ([PMR446](page:pmr446))."
+      - "Go early in the day and ask to speak to the pharmacist rather than the counter assistant."
       - "Say what the medicine is for, not only its name, so an alternative can be suggested."
-      - "Ask for a week's supply rather than a month, so the person behind you gets some too."
+      - "Take whatever quantity the pharmacist judges safe: the law sets limits, and it may already be less than a month."
       - "Offer to collect a neighbour's prescription while you are there, and tell them what you did."
   gp:
     title: GP surgery
     expect: >-
-      A GP surgery is one of the first places to close in an emergency and one of the last to reopen,
-      so do not walk here hoping for a door that opens. Ring 111 for urgent advice that is not
-      life-threatening in England, Scotland and Wales; Northern Ireland uses GP out-of-hours numbers
-      instead. Ring 999, or 112, for anything life-threatening. If the network is down none of those
-      numbers connect, and the quick cards in this box are what you have until it comes back
-      ([PMR446](page:pmr446)).
+      A GP surgery keeps its essential services going through a disruption, but it may close its
+      building or move to another site, so ring or read the door notice before walking here. Ring 111
+      for urgent advice that is not life-threatening in England, Scotland and Wales; Northern Ireland
+      has no 111 and uses your practice in hours, your trust's Phone First number before an emergency
+      department, and GP out-of-hours at night and at weekends. Ring 999, or 112, for anything
+      life-threatening. If your own network is down, still try 999: a mobile uses any network it can
+      find, without credit or a SIM ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
       - "Consulting rooms, dressings, a defibrillator, a dispensary in rural practices, and staff who know local patients."
-      - "Paper records in older practices, but nothing readable once the computers are down."
+      - "Records are electronic; with the computers down the practice may not see your record at all, so bring your own list."
       - "A phone line that diverts out of hours, and a locked door outside surgery times."
       - "No beds, no emergency department, and no fuel, water or food for anyone."
     useful:
       - "Inside surgery hours in a small emergency: a wound review, a repeat prescription, a sick note."
-      - "To read the door notice naming where the practice is working from and which numbers still answer."
-      - "For anyone whose insulin, steroids or epilepsy tablets are running out ([PMR446](page:pmr446))."
+      - "To read a door notice: many practices post where they have moved to and which numbers still answer."
+      - "For anyone whose insulin, steroids or epilepsy tablets are running out; if it is shut, a pharmacy can often supply ([PMR446](page:pmr446))."
     avoid:
-      - "One of the first buildings to close in a serious emergency and one of the last to reopen."
-      - "Never walk here with a life-threatening problem: A&E or 999 is the route ([PMR446](page:pmr446))."
-      - "Out of hours the building is dark and there is nobody to hear you knock."
+      - "The building may be shut or the practice working from another site, so check before you walk there."
+      - "For anything life-threatening ring 999 rather than travelling to the surgery ([PMR446](page:pmr446))."
+      - "Outside surgery hours the building is usually locked and unstaffed."
     approach:
-      - "Ring 111 for urgent advice in England, Scotland and Wales; Northern Ireland uses GP out-of-hours numbers ([PMR446](page:pmr446))."
-      - "Go inside surgery hours, with your NHS number, your medicines list and any letters you hold."
-      - "Ask what the practice has agreed to do if it stays shut, and write it down."
-      - "Knock once, wait, and leave a note with your name and address if nobody answers."
+      - "Ring 111 in England, Scotland and Wales; in Northern Ireland ring the practice, Phone First or GP out-of-hours ([PMR446](page:pmr446))."
+      - "Go inside surgery hours with your medicines list and any letters; your NHS number helps but is not needed."
+      - "Ask where the practice will work from if it has to close, and write it down."
+      - "If nobody answers, use the number on the door, and do not leave your address on the premises."
   clinic:
     title: Walk-in or urgent treatment centre
     expect: >-
       A walk-in centre, minor injuries unit or urgent treatment centre takes the injuries that hurt but
       are not going to kill you: a cut that needs closing, a sprain, a bone that may be cracked, an
-      X-ray. It is not an A&E, and anything life-threatening gets sent on from here. Opening hours are
-      short in normal times and shorter in an emergency, so do not set out on a long walk on the
-      strength of this map alone. Treat what you can at home first ([Water module](module:water)).
+      X-ray. It is not an A&E, and anything life-threatening is sent on from here. Urgent treatment
+      centres must open at least 12 hours a day, seven days a week; walk-in centres and minor injuries
+      units keep varying hours and some close early, so check before a long walk. If you are unsure,
+      ring 111 first, or Phone First in Northern Ireland ([Water module](module:water)).
     link: module:water
     have:
-      - "Dressings, splints, stitches, tetanus cover and often an X-ray machine while the power holds."
-      - "Nurses and paramedics who can close a wound, strap a sprain and give strong painkillers."
-      - "Chairs, toilets, drinking water and light, on a generator at some units but not all."
-      - "Short opening hours in normal times, and shorter still in an emergency."
+      - "Dressings, splints, stitches and tetanus cover, with X-ray at an urgent treatment centre through its opening hours."
+      - "Nurses, paramedics and GPs who can close a wound, strap a sprain and give pain relief."
+      - "Chairs, toilets and drinking water; do not count on the lights, as most units have no standby generator."
+      - "Urgent treatment centres open at least 12 hours a day, every day; other units keep varying hours ([Water module](module:water))."
     useful:
       - "For a cut that needs closing, a suspected fracture, a burn or an eye injury ([Water module](module:water))."
       - "When A&E is hours away and the problem hurts but is not going to kill anyone."
-      - "After a storm or a flood, for the sprains, cuts and chilling that follow the clean-up."
+      - "After a storm or a flood, for the sprains and cuts of the clean-up; if someone is cold and confused, ring 999."
     avoid:
-      - "Not for chest pain, stroke, heavy bleeding or breathing trouble; all of those are sent on."
-      - "Do not set out on a long walk on the strength of this map: it may be shut."
-      - "Late evening and overnight, when most units are closed and the walk home is dark."
+      - "Not for chest pain, stroke, heavy bleeding or breathing trouble: ring 999 rather than coming here."
+      - "Check it is open before a long walk: walk-in centres and minor injuries units keep varying hours."
+      - "Many units close in the evening, though some urgent treatment centres open late or around the clock."
     approach:
       - "Check the daylight and your route home before you go, and plan to be back before dark."
-      - "Take the medicines list, a warm layer, water and something to eat while you wait."
-      - "Bring the person who was hurt, not the household; somebody stays with the children."
-      - "Describe the injury plainly and say if anyone is on anticoagulants ([PMR446](page:pmr446))."
+      - "Take the medicines list, a warm layer and water; do not eat if the injury may need setting under sedation."
+      - "Bring the injured person, not the household, and a child must come with a parent or guardian."
+      - "Say if anyone is on anticoagulants: with a head injury that means A&E, not a walk-in centre ([PMR446](page:pmr446))."
   fuel:
     title: Filling station
     expect: >-
-      A filling station is only useful while the mains is on, because the pumps are electric and most
-      forecourts close in a blackout. If one is serving, expect a queue, a limit per car and cash only.
-      Take what the journey that matters needs rather than filling every container you own: a household
-      may keep up to 30 litres of petrol without telling anyone, in plastic containers of up to 10
-      litres or metal ones of up to 20. Panic buying, not shortage, emptied the pumps in 2021
+      The pumps are electric, so unless a filling station has a standby generator it sells nothing in a
+      power cut and you should assume it is shut. If one is serving, expect a queue and a limit per car,
+      and carry cash and a card, because some sites are card-only and some tills take only cash. Take
+      what the journey that matters needs rather than filling every container you own: a household may
+      keep up to 30 litres of petrol without telling anyone, in plastic containers of up to 10 litres or
+      metal ones of up to 20. Panic buying, not shortage, emptied the pumps in 2021
       ([Water module](module:water)).
     link: module:water
     have:
-      - "Pumps and card machines both die with the mains, so a dark forecourt sells nothing ([PMR446](page:pmr446))."
-      - "The shop, while the shutters are up, holds bottled water, tinned food, batteries and firelighters."
-      - "Gas canisters, screenwash, engine oil, jerrycans, road maps and de-icer on the forecourt shelves."
-      - "An air line, a water tap, toilets and sometimes a payphone; all electric except the tap."
-      - "Bulk fuel sits in underground tanks that only the site's own pumps can lift."
+      - "With no power the pumps and tills are dead; only a site with its own generator can serve ([PMR446](page:pmr446))."
+      - "The shop, if it is open, usually holds bottled water, tinned food and batteries."
+      - "Often gas cylinders, screenwash, engine oil and de-icer; do not count on jerrycans or road maps."
+      - "Sometimes an air line and toilets; the water tap depends on the mains, not on the forecourt."
+      - "Bulk fuel sits in underground tanks that only the site's own pumps or a tanker can lift."
     useful:
       - "Before a blackout bites, to fill the tank for the one journey that matters ([Water module](module:water))."
-      - "As a late-opening shop when the supermarkets have closed and you need water or gas canisters."
-      - "For a generator's petrol, kept within the household limit of 30 litres ([Water module](module:water))."
-      - "During a freeze, for de-icer, screenwash, a shovel and something hot to drink."
+      - "As a late-opening shop when the supermarkets have closed; it may or may not have gas cylinders."
+      - "For a generator's petrol, within the household limit of 30 litres; never run a generator indoors ([Water module](module:water))."
+      - "During a freeze, for de-icer and screenwash."
     avoid:
       - "In a blackout: no power, no pumps, and a queue of cars that will not move."
       - "When there is panic buying; in 2021 the queueing, not a shortage, emptied the forecourts ([Water module](module:water))."
-      - "Forecourts are early targets for looting and for fights over the last of the fuel."
-      - "Never siphon from someone else's tank or a closed pump: that is theft ([Water module](module:water))."
+      - "Tempers run high in fuel queues and forecourt staff were abused in 2021, so walk away from confrontation."
+      - "Never siphon from someone else's tank or a closed pump: that is theft, and never siphon by mouth ([Water module](module:water))."
     approach:
-      - "Take cash in small notes; card readers and cash machines go down with the network ([PMR446](page:pmr446))."
+      - "Keep small notes and a card: cash machines fail in a power cut and some forecourts take no cash ([PMR446](page:pmr446))."
       - "Carry approved containers only: plastic up to 10 litres, metal up to 20 ([Water module](module:water))."
       - "Go early, take what the journey needs, and accept the limit per car without arguing."
-      - "Never smoke, never fill a container in the boot, and stand the can on the ground."
-      - "Walk or cycle if it is the shop you want rather than fuel, and leave the car."
+      - "Never smoke, switch the engine off, never fill a container in the boot, and stand the can on the ground."
+      - "Walk or cycle if it is the shop you want rather than fuel, and never carry petrol on a bicycle."
   water-works:
     title: Water treatment works
     expect: >-
-      This is a treatment works or a pumping station, not a tap. There is nothing here to fetch: the
-      site is fenced, the water inside it is part-way through treatment and staff will turn you away.
-      Mains water usually keeps running for hours or days into a power cut because pumping stations
-      have backup, and it fails first in high-rise flats when the booster pumps stop. When supply does
-      go, your water company must set up bottled-water stations and bowsers, and it will say where
-      ([Water module](module:water)).
+      This is a treatment works or a pumping station, not a tap. It is fenced, often unmanned, and the
+      water inside it is part-way through treatment, so there is nothing here to fetch. Do not count on
+      mains water in a power cut: a works holds up to about 24 hours of treated water, gravity-fed areas
+      run on for a while, and flats on booster pumps can lose supply within hours. Store water now. If
+      the pipes do fail, your company must supply you by other means, usually bottled-water stations or
+      bowsers, and it will say where: check its website or local radio ([Water module](module:water)).
     link: module:water
     have:
       - "Fenced tanks, filter beds, chlorine dosing and pumps; nothing here is a tap for the public."
-      - "Standby generators keep the pumps turning, which is why mains water outlasts the lights ([Water module](module:water))."
-      - "Staff, radios and the company's own vehicles, and bulk chlorine or hypochlorite at some sites."
-      - "It is the address the company works from when it sets up bowsers and bottled-water stations."
+      - "Some sites have standby generators and many do not, so treat mains water as at risk whenever the power is out ([Water module](module:water))."
+      - "Bulk chlorine or hypochlorite at the larger sites; staff and company vehicles are not always there."
+      - "Collection points are set up where people are, not at the works."
     useful:
-      - "To see whether tankers and crews are moving, which tells you a supply is coming back."
-      - "In a water cut, as a place a company notice or a delivery point may appear ([Water module](module:water))."
+      - "Rarely in itself: the company's website and local radio say more about restoration than the gate does ([Water module](module:water))."
+      - "In a water cut, to read a company notice, though the works is not a designated collection point ([Water module](module:water))."
       - "To learn now where your supply comes from, before you ever need to ask."
     avoid:
       - "Do not climb in for water: the site is fenced and part-treated water is not drinkable."
-      - "Chlorine is stored in bulk at some works, and a leak there is a plume to walk away from."
-      - "In flooding, treatment works are among the first sites to be inundated and to overflow."
-      - "Trespass here is a civil matter, but you will be removed and you gain nothing by it."
+      - "Some works hold bulk chlorine or hypochlorite; if there is a chemical release, move upwind and away."
+      - "Flooding can knock out a works and cause sewage overflows, so stay out of flood water."
+      - "Entering a waterworks can be a criminal offence under water company byelaws, not just civil trespass ([Water module](module:water))."
     approach:
       - "Read the gate notices and go no further; ask staff outside the fence, and do not follow vehicles."
       - "Take your own containers to whatever bowser the company names, not to the works ([Water module](module:water))."
@@ -188,82 +192,84 @@ places:
     expect: >-
       A reservoir is a real source of water once the mains has gone, but nothing in it is safe to drink
       as it comes: it collects run-off from fields, roads, birds and livestock. Let what you fetch
-      settle, pour it through a cloth, then bring it to a rolling boil for one minute, which kills
-      bacteria, viruses and parasites alike. Tablets or thin bleach will do at a push, but they leave
-      Cryptosporidium behind. The banks are steep and the water is colder than it looks, so never go in
-      after anything ([PMR446](page:pmr446)).
+      settle, filter it through a cloth until it runs clear, then bring it to a rolling boil for one
+      minute, and do not use water with an oily film on it. Tablets or thin bleach will do at a push, at
+      the doses on the disinfection page, but they leave Cryptosporidium behind, so boil whenever you
+      can. The banks are steep and the water is colder than it looks, so never go in after anything
+      ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
       - "Millions of litres of raw water that needs settling, straining and boiling before anyone drinks it."
-      - "A dam, spillway, valve tower and a service road that usually reaches a public car park."
+      - "Many have a dam, valve tower and a public car park; some have no public access at all."
       - "Fish, wildfowl and woodland around most British reservoirs, and often an angling club with boats."
-      - "Steep banks, cold deep water, no shelter, and frequently no phone signal at all."
+      - "Steep banks, cold deep water, no shelter, and phone signal that may be poor or absent."
       - "Run-off from fields, roads, birds and livestock collects here, so nothing in it is safe raw."
     useful:
-      - "Once the mains has gone and the stored water is running out, this is a real source ([Water module](module:water))."
-      - "When flushing, washing and cooking water are running short; cooking water is treated exactly as drinking water ([PMR446](page:pmr446))."
-      - "In a long drought or a rota supply, when standpipes and bowsers cannot keep up ([Water module](module:water))."
+      - "Once the mains has gone, a real source, but only if it is close by and you can get there and back safely ([Water module](module:water))."
+      - "For cooking water, which is treated exactly as drinking water: boil it rather than use bleach ([PMR446](page:pmr446))."
+      - "In a long drought or a rota supply, when standpipes and bowsers cannot keep up; respect the signs and byelaws ([Water module](module:water))."
     avoid:
       - "Never go in after anything: the water is colder than it looks and the banks are steep."
-      - "In a freeze keep off the ice; British ice rarely reaches the 10 cm that bears a person ([PMR446](page:pmr446))."
+      - "In a freeze keep off the ice completely: you cannot tell how thick it is, and it is thinner than it looks ([PMR446](page:pmr446))."
       - "After heavy rain, or any dam warning, move away and uphill rather than towards the water."
       - "Do not draw water downstream of farms, a sewage works or an industrial site ([Water module](module:water))."
     approach:
-      - "Bring containers, a cloth to strain through, and fuel to boil: a rolling boil for one minute ([PMR446](page:pmr446))."
+      - "Bring containers, a cloth to filter through until it runs clear, and fuel to boil ([PMR446](page:pmr446))."
       - "Go in daylight and in twos, and move the water on wheels rather than on your back."
-      - "Fill above any inflow, away from the birds and the car park, and take the clearest water."
+      - "Take the clearest water you can, away from birds and inflows, in a container that has never held fuel."
       - "Ten litres weighs ten kilos: make two trips rather than one you cannot finish."
       - "Tell somebody where you are going and roughly when you will be back."
   spring:
     title: Spring
     expect: >-
-      A spring is the best raw water there is, because it comes out of the ground above whatever has
-      been spread on the land. Go as high and as close to the source as you can, and stay upstream of
-      any building, track, grazing or footpath. Look for a green patch on a dry hillside or a line of
-      rushes. Brown peaty water that tastes of soil is fine once treated, and treated is the point:
-      filter it, then boil it, before anyone drinks ([PMR446](page:pmr446)).
+      A spring can be a good source, but it is not automatically clean: a shallow spring carries
+      whatever soaks through the ground above it, so treat it like any other raw water. Go as high and
+      as close to the source as you can, and stay upstream of any building, track, grazing or footpath.
+      A green patch on a dry hillside, or a line of rushes, may mark one. Filter it until it runs clear,
+      then boil it: brown peaty colour is not the danger, what you cannot see is
+      ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
-      - "Water coming out of the ground above whatever has been spread on the land ([PMR446](page:pmr446))."
+      - "Water coming out of the ground, though most springs are surface-fed and carry what is on the land above ([PMR446](page:pmr446))."
       - "Often a trough, a stone basin or a pipe, with a track or a path reaching it."
-      - "A green patch on a dry hillside, or a line of rushes, marks one that is unmapped."
-      - "Steady flow through a drought and through a freeze, when surface water has gone."
+      - "A green patch on a dry hillside, or a line of rushes, may mark one that is unmapped."
+      - "Often still running when surface water has gone, though a spring can slow or fail in a long drought."
     useful:
-      - "The best raw source once the mains fails, and the one worth the walk ([Water module](module:water))."
-      - "In a long water cut, as a daily round for a household or a street."
-      - "In a freeze, when butts and pipes are solid but a spring still runs."
+      - "One raw source among several once the mains fails, and it still has to be treated ([Water module](module:water))."
+      - "In a long water cut, as a daily round, once you have checked it is not somebody's own supply."
+      - "It may still run in a freeze when butts and pipes are solid."
     avoid:
       - "Not below a building, a track, grazing or a footpath: go up towards the source ([PMR446](page:pmr446))."
       - "A private supply is somebody's drinking water and their responsibility; ask before you make it a queue."
       - "After heavy rain a spring runs cloudy and carries whatever the ground above it holds."
       - "Springs on farmland can be fouled by slurry, and smell and taste tell you nothing useful."
     approach:
-      - "Treat it anyway: strain through a cloth, then boil for one minute ([PMR446](page:pmr446))."
-      - "Ask at the nearest house first; a spring on private land is usually shared willingly."
-      - "Take two containers, a funnel and a wide-necked bottle that fits under a slow pipe."
+      - "Filter until it runs clear, then boil: the cloth takes out the dirt, the boil takes out the bugs ([PMR446](page:pmr446))."
+      - "Ask at the nearest house first: the water may be their supply, and it is theirs, not yours."
+      - "Take two containers, a funnel and a wide-necked bottle that has never held fuel or chemicals."
       - "Go in daylight, keep to the path, and leave the place cleaner than you found it."
-      - "Leave gates as you found them and keep dogs on a lead near stock."
+      - "Leave gates as you find them, dogs on a lead near stock, and let the dog go if cattle threaten you."
   rail-station:
     title: Railway station
     expect: >-
       A station is a landmark and a roof, not a service. Trains stop early in almost every emergency,
       because power, signalling and staff all have to hold for the line to run, so do not build a plan
-      around one. What it is good for is a dry, lit, well-known place to meet people who are walking to
-      you. The track itself is fenced off and dangerous. If you are walking out, the line itself is a
-      handrail you can follow to the next town, but from the far side of the fence: never the ballast,
-      and never a tunnel or a cutting
-      ([Water module](module:water)).
+      around one. What it is good for is a well-known place to meet people who are walking to you, but
+      stations get closed and emptied in an emergency, so agree a fallback spot outside. The track
+      itself is fenced off and dangerous. If you are walking out, the line is a handrail you can follow
+      to the next town, but from the far side of the fence: never the ballast, and never a tunnel or a
+      cutting ([Water module](module:water)).
     link: module:water
     have:
-      - "A roof, benches, toilets that may still flush, and lighting that runs on backup for a while."
+      - "A roof, benches, toilets that may still flush, and emergency lighting that lasts an hour or two on the escape routes."
       - "Staff with radios and their own telephone network, and a public address system."
       - "Vending machines, a coffee kiosk and often a small shop, all needing power and cards."
-      - "Step-free routes, a waiting room and, at bigger stations, a first-aid room and a defibrillator."
+      - "Step-free routes, a waiting room and, at some stations, a defibrillator in a cabinet by the entrance."
       - "Electric trains stop with the grid and diesel services run only in part ([PMR446](page:pmr446))."
     useful:
       - "When the household is scattered and the phones are down, it is the one address everyone can find ([PMR446](page:pmr446))."
-      - "In a flood, stations often sit on an embankment above the streets around them."
-      - "For information: staff hear more, and sooner, than anyone holding a dead phone."
+      - "Some stations sit high on an embankment, but many sit in a cutting and flood first, so check yours."
+      - "For information: staff may hear from control before the public, though do not count on it."
       - "Walking out of town, follow the line to the next town from outside the fence, never the track."
     avoid:
       - "Do not build a plan around trains: they stop early in almost every emergency."
@@ -273,32 +279,33 @@ places:
     approach:
       - "Agree the exact spot in advance, under the clock rather than simply the station ([PMR446](page:pmr446))."
       - "Take cash, water and a warm layer; the concourse is cold and the shops want cards."
-      - "Ask the station supervisor rather than a passing member of staff, and ask once, calmly."
+      - "Ask a member of station staff once, calmly; the supervisor is the person who can decide anything."
       - "Arrive in daylight, leave before dark, and agree a fallback time if nobody comes."
       - "Stay together as a group and keep bags in front of you in a crowd."
   airport:
     title: Airport or airfield
     expect: >-
-      An airport or airfield closes to the public early in a crisis; the terminal is not a shelter and
-      the perimeter is guarded. In a war an airfield is a target, so it is a place to move away from
-      rather than towards. Evacuation is never self-service: if one is ever run from here you will be
-      told to go, given a route and a time, and registered at a rest centre run by the council. Until
-      somebody with authority says otherwise, staying put is the default
-      ([Water module](module:water)).
+      The airside area of an airport is a security restricted zone you commit an offence by entering.
+      The terminal itself is public, but it can be closed or cleared at no notice and it is not a
+      shelter. Airfields are critical national infrastructure and a plausible target in a conflict, so
+      this is a place to move away from rather than towards. Evacuation is never self-service: if one is
+      ever run from here you will be told to go, given a route and a time, and registered at a rest
+      centre run by the council. Until somebody with authority says otherwise, staying put is the
+      default ([Water module](module:water)).
     link: module:water
     have:
       - "Fuel, fire crews, generators, medical rooms, food and a terminal that can hold thousands."
-      - "All of it behind a guarded perimeter that closes to the public in a crisis."
+      - "All of it behind a guarded airside perimeter; landside can be closed or evacuated at short notice."
       - "Radios, radar, weather reporting and staff in direct touch with national agencies."
       - "A small airfield has far less: a clubhouse, a windsock, avgas and a locked hangar."
     useful:
       - "Only when officials tell you to go, and give you a route and a time ([Water module](module:water))."
       - "If a relative is stranded there, arrange to meet them at a car park outside the perimeter."
-      - "In a flood, airfields are flat, drained, and often where aid is flown in first."
+      - "Helicopters may fly from an airfield in a flood, but nothing there is handed out, so do not go for aid."
     avoid:
-      - "In a war an airfield is a target: put distance between it and where you sleep."
-      - "The terminal is not a shelter, and you will be turned away at the door."
-      - "Crowds at an airport turn ugly quickly once flights stop and nobody is in charge."
+      - "Airfields are critical infrastructure and a target in a conflict: do not sleep next to one."
+      - "The terminal is not a public shelter and can be cleared or closed at any time."
+      - "Expect large frustrated crowds and long queues once flights stop."
       - "Do not drive there hoping to leave the country: evacuation is never self-service."
     approach:
       - "Staying put is the default until the police or an Emergency Alert say otherwise ([Water module](module:water))."
@@ -309,70 +316,71 @@ places:
     title: Military site
     expect: >-
       A base, barracks, depot or training area is not a refuge. There is no aid inside it and guards
-      will turn you back at the gate. Military land is also one of the few places where simply being
-      there is a criminal offence rather than the civil wrong that ordinary trespass is. In an invasion
-      or a nuclear exchange these sites are targets, so put distance between them and where you sleep,
-      and plan your route along footpaths and open access land instead
+      will turn you back at the gate. On most military sites, anywhere byelaws are posted or the site is
+      a designated one, simply being there is a criminal offence rather than the civil wrong that
+      ordinary trespass is. In a conflict these are among the first places attacked, so put distance
+      between them and where you sleep, and plan your route along footpaths and open access land instead
       ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
-      - "Fuel, generators, water, food, workshops, medics and vehicles, all behind an armed guard."
+      - "Fuel, generators, water, food, workshops, medics and vehicles, all behind a guarded gate."
       - "None of it is available to the public, and the gate is where you stop."
       - "Training areas hold unexploded ordnance, ranges, red flags and no shelter at all."
-      - "Radios and a chain of command that answers to the police in a civil emergency ([Water module](module:water))."
+      - "Radios, and a chain of command that acts in support of the police but stays under military command ([Water module](module:water))."
     useful:
       - "Almost never; the exception is a soldier on a cordon who can pass a message on."
       - "Knowing where the perimeter runs is what lets you plan a route that keeps well clear of it."
-      - "Troops helping in an emergency work under police control, not on their own authority ([Water module](module:water))."
+      - "Troops helping in an emergency support the police, who stay in charge; soldiers have no police powers ([Water module](module:water))."
     avoid:
-      - "In an invasion or a nuclear exchange these are targets; move away and sleep elsewhere ([Water module](module:water))."
-      - "Being on military land is a criminal offence, unlike ordinary trespass ([PMR446](page:pmr446))."
+      - "In a conflict these are among the first places attacked; move away and sleep elsewhere ([Water module](module:water))."
+      - "Where byelaws are posted, or the site is designated, being there is a criminal offence ([PMR446](page:pmr446))."
       - "Never photograph, sketch or loiter at the fence: it will be treated as hostile."
       - "Never pick anything up on a training area, and red flags mean live firing today."
     approach:
       - "Do not approach at all in a crisis; route yourself along footpaths and access land instead ([Water module](module:water))."
       - "If you must speak to a sentry, stop well back, keep your hands visible and state your business."
-      - "Carry ID, and expect to be searched, questioned and turned back without explanation."
+      - "Carrying ID helps; expect to be questioned, searched and turned back without explanation."
       - "Carry no blade beyond the folding, non-locking three-inch knife the law allows ([PMR446](page:pmr446))."
   nuclear:
     title: Nuclear site
     expect: >-
-      A licensed nuclear site sits inside an emergency planning zone. Households in the detailed zone
-      around it have already been sent iodine tablets and a leaflet under the 2019 regulations. If
+      A licensed nuclear site sits inside an emergency planning zone. Households in many detailed zones
+      have already been sent iodine tablets and a leaflet, so ask your council whether yours has. If
       there is ever a release the instruction is the same wherever you are standing: get inside, stay
       inside, stay tuned. Go into the nearest solid building, shut doors and windows, turn off fans and
       extractors, and listen. Do not drive out to collect children; they are kept in. Take the tablets
-      only when you are told to ([Water module](module:water)).
+      only when you are told to, at the dose on the pack ([Water module](module:water)).
     link: module:water
     have:
       - "A licensed site with its own power, security, health physics team and monitoring equipment."
-      - "Sirens and an off-site emergency plan run with the council and the police ([Water module](module:water))."
-      - "Households in the detailed planning zone already hold iodine tablets and a leaflet under REPPIR 2019 ([Water module](module:water))."
+      - "An off-site plan run by the council with the emergency services, and a warning that is a siren at some sites, a call or text at others ([Water module](module:water))."
+      - "Households in many detailed planning zones already hold iodine tablets and a leaflet; ask the council ([Water module](module:water))."
       - "Nothing at the gate for the public: no shelter, no water, no aid."
       - "Some sites are defuelled or decommissioning and hold waste rather than a running reactor."
     useful:
       - "Find out now whether home, school and work sit inside the detailed emergency planning zone ([Water module](module:water))."
-      - "A siren or an Emergency Alert means go indoors and turn the radio on, not go and look ([PMR446](page:pmr446))."
-      - "Choose now which inner room or cellar the household shelters in, and stock it with water."
+      - "A phone call, a text or an Emergency Alert, and a siren at some sites, means go indoors and turn the radio on ([PMR446](page:pmr446))."
+      - "Choose now which inner room the household shelters in and stock it with water: upstairs, not a cellar."
     avoid:
       - "Never drive towards a release, and never drive out to collect children; schools keep them in."
       - "Do not take iodine tablets until the authorities say so; they protect the thyroid alone ([Water module](module:water))."
-      - "The site is a target in a war and a security area at every other time."
+      - "A protected security site at all times, and critical infrastructure in a conflict."
       - "Rumour spreads faster than fallout: act on the radio and Emergency Alerts, not hearsay ([PMR446](page:pmr446))."
     approach:
       - "Take the radio, torches, water and medicines into the shelter room before you shut it up."
       - "Tune a battery or wind-up radio to BBC local radio and wait for instructions ([PMR446](page:pmr446))."
       - "If you were outdoors, bag the outer clothing and wash without scrubbing ([Water module](module:water))."
-      - "Know where the iodine tablets are kept and which dose each person takes ([Water module](module:water))."
+      - "Know where the iodine tablets are kept, and take the dose the pack and the official instruction give for each age ([Water module](module:water))."
       - "Leave only when told, along the route given, and take medicines and documents with you."
   chemical:
     title: Chemical site
     expect: >-
       A works, refinery or bulk store holding chemicals. The danger is not the fence, it is the plume,
       and the wind decides who it reaches. If a release happens while you are indoors, stay in: shut
-      doors and windows, turn off fans and extractors, and listen to the radio. If you are outside,
-      move across the wind and then upwind, and uphill, away from the smell. Never drive into a cloud.
-      Anyone splashed or doused has their clothing cut off and the chemical blotted, not rubbed
+      doors and windows, turn off fans and extractors, and listen to the radio. If you are outside, move
+      across the wind and then upwind, and uphill, away from the smell. Never drive into a cloud. Anyone
+      splashed gets away from the source, takes their outer clothing off without pulling it over the
+      head, and blots and rubs the skin with dry absorbent material
       ([Bleeding](card:bleeding)).
     link: card:bleeding
     have:
@@ -388,102 +396,106 @@ places:
       - "Never drive into a cloud, and never go closer to see what is burning."
       - "Downwind and downhill of a release is the worst place to be; move across the wind."
       - "Smoke from a chemical fire carries for miles, so stay indoors when it drifts your way."
-      - "In flooding, drums and tanks float and burst; treat floodwater near a works as contaminated."
+      - "Floodwater near a works can carry chemicals and sewage, so treat it as contaminated and keep out."
     approach:
-      - "Take the radio, a torch and drinking water into the room you seal, and stay off the phone."
-      - "Anyone splashed has clothing cut off outside, is blotted dry, then washed for 15 to 20 minutes ([Bleeding](card:bleeding))."
+      - "Take the radio, a torch and drinking water into the room you seal, and keep the line free for official calls."
+      - "Get outer clothing off within minutes, blot and rub the skin with dry absorbent material, then rinse with plenty of water ([Bleeding](card:bleeding))."
       - "Keep the wash water away from you and from any drinking water, and bag the clothing ([Bleeding](card:bleeding))."
       - "Never go into a cellar or tank after someone: the gas that dropped them will drop you ([Bleeding](card:bleeding))."
-      - "Report a leak or a strange smell to 999 and the Environment Agency hotline ([PMR446](page:pmr446))."
+      - "Ring 999 first; report pollution afterwards to the Environment Agency, SEPA, Natural Resources Wales or NIEA ([PMR446](page:pmr446))."
   flood-zone:
     title: Flood zone
     expect: >-
-      These are the mapped zones for flooding from rivers and the sea: zone 2 is the wider area at
-      lower risk, zone 3 the smaller area at higher risk. Being inside one does not mean water today,
-      and being outside one is no promise, because surface water floods streets no river reaches.
-      Decide early whether you are going upstairs or going out, since moving late is what kills people.
-      Never walk or drive through floodwater: 15 cm of moving water knocks an adult over and 30 cm
-      floats a car ([Water module](module:water)).
+      In England and Wales these are the mapped zones for flooding from rivers and the sea: zone 2 the
+      wider area at lower risk, zone 3 the smaller area at higher risk. Scotland and Ireland map the
+      same thing as high, medium and low likelihood instead. Being outside a zone is no promise, because
+      surface water floods streets no river reaches. Act on the warning level: at a flood warning move
+      upstairs or to higher ground, and at a severe flood warning stay somewhere safe and be ready to
+      leave when told. Never walk or drive through floodwater: 15 cm of moving water knocks an adult
+      over and 30 cm floats a car ([Water module](module:water)).
     link: module:water
     have:
       - "A mapped area at risk from rivers and the sea: zone 2 the wider one, zone 3 the higher risk."
       - "Nothing physical at all: it is a line on a map, not a place holding resources."
-      - "Properties inside it can usually get flood warnings, and some have their own defences."
-      - "The roads, bridges and underpasses within it go under first and reopen last."
+      - "Many but not all properties inside it can get flood warnings; the zone is drawn as if no defences existed."
+      - "Roads, bridges and underpasses inside it flood and close, and underpasses flood from surface water too."
     useful:
-      - "To decide, before the rain arrives, whether the household goes upstairs or goes out ([Water module](module:water))."
+      - "To decide, before the rain arrives, what you will do at a flood warning and at a severe flood warning ([Water module](module:water))."
       - "To plan a walking route to a rest centre that stays out of the shaded area."
       - "To choose where the car, the generator and the food store are kept."
     avoid:
       - "Never walk or drive through floodwater: 15 cm knocks an adult over, 30 cm floats a car ([Water module](module:water))."
-      - "Do not move late; leaving as the water arrives is what kills people."
+      - "Act on the warning, not on the water: once it is at the door, upstairs is usually safer than the street."
       - "Floodwater carries sewage, fuel and sharp debris, so never drink it or wash in it ([Water module](module:water))."
       - "Being outside a zone is no promise: surface water floods streets that no river reaches."
     approach:
       - "Sign up for flood warnings and know the Floodline number before the water comes ([PMR446](page:pmr446))."
       - "Move the car, the medicines, the documents and the pets upstairs or uphill early."
       - "Turn off gas, electricity and water before leaving, if it is safe to do so."
-      - "Go on foot by the highest route, in a group, and register at the rest centre ([Water module](module:water))."
-      - "Check on the neighbours downhill of you, and anyone housebound, before you leave the street."
+      - "If you are told to leave, take the route the emergency services give you and register at the rest centre ([Water module](module:water))."
+      - "Check on the neighbours downhill and anyone housebound if there is time, but do not delay your own move."
   footpath:
     title: Public footpath
     expect: >-
       A public footpath, bridleway or byway is a right of way you may walk at any hour, and when the
-      roads are blocked it is often the way out, because paths keep going where traffic stops. England
-      and Wales are covered by rights of way and open access land, Scotland by a right of responsible
-      access to almost all land, and Northern Ireland has very few. The ground is wetter, rougher and
-      darker than a line on a map suggests, so allow far more time than the distance implies
-      ([Water module](module:water)).
+      roads are blocked it can be the way out, though in a flood the low paths go under before the roads
+      do. England and Wales are covered by rights of way and open access land, Scotland by a right of
+      responsible access to most land and water but not houses, gardens or growing crops, and Northern
+      Ireland by a handful of recorded rights of way and otherwise the landowner's permission. The
+      ground is wetter, rougher and darker than a line on a map suggests, so allow far more time than
+      the distance implies ([Water module](module:water)).
     link: module:water
     have:
-      - "A right of way you may walk at any hour, marked by a signpost and waymarks."
-      - "Stiles, gates, footbridges and, on a byway, a surface that takes a bike or a cart."
+      - "A right of way you may walk at any hour, signposted where it leaves a metalled road; waymarks after that are optional."
+      - "Stiles, gates and footbridges. A footpath is for feet only; bikes and horses need a bridleway or byway."
       - "No water, no shelter and no lighting: whatever you need out here, you carry."
       - "Ground that is wetter, rougher and darker than the line on the map suggests."
-      - "A way out when roads are blocked, because paths keep going where traffic stops."
+      - "Often a way out when roads are blocked, but not in a flood, when the low paths go first."
     useful:
-      - "In an evacuation on foot, when the roads are jammed or under water ([Water module](module:water))."
+      - "In an evacuation on foot, if the route is clear and the emergency services have not given you another ([Water module](module:water))."
       - "To reach a neighbouring village, a spring or a reservoir without meeting traffic."
-      - "To move quietly and out of sight of a road, on a day when that matters."
+      - "To move out of sight of a road when that matters, though the right is to pass along, not to stop."
       - "For a daily round to fetch water or check on outlying households."
     avoid:
       - "In the dark, in fog or in a flood, when a path becomes the most dangerous route."
-      - "Where it crosses a field of cattle with calves, and especially with a dog ([PMR446](page:pmr446))."
+      - "Where it crosses a field of cattle with calves, especially with a dog; if they threaten you, let the dog go ([PMR446](page:pmr446))."
       - "Riverside and coastal paths flood and undercut, and estuary sands fill in behind you."
       - "As a shortcut in a hurry: allow far more time than the distance implies."
     approach:
       - "Work the time out with Naismith: 5 km an hour plus a minute per 10 m of climb ([Water module](module:water))."
       - "Carry water, a torch, waterproofs, a paper map and a compass, and tell somebody your route."
-      - "Shut every gate, keep to the field edge, and keep dogs on a lead near stock."
+      - "Leave gates as you find them or as the sign says, keep to the line of the path, dogs on a lead near stock ([PMR446](page:pmr446))."
       - "Set out early enough to arrive with an hour of daylight to spare."
       - "Walk as a group at the pace of the slowest, and stop before anyone is soaked."
   access-land:
     title: Open access land
     expect: >-
-      Open access land is the mountain, moor, heath, down and registered common you may cross on foot
-      in England and Wales under the Countryside and Rights of Way Act 2000. Walking is all it gives
-      you: it is not a right to camp, light a fire or take anything, and wild camping needs the
-      landowner's permission everywhere except the Dartmoor commons. Scotland is different, with a
-      right of responsible access to almost all land that includes wild camping. Shut every gate and
-      keep dogs close ([PMR446](page:pmr446)).
+      Open access land is the mountain, moor, heath, down and registered common you may cross on foot in
+      England and Wales under the Countryside and Rights of Way Act 2000. It is a right to be there on
+      foot, not to camp, light a fire or take anything: wild camping needs the landowner's permission
+      everywhere except the Dartmoor commons, and there only in the areas on the National Park map.
+      Scotland is different, with a right of responsible access to most land that includes lightweight
+      wild camping, except where local byelaws apply. Leave gates as you find them, and keep dogs on a
+      short lead near livestock and from 1 March to 31 July
+      ([PMR446](page:pmr446)).
     link: page:pmr446
     have:
       - "Mountain, moor, heath, down and registered common you may cross on foot under the CRoW Act ([Water module](module:water))."
-      - "Open ground, hill water, dead wood on the ground, and space well away from crowds."
-      - "No shelter, no signal, no path and no help; the weather is the whole problem."
+      - "Open ground, hill water and space well away from crowds; the dead wood is not yours and fires are not allowed."
+      - "Little shelter, patchy signal, often no path and no help nearby; the weather is the whole problem."
       - "Grazing stock, ground-nesting birds and, in season, shooting and heather burning."
     useful:
-      - "To move across country when the roads are blocked or held ([PMR446](page:pmr446))."
-      - "To reach upland springs and fast streams, the best raw water there is ([PMR446](page:pmr446))."
-      - "In Scotland, where responsible access covers almost all land and includes wild camping ([Water module](module:water))."
+      - "To move across country where access land and rights of way connect; it comes in disconnected blocks, so check the map ([PMR446](page:pmr446))."
+      - "To reach upland springs and fast streams: still boil or filter, and never draw below livestock or a carcass ([PMR446](page:pmr446))."
+      - "In Scotland, where responsible access covers most land and includes lightweight wild camping ([Water module](module:water))."
     avoid:
       - "In bad weather or failing light: exposure kills faster on open moor than anywhere else."
-      - "It gives walking only, not camping, fires or taking anything, outside Scotland and the Dartmoor commons ([PMR446](page:pmr446))."
+      - "Walking only: no camping and no fires. Picking wild fruit or fungi for yourself is lawful, selling is not ([PMR446](page:pmr446))."
       - "Bog, peat hags and cliffs in mist; go round them rather than through ([PMR446](page:pmr446))."
       - "Access can be closed for shooting, lambing or fire risk, so read the notices at the gate."
     approach:
       - "Uprooting a wild plant is an offence, and picking to sell can be theft ([PMR446](page:pmr446))."
       - "Carry map, compass, water, food and a shelter; there is nothing out here to buy."
       - "Walk on a bearing in poor visibility, and treat every edge as a drop."
-      - "Shut every gate, keep dogs close, and give cattle with calves a wide berth."
+      - "Leave gates as you find them, dogs on a short lead near stock, and let the dog go if cattle threaten you."
       - "Go in a group, tell somebody the route, and turn back rather than push on."

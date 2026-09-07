@@ -9,7 +9,7 @@ category: reference
 
 ## Emergency
 
-{{#if phones}}999 and 112 connect from any mobile on any network that has signal, with no credit, but the phone must have a SIM in it; the call roams onto whichever network can carry it ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)).{{else}}None of these will connect while the network is down: [getting help without phones](page:no-phones) is the page to use until it comes back.{{/if}}
+**Always try 999.** 999 and 112 connect from any mobile, on any network that has signal, without credit and without a SIM: the call roams onto whichever network can carry it, so try it even when your own network shows no bars ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). {{#if phones}}The rest of the numbers below need a working network.{{else}}Try 999 anyway, and if nothing connects at all, [getting help without phones](page:no-phones) is the page to use until the network comes back.{{/if}}
 
 | Number | For | Notes |
 |---|---|---|
@@ -23,9 +23,9 @@ category: reference
 
 | Number | For | Notes |
 |---|---|---|
-| 111 | Urgent but not life-threatening | England, Scotland and Wales; Northern Ireland uses GP out-of-hours numbers |
+| 111 | Urgent but not life-threatening | England, Scotland and Wales. Northern Ireland has no 111: ring your GP practice in hours, your trust's Phone First number before going to an emergency department, and the GP out-of-hours number at night and at weekends |
 | — | NHS 111 online | Needs the internet |
-| — | Pharmacy First | England: a pharmacist can treat some conditions without a GP |
+| — | Pharmacy First | England: a pharmacist can treat some conditions without a GP. Scotland has NHS Pharmacy First Scotland; Wales and Northern Ireland run their own common-ailments schemes |
 
 ## Utilities
 
@@ -49,7 +49,7 @@ category: reference
 |---|---|---|
 | 0345 988 1188 | Floodline | England, Scotland and Wales |
 | 0300 2000 100 | Flooding Incident Line | Northern Ireland |
-| 0800 80 70 60 | Environment Agency incident hotline | Pollution ([Get flood warnings](kiwix:govuk_resilience/www.gov.uk/get-flood-warnings)) |
+| 0800 80 70 60 | Environment Agency incident hotline | Pollution, England only; Scotland is SEPA, Wales is Natural Resources Wales, Northern Ireland is NIEA. Ring 999 first for anything dangerous ([Get flood warnings](kiwix:govuk_resilience/www.gov.uk/get-flood-warnings)) |
 
 ## Mental health
 
