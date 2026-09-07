@@ -41,7 +41,6 @@ class Model:
     drill: bool = False
     checklist: tuple[dict, ...] = ()                      # {id, text} for the active scenario
     checklist_state: dict[str, bool] = field(default_factory=dict)
-    kits: tuple[dict, ...] = ()                           # {slug, title, relevant, basic_done, basic_total}
     task_state: dict[str, dict] = field(default_factory=dict)
     detected: dict[str, dict] = field(default_factory=dict)   # condition id -> {state, at, confidence, sensor}
     titles: dict[str, str] = field(default_factory=dict)      # content link -> title, for the briefing

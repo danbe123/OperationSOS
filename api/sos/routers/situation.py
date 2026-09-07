@@ -117,23 +117,11 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                 "SELECT item_id, checked FROM checklist_state WHERE playbook=?", (slug,))}
     task_state = {r["task_id"]: {"done": bool(r["done"]), "done_at": r["done_at"], "person": r["person"]}
                   for r in conn.execute("SELECT * FROM task_state")}
-    from sos import kits as kits_mod
-
-    # Every kit's ticks in one read, not one query per kit: fifteen kits is fifteen round trips on a screen refresh.
-    ticked: dict[str, set[str]] = {}
-    for row in conn.execute("SELECT playbook, item_id FROM checklist_state WHERE checked=1 AND playbook LIKE 'kit:%'"):
-        ticked.setdefault(row["playbook"][len("kit:"):], set()).add(row["item_id"])
-    kit_rows: list[dict] = []
-    for kit in content.kits():
-        done, total = kits_mod.basic_progress(kit, ticked.get(kit.id, set()))
-        kit_rows.append({"slug": kit.id, "title": kit.title, "relevant": kits_mod.relevant(kit),
-                         "basic_done": done, "basic_total": total})
     return engine.Model(
         now=now, conditions=cond.load(conn), scenario=scenario, home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
         titles=_titles(content, ruleset, slug), tz=get_setting(conn, "timezone", "Europe/London"),
         detected=sensors.detected_states(conn, now),
-        kits=tuple(kit_rows),
     )
 
 

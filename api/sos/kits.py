@@ -150,11 +150,6 @@ def relevant(kit: Kit) -> bool:
     return True
 
 
-def basic_progress(kit: Kit, checked: set[str]) -> tuple[int, int]:
-    basic = kit.items_in("basic")
-    return sum(1 for i in basic if i.id in checked), len(basic)
-
-
 # --- validation (called by content.validate_tree) ---------------------------------------------------------------
 
 def _deep_checks(rel: str, kit: Kit, items_by_id: dict, kiwix_check, doc_check) -> list[str]:
@@ -224,7 +219,8 @@ def validate_kits(playbooks_dir: Path | str, zim_ids: set[str], doc_ids: set[str
             if item.tier not in kit.tiers:
                 errors.append(f"{rel}: item '{item.id}': unknown tier '{item.tier}'")
             if item.stock and item.stock.get("category") not in STOCK_CATEGORIES:
-                errors.append(f"{rel}: item '{item.id}': stock category '{item.stock.get('category')}' is not a Stock category")
+                errors.append(f"{rel}: item '{item.id}': category '{item.stock.get('category')}' is not one of "
+                              f"{', '.join(STOCK_CATEGORIES)}")
             if not (item.why or item.link):
                 errors.append(f"{rel}: item '{item.id}': needs a why or a link")
             if item.link:

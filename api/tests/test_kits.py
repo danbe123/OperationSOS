@@ -55,12 +55,6 @@ def test_matching_people_is_the_setting_never_below_one(people, expected):
         assert kits.matching_people(kits.load_kit(FIXTURES / name), people) == expected
 
 
-def test_basic_progress_counts_only_basic_items():
-    kit = kits.load_kit(FIXTURES / "water.yaml")
-    assert kits.basic_progress(kit, set()) == (0, 2)
-    assert kits.basic_progress(kit, {"stored-water", "tablets", "filter"}) == (1, 2)
-
-
 import shutil
 
 from sos import content

@@ -87,10 +87,6 @@ def is_drill(conn: sqlite3.Connection) -> bool:
     return drill(conn) is not None
 
 
-def last_drill_at(conn: sqlite3.Connection) -> Optional[str]:
-    return get_setting(conn, LAST_DRILL_KEY)
-
-
 def start_drill(conn: sqlite3.Connection, slug: str, states: dict[str, str], hours_ago: float = 0.0,
                 now: Optional[datetime] = None) -> dict:
     """Save the real situation, then set the drill's conditions and start its clock in the past."""
