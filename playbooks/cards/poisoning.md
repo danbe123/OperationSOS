@@ -21,6 +21,14 @@ Someone has swallowed or taken something harmful: tablets, alcohol, drugs, clean
 7. Opioids (heroin, morphine, methadone, codeine, fentanyl): pinpoint pupils and slow shallow breathing. Give naloxone if you have a kit (nasal spray or injection), give rescue breaths, and repeat naloxone if they drift off again ([Opioid overdose (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Opioid_overdose)).
 8. Fumes or gas: get them into fresh air ([carbon monoxide](card:carbon-monoxide); [chemical exposure](card:chemical-exposure)). Plants and fungi that kill: keep a sample for the hospital. Fits: see [seizures](card:seizures).
 
+{{#unless power}}
+You need light to read a label and to see the pupils and the colour of the lips: a head torch, and never a naked flame near petrol, solvents, or anyone who has been in fumes. If the poisoning followed a stove, generator, barbecue or heater brought indoors because the power is off, treat it as carbon monoxide: get everyone out into the air, leave the doors open, and do not go back in ([carbon monoxide](card:carbon-monoxide)).
+{{/unless}}
+
+{{#unless water}}
+Rinsing costs water you may not have to spare. Skin and eyes come first if the chemical is on them, and an eye is rinsed for longer than anything else, with any clean stored or bottled water you hold ([eye injury](card:eye-injury); [chemical exposure](card:chemical-exposure)). For a corrosive swallowed, rinse the mouth out and spit it away, then sips of water or milk if they are fully awake. Never use untreated stream or floodwater on an eye or in a mouth.
+{{/unless}}
+
 ## Warnings
 
 **Warning:** Someone drunk or drugged and unrousable can choke on vomit: recovery position, and do not leave them to "sleep it off".
@@ -29,6 +37,10 @@ Someone has swallowed or taken something harmful: tablets, alcohol, drugs, clean
 ## Stop or escalate
 
 Unconscious, fitting, struggling to breathe, or any swallowing of paracetamol, opioids, corrosives, antifreeze, a battery or an unknown fungus — [[call 999]]. Anything else swallowed that should not have been — [[call 111]]. If nobody can come: give activated charcoal from a first-aid kit (not barbecue charcoal) as soon as possible after most swallowed poisons, never after corrosives or petrol and never to anyone drowsy; give water or milk to dilute corrosives; keep them on their side and watch the breathing for a day ([Where There Is No Doctor, p. 152](doc:where-there-is-no-doctor#page=152); [Survival and Austere Medicine, p. 466](doc:survival-austere-medicine-2017#page=466)).
+
+{{#unless phones}}
+111 and the poisons information service cannot be reached, so the packet is your reference: keep it, and read the label and the leaflet for what it contains and what it says about swallowing. Anything you cannot identify is treated as dangerous. Watch them on their side for a full day and night, in turns, checking the breathing; most poisons show what they are going to do within hours. Paracetamol, opioids, corrosives, antifreeze, a button battery or an unknown fungus need a hospital, so carry them there if one is crewed and reachable ([the map's health layer](map:?overlay=health)).
+{{/unless}}
 
 ## Source
 

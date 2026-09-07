@@ -21,6 +21,18 @@ Nausea, vomiting or diarrhoea within hours of being outside during fallout or ne
 7. Keep them away from anyone with a cough or cold and away from crowds.
 8. Stable iodine does nothing for radiation sickness; when and whether to take it is in the [radiation module](module:radiation).
 
+{{#unless power}}
+No hospital, no blood counts and no fridge, so keep going with what needs no power: fluids, rest, clean food, mouth care and scrupulous care of every cut. Boil water on gas or on a stove used outdoors and cool it covered. Check what antibiotics you hold, and what each is for, before you need them rather than after ([Chronic conditions](page:chronic-conditions); [medical module](module:medical)). Work by torch and keep the torch and the box charged from a power bank or solar rather than running lamps all night.
+{{/unless}}
+
+{{#if scenario:nuclear-war}}
+Sheltering comes before treating. Nobody goes outside to fetch help while the fallout is at its worst, because the dose taken going out is worse than the delay ([radiation module](module:radiation)). Decontaminate and nurse inside the shelter. Write down, for each person, the time of the flash and the time their vomiting began, and keep the list: that timing is what the module's dose scale is read against, and it is the only measurement you will have of who is in most danger ([FEMA nuclear detonation guidance, p. 97](doc:fema-nuclear-detonation-2022#page=97)).
+{{/if}}
+
+{{#if scenario:nuclear-accident}}
+An accident at a reactor or in transport means an official response exists: go in, stay in, tune in, and take stable iodine only when you are told to, because it protects the thyroid alone and does nothing for radiation sickness ([radiation module](module:radiation)). Decontaminate before treating: outer clothing off and bagged, then skin and hair washed with soap and no conditioner ([UKHSA decontamination, p. 1](doc:ukhsa-radiation-decontamination#page=1)). Somebody who has been decontaminated is safe to nurse, so nobody is left untreated for fear of contamination.
+{{/if}}
+
 ## Warnings
 
 **Warning:** Skin burns, hair loss and bleeding gums two to three weeks later mean a high dose; get medical help by any route.
@@ -32,4 +44,4 @@ Hospital care with antibiotics and transfusions changes the odds at doses above 
 
 ## Source
 
-[Acute radiation syndrome (Wikipedia)](kiwix:wikipedia_en_all_maxi/Acute_radiation_syndrome); [FEMA nuclear detonation guidance, p. 97](doc:fema-nuclear-detonation-2022#page=97); [Emergency War Surgery, p. 448](doc:emergency-war-surgery-2018#page=448); [Ship Captain's Medical Guide ch. 3](doc:scmg-ch03).
+[Acute radiation syndrome (Wikipedia)](kiwix:wikipedia_en_all_maxi/Acute_radiation_syndrome); [FEMA nuclear detonation guidance, p. 97](doc:fema-nuclear-detonation-2022#page=97); [Emergency War Surgery, p. 448](doc:emergency-war-surgery-2018#page=448); [Ship Captain's Medical Guide ch. 3](doc:scmg-ch03); [UKHSA: removing radioactive material from your skin and clothes](doc:ukhsa-radiation-decontamination).

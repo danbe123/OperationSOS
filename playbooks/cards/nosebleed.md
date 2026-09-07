@@ -20,6 +20,14 @@ Blood from one or both nostrils after a knock, nose-picking, a cold or dry air, 
 6. Once it stops: no blowing, picking, hot drinks, bending or lifting for the rest of the day. Petroleum jelly inside the nostrils twice a day if it bleeds often ([Where There Is No Doctor, p. 132](doc:where-there-is-no-doctor#page=132)).
 7. Do not tip the head back or lie down: blood runs down the throat and is swallowed or breathed in ([Where There Is No Doctor, p. 132](doc:where-there-is-no-doctor#page=132)).
 
+{{#unless power}}
+Work by torch light, held by somebody else or worn on your head, because packing a nostril takes both your hands. Ice went with the freezer, and it was never the treatment anyway: the pinch is. Time the 10 to 15 minutes by a wind-up clock or a watch rather than a phone you are saving, and call the minutes out loud, because holding on without letting go feels far longer than it is.
+{{/unless}}
+
+{{#unless water}}
+You will have blood on your hands. Wash them before and after with soap and stored or boiled water poured over them by somebody else, rather than dipping them in a bowl, or use hand sanitiser if you hold it ([hygiene without a tap](page:fieldcraft-hygiene)). Do not rinse the mouth or the nose with untreated water; spitting into a bowl is enough, and the bowl goes outside afterwards.
+{{/unless}}
+
 ## Warnings
 
 **Warning:** After a head injury, thin watery bloodstained fluid from the nose is a skull fracture, not a nosebleed: do not pinch or pack, see [head injury](card:head-injury) ([Ship Captain's Medical Guide ch. 4, p. 7](doc:scmg-ch04#page=7)).
@@ -28,6 +36,10 @@ Blood from one or both nostrils after a knock, nose-picking, a cold or dry air, 
 ## Stop or escalate
 
 Bleeding still heavy after 30 minutes of proper pressure ([Nosebleed (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Nosebleed)), a large amount lost, feeling faint or pale, difficulty breathing, or a nosebleed after a head injury — [[call 999]] or get to A&E ([severe bleeding](card:severe-bleeding)). Frequent nosebleeds, or one in someone on blood thinners — [[call 111]]. If nobody can come: pack the nostril with ribbon gauze or a strip of clean cloth well smeared with petroleum jelly, fed in flat along the floor of the nose (not upwards) until the nostril is full, leave it 48 hours and pull it out gently ([Ship Captain's Medical Guide ch. 4, p. 13](doc:scmg-ch04#page=13)); an older person bleeding from the back of the nose sits leaning forward and tries not to swallow until it clots ([Where There Is No Doctor, p. 132](doc:where-there-is-no-doctor#page=132)).
+
+{{#unless phones}}
+No ambulance is coming. A nosebleed still going after 30 minutes of correct pinching is packed as above and left for 48 hours. Watch the person rather than the towels: pale, clammy, faint on sitting up, or a fast weak pulse means real blood loss ([shock](card:shock)). Somebody swallowing blood will vomit it, so keep them leaning forward. If they are still bleeding heavily after packing, or going pale, carry them to the nearest crewed hospital ([the map's health layer](map:?overlay=health)) with a note of when it started.
+{{/unless}}
 
 ## Source
 

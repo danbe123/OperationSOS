@@ -20,6 +20,22 @@ Shivering, cold pale skin, slurred speech, clumsiness, confusion; later shiverin
 6. Handle gently and keep them lying flat; sudden movement can stop the heart.
 7. Do not rub the limbs, do not use a hot bath, and do not leave them alone. Frozen white hard fingers, toes or ears are on the [frostbite card](card:frostbite).
 
+{{#unless heating}}
+With the heating off, one room is the plan: the smallest room with the fewest outside walls, doors shut, curtains closed, everyone in it ([shelter and heat module](module:shelter-heat); [keep warm, keep well (NHS)](kiwix:nhs_uk/www.nhs.uk/live-well/seasonal-health/keep-warm-keep-well/)). Get them off the floor onto insulation first, because the ground takes more heat than the air does. Body heat is the most reliable source you have: an adult on each side under shared blankets, a small child inside an adult's clothing against the skin. Watch the others in the room too, and especially whoever went out and brought them in.
+{{/unless}}
+
+{{#if scenario:severe-winter}}
+In a long freeze the danger is indoors as much as out: an unheated bedroom, an older person who has stopped shivering, a baby who is quiet and cold to touch. Check on everyone in the house morning and night, and on neighbours living alone. Anyone who has been out clearing snow, fetching water or walking comes straight in, out of the wet clothes and into dry ones with a warm sweet drink before they sit down ([severe winter](playbook:severe-winter)).
+{{/if}}
+
+{{#if scenario:impact-winter}}
+Months of cold and dark with no fuel deliveries make hypothermia a daily risk rather than an accident. Ration heat to one room and to the hours people are awake, sleep in layers with a hat on, and eat before bed, because the body needs fuel to make heat. Send anyone working outside back in on a timer, before they are cold rather than after, and check their hands, feet and face when they come in ([frostbite](card:frostbite); [impact winter](playbook:impact-winter)).
+{{/if}}
+
+{{#if scenario:storms-flooding}}
+Cold water strips heat far faster than cold air, so anyone pulled out of floodwater is treated as hypothermic even if they walked out of it themselves. Get them out of the wet clothes at once, dry them, wrap them and keep them lying flat. Do not let them go back for possessions. Going into moving water after somebody is for people with a line and the training, not for whoever is nearest ([drowning](card:drowning); [storms and flooding](playbook:storms-flooding)).
+{{/if}}
+
 ## Warnings
 
 **Warning:** A very cold person can look dead. Check breathing for a full minute before deciding.
@@ -28,6 +44,10 @@ Shivering, cold pale skin, slurred speech, clumsiness, confusion; later shiverin
 ## Stop or escalate
 
 Confusion, drowsiness, shivering that has stopped, or a baby or an older person — [[call 999]]. If they stop breathing, start CPR ([adult](card:cpr-adult) or [child/baby](card:cpr-child)) and keep going; cold people have survived long resuscitation. If nobody can come: keep warming slowly at the trunk, never fast, with wrapped warm stones or bottles, a warm person on each side under the blankets, and a child inside your own clothing against your skin; sweet food and drink as soon as they can swallow; and if the shivering stops while they stay confused or drowsy, treat it as critical and keep warming through the night ([WTIND, p. 457](doc:where-there-is-no-doctor#page=457); [Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1)).
+
+{{#unless phones}}
+No ambulance is coming, so the rewarming here is the treatment and it takes hours rather than minutes. Two people stay with them through the night, warming the trunk, changing the wrapped bottles or stones as they cool, and checking the breathing every few minutes. Do not carry a deeply cold person any distance unless you must: handling can stop the heart, and a cold journey undoes the warming. If they stop breathing, start CPR and keep going far longer than you otherwise would, because cold people have been brought back after a long resuscitation ([Ship Captain's Medical Guide ch. 11, p. 1](doc:scmg-ch11#page=1)).
+{{/unless}}
 
 ## Source
 
