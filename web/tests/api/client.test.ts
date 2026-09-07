@@ -91,6 +91,20 @@ describe('api request helpers', () => {
       ['/api/system/settings', 'POST', '{"idle_minutes":7}'],
     ]);
   });
+
+  it('reads and writes the one setting a household is ever asked for, and ticks a kit item', async () => {
+    fetchMock.mockImplementation(async () => jsonResponse({ people: 3 }));
+    await api.people();
+    await api.setPeople(3);
+    await api.setKitItem('water', 'stored-water', { checked: true });
+    const calls = fetchMock.mock.calls.map((c) => [c[0], (c[1] as RequestInit).method, (c[1] as RequestInit).body]);
+    expect(calls).toEqual([
+      ['/api/settings/people', 'GET', undefined],
+      ['/api/settings/people', 'PUT', '{"people":3}'],
+      // A tick and nothing else: there is no cupboard to hand the item off into.
+      ['/api/kits/water/items/stored-water', 'PUT', '{"checked":true}'],
+    ]);
+  });
 });
 
 describe('parseSse', () => {
