@@ -33,6 +33,11 @@
 	# policy on every archived response keeps everything on the box: no request, no beacon, no font
 	# and no frame may leave it, and the archived page tells nobody where it was read.
 	handle /kiwix/* {
+		# The pages also keep their tag managers, analytics beacons, consent scripts and uptime pollers,
+		# rewritten by the replay shim onto the box, where they would 404 on every poll. They get an
+		# empty success instead: nothing runs, nothing retries loudly, the console stays readable.
+		@trackers path_regexp ^/kiwix/content/[^/]+/(?:[^/]+\.)?(googletagmanager\.com|google-analytics\.com|analytics\.google\.com|googlesyndication\.com|googleadservices\.com|doubleclick\.net|facebook\.net|facebook\.com/tr|hotjar\.com|nr-data\.net|newrelic\.com|cookielaw\.org|cookiebot\.com|onetrust\.com|scorecardresearch\.com|quantserve\.com|adobedtm\.com|omtrdc\.net|demdex\.net|clarity\.ms|bing\.com/bat\.js|licdn\.com|sentry\.io|bugsnag\.com|segment\.(?:com|io)|mixpanel\.com|optimizely\.com|crazyegg\.com|siteimproveanalytics\.com|civiccomputing\.com|nlm\.nih\.gov/coop_all\.js)
+		respond @trackers 204
 		header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
 		header Referrer-Policy no-referrer
 		header -Set-Cookie
