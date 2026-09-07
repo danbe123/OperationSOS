@@ -111,6 +111,17 @@ describe('Map screen', () => {
     expect(Math.abs(call.center[1] - 50.9379)).toBeLessThan(0.001);
   });
 
+  it('opens on the device position when there is no home and the browser allows it', async () => {
+    mockApis();
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+    const getCurrentPosition = vi.fn((ok: (p: { coords: { latitude: number; longitude: number } }) => void) => ok({ coords: { latitude: 53.4, longitude: -2.98 } }));
+    Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true });
+    renderRoute('/map');
+    await waitFor(() => expect(getCurrentPosition).toHaveBeenCalledTimes(1));
+    expect(lastMap().flyTo).toHaveBeenLastCalledWith(expect.objectContaining({ center: [-2.98, 53.4], zoom: 14 }));
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+  });
+
   it('Find place on the kiosk offers the device position and flies to it', async () => {
     mockApis();
     Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });

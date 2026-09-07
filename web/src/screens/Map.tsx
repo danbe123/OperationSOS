@@ -104,6 +104,24 @@ export function MapScreen() {
     flyTo(at.lon, at.lat, 14);
   }, [homeQ.data, query.lat, query.lon, flyTo]);
 
+  /* With no home and no point in the address, ask the device once where it is (browsers only allow
+     that over HTTPS or on localhost, which `canLocate` already knows). A refusal or a timeout is
+     silent: the country view is the fallback, and Find place still offers Locate me. */
+  const canLocate = typeof window !== 'undefined' && window.isSecureContext && Boolean(navigator.geolocation);
+  const locatedRef = useRef(false);
+  useEffect(() => {
+    if (locatedRef.current || homedRef.current || query.lat !== null || query.lon !== null) return;
+    if (homeQ.loading) return;                       // a home may still be on its way
+    const at = homeQ.data;
+    if ((at && (at.lat !== null || at.lon !== null)) || !canLocate) return;
+    locatedRef.current = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setView({ lat: pos.coords.latitude, lon: pos.coords.longitude, zoom: 14 }); flyTo(pos.coords.longitude, pos.coords.latitude, 14); },
+      () => undefined,
+      { timeout: 10_000 },
+    );
+  }, [homeQ.data, homeQ.loading, query.lat, query.lon, flyTo, canLocate]);
+
   const savePin = async () => {
     const at = pendingPin ?? { lat: view.lat, lon: view.lon };
     try {
@@ -167,7 +185,6 @@ export function MapScreen() {
 
   /** The box asks the device where it is where it can, and says why it cannot where it cannot.
    * Either way the answer lives in the Find place panel, so there is one place to look. */
-  const canLocate = typeof window !== 'undefined' && window.isSecureContext && Boolean(navigator.geolocation);
   const locate = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => { flyTo(pos.coords.longitude, pos.coords.latitude, 14); setPanel('none'); },
