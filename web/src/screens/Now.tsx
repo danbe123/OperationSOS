@@ -2,70 +2,47 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
-import type { StockResponse } from '../api/types';
-import { useQuery, type QueryState } from '../api/useQuery';
+import { useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
 import { ConnectPanel } from '../kiosk/ConnectPanel';
 import { Screen, Body } from '../shell/Screen';
 import { Briefing } from '../situation/Briefing';
 import { Emergency999 } from '../situation/Emergency999';
 import { nowTitle } from '../situation/nowTitle';
-import { Readiness } from '../situation/Readiness';
 import { scenarioMapHref } from '../situation/mapLink';
 import { isEventful, useCallsHidden, useSituation } from '../situation/SituationProvider';
 import { situationLine } from '../components/SituationClock';
 import { ReadAloud } from '../situation/ReadAloud';
 import './now.css';
 
-/** The three the box counts in days, in the order it counts them. */
-const STOCK_DAYS = [['water', 'Water'], ['food', 'Food'], ['medicine', 'Medicine']] as const;
-
-/** Who lives here and how long the stock lasts: the two facts the rest of the box counts with. The
- * cupboard is read one level up, in Now, because the heading needs the same answer this panel does. */
-function HouseholdSummary({ stock }: { stock: QueryState<StockResponse> }) {
-  const people = useQuery(() => api.household(), [], { refetchOnFocus: true });
-  const neighbours = useQuery(() => api.neighbours(), [], { refetchOnFocus: true });
-  const days = stock.data?.days ?? null;
-  const count = people.data?.length ?? 0;
+/** Peacetime on Now: nothing is wrong with the services, so the box says where to start instead.
+ * It asks for nothing first — the one line of progress is the ticks already on the kits, and the
+ * two things worth doing on a quiet evening are a drill and the guides. No score, no gaps, no
+ * register: a box nobody has filled in is as useful as one somebody has. */
+function StartHere() {
+  const kits = useQuery(() => api.kits(), [], { refetchOnFocus: true });
+  const basic = (kits.data?.kits ?? []).reduce(
+    (sum, k) => ({ done: sum.done + k.tiers.basic.done, total: sum.total + k.tiers.basic.total }),
+    { done: 0, total: 0 },
+  );
   return (
-    <section className="panel" aria-label="Household and stock">
+    <section className="panel panel-signal" aria-label="Start here">
       <div className="panel-head">
-        <h2>Household and stock</h2>
-        <Link className="btn btn-small" to="/plan">Open the plan</Link>
+        <h2>Start here</h2>
+        <Link className="btn btn-small" to="/situation"><Icon name="plan" size={18} /><span>Situation</span></Link>
       </div>
-      {/* The one place the box says who it is counting for. The peacetime panel above says how many
-          things would help most and nothing else about people or water, so the screen no longer makes
-          four statements about the same stock. */}
-      <p>
-        {count === 0
-          ? 'Nobody is registered yet, so the box counts stock for one person.'
-          : `${count} ${count === 1 ? 'person is' : 'people are'} registered.`}
-        {neighbours.data && neighbours.data.length > 0 && ` ${neighbours.data.length} ${neighbours.data.length === 1 ? 'neighbour' : 'neighbours'} on the street list.`}
-      </p>
-      {!days || (stock.data?.items.length ?? 0) === 0 ? (
-        <>
-          <p className="muted">No stock recorded yet, so the box cannot say how many days you have.</p>
-          <p className="row"><Link className="btn" to="/plan/stock"><Icon name="drop" size={18} /><span>Add water, food and fuel</span></Link></p>
-        </>
-      ) : (
-        /* The API's own three figures, not a fourth count of the same cupboard: whatever Stock,
-           the hub and the board say, this panel says too. */
-        <ul className="row now-stock" aria-label="Days of stock left">
-          {STOCK_DAYS.map(([id, title]) => {
-            const d = days[id];
-            return (
-              <li key={id}>
-                {/* The badge is the link, not a link inside a badge: a chip that keeps its tone and
-                    opens the cupboard it is talking about. */}
-                <Link className={d < 3 ? 'badge badge-danger' : d < 7 ? 'badge badge-warn' : 'badge badge-ok'} to="/plan/stock">
-                  <span aria-hidden="true">{d < 3 ? '⚠' : d < 7 ? '▲' : '✓'}</span>
-                  {title} {d} {d === 1 ? 'day' : 'days'}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <p className="lead">Nothing is wrong. This is the time to read something and put a kit together.</p>
+      {kits.error && <p className="warning">Kits unavailable: {kits.error}</p>}
+      {kits.data && (
+        <p>
+          <Link to="/kit">Kits: {basic.done} of {basic.total} basic items ticked</Link>
+        </p>
       )}
+      <p className="row">
+        <Link className="btn btn-primary" to="/situation#drill"><Icon name="plan" size={18} /><span>Practise a drill</span></Link>
+        <Link className="btn" to="/guides"><Icon name="book" size={18} /><span>Read the guides</span></Link>
+        <Link className="btn" to="/notes"><Icon name="pin" size={18} /><span>Notes and pins</span></Link>
+      </p>
     </section>
   );
 }
@@ -149,12 +126,9 @@ function CarryOn() {
 }
 
 /** Now is the front door. It answers "what do I do" from the engine, or says nothing is wrong and
- * shows how ready the household is. */
+ * says where to start. */
 export function Now() {
   const { view, error, loading, refresh } = useSituation();
-  // The cupboard, read once for the two things that ask about it: the heading and the panel below.
-  const stock = useQuery(() => api.stock(), [], { refetchOnFocus: true });
-  const stockEmpty = stock.data ? stock.data.items.length === 0 : null;
   const eventful = isEventful(view);
   const mapHref = scenarioMapHref(view?.scenario?.slug);
   // What is read aloud is the briefing itself; the button that reads it belongs in the screen's own
@@ -163,7 +137,7 @@ export function Now() {
   // The heading is the answer, not the name of the screen: the rail already says this is Now.
   return (
     <Screen
-      title={nowTitle(view, stockEmpty)}
+      title={nowTitle(view)}
       back={false}
       actions={eventful ? <ReadAloud id="briefing" target={briefing} label="Read aloud" /> : undefined}
     >
@@ -183,8 +157,9 @@ export function Now() {
           <p><Link className="btn btn-primary btn-big" to={mapHref}><Icon name="map" /><span>Open the map</span></Link></p>
         )}
         <CarryOn />
-        {eventful ? <Briefing blockRef={briefing} /> : <Readiness />}
-        <HouseholdSummary stock={stock} />
+        {/* Nothing at all until the engine has answered: painting "Start here" over a situation
+            that is still being read is the front door telling a household the wrong thing first. */}
+        {eventful ? <Briefing blockRef={briefing} /> : view && <StartHere />}
         <BoxPanel />
       </Body>
     </Screen>

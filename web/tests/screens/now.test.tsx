@@ -2,32 +2,23 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { playbooks, powerOffView, stockResponse, view } from '../fixtures/api';
+import { kitsResponse, playbooks, powerOffView, view } from '../fixtures/api';
 
 describe('Now', () => {
-  it('is the front door: the title, the household summary and the box, with no app bar of its own', async () => {
+  it('is the front door: the title, Start here and the box, with no app bar of its own', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
-    vi.spyOn(api, 'household').mockResolvedValue([]);
-    vi.spyOn(api, 'neighbours').mockResolvedValue([]);
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/');
-    // The heading is the answer, not the name of the screen: the rail already says this is Now. The
-    // services are fine and the readiness still wants more water, but there is water in the cupboard,
-    // so the box does not tell this household it has stored nothing.
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Not ready yet.' })).toBeInTheDocument();
-    await waitFor(() => expect(document.title).toBe('Everything is working. Not ready yet. · SOS'));
+    // The heading is the answer, not the name of the screen: the rail already says this is Now.
+    // Nothing is wrong with the services, and the box asks nobody to describe themselves first.
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
+    await waitFor(() => expect(document.title).toBe('Everything is working · SOS'));
     // no Back on the front door
     expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
-    const household = await screen.findByRole('region', { name: 'Household and stock' });
-    // Who the box counts for is said once, on this panel and nowhere else on the screen.
-    expect(household).toHaveTextContent('Nobody is registered yet, so the box counts stock for one person.');
-    // The three figures are the API's own: medicine is on the panel at nought days even though no
-    // medicine row exists, and each one opens the Stock screen.
-    const left = within(household).getByRole('list', { name: 'Days of stock left' });
-    expect(left).toHaveTextContent('Water 1.5 days');
-    expect(left).toHaveTextContent('Medicine 0 days');
-    expect(within(left).getByRole('link', { name: 'Water 1.5 days' })).toHaveAttribute('href', '/plan/stock');
+    // Nothing about a register, a cupboard or a score: the box counts the ticks it already has.
+    expect(screen.queryByRole('region', { name: 'Household and stock' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'How ready you are' })).toBeNull();
     // The front door says how a phone joins the box and nothing else about the machine: the address,
     // the drive's free space and the chip's temperature are on System.
     const box = await screen.findByTestId('status-strip');
@@ -39,42 +30,39 @@ describe('Now', () => {
   it('/now is the same screen as /', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/now');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Not ready yet.' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working' })).toBeInTheDocument();
   });
 
-  it('says nothing is stored only when the cupboard really is empty', async () => {
+  it('says where to start in peacetime: the kit ticks so far, a drill and the guides', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'stock').mockResolvedValue({ people: 3, days: { water: 0, food: 0, medicine: 0 }, items: [] });
-    vi.spyOn(api, 'household').mockResolvedValue([]);
-    vi.spyOn(api, 'neighbours').mockResolvedValue([]);
+    vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Everything is working. Nothing stored yet.' })).toBeInTheDocument();
-  });
-
-  it('says how long the household would last and what would help, with no score and no points', async () => {
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
-    vi.spyOn(api, 'household').mockResolvedValue([]);
-    renderRoute('/');
-    const panel = await screen.findByRole('region', { name: 'How ready you are' });
-    // The heading above already says the state; the panel says what it is about.
-    expect(panel).toHaveTextContent('How ready you are');
-    // Every number on this panel comes from the engine's readiness: no second count of the same water.
-    await waitFor(() => expect(panel).toHaveTextContent('One thing would help most.'));
-    expect(panel).not.toHaveTextContent('You have water for');
+    const panel = await screen.findByRole('region', { name: 'Start here' });
+    expect(panel).toHaveTextContent('Start here');
+    // One line, from the basic tier of every kit added up: 1 of 2 on Water, 0 of 1 on Baby and child.
+    const kits = await within(panel).findByRole('link', { name: 'Kits: 1 of 3 basic items ticked' });
+    expect(kits).toHaveAttribute('href', '/kit');
+    expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toHaveAttribute('href', '/situation#drill');
+    expect(within(panel).getByRole('link', { name: /Read the guides/ })).toHaveAttribute('href', '/guides');
+    expect(within(panel).getByRole('link', { name: /Notes and pins/ })).toHaveAttribute('href', '/notes');
+    // No score, no points, and nothing to fill in before the box is any use.
     expect(panel).not.toHaveTextContent('out of 100');
     expect(panel).not.toHaveTextContent('points');
-    expect(panel).toHaveTextContent('New box?');
-    // the first-run calls to action are buttons on their own row, not 20 px underlines
-    expect(within(panel).getByRole('link', { name: /Add who lives here/ })).toHaveClass('btn');
-    expect(within(panel).getByRole('link', { name: /Add water, food and fuel/ })).toHaveClass('btn');
-    expect(within(panel).getByRole('link', { name: 'Water: 1.5 days for 3 people' })).toHaveAttribute('href', '/plan#stock');
-    expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toHaveAttribute('href', '/situation#drill');
+    expect(panel).not.toHaveTextContent('register');
     expect(screen.queryByRole('region', { name: 'Right now' })).toBeNull();
+  });
+
+  it('still says where to start when the kits cannot be counted', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    vi.spyOn(api, 'kits').mockRejectedValue(new Error('boom'));
+    renderRoute('/');
+    const panel = await screen.findByRole('region', { name: 'Start here' });
+    expect(await within(panel).findByText(/Kits unavailable: boom/)).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: /Practise a drill/ })).toBeInTheDocument();
   });
 
   it('leads with what to do once something is off', async () => {
@@ -85,7 +73,7 @@ describe('Now', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
     expect(within(now).getAllByRole('listitem')).toHaveLength(3);
     expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
-    expect(screen.queryByRole('region', { name: 'How ready you are' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Start here' })).toBeNull();
     expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
     expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
     expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { api } from '../api/client';
 import type { Kit as KitData, KitItem, KitTier } from '../api/types';
@@ -8,8 +8,6 @@ import { notify } from '../components/Notice';
 import { PrintButton } from '../components/PrintButton';
 import { Screen, Body } from '../shell/Screen';
 import { TickedLine, UndoTick, useTickUndo } from '../situation/Tick';
-import { isoToUkDate, ukDateToIso } from '../tools/dates';
-import { daysBadge } from './plan/Stock';
 import './kit.css';
 
 function linkTitle(item: KitItem): string {
@@ -18,41 +16,6 @@ function linkTitle(item: KitItem): string {
   const name = rest.replace(/[-_]/g, ' ').replace(/^.*\//, '');
   const kind = { module: 'module', page: 'page', card: 'card', playbook: 'guide', doc: 'document', kiwix: 'article', map: 'map' }[scheme] ?? '';
   return `${name.charAt(0).toUpperCase()}${name.slice(1)}${kind ? ` ${kind}` : ''}`;
-}
-
-function AddToStock({ slug, item, onSaved }: { slug: string; item: KitItem; onSaved: (kit: KitData) => void }) {
-  const [open, setOpen] = useState(false);
-  const [quantity, setQuantity] = useState(String(item.qty?.scaled ?? 1));
-  const [useBy, setUseBy] = useState('');
-  const unit = item.stock?.unit ?? '';
-  const save = async (e: FormEvent) => {
-    e.preventDefault();
-    const q = Number(quantity);
-    // The API refuses a zero row outright (a nought in Stock locks the item behind a 409), so the
-    // screen asks the same question rather than sending one to be rejected.
-    if (!Number.isFinite(q) || q <= 0) { notify('Give a quantity of more than zero.'); return; }
-    const expires = useBy.trim() === '' ? null : ukDateToIso(useBy);
-    if (useBy.trim() !== '' && expires === null) { notify('Write the use-by date as day/month/year, like 06/09/2026.'); return; }
-    try {
-      onSaved(await api.setKitItem(slug, item.id, { checked: true, stock: { quantity: q, expires } }));
-      setOpen(false);
-    } catch (err) {
-      notify(`Could not add ${item.name} to Stock: ${errorMessage(err)}`);
-    }
-  };
-  if (!open) return <button type="button" className="btn btn-small no-print kit-add-stock" onClick={() => setOpen(true)}>Add to Stock</button>;
-  return (
-    <form className="row no-print kit-add-stock" onSubmit={(e) => void save(e)} aria-label="Add to Stock">
-      <label className="field"><span>Quantity ({unit})</span>
-        <input type="number" inputMode="decimal" min={0.01} step="any" aria-label={`Quantity (${unit})`} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      </label>
-      <label className="field"><span>Use by</span>
-        <input type="text" inputMode="numeric" maxLength={10} placeholder="dd/mm/yyyy" aria-label="Use by" value={useBy} onChange={(e) => setUseBy(e.target.value)} />
-      </label>
-      <button type="submit" className="btn">Save to Stock</button>
-      <button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button>
-    </form>
-  );
 }
 
 function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (kit: KitData) => void }) {
@@ -71,9 +34,6 @@ function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (k
       setBusy(false);
     }
   };
-  const badge = item.stock_item ? daysBadge({ id: item.stock_item.id, name: item.name, category: item.stock?.category ?? 'other', quantity: item.stock_item.quantity,
-    unit: item.stock_item.unit, per_person_day: null, expires: item.stock_item.expires, notes: '', updated_at: '',
-    days_left: item.stock_item.days_left, expired: false, kit_item: `${slug}/${item.id}` }) : null;
   const id = `kit-${slug}-${item.id}`;
   return (
     <li className={item.checked ? 'task-row task-done' : 'task-row'}>
@@ -95,14 +55,6 @@ function ItemRow({ slug, item, onKit }: { slug: string; item: KitItem; onKit: (k
           {armed && undoing && <UndoTick label={item.name} busy={busy} onUndo={() => void toggle()} />}
         </div>
       )}
-      {item.stock_item ? (
-        <div className="kit-stock-line">
-          <span>{item.stock_item.quantity} {item.stock_item.unit} in Stock</span>
-          {badge && <span className={badge.cls}>{badge.text}</span>}
-          {item.stock_item.expires && <span className="muted">use by {isoToUkDate(item.stock_item.expires)}</span>}
-          <Link to="/plan#stock">Stock</Link>
-        </div>
-      ) : (item.checked && item.stock && <AddToStock slug={slug} item={item} onSaved={onKit} />)}
     </li>
   );
 }
@@ -145,8 +97,11 @@ export function Kit() {
         {q.error && <p className="warning">Could not load this kit: {q.error}</p>}
         {kit && (
           <>
-            {!kit.relevant && <p className="panel muted">Nobody on the household register needs this kit yet. It is here for when they do.</p>}
-            <p className="muted">Quantities are for {kit.people} {kit.people === 1 ? 'person' : 'people'} on the register. Ticks are shared by everyone on the box.</p>
+            {/* The count is a setting, not a register, and the stepper that holds it is one tap away
+                on the kit list: the number is said here and changed there. */}
+            <p className="muted">
+              Quantities are for <Link to="/kit">{kit.people} {kit.people === 1 ? 'person' : 'people'}</Link>. Ticks are shared by everyone on the box.
+            </p>
             {kit.tiers.map((tier) => (
               <div key={tier.id} onToggle={(e) => setOpened((o) => ({ ...o, [tier.id]: (e.target as HTMLDetailsElement).open }))}>
                 <Tier slug={slug} tier={tier} open={isOpen(tier)} onKit={q.setData} />

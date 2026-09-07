@@ -9,6 +9,9 @@ import { Screen, Body } from '../shell/Screen';
 import './kit.css';
 
 const TIER_LABEL: Record<KitTierId, string> = { basic: 'Basic', serious: 'Serious', full: 'Full' };
+/** The range the box will hold: one person at least, and twenty is more than any household. */
+const MIN_PEOPLE = 1;
+const MAX_PEOPLE = 20;
 
 /** "Basic 1/2 · Serious 0/1 · Full 0/1": the one line a tile has for progress. */
 export function tierLine(tiers: KitSummary['tiers']): string {
@@ -61,6 +64,32 @@ function PackingList({ sheets }: { sheets: Kit[] }) {
   );
 }
 
+/** The one thing the box ever asks a household: how many people the quantities are for. One tap
+ * either way, saved as it is tapped, and the kits are read again so every quantity on the next
+ * screen is the box's own arithmetic rather than the screen's guess at it. */
+function PeopleStepper({ people, onSaved }: { people: number; onSaved: () => Promise<void> }) {
+  const [busy, setBusy] = useState(false);
+  const step = async (to: number) => {
+    if (to < MIN_PEOPLE || to > MAX_PEOPLE) return;
+    setBusy(true);
+    try {
+      await api.setPeople(to);
+      await onSaved();
+    } catch (e) {
+      notify(`Could not save how many people: ${errorMessage(e)}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="row kit-people" role="group" aria-label="How many people">
+      <button type="button" className="btn" disabled={busy || people <= MIN_PEOPLE} onClick={() => void step(people - 1)}>Fewer</button>
+      <strong>For {people} {people === 1 ? 'person' : 'people'}</strong>
+      <button type="button" className="btn" disabled={busy || people >= MAX_PEOPLE} onClick={() => void step(people + 1)}>More</button>
+    </div>
+  );
+}
+
 function KitTiles({ kits, label }: { kits: KitSummary[]; label: string }) {
   return (
     <nav className="tiles tiles-wide" aria-label={label}>
@@ -73,8 +102,6 @@ function KitTiles({ kits, label }: { kits: KitSummary[]; label: string }) {
 export function Kits() {
   const q = useQuery(() => api.kits(), [], { refetchOnFocus: true });
   const kits = q.data?.kits ?? [];
-  const relevant = kits.filter((k) => k.relevant);
-  const rest = kits.filter((k) => !k.relevant);
   const people = q.data?.people ?? 1;
   const { sheets, busy, printAll } = usePrintEveryKit(kits);
   // Nothing to print until the list of kits is on the screen: the button used to sit there through
@@ -87,22 +114,12 @@ export function Kits() {
       <Body>
         <p className="muted">
           What to have before anything happens, in three tiers: three days, two weeks, and no help coming.
-          Quantities are for {people} {people === 1 ? 'person' : 'people'} on the household register. Ticks are shared by everyone on the box.
+          Ticks are shared by everyone on the box.
         </p>
+        {q.data && <PeopleStepper people={people} onSaved={q.refetch} />}
         {q.loading && <p className="muted">Loading the kits…</p>}
         {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
-        {relevant.length > 0 && (
-          <section aria-label="Kits for this household">
-            <KitTiles kits={relevant} label="Kits" />
-          </section>
-        )}
-        {rest.length > 0 && (
-          <section aria-label="Kits not needed">
-            <h2>Not needed for this household</h2>
-            <p className="muted">These appear when someone on the register needs them. They open all the same.</p>
-            <KitTiles kits={rest} label="Not needed for this household" />
-          </section>
-        )}
+        {kits.length > 0 && <KitTiles kits={kits} label="Kits" />}
         <PackingList sheets={sheets} />
       </Body>
     </Screen>

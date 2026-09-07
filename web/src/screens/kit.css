@@ -3,8 +3,10 @@
 .kit-tier > summary { cursor: pointer; min-height: var(--touch); display: flex; align-items: center; gap: 12px; font-weight: 600; }
 .kit-tier > summary .muted { font-weight: 400; }
 .kit-qty { display: block; color: var(--ink-muted); }
-.kit-stock-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: calc(var(--touch) + 12px); }
-.kit-add-stock { margin-left: calc(var(--touch) + 12px); }
+/* The one question the box asks, so it wears the shape of an answer: two big taps with the count
+   between them, never a number field somebody has to select and retype. */
+.kit-people { align-items: center; gap: 12px; margin: 0 0 12px; }
+.kit-people strong { font-size: var(--t-lead); }
 .kit-why { color: var(--ink-muted); }
 /* On paper every tier is packed, not only the ones somebody opened on the screen: a `details` that is
    shut renders nothing at all, so the list itself is forced open for the printer. */
