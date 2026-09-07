@@ -40,6 +40,12 @@ export function MapPanel({ label, title, onClose, lead, actions, onBodySize, chi
   }, []);
 
   useEffect(() => { report.current = onBodySize; }, [onBodySize]);
+  // Escape closes the panel, as it closes every sheet a keyboard user expects it to.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
   // After every render, because the body's own box does not change when the list inside it arrives,
   // so a resize observer on its own would never notice that there is now more than fits.
   useEffect(measure);

@@ -119,6 +119,19 @@ describe('Map panels: the answer comes first', () => {
   });
 });
 
+describe('Map panels close on Escape', () => {
+  it('closes the open panel when Escape is pressed', async () => {
+    vi.spyOn(api, 'mapConfig').mockResolvedValue(mapConfig);
+    vi.spyOn(api, 'notes').mockResolvedValue([]);
+    const user = userEvent.setup();
+    renderRoute('/map');
+    await user.click(await screen.findByRole('button', { name: /Pins/ }));
+    expect(screen.getByRole('dialog', { name: 'Pins' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Pins' })).toBeNull();
+  });
+});
+
 describe('The QR quiet zone', () => {
   it('frames the code in the panel colour on a dark theme and offers the bright one on request', async () => {
     document.documentElement.style.setProperty('--panel', '#121b14');

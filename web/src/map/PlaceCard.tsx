@@ -44,13 +44,13 @@ export function PlaceCard({ place, from, guidance, onClose, onRoute, onPin, onNe
       }
     >
       {rows.length > 0 && (
-        <section>
+        <section className="place-section">
           <h3>What it has</h3>
           <dl className="place-rows">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
         </section>
       )}
       {guidance && (
-        <section>
+        <section className="place-section">
           <h3>What to expect here</h3>
           {/* The box's own guidance, rendered on the box: its links navigate in the app like every
               other rendered guide, and the button under it opens the guide they came from. */}
