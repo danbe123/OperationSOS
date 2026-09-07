@@ -98,7 +98,7 @@ describe('attachFeatureTooltip', () => {
     map.renderedFeatures = [zone];
     move(map, 14, 14);
     expect(document.querySelector('.map-tip-title')?.textContent).toBe('Flood zone 3');
-    expect(document.querySelector('.map-tip-type')?.textContent).toBe('Flood zone 3');
+    expect(document.querySelector('.map-tip-type')).toBeNull(); // unnamed: the type is already the title
   });
 
   it('a tap hands the place to onTap with a wider hit box and closes the popup; a tap on empty map hands null', () => {
