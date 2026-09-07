@@ -4,7 +4,7 @@ title: Total collapse and the long rebuild
 icon: hammer
 order: 20
 summary: No state, no grid, no supply chain, for years. The first month of survival, the first year of food and water, and the decade of trades, law and community.
-modules: [community, growing-food, livestock, tools-repair, water, sanitation, power, medical, security-law, navigation, mental-health, food, shelter-heat]
+modules: [community, growing-food, livestock, tools-repair, water, sanitation, power, medical, security-law, navigation, mental-health, food, shelter-heat, rebuild]
 overlays: [water, access-land, footpaths, rail]
 reviewed: null
 sources:
@@ -89,6 +89,8 @@ sources:
 
 **Law and community.** Britain after Rome lost coinage and pottery within a generation ([Fall of the Western Roman Empire](kiwix:wikipedia_en_all_maxi/Fall_of_the_Western_Roman_Empire)); the Black Death killed a third to a half and the survivors renegotiated everything ([Black Death in England](kiwix:wikipedia_en_all_maxi/Black_Death_in_England)); disease without the NHS is the [pandemic playbook](playbook:pandemic). Collapses are usually slow and partial, and what carries people through is the parish: a council that meets, a ledger, a common law of contract and theft that everyone still recognises, and mutual aid ([Societal collapse](kiwix:wikipedia_en_all_maxi/Societal_collapse); [Parish council (England)](kiwix:wikipedia_en_all_maxi/Parish_council_(England)); [Common law](kiwix:wikipedia_en_all_maxi/Common_law); [Mutual aid](kiwix:wikipedia_en_all_maxi/Mutual_aid)). Barter and commodity money return before paper does ([Commodity money](kiwix:wikipedia_en_all_maxi/Commodity_money)).
 
+{{module:rebuild}}
+
 {{module:growing-food}}
 
 {{module:livestock}}
@@ -122,6 +124,18 @@ sources:
 
 ## Go deeper
 
+- [The rebuild, year by year](module:rebuild)
+- [The first year](page:rebuild-first-year)
+- [Keeping the box alive](page:rebuild-keeping-the-box)
+- [The essentials, printed](page:rebuild-essentials-printed)
+- [Restarting science](page:rebuild-restarting-science)
+- [Making things again](page:rebuild-making-things)
+- [Iron and tools](page:rebuild-iron-and-tools)
+- [Power from scratch](page:rebuild-power)
+- [Medicine without industry](page:rebuild-medicine)
+- [Farming for a decade](page:rebuild-farming)
+- [Law, records and trade](page:rebuild-law-and-trade)
+- [The library map](page:rebuild-library-map)
 - [Community module](module:community)
 - [Growing food module](module:growing-food)
 - [Tools and repair module](module:tools-repair)

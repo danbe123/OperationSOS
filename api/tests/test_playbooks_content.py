@@ -20,12 +20,25 @@ MANIFEST_DIR = REPO / "manifest"
 MODULES = [
     "water", "food", "shelter-heat", "medical", "sanitation", "power", "comms", "security-law",
     "navigation", "community", "mental-health", "radiation", "evacuation", "vehicles-fuel",
-    "tools-repair", "growing-food", "livestock",
+    "tools-repair", "growing-food", "livestock", "rebuild",
 ]
 MODULE_HEADINGS = ["## Key facts", "## What to do", "## UK specifics", "## Go deeper"]
+# the rebuild module is a timeline rather than a fact sheet, so it carries its own headings and a checklist
+REBUILD_MODULE_HEADINGS = [
+    "## The first month", "## The first year", "## Years one to three: food and health",
+    "## Years three to ten: trades and power", "## The decade after", "## Checklist",
+]
+MODULE_HEADINGS_BY_SLUG = {"rebuild": REBUILD_MODULE_HEADINGS}
+MODULE_CITED_SECTIONS = {
+    "rebuild": ("The first year", "Years one to three: food and health",
+                "Years three to ten: trades and power"),
+}
 CITE = re.compile(r"\]\((?:kiwix|doc):[^)]+\)")
 ANY_LINK = re.compile(r"\]\(((?:kiwix|doc|module|card|page|playbook|map):[^)]+)\)")
 AS_AT = re.compile(r"^\d{4}-\d{2}(-\d{2})?$")
+
+# `- [ ] text {#id}`, with the optional bucket token after the id: `{#id now}`
+TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)(?: (now|hour|today|week))?\}$")
 
 
 def overlay_ids() -> list[str]:
@@ -70,12 +83,26 @@ def test_module_front_matter(slug):
 @pytest.mark.parametrize("slug", MODULES)
 def test_module_headings_citations_and_no_task_lines(slug):
     post = load("modules", slug)
-    assert h2(post.content) == MODULE_HEADINGS
+    headings = MODULE_HEADINGS_BY_SLUG.get(slug, MODULE_HEADINGS)
+    assert h2(post.content) == headings
     body = sections(post.content)
-    for name in ("Key facts", "What to do", "UK specifics"):
+    for name in MODULE_CITED_SECTIONS.get(slug, ("Key facts", "What to do", "UK specifics")):
         assert len(CITE.findall(body[name])) >= 1, (slug, name)
-    assert len(ANY_LINK.findall(body["Go deeper"])) >= 4, slug
-    assert "- [ ]" not in post.content, slug
+    if slug in MODULE_HEADINGS_BY_SLUG:
+        # a timeline module points at pages instead of a Go deeper list, and carries a bucketed checklist
+        assert len(ANY_LINK.findall(post.content)) >= 10, slug
+        tasks = [l for l in body["Checklist"].splitlines() if l.strip()]
+        assert 10 <= len(tasks) <= 14, slug
+        ids = []
+        for line in tasks:
+            m = TASK_LINE.match(line)
+            assert m, (slug, line)
+            ids.append(m.group(1))
+        assert len(ids) == len(set(ids)), slug
+        assert post.content.count("- [ ]") == len(tasks), (slug, "task lines outside the checklist")
+    else:
+        assert len(ANY_LINK.findall(body["Go deeper"])) >= 4, slug
+        assert "- [ ]" not in post.content, slug
     assert "NOMAD" not in post.content
 
 
@@ -138,7 +165,21 @@ PAGES = {
     "chronic-conditions": "reference", "death-and-grief": "reference", "infant-feeding": "reference",
     "fieldcraft-navigation": "fieldcraft", "food-storage": "reference", "fieldcraft-fishing": "fieldcraft",
     "butchery": "reference",
+    "rebuild-first-year": "rebuild", "rebuild-keeping-the-box": "rebuild",
+    "rebuild-essentials-printed": "rebuild", "rebuild-restarting-science": "rebuild",
+    "rebuild-making-things": "rebuild", "rebuild-iron-and-tools": "rebuild", "rebuild-power": "rebuild",
+    "rebuild-medicine": "rebuild", "rebuild-farming": "rebuild", "rebuild-law-and-trade": "rebuild",
+    "rebuild-library-map": "rebuild",
 }
+REBUILD_PAGES = [slug for slug, category in PAGES.items() if category == "rebuild"]
+REBUILD_ORDER_BASE = 200
+
+
+def expected_page_order(slug: str) -> int:
+    """Pages are numbered 1..n in the order they were written; the Rebuilding section starts again at 200."""
+    if PAGES[slug] == "rebuild":
+        return REBUILD_ORDER_BASE + REBUILD_PAGES.index(slug)
+    return list(PAGES).index(slug) + 1
 
 
 @pytest.mark.parametrize("slug", sorted(PAGES))
@@ -147,7 +188,7 @@ def test_page_front_matter_and_body(slug):
     assert set(post.keys()) == {"id", "title", "icon", "order", "summary", "category"}
     assert post["id"] == slug
     assert post["category"] == PAGES[slug]
-    assert post["order"] == list(PAGES).index(slug) + 1
+    assert post["order"] == expected_page_order(slug)
     assert len(h2(post.content)) >= 2, slug
     assert len(CITE.findall(post.content)) >= 2, slug
     assert "NOMAD" not in post.content
@@ -184,8 +225,6 @@ SCENARIO_HEADINGS = [
     "## Right now", "## First 72 hours", "## First month", "## Long term", "## UK specifics",
     "## Checklist", "## Go deeper",
 ]
-# `- [ ] text {#id}`, with the optional bucket token after the id: `{#id now}`
-TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)(?: (now|hour|today|week))?\}$")
 INCLUDE = re.compile(r"^\{\{module:([a-z0-9-]+)\}\}$", re.M)
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 WRITTEN = SCENARIOS

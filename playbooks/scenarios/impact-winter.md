@@ -4,7 +4,7 @@ title: Nuclear or impact winter
 icon: cloud
 order: 18
 summary: Years of cold, dark summers after a nuclear exchange, supervolcano or asteroid. Insulation and fuel for years, growing under cover, vitamin D, morale.
-modules: [shelter-heat, growing-food, food, water, power, livestock, medical, community, mental-health]
+modules: [shelter-heat, growing-food, food, water, power, livestock, medical, community, mental-health, rebuild]
 overlays: [health, water, fuel]
 reviewed: null
 sources:
@@ -78,9 +78,11 @@ sources:
 
 What is unique to this winter is the light. Cold alone can be met with fuel and walls; a dimmed sky shortens the growing season as well, and the models for a large nuclear exchange have killing frosts cutting growing seasons by 10 to 40 days a year for five years and surface temperatures depressed for more than 25 years ([Nuclear winter](kiwix:wikipedia_en_all_maxi/Nuclear_winter)). The Little Ice Age, centuries of cold summers, was survived in Britain with hardier crops, more livestock and a great deal of hunger ([Little Ice Age](kiwix:wikipedia_en_all_maxi/Little_Ice_Age)); the Toba eruption 74,000 years ago may have reduced humanity to thousands ([Youngest Toba eruption](kiwix:wikipedia_en_all_maxi/Youngest_Toba_eruption)). The scale decides everything, and nobody will know it in the first year.
 
-So the long plan is built on four things. Crops chosen for cold and low light, roots and brassicas and oats rather than anything that needs a warm summer, and every square metre under cover that materials allow ([Growing food module](module:growing-food)). Growing indoors under lights wherever there is power, because a battery and an LED panel over a tray of sprouts is the one crop that does not depend on the sky ([Grow light](kiwix:wikipedia_en_all_maxi/Grow_light)). A herd cut each autumn to what the stored hay will feed, with the rest killed and preserved while they still carry flesh ([Livestock module](module:livestock); [Butchery](page:butchery)). And fuel and food planned in three-year units: wood cut and drying, seed saved from what actually grew, a community that pools tunnels, tools and labour ([Community module](module:community)). The [long rebuild playbook](playbook:long-rebuild) is the rest.
+So the long plan is built on four things. Crops chosen for cold and low light, roots and brassicas and oats rather than anything that needs a warm summer, and every square metre under cover that materials allow ([Growing food module](module:growing-food)). Growing indoors under lights wherever there is power, because a battery and an LED panel over a tray of sprouts is the one crop that does not depend on the sky ([Grow light](kiwix:wikipedia_en_all_maxi/Grow_light)). A herd cut each autumn to what the stored hay will feed, with the rest killed and preserved while they still carry flesh ([Livestock module](module:livestock); [Butchery](page:butchery)). And fuel and food planned in three-year units: wood cut and drying, seed saved from what actually grew, a community that pools tunnels, tools and labour ([Community module](module:community)). The [long rebuild playbook](playbook:long-rebuild) is the rest, and the year-by-year shape of it is below.
 
 {{module:community}}
+
+{{module:rebuild}}
 
 {{module:mental-health}}
 
