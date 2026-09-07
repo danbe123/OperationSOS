@@ -61,10 +61,13 @@ export function renderDescription(d: FeatureDescription): HTMLElement {
   title.className = 'map-tip-title';
   title.textContent = d.title;
   root.appendChild(title);
-  const type = document.createElement('div');
-  type.className = 'map-tip-type';
-  type.textContent = d.typeLine;
-  root.appendChild(type);
+  // An unnamed place is titled by its type; saying it twice tells nobody anything.
+  if (d.typeLine && d.typeLine !== d.title) {
+    const type = document.createElement('div');
+    type.className = 'map-tip-type';
+    type.textContent = d.typeLine;
+    root.appendChild(type);
+  }
   return root;
 }
 

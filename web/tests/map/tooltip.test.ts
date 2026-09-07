@@ -52,6 +52,9 @@ describe('renderDescription', () => {
     expect(el.querySelector('.map-tip-title')?.textContent).toBe('<b>Bold</b>');
     expect(el.querySelector('b')).toBeNull();
     expect(el.querySelector('.map-tip-type')?.textContent).toBe('Fuel station');
+    const unnamed = renderDescription({ title: 'Flood zone 3', overlay: 'Flood zones', typeLine: 'Flood zone 3', kind: 'flood-zone', rows: [] });
+    expect(unnamed.querySelector('.map-tip-type')).toBeNull();
+    expect(unnamed.textContent).toBe('Flood zone 3');
     // The rows moved to the card a tap opens: a popup that follows the pointer is not the place to read a list.
     expect(el.querySelector('dl')).toBeNull();
     expect(el.textContent).not.toContain('0123');
