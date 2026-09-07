@@ -1,6 +1,6 @@
 import type {
   AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
-  ExportChunks, ImportSummary, Neighbour, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, StockResponse, Suggestion, UpdateProgress,
+  ExportChunks, ImportSummary, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 
@@ -18,7 +18,7 @@ export const status: Status = {
   pin_required: false, dev: true, default_theme: 'field',
   conditions: Object.fromEntries(CONDITION_IDS.map((id) => [id, 'working' as ConditionState])) as Record<ConditionId, ConditionState>,
   modes: { theme: null, dim: false, calls: 'shown', map_first: false, board: false },
-  drill: false, readiness_score: 62,
+  drill: false,
 };
 
 export const WIKI = 'wikipedia_en_100_mini_2026-01';
@@ -343,7 +343,6 @@ export function makeView(over: Partial<SituationView> = {}): SituationView {
     conditions,
     inferred: [], forecast: [], tasks: [], briefing: [],
     modes: { theme: null, dim: false, calls: 'shown', map_first: false, board: false },
-    readiness: { score: 62, gaps: [{ title: 'Water: 1.5 days for 3 people', link: '/plan#stock', points: 12 }] },
     bulletins: { next: { station: 'BBC Radio 4', frequency: '198 kHz LW', at: '2026-09-06T18:00:00.000Z' } },
     ...over,
     ...(over.conditions ? { conditions: { ...conditions, ...over.conditions } } : {}),
@@ -364,7 +363,7 @@ export const powerOffView: SituationView = makeView({
     { id: 'fill-bath', title: 'Fill the bath and every container', bucket: 'now', why: 'Pumped supplies fail once the power has been off a day.', link: 'module:water', person: null, done: false, done_at: null, source: 'rule:fill-bath' },
     { id: 'freezer-shut', title: 'Keep the fridge and freezer shut', bucket: 'now', why: 'Every opening costs hours.', link: 'module:food', person: 'Sam', done: false, done_at: null, source: 'rule:freezer-shut' },
     { id: 'cash', title: 'Get cash out while the shops take cards', bucket: 'hour', why: 'Card terminals need power.', link: 'module:money', person: null, done: false, done_at: null, source: 'rule:cash' },
-    { id: 'street', title: 'Knock on both neighbours', bucket: 'today', why: 'Check on anyone medically dependent.', link: 'page:neighbours', person: null, done: true, done_at: '2026-09-06T13:00:00.000Z', source: 'rule:street' },
+    { id: 'radio', title: 'Find the wind-up radio', bucket: 'today', why: 'A bulletin is the only news once the networks go.', link: 'page:what-still-works', person: null, done: true, done_at: '2026-09-06T13:00:00.000Z', source: 'rule:radio' },
   ],
   briefing: [
     { title: 'Right now', kind: 'playbook-section', ref: 'grid-collapse#right-now' },
@@ -373,21 +372,13 @@ export const powerOffView: SituationView = makeView({
   ],
 });
 
-/* Phase 2 and 3 fixtures: the event log, the stock, the facilities round the home and the box's senses. */
+/* Phase 2 and 3 fixtures: the event log, the facilities round the home and the box's senses. */
 export const events: Note[] = [
   { id: 44, kind: 'event', title: 'Mains power off since 13:00 (phone)', body: '', lat: null, lon: null, updated_at: '2026-09-06T13:02:00.000Z' },
   { id: 43, kind: 'event', title: 'Fill the bath ticked by Sam', body: '', lat: null, lon: null, updated_at: '2026-09-06T13:20:00.000Z' },
   { id: 42, kind: 'event', title: 'Drill started: National grid collapse', body: '', lat: null, lon: null, updated_at: '2026-09-06T12:00:00.000Z' },
 ];
 
-export const stockResponse: StockResponse = {
-  people: 3,
-  days: { water: 1.5, food: 4.6, medicine: 0 },
-  items: [
-    { id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 1.5, expired: false, kit_item: 'power-and-light/torch', kit_title: 'Power and light' },
-    { id: 2, name: 'Tins', category: 'food', quantity: 42, unit: 'meals', per_person_day: 3, expires: null, notes: '', updated_at: '2026-09-05T10:00:00Z', days_left: 4.6, expired: false, kit_item: null, kit_title: null },
-  ],
-};
 
 export const nearby: NearbyResponse = {
   lat: 50.9379, lon: -1.4708,
@@ -416,11 +407,7 @@ export const nearby: NearbyResponse = {
   ],
 };
 
-/* Phase 4: the street, and carrying the situation to another box. */
-export const neighbours: Neighbour[] = [
-  { id: 1, name: 'Joan Reeve', address: '14 Mill Lane', needs: 'oxygen concentrator, cannot manage stairs', skills: '', contacts: '07700 900123', notes: 'key is with number 12', updated_at: '2026-09-05T10:00:00Z' },
-  { id: 2, name: 'Ade Okafor', address: '18 Mill Lane', needs: '', skills: 'nurse, has a petrol generator', contacts: '07700 900456', notes: '', updated_at: '2026-09-05T10:00:00Z' },
-];
+/* Carrying the situation to another box. */
 
 export const exportChunks: ExportChunks = {
   chunks: ['{"i":0,"n":2,"d":"H4sIAAAAAAACA61W247bIBD9FcRTq"}', '{"i":1,"n":2,"d":"8ar0iFOzA90K7V9aCv1oapWGHC"}'],
@@ -430,12 +417,12 @@ export const importSummary: ImportSummary = {
   ok: true, version: 1, exported_at: '2026-09-06T13:00:00Z',
   counts: {
     conditions: { updated: 2, kept: 8 },
-    household: { added: 1, updated: 0, kept: 2 },
-    neighbours: { added: 2, updated: 0, kept: 0 },
+    notes: { added: 1, updated: 0, kept: 2 },
+    settings: { updated: 1 },
     events: { added: 3, skipped: 1 },
   },
   home: 'kept', scenario: 'started: grid-collapse',
-  changes: ['Mains power set to off', 'Joan Reeve added to the street list'],
+  changes: ['Mains power set to off', 'The people count set to 3'],
 };
 
 export const sensors: Sensors = {
@@ -450,7 +437,7 @@ export const kitsResponse: KitsResponse = {
   kits: [
     { slug: 'water', title: 'Water', icon: 'water', order: 2, summary: 'Stored drinking water and the means to make more.', relevant: true,
       tiers: { basic: { done: 1, total: 2 }, serious: { done: 0, total: 1 }, full: { done: 0, total: 1 } } },
-    { slug: 'baby-child', title: 'Baby and child', icon: 'baby', order: 11, summary: 'What a household with a baby needs on top of everything else.', relevant: false,
+    { slug: 'baby-child', title: 'Baby and child', icon: 'baby', order: 11, summary: 'What a household with a baby needs on top of everything else.', relevant: true,
       tiers: { basic: { done: 0, total: 1 }, serious: { done: 0, total: 0 }, full: { done: 0, total: 0 } } },
   ],
 };
@@ -464,17 +451,17 @@ export const kitWater: Kit = {
       { id: 'stored-water', name: 'Drinking water in sealed containers', why: 'Bottled, or filled containers, rotated yearly ([Prepare](kiwix:prepare_uk/prepare)).', note: 'Rotate every year.',
         why_html: 'Bottled, or filled containers, rotated yearly (<a href="/read/prepare_uk/prepare">Prepare</a>).', note_html: 'Rotate every year.',
         link: 'module:water', href: '/m/water',
-        qty: { amount: 3, unit: 'L', scaled: 18, text: '18 L for 2 people over 3 days' }, stock: { category: 'water', unit: 'L' },
-        checked: true, updated_at: '2026-09-06T10:00:00+00:00', stock_item: { id: 7, quantity: 18, unit: 'L', expires: null, days_left: 3 } },
+        qty: { amount: 3, unit: 'L', scaled: 18, text: '18 L for 2 people over 3 days' },
+        checked: true, updated_at: '2026-09-06T10:00:00+00:00' },
       { id: 'containers', name: 'Containers with lids, 10 litres or more', why: '', note: '', why_html: '', note_html: '', link: 'module:water', href: '/m/water',
-        qty: { amount: 2, unit: '', scaled: 4, text: '4 for 2 people' }, stock: null, checked: false, updated_at: null, stock_item: null },
+        qty: { amount: 2, unit: '', scaled: 4, text: '4 for 2 people' }, checked: false, updated_at: null },
     ] },
     { id: 'serious', title: 'Two weeks', days: 14, why: 'What every playbook on this box plans for.', done: 0, total: 1, items: [
       { id: 'tablets', name: 'Water purification tablets', why: 'One pack treats a fortnight of water.', note: '', why_html: 'One pack treats a fortnight of water.', note_html: '', link: null, href: null,
-        qty: { amount: 1, unit: 'pack', scaled: 1, text: '1 pack' }, stock: { category: 'other', unit: 'packs' }, checked: false, updated_at: null, stock_item: null },
+        qty: { amount: 1, unit: 'pack', scaled: 1, text: '1 pack' }, checked: false, updated_at: null },
     ] },
     { id: 'full', title: 'No help coming', days: 90, why: 'A season with no mains and no shops.', done: 0, total: 1, items: [
-      { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', why_html: 'x', note_html: '', link: null, href: null, qty: null, stock: null, checked: false, updated_at: null, stock_item: null },
+      { id: 'filter', name: 'Gravity filter with spare elements', why: 'x', note: '', why_html: 'x', note_html: '', link: null, href: null, qty: null, checked: false, updated_at: null },
     ] },
   ],
 };

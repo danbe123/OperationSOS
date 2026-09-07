@@ -48,7 +48,7 @@ describe('the app while a countdown runs out', () => {
     const next = makeView({ forecast: [passed, { ...later, due_at: '2026-09-06T13:59:00.000Z', passed: true }] });
     const situationView = vi.spyOn(api, 'situationView').mockResolvedValue(start);
     renderRoute('/');
-    await screen.findByRole('region', { name: 'How ready you are' });
+    await screen.findByRole('region', { name: 'Start here' });
     expect(toasts()).toBe('');
     expect(alarm).not.toHaveBeenCalled();
     expect(readSeen(localStorage)).toEqual([reminderKey(passed)]);
@@ -69,7 +69,7 @@ describe('the app while a countdown runs out', () => {
     const alarm = vi.spyOn(audio, 'alarm').mockImplementation(() => {});
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    await screen.findByRole('region', { name: 'How ready you are' });
+    await screen.findByRole('region', { name: 'Start here' });
     expect(alarm).not.toHaveBeenCalled();
     expect(readSeen(localStorage)).toEqual([]);
   });

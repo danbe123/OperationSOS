@@ -22,7 +22,7 @@ describe('Guides', () => {
     expect(tiles[19]).toHaveTextContent('The long rebuild');
     expect(tiles[0].querySelector('svg.icon')).not.toBeNull();
     expect(screen.getByRole('navigation', { name: 'Phone and radio' })).toHaveTextContent('PMR446 radio');
-    expect(within(screen.getByRole('navigation', { name: 'Tools' })).getAllByRole('link')).toHaveLength(7);
+    expect(within(screen.getByRole('navigation', { name: 'Tools' })).getAllByRole('link')).toHaveLength(6);
   });
 
   it('filters everything from one field, and offers the whole box when nothing matches', async () => {

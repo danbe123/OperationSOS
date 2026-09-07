@@ -79,7 +79,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
 });
 
 test('every screen has a title, a way back and a way to search', async ({ page }) => {
-  for (const path of ['/guides', '/medical', '/map', '/search', '/plan', '/system', '/tools/timers']) {
+  for (const path of ['/guides', '/medical', '/map', '/search', '/notes', '/system', '/tools/timers']) {
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Find' })).toBeVisible();

@@ -1,4 +1,4 @@
-import type { ChecklistItem, Conditions, Home, Neighbour, Note, Person, Recording, Sensors, Situation, Status, StockItem } from '../../src/api/types';
+import type { ChecklistItem, Conditions, Home, Note, Recording, Sensors, Situation, Status } from '../../src/api/types';
 import { notes, playbook, status } from '../../tests/fixtures/api';
 import { freshConditions } from './engine';
 
@@ -10,8 +10,8 @@ export type FixtureState = {
   checklists: Map<string, ChecklistItem[]>;
   notes: Note[];
   nextNoteId: number;
-  household: Person[];
-  stock: StockItem[];
+  /** The one number the box is ever told: how many people the kit quantities are scaled for. */
+  people: number;
   situation: Situation;
   conditions: Conditions;
   /** done and who, by task id; checklist tasks keep their state in `checklists` instead */
@@ -26,7 +26,6 @@ export type FixtureState = {
   places: FixturePlace[];
   /** Facility ids the box has no searchable data for, so /nearby answers them with a `why`. */
   missingNearby: string[];
-  neighbours: Neighbour[];
   sensors: Sensors;
   /** Piper installed? When false /speak answers 503 and the read-aloud buttons take themselves away. */
   speaks: boolean;
@@ -56,8 +55,7 @@ export function createFixtureState(overrides: Partial<Status> = {}): FixtureStat
     checklists: new Map([[playbook.slug, playbook.checklist.map((i) => ({ ...i }))]]),
     notes: notes.map((n) => ({ ...n })),
     nextNoteId: 100,
-    household: [],
-    stock: [],
+    people: 2,
     situation: { slug: null },
     conditions: freshConditions(new Date(Date.now() - 3_600_000).toISOString()),
     taskState: new Map(),
@@ -69,7 +67,6 @@ export function createFixtureState(overrides: Partial<Status> = {}): FixtureStat
     ethMode: 'client',
     places: FIXTURE_PLACES.map((x) => ({ ...x })),
     missingNearby: ['rest-centre', 'fire-station', 'fuel'],
-    neighbours: [],
     sensors: {
       internet: { value: 1, unit: 'up', at: new Date(Date.now() - 120_000).toISOString() },
       mains: { value: 1, unit: 'on', at: new Date(Date.now() - 60_000).toISOString() },

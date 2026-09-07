@@ -20,8 +20,8 @@ export function Screen({
   back?: boolean;
   search?: boolean;
   fill?: boolean;
-  /** Where Back goes instead of the history stack. A screen reached by a deep link (a readiness
-      gap, say) has no useful "back" in history — it should return to its parent screen instead. */
+  /** Where Back goes instead of the history stack. A screen reached by a deep link (a pin dropped
+      on the map, say) has no useful "back" in history — it returns to its parent screen instead. */
   backTo?: string;
 }) {
   const navigate = useNavigate();

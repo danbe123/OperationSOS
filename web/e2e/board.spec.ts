@@ -36,22 +36,18 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
 });
 
-test('Home in peacetime says how long the household would last, in plain words', async ({ page }) => {
+test('Home in peacetime says where to start, and asks for nothing first', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
-  const strip = page.getByRole('region', { name: 'How ready you are' });
+  const strip = page.getByRole('region', { name: 'Start here' });
   // No score, no points: a number out of a hundred whose meaning is never given is not an answer.
   await expect(strip).not.toContainText('out of 100');
   await expect(strip).not.toContainText('points');
-  await expect(strip).toContainText('would help most');
-  const gaps = strip.getByLabel('Gaps to close');
-  // Every number on this panel comes from one source, the engine's readiness, and is said once.
-  await expect(gaps).toContainText('No water recorded');
-  await expect(strip).not.toContainText('You have water for');
-  // A gap is somewhere to go, so it is a row you can hit — but never the shape of a job you can tick.
-  const row = gaps.getByRole('link', { name: 'No water recorded: add what you have' });
-  expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(48);
-  await expect(row).not.toHaveClass(/task-tick/);
+  await expect(strip).not.toContainText('register');
+  // The one measure left is the ticks the household has already made, and it opens the kits.
+  const row = strip.getByRole('link', { name: /basic items ticked/ });
+  expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(20);
   await row.click();
-  await expect(page).toHaveURL(/\/plan#stock$/);
+  await expect(page).toHaveURL(/\/kit$/);
+  await expect(page.getByRole('group', { name: 'How many people' })).toContainText('For 2 people');
 });

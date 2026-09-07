@@ -5,7 +5,7 @@ import { QrCode } from '../components/QrCode';
 import { Icon } from '../icons';
 import type { ExportChunks, ImportSummary } from '../api/types';
 
-/** "household: 2 added, 1 kept" — the box's own counts, read out in its own words. */
+/** "notes: 2 added, 1 kept" — the box's own counts, read out in its own words. */
 export function countLines(summary: ImportSummary): string[] {
   return Object.entries(summary.counts ?? {}).map(([what, how]) => {
     const parts = Object.entries(how).filter(([, n]) => n > 0).map(([verb, n]) => `${n} ${verb}`);

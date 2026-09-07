@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
-import type { Person, Task } from '../api/types';
+import type { Task } from '../api/types';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { contentHref } from './links';
@@ -13,9 +13,13 @@ import { TickedLine, UndoTick, useTickUndo } from './Tick';
  *
  * `why` is three lines of explanation, and four of them are most of a 480 px screen. The front door
  * shows it for the job at the top and turns it off for the rest, where "Read more" and Things to do
- * still carry it; every other list shows it as before. */
-export function TaskRow({ task, people, why = true, onChanged }: { task: Task; people?: Person[]; why?: boolean; onChanged: (t: Task) => void }) {
+ * still carry it; every other list shows it as before.
+ *
+ * Who is doing it is a name somebody types, not a pick from a register: the box is not told who
+ * lives here, and a job handed to "Alex" reads the same whether the box has ever heard of Alex. */
+export function TaskRow({ task, why = true, onChanged }: { task: Task; why?: boolean; onChanged: (t: Task) => void }) {
   const [busy, setBusy] = useState(false);
+  const [who, setWho] = useState('');
   const { armed, arm, disarm } = useTickUndo();
   const href = contentHref(task.link);
   const save = async (patch: { done?: boolean; person?: string }) => {
@@ -30,6 +34,19 @@ export function TaskRow({ task, people, why = true, onChanged }: { task: Task; p
       setBusy(false);
     }
   };
+  /* Saved when the field is left or Enter is pressed, and never for an empty one: tabbing past a
+     box nobody typed in must not hand the job to nobody. */
+  const saveWho = () => {
+    const name = who.trim();
+    if (!name) return;
+    void save({ person: name });
+  };
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveWho();
+    }
+  };
   return (
     <li className={task.done ? 'task-row task-done' : 'task-row'}>
       <label className="task-tick">
@@ -39,19 +56,23 @@ export function TaskRow({ task, people, why = true, onChanged }: { task: Task; p
       {why && task.why && <p className="task-why muted">{task.why}</p>}
       <div className="row task-meta">
         {/* The "who and when" line is never struck through; only the title is. */}
-        {task.done && <TickedLine at={task.done_at} person={people ? null : task.person} />}
+        {task.done && <TickedLine at={task.done_at} person={task.person} />}
         {task.done && armed && <UndoTick label={task.title} busy={busy} onUndo={() => void save({ done: false })} />}
         {href && <Link className="btn btn-small task-link" to={href} aria-label={`Read more: ${task.title}`}>Read more</Link>}
-        {people && (
+        {!task.done && !task.person && (
           <label className="field task-person">
-            <span className="muted">Who</span>
-            <select aria-label={`Who is doing: ${task.title}`} value={task.person ?? ''} disabled={busy} onChange={(e) => void save({ person: e.target.value })}>
-              <option value="">Nobody yet</option>
-              {people.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-            </select>
+            <span className="muted">Who is doing this</span>
+            <input
+              type="text" maxLength={40} autoComplete="off" placeholder="a name"
+              aria-label={`Who is doing this: ${task.title}`}
+              value={who} disabled={busy}
+              onChange={(e) => setWho(e.target.value)}
+              onBlur={saveWho}
+              onKeyDown={onKey}
+            />
           </label>
         )}
-        {!people && task.person && !task.done && <span className="muted">{task.person}</span>}
+        {!task.done && task.person && <span className="muted">{task.person}</span>}
       </div>
     </li>
   );

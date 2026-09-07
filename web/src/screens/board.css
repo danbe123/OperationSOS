@@ -27,8 +27,6 @@
 /* The glyph belongs to the first line of what it marks, not to the middle of a four-line wrap. */
 .board-facts p { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: var(--t-lead); }
 .board-facts p svg { flex: 0 0 auto; margin-top: 3px; }
-.board-stock { list-style: none; margin: 0; padding: 0; font-size: var(--t-lead); font-weight: 600; }
-.board-stock li { margin-bottom: 4px; }
 .board-events { flex: 0 0 auto; border-top: 1px solid var(--line); padding-top: 6px; max-height: 3.6em; overflow: hidden; }
 .board-events ul { list-style: none; margin: 0; padding: 0; font-size: var(--t-meta); }
 .board-hint { flex: 0 0 auto; margin: 0; padding: 2px 16px 6px; text-align: center; font-size: var(--t-meta); color: var(--ink-muted); }

@@ -3,17 +3,17 @@ import { test, expect, openDetails, setCondition } from './test';
 
 test('the power goes off: the band, the forecast, a job ticked, and everything back on', async ({ page }) => {
   await page.goto('/');
-  // peacetime: Now carries the readiness, not chips, and there is no band
+  // peacetime: Now says where to start, not how it scores the household, and there is no band
   await expect(page.getByRole('heading', { level: 1, name: 'Everything is working' })).toBeVisible();
-  const readiness = page.getByRole('region', { name: 'How ready you are', exact: true });
-  await expect(readiness).toContainText('How ready you are');
-  // A plain sentence, not a score out of a hundred nobody was given the meaning of.
-  await expect(readiness).toContainText('would help most');
-  await expect(readiness).not.toContainText('out of 100');
+  const start = page.getByRole('region', { name: 'Start here', exact: true });
+  await expect(start).toContainText('Start here');
+  // The ticks already on the kits, not a score out of a hundred nobody was given the meaning of.
+  await expect(start.getByRole('link', { name: /basic items ticked/ })).toBeVisible();
+  await expect(start).not.toContainText('out of 100');
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
 
   // set the power off, an hour ago, from the sheet
-  await readiness.getByRole('link', { name: 'Situation' }).click();
+  await start.getByRole('link', { name: 'Situation' }).click();
   await setCondition(page, 'power', 'Off', 'About an hour ago');
 
   // Now leads with what to do, and the band says what is off

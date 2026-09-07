@@ -69,9 +69,9 @@ function Rations() {
   return (
     <section className="panel" aria-label="Rationing">
       <h3>Rationing</h3>
-      <div className="row"><Num label="Stock" value={qty} onChange={setQty} /><Num label="People" value={people} onChange={setPeople} /><Num label="Per person a day" value={rate} onChange={setRate} /></div>
+      <div className="row"><Num label="How much you have" value={qty} onChange={setQty} /><Num label="People" value={people} onChange={setPeople} /><Num label="Per person a day" value={rate} onChange={setRate} /></div>
       <p className="result">{d === null ? INVALID : `${d.toFixed(1)} days.`}</p>
-      <p className="muted">Water: 3 litres a person a day for drinking and basic hygiene; more in heat or illness. Track it properly under <Link to="/plan#stock">Stock</Link>.</p>
+      <p className="muted">Water: 3 litres a person a day for drinking and basic hygiene; more in heat or illness. What to put by, and how much, is in the <Link to="/kit/water">Water kit</Link>.</p>
     </section>
   );
 }

@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Neighbour, Note, Person, StockItem } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Note } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
-import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, kitsResponse, kitWater, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
@@ -111,7 +111,7 @@ function exportDocument(state: FixtureState) {
   const view = computeView(state);
   return {
     kind: 'sos-situation-export', version: 1, exported_at: new Date().toISOString(), checksum: 'fixture',
-    data: { conditions: view.conditions, household: state.household, neighbours: state.neighbours, stock: state.stock, notes: state.notes },
+    data: { conditions: view.conditions, notes: state.notes, settings: { people: state.people } },
   };
 }
 
@@ -178,7 +178,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       return json(route, {
         ...state.status, eth_mode: state.ethMode,
         conditions: Object.fromEntries(CONDITION_IDS.map((id) => [id, v.conditions[id].state])),
-        modes: v.modes, drill: v.meta.drill, readiness_score: v.readiness.score,
+        modes: v.modes, drill: v.meta.drill, people: state.people,
         situation: state.situation.slug ? { slug: state.situation.slug, started_at: state.situation.started_at } : null,
       });
     }
@@ -244,55 +244,22 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       const list = state.notes.filter((n) => !kind || n.kind === kind);
       return json(route, kind === 'event' ? [...list].reverse() : list);
     }
-    if (p === '/household' && method === 'GET') return json(route, state.household);
-    if (p === '/household' && method === 'POST') {
-      const b = body();
-      const person: Person = { id: state.nextId++, name: String(b.name ?? ''), age: (b.age as number | null) ?? null, needs: String(b.needs ?? ''), medications: String(b.medications ?? ''), contacts: String(b.contacts ?? ''), updated_at: new Date().toISOString() };
-      state.household.push(person);
-      return json(route, person);
+    /* The kits, scaled by the one setting the box holds. Ticks are not modelled: the screens that
+       need them exercise the real API in the unit tests. */
+    if (p === '/kits' && method === 'GET') return json(route, { people: state.people, kits: kitsResponse.kits });
+    const kit = /^\/kits\/([\w-]+)$/.exec(p);
+    if (kit && method === 'GET') {
+      const summary = kitsResponse.kits.find((k) => k.slug === kit[1]);
+      if (!summary) return detail(route, 404, 'no such kit');
+      return json(route, { ...kitWater, slug: summary.slug, title: summary.title, summary: summary.summary, people: state.people });
     }
-    const person = /^\/household\/(\d+)$/.exec(p);
-    if (person) {
-      const idx = state.household.findIndex((x) => x.id === Number(person[1]));
-      if (idx === -1) return detail(route, 404, 'Person not found');
-      if (method === 'PUT') { state.household[idx] = { ...state.household[idx], ...body() } as Person; return json(route, state.household[idx]); }
-      if (method === 'DELETE') { state.household.splice(idx, 1); return json(route, { ok: true }); }
-    }
-    /** The API's own arithmetic in miniature (`api/sos/routers/household.py`): an expired row lasts
-     * nought days, and a category's figure is the runs of its rows added up and rounded once at the
-     * end — not the shortest of them, and not the rounded ones summed. */
-    const stockPeople = () => Math.max(1, state.household.length);
-    const stockRun = (i: StockItem): number | null => (i.per_person_day ? i.quantity / (i.per_person_day * stockPeople()) : null);
-    const withDays = (i: StockItem): StockItem => {
-      const expired = i.expires !== null && i.expires !== '' && i.expires < new Date().toISOString().slice(0, 10);
-      const run = stockRun(i);
-      return { ...i, expired, days_left: expired ? 0 : run === null ? null : Math.round(run * 10) / 10 };
-    };
-    const categoryDays = (items: StockItem[]) => {
-      const total = (c: StockItem['category']) => Math.round(items
-        .filter((i) => i.category === c && !i.expired)
-        .reduce((n, i) => n + (stockRun(i) ?? 0), 0) * 10) / 10;
-      return { water: total('water'), food: total('food'), medicine: total('medicine') };
-    };
-    /** A use-by the client sent as an empty string is no use-by, the way the API stores it. */
-    const stockDate = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v : null);
-    if (p === '/neighbours' && method === 'GET') return json(route, state.neighbours);
-    if (p === '/neighbours' && method === 'POST') {
-      const b = body();
-      const n: Neighbour = { id: state.nextId++, name: String(b.name ?? ''), address: String(b.address ?? ''), needs: String(b.needs ?? ''), skills: String(b.skills ?? ''), contacts: String(b.contacts ?? ''), notes: String(b.notes ?? ''), updated_at: new Date().toISOString() };
-      state.neighbours.push(n);
-      return json(route, n);
-    }
-    const neighbour = /^\/neighbours\/(\d+)$/.exec(p);
-    if (neighbour) {
-      const idx = state.neighbours.findIndex((x) => x.id === Number(neighbour[1]));
-      if (idx === -1) return detail(route, 404, 'Neighbour not found');
-      if (method === 'PUT') { state.neighbours[idx] = { ...state.neighbours[idx], ...body(), updated_at: new Date().toISOString() } as Neighbour; return json(route, state.neighbours[idx]); }
-      if (method === 'DELETE') { state.neighbours.splice(idx, 1); return json(route, { ok: true }); }
-    }
-    if (p === '/street-list' && method === 'GET') {
-      const rows = state.neighbours.map((n) => `| ${n.name} | ${n.address} | ${n.needs} | ${n.skills} | ${n.contacts} |`).join('\n');
-      return route.fulfill({ status: 200, contentType: 'text/markdown; charset=utf-8', body: `# Street list\n\n| Name | Address | Needs | Can do | Reach on |\n|---|---|---|---|---|\n${rows}\n` });
+    /** The one setting the box holds: how many people the kit quantities are scaled for. */
+    if (p === '/settings/people' && method === 'GET') return json(route, { people: state.people });
+    if (p === '/settings/people' && method === 'PUT') {
+      const want = Number(body().people);
+      if (!Number.isInteger(want) || want < 1 || want > 20) return detail(route, 422, 'people must be between 1 and 20');
+      state.people = want;
+      return json(route, { people: state.people });
     }
     if (p === '/situation/export' && method === 'GET') {
       return json(route, exportDocument(state));
@@ -311,37 +278,14 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
         ok: true, version: 1, exported_at: new Date().toISOString(),
         counts: {
           conditions: { updated: 2, kept: 8 },
-          household: { added: 1, updated: 0, kept: state.household.length },
-          neighbours: { added: state.neighbours.length, updated: 0, kept: 0 },
+          notes: { added: 1, updated: 0, kept: state.notes.length },
+          settings: { updated: 1 },
           events: { added: 3, skipped: 0 },
         },
         home: state.home ? 'kept' : 'set',
         scenario: state.situation.slug ? 'kept' : 'started: grid-collapse',
-        changes: ['Mains power set to off', 'One person added to the household'],
+        changes: ['Mains power set to off', 'The people count set to 3'],
       });
-    }
-    if (p === '/stock' && method === 'GET') {
-      const items = state.stock.map(withDays);
-      return json(route, { people: Math.max(1, state.household.length), days: categoryDays(items), items });
-    }
-    if (p === '/stock' && method === 'POST') {
-      const b = body();
-      const item: StockItem = { id: state.nextId++, name: String(b.name ?? ''), category: (b.category as StockItem['category']) ?? 'other', quantity: Number(b.quantity ?? 0), unit: String(b.unit ?? ''), per_person_day: (b.per_person_day as number | null) ?? (b.category === 'water' ? 3 : null), expires: stockDate(b.expires), notes: String(b.notes ?? ''), updated_at: new Date().toISOString(), days_left: null, expired: false, kit_item: null };
-      state.stock.push(item);
-      return json(route, withDays(item));
-    }
-    const stockItem = /^\/stock\/(\d+)$/.exec(p);
-    if (stockItem) {
-      const idx = state.stock.findIndex((x) => x.id === Number(stockItem[1]));
-      if (idx === -1) return detail(route, 404, 'Stock item not found');
-      if (method === 'PUT') {
-        const b = body();
-        const merged = { ...state.stock[idx], ...b } as StockItem;
-        if ('expires' in b) merged.expires = stockDate(b.expires);
-        state.stock[idx] = merged;
-        return json(route, withDays(merged));
-      }
-      if (method === 'DELETE') { state.stock.splice(idx, 1); return json(route, { ok: true }); }
     }
     // The situation engine (spec 2026-09-06): an in-memory View over the fixture state.
     if (method === 'GET' && p === '/situation/view') return json(route, computeView(state));

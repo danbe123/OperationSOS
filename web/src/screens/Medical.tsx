@@ -65,8 +65,6 @@ export function Medical() {
   const groups = useMemo(() => groupCards(cardsQ.data ?? [], term), [cardsQ.data, term]);
   const medicalItems = useMemo(() => libQ.data?.categories.find((c) => c.id === 'medical')?.items ?? [], [libQ.data]);
   const nhs = nhsAtoZ(medicalItems);
-  const householdQ = useQuery(() => api.household(), [], { refetchOnFocus: true });
-  const people = (householdQ.data ?? []).filter((p) => p.needs || p.medications);
   return (
     <Screen title="Medical" back={false}>
       <Body>
@@ -105,21 +103,6 @@ export function Medical() {
             ))}
           </nav>
         </section>
-
-        {people.length > 0 && (
-          <section className="panel" aria-label="Household medical needs">
-            <div className="panel-head"><h2>In this household</h2><Link className="btn btn-small" to="/plan#household">Edit the register</Link></div>
-            <ul className="list household-needs">
-              {people.map((p) => (
-                <li key={p.id}>
-                  <strong>{p.name}</strong>{p.age !== null && <span className="muted"> ({p.age})</span>}
-                  {p.needs && <span>: {p.needs}</span>}
-                  {p.medications && <span className="muted"> · {p.medications}</span>}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
 
         <section aria-label="NHS A to Z" id="nhs">
           <h2>NHS A to Z</h2>

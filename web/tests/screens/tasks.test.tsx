@@ -5,15 +5,9 @@ import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { powerOffView } from '../fixtures/api';
 
-const people = [
-  { id: 1, name: 'Sam', age: 41, needs: '', medications: '', contacts: '', updated_at: '2026-09-01T10:00:00Z' },
-  { id: 2, name: 'Alex', age: 12, needs: 'asthma', medications: 'salbutamol', contacts: '', updated_at: '2026-09-01T10:00:00Z' },
-];
-
 describe('Tasks', () => {
   it('groups the jobs into buckets, hides the done ones and counts what is left', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
-    vi.spyOn(api, 'household').mockResolvedValue(people);
     renderRoute('/tasks');
     const now = await screen.findByRole('region', { name: 'Right now' });
     expect(within(now).getAllByRole('listitem')).toHaveLength(2);
@@ -26,30 +20,53 @@ describe('Tasks', () => {
 
   it('shows the done ones on request, struck through', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
-    vi.spyOn(api, 'household').mockResolvedValue(people);
     renderRoute('/tasks');
     // The filter is a chip, not a tick: a filter and a job must not look like the same control.
     await userEvent.setup().click(await screen.findByRole('button', { name: 'Show done' }));
     const today = screen.getByRole('region', { name: 'Today' });
     expect(within(today).getByRole('listitem')).toHaveClass('task-done');
-    expect(within(today).getByRole('checkbox', { name: /Knock on both neighbours/ })).toBeChecked();
+    expect(within(today).getByRole('checkbox', { name: /Find the wind-up radio/ })).toBeChecked();
   });
 
-  it('assigns a task to somebody in the household', async () => {
+  it('takes a name for a job, typed in, with nobody to pick from first', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
-    vi.spyOn(api, 'household').mockResolvedValue(people);
     const set = vi.spyOn(api, 'setTask').mockResolvedValue({ ...powerOffView.tasks[0], person: 'Alex' });
     renderRoute('/tasks');
-    const select = await screen.findByRole('combobox', { name: 'Who is doing: Fill the bath and every container' });
-    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual(['Nobody yet', 'Sam', 'Alex']);
-    await userEvent.setup().selectOptions(select, 'Alex');
+    // A name, not a register: the box asks nobody to type the household in before a job can be given out.
+    const who = await screen.findByRole('textbox', { name: 'Who is doing this: Fill the bath and every container' });
+    expect(screen.queryByRole('combobox', { name: /Who is doing/ })).toBeNull();
+    const user = userEvent.setup();
+    await user.type(who, 'Alex');
+    await user.tab();
     expect(set).toHaveBeenCalledWith('fill-bath', { person: 'Alex' });
-    expect(await screen.findByRole('combobox', { name: 'Who is doing: Fill the bath and every container' })).toHaveValue('Alex');
+    // Once the job has a name on it, the box says the name rather than asking again.
+    expect(await screen.findByText('Alex')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Who is doing this: Fill the bath and every container' })).toBeNull();
+  });
+
+  it('takes the name on Enter too, and does not save an empty one', async () => {
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    const set = vi.spyOn(api, 'setTask').mockResolvedValue({ ...powerOffView.tasks[0], person: 'Jo' });
+    renderRoute('/tasks');
+    const who = await screen.findByRole('textbox', { name: 'Who is doing this: Fill the bath and every container' });
+    const user = userEvent.setup();
+    await user.click(who);
+    await user.tab();
+    expect(set).not.toHaveBeenCalled();
+    await user.type(who, 'Jo{Enter}');
+    expect(set).toHaveBeenCalledWith('fill-bath', { person: 'Jo' });
+  });
+
+  it('does not ask who is doing a job that already has a name on it', async () => {
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    renderRoute('/tasks');
+    await screen.findByRole('region', { name: 'Right now' });
+    expect(screen.queryByRole('textbox', { name: 'Who is doing this: Keep the fridge and freezer shut' })).toBeNull();
+    expect(screen.getByText('Sam')).toBeInTheDocument();
   });
 
   it('ticks a task off', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
-    vi.spyOn(api, 'household').mockResolvedValue(people);
     const set = vi.spyOn(api, 'setTask').mockResolvedValue({ ...powerOffView.tasks[2], done: true });
     renderRoute('/tasks');
     await userEvent.setup().click(await screen.findByRole('checkbox', { name: /Get cash out/ }));
@@ -59,7 +76,6 @@ describe('Tasks', () => {
 
   it('says so when there is nothing to do', async () => {
     vi.spyOn(api, 'situationView').mockResolvedValue({ ...powerOffView, tasks: [] });
-    vi.spyOn(api, 'household').mockResolvedValue([]);
     renderRoute('/tasks');
     expect(await screen.findByText(/Nothing to do/)).toBeInTheDocument();
   });

@@ -3,11 +3,10 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { events, makeView, powerOffView, stockResponse, VIEW_NOW } from '../fixtures/api';
+import { events, makeView, powerOffView, VIEW_NOW } from '../fixtures/api';
 
 function mockBoard(view = powerOffView) {
   vi.spyOn(api, 'situationView').mockResolvedValue(view);
-  vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
   vi.spyOn(api, 'notes').mockResolvedValue(events);
 }
 
@@ -17,7 +16,7 @@ describe('/board', () => {
   beforeEach(() => vi.useFakeTimers({ now: Date.parse(VIEW_NOW), toFake: ['Date'] }));
   afterEach(() => vi.useRealTimers());
 
-  it('shows the conditions, the next three jobs with names, sunset, the bulletin, the stock and the log', async () => {
+  it('shows the conditions, the next three jobs with names, sunset, the bulletin and the log', async () => {
     mockBoard();
     renderRoute('/board');
     const conditions = await screen.findByRole('region', { name: 'What is working' });
@@ -35,11 +34,9 @@ describe('/board', () => {
     const facts = await screen.findByRole('region', { name: 'Today' });
     expect(facts).toHaveTextContent('Sunset');
     expect(facts).toHaveTextContent('BBC Radio 4');
-    const left = within(facts).getByRole('list', { name: 'Stock left' });
-    expect(left).toHaveTextContent('Water 1.5 days');
-    expect(left).toHaveTextContent('Food 4.6 days');
-    // Straight from the API's three figures: medicine is nought days, not left off.
-    expect(left).toHaveTextContent('Medicine 0 days');
+    // The across-the-room screen counts services and jobs; there is no cupboard to count down.
+    expect(within(facts).queryByRole('list', { name: 'Stock left' })).toBeNull();
+    expect(facts).not.toHaveTextContent('days');
 
     const log = await screen.findByRole('region', { name: 'Last events' });
     expect(within(log).getAllByRole('listitem')).toHaveLength(3);

@@ -8,7 +8,7 @@ import { describeElapsed } from '../tools/situation';
 
 /** The band: the memorable element. It sits at the top of the content column whenever a scenario is
  * running, a drill is on, or anything is not working, and says the same thing on every screen — in
- * one row, at every width. In peacetime it is not rendered at all: Now shows the readiness instead. */
+ * one row, at every width. In peacetime it is not rendered at all: Now says where to start instead. */
 export function SituationBand() {
   const { view } = useSituation();
   const { pathname } = useLocation();

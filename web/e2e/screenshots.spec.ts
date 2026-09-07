@@ -35,13 +35,14 @@ async function settle(page: Page) {
 }
 
 const SHOTS: Shot[] = [
-  { name: 'now-peacetime', go: async (p, s) => { s.household = [{ id: 1, name: 'Sam', age: 41, needs: '', medications: '', contacts: '', updated_at: hour() }, { id: 2, name: 'Alex', age: 12, needs: 'asthma', medications: 'salbutamol', contacts: '', updated_at: hour() }]; s.stock = [{ id: 1, name: 'Bottled water', category: 'water', quantity: 27, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: hour(), days_left: 4.5, expired: false, kit_item: null }]; await p.goto('/'); await expect(p.getByRole('region', { name: 'How ready you are', exact: true })).toBeVisible(); } },
+  { name: 'now-peacetime', go: async (p) => { await p.goto('/'); await expect(p.getByRole('region', { name: 'Start here', exact: true })).toBeVisible(); } },
   { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
   { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByTestId('status-strip')).toBeVisible(); } },
   { name: 'now-drill', go: async (p, s) => { off(s, 'power'); s.drill = true; s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/'); await expect(p.getByRole('group', { name: 'Situation now' })).toBeVisible(); } },
   { name: 'now-engine-down', go: async (p) => { await p.route('**/api/situation/view', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"detail":"the engine is not answering"}' })); await p.goto('/'); await expect(p.getByText(/The box cannot read the situation/)).toBeVisible(); } },
-  // Nothing registered and nothing in stock: the state a box is in on the day it is hung on the wall.
-  { name: 'now-empty-household', go: async (p) => { await p.goto('/'); await expect(p.getByText('Nobody is registered yet, so the box counts stock for one person.')).toBeVisible(); } },
+  // Nothing typed in at all: the state a box is in on the day it is hung on the wall, and the state
+  // it is useful in — the front door leads with the kits and the guides, not with a form.
+  { name: 'now-nothing-typed-in', go: async (p) => { await p.goto('/'); await expect(p.getByRole('link', { name: /basic items ticked/ })).toBeVisible(); } },
   { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('heading', { level: 1, name: 'Situation' })).toBeVisible(); } },
   { name: 'situation-carry', go: async (p) => { await p.goto('/situation'); await p.getByRole('button', { name: 'Export as codes' }).click(); await expect(p.getByRole('group', { name: 'Situation codes' })).toBeVisible(); await p.getByRole('group', { name: 'Situation codes' }).scrollIntoViewIfNeeded(); } },
   { name: 'situation-drill', go: async (p) => { await p.goto('/situation#drill'); await p.getByLabel('Drill scenario').selectOption('grid-collapse'); await p.getByRole('region', { name: 'Practise a drill' }).scrollIntoViewIfNeeded(); } },
@@ -72,9 +73,8 @@ const SHOTS: Shot[] = [
   { name: 'reader', go: async (p) => { await p.goto(`/read/${WIKI}/A/Water`); await expect(p.getByTitle('Article')).toBeVisible(); await p.waitForTimeout(600); } },
   { name: 'document-missing', go: async (p) => { await p.goto('/doc/nrr-2025'); await expect(p.getByRole('heading', { level: 1 })).toBeVisible(); } },
   { name: 'assistant-off', go: async (p) => { await p.goto('/ai'); await expect(p.getByText('The assistant is off')).toBeVisible(); } },
-  { name: 'household', go: async (p, s) => { s.household = [{ id: 1, name: 'Sam', age: 41, needs: 'asthma', medications: 'salbutamol inhaler', contacts: 'GP 023 8000 0000', updated_at: hour() }]; await p.goto('/plan'); await expect(p.getByRole('region', { name: 'Household', exact: true })).toBeVisible(); } },
-  { name: 'neighbours', go: async (p, s) => { s.neighbours = [{ id: 5, name: 'Joan Reeve', address: '14 Mill Lane', needs: 'oxygen concentrator, cannot manage stairs', skills: '', contacts: '07700 900123', notes: 'key is with number 12', updated_at: hour() }, { id: 6, name: 'Ade Okafor', address: '18 Mill Lane', needs: '', skills: 'nurse, has a petrol generator', contacts: '07700 900456', notes: '', updated_at: hour() }]; await p.goto('/plan'); await p.getByRole('region', { name: 'Neighbours' }).scrollIntoViewIfNeeded(); await expect(p.getByRole('list', { name: 'Neighbours' })).toBeVisible(); } },
-  { name: 'stock', go: async (p, s) => { s.stock = [{ id: 1, name: 'Bottled water', category: 'water', quantity: 13.5, unit: 'L', per_person_day: 3, expires: null, notes: '', updated_at: hour(), days_left: 1.5, expired: false, kit_item: null }]; await p.goto('/plan#stock'); await p.getByRole('region', { name: 'Stock' }).scrollIntoViewIfNeeded(); } },
+  { name: 'notes', go: async (p) => { await p.goto('/notes'); await expect(p.getByRole('list', { name: 'Notes and pins' })).toBeVisible(); } },
+  { name: 'kit', go: async (p) => { await p.goto('/kit'); await expect(p.getByRole('group', { name: 'How many people' })).toBeVisible(); } },
   { name: 'field-craft', go: async (p) => { await p.goto('/fieldcraft'); await expect(p.getByRole('navigation', { name: 'Field craft pages' }).getByRole('link')).toHaveCount(10); } },
   { name: 'field-craft-page', go: async (p) => { await p.goto('/p/shelter-and-warmth'); await expect(p.getByRole('heading', { level: 1, name: 'Shelter and warmth' })).toBeVisible(); } },
   { name: 'phone-and-radio', go: async (p) => { await p.goto('/radio'); await expect(p.getByRole('navigation', { name: 'Comms pages' })).toBeVisible(); } },

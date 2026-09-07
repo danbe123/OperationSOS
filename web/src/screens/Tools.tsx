@@ -8,7 +8,6 @@ export const TOOL_TILES = [
   { to: '/tools/calc', icon: 'bolt', title: 'Calculators', subtitle: 'Generator, battery, solar, rations' },
   { to: '/situation#log', icon: 'book', title: 'Event log', subtitle: 'What happened, when' },
   { to: '/medical/dose', icon: 'flask', title: "Children's doses", subtitle: 'Paracetamol and ibuprofen by age' },
-  { to: '/plan/stock', icon: 'wheat', title: 'Stock', subtitle: 'Water, food, fuel: days left' },
 ] as const;
 
 export function Tools() {

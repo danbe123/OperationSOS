@@ -12,8 +12,6 @@ import { nowTitle } from './nowTitle';
 import { useSituation } from './SituationProvider';
 
 export const BOARD_REFRESH_MS = 30_000;
-/** The three the box counts in days, in the order it counts them. */
-const STOCK_DAYS = [['water', 'Water'], ['food', 'Food'], ['medicine', 'Medicine']] as const;
 
 function timeOfDay(at: number): string {
   return new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -23,7 +21,6 @@ function timeOfDay(at: number): string {
  * Big type for a 7-inch screen across the room; everything on it refreshes itself. */
 export function BoardView() {
   const { view } = useSituation();
-  const stock = useQuery(() => api.stock(), [], { intervalMs: BOARD_REFRESH_MS });
   const events = useQuery(() => api.notes('event'), [], { intervalMs: BOARD_REFRESH_MS });
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
@@ -40,7 +37,6 @@ export function BoardView() {
   const jobs = nextTasks(view.tasks);
   const sunset = boardSunset(view, now);
   const bulletin = view.bulletins.next;
-  const days = (stock.data?.items.length ?? 0) > 0 ? stock.data?.days ?? null : null;
   // Three lines, not five: the log was the bottom third of the across-the-room screen, in the
   // smallest type on it, and the tiles above it were being clipped to make room.
   const log = (events.data ?? []).slice(0, 3);
@@ -91,14 +87,6 @@ export function BoardView() {
         <section className="board-facts" aria-label="Today">
           <p><Icon name="sun" size={22} /> <span>Sunset {sunset ? timeOfDay(sunset.getTime()) : 'not tonight'}</span></p>
           <p><Icon name="radio" size={22} /> <span>{bulletin ? `${bulletinWords(bulletin.station)} ${bulletinWords(bulletin.frequency)} at ${clockTime(bulletin.at)}` : 'No bulletin scheduled'}</span></p>
-          <ul className="board-stock" aria-label="Stock left">
-            {!days && <li className="muted">No stock recorded</li>}
-            {days && STOCK_DAYS.map(([id, title]) => (
-              <li key={id} className={days[id] < 3 ? 'warning' : undefined}>
-                {title} {days[id]} {days[id] === 1 ? 'day' : 'days'}
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
 

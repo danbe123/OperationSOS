@@ -82,7 +82,7 @@ describe('modes: map first', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
-    await screen.findByRole('region', { name: 'How ready you are' });
+    await screen.findByRole('region', { name: 'Start here' });
     expect(screen.queryByRole('link', { name: /Open the map/ })).toBeNull();
   });
 });

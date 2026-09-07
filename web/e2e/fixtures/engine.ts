@@ -1,6 +1,6 @@
 // A small in-memory situation engine for the Playwright fixtures: enough of the contract for the
 // screens to be exercised without the backend (conditions, a fixed forecast when the power is off,
-// tasks with their done state, modes, briefing, readiness).
+// tasks with their done state, modes and the briefing).
 import { CONDITION_IDS, type Condition, type ConditionId, type ConditionState, type Conditions, type Forecast, type Inferred, type SituationView, type Task } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
 import type { FixtureState } from './state';
@@ -30,21 +30,6 @@ const sinceOf = (c: Condition): number => (c.since ? Date.parse(c.since) : Date.
 function task(id: string, title: string, bucket: Task['bucket'], why: string, link: string, state: FixtureState): Task {
   const saved = state.taskState.get(id);
   return { id, title, bucket, why, link, person: saved?.person ?? null, done: saved?.done ?? false, done_at: saved?.done_at ?? null, source: `rule:${id}` };
-}
-
-/** The gaps come from the same register and the same stock the household summary counts, so the
- * front door cannot say two different things about the same water. */
-function readinessGaps(state: FixtureState): { title: string; link: string; points: number }[] {
-  const gaps: { title: string; link: string; points: number }[] = [];
-  const people = Math.max(1, state.household.length);
-  const water = state.stock.filter((s) => s.category === 'water');
-  const food = state.stock.filter((s) => s.category === 'food');
-  const daysOf = (items: typeof state.stock) => items.reduce((n, i) => n + (i.days_left ?? 0), 0);
-  if (state.household.length === 0) gaps.push({ title: 'Say who lives here', link: '/plan#household', points: 12 });
-  if (water.length === 0) gaps.push({ title: 'No water recorded: add what you have', link: '/plan#stock', points: 12 });
-  else if (daysOf(water) < 3) gaps.push({ title: `Water: ${daysOf(water).toFixed(1)} days for ${people} ${people === 1 ? 'person' : 'people'}`, link: '/plan#stock', points: 12 });
-  if (food.length === 0) gaps.push({ title: 'No food recorded: add what you have', link: '/plan#stock', points: 8 });
-  return gaps;
 }
 
 export function computeView(state: FixtureState, now = Date.now()): SituationView {
@@ -100,23 +85,6 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
       tasks.push({ id, title: item.text, bucket: 'today', why: 'From this situation’s checklist.', link: `playbook:${state.situation.slug}`, person: state.taskState.get(id)?.person ?? null, done: item.checked, done_at: item.updated_at, source: `checklist:${state.situation.slug}` });
     }
   }
-  // Phase 4: a neighbour who needs checking on is a job like any other, with the same id on both sides.
-  const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const checkOn = (off('power') || off('water') || off('mobile'))
-    ? state.neighbours.filter((n) => n.needs.trim()).map((n) => ({
-        id: `neighbour:${slug(n.name)}`, name: n.name, address: n.address, needs: n.needs, contacts: n.contacts,
-        title: `Knock on ${n.name}${n.address ? `, ${n.address}` : ''}`, why: n.needs,
-        rule: `neighbour-check-${slug(n.name)}`, link: null, bucket: 'today' as const,
-        done: state.taskState.get(`neighbour:${slug(n.name)}`)?.done ?? false,
-      }))
-    : [];
-  const skills = state.neighbours.filter((n) => n.skills.trim()).map((n) => ({
-    name: n.name, address: n.address, skill: n.skills, text: n.skills, contacts: n.contacts,
-    why: 'On the street list.', rule: `neighbour-skill-${slug(n.name)}`, link: null,
-  }));
-  for (const c of checkOn) {
-    tasks.push({ id: c.id, title: c.title, bucket: c.bucket, why: c.why, link: c.link, person: state.taskState.get(c.id)?.person ?? null, done: c.done, done_at: null, source: 'rule:neighbours' });
-  }
 
   const order = { now: 0, hour: 1, today: 2, week: 3 };
   tasks.sort((a, b) => order[a.bucket] - order[b.bucket] || a.title.localeCompare(b.title));
@@ -153,9 +121,7 @@ export function computeView(state: FixtureState, now = Date.now()): SituationVie
       map_first: state.situation.slug === 'storms-flooding',
       board: Boolean(state.situation.slug),
     },
-    readiness: { score: 62, gaps: readinessGaps(state) },
     bulletins: { next: { station: 'BBC Radio 4', frequency: '198 kHz LW', at: '2026-09-06T18:00:00.000Z' } },
-    neighbours: { check_on: checkOn, skills },
   };
 }
 

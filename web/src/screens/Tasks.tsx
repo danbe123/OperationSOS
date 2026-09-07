@@ -1,6 +1,4 @@
 import { useRef, useState } from 'react';
-import { api } from '../api/client';
-import { useQuery } from '../api/useQuery';
 import { Screen, Body } from '../shell/Screen';
 import { BUCKET_ORDER, BUCKET_TITLE } from '../situation/conditions';
 import { withTask } from '../situation/apply';
@@ -10,7 +8,6 @@ import { TaskRow } from '../situation/TaskRow';
 /** Every job the box has raised, in buckets, tickable from any phone in the house. One list. */
 export function Tasks() {
   const { view, apply, error, loading } = useSituation();
-  const household = useQuery(() => api.household(), []);
   const [showDone, setShowDone] = useState(false);
   const tasks = view?.tasks ?? [];
   const outstanding = tasks.filter((t) => !t.done).length;
@@ -45,7 +42,7 @@ export function Tasks() {
               <h2>{BUCKET_TITLE[bucket]}</h2>
               <ul className="list task-list">
                 {list.map((t) => (
-                  <TaskRow key={t.id} task={t} people={household.data ?? []} onChanged={(saved) => view && apply(withTask(view, saved))} />
+                  <TaskRow key={t.id} task={t} onChanged={(saved) => view && apply(withTask(view, saved))} />
                 ))}
               </ul>
             </section>

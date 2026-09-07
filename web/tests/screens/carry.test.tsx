@@ -98,13 +98,15 @@ describe('carrying the situation to another box', () => {
 
 describe('reading what came in', () => {
   it('turns the box\'s nested counts into one line per kind of row', () => {
+    // The parts that travel between boxes now: conditions, scenario, tasks, checklist, notes, home,
+    // events and the one setting. No register, no cupboard, no street list.
     expect(countLines(importSummary)).toEqual([
       'conditions: 2 updated, 8 kept',
-      'household: 1 added, 2 kept',
-      'neighbours: 2 added',
+      'notes: 1 added, 2 kept',
+      'settings: 1 updated',
       'events: 3 added, 1 skipped',
     ]);
-    expect(countLines({ ok: true, counts: { stock: { added: 0, kept: 0 } } })).toEqual(['stock: nothing to do']);
+    expect(countLines({ ok: true, counts: { notes: { added: 0, kept: 0 } } })).toEqual(['notes: nothing to do']);
     expect(countLines({ ok: true })).toEqual([]);
   });
 

@@ -5,7 +5,7 @@ import { renderRoute } from '../render';
 import { api, ApiError } from '../../src/api/client';
 import { Shell as Layout } from '../../src/shell/Shell';
 import { isProtectedRoute, IDLE_LEVEL, ACTIVE_LEVEL } from '../../src/kiosk/IdleOverlay';
-import { events, powerOffView, stockResponse } from '../fixtures/api';
+import { events, powerOffView } from '../fixtures/api';
 
 function Where() {
   const loc = useLocation();
@@ -101,7 +101,6 @@ describe('IdleOverlay', () => {
     const backlight = vi.spyOn(api, 'kioskBacklight').mockResolvedValue({ level: 10 });
     const idle = vi.spyOn(api, 'kioskIdle').mockResolvedValue({ ok: true });
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
-    vi.spyOn(api, 'stock').mockResolvedValue(stockResponse);
     vi.spyOn(api, 'notes').mockResolvedValue(events);
     renderRoute('/search', { routes, kiosk: true });
     await act(async () => {});
