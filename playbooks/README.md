@@ -89,7 +89,7 @@ Markdown links use these schemes; `sos validate-playbooks` checks every target e
 
 | Link | Opens |
 |---|---|
-| `kiwix:<id>/<path>` | the reader at that article, e.g. `kiwix:wikipedia_en_all_maxi/Potassium_iodide` |
+| `kiwix:<id>/<path>` | the reader at that article, e.g. `kiwix:wikipedia_en_all_maxi/Potassium_iodide`; `kiwix:<id>/` with nothing after the slash opens the archive's own front page, for an archive whose article paths cannot be checked from here |
 | `doc:<id>` | the PDF or EPUB viewer for a manifest item |
 | `doc:<id>#page=<n>` | the same document at page n |
 | `map:?overlay=<id>&overlay=<id>` | the map with those overlays switched on |
