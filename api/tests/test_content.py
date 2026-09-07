@@ -226,3 +226,17 @@ def test_links_keep_one_level_of_parentheses():
         "kiwix:wikipedia_en_all_maxi/999_(emergency_telephone_number)",
         "doc:nrr-2025#page=45", "page:foo",
     ]
+
+
+def test_a_kiwix_link_to_an_archive_front_page_is_allowed_and_a_bare_id_is_not(tree, items):
+    """`kiwix:<id>/` opens the archive's own front page (kiwix-serve redirects to its main page); the
+    validator lets it through and hands the deep check an empty path, while `kiwix:<id>` alone is an error."""
+    page = tree / "pages" / "pmr446.md"
+    text = page.read_text()
+    page.write_text(text + "\n\nRead [the front page](kiwix:wikipedia_en_100_mini_2026-01/) and [a typo](kiwix:wikipedia_en_100_mini_2026-01).\n")
+    seen = []
+    out = content.validate_tree(tree, items, OVERLAYS, kiwix_check=lambda b, p: seen.append((b, p)) or True)
+    errors = [e for e in out if not e.startswith("warning: ")]
+    assert any("link kiwix:wikipedia_en_100_mini_2026-01: needs <id>/<path>" in e for e in errors), errors
+    assert not any("kiwix:wikipedia_en_100_mini_2026-01/:" in e for e in errors), errors
+    assert ("wikipedia_en_100_mini_2026-01", "") in seen

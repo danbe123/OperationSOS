@@ -427,8 +427,10 @@ def _check_links(rel: str, body: str, zim_ids: set[str], doc_ids: set[str],
             continue
         if scheme == "kiwix":
             book, slash, path = rest.partition("/")
-            if not slash or not path:
-                errors.append(f"{rel}: link {href}: needs <id>/<path>")
+            # `kiwix:<id>/` with nothing after the slash is the archive's own front page, which
+            # kiwix-serve answers for every archive; a bare `kiwix:<id>` is a typo.
+            if not slash:
+                errors.append(f"{rel}: link {href}: needs <id>/<path> (or <id>/ for the archive's front page)")
             elif book not in zim_ids:
                 errors.append(f"{rel}: link {href}: item '{book}' not in manifest")
         elif scheme == "doc":

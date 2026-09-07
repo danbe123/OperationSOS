@@ -11,7 +11,7 @@ category: rebuild
 
 This box holds more than anyone can read. For each domain below there are **three things to read, in the order given**: the first tells you what to do this week, the second is the working handbook, the third is the deep reference you go to with a specific question. Under each is a line of anchoring encyclopedia articles — the ones to print, copy or teach from if the library itself is ever at risk ([Keeping the box alive](page:rebuild-keeping-the-box); [The essentials, printed](page:rebuild-essentials-printed)).
 
-Not everything here is on every copy of the box. The core library is always present; the extended shelf — LibreTexts, Khan Academy, Project Gutenberg and the Survivor Library of old trade manuals — is only on the larger builds, so check before you plan a trade around it ([About Operation SOS](page:about-sos)).
+Not everything here is on every copy of the box. The core library is always present; the extended shelf — LibreTexts, Khan Academy, Project Gutenberg and [the Survivor Library](kiwix:survivorlibrary.com_en_all/) of old trade manuals — is only on the larger builds, so check before you plan a trade around it ([About Operation SOS](page:about-sos)).
 
 ## Water
 
@@ -69,7 +69,7 @@ Anchors: [Soap](kiwix:wikipedia_en_all_maxi/Soap), [Lye](kiwix:wikipedia_en_all_
 2. [Tools and repair module](module:tools-repair) and [iFixit](kiwix:ifixit_en_all/home/home) — keeping what exists working, which beats making anything new.
 3. [Engineering Q&A](kiwix:engineering.stackexchange.com_en_all/questions) and [Woodworking Q&A](kiwix:woodworking.stackexchange.com_en_all/questions) — worked answers on loads, materials and joints.
 
-4. **If you have the extended shelf:** the Survivor Library (manifest id `survivorlibrary.com_en_all`), tens of thousands of scanned pre-1920s trade books covering blacksmithing, farriery, edge-tool making and forge practice from the era when all of it was ordinary work. It is the deepest reference in the box for this domain, it is not on every copy, and it is worth copying before it is needed ([Iron and tools](page:rebuild-iron-and-tools); [Keeping the box alive](page:rebuild-keeping-the-box)).
+4. **If you have the extended shelf:** [the Survivor Library](kiwix:survivorlibrary.com_en_all/), tens of thousands of scanned pre-1920s trade books covering blacksmithing, farriery, edge-tool making and forge practice from the era when all of it was ordinary work. Its front page is a category index (blacksmithing, farriery, foundry work, and beyond this domain farming, dairying, beekeeping, carpentry, masonry, medicine and midwifery as they were taught before 1920). It is the deepest reference in the box for this domain, it is not on every copy, and it is worth copying before it is needed ([Iron and tools](page:rebuild-iron-and-tools); [Keeping the box alive](page:rebuild-keeping-the-box)).
 
 Anchors: [Blacksmith](kiwix:wikipedia_en_all_maxi/Blacksmith), [Forge](kiwix:wikipedia_en_all_maxi/Forge), [Bloomery](kiwix:wikipedia_en_all_maxi/Bloomery), [Tempering](kiwix:wikipedia_en_all_maxi/Tempering_(metallurgy)), [Blast furnace](kiwix:wikipedia_en_all_maxi/Blast_furnace).
 

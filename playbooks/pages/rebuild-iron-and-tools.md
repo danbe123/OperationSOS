@@ -87,7 +87,7 @@ Green woodworking needs a small kit and gives you handles, spoons, bowls, chairs
 
 When the scrap does finally run down — generations away — iron comes from ore without ever melting it. Roast the ore, in Britain most likely bog iron, to drive off water and break it up; build a clay shaft furnace a couple of metres tall; charge it with alternating charcoal and ore with forced air from bellows; and run it for most of a day. Carbon monoxide from the charcoal reduces the ore at temperatures below iron's melting point of about 1,538 °C, leaving a spongy mass of iron and slag — the bloom — at the bottom, which is then hammered hot, repeatedly, to squeeze out the slag and consolidate it into wrought iron ([Bloomery](kiwix:wikipedia_en_all_maxi/Bloomery); [Wrought iron](kiwix:wikipedia_en_all_maxi/Wrought_iron)). It is a multi-day job for several people and eats charcoal, which is why it is the last step and not the first. Read it now, so that somebody knows it is possible.
 
-The extended library also carries the Survivor Library, tens of thousands of scanned pre-1920s trade books, including blacksmithing, farriery, edge-tool making and forge practice from the era when all of this was ordinary work; it is worth copying before it is needed.
+The extended library also carries [the Survivor Library](kiwix:survivorlibrary.com_en_all/), tens of thousands of scanned pre-1920s trade books, including blacksmithing, farriery, edge-tool making and forge practice from the era when all of this was ordinary work; open it from its front page and follow the category index to Blacksmithing and Metalworking. It is worth copying before it is needed.
 
 ## Go deeper
 

@@ -82,6 +82,8 @@ def cmd_validate(settings: Settings, args) -> int:
 
         def kiwix_check(book: str, path: str) -> bool:
             try:
+                if not path:   # the archive's front page: served (via a redirect) at /content/<book>/
+                    return client.get(f"{settings.kiwix_url}/content/{book}/").status_code == 200
                 return client.get(f"{settings.kiwix_url}/raw/{book}/content/{path}").status_code == 200
             except httpx.HTTPError:
                 return False
