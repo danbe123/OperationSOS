@@ -40,6 +40,7 @@ OSM_OVERLAYS: tuple[OsmOverlay, ...] = (
                ("name", "military", "landuse", "operator", "description", "access")),
 )
 HAND_AUTHORED = {"chemical-sites": "chemical-sites.geojson"}
+FLOOD_TAGS = ("z2", "z3", "river", "coastal")
 FLOOD_REGIONS = (("england", "FLOOD_EN_URL"), ("wales", "FLOOD_WA_URL"), ("scotland", "FLOOD_SC_URL"),
                  ("ni", "FLOOD_NI_URL"), ("roi", "FLOOD_IE_URL"))
 ACCESS_REGIONS = (("england", "ACCESS_EN_URL"), ("wales", "ACCESS_WA_URL"))
@@ -52,11 +53,19 @@ class VectorSource:
     layer: str | None = None
 
 
+def parse_source_specs(value: str) -> list[tuple[str, str | None, str | None]]:
+    """`url[|layer][#tag]` entries separated by whitespace: (url, layer, tag) each."""
+    out = []
+    for entry in value.split():
+        body, _, tag = entry.partition("#")
+        url, _, layer = body.partition("|")
+        out.append((url.strip(), layer.strip() or None, tag.strip() or None))
+    return out
+
+
 def vector_source(ctx: Context, spec: str, name: str) -> VectorSource:
-    """Turn a versions.env value into what ogr2ogr reads: /vsizip/ of a cached zip, a paged FeatureServer query, or the URL."""
-    url, _, layer = spec.partition("|")
-    layer = layer.strip() or None
-    url = url.strip()
+    """Turn one entry into what ogr2ogr reads: /vsizip/ of a cached zip, a paged FeatureServer query, or the URL."""
+    url, layer, _ = parse_source_specs(spec)[0]
     if url.lower().endswith(".zip"):
         path = ctx.download(url, f"{name}.zip")
         return VectorSource(f"/vsizip/{path}", (), layer)
@@ -76,18 +85,29 @@ def ogr_to(ctx: Context, fmt: str, dest: Path, src: VectorSource, *, spat: BBox 
     ctx.run(cmd)
 
 
-def region_sources(ctx: Context, regions: tuple[tuple[str, str], ...], *, fixture_sample: str) -> list[tuple[str, VectorSource]]:
+def region_sources(ctx: Context, regions: tuple[tuple[str, str], ...], *, fixture_sample: str) -> list[tuple[str, str | None, VectorSource]]:
+    """(region, tag, source) for every configured entry; a region with two entries yields two rows."""
     if ctx.fixture:
         sample = ctx.repo / "api" / "tests" / "fixtures" / "maps" / "src" / fixture_sample
-        return [("england", VectorSource(str(sample)))]
+        return [("england", None, VectorSource(str(sample)))]
     found = []
     for region, key in regions:
-        spec = ctx.versions.get(key, "")
-        if not spec:
+        specs = parse_source_specs(ctx.versions.get(key, ""))
+        if not specs:
             log.warning("[overlays] %s is blank; %s skipped", key, region)
             continue
-        found.append((region, vector_source(ctx, spec, key.lower())))
+        for i, (url, layer, tag) in enumerate(specs):
+            found.append((region, tag, vector_source(ctx, f"{url}|{layer or ''}", f"{key.lower()}_{i}")))
     return found
+
+
+def flood_coverage(layers: list[str]) -> list[str]:
+    seen: list[str] = []
+    for layer in layers:
+        region = layer.removeprefix("flood_").split("_")[0]
+        if region not in seen:
+            seen.append(region)
+    return seen
 
 
 def load_geojson(path: Path) -> dict:
@@ -154,32 +174,48 @@ def finalise(ctx: Context, overlay_id: str, geojson: Path, staged_dir: Path) -> 
 
 def build_flood_zones(ctx: Context, work: Path, staged_dir: Path) -> tuple[Path, list[str]]:
     built: list[tuple[str, Path]] = []
-    for region, src in region_sources(ctx, FLOOD_REGIONS, fixture_sample="flood-england-sample.geojson"):
-        fgb = work / f"flood_{region}.fgb"
+    for region, tag, src in region_sources(ctx, FLOOD_REGIONS, fixture_sample="flood-england-sample.geojson"):
+        if tag is not None and tag not in FLOOD_TAGS:
+            raise BuildError(f"FLOOD_*: tag '{tag}' is not one of {', '.join(FLOOD_TAGS)}")
+        layer = f"flood_{region}" + (f"_{tag}" if tag else "")
+        fgb = work / f"{layer}.fgb"
         ogr_to(ctx, "FlatGeobuf", fgb, src, spat=ctx.bbox if ctx.fixture else None)
-        built.append((region, fgb))
+        built.append((layer, fgb))
     if not built:
         raise BuildError("no flood-zone sources configured: set FLOOD_EN_URL, FLOOD_WA_URL, FLOOD_SC_URL, FLOOD_NI_URL or FLOOD_IE_URL")
     out = staged_dir / "flood-zones.pmtiles"
     cmd = ["tippecanoe", "-o", str(out), "-Z8", "-z14", "-P", "--detect-shared-borders", "--coalesce-densest-as-needed",
            "--simplification=6", "--force"]
-    for region, fgb in built:
-        cmd += ["-L", f"flood_{region}:{fgb}"]
+    for layer, fgb in built:
+        cmd += ["-L", f"{layer}:{fgb}"]
     ctx.run(cmd)
-    return out, [f"flood_{region}" for region, _ in built]
+    return out, [layer for layer, _ in built]
 
 
 def build_access_land(ctx: Context, work: Path, staged_dir: Path) -> tuple[str, str, list[str]]:
     collections: list[dict] = []
     regions: list[str] = []
-    for region, src in region_sources(ctx, ACCESS_REGIONS, fixture_sample="access-england-sample.geojson"):
-        geojson = work / f"access_{region}.geojson"
+    sources = region_sources(ctx, ACCESS_REGIONS, fixture_sample="access-england-sample.geojson")
+    counts: dict[str, int] = {}
+    for region, _, _ in sources:
+        counts[region] = counts.get(region, 0) + 1
+    seen: dict[str, int] = {}
+    for region, tag, src in sources:
+        if counts[region] > 1:
+            i = seen.get(region, 0)
+            seen[region] = i + 1
+            geojson = work / f"access_{region}_{i}.geojson"
+        else:
+            geojson = work / f"access_{region}.geojson"
         ogr_to(ctx, "GeoJSON", geojson, src, spat=ctx.bbox if ctx.fixture else None)
         obj = load_geojson(geojson)
         for feature in obj["features"]:
-            feature.setdefault("properties", {})["region"] = region
+            feature.setdefault("properties", {}).setdefault("region", region)
+            if tag:
+                feature["properties"].setdefault("designation", tag)
         collections.append(obj)
-        regions.append(region)
+        if region not in regions:
+            regions.append(region)
     if not collections:
         raise BuildError("no access-land sources configured: set ACCESS_EN_URL or ACCESS_WA_URL")
     combined = work / "access-land.geojson"
@@ -261,7 +297,7 @@ class OverlaysStep:
 
         _, layers = build_flood_zones(ctx, work, staged_dir)
         index["flood-zones"] = {"kind": "pmtiles", "file": "overlays/flood-zones.pmtiles", "layers": layers,
-                                "coverage": [layer.removeprefix("flood_") for layer in layers]}
+                                "coverage": flood_coverage(layers)}
         kind, name, regions = build_access_land(ctx, work, staged_dir)
         index["access-land"] = {"kind": kind, "file": f"overlays/{name}", "coverage": regions}
 

@@ -66,7 +66,8 @@
           "wales"
         ],
         "color": "#b58900",
-        "icon": null
+        "icon": null,
+        "coverage_note": "England and Wales only. Scotland has a right of responsible access to almost all land; Northern Ireland, Ireland, the Isle of Man and the Channel Islands have no open-access designation."
       }
     },
     {
@@ -84,9 +85,9 @@
       "dest": "maps/overlays/flood-zones.pmtiles",
       "size_bytes": 746978373,
       "as_at": "2026-05-20",
-      "licence": "OGL v3 (Environment Agency, NRW, SEPA, DfI Rivers)",
+      "licence": "OGL v3 (Environment Agency, Natural Resources Wales, SEPA); CC BY-NC-ND 4.0 (OPW, Ireland)",
       "priority": 72,
-      "description": "Flood zones 2 and 3 for England, NRW zones for Wales, SEPA river and coastal outlines, DfI strategic flood map for Northern Ireland.",
+      "description": "Flood zones 2 and 3 for England, NRW zones for Wales, SEPA river and coastal outlines for Scotland, OPW CFRAM river and coastal outlines for Ireland.",
       "search_weight": 1.0,
       "suggest": false,
       "overlay": {
@@ -97,10 +98,11 @@
           "england",
           "wales",
           "scotland",
-          "ni"
+          "roi"
         ],
         "color": "#1f77b4",
-        "icon": null
+        "icon": null,
+        "coverage_note": "No flood map for Northern Ireland (its flood maps are not open data), the Isle of Man or the Channel Islands."
       }
     },
     {

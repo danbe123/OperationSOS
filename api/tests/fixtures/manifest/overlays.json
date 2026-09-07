@@ -66,7 +66,8 @@
           "wales"
         ],
         "color": "#b58900",
-        "icon": null
+        "icon": null,
+        "coverage_note": "England and Wales only. Scotland has a right of responsible access to almost all land; Northern Ireland, Ireland, the Isle of Man and the Channel Islands have no open-access designation."
       }
     },
     {
@@ -100,7 +101,8 @@
           "ni"
         ],
         "color": "#1f77b4",
-        "icon": null
+        "icon": null,
+        "coverage_note": "No flood map for Northern Ireland (its flood maps are not open data), the Isle of Man or the Channel Islands."
       }
     },
     {

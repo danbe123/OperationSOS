@@ -34,6 +34,7 @@ class OverlaySpec(BaseModel):
     coverage: list[str] = Field(default_factory=list)
     color: str = "#ffffff"
     icon: str | None = None
+    coverage_note: str | None = None
 
 
 class Item(BaseModel):

@@ -151,7 +151,9 @@ def test_map_config_and_overlays(client, env):
     assert overlays["health"]["scenarios_on"] == ["grid-collapse", "pandemic"] and overlays["health"]["color"] == "#d62728"
     assert overlays["nuclear-sites"]["available"] is False and overlays["nuclear-sites"]["url"] is None
     assert overlays["water"]["kind"] == "geojson" and overlays["water"]["layer_id"] is None
-    assert set(overlays["health"]) == {"id", "title", "kind", "layer_id", "url", "default_on", "scenarios_on", "coverage", "color", "icon", "available"}
+    assert set(overlays["health"]) == {"id", "title", "kind", "layer_id", "url", "default_on", "scenarios_on", "coverage", "color", "icon", "available", "coverage_note"}
+    assert overlays["flood-zones"]["coverage_note"] == "No flood map for Northern Ireland (its flood maps are not open data), the Isle of Man or the Channel Islands."
+    assert overlays["health"]["coverage_note"] is None
     assert client.get("/api/map/overlays").json() == cfg["overlays"]
 
 

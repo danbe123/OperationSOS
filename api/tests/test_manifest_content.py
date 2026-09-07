@@ -244,12 +244,14 @@ def test_overlay_ids_and_objects():
         assert ov["coverage"] and set(ov["coverage"]) <= set(REGIONS), r["id"]
         assert re.fullmatch(r"#[0-9a-f]{6}", ov["color"]), r["id"]
         assert ov["icon"] is None or isinstance(ov["icon"], str), r["id"]
+        assert ov.get("coverage_note") is None or isinstance(ov["coverage_note"], str), r["id"]
         assert "layer_id" not in ov, r["id"]
     ov = {r["id"]: r["overlay"] for r in rows}
     assert [i for i in OVERLAY_IDS if ov[i]["default_on"]] == ["footpaths"]
     assert ov["footpaths"]["coverage"] == REGIONS
     assert ov["access-land"]["coverage"] == ["england", "wales"]
-    assert ov["flood-zones"]["coverage"] == ["england", "wales", "scotland", "ni"]
+    assert ov["flood-zones"]["coverage"] == ["england", "wales", "scotland", "roi"]
+    assert ov["flood-zones"]["coverage_note"] and ov["access-land"]["coverage_note"]
     for i in ("health", "fuel", "water", "rail", "nuclear-sites", "chemical-sites", "airports", "military"):
         assert ov[i]["coverage"] == REGIONS, i
 

@@ -42,6 +42,7 @@ def overlays_list(conn) -> list[dict]:
             "url": _maps_url(row) if available and o["kind"] != "style-layer" else None,
             "default_on": bool(o.get("default_on")), "scenarios_on": scenarios_on.get(o["id"], []),
             "coverage": built.get("coverage", o.get("coverage", [])), "color": o.get("color", "#ffffff"), "icon": o.get("icon"), "available": available,
+            "coverage_note": o.get("coverage_note"),
         })
     return out
 

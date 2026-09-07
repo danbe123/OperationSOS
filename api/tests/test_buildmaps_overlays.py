@@ -191,6 +191,45 @@ def test_flood_zones_full_mode_skips_blank_regions_and_needs_at_least_one(tmp_pa
         overlays.build_flood_zones(empty, tmp_path / "e" / "w", tmp_path / "e" / "s")
 
 
+def test_source_specs_split_on_whitespace_and_read_layer_and_tag():
+    specs = overlays.parse_source_specs("https://a/x.zip|zones#z3  https://b/FeatureServer/2#z2\nhttps://c/d.json")
+    assert specs == [("https://a/x.zip", "zones", "z3"), ("https://b/FeatureServer/2", None, "z2"), ("https://c/d.json", None, None)]
+
+
+def test_flood_zones_layer_per_tagged_source(tmp_path):
+    runner = FakeRunner(files={"flood_wales_z3.fgb": b"x", "flood_wales_z2.fgb": b"y", "flood_england.fgb": b"z", "flood-zones.pmtiles": b"p"})
+    ctx = make_ctx(tmp_path, fixture=False, runner=runner)
+    ctx.versions.update({"FLOOD_EN_URL": "https://e/en.gpkg", "FLOOD_WA_URL": "https://w/FeatureServer/1#z3 https://w/FeatureServer/2#z2"})
+    work = tmp_path / "work"; work.mkdir()
+    staged = tmp_path / "staged"; staged.mkdir()
+    _, layers = overlays.build_flood_zones(ctx, work, staged)
+    assert layers == ["flood_england", "flood_wales_z3", "flood_wales_z2"]
+    tippe = runner.find("tippecanoe")[0]
+    assert f"flood_wales_z3:{work / 'flood_wales_z3.fgb'}" in tippe and f"flood_wales_z2:{work / 'flood_wales_z2.fgb'}" in tippe
+    assert overlays.flood_coverage(layers) == ["england", "wales"]
+
+
+def test_flood_zones_rejects_an_unknown_tag(tmp_path):
+    ctx = make_ctx(tmp_path, fixture=False)
+    ctx.versions.update({"FLOOD_SC_URL": "https://s/FeatureServer/0#medium"})
+    with pytest.raises(overlays.BuildError, match="tag 'medium'"):
+        overlays.build_flood_zones(ctx, tmp_path, tmp_path)
+
+
+def test_access_land_stamps_region_and_designation(tmp_path):
+    runner = FakeRunner(files={"access_england.geojson": POINT_FC, "access_wales_0.geojson": POINT_FC, "access_wales_1.geojson": POINT_FC})
+    ctx = make_ctx(tmp_path, fixture=False, runner=runner)
+    ctx.versions.update({"ACCESS_EN_URL": "https://e/FeatureServer/0",
+                         "ACCESS_WA_URL": "https://w/open.json#open_country https://w/common.json#common_land"})
+    work = tmp_path / "work"; work.mkdir()
+    staged = tmp_path / "staged"; staged.mkdir()
+    kind, name, regions = overlays.build_access_land(ctx, work, staged)
+    assert regions == ["england", "wales"]
+    features = json.loads((staged / name).read_text())["features"]
+    assert [f["properties"]["region"] for f in features] == ["england", "wales", "wales"]
+    assert [f["properties"].get("designation") for f in features] == [None, "open_country", "common_land"]
+
+
 def test_nuclear_sites_rejects_short_or_non_point_lists(tmp_path, monkeypatch):
     ctx = make_ctx(tmp_path)
     bad_repo = tmp_path / "repo"

@@ -63,7 +63,8 @@
         "default_on": { "type": "boolean" },
         "coverage": { "type": "array", "items": { "enum": ["england", "wales", "scotland", "ni", "roi", "iom", "ci"] } },
         "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
-        "icon": { "type": ["string", "null"] }
+        "icon": { "type": ["string", "null"] },
+        "coverage_note": { "type": ["string", "null"] }
       }
     }
   }
