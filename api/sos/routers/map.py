@@ -5,8 +5,9 @@ Conventions plan 04 must follow: base map item ids are `uk-ie` (osm) and `os-zoo
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
+from sos import content as content_mod, map_places
 from sos.db import get_setting
 from sos.routers import get_db
 from sos.system import THEMES
@@ -76,3 +77,22 @@ def map_config(conn=Depends(get_db)):
 @router.get("/map/overlays")
 def map_overlays(conn=Depends(get_db)):
     return overlays_list(conn)
+
+
+def _link_title(request: Request, link: str) -> str:
+    """The title of the guide a place card's button opens, or the slug humanised if it has gone."""
+    kind, _, slug = link.partition(":")
+    for doc in request.app.state.content.list(kind):
+        if doc.id == slug:
+            return doc.title
+    return slug.replace("-", " ").capitalize()
+
+
+@router.get("/map/places")
+def map_places_guidance(request: Request):
+    """What to expect at each kind of place on the map, rendered so the frontend never parses Markdown."""
+    resolver = request.app.state.content.resolver
+    places = map_places.load_places(request.app.state.settings.playbooks / "map" / "places.yaml")
+    return {kind: {"title": place.title, "html": content_mod.render_markdown(place.expect, resolver),
+                   "link": {"href": resolver(place.link), "title": _link_title(request, place.link)}}
+            for kind, place in places.items()}

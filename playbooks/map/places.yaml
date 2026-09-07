@@ -1,0 +1,161 @@
+# What to expect at each kind of place on the map. One paragraph per kind, shown on the card that opens
+# when a place is tapped; `link` is the guide the card's button opens. Rules and word limits: playbooks/README.md.
+places:
+  hospital:
+    title: Hospital
+    expect: >-
+      The hospital is the last part of the health service to stop, and A&E keeps going when almost
+      everything else has closed. Everything routine goes first: clinics, appointments, planned
+      operations, and the waits get very long. Come here only for something life-threatening, and be
+      ready to make your own way. Bring your medicines and a written list of them with the doses,
+      because nobody can look your record up when the systems are down. For anything smaller, treat it
+      where you are and read the quick cards first ([Medical module](module:medical)).
+    link: module:medical
+  pharmacy:
+    title: Pharmacy
+    expect: >-
+      A pharmacy needs power, deliveries and staff, so it shuts early in a serious emergency and the
+      one nearest you may already be dark. While it is open it is the easiest medical help there is to
+      reach, and a pharmacist can advise on the medicines you take every day. Bring the labelled box or
+      the repeat slip, because no record can be seen, and bring cash, because the card machine fails
+      with the network. Ask about a longer supply before you need one, never at the counter on the day
+      ([Chronic conditions](page:chronic-conditions)).
+    link: page:chronic-conditions
+  gp:
+    title: GP surgery
+    expect: >-
+      A GP surgery is one of the first places to close in an emergency and one of the last to reopen,
+      so do not walk here hoping for a door that opens. Ring 111 for urgent advice that is not
+      life-threatening in England, Scotland and Wales; Northern Ireland uses GP out-of-hours numbers
+      instead. Ring 999, or 112, for anything life-threatening. If the network is down none of those
+      numbers connect, and the quick cards in this box are what you have until it comes back
+      ([UK emergency numbers](page:uk-numbers)).
+    link: page:uk-numbers
+  clinic:
+    title: Walk-in or urgent treatment centre
+    expect: >-
+      A walk-in centre, minor injuries unit or urgent treatment centre takes the injuries that hurt but
+      are not going to kill you: a cut that needs closing, a sprain, a bone that may be cracked, an
+      X-ray. It is not an A&E, and anything life-threatening gets sent on from here. Opening hours are
+      short in normal times and shorter in an emergency, so do not set out on a long walk on the
+      strength of this map alone. Treat what you can at home first ([Medical module](module:medical)).
+    link: module:medical
+  fuel:
+    title: Filling station
+    expect: >-
+      A filling station is only useful while the mains is on, because the pumps are electric and most
+      forecourts close in a blackout. If one is serving, expect a queue, a limit per car and cash only.
+      Take what the journey that matters needs rather than filling every container you own: a household
+      may keep up to 30 litres of petrol without telling anyone, in plastic containers of up to 10
+      litres or metal ones of up to 20. Panic buying, not shortage, emptied the pumps in 2021
+      ([Vehicles and fuel](module:vehicles-fuel)).
+    link: module:vehicles-fuel
+  water-works:
+    title: Water treatment works
+    expect: >-
+      This is a treatment works or a pumping station, not a tap. There is nothing here to fetch: the
+      site is fenced, the water inside it is part-way through treatment and staff will turn you away.
+      Mains water usually keeps running for hours or days into a power cut because pumping stations
+      have backup, and it fails first in high-rise flats when the booster pumps stop. When supply does
+      go, your water company must set up bottled-water stations and bowsers, and it will say where
+      ([Water module](module:water)).
+    link: module:water
+  reservoir:
+    title: Reservoir
+    expect: >-
+      A reservoir is a real source of water once the mains has gone, but nothing in it is safe to drink
+      as it comes: it collects run-off from fields, roads, birds and livestock. Let what you fetch
+      settle, pour it through a cloth, then bring it to a rolling boil for one minute, which kills
+      bacteria, viruses and parasites alike. Tablets or thin bleach will do at a push, but they leave
+      Cryptosporidium behind. The banks are steep and the water is colder than it looks, so never go in
+      after anything ([Water disinfection](page:water-disinfection)).
+    link: page:water-disinfection
+  spring:
+    title: Spring
+    expect: >-
+      A spring is the best raw water there is, because it comes out of the ground above whatever has
+      been spread on the land. Go as high and as close to the source as you can, and stay upstream of
+      any building, track, grazing or footpath. Look for a green patch on a dry hillside or a line of
+      rushes. Brown peaty water that tastes of soil is fine once treated, and treated is the point:
+      filter it, then boil it, before anyone drinks ([Water outdoors](page:fieldcraft-water)).
+    link: page:fieldcraft-water
+  rail-station:
+    title: Railway station
+    expect: >-
+      A station is a landmark and a roof, not a service. Trains stop early in almost every emergency,
+      because power, signalling and staff all have to hold for the line to run, so do not build a plan
+      around one. What it is good for is a dry, lit, well-known place to meet people who are walking to
+      you. The track itself is fenced off and dangerous. If you are leaving, keep the tank at least
+      half full, and remember that bicycles get through where cars jam
+      ([Evacuation module](module:evacuation)).
+    link: module:evacuation
+  airport:
+    title: Airport or airfield
+    expect: >-
+      An airport or airfield closes to the public early in a crisis; the terminal is not a shelter and
+      the perimeter is guarded. In a war an airfield is a target, so it is a place to move away from
+      rather than towards. Evacuation is never self-service: if one is ever run from here you will be
+      told to go, given a route and a time, and registered at a rest centre run by the council. Until
+      somebody with authority says otherwise, staying put is the default
+      ([Evacuation module](module:evacuation)).
+    link: module:evacuation
+  military:
+    title: Military site
+    expect: >-
+      A base, barracks, depot or training area is not a refuge. There is no aid inside it and guards
+      will turn you back at the gate. Military land is also one of the few places where simply being
+      there is a criminal offence rather than the civil wrong that ordinary trespass is. In an invasion
+      or a nuclear exchange these sites are targets, so put distance between them and where you sleep,
+      and plan your route along footpaths and open access land instead
+      ([Moving across country](page:fieldcraft-moving)).
+    link: page:fieldcraft-moving
+  nuclear:
+    title: Nuclear site
+    expect: >-
+      A licensed nuclear site sits inside an emergency planning zone. Households in the detailed zone
+      around it have already been sent iodine tablets and a leaflet under the 2019 regulations. If
+      there is ever a release the instruction is the same wherever you are standing: get inside, stay
+      inside, stay tuned. Go into the nearest solid building, shut doors and windows, turn off fans and
+      extractors, and listen. Do not drive out to collect children; they are kept in. Take the tablets
+      only when you are told to ([Radiation module](module:radiation)).
+    link: module:radiation
+  chemical:
+    title: Chemical site
+    expect: >-
+      A works, refinery or bulk store holding chemicals. The danger is not the fence, it is the plume,
+      and the wind decides who it reaches. If a release happens while you are indoors, stay in: shut
+      doors and windows, turn off fans and extractors, and listen to the radio. If you are outside,
+      move across the wind and then upwind, and uphill, away from the smell. Never drive into a cloud.
+      Anyone splashed or doused has their clothing cut off and the chemical blotted, not rubbed
+      ([Chemical exposure](card:chemical-exposure)).
+    link: card:chemical-exposure
+  flood-zone:
+    title: Flood zone
+    expect: >-
+      These are the mapped zones for flooding from rivers and the sea: zone 2 is the wider area at
+      lower risk, zone 3 the smaller area at higher risk. Being inside one does not mean water today,
+      and being outside one is no promise, because surface water floods streets no river reaches.
+      Decide early whether you are going upstairs or going out, since moving late is what kills people.
+      Never walk or drive through floodwater: 15 cm of moving water knocks an adult over and 30 cm
+      floats a car ([Evacuation module](module:evacuation)).
+    link: module:evacuation
+  footpath:
+    title: Public footpath
+    expect: >-
+      A public footpath, bridleway or byway is a right of way you may walk at any hour, and when the
+      roads are blocked it is often the way out, because paths keep going where traffic stops. England
+      and Wales are covered by rights of way and open access land, Scotland by a right of responsible
+      access to almost all land, and Northern Ireland has very few. The ground is wetter, rougher and
+      darker than a line on a map suggests, so allow far more time than the distance implies
+      ([Navigation module](module:navigation)).
+    link: module:navigation
+  access-land:
+    title: Open access land
+    expect: >-
+      Open access land is the mountain, moor, heath, down and registered common you may cross on foot
+      in England and Wales under the Countryside and Rights of Way Act 2000. Walking is all it gives
+      you: it is not a right to camp, light a fire or take anything, and wild camping needs the
+      landowner's permission everywhere except the Dartmoor commons. Scotland is different, with a
+      right of responsible access to almost all land that includes wild camping. Shut every gate and
+      keep dogs close ([Moving across country](page:fieldcraft-moving)).
+    link: page:fieldcraft-moving

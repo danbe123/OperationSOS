@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Operation SOS map places",
+  "description": "playbooks/map/places.yaml: what to expect at each kind of place on the map. Rules in playbooks/README.md.",
+  "type": "object",
+  "required": ["places"],
+  "additionalProperties": false,
+  "properties": {
+    "places": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z][a-z-]*$"},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "expect", "link"],
+        "additionalProperties": false,
+        "properties": {
+          "title": {"type": "string", "minLength": 3, "maxLength": 60},
+          "expect": {"type": "string", "minLength": 200},
+          "link": {"type": "string", "pattern": "^(page|module|card):[a-z0-9-]+$"}
+        }
+      }
+    }
+  }
+}
