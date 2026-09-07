@@ -1,21 +1,31 @@
+import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { Icon } from '../icons';
 import { BoardView } from '../situation/BoardView';
 
-/** `/board`: the whole screen is the board, and a tap anywhere on it goes back to Now. */
+/** `/board`: the board, and on this screen you can work it. The whole screen used to be one button
+ * back to Now, so nothing on the board could be touched — a household looking at "Gas ✓ working"
+ * had no way to say it had gone off without going back and finding the front door's buttons. Back
+ * is now a button of its own in the board's header, and Escape does the same. */
 export function Board() {
   const navigate = useNavigate();
-  const home = () => navigate('/');
+  const home = useCallback(() => navigate('/'), [navigate]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') home(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [home]);
   return (
-    <div
-      className="screen screen-fill board-screen"
-      role="button"
-      tabIndex={0}
-      aria-label="Board: tap to go back to Now"
-      onClick={home}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') home(); }}
-    >
-      <BoardView />
-      <p className="board-hint">Tap anywhere to go back</p>
+    <div className="screen screen-fill board-screen">
+      <BoardView
+        interactive
+        action={(
+          <button type="button" className="btn board-back" onClick={home}>
+            <Icon name="back" size={22} /><span>Back to Now</span>
+          </button>
+        )}
+      />
+      <p className="board-hint">Tap a service to mark it off or on; tap a job to tick it.</p>
     </div>
   );
 }

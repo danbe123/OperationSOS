@@ -1,5 +1,6 @@
-/* The board: the kiosk's standing screen at 853x480, read from across the room. */
-.board-screen { height: 100%; overflow: hidden; cursor: pointer; }
+/* The board: the kiosk's standing screen at 853x480, read from across the room — and on /board,
+   worked with a finger: every service and every job on it is a button. */
+.board-screen { height: 100%; overflow: hidden; }
 .board { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow: hidden; padding: 10px 14px; background: var(--ground); }
 .board-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .board-title { margin: 0; font-size: var(--t-display); line-height: 1.05; }
@@ -8,6 +9,9 @@
    display face used to be stamped on it in the dark-green theme alone, which is gone; the box's
    voice is now the wordmark and the card numerals, and nothing else. */
 .board-now { margin: 0 0 0 auto; font-size: var(--t-board); line-height: 0.9; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Back to Now sits at the top of the header, before the headline, at a full touch height: the
+   whole screen was the way back until the board grew buttons of its own. */
+.board-back { align-self: center; min-height: var(--touch); }
 .board-cols { flex: 1 1 auto; min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
 .board-conditions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 /* Name on the first line, state and duration on the second: three rows of two fit the column, where
@@ -19,11 +23,36 @@
 .board-cond.cond-danger { background: color-mix(in srgb, var(--danger) 16%, var(--panel)); }
 .board-cond-name { display: flex; align-items: center; gap: 6px; font-size: var(--t-lead); }
 .board-cond .cond-state, .board-cond .cond-for { font-size: var(--t-body); }
+/* A service tile is a button on /board and a panel on the idle screen: same tile, and the button
+   brings nothing of its own but a touch height and a finger. */
+button.board-cond { font: inherit; font-weight: 600; color: inherit; border: 0; text-align: left; align-content: center; min-height: var(--touch); cursor: pointer; }
+button.board-cond:disabled { opacity: 0.65; cursor: progress; }
+button.board-cond:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+/* Ten services, not five: the two-column grid ran five rows deep and pushed the log off a 480 px
+   screen, so a board you can work goes to three columns. That leaves about 120 px a tile, where the
+   name steps down from --t-lead to --t-body - 18 px on the kiosk, still a word across the room. */
+.board-conditions-all { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.board-conditions-all .board-cond { padding: 6px 8px; }
+.board-conditions-all .board-cond-name { font-size: var(--t-body); gap: 4px; }
+.board-conditions-all .board-cond-name svg { width: 22px; height: 22px; }
+.board-live .board-cols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr) minmax(0, 0.8fr); }
 .board-tasks h2, .board-facts h2 { margin: 0 0 6px; font-size: var(--t-lead); }
 .board-task-list { margin: 0; padding-left: 1.2em; }
 .board-task-list li { margin-bottom: 6px; }
 .board-task-title { font-weight: 600; }
 .board-task-who { display: block; font-size: var(--t-meta); color: var(--ink-muted); }
+/* A job is a tick box the size of a finger. Ticked, it stays where it is with a line through the
+   title and an Undo beside it; the who-and-when line is never struck through. */
+.board-jobs { list-style: none; padding-left: 0; }
+.board-job { margin-bottom: 6px; }
+.board-job-tick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; width: 100%; min-height: var(--touch); padding: 6px 10px; border: 0; border-radius: var(--radius); background: var(--panel); font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.board-job-tick:disabled { opacity: 0.65; cursor: progress; }
+.board-job-tick:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.board-job-box { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 1.2em; height: 1.2em; border: 2px solid currentColor; border-radius: 4px; font-size: var(--t-body); line-height: 1; }
+.board-job .board-task-title { flex: 1 1 auto; min-width: 0; }
+.board-job .board-task-who { flex: 1 1 100%; }
+.board-job-done .board-task-title { text-decoration: line-through; }
+.board-all-tasks { margin: 6px 0 0; font-size: var(--t-body); }
 /* The glyph belongs to the first line of what it marks, not to the middle of a four-line wrap. */
 .board-facts p { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 6px; font-size: var(--t-lead); }
 .board-facts p svg { flex: 0 0 auto; margin-top: 3px; }
@@ -32,6 +61,7 @@
 .board-hint { flex: 0 0 auto; margin: 0; padding: 2px 16px 6px; text-align: center; font-size: var(--t-meta); color: var(--ink-muted); }
 .board-waiting { align-items: center; justify-content: center; font-size: var(--t-lead); }
 @media (max-width: 699px) {
-  .board-cols { grid-template-columns: minmax(0, 1fr); overflow: auto; }
+  .board-cols, .board-live .board-cols { grid-template-columns: minmax(0, 1fr); overflow: auto; }
+  .board-conditions-all { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .board-title, .board-now { font-size: var(--t-title); }
 }

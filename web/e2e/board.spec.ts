@@ -22,7 +22,8 @@ test('a drill puts the board on the kiosk screen, and a tap brings Home back', a
   await expect(page.getByRole('region', { name: 'Last events' })).toContainText('Drill started: National grid collapse');
   await page.screenshot({ path: '/tmp/sos-board-853.png' });
 
-  await page.getByRole('region', { name: 'Next jobs' }).click();
+  // The board is worked with a finger now, so the way back is a button and not the whole screen.
+  await page.getByRole('button', { name: 'Back to Now' }).click();
   await expect(page).toHaveURL(/\/$/);
 
   // and the drill ends with what happened in it
