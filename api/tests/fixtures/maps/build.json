@@ -33,7 +33,8 @@
     "water": 20440,
     "rail": 934,
     "chemical-sites": 1964,
-    "airports-military": 45,
+    "airports": 45,
+    "military": 45,
     "flood-zones": 3797,
     "access-land": 292,
     "nuclear-sites": 8310
@@ -61,6 +62,7 @@
     "rail",
     "nuclear-sites",
     "chemical-sites",
-    "airports-military"
+    "airports",
+    "military"
   ]
 }

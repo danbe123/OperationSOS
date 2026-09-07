@@ -20,15 +20,24 @@ class OsmOverlay:
     id: str
     filters: tuple[str, ...]
     points: bool  # True: ST_PointOnSurface markers; False: keep polygons
+    tags: tuple[str, ...]  # the OSM keys kept on every feature (spec section 5); everything else is dropped
 
 
 OSM_OVERLAYS: tuple[OsmOverlay, ...] = (
-    OsmOverlay("health", ("nwr/amenity=hospital,pharmacy,doctors",), True),
-    OsmOverlay("fuel", ("nwr/amenity=fuel",), True),
-    OsmOverlay("water", ("nwr/landuse=reservoir", "nwr/water=reservoir", "nwr/man_made=water_works"), False),
-    OsmOverlay("rail", ("nwr/railway=station",), True),
-    OsmOverlay("chemical-sites", ("nwr/industrial=chemical,refinery,oil",), True),
-    OsmOverlay("airports-military", ("nwr/aeroway=aerodrome", "nwr/military=*"), False),
+    OsmOverlay("health", ("nwr/amenity=hospital,pharmacy,doctors,clinic",), True,
+               ("name", "amenity", "healthcare", "emergency", "beds", "operator", "phone", "website", "opening_hours", "wheelchair", "dispensing")),
+    OsmOverlay("fuel", ("nwr/amenity=fuel",), True,
+               ("name", "brand", "operator", "opening_hours", "phone", "fuel:diesel", "fuel:lpg", "fuel:electricity", "shop")),
+    OsmOverlay("water", ("nwr/landuse=reservoir", "nwr/water=reservoir", "nwr/man_made=water_works", "nwr/natural=spring"), False,
+               ("name", "man_made", "natural", "water", "landuse", "operator", "description")),
+    OsmOverlay("rail", ("nwr/railway=station",), True,
+               ("name", "railway", "station", "operator", "network", "platforms", "wheelchair")),
+    OsmOverlay("chemical-sites", ("nwr/industrial=chemical,refinery,oil",), True,
+               ("name", "industrial", "landuse", "man_made", "operator", "hazmat", "description")),
+    OsmOverlay("airports", ("nwr/aeroway=aerodrome",), False,
+               ("name", "aeroway", "aerodrome", "aerodrome:type", "icao", "iata", "operator", "surface", "military")),
+    OsmOverlay("military", ("nwr/military=*", "nwr/landuse=military"), False,
+               ("name", "military", "landuse", "operator", "description", "access")),
 )
 HAND_AUTHORED = {"chemical-sites": "chemical-sites.geojson"}
 FLOOD_REGIONS = (("england", "FLOOD_EN_URL"), ("wales", "FLOOD_WA_URL"), ("scotland", "FLOOD_SC_URL"),
@@ -105,12 +114,21 @@ def build_footpaths(ctx: Context, pbf: Path, work: Path, staged_dir: Path) -> Pa
     return out
 
 
+def export_config_for(ctx: Context, overlay: OsmOverlay, work: Path) -> Path:
+    """osmium export config for one overlay: the pois.json template with this overlay's own allow-list."""
+    template = json.loads((ctx.repo / "tools" / "map-styles" / "export" / "pois.json").read_text())
+    template["include_tags"] = list(overlay.tags)
+    path = work / f"{overlay.id}-export.json"
+    path.write_text(json.dumps(template, indent=2) + "\n")
+    return path
+
+
 def build_osm_overlay(ctx: Context, overlay: OsmOverlay, pbf: Path, work: Path) -> Path:
     filtered = work / f"{overlay.id}.osm.pbf"
     ctx.run(["osmium", "tags-filter", "--overwrite", "-o", str(filtered), str(pbf), *overlay.filters])
     raw = work / f"{overlay.id}_raw.geojson"
     ctx.run(["osmium", "export", "--overwrite", "-f", "geojson", "--add-unique-id=type_id",
-             "-c", str(export_config(ctx, "pois")), "-o", str(raw), str(filtered)])
+             "-c", str(export_config_for(ctx, overlay, work)), "-o", str(raw), str(filtered)])
     if not overlay.points:
         return raw
     out = work / f"{overlay.id}.geojson"

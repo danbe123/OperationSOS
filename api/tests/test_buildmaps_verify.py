@@ -160,7 +160,7 @@ def test_check_overlays_requires_the_index_checks_its_files_and_skips_unbuilt_id
 
 
 def test_check_overlays_skips_the_artifact_kind_cross_check_in_fixture_mode(tmp_path):
-    """Ruling R15: access-land/airports-military/water are declared in manifest/overlays.json at their
+    """Ruling R15: access-land/airports/military/water are declared in manifest/overlays.json at their
     real production-scale kind (pmtiles), but at fixture scale every overlay's tiny sample input
     legitimately finalises as geojson under the uniform 5MB rule (Task 7's `finalise()`) -- this is
     correct fixture behaviour, not a drifted manifest, so the artifact-path cross-check must not fire

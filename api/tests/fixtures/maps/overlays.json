@@ -6,12 +6,13 @@
   "osm_input": "fixture.osm.pbf",
   "overlays": [
     "access-land",
-    "airports-military",
+    "airports",
     "chemical-sites",
     "flood-zones",
     "footpaths",
     "fuel",
     "health",
+    "military",
     "nuclear-sites",
     "rail",
     "water"

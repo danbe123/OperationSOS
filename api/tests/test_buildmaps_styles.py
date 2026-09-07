@@ -106,7 +106,7 @@ def test_every_fragment_is_a_sources_layers_object_with_local_urls():
 
 def test_prune_overlay_fragment_keeps_only_pmtiles_overlays():
     frag = json.loads((REPO / "tools/map-styles/layers/overlays.json").read_text())
-    pruned = styles.prune_overlay_fragment(frag, {"water": "pmtiles", "airports-military": "geojson", "access-land": "geojson"})
+    pruned = styles.prune_overlay_fragment(frag, {"water": "pmtiles", "airports": "geojson", "access-land": "geojson"})
     assert set(pruned["sources"]) == {"water"}
     assert {layer["source"] for layer in pruned["layers"]} == {"water"}
 
@@ -156,7 +156,7 @@ def test_styles_step_generates_rewrites_vendors_and_indexes(tmp_path):
     (ctx.out / "contours.json").write_text(json.dumps({"output": "contours.pmtiles", "height_field": "PROP_VALUE"}))
     (ctx.out / "overlays").mkdir()
     (ctx.out / "overlays" / "index.json").write_text(json.dumps({"water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
-                                                                 "airports-military": {"kind": "geojson", "file": "overlays/airports-military.geojson"}}))
+                                                                 "airports": {"kind": "geojson", "file": "overlays/airports.geojson"}}))
     styles.StylesStep().run(ctx)
     assert runner.find("pnpm", "install")[0] == ["pnpm", "install", "--frozen-lockfile"]
     node = runner.find("node", "build-styles.mjs")[0]

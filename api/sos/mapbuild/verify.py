@@ -127,7 +127,7 @@ def check_overlays(out: Path, overlays_manifest: Path, fixture: bool = False) ->
     ids this run was never asked to build.
 
     Ruling R15: the second check (the `source.artifact` cross-check) is skipped entirely in fixture
-    mode. `manifest/overlays.json` declares access-land/airports-military/water at their real
+    mode. `manifest/overlays.json` declares access-land/airports/military/water at their real
     production-scale kind (pmtiles, since full UK-wide data crosses the 5MB tippecanoe threshold), but
     at fixture scale every overlay's tiny sample input legitimately finalises as geojson under the
     uniform 5MB rule (Task 7's `finalise()`) -- so the manifest's hardcoded production-scale artifact

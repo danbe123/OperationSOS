@@ -1,7 +1,8 @@
 {
   "sources": {
     "water": {"type": "vector", "url": "pmtiles:///maps/overlays/water.pmtiles"},
-    "airports-military": {"type": "vector", "url": "pmtiles:///maps/overlays/airports-military.pmtiles"},
+    "airports": {"type": "vector", "url": "pmtiles:///maps/overlays/airports.pmtiles"},
+    "military": {"type": "vector", "url": "pmtiles:///maps/overlays/military.pmtiles"},
     "access-land": {"type": "vector", "url": "pmtiles:///maps/overlays/access-land.pmtiles"}
   },
   "layers": [
@@ -11,9 +12,15 @@
      "filter": ["has", "name"],
      "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
      "paint": {"text-color": "#0e6f8a", "text-halo-color": "#ffffff", "text-halo-width": 1}},
-    {"id": "airports-military-fill", "type": "fill", "source": "airports-military", "source-layer": "airports-military",
-     "paint": {"fill-color": ["case", ["has", "military"], "#8b0000", "#555555"], "fill-opacity": 0.35}},
-    {"id": "airports-military-label", "type": "symbol", "source": "airports-military", "source-layer": "airports-military",
+    {"id": "airports-fill", "type": "fill", "source": "airports", "source-layer": "airports",
+     "paint": {"fill-color": "#555555", "fill-opacity": 0.35}},
+    {"id": "airports-label", "type": "symbol", "source": "airports", "source-layer": "airports",
+     "minzoom": 9, "filter": ["has", "name"],
+     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
+     "paint": {"text-color": "#3a0000", "text-halo-color": "#ffffff", "text-halo-width": 1}},
+    {"id": "military-fill", "type": "fill", "source": "military", "source-layer": "military",
+     "paint": {"fill-color": "#8b0000", "fill-opacity": 0.35}},
+    {"id": "military-label", "type": "symbol", "source": "military", "source-layer": "military",
      "minzoom": 9, "filter": ["has", "name"],
      "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
      "paint": {"text-color": "#3a0000", "text-halo-color": "#ffffff", "text-halo-width": 1}},

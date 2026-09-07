@@ -112,26 +112,53 @@ def test_build_osm_overlay_points_use_point_on_surface_and_polygons_do_not(tmp_p
     out = overlays.build_osm_overlay(ctx, health, ctx.src / "in.pbf", work)
     assert out == work / "health.geojson"
     tags = runner.find("osmium", "tags-filter")[0]
-    assert tags[-1] == "nwr/amenity=hospital,pharmacy,doctors"
+    assert tags[-1] == "nwr/amenity=hospital,pharmacy,doctors,clinic"
     export = runner.find("osmium", "export")[0]
-    assert "--add-unique-id=type_id" in export and export[export.index("-c") + 1].endswith("export/pois.json")
+    assert "--add-unique-id=type_id" in export and export[export.index("-c") + 1].endswith("health-export.json")
     ogr = runner.find("ogr2ogr")[0]
     assert ogr[-1] == 'SELECT ST_PointOnSurface(geometry) AS geometry, * FROM "health_raw"' and ogr[ogr.index("-dialect") + 1] == "sqlite"
     water = next(o for o in overlays.OSM_OVERLAYS if o.id == "water")
     out = overlays.build_osm_overlay(ctx, water, ctx.src / "in.pbf", work)
     assert out == work / "water_raw.geojson"
     tags = runner.find("osmium", "tags-filter")[1]
-    assert tags[-3:] == ["nwr/landuse=reservoir", "nwr/water=reservoir", "nwr/man_made=water_works"]
+    assert tags[-4:] == ["nwr/landuse=reservoir", "nwr/water=reservoir", "nwr/man_made=water_works", "nwr/natural=spring"]
     assert len(runner.find("ogr2ogr")) == 1
 
 
 def test_osm_overlay_table_matches_the_spec():
     table = {o.id: (o.filters, o.points) for o in overlays.OSM_OVERLAYS}
-    assert set(table) == {"health", "fuel", "water", "rail", "chemical-sites", "airports-military"}
+    assert set(table) == {"health", "fuel", "water", "rail", "chemical-sites", "airports", "military"}
+    assert table["health"] == (("nwr/amenity=hospital,pharmacy,doctors,clinic",), True)
     assert table["fuel"] == (("nwr/amenity=fuel",), True)
+    assert table["water"] == (("nwr/landuse=reservoir", "nwr/water=reservoir", "nwr/man_made=water_works", "nwr/natural=spring"), False)
     assert table["rail"] == (("nwr/railway=station",), True)
     assert table["chemical-sites"] == (("nwr/industrial=chemical,refinery,oil",), True)
-    assert table["airports-military"] == (("nwr/aeroway=aerodrome", "nwr/military=*"), False)
+    assert table["airports"] == (("nwr/aeroway=aerodrome",), False)
+    assert table["military"] == (("nwr/military=*", "nwr/landuse=military"), False)
+
+
+def test_osm_overlay_kept_tags_match_the_spec():
+    tags = {o.id: o.tags for o in overlays.OSM_OVERLAYS}
+    assert tags["health"] == ("name", "amenity", "healthcare", "emergency", "beds", "operator", "phone", "website", "opening_hours", "wheelchair", "dispensing")
+    assert tags["fuel"] == ("name", "brand", "operator", "opening_hours", "phone", "fuel:diesel", "fuel:lpg", "fuel:electricity", "shop")
+    assert tags["water"] == ("name", "man_made", "natural", "water", "landuse", "operator", "description")
+    assert tags["rail"] == ("name", "railway", "station", "operator", "network", "platforms", "wheelchair")
+    assert tags["airports"] == ("name", "aeroway", "aerodrome", "aerodrome:type", "icao", "iata", "operator", "surface", "military")
+    assert tags["military"] == ("name", "military", "landuse", "operator", "description", "access")
+    assert tags["chemical-sites"] == ("name", "industrial", "landuse", "man_made", "operator", "hazmat", "description")
+
+
+def test_export_config_for_writes_the_overlay_allow_list(tmp_path):
+    ctx = make_ctx(tmp_path)
+    work = tmp_path / "work"
+    work.mkdir()
+    fuel = next(o for o in overlays.OSM_OVERLAYS if o.id == "fuel")
+    path = overlays.export_config_for(ctx, fuel, work)
+    assert path == work / "fuel-export.json"
+    cfg = json.loads(path.read_text())
+    assert cfg["include_tags"] == list(fuel.tags)
+    template = json.loads((ctx.repo / "tools" / "map-styles" / "export" / "pois.json").read_text())
+    assert cfg["attributes"] == template["attributes"] and cfg["area_tags"] is True
 
 
 def test_flood_zones_fixture_uses_the_committed_sample_with_spat_and_named_layer(tmp_path):
@@ -211,7 +238,8 @@ def test_verify_manifest_kinds_passes_against_the_real_merged_manifest(tmp_path)
     ctx = make_ctx(tmp_path, fixture=False)
     index = {
         "water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
-        "airports-military": {"kind": "pmtiles", "file": "overlays/airports-military.pmtiles"},
+        "airports": {"kind": "pmtiles", "file": "overlays/airports.pmtiles"},
+        "military": {"kind": "pmtiles", "file": "overlays/military.pmtiles"},
         "health": {"kind": "pmtiles", "file": "overlays/health.pmtiles"},
         "access-land": {"kind": "pmtiles", "file": "overlays/access-land.pmtiles"},
     }
@@ -226,7 +254,7 @@ def test_overlays_step_end_to_end_fixture(tmp_path):
     overlays.OverlaysStep().run(ctx)
     out = ctx.out / "overlays"
     index = json.loads((out / "index.json").read_text())
-    assert set(index) == {"footpaths", "health", "fuel", "water", "rail", "chemical-sites", "airports-military", "flood-zones", "access-land", "nuclear-sites"}
+    assert set(index) == {"footpaths", "health", "fuel", "water", "rail", "chemical-sites", "airports", "military", "flood-zones", "access-land", "nuclear-sites"}
     assert index["footpaths"] == {"kind": "pmtiles", "file": "overlays/footpaths.pmtiles", "layers": ["footpaths"], "size_bytes": 2}
     assert index["flood-zones"]["layers"] == ["flood_england"] and index["flood-zones"]["coverage"] == ["england"]
     assert index["health"]["kind"] == "geojson" and index["health"]["features"] == 1

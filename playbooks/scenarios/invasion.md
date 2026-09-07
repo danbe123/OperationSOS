@@ -5,7 +5,7 @@ icon: flag
 order: 8
 summary: "Conventional war on UK soil: missile strikes, fighting, occupation. Shelter from strikes, evacuate only when told, the law of war, and lasting it out."
 modules: [evacuation, security-law, navigation, comms, medical, shelter-heat, community, mental-health]
-overlays: [airports-military, rail, footpaths, fuel]
+overlays: [military, airports, rail, footpaths, fuel]
 reviewed: null
 sources:
   - title: National Risk Register 2025
@@ -39,7 +39,7 @@ sources:
 
 ## Right now
 
-**Missile strikes come first, and they hit infrastructure.** The register's planning case is "a combination of conventional missiles and cyber operations" against infrastructure, with civilian deaths even though population centres are not the target ([NRR 2025, p. 184](doc:nrr-2025#page=184)). Stay away from power stations, substations, fuel depots, ports, airfields, barracks, bridges and communication masts; they are on the map ([military and airfield overlay](map:?overlay=airports-military&overlay=rail)).
+**Missile strikes come first, and they hit infrastructure.** The register's planning case is "a combination of conventional missiles and cyber operations" against infrastructure, with civilian deaths even though population centres are not the target ([NRR 2025, p. 184](doc:nrr-2025#page=184)). Stay away from power stations, substations, fuel depots, ports, airfields, barracks, bridges and communication masts; they are on the map ([military and airfield overlays](map:?overlay=military&overlay=airports&overlay=rail)).
 
 **On a warning or an explosion:** get inside, to a ground-floor or basement room with no windows, or a corridor with two walls between you and the outside, and lie down; the Protect and Survive fall-out room is also the best blast room in an ordinary house ([Protect and Survive, p. 5](doc:protect-and-survive-1980#page=5)). Glass kills: stay away from windows and draw curtains ([The Blitz](kiwix:wikipedia_en_all_maxi/The_Blitz)). Do not go out to look, do not film, do not drive towards it.
 
@@ -90,7 +90,7 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 
 - **Emergency powers** are those of the Civil Contingencies Act 2004, summarised in the [security and the law module](module:security-law): there is no "martial law" in UK law.
 - **Weapons.** The knife, firearm and offensive-weapon laws do not change with a war; carrying a weapon "for defence" remains an offence ([Knife and firearms law](page:knife-firearms-law)). Possessing material useful to terrorism is an offence under the Terrorism Act 2000 s58, which is why this library carries medical and survival manuals and nothing tactical ([Terrorism Act 2000 s58](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2000/11/section/58)).
-- **Targets in Britain** (the naval bases, the submarine yards, the airfields, the fuel depots and grid supply points) are listed in the [nuclear war playbook](playbook:nuclear-war) and shown on the map ([military and airfield overlay](map:?overlay=airports-military&overlay=fuel)).
+- **Targets in Britain** (the naval bases, the submarine yards, the airfields, the fuel depots and grid supply points) are listed in the [nuclear war playbook](playbook:nuclear-war) and shown on the map ([military and airfield overlays](map:?overlay=military&overlay=airports&overlay=fuel)).
 - **Routes:** footpaths, bridleways and byways off the main roads ([Footpaths overlay](map:?overlay=footpaths)), and Scotland's right of responsible access on foot ([Scottish Outdoor Access Code](kiwix:wikipedia_en_all_maxi/Scottish_Outdoor_Access_Code); [Rights of way in England and Wales](kiwix:wikipedia_en_all_maxi/Rights_of_way_in_England_and_Wales)).
 - {{#if phones}}**Numbers**: [[call 999]] while it answers; the LRF list gives who runs the local response ([LRF contacts](kiwix:govuk_resilience/www.gov.uk/guidance/local-resilience-forums-contact-details)).{{else}}**Numbers**: nothing answers with the network down, so an emergency is reported in person at a fire or police station, a rest centre or to the council's wardens ([getting help without phones](page:no-phones); [LRF contacts](kiwix:govuk_resilience/www.gov.uk/guidance/local-resilience-forums-contact-details)).{{/if}}
 
@@ -120,7 +120,7 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 - [Refugee (Wikipedia)](kiwix:wikipedia_en_all_maxi/Refugee)
 - [Rights of way in England and Wales (Wikipedia)](kiwix:wikipedia_en_all_maxi/Rights_of_way_in_England_and_Wales)
 - [The Great Outdoors Q&A](kiwix:outdoors.stackexchange.com_en_all/questions)
-- [Military and airfield overlay](map:?overlay=airports-military&overlay=rail&overlay=fuel)
+- [Military and airfield overlays](map:?overlay=military&overlay=airports&overlay=rail&overlay=fuel)
 - [Nuclear war playbook](playbook:nuclear-war)
 - [Ranger Handbook, TC 3-21.76 (small-group field craft)](doc:tc-3-21-76-ranger-handbook)
 - [Survival, Evasion and Recovery, FM 21-76-1 (pocket checklists)](doc:fm-21-76-1-survival-evasion-recovery)

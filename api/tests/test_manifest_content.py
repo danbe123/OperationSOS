@@ -194,7 +194,7 @@ def test_core_size_near_target():
 
 OVERLAY_IDS = [
     "footpaths", "access-land", "flood-zones", "health", "fuel", "water", "rail",
-    "nuclear-sites", "chemical-sites", "airports-military",
+    "nuclear-sites", "chemical-sites", "airports", "military",
 ]
 REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
 EXTENDED_REQUIRED = {
@@ -250,7 +250,7 @@ def test_overlay_ids_and_objects():
     assert ov["footpaths"]["coverage"] == REGIONS
     assert ov["access-land"]["coverage"] == ["england", "wales"]
     assert ov["flood-zones"]["coverage"] == ["england", "wales", "scotland", "ni"]
-    for i in ("health", "fuel", "water", "rail", "nuclear-sites", "chemical-sites", "airports-military"):
+    for i in ("health", "fuel", "water", "rail", "nuclear-sites", "chemical-sites", "airports", "military"):
         assert ov[i]["coverage"] == REGIONS, i
 
 

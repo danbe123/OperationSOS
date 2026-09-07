@@ -30,7 +30,7 @@ def test_fixture_styles_resolve_to_fixture_files():
 
 def test_fixture_overlays_index_matches_files():
     index = json.loads((FIXTURE / "overlays" / "index.json").read_text())
-    for overlay_id in ("footpaths", "flood-zones", "nuclear-sites", "health", "fuel", "water", "rail", "chemical-sites", "airports-military", "access-land"):
+    for overlay_id in ("footpaths", "flood-zones", "nuclear-sites", "health", "fuel", "water", "rail", "chemical-sites", "airports", "military", "access-land"):
         assert overlay_id in index
         assert (FIXTURE / index[overlay_id]["file"]).exists(), overlay_id
     nuclear = json.loads((FIXTURE / "overlays" / "nuclear-sites.geojson").read_text())

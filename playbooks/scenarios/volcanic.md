@@ -5,7 +5,7 @@ icon: mountain
 order: 15
 summary: An Icelandic eruption sends ash and sulphur over Britain for weeks. Bad-air days, masks, covered water, livestock indoors, no flights, a cold summer.
 modules: [shelter-heat, medical, water, food, livestock, growing-food, comms]
-overlays: [health, airports-military]
+overlays: [health, airports]
 reviewed: null
 sources:
   - title: National Risk Register 2025
@@ -89,7 +89,7 @@ A large enough eruption cools the world for a year or two: Tambora in 1815 gave 
 
 - **The register** lists volcanic eruption among natural hazards with Iceland as the main source and aviation as the main impact ([NRR 2025, p. 129](doc:nrr-2025#page=129)); the GOV.UK hazards guidance covers volcanic ash ([Extreme weather and natural hazards](kiwix:govuk_resilience/www.gov.uk/guidance/extreme-weather-and-natural-hazards)).
 - **Which volcanoes:** Bárðarbunga (whose Holuhraun fissure poured sulphur dioxide in 2014 to 2015), Eyjafjallajökull, Grímsvötn, Katla and Hekla are the frequent ones; Laki and Eldgjá are the historic gas eruptions ([Bárðarbunga](kiwix:wikipedia_en_all_maxi/Bárðarbunga); [Grímsvötn](kiwix:wikipedia_en_all_maxi/Grímsvötn); [Katla (volcano)](kiwix:wikipedia_en_all_maxi/Katla_(volcano)); [Eldgjá](kiwix:wikipedia_en_all_maxi/Eldgjá)).
-- **Airports** on the map close first and open last ([airports overlay](map:?overlay=airports-military)); ferries and the tunnel keep running.
+- **Airports** on the map close first and open last ([airports overlay](map:?overlay=airports)); ferries and the tunnel keep running.
 - **Health warnings** come through UKHSA's Weather-Health Alert system and Defra's Daily Air Quality Index ([Weather-health alerting system](kiwix:govuk_resilience/www.gov.uk/guidance/weather-health-alerting-system); [Air quality index](kiwix:wikipedia_en_all_maxi/Air_quality_index)); {{#if phones}}[[call 111]] for breathing problems that are not an emergency, and [[call 999]] when they are ([UK numbers](page:uk-numbers)).{{else}}with the phones down, work from the [asthma card](card:asthma-attack) and take anyone who cannot speak in sentences to hospital yourself ([UK numbers](page:uk-numbers)).{{/if}}
 - **Scotland and the north** are downwind first and most; the Northern Isles and the Hebrides got the worst of Laki's haze ([Laki](kiwix:wikipedia_en_all_maxi/Laki)).
 
@@ -119,6 +119,6 @@ A large enough eruption cools the world for a year or two: Tambora in 1815 gave 
 - [Volcanoes (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/volcanoes)
 - [Earth science Q&A](kiwix:earthscience.stackexchange.com_en_all/questions)
 - [NRR 2025, volcanic eruption](doc:nrr-2025#page=129)
-- [Airports on the map](map:?overlay=airports-military&overlay=health)
+- [Airports on the map](map:?overlay=airports&overlay=health)
 - [Impact winter playbook](playbook:impact-winter)
 - [Butchery](page:butchery)

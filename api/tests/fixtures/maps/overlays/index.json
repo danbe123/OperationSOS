@@ -37,9 +37,15 @@
     "features": 10,
     "size_bytes": 1964
   },
-  "airports-military": {
+  "airports": {
     "kind": "geojson",
-    "file": "overlays/airports-military.geojson",
+    "file": "overlays/airports.geojson",
+    "features": 0,
+    "size_bytes": 45
+  },
+  "military": {
+    "kind": "geojson",
+    "file": "overlays/military.geojson",
     "features": 0,
     "size_bytes": 45
   },

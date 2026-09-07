@@ -5,7 +5,7 @@ icon: radiation
 order: 1
 summary: A nuclear strike on the UK. The flash and blast, fallout, the fall-out room, the first 48 hours, stable iodine, and the months after.
 modules: [radiation, shelter-heat, water, food, sanitation, medical, comms, evacuation]
-overlays: [nuclear-sites, airports-military, health, water]
+overlays: [nuclear-sites, military, airports, health, water]
 reviewed: null
 sources:
   - title: National Risk Register 2025
@@ -99,7 +99,7 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 
 ## UK specifics
 
-- **Targets and wind.** The UK's nuclear weapons infrastructure is HMNB Clyde at Faslane and the warhead store at Coulport, AWE Aldermaston and Burghfield, the submarine yards at Barrow, Devonport and Rosyth, and the US-used air bases ([Nuclear weapons of the United Kingdom](kiwix:wikipedia_en_all_maxi/Nuclear_weapons_of_the_United_Kingdom)); they are on the map with the airfields ([UK target overlay](map:?overlay=nuclear-sites&overlay=airports-military)). Britain's prevailing wind is south-westerly ([Climate of the United Kingdom](kiwix:wikipedia_en_all_maxi/Climate_of_the_United_Kingdom)), so fallout from a strike usually travels north-east of it; the wind on the day decides, and the map's compass tells you which way you are from the nearest site.
+- **Targets and wind.** The UK's nuclear weapons infrastructure is HMNB Clyde at Faslane and the warhead store at Coulport, AWE Aldermaston and Burghfield, the submarine yards at Barrow, Devonport and Rosyth, and the US-used air bases ([Nuclear weapons of the United Kingdom](kiwix:wikipedia_en_all_maxi/Nuclear_weapons_of_the_United_Kingdom)); they are on the map with the airfields ([UK target overlay](map:?overlay=nuclear-sites&overlay=military&overlay=airports)). Britain's prevailing wind is south-westerly ([Climate of the United Kingdom](kiwix:wikipedia_en_all_maxi/Climate_of_the_United_Kingdom)), so fallout from a strike usually travels north-east of it; the wind on the day decides, and the map's compass tells you which way you are from the nearest site.
 - **How far the blast and heat reach.** A Trident warhead is about 100 kilotons ([Trident](kiwix:wikipedia_en_all_maxi/Trident_(UK_nuclear_programme))), and warheads of 100 to 475 kilotons are the commonest in the big arsenals ([Effects of nuclear explosions](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)). Under clear skies a 20 kiloton air burst (Hiroshima-class) destroys most buildings out to about 1.7 km, damages them out to about 4.7 km and gives third-degree burns to exposed skin out to about 2.5 km; a 1 megaton burst destroys most buildings to about 6.2 km, damages them to about 17 km and burns to about 12 km ([Effects of nuclear explosions](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)); for 100 kilotons, severe blast reaches about 1.9 km ([Effects of nuclear explosions](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)). FEMA's planning table for a 10 kiloton ground burst is severe damage to 0.8 km, moderate to 1.6 km and light damage (mostly broken glass) to 4.8 km ([FEMA, p. 27](doc:fema-nuclear-detonation-2022#page=27)). A megaton burst breaks some windows 64 km away, and its blast wave takes about 22 seconds to reach a point 10 km out ([NWSS, p. 30](doc:nwss#page=30)): that gap is why "drop and cover" at the flash works.
 - **No public shelters.** The Cold War shelter and warning organisations were wound up in 1992, and the rising-and-falling siren and the four-minute warning belong to the past ([Four-minute warning](kiwix:wikipedia_en_all_maxi/Four-minute_warning)); Protect and Survive (1980) remains the only public shelter guidance ever printed in the UK ([Protect and Survive, p. 3](doc:protect-and-survive-1980#page=3)), and its instruction on the warning was the same as today's: children to the fall-out room, gas and electricity off at the mains, stoves closed, windows shut, curtains drawn ([Protect and Survive, p. 11](doc:protect-and-survive-1980#page=11)). The register's nuclear-attack scenario is held at a higher classification ([NRR 2025, p. 184](doc:nrr-2025#page=184)).
 - **Stable iodine.** UK stock is potassium iodate, pre-distributed only inside the planning zones round civil nuclear sites under REPPIR 2019; the doses by age and who has priority are in the [radiation module](module:radiation). The tablets do nothing for radiation sickness and nothing against fallout gamma ([FEMA, p. 97](doc:fema-nuclear-detonation-2022#page=97)).
@@ -134,7 +134,7 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 - [Fallout shelter (Wikipedia)](kiwix:wikipedia_en_all_maxi/Fallout_shelter)
 - [Effects of nuclear explosions (Wikipedia)](kiwix:wikipedia_en_all_maxi/Effects_of_nuclear_explosions)
 - [Radiation emergencies (Ready.gov)](kiwix:www.ready.gov_en/www.ready.gov/radiation)
-- [UK target overlay](map:?overlay=nuclear-sites&overlay=airports-military)
+- [UK target overlay](map:?overlay=nuclear-sites&overlay=military&overlay=airports)
 - [Nuclear accident playbook](playbook:nuclear-accident)
 - [Impact winter playbook](playbook:impact-winter)
 - [Survival, ATP 3-50.21 (US Army, 2018)](doc:atp-3-50-21-survival)
