@@ -255,6 +255,8 @@ const FIELDCRAFT: [string, string, string, string][] = [
 
 export const pages: Page[] = [
   ...FIELDCRAFT.map(([slug, title, icon, summary], i) => ({ slug, title, icon, order: i + 1, html: '', category: 'fieldcraft', summary })),
+  { slug: 'rebuild-first-year', title: 'The first year', icon: 'seedling', order: 1, html: '', category: 'rebuild', summary: 'What a household does once the emergency itself is over.' },
+  { slug: 'rebuild-essentials-printed', title: 'Essentials, printed', icon: 'print', order: 3, html: '', category: 'rebuild', summary: 'The sheets to print while there is still power and toner.' },
   { slug: 'pmr446', title: 'PMR446 radio', icon: 'radio', order: 1, html: '', category: 'comms' },
   { slug: 'uk-numbers', title: 'UK emergency numbers', icon: 'phone', order: 2, html: '', category: 'comms' },
   { slug: 'what-still-works', title: 'What still works', icon: 'wifi', order: 3, html: '', category: 'comms' },
@@ -271,6 +273,14 @@ export const fieldcraftPage: Page = {
   slug: 'shelter-and-warmth', title: 'Shelter and warmth', icon: 'home', order: 1, category: 'fieldcraft',
   summary: 'Staying dry and out of the wind, indoors and out.',
   html: '<p>Warmth before food. A dry, still, insulated space keeps a person alive far longer than a meal does.</p><h2>Indoors, with no heating</h2><p>Pick one room, ideally south-facing with the fewest outside walls. Close the doors to the rest of the house. Put something over the windows at dusk and take it down at first light.</p><h2>Outdoors</h2><p>Get off the ground first: bracken, leaves, a rucksack, anything. The ground takes more heat than the air does.</p><table><tr><th>Layer</th><th>What it does</th></tr><tr><td>Next to the skin</td><td>Moves sweat away; never cotton</td></tr><tr><td>Middle</td><td>Traps still air: fleece, wool, down</td></tr><tr><td>Outside</td><td>Stops wind and rain</td></tr></table>',
+};
+
+/** The printed primer: a bundle of one-page sheets under `## ` headings, each of which prints on
+ * its own side of A4. */
+export const rebuildSheets: Page = {
+  slug: 'rebuild-essentials-printed', title: 'Essentials, printed', icon: 'print', order: 3, category: 'rebuild',
+  summary: 'The sheets to print while there is still power and toner.',
+  html: '<p>Print these while the printer still runs.</p><h2>Boiling water</h2><p>A rolling boil for one minute.</p><h2>Hand washing</h2><p>Twenty seconds, soap, both sides.</p>',
 };
 
 export const householdPlan: Page = {

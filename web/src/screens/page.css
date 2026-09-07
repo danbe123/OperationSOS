@@ -1,0 +1,7 @@
+/* The printed primer (`rebuild-essentials-printed`) is a bundle of one-page sheets, one under each
+   `## ` heading: on paper every sheet starts a new side, so a household can pull one out, pin it up
+   and put it back. The first heading does not break, or the printer leads with a blank side. */
+@media print {
+  .page-print-sheets .html h2 { break-before: page; }
+  .page-print-sheets .html h2:first-of-type { break-before: auto; }
+}

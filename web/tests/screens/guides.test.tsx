@@ -49,6 +49,14 @@ describe('Guides', () => {
     expect(screen.getByRole('navigation', { name: 'Tools' })).toBeInTheDocument();
   });
 
+  it('groups the rebuilding pages under their own heading', async () => {
+    mockGuides();
+    renderRoute('/guides');
+    const rebuild = await screen.findByRole('navigation', { name: 'Rebuilding' });
+    expect(within(rebuild).getByRole('link', { name: /The first year/ })).toHaveAttribute('href', '/p/rebuild-first-year');
+    expect(screen.getByRole('region', { name: 'Rebuilding' })).toHaveTextContent('2 pages.');
+  });
+
   it('keeps the household plan as a page in Reference', async () => {
     mockGuides();
     renderRoute('/guides');

@@ -15,6 +15,7 @@ type Group = { id: string; title: string; unit: string; note: string; entries: {
 
 const PAGE_GROUPS: { id: string; title: string; unit: string; note: string; categories: string[] }[] = [
   { id: 'fieldcraft', title: 'Field craft', unit: 'pages', note: 'Shelter, fire, water, wild food, moving about.', categories: ['fieldcraft'] },
+  { id: 'rebuild', title: 'Rebuilding', unit: 'pages', note: 'After the situation: the first year, the trades, science and the library, and the box itself.', categories: ['rebuild'] },
   { id: 'comms', title: 'Phone and radio', unit: 'pages', note: 'Numbers, PMR446, what still works.', categories: ['comms'] },
   { id: 'reference', title: 'Reference', unit: 'pages', note: 'The pages the guides link to.', categories: ['reference', 'plan', 'about'] },
 ];
