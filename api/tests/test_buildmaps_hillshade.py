@@ -31,7 +31,7 @@ def test_hillshade_step_runs_the_spec_pipeline_in_order(tmp_path):
     tools = [c[0] if c[0] not in ("pmtiles", "gdal") else " ".join(c[:2 if c[0] == "pmtiles" else 3])
              for c in runner.calls if c[0] not in ("aria2c", "gdalinfo")]
     assert tools == ["gdalbuildvrt", "gdalbuildvrt", "ogr2ogr", "gdalwarp", "gdal_rasterize", "gdaldem", "gdal raster calc",
-                     "gdal_translate", "gdaladdo", "pmtiles convert", "pmtiles show"]
+                     "gdalwarp", "gdal_translate", "gdaladdo", "pmtiles convert", "pmtiles show"]
     land = runner.find("ogr2ogr")[0]
     assert land == ["ogr2ogr", "-f", "GPKG", "-t_srs", "EPSG:3857", "-spat", "-1.56", "50.87", "-1.46", "50.97",
                     "-clipsrc", "-1.56", "50.87", "-1.46", "50.97", "-makevalid", "-nlt", "PROMOTE_TO_MULTI",
@@ -56,8 +56,11 @@ def test_hillshade_step_runs_the_spec_pipeline_in_order(tmp_path):
     assert calc[calc.index("--calc") + 1] == "A*(B==1)" and calc[calc.index("--nodata") + 1] == "0", "shaded sea becomes 0, gdaldem's nodata"
     assert calc[-2:] == ["-o", str(work / "hillshade.tif")]
     translate = runner.find("gdal_translate")[0]
-    assert translate == ["gdal_translate", "-of", "MBTILES", "-co", "TILE_FORMAT=PNG8", "-co", "ZOOM_LEVEL_STRATEGY=LOWER",
-                         str(work / "hillshade.tif"), str(work / "hillshade.mbtiles")]
+    alpha = runner.find("gdalwarp")[1]
+    assert alpha[:4] == ["gdalwarp", "-overwrite", "-srcnodata", "0"] and "-dstalpha" in alpha
+    assert alpha[-2:] == [str(work / "hillshade.tif"), str(work / "hillshade-alpha.tif")]
+    assert translate == ["gdal_translate", "-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", "ZOOM_LEVEL_STRATEGY=LOWER",
+                         str(work / "hillshade-alpha.tif"), str(work / "hillshade.mbtiles")]
     assert runner.find("gdaladdo")[0] == ["gdaladdo", "-r", "average", str(work / "hillshade.mbtiles"), "2", "4", "8", "16", "32", "64", "128"]
     assert runner.find("pmtiles", "convert")[0] == ["pmtiles", "convert", str(work / "hillshade.mbtiles"), str(ctx.incoming / "hillshade.pmtiles")]
     assert (ctx.out / "hillshade.pmtiles").read_bytes() == b"png-archive"

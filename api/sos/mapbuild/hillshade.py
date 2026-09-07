@@ -9,7 +9,7 @@ from .dem import DTM_NODATA, LAND_POLYGONS_ZIP, dem_vrts, land_mask
 
 PIPELINE = ("gdalwarp -t_srs EPSG:3857 -tr 30 30 (Copernicus, OSNI, OS Terrain 50; later inputs win; gaps are nodata) -> "
             "gdaldem hillshade -compute_edges -z 1 -s 1 -az 315 -alt 45 -> gdal raster calc x OSM land mask (sea is nodata) -> "
-            "gdal_translate MBTILES PNG8 -> gdaladdo 2..128 -> pmtiles convert")
+            "gdalwarp -dstalpha (sea transparent) -> gdal_translate MBTILES PNG -> gdaladdo 2..128 -> pmtiles convert")
 
 
 def _info(ctx: Context, raster: Path) -> dict:
@@ -58,10 +58,17 @@ class HillshadeStep:
         ctx.run(["gdal", "raster", "calc", "--overwrite", "-i", f"A={raw}", "-i", f"B={mask}", "--calc", "A*(B==1)",
                  "--nodata", "0", "--ot", "UInt8", "--co", "TILED=YES", "--co", "COMPRESS=DEFLATE", "--co", "BIGTIFF=YES",
                  "-o", str(shade)])
+        # The tiles must carry the transparency, not just the GeoTIFF: written straight from a one-band
+        # raster the MBTiles held sea as opaque black, which the map drew at 35 % over the water as a
+        # teal wash that ended in a jagged step wherever the tile coverage ended. An alpha band made
+        # from the nodata makes the sea see-through in every tile and overview.
+        alpha = work / "hillshade-alpha.tif"
+        ctx.run(["gdalwarp", "-overwrite", "-srcnodata", "0", "-dstalpha", "-multi", "-wo", "NUM_THREADS=ALL_CPUS",
+                 "-co", "TILED=YES", "-co", "COMPRESS=DEFLATE", "-co", "BIGTIFF=YES", str(shade), str(alpha)])
         mbtiles = work / "hillshade.mbtiles"
         mbtiles.unlink(missing_ok=True)
-        ctx.run(["gdal_translate", "-of", "MBTILES", "-co", "TILE_FORMAT=PNG8", "-co", "ZOOM_LEVEL_STRATEGY=LOWER",
-                 str(shade), str(mbtiles)])
+        ctx.run(["gdal_translate", "-of", "MBTILES", "-co", "TILE_FORMAT=PNG", "-co", "ZOOM_LEVEL_STRATEGY=LOWER",
+                 str(alpha), str(mbtiles)])
         ctx.run(["gdaladdo", "-r", "average", str(mbtiles), "2", "4", "8", "16", "32", "64", "128"])
         staged = ctx.stage("hillshade.pmtiles")
         ctx.run(["pmtiles", "convert", str(mbtiles), str(staged)])
