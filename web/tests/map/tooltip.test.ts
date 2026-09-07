@@ -77,8 +77,32 @@ describe('renderDescription', () => {
     expect(el.querySelector('.map-tip-section a')?.getAttribute('href')).toBe('/m/water');
     // ...while the feature's own values stay text, whatever OSM put in them.
     expect(el.querySelector('.map-tip-rows dd')?.textContent).toBe('1200');
-    // The guide is named rather than linked: opening one is the card's business, not the hover's.
-    expect(el.querySelector('.map-tip-guide')?.textContent).toBe('Guide: Medical');
+    // The guide is a real button at the foot, named for what it opens, not a "Guide:" caption.
+    const guide = el.querySelector('.map-tip-guide');
+    expect(guide?.textContent).toBe('Open the Medical guide');
+    expect(guide?.getAttribute('href')).toBe('/m/medical');
+    expect(guide?.classList.contains('btn')).toBe(true);
+  });
+
+  it('bands each section with its own class and its own icon, so the eye finds one in a second', () => {
+    const el = renderDescription(
+      { title: 'Southampton General Hospital', overlay: 'Hospitals', typeLine: 'Hospital', kind: 'hospital', rows: [] },
+      mapPlaces.hospital,
+    );
+    // The id is on the section itself: the rule down its edge and the tone of its icon and bullets
+    // hang off it in map.css, and the black-and-white theme tells them apart by rule style alone.
+    expect([...el.querySelectorAll('.map-tip-section')].map((s) => s.className)).toEqual([
+      'map-tip-section map-tip-section-have',
+      'map-tip-section map-tip-section-useful',
+      'map-tip-section map-tip-section-avoid',
+      'map-tip-section map-tip-section-approach',
+    ]);
+    // Every heading carries its own small icon, drawn in the section's tone, and the words beside it.
+    const heads = [...el.querySelectorAll('.map-tip-section h4')];
+    expect(heads.map((h) => h.querySelector('svg.map-tip-icon')?.getAttribute('width'))).toEqual(['16', '16', '16', '16']);
+    expect(heads.every((h) => (h.querySelector('svg') as SVGElement | null)?.children.length)).toBeTruthy();
+    // The head is one block: the name, the type and the facts, with a rule under it in map.css.
+    expect(el.querySelector('.map-tip-head .map-tip-title')?.textContent).toBe('Southampton General Hospital');
   });
 });
 
@@ -157,7 +181,7 @@ describe('attachFeatureTooltip', () => {
     move(map, 11, 11);
     expect([...map.getContainer().querySelectorAll('.map-tip-section h4')].map((h) => h.textContent))
       .toEqual(['Usually here', 'Worth going when', 'Stay away when', 'How to go about it']);
-    expect(tip(map, '.map-tip-guide')?.textContent).toBe('Guide: Medical');
+    expect(tip(map, '.map-tip-guide')?.textContent).toBe('Open the Medical guide');
     // A kind the box has no guidance for stays the name, the type and the rows.
     map.renderedFeatures = [path];
     move(map, 12, 12);

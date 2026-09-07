@@ -84,6 +84,15 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   await expect(tip).toContainText('Usually here');
   expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
   expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  // Four bands, each with its own rule and its own icon, and the guide as a button at the foot.
+  await expect(tip.locator('.map-tip-section')).toHaveCount(4);
+  await expect(tip.locator('.map-tip-section-avoid .map-tip-section-head svg.map-tip-icon')).toBeVisible();
+  const bullet = tip.locator('.map-tip-section-have li').first();
+  expect(await bullet.evaluate((li) => getComputedStyle(li).listStyleType)).toBe('none');
+  expect(await bullet.evaluate((li) => parseFloat(getComputedStyle(li).fontSize))).toBeGreaterThanOrEqual(16);
+  const guide = tip.locator('a.map-tip-guide');
+  await expect(guide).toHaveText(/^Open the .+ guide$/);
+  await expect(guide).toHaveAttribute('href', /^\//);
 
   // The panel is docked inside the map with a margin at top and bottom, so all of it is on screen:
   // anchored to the point, 600 px of guidance ran off the bottom edge and only the title was readable.
@@ -102,6 +111,10 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   const card = page.getByRole('dialog', { name: 'Place' });
   await expect(card).toContainText('Southampton General Hospital');
   await expect(card).toContainText('What to expect here');
+  // The card says the same four bands, off the same file, so the two readings cannot drift apart.
+  await expect(card.locator('.map-tip-section')).toHaveCount(4);
+  await expect(card.locator('.map-tip-section-approach .map-tip-section-head svg.map-tip-icon')).toBeVisible();
+  await expect(card.locator('a.map-tip-guide')).toHaveText(/^Open the .+ guide$/);
   await expect(tip).toBeHidden();
 
   // A tap on empty map closes it again — on the left, clear of the card that opened on the right.

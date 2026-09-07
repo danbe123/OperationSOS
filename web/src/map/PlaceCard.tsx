@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
-import type { PlaceGuidance } from '../api/types';
+import type { PlaceGuidance, PlaceSection } from '../api/types';
 import { Html } from '../components/Html';
 import { Icon } from '../icons';
 import { gridRef } from './grid';
 import { bearingDeg, distanceKm, formatBearing, formatDistance, formatWalk, naismithMinutes, type LngLat } from './measure';
 import { MapPanel } from './MapPanel';
+import { guideLinkLabel, SECTION_ICON_PATHS, SECTION_ICON_SIZE, sectionClassName } from './placeSections';
 import type { TappedPlace } from './tooltip';
 
 /** Where the distance is measured from: home when the box has one, else the middle of the map. */
@@ -18,6 +19,26 @@ export function distanceLine(place: LngLat, from: From): { answer: string; origi
     answer: `${formatDistance(km)} ${formatBearing(bearingDeg(from, place))}, about ${formatWalk(naismithMinutes(km))} on foot`,
     origin: `from ${from.label} · ${gridRef(place.lat, place.lon).text}`,
   };
+}
+
+/** One of the four survival sections, in exactly the shape the docked hover panel builds in plain
+ * DOM: the same class names, the same icon and the same bullets, off the same file, so a card and a
+ * hover of the same hospital can never come to look like two different things. The heading is an h3
+ * here because the card's own sections are h3s; the panel, which has no h3s above it, uses h4. */
+function GuideSection({ part }: { part: PlaceSection }) {
+  return (
+    <section className={sectionClassName(part.id)}>
+      <h3 className="map-tip-section-head">
+        <svg
+          className="map-tip-icon" width={SECTION_ICON_SIZE} height={SECTION_ICON_SIZE} viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: SECTION_ICON_PATHS[part.id] }}
+        />
+        <span>{part.title}</span>
+      </h3>
+      <Html html={part.html} />
+    </section>
+  );
 }
 
 /** What one place on the map is, what it has, how far away it is and what to expect there in an
@@ -65,13 +86,8 @@ export function PlaceCard({ place, from, guidance, onClose, onRoute, onPin, onNe
           </section>
           {/* What is usually here, when it is worth going, when to stay away and how to go about it:
               the same four lists the hover tooltip carries, for the finger that opened the card. */}
-          {guidance.sections.map((part) => (
-            <section className="place-section" key={part.id}>
-              <h3>{part.title}</h3>
-              <Html html={part.html} />
-            </section>
-          ))}
-          <Link className="btn" to={guidance.link.href}><Icon name="book" size={18} /><span>Open {guidance.link.title}</span></Link>
+          {guidance.sections.map((part) => <GuideSection key={part.id} part={part} />)}
+          <Link className="btn map-tip-guide" to={guidance.link.href}><Icon name="book" size={18} /><span>{guideLinkLabel(guidance)}</span></Link>
         </>
       )}
     </MapPanel>

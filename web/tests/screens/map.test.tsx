@@ -210,7 +210,7 @@ describe('Map screen', () => {
     // The hover is the fast read of the same survival answers the card carries.
     expect(tip).toHaveTextContent('Usually here');
     expect(tip).toHaveTextContent('Mains power on generators for a few days');
-    expect(tip).toHaveTextContent('Guide: Medical');
+    expect(tip).toHaveTextContent('Open the Medical guide');
     expect(map.getCanvas().style.cursor).toBe('pointer');
     // The tap replaces the panel with the card: the hover is a read, the card is the answer.
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
@@ -256,9 +256,18 @@ describe('Map screen', () => {
     expect(within(card).getAllByRole('heading', { level: 3 }).map((h) => h.textContent))
       .toEqual(['What it has', 'What to expect here', 'Usually here', 'Worth going when', 'Stay away when', 'How to go about it']);
     expect(within(card).getByText('Take medicines and a written list')).toBeInTheDocument();
+    // The card says the four sections in exactly the shape the hover panel builds them, off the same
+    // file: the same bands, the same class per section, the same icon beside each heading.
+    expect([...card.querySelectorAll('.map-tip-section')].map((s) => s.className)).toEqual([
+      'map-tip-section map-tip-section-have',
+      'map-tip-section map-tip-section-useful',
+      'map-tip-section map-tip-section-avoid',
+      'map-tip-section map-tip-section-approach',
+    ]);
+    expect(card.querySelectorAll('.map-tip-section-head svg.map-tip-icon')).toHaveLength(4);
     // The guide's own link and the button under it both go to the guide, and both navigate in the app.
     expect(within(card).getByRole('link', { name: 'Medical' })).toHaveAttribute('href', '/m/medical');
-    expect(within(card).getByRole('link', { name: 'Open Medical' })).toHaveAttribute('href', '/m/medical');
+    expect(within(card).getByRole('link', { name: 'Open the Medical guide' })).toHaveAttribute('href', '/m/medical');
     await user.click(within(card).getByRole('button', { name: 'Route from the map centre' }));
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Southampton General Hospital:');
     await user.click(within(card).getByRole('button', { name: 'Pin this place' }));
