@@ -14,10 +14,10 @@ Blood is flowing or spurting, soaking through cloth, or pooling; the person is p
 
 1. Get help coming — [[call 999]]. Gloves on if you have them.
 2. Press hard on the wound with a pad or clean cloth. Do not let go.
-3. Keep pressing for at least 10 minutes without lifting to look.
-4. If blood soaks through, add more on top; never remove the first pad.
-5. For a deep wound in the groin, armpit or neck, pack the wound tightly with gauze or clean cloth and press on the packing.
-6. For a limb wound that will not stop, put a tourniquet 5 to 7 cm above the wound, not over a joint, tighten until the bleeding stops, and write the time on it. Do not loosen it.
+3. Not stopping in a couple of minutes? Escalate, do not wait it out.
+4. If blood soaks through, take that pad off and press with a fresh one.
+5. For a deep wound in the groin or armpit, pack the wound tightly with gauze or clean cloth and press on the packing. For the neck, press directly on the wound: do not pack it, and never put anything round the neck.
+6. For a limb wound that will not stop, put a tourniquet 5 to 7 cm above the wound, not over a joint, tighten until the bleeding stops, and write the time on it. Do not loosen it. If one is not enough, put a second one above the first.
 7. Lie the person down, keep them warm, and treat for [shock](card:shock).
 8. Do not give food or drink.
 
@@ -45,6 +45,7 @@ Treat behind a locked door, not on the street, and do not go out to a casualty w
 
 **Warning:** A tourniquet hurts; that is expected. Leave it on for the paramedics.
 **Warning:** Do not remove an object stuck in a wound; press around it.
+**Warning:** A pad soaked through is not pressing on anything. Replace it rather than piling more on top, and do not hold pressure for a fixed count of minutes while the bleeding continues — pack the wound or put a tourniquet on instead.
 
 ## Stop or escalate
 
@@ -56,4 +57,4 @@ No ambulance is coming, so the plan is: stop the bleeding, then decide about mov
 
 ## Source
 
-[Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [FM 4-25.11, p. 41](doc:fm-4-25-11-first-aid#page=41); [Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/); [Emergency War Surgery, p. 543](doc:emergency-war-surgery-2018#page=543).
+[Ship Captain's Medical Guide ch. 1, p. 15](doc:scmg-ch01#page=15); [FM 4-25.11, p. 41](doc:fm-4-25-11-first-aid#page=41); [Cuts and grazes (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/cuts-and-grazes/); [Emergency War Surgery, p. 543](doc:emergency-war-surgery-2018#page=543). The pad-replacement rule and the escalating approach to pressure, packing and tourniquet follow St John Ambulance's severe bleeding advice and the Resuscitation Council UK 2025 first aid guidelines, which are not in this box's library.

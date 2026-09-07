@@ -35,13 +35,15 @@ Anchors: [Sanitation](kiwix:wikipedia_en_all_maxi/Sanitation), [Composting toile
 2. [Where There Is No Doctor](doc:where-there-is-no-doctor) — the village handbook: diagnosis, drugs, childbirth, children.
 3. [Survival and Austere Medicine](doc:survival-austere-medicine-2017) — the harder end: anaesthesia, surgery, making and keeping drugs. Teeth have their own book, [Where There Is No Dentist](doc:where-there-is-no-dentist).
 
+Also on the core shelf: the [Medical Library (zimgit)](kiwix:zimgit-medicine_en/home), a curated set of public-domain field first-aid and austere-care PDFs, which is the closest thing here to a second opinion on any of the three above.
+
 Anchors: [Sanitation](kiwix:wikipedia_en_all_maxi/Sanitation), [Germ theory of disease](kiwix:wikipedia_en_all_maxi/Germ_theory_of_disease), [Penicillin](kiwix:wikipedia_en_all_maxi/Penicillin), [Midwifery](kiwix:wikipedia_en_all_maxi/Midwifery). The medical encyclopedias are [WikiMed](kiwix:wikipedia_en_medicine_maxi/Sepsis) and [WikEM](kiwix:wikem_en_all_maxi/Main_Page).
 
 ## Surgery and first aid
 
 1. [Medical module](module:medical) and the quick cards — [severe bleeding](card:severe-bleeding), [wound cleaning](card:wound-cleaning), [wound closure](card:wound-closure), [sepsis](card:sepsis).
 2. [FM 4-25-11, First Aid](doc:fm-4-25-11-first-aid) — the drills, illustrated, for people with no training.
-3. [Emergency War Surgery](doc:emergency-war-surgery-2018) — triage and damage control when there is no hospital; the [Special Forces Medical Handbook](doc:st-31-91b-sf-medical-handbook) covers the middle ground.
+3. [Emergency War Surgery](doc:emergency-war-surgery-2018) — triage and damage control when there is no hospital; the [Special Forces Medical Handbook](doc:st-31-91b-sf-medical-handbook) covers the middle ground, and the [Medical Library (zimgit)](kiwix:zimgit-medicine_en/home) adds a shelf of field first-aid PDFs alongside them.
 
 Anchors: [Antiseptic](kiwix:wikipedia_en_all_maxi/Antiseptic), [Debridement](kiwix:wikipedia_en_all_maxi/Debridement), [Triage](kiwix:wikipedia_en_all_maxi/Triage), [Tourniquet](kiwix:wikipedia_en_all_maxi/Tourniquet).
 
@@ -66,6 +68,8 @@ Anchors: [Soap](kiwix:wikipedia_en_all_maxi/Soap), [Lye](kiwix:wikipedia_en_all_
 1. [Iron and tools](page:rebuild-iron-and-tools) — scrap before ore, the forge, hardening and tempering.
 2. [Tools and repair module](module:tools-repair) and [iFixit](kiwix:ifixit_en_all/home/home) — keeping what exists working, which beats making anything new.
 3. [Engineering Q&A](kiwix:engineering.stackexchange.com_en_all/questions) and [Woodworking Q&A](kiwix:woodworking.stackexchange.com_en_all/questions) — worked answers on loads, materials and joints.
+
+4. **If you have the extended shelf:** the Survivor Library (manifest id `survivorlibrary.com_en_all`), tens of thousands of scanned pre-1920s trade books covering blacksmithing, farriery, edge-tool making and forge practice from the era when all of it was ordinary work. It is the deepest reference in the box for this domain, it is not on every copy, and it is worth copying before it is needed ([Iron and tools](page:rebuild-iron-and-tools); [Keeping the box alive](page:rebuild-keeping-the-box)).
 
 Anchors: [Blacksmith](kiwix:wikipedia_en_all_maxi/Blacksmith), [Forge](kiwix:wikipedia_en_all_maxi/Forge), [Bloomery](kiwix:wikipedia_en_all_maxi/Bloomery), [Tempering](kiwix:wikipedia_en_all_maxi/Tempering_(metallurgy)), [Blast furnace](kiwix:wikipedia_en_all_maxi/Blast_furnace).
 
