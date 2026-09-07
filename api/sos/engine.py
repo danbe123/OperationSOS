@@ -16,10 +16,11 @@ from zoneinfo import ZoneInfo
 
 from sos import conditions as cond
 from sos import sun
-from sos.rules import Rule, Rules, parse_duration
+from sos.rules import DEFAULT_RANK, Rule, Rules, parse_duration
 from sos.system import THEMES
 
 BUCKETS = ("now", "hour", "today", "week")
+BUCKET_WHY = {"now": "right now", "hour": "in the first hour", "today": "today", "week": "this week"}
 PHASE_TITLES = {"right-now": "Right now", "first-72-hours": "First 72 hours", "first-month": "First month",
                 "long-term": "Long term"}
 LINK_KINDS = {"playbook": "playbook", "module": "module", "page": "page", "card": "card", "doc": "doc", "map": "map",
@@ -39,7 +40,7 @@ class Model:
     scenario: Optional[dict] = None                       # {slug, title, started_at, elapsed_s, phase}
     home: dict = field(default_factory=lambda: dict(DEFAULT_HOME))
     drill: bool = False
-    checklist: tuple[dict, ...] = ()                      # {id, text} for the active scenario
+    checklist: tuple[dict, ...] = ()                      # {id, text, bucket} for the active scenario
     checklist_state: dict[str, bool] = field(default_factory=dict)
     task_state: dict[str, dict] = field(default_factory=dict)
     detected: dict[str, dict] = field(default_factory=dict)   # condition id -> {state, at, confidence, sensor}
@@ -70,7 +71,7 @@ def _season(now: datetime) -> str:
 
 
 def matches(clause: dict, states: dict[str, str], model: Model, dark: bool) -> bool:
-    """Every key in a `when` (or `until`) must hold. An empty clause always holds."""
+    """Every key in a `when` (or an `until`/`unless`) must hold. An empty clause always holds."""
     for key, value in (clause or {}).items():
         if key in cond.IDS:
             wanted = value if isinstance(value, list) else [value]
@@ -80,11 +81,13 @@ def matches(clause: dict, states: dict[str, str], model: Model, dark: bool) -> b
             if phones_state(states) != value:
                 return False
         elif key == "scenario":
+            # a slug, a list of slugs, or `any` for "some scenario is running"
             slug = (model.scenario or {}).get("slug")
-            if value == "any":
+            wanted = value if isinstance(value, list) else [value]
+            if "any" in wanted:
                 if slug is None:
                     return False
-            elif slug != value:
+            elif slug not in wanted:
                 return False
         elif key == "dark":
             if bool(value) != dark:
@@ -211,32 +214,44 @@ def _task(model: Model, task_id: str, title: str, bucket: str, why: str, link: O
 def task_rule_applies(rule: Rule, model: Model, states: dict[str, str], dark: bool) -> bool:
     if not matches(rule.when, states, model, dark):
         return False
-    if rule.until and matches(rule.until, states, model, dark):
+    if any(matches(clause, states, model, dark) for clause in rule.blockers):
         return False
     return not (rule.after and trigger_since(rule.when, model, states) + rule.after_td > model.now)
 
 
 def tasks(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
+    """The jobs, most urgent first: by bucket, then by rank, then in the order they were written.
+
+    Nothing is sorted by title. A household reads the list from the top, so the order is the author's:
+    the task rules in `tasks.yaml` file order and then the scenario's checklist in checklist order, each
+    item in the bucket its author gave it, with `rank` (100 unless a rule says otherwise) to lift a
+    scenario's own first actions above generic housekeeping inside the same bucket."""
     out: list[dict] = []
+    ranks: dict[str, int] = {}
     seen: set[str] = set()
 
-    def add(task: dict) -> None:
+    def add(task: dict, rank: int) -> None:
         if task["id"] not in seen:
             seen.add(task["id"])
+            ranks[task["id"]] = rank
             out.append(task)
 
     for rule in rules.tasks:
         if not task_rule_applies(rule, model, states, dark):
             continue
-        add(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
+        add(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"), rule.rank)
     if model.scenario:
         slug = model.scenario["slug"]
         title = model.scenario.get("title") or slug
         for item in model.checklist:
-            add(_task(model, f"checklist:{slug}/{item['id']}", item["text"], "today",
-                      f"On the {title} checklist.", f"playbook:{slug}#checklist", f"checklist:{slug}",
-                      done_from_checklist=bool(model.checklist_state.get(item["id"]))))
-    out.sort(key=lambda t: (BUCKETS.index(t["bucket"]) if t["bucket"] in BUCKETS else len(BUCKETS), t["title"]))
+            bucket = item.get("bucket") or "today"
+            why = f"{title}: {BUCKET_WHY.get(bucket, bucket)}"
+            add(_task(model, f"checklist:{slug}/{item['id']}", item["text"], bucket,
+                      why, f"playbook:{slug}#checklist", f"checklist:{slug}",
+                      done_from_checklist=bool(model.checklist_state.get(item["id"]))),
+                DEFAULT_RANK)
+    # a stable sort: within a bucket and a rank, tasks keep the order they were produced in
+    out.sort(key=lambda t: (BUCKETS.index(t["bucket"]) if t["bucket"] in BUCKETS else len(BUCKETS), ranks[t["id"]]))
     return out
 
 

@@ -11,7 +11,7 @@
     "state": { "enum": ["working", "degraded", "off"] },
     "when": {
       "type": "object",
-      "description": "Every key must match. Condition keys take a state or a list of states; scenario takes a slug or 'any'; dark and drill take booleans; phones takes off (no route) or working (some route).",
+      "description": "Every key must match. Condition keys take a state or a list of states; scenario takes a slug, a list of slugs or 'any' (some scenario is running); dark and drill take booleans; phones takes off (no route) or working (some route).",
       "additionalProperties": false,
       "properties": {
         "power": { "$ref": "#/$defs/stateOrList" }, "water": { "$ref": "#/$defs/stateOrList" }, "mobile": { "$ref": "#/$defs/stateOrList" },
@@ -19,10 +19,13 @@
         "heating": { "$ref": "#/$defs/stateOrList" }, "roads": { "$ref": "#/$defs/stateOrList" }, "shops": { "$ref": "#/$defs/stateOrList" },
         "sewage": { "$ref": "#/$defs/stateOrList" },
         "phones": { "enum": ["off", "working"] },
-        "scenario": { "type": "string" }, "dark": { "type": "boolean" }, "drill": { "type": "boolean" },
+        "scenario": { "$ref": "#/$defs/scenarioRef" }, "dark": { "type": "boolean" }, "drill": { "type": "boolean" },
         "season": { "enum": ["winter", "summer"] }
       }
     },
+    "scenarioSlug": { "type": "string", "pattern": "^(any|[a-z0-9-]+)$" },
+    "scenarioRef": { "oneOf": [{ "$ref": "#/$defs/scenarioSlug" }, { "type": "array", "items": { "$ref": "#/$defs/scenarioSlug" }, "minItems": 1 }],
+      "description": "A scenario slug, a list of slugs, or 'any' while any scenario is running" },
     "stateOrList": { "oneOf": [{ "$ref": "#/$defs/state" }, { "type": "array", "items": { "$ref": "#/$defs/state" }, "minItems": 1 }] },
     "duration": { "type": "string", "pattern": "^\\d+(\\.\\d+)?[mhd]$", "description": "Minutes, hours or days: 30m, 4h, 2d" },
     "link": { "type": "string", "pattern": "^(playbook|module|page|card|doc|map|kiwix):" },
@@ -45,7 +48,9 @@
         "severity": { "enum": ["info", "warn", "danger"] },
         "link": { "$ref": "#/$defs/link" },
         "bucket": { "enum": ["now", "hour", "today", "week"] },
-        "until": { "$ref": "#/$defs/when" },
+        "rank": { "type": "integer", "description": "Order within the bucket, 100 by default: below 100 leads (a scenario's own first actions rank 10), above 100 follows (generic housekeeping demoted while a scenario runs). Ties keep the file order." },
+        "until": { "$ref": "#/$defs/when", "description": "The task retires when this holds: the situation has moved past it" },
+        "unless": { "$ref": "#/$defs/when", "description": "The rule does not apply while this holds, e.g. unless a scenario's own first actions supersede it" },
         "set": { "type": "object", "additionalProperties": false,
           "properties": { "theme": { "enum": ["field", "mono"] }, "dim": { "type": "boolean" }, "calls": { "enum": ["shown", "hidden"] }, "map_first": { "type": "boolean" }, "board": { "type": "boolean" } } },
         "open": { "type": "array", "items": { "$ref": "#/$defs/link" }, "minItems": 1 }

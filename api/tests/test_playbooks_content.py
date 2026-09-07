@@ -11,6 +11,7 @@ from sos import directives
 
 from sos.content import parse_document, validate_tree
 from sos.manifest import load_manifests
+from tests.conftest import real_tree_errors
 
 REPO = Path(__file__).resolve().parents[2]
 PB = REPO / "playbooks"
@@ -183,15 +184,17 @@ SCENARIO_HEADINGS = [
     "## Right now", "## First 72 hours", "## First month", "## Long term", "## UK specifics",
     "## Checklist", "## Go deeper",
 ]
-TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)\}$")
+# `- [ ] text {#id}`, with the optional bucket token after the id: `{#id now}`
+TASK_LINE = re.compile(r"^- \[ \] \S.*\S \{#([a-z0-9]+(?:-[a-z0-9]+)*)(?: (now|hour|today|week))?\}$")
 INCLUDE = re.compile(r"^\{\{module:([a-z0-9-]+)\}\}$", re.M)
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 WRITTEN = SCENARIOS
 
 
-def checklist_ids(slug: str) -> list[str]:
+def checklist_items(slug: str) -> list[tuple[str, str]]:
+    """(id, bucket) for each checklist line, the bucket defaulting to `today` as the parser does."""
     lines = sections(load("scenarios", slug).content)["Checklist"].splitlines()
-    return [m.group(1) for m in (TASK_LINE.match(l) for l in lines) if m]
+    return [(m.group(1), m.group(2) or "today") for m in (TASK_LINE.match(l) for l in lines) if m]
 
 
 @pytest.mark.parametrize("slug", WRITTEN)
@@ -238,16 +241,26 @@ def test_scenario_sections_citations_checklist_and_includes(slug):
     assert "NOMAD" not in post.content
 
 
+@pytest.mark.xfail(reason="the scenario author marks each checklist's first actions `now` "
+                          "(task-priority design, 2026-09-07 section 4)", strict=False)
+@pytest.mark.parametrize("slug", WRITTEN)
+def test_scenario_checklist_leads_with_at_least_three_now_items(slug):
+    """The first actions lead the list: a household reads from the top and does what it says."""
+    buckets = [b for _, b in checklist_items(slug)]
+    assert buckets.count("now") >= 3, (slug, buckets)
+    assert buckets[:3] == ["now", "now", "now"], (slug, buckets)
+
+
 @pytest.mark.parametrize("slug", WRITTEN)
 def test_scenario_parses_and_validates(slug):
     doc = parse_document(PB / "scenarios" / f"{slug}.md")
     assert doc.kind == "scenario" and doc.id == slug
     assert [t for _, t, _ in doc.sections if t] == [h[3:] for h in SCENARIO_HEADINGS]
-    assert [i for i, _ in doc.checklist] == checklist_ids(slug)
+    assert [(i["id"], i["bucket"]) for i in doc.checklist] == checklist_items(slug)
     errors = validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids())
     mine = [e for e in errors if e.startswith(f"scenarios/{slug}.md")]
     pending = re.compile(r"playbook '(" + "|".join(SCENARIOS) + r")' does not exist")
-    assert [e for e in mine if not pending.search(e)] == [], mine
+    assert [e for e in real_tree_errors(mine) if not pending.search(e)] == [], mine
 
 
 def all_scenarios() -> dict[str, frontmatter.Post]:
@@ -260,7 +273,7 @@ PLAYBOOK_LINK = re.compile(r"\]\(playbook:([a-z0-9-]+)\)")
 def test_every_scenario_present_and_tree_validates():
     assert sorted(p.stem for p in (PB / "scenarios").glob("*.md")) == sorted(SCENARIOS)
     errors = validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids(), require_all_scenarios=True)
-    assert [e for e in errors if not e.startswith("warning: ")] == []
+    assert real_tree_errors(errors) == []
 
 
 def test_every_module_used_by_at_least_two_scenarios():
@@ -337,5 +350,4 @@ def test_kit_relevance_clauses():
 
 def test_kit_tree_validates():
     items = load_manifests(MANIFEST_DIR)
-    errors = [e for e in validate_tree(PB, items, overlay_ids()) if not e.startswith("warning:")]
-    assert errors == []
+    assert real_tree_errors(validate_tree(PB, items, overlay_ids())) == []

@@ -95,9 +95,8 @@ def test_golden_blackout_forecast_is_ordered_by_due_time(blackout, ruleset):
 def test_golden_blackout_tasks_buckets_modes_and_briefing(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     now_tasks = [t["id"] for t in view["tasks"] if t["bucket"] == "now"]
-    assert set(now_tasks) == {"fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power",
-                              "check-on-people-nearby"}
-    assert now_tasks == sorted(now_tasks, key=lambda i: next(t["title"] for t in view["tasks"] if t["id"] == i))
+    # the file order of tasks.yaml, not the alphabet: the author decides what a household does first
+    assert now_tasks == ["fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power", "check-on-people-nearby"]
     assert not any(t["bucket"] == "week" for t in view["tasks"])
     fill = next(t for t in view["tasks"] if t["id"] == "fill-bath")
     assert fill["done"] is False and fill["person"] is None and fill["source"] == "rule:fill-bath" and fill["link"] == "module:water"
@@ -353,3 +352,171 @@ def test_a_winter_heating_failure_asks_after_the_old_and_the_young(ruleset):
     # The same failure in September, which the engine counts as summer, does not fire it.
     model.now = at("2026-09-06T14:00:00+00:00")
     assert not any(t["id"] == "check-on-people-nearby-cold" for t in engine.compute(model, ruleset)["tasks"])
+
+
+# --- prioritised tasks: buckets, the author's order and scenario-aware rules ---------------------------------
+
+DRILL_RULES = """
+rules:
+  - id: fridge-doors-shut
+    kind: task
+    when: {power: "off"}
+    title: Keep the fridge and freezer doors shut
+    bucket: now
+    rank: 200
+    why: Housekeeping, and it waits while a scenario's own first actions are done.
+    source: module:water
+
+  - id: cooker-off
+    kind: task
+    when: {power: "off"}
+    unless: {scenario: [nuclear-drill, chemical]}
+    title: Turn the cooker off at the knobs
+    bucket: now
+    why: A ring left on starts a fire when the power comes back.
+    source: module:water
+
+  - id: co-alarm-power
+    kind: task
+    when: {power: "off"}
+    title: Test the carbon monoxide alarm
+    bucket: now
+    why: Carbon monoxide gives no warning.
+    source: module:water
+
+  - id: get-everyone-in
+    kind: task
+    when: {scenario: nuclear-drill}
+    title: Get everyone into the house
+    bucket: now
+    rank: 10
+    why: The first minutes are the ones that count.
+    source: module:water
+
+  - id: shut-the-windows
+    kind: task
+    when: {scenario: nuclear-drill}
+    title: Shut every window and door
+    bucket: now
+    rank: 10
+    why: The first minutes are the ones that count.
+    source: module:water
+
+  - id: turn-the-radio-on
+    kind: task
+    when: {scenario: nuclear-drill}
+    title: Turn the radio on
+    bucket: now
+    rank: 10
+    why: The first minutes are the ones that count.
+    source: module:water
+
+  - id: plan-the-week
+    kind: task
+    when: {scenario: any}
+    title: Plan the week
+    bucket: week
+    why: Something for later, whatever the scenario is.
+    source: module:water
+
+  - id: peacetime-only
+    kind: task
+    when: {power: "off"}
+    unless: {scenario: any}
+    title: Only when no scenario is running
+    bucket: now
+    why: A scenario's own list supersedes it.
+    source: module:water
+"""
+
+
+@pytest.fixture
+def drill_rules(tmp_path) -> rules.Rules:
+    """A small rule set of its own, so the ordering test does not move whenever the real tasks.yaml does."""
+    (tmp_path / "schema.json").write_text((RULES_DIR / "schema.json").read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "tasks.yaml").write_text(DRILL_RULES, encoding="utf-8")
+    return rules.load(tmp_path)
+
+
+@pytest.fixture
+def drill() -> engine.Model:
+    """A nuclear-war drill with the power off: the scenario's own checklist, three items of it urgent."""
+    now = at("2026-09-06T14:00:00+00:00")
+    return engine.Model(
+        now=now,
+        conditions={"power": off("power", "2026-09-06T13:00:00+00:00")},
+        scenario={"slug": "nuclear-drill", "title": "Nuclear drill", "started_at": "2026-09-06T13:00:00+00:00",
+                  "elapsed_s": 3600, "phase": "right-now"},
+        home=dict(HOME), drill=True,
+        checklist=({"id": "count-people", "text": "Count everyone in the house", "bucket": "now"},
+                   {"id": "fill-the-bath", "text": "Fill the bath", "bucket": "now"},
+                   {"id": "tape-the-room", "text": "Tape up the inner room", "bucket": "now"},
+                   {"id": "ration-food", "text": "Work out the food", "bucket": "hour"},
+                   {"id": "write-it-down", "text": "Write down what you have used", "bucket": "today"},
+                   {"id": "the-long-haul", "text": "Think about the month", "bucket": "week"}),
+    )
+
+
+def test_a_drill_leads_with_the_scenarios_own_first_actions(drill, drill_rules):
+    """The complaint that started this: generic power-cut housekeeping led the list and the scenario's
+    own first actions were ninth, alphabetically. Now the scenario leads and the fridge waits."""
+    view = engine.compute(drill, drill_rules)
+    ids = [t["id"] for t in view["tasks"]]
+    assert ids[:3] == ["get-everyone-in", "shut-the-windows", "turn-the-radio-on"]
+    assert "fridge-doors-shut" not in ids[:5]
+    assert ids == ["get-everyone-in", "shut-the-windows", "turn-the-radio-on",       # the scenario's rules, rank 10
+                   "co-alarm-power",                                                 # generic, rank 100
+                   "checklist:nuclear-drill/count-people",                            # the checklist's own now items
+                   "checklist:nuclear-drill/fill-the-bath",
+                   "checklist:nuclear-drill/tape-the-room",
+                   "fridge-doors-shut",                                               # demoted to rank 200
+                   "checklist:nuclear-drill/ration-food",                             # hour
+                   "checklist:nuclear-drill/write-it-down",                           # today
+                   "plan-the-week", "checklist:nuclear-drill/the-long-haul"]          # week, rules before checklist
+    assert [t["bucket"] for t in view["tasks"][:8]] == ["now"] * 8
+
+
+def test_checklist_items_take_their_own_bucket_and_say_why(drill, drill_rules):
+    view = engine.compute(drill, drill_rules)
+    by_id = {t["id"]: t for t in view["tasks"]}
+    assert [(by_id[f"checklist:nuclear-drill/{i}"]["bucket"], by_id[f"checklist:nuclear-drill/{i}"]["why"])
+            for i in ("count-people", "ration-food", "write-it-down", "the-long-haul")] == [
+        ("now", "Nuclear drill: right now"), ("hour", "Nuclear drill: in the first hour"),
+        ("today", "Nuclear drill: today"), ("week", "Nuclear drill: this week")]
+    assert by_id["checklist:nuclear-drill/count-people"]["link"] == "playbook:nuclear-drill#checklist"
+
+
+def test_a_rule_may_name_the_scenario_it_belongs_to(drill, drill_rules):
+    """`when: {scenario: …}` fires only in that scenario; `unless: {scenario: […]}` stands the rule down."""
+    view = engine.compute(drill, drill_rules)
+    ids = [t["id"] for t in view["tasks"]]
+    assert "cooker-off" not in ids                      # unless: [nuclear-drill, chemical]
+    assert "peacetime-only" not in ids                  # unless: {scenario: any}
+    assert "plan-the-week" in ids                       # when: {scenario: any}
+    drill.scenario = {"slug": "storms-flooding", "title": "Storms and flooding",
+                      "started_at": "2026-09-06T13:00:00+00:00", "elapsed_s": 3600, "phase": "right-now"}
+    drill.checklist = ()
+    other = [t["id"] for t in engine.compute(drill, drill_rules)["tasks"]]
+    assert other == ["cooker-off", "co-alarm-power", "fridge-doors-shut", "plan-the-week"]
+    assert not any(i in other for i in ("get-everyone-in", "shut-the-windows", "turn-the-radio-on"))
+    drill.scenario = None
+    none = [t["id"] for t in engine.compute(drill, drill_rules)["tasks"]]
+    assert none == ["cooker-off", "co-alarm-power", "peacetime-only", "fridge-doors-shut"]
+
+
+def test_the_order_is_the_files_order_when_nothing_is_ranked(drill_rules, tmp_path):
+    """No sort by title anywhere: equal bucket and equal rank means the order they were written in."""
+    text = DRILL_RULES.replace("    rank: 200\n", "").replace("    rank: 10\n", "")
+    (tmp_path / "schema.json").write_text((RULES_DIR / "schema.json").read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "tasks.yaml").write_text(text, encoding="utf-8")
+    plain = rules.load(tmp_path)
+    assert all(rule.rank == 100 for rule in plain.tasks)
+    model = engine.Model(now=at("2026-09-06T14:00:00+00:00"),
+                         conditions={"power": off("power", "2026-09-06T13:00:00+00:00")},
+                         scenario={"slug": "nuclear-drill", "title": "Nuclear drill",
+                                   "started_at": "2026-09-06T13:00:00+00:00", "elapsed_s": 3600, "phase": "right-now"},
+                         home=dict(HOME),
+                         checklist=({"id": "count-people", "text": "Count everyone in the house", "bucket": "now"},))
+    ids = [t["id"] for t in engine.compute(model, plain)["tasks"]]
+    assert ids == ["fridge-doors-shut", "co-alarm-power", "get-everyone-in", "shut-the-windows",
+                   "turn-the-radio-on", "checklist:nuclear-drill/count-people", "plan-the-week"]

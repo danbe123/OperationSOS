@@ -33,9 +33,9 @@ Learn the [PMR446 channels](page:pmr446) and re-read the [grid collapse](playboo
 Call 105 (power cut), 999 (emergency), 111 (NHS). Register for the Priority Services Register. See [page 2](doc:sos-test-pdf#page=2).
 
 ## Checklist
-- [ ] Fill every bottle and the bath {#fill-every-bottle-and-the-bath now}
+- [ ] Fill every bottle and the bath {#fill-every-bottle-and-the-bath}
 - [ ] Turn off the cooker at the wall {#cooker-off}
-- [ ] Check on neighbours {#cooker-off}
+- [ ] Check on neighbours
 
 ## Go deeper
 - [Water module](module:water)

@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from sos import content, directives
+from tests.conftest import real_tree_errors
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPO = Path(__file__).resolve().parents[2]
@@ -381,4 +382,4 @@ def test_the_repository_content_validates_in_every_branch():
     overlays = {i.overlay.id for i in load_manifests(REPO / "manifest") if i.overlay}
     out = content.validate_tree(REPO / "playbooks", load_manifests(REPO / "manifest"), overlays,
                                 require_all_scenarios=True)
-    assert [e for e in out if not e.startswith("warning: ")] == []
+    assert real_tree_errors(out) == []

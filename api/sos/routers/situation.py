@@ -112,7 +112,8 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
     if slug:
         rendered = content.rendered("scenario", slug, flags)
         if rendered is not None:
-            checklist = tuple({"id": item["id"], "text": item["text"]} for item in rendered.checklist)
+            checklist = tuple({"id": item["id"], "text": item["text"], "bucket": item["bucket"]}
+                              for item in rendered.checklist)
             checklist_state = {r["item_id"]: bool(r["checked"]) for r in conn.execute(
                 "SELECT item_id, checked FROM checklist_state WHERE playbook=?", (slug,))}
     task_state = {r["task_id"]: {"done": bool(r["done"]), "done_at": r["done_at"], "person": r["person"]}

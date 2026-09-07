@@ -135,13 +135,16 @@ def test_checklist_tasks_share_their_state_with_the_playbook(client):
     client.post("/api/situation", json={"slug": "grid-collapse"})
     tasks = client.get("/api/tasks").json()
     checklist = [t for t in tasks if t["source"] == "checklist:grid-collapse"]
-    assert [t["id"] for t in checklist] == [                       # in bucket order, then by title
+    assert [t["id"] for t in checklist] == [                       # in bucket order, then in checklist order
+        "checklist:grid-collapse/fill-every-bottle-and-the-bath",   # the one marked {#… now}
+        "checklist:grid-collapse/cooker-off",
         "checklist:grid-collapse/check-on-neighbours",
         "checklist:grid-collapse/water/fill-clean-containers",
-        "checklist:grid-collapse/fill-every-bottle-and-the-bath",
-        "checklist:grid-collapse/water/label-treated",
-        "checklist:grid-collapse/cooker-off"]
-    assert all(t["bucket"] == "today" and t["done"] is False for t in checklist)
+        "checklist:grid-collapse/water/label-treated"]
+    assert [t["bucket"] for t in checklist] == ["now", "today", "today", "today", "today"]
+    assert all(t["done"] is False for t in checklist)
+    assert checklist[0]["why"] == "National grid collapse: right now"
+    assert checklist[1]["why"] == "National grid collapse: today"
     r = client.put("/api/tasks/checklist:grid-collapse/cooker-off", json={"done": True})
     assert r.status_code == 200 and r.json()["done"] is True
     playbook = client.get("/api/playbooks/grid-collapse").json()

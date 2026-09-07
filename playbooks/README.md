@@ -65,9 +65,23 @@ A scenario body contains exactly these seven headings, in this order, each non-e
 
 Modules are declared in `modules:` and inserted where a line `{{module:<slug>}}` appears (any section except Checklist). The validator errors when a declared module is never included or an include names an undeclared or missing module. Sections are rendered as tabs; keep "Right now" short enough to read on a phone without scrolling much.
 
-## Checklist ids
+## Checklist ids and buckets
 
-`## Checklist` contains only task-list lines, `- [ ] text` or `- [ ] text {#id}`. Ticks are shared by everyone on the box (`PUT /api/playbooks/<slug>/checklist/<id>`) and stored by playbook and item id. The id is the explicit `{#id}` when given, otherwise the slug of the text (lower-case, hyphens, at most 60 characters). **Rewording a checklist item without an explicit id changes its id and resets its state**, so give every item an explicit id and keep it when the wording changes. Ids must be unique within a playbook. Task lists inside an included module get the id `<module-slug>/<item-id>` and are stored under the including playbook, so the same module ticked in two playbooks has two states.
+`## Checklist` contains only task-list lines, `- [ ] text`, `- [ ] text {#id}` or `- [ ] text {#id now}`. Ticks are shared by everyone on the box (`PUT /api/playbooks/<slug>/checklist/<id>`) and stored by playbook and item id. The id is the explicit `{#id}` when given, otherwise the slug of the text (lower-case, hyphens, at most 60 characters). **Rewording a checklist item without an explicit id changes its id and resets its state**, so give every item an explicit id and keep it when the wording changes. Ids must be unique within a playbook. Task lists inside an included module get the id `<module-slug>/<item-id>` and are stored under the including playbook, so the same module ticked in two playbooks has two states.
+
+The word after the id is the item's **bucket**: `now`, `hour`, `today` (the default when there is no token) or `week`. It is how urgent the job is, and the situation engine puts the item straight into that bucket of the task list, above or below the rules' own tasks, with a reason line of "<Scenario title>: right now / in the first hour / today / this week". Anything else after the id is an error (`unknown bucket 'soon'`). The bucket is not part of the id, so adding one to a line that is already written never resets anybody's tick.
+
+**Every scenario checklist carries at least one `now` item, and reads with its first actions at the top**: the list is read from the top by somebody frightened, so the first three lines are the first three things to do, marked `now`, in the order a household should do them. A checklist with no `now` item is a validation error (`checklist: no item marked now — the first actions must lead the list`). Nothing is ever sorted by title: the order on the screen is the order the items are written in.
+
+```markdown
+## Checklist
+- [ ] Get everyone into the house and shut the door {#everyone-in now}
+- [ ] Shut every window, door and vent {#shut-up now}
+- [ ] Fill the bath and every container {#fill-water now}
+- [ ] Work out how many days of food are in the house {#count-food hour}
+- [ ] Write down what you use as you use it {#write-it-down today}
+- [ ] Plan the second week {#second-week week}
+```
 
 ## Link scheme
 
@@ -124,9 +138,19 @@ Tapping a place on the map opens a card, and the "What to expect here" paragraph
 - **Figures.** Every number, distance or law in a paragraph is one the linked guide already carries, taken from that guide, rather than a new fact introduced here: the 30 litre petrol limit from [Vehicles and fuel](module:vehicles-fuel), the 15 cm and 30 cm of floodwater from [Evacuation](module:evacuation), the one-minute rolling boil from [Water disinfection](page:water-disinfection).
 - **The test tree** carries its own `api/tests/fixtures/playbooks/map/places.yaml`: the same prose with the guide links rewritten to slugs the fixture tree holds. Change the real file and change that copy too.
 
+## Situation rules
+
+`playbooks/rules/*.yaml` are the situation engine's rules — one file per kind (`implications`, `consequences`, `tasks`, `modes`, `reading`, `bulletins`), the shape fixed by `playbooks/rules/schema.json` and loaded by `api/sos/rules.py`. A rule is data: it says when it applies, what follows, why, and where the advice comes from. A rule names nobody (there is no household register), so `needs`, `who`, `skills` and `stock` are refused.
+
+- **`when`** is the condition clause, and every key in it must hold. Condition keys (`power`, `water`, `mobile`, `landline`, `internet`, `gas`, `heating`, `roads`, `shops`, `sewage`) take a state or a list of states; `phones` takes `off` (no route at all) or `working`; `dark`, `drill` take booleans; `season` takes `winter` or `summer`.
+- **`scenario`** in a `when` names the playbook that is running: `scenario: nuclear-war`, `scenario: [nuclear-war, chemical]` (any of them), or `scenario: any` (some scenario, whichever it is). An empty `when` always holds.
+- **`until`** and **`unless`** are the same clause the other way round: the rule does not apply while either holds. Write `until` when the situation moves past the task (`until: {water: [degraded, "off"]}` on "fill the bath"), `unless` when something supersedes the rule (`unless: {scenario: [nuclear-war, chemical]}` on generic housekeeping a scenario's own first actions replace).
+- **`bucket`** on a task is `now`, `hour`, `today` or `week`, the same four the checklist uses.
+- **`rank`** is an optional integer, 100 by default, and orders tasks *within* a bucket: below 100 leads (a scenario's own first actions rank 10), above 100 follows (generic housekeeping demoted to 200 while a scenario runs). Ties keep the order of the file, so within one bucket and one rank the list reads in `tasks.yaml` order and then in checklist order. The engine never sorts tasks by title.
+
 ## Validation
 
-`sos validate-playbooks` (run by `make test`) checks: front matter against the schema; the seven scenario headings present, in order and non-empty; that every `kiwix:`, `doc:`, `module:`, `card:`, `page:` and `playbook:` target exists in the manifest or the playbook set; that `map:` overlays and `overlays:` entries exist in `manifest/overlays.json`; that module declarations and includes agree; that checklist ids are unique; and that every `sources[].doc` or `kiwix:` resolves (warning for `url`-only). `--deep` (on the box after `sos sync`) also requests every `kiwix:` path from kiwix-serve and checks every `doc:` file on disk. `--all-scenarios` fails unless all twenty scenario slugs from spec section 2 exist. Output is one line per problem, then `FAILED <n> errors` (exit 1) or `OK <n> documents`.
+`sos validate-playbooks` (run by `make test`) checks: front matter against the schema; the seven scenario headings present, in order and non-empty; that every `kiwix:`, `doc:`, `module:`, `card:`, `page:` and `playbook:` target exists in the manifest or the playbook set; that `map:` overlays and `overlays:` entries exist in `manifest/overlays.json`; that module declarations and includes agree; that checklist ids are unique, every bucket token is one of the four, and every scenario checklist has at least one `now` item; and that every `sources[].doc` or `kiwix:` resolves (warning for `url`-only). `--deep` (on the box after `sos sync`) also requests every `kiwix:` path from kiwix-serve and checks every `doc:` file on disk. `--all-scenarios` fails unless all twenty scenario slugs from spec section 2 exist. Output is one line per problem, then `FAILED <n> errors` (exit 1) or `OK <n> documents`.
 
 ## Style
 
@@ -137,7 +161,7 @@ British English. Emergency numbers are 999, 111 (NHS), 105 (power cut) and 0345 
 - Icons are words from the fixed vocabulary in docs/superpowers/plans/2026-09-03-03-content.md ("Icon vocabulary"); unknown names render as a book.
 - Modules use exactly these headings: `## Key facts`, `## What to do`, `## UK specifics`, `## Go deeper`, and never contain `- [ ]` lines.
 - Cards use exactly these headings: `## When to use`, `## Steps`, `## Warnings`, `## Stop or escalate`, `## Source`. Steps 1 to 3 are at most 70 characters; "When to use" is at most 110 characters (the one-screen rule). Warnings start with `**Warning:**`.
-- Scenario checklist items always carry an explicit `{#id}` so that rewording never resets anyone's ticks.
+- Scenario checklist items always carry an explicit `{#id}` so that rewording never resets anyone's ticks, and the first actions carry the `now` bucket (`{#id now}`) so that they lead the task list.
 - Every dose, distance, time or law is followed by a citation in brackets: `([NRR 2025, p. 45](doc:nrr-2025#page=45))`, `([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/))`.
 - Zimit article paths are the crawled URL without scheme (`www.gov.uk/buying-carrying-knives`); Wikipedia paths are the underscored title; Stack Exchange paths are `questions/<id>/<slug>`.
 - British English; 999, 111, 105, 0345 988 1188; UK drug names; never "NOMAD".

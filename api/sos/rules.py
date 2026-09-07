@@ -18,7 +18,9 @@ import yaml
 KINDS = ("implication", "consequence", "task", "mode", "reading")
 BUCKETS = ("now", "hour", "today", "week")
 _DURATION_UNITS = {"m": 60, "h": 3600, "d": 86400}
-_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "bucket", "until", "set", "open")
+_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "bucket", "rank", "until", "unless",
+           "set", "open")
+DEFAULT_RANK = 100
 
 
 class RulesError(ValueError):
@@ -54,13 +56,21 @@ class Rule:
     severity: str = "info"
     link: str | None = None
     bucket: str | None = None
+    rank: int = DEFAULT_RANK       # within a bucket: below 100 leads, above 100 follows; the file order breaks ties
     until: dict | None = None
+    unless: dict | None = None
     set: dict = field(default_factory=dict)
     open: tuple[str, ...] = ()
 
     @property
     def after_td(self) -> timedelta:
         return parse_duration(self.after) if self.after else timedelta(0)
+
+    @property
+    def blockers(self) -> tuple[dict, ...]:
+        """The clauses that stop the rule applying: `until` (the situation has moved past it) and `unless`
+        (it never applied in this situation). They read differently and mean the same thing to the engine."""
+        return tuple(clause for clause in (self.until, self.unless) if clause)
 
     @property
     def where(self) -> str:

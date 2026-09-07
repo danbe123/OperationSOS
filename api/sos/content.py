@@ -33,7 +33,10 @@ SCENARIO_SLUGS = [
 ]
 LINK_ROUTES = {"kiwix": "/read/", "doc": "/doc/", "playbook": "/s/", "module": "/m/", "card": "/medical/card/", "page": "/p/"}
 
-TASK_RE = re.compile(r"^\s*[-*+] \[([ xX])\] (.*?)(?:\s*\{#([A-Za-z0-9][A-Za-z0-9_/-]*)\})?\s*$")
+# `- [ ] text {#id}` or `- [ ] text {#id now}`: the marker carries the item's id and, after it, its bucket
+TASK_RE = re.compile(r"^\s*[-*+] \[([ xX])\] (.*?)(?:\s*\{#([A-Za-z0-9][A-Za-z0-9_/-]*)(?:\s+([A-Za-z0-9-]+))?\})?\s*$")
+BUCKETS = ("now", "hour", "today", "week")
+DEFAULT_BUCKET = "today"
 INCLUDE_RE = re.compile(r"^\s*\{\{module:([a-z0-9-]+)\}\}\s*$")
 H2_RE = re.compile(r"^## (.+?)\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
@@ -41,7 +44,7 @@ FENCE_RE = re.compile(r"^\s*(```|~~~)")
 # 999_(emergency_telephone_number)); the old pattern stopped at the first ")" and checked a truncated path.
 LINK_RE = re.compile(r"\[[^\]]*\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?\)")
 # the `{#id}` marker is checklist-id syntax, not prose: it is stripped before rendering
-TASK_ID_MARKER_RE = re.compile(r"^(\s*[-*+] \[[ xX]\] .*?)\s*\{#[A-Za-z0-9][A-Za-z0-9_/-]*\}\s*$")
+TASK_ID_MARKER_RE = re.compile(r"^(\s*[-*+] \[[ xX]\] .*?)\s*\{#[A-Za-z0-9][A-Za-z0-9_/-]*(?:\s+[A-Za-z0-9-]+)?\}\s*$")
 _TASK_LI = '<li class="task-list-item">'
 # the marker `directives.resolve` leaves in front of a block-level branch, and the paragraph it renders as
 BECAUSE_RE = re.compile(r"\[\[because:([A-Za-z0-9:_-]+)\]\]")
@@ -143,7 +146,7 @@ class Document:
     reviewed: str | None
     sources: list[dict]
     sections: list[tuple[str, str, str]]
-    checklist: list[tuple[str, str]]
+    checklist: list[dict]                      # {id, text, bucket}, in the order they are written
     category: str | None
     path: Path
     mtime: float
@@ -200,8 +203,13 @@ def split_sections(body: str) -> list[tuple[str, str, str]]:
     return sections
 
 
-def parse_checklist(md_text: str) -> tuple[list[tuple[str, str]], list[str]]:
-    items: list[tuple[str, str]] = []
+def parse_checklist(md_text: str) -> tuple[list[dict], list[str]]:
+    """The checklist items in the order they are written: `{id, text, bucket}`.
+
+    The bucket is the token after the id in the marker (`{#id now}`), and `today` when there is none:
+    a checklist is a set of jobs with different urgencies, and the engine puts each item in its own
+    bucket rather than dropping the lot into one."""
+    items: list[dict] = []
     errors: list[str] = []
     for line in md_text.splitlines():
         if not line.strip() or BECAUSE_RE.fullmatch(line.strip()):    # the badge marker is not an item
@@ -211,18 +219,17 @@ def parse_checklist(md_text: str) -> tuple[list[tuple[str, str]], list[str]]:
             errors.append(f"not a task-list line: {line.strip()!r}")
             continue
         text = m.group(2).strip()
-        items.append((m.group(3) or slugify(text), text))
+        bucket = m.group(4)
+        if bucket is not None and bucket not in BUCKETS:
+            errors.append(f"unknown bucket '{bucket}' on {text!r}: use now, hour, today or week")
+            bucket = None
+        items.append({"id": m.group(3) or slugify(text), "text": text, "bucket": bucket or DEFAULT_BUCKET})
     return items, errors
 
 
-def module_tasks(md_text: str) -> list[tuple[str, str]]:
-    out: list[tuple[str, str]] = []
-    for line in md_text.splitlines():
-        m = TASK_RE.match(line)
-        if m:
-            text = m.group(2).strip()
-            out.append((m.group(3) or slugify(text), text))
-    return out
+def module_tasks(md_text: str) -> list[dict]:
+    """The task-list lines of a module, in the same shape as a scenario checklist."""
+    return parse_checklist("\n".join(line for line in md_text.splitlines() if TASK_RE.match(line)))[0]
 
 
 def parse_document(path: Path) -> Document:
@@ -232,7 +239,7 @@ def parse_document(path: Path) -> Document:
     kind = KIND_BY_DIR.get(path.parent.name, "page")
     body = post.content
     sections = split_sections(body)
-    checklist: list[tuple[str, str]] = []
+    checklist: list[dict] = []
     if kind == "scenario":
         for sid, _, md_text in sections:
             if sid == "checklist":
@@ -293,8 +300,8 @@ def directive_signature(doc: Document, modules: dict[str, Document] | None, flag
 
 def render_module(mod: Document, md: MarkdownIt, flags: dict[str, bool] | None = None) -> dict:
     mod = apply_directives(mod, flags)
-    tasks = [(f"{mod.id}/{i}", t) for i, t in module_tasks(mod.body)]
-    html_text = _inject_item_ids(_render(md, mod.body), [i for i, _ in tasks])
+    tasks = [{**t, "id": f"{mod.id}/{t['id']}"} for t in module_tasks(mod.body)]
+    html_text = _inject_item_ids(_render(md, mod.body), [t["id"] for t in tasks])
     return {"slug": mod.id, "title": mod.title, "html": html_text, "checklist": tasks}
 
 
@@ -339,9 +346,9 @@ def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link
         if chunk:
             parts.append(_render(md, "\n".join(chunk)))
         sections.append({"id": sid, "title": title, "html": "".join(parts)})
-    checklist = [{"id": i, "text": t} for i, t in doc.checklist]
+    checklist = [dict(item) for item in doc.checklist]
     for r in included:
-        checklist += [{"id": i, "text": t} for i, t in r["checklist"]]
+        checklist += [dict(item) for item in r["checklist"]]
     return RenderedDocument(
         **common, sections=sections, checklist=checklist,
         modules=[{"slug": r["slug"], "title": r["title"], "html": r["html"]} for r in included],
@@ -393,11 +400,13 @@ def _check_scenario(rel: str, doc: Document, module_slugs: set[str], overlay_ids
             errors.append(f"{rel}: include of undeclared module '{slug}'")
         if slug not in module_slugs:
             errors.append(f"{rel}: module '{slug}' does not exist")
-    all_ids = [i for i, _ in items]
+    if items and not any(item["bucket"] == "now" for item in items):
+        errors.append(f"{rel}: checklist: no item marked now — the first actions must lead the list")
+    all_ids = [item["id"] for item in items]
     for slug in included:
         mod = module_docs.get(slug)
         if mod:
-            all_ids += [f"{slug}/{i}" for i, _ in module_tasks(mod.body)]
+            all_ids += [f"{slug}/{t['id']}" for t in module_tasks(mod.body)]
     seen: set[str] = set()
     for item_id in all_ids:
         if item_id in seen:

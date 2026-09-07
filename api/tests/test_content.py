@@ -73,10 +73,41 @@ def test_parse_scenario(tree):
     assert [s[1] for s in doc.sections] == [t for _, t in content.SCENARIO_HEADINGS]
     assert [s[0] for s in doc.sections] == [i for i, _ in content.SCENARIO_HEADINGS]
     assert doc.checklist == [
-        ("fill-every-bottle-and-the-bath", "Fill every bottle and the bath"),
-        ("cooker-off", "Turn off the cooker at the wall"),
-        ("check-on-neighbours", "Check on neighbours"),
+        {"id": "fill-every-bottle-and-the-bath", "text": "Fill every bottle and the bath", "bucket": "now"},
+        {"id": "cooker-off", "text": "Turn off the cooker at the wall", "bucket": "today"},
+        {"id": "check-on-neighbours", "text": "Check on neighbours", "bucket": "today"},
     ]
+
+
+def test_checklist_items_carry_a_bucket():
+    """`{#id now}`: the token after the id is the item's urgency, and `today` when there is none."""
+    items, errors = content.parse_checklist(
+        "- [ ] Get everyone in {#get-in now}\n"
+        "- [ ] Tape the windows {#tape hour}\n"
+        "- [ ] Count the water {#count-water today}\n"
+        "- [ ] Plan the month {#plan week}\n"
+        "- [ ] Something plain {#plain}\n"
+        "- [ ] No marker at all\n")
+    assert errors == []
+    assert [(i["id"], i["bucket"]) for i in items] == [
+        ("get-in", "now"), ("tape", "hour"), ("count-water", "today"), ("plan", "week"),
+        ("plain", "today"), ("no-marker-at-all", "today")]
+    assert items[0]["text"] == "Get everyone in"
+
+
+def test_an_unknown_bucket_token_is_a_checklist_error():
+    items, errors = content.parse_checklist("- [ ] Get everyone in {#get-in soon}\n")
+    assert errors == ["unknown bucket 'soon' on 'Get everyone in': use now, hour, today or week"]
+    assert [(i["id"], i["bucket"]) for i in items] == [("get-in", "today")]
+
+
+def test_a_bucket_token_never_reaches_the_reader_and_never_changes_an_id():
+    """The tick is stored against the id, so adding a bucket to a line must not move it."""
+    plain, _ = content.parse_checklist("- [ ] Get everyone in {#get-in}\n")
+    urgent, _ = content.parse_checklist("- [ ] Get everyone in {#get-in now}\n")
+    assert plain[0]["id"] == urgent[0]["id"] == "get-in"
+    html = content.render_markdown("- [ ] Get everyone in {#get-in now}")
+    assert "{#get-in now}" not in html and "now}" not in html and "Get everyone in" in html
 
 
 def test_parse_page_and_card(tree):
