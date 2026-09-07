@@ -70,7 +70,11 @@ def vector_source(ctx: Context, spec: str, name: str) -> VectorSource:
         path = ctx.download(url, f"{name}.zip")
         return VectorSource(f"/vsizip/{path}", (), layer)
     if "/FeatureServer/" in url or "/MapServer/" in url:
-        return VectorSource(f"{url.rstrip('/')}/query?where=1%3D1&outFields=*&f=json", ("-oo", "FEATURE_SERVER_PAGING=YES"), layer)
+        # A value that already carries its own /query?… is used as written, so a service that cannot
+        # serialise its polygons whole (SEPA's coastal layer answers 500) can be asked with
+        # maxAllowableOffset or any other parameter it needs.
+        query = url if "/query?" in url else f"{url.rstrip('/')}/query?where=1%3D1&outFields=*&f=json"
+        return VectorSource(query, ("-oo", "FEATURE_SERVER_PAGING=YES"), layer)
     return VectorSource(url, (), layer)
 
 

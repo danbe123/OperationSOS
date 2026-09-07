@@ -58,6 +58,13 @@ def test_vector_source_forms(tmp_path):
     assert len(runner.find("aria2c")) == 1
 
 
+def test_vector_source_keeps_a_ready_made_feature_server_query(tmp_path):
+    ctx = make_ctx(tmp_path)
+    url = "https://s/FeatureServer/7/query?where=1%3D1&outFields=*&f=json&maxAllowableOffset=5"
+    src = overlays.vector_source(ctx, url, "flood_sc_url_1")
+    assert src.source == url and src.open_options == ("-oo", "FEATURE_SERVER_PAGING=YES")
+
+
 def test_ogr_to_assembles_reprojection_with_optional_spat(tmp_path):
     runner = FakeRunner()
     ctx = make_ctx(tmp_path, runner=runner)
