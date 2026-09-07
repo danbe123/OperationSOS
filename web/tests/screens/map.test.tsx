@@ -239,7 +239,8 @@ describe('Map screen', () => {
     const card = await screen.findByRole('dialog', { name: 'Place' });
     expect(within(card).getByRole('heading', { name: 'Southampton General Hospital' })).toBeInTheDocument();
     expect(within(card).getByText('Hospital \u00b7 emergency department')).toBeInTheDocument();
-    expect(within(card).getByText(/from the map centre, about \d+ min on foot/)).toBeInTheDocument();
+    expect(within(card).getByText(/about \d+ min on foot/)).toBeInTheDocument();
+    expect(within(card).getByText(/^from the map centre · SU /)).toBeInTheDocument();
     expect(within(card).getByText('Beds')).toBeInTheDocument();
     expect(within(card).getByText(/A&E stays open/)).toBeInTheDocument();
     // The guide's own link and the button under it both go to the guide, and both navigate in the app.

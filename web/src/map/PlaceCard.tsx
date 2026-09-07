@@ -10,11 +10,14 @@ import type { TappedPlace } from './tooltip';
 /** Where the distance is measured from: home when the box has one, else the middle of the map. */
 export type From = LngLat & { label: 'home' | 'the map centre' };
 
-/** How far the place is, which way, and how long it would take to walk there — one sentence, from a
- * point the line names, because a distance with no origin on it answers nothing. */
-export function distanceLine(place: LngLat, from: From): string {
+/** How far the place is, which way and how long on foot, then where that was measured from and the
+ * grid reference: two short lines, because the card's body has to be readable under them on a phone. */
+export function distanceLine(place: LngLat, from: From): { answer: string; origin: string } {
   const km = distanceKm(from, place);
-  return `${formatDistance(km)} ${formatBearing(bearingDeg(from, place))} from ${from.label}, about ${formatWalk(naismithMinutes(km))} on foot`;
+  return {
+    answer: `${formatDistance(km)} ${formatBearing(bearingDeg(from, place))}, about ${formatWalk(naismithMinutes(km))} on foot`,
+    origin: `from ${from.label} · ${gridRef(place.lat, place.lon).text}`,
+  };
 }
 
 /** What one place on the map is, what it has, how far away it is and what to expect there in an
@@ -25,21 +28,24 @@ export function PlaceCard({ place, from, guidance, onClose, onRoute, onPin, onNe
 }) {
   // The type is already the line above the rows; it does not need saying twice.
   const rows = place.rows.filter(([label]) => label !== 'Type');
+  const line = distanceLine(place, from);
   return (
     <MapPanel
       label="Place" title={place.title} onClose={onClose}
       lead={
         <>
           <p className="map-lead-line">{place.typeLine}</p>
-          <p className="map-lead-answer">{distanceLine(place, from)}</p>
-          <p className="map-lead-line">{gridRef(place.lat, place.lon).text}</p>
+          <p className="map-lead-answer">{line.answer}</p>
+          <p className="map-lead-line">{line.origin}</p>
         </>
       }
+      /* Three actions on one row, each a word and an icon, with the full sentence for a screen reader:
+         three stacked sentences under a three-line lead left the body a sliver on the kiosk. */
       actions={
         <>
-          <button type="button" className="btn btn-small" onClick={onRoute}><Icon name="compass" size={18} /><span>Route from {from.label === 'home' ? 'home' : 'the map centre'}</span></button>
-          <button type="button" className="btn btn-small" onClick={onPin}><Icon name="pin" size={18} /><span>Pin this place</span></button>
-          <button type="button" className="btn btn-small" onClick={onNearby}><Icon name="search" size={18} /><span>Nearby from here</span></button>
+          <button type="button" className="btn btn-small" onClick={onRoute} aria-label={`Route from ${from.label}`} title={`Route from ${from.label}`}><Icon name="compass" size={18} /><span>Route</span></button>
+          <button type="button" className="btn btn-small" onClick={onPin} aria-label="Pin this place" title="Pin this place"><Icon name="pin" size={18} /><span>Pin</span></button>
+          <button type="button" className="btn btn-small" onClick={onNearby} aria-label="Nearby from here" title="Nearby from here"><Icon name="search" size={18} /><span>Nearby</span></button>
         </>
       }
     >
