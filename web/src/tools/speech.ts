@@ -59,9 +59,14 @@ function collect(node: Node, out: string[]): void {
 
 /** The words a reader would say: what is on the screen, without the buttons, the icons or the print-only
  * parts, with a gap wherever the layout has one so two paragraphs never run into one word. */
+/** A parenthesis holding nothing but links — "(Survival and Austere Medicine, p. 96; Wikipedia)" — is a
+ * citation: it belongs on the page and in print, not in the reader's mouth between two instructions. */
+const CITATION = /\s*\(\s*(?:<a\b[^>]*>[^<]*<\/a>\s*[;,]?\s*)+\)/g;
+
 export function visibleText(root: Element): string {
   const clone = root.cloneNode(true) as Element;
-  for (const el of clone.querySelectorAll('button, [aria-hidden="true"], .no-print, .read-aloud, script, style, select, input, svg')) el.remove();
+  clone.innerHTML = clone.innerHTML.replace(CITATION, '');
+  for (const el of clone.querySelectorAll('button, [aria-hidden="true"], .no-print, .read-aloud, .card-source, .scenario-sources, .sources, .doc-sources, script, style, select, input, svg')) el.remove();
   const out: string[] = [];
   collect(clone, out);
   return out.join('').replace(/\s+/g, ' ').trim();

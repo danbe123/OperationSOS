@@ -36,4 +36,13 @@ describe('visibleText', () => {
       <select><option>Sam</option></select>`;
     expect(visibleText(el)).toBe('Power Keep the freezer shut.');
   });
+
+  it('leaves the citations and the source line on the page rather than reading them out', () => {
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <p>Keep going for thirty minutes (<a href="/doc/austere#page=96">Survival and Austere Medicine, p. 96</a>; <a href="/read/w/CPR">CPR (Wikipedia)</a>).</p>
+      <p>Send someone (<a href="/p/no-phones">getting help without phones</a>). Read <a href="/m/water">the water guide</a> first.</p>
+      <div class="card-source"><p><a href="/doc/austere">Survival and Austere Medicine</a></p></div>`;
+    expect(visibleText(el)).toBe('Keep going for thirty minutes. Send someone. Read the water guide first.');
+  });
 });
