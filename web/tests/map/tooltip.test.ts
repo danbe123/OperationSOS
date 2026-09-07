@@ -45,13 +45,13 @@ describe('overlayLayerIds and pickFeature', () => {
 
 describe('renderDescription', () => {
   it('renders title, overlay and rows as text, never HTML', () => {
-    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', rows: [['Phone', '0123']] });
+    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', typeLine: 'Fuel stations', kind: null, rows: [['Phone', '0123']] });
     expect(el.getAttribute('role')).toBe('tooltip');
     expect(el.querySelector('.map-tip-title')?.textContent).toBe('<b>Bold</b>');
     expect(el.querySelector('b')).toBeNull();
     expect(el.querySelector('.map-tip-overlay')?.textContent).toBe('Fuel stations');
     expect([...el.querySelectorAll('dt, dd')].map((n) => n.textContent)).toEqual(['Phone', '0123']);
-    expect(renderDescription({ title: 'x', overlay: 'y', rows: [] }).querySelector('dl')).toBeNull();
+    expect(renderDescription({ title: 'x', overlay: 'y', typeLine: 'y', kind: null, rows: [] }).querySelector('dl')).toBeNull();
   });
 });
 

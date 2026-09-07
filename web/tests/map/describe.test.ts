@@ -5,7 +5,7 @@ vi.mock('maplibre-gl', () => ({ default: { addProtocol: vi.fn() }, addProtocol: 
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));
 
 // The overlay ids in manifest/overlays.json (the source of truth lives outside web/; this list is asserted against it by hand).
-const MANIFEST_IDS = ['footpaths', 'access-land', 'flood-zones', 'health', 'fuel', 'water', 'rail', 'nuclear-sites', 'chemical-sites', 'airports-military'];
+const MANIFEST_IDS = ['footpaths', 'access-land', 'flood-zones', 'health', 'fuel', 'water', 'rail', 'nuclear-sites', 'chemical-sites', 'airports', 'military'];
 
 const RAW_KEY = /^(amenity|operator|opening_hours|prow_ref|sac_scale|trail_visibility|man_made|aeroway|railway|industrial|designation|highway|Descrip|addr:)/;
 
@@ -14,7 +14,8 @@ describe('describeFeature', () => {
     expect(Object.keys(OVERLAY_TITLES).sort()).toEqual([...MANIFEST_IDS].sort());
     const generic: Record<string, string> = {
       footpaths: 'Path', 'access-land': 'Open access land', 'flood-zones': 'Flood risk area', health: 'Health service', fuel: 'Fuel station',
-      water: 'Water body', rail: 'Railway station', 'nuclear-sites': 'Nuclear site', 'chemical-sites': 'Chemical (COMAH) site', 'airports-military': 'Airport or military land',
+      water: 'Water body', rail: 'Railway station', 'nuclear-sites': 'Nuclear site', 'chemical-sites': 'Chemical (COMAH) site',
+      airports: 'Airport or airfield', military: 'Military land',
     };
     for (const id of MANIFEST_IDS) {
       const d = describeFeature(id, {});
@@ -29,55 +30,66 @@ describe('describeFeature', () => {
     expect(describeFeature('health', undefined).overlay).toBe('Hospitals, pharmacies and GP surgeries');
   });
 
-  it('health: hospital, pharmacy and GP surgery with phone, hours, A&E and address', () => {
-    const d = describeFeature('health', { name: 'Southampton General Hospital', amenity: 'hospital', phone: '+44 23 8077 7222', opening_hours: '24/7', emergency: 'yes', operator: 'University Hospital Southampton NHS Foundation Trust', 'addr:street': 'Tremona Road', 'addr:city': 'Southampton', 'addr:postcode': 'SO16 6YD' });
-    expect(d.title).toBe('Southampton General Hospital');
-    expect(d.overlay).toBe('Hospitals, pharmacies and GP surgeries');
-    expect(d.rows).toEqual([
-      ['Type', 'Hospital'],
-      ['Emergency department', 'Yes'],
-      ['Run by', 'University Hospital Southampton NHS Foundation Trust'],
-      ['Address', 'Tremona Road, Southampton, SO16 6YD'],
-      ['Phone', '+44 23 8077 7222'],
-      ['Opening hours', 'Open 24 hours a day, every day'],
-    ]);
+  it('airports: type line from the aerodrome type, codes and operator as rows, kind airport', () => {
+    const d = describeFeature('airports', { name: 'Southampton Airport', aeroway: 'aerodrome', 'aerodrome:type': 'international', iata: 'SOU', icao: 'EGHI', operator: 'AGS Airports' });
+    expect(d.title).toBe('Southampton Airport');
+    expect(d.typeLine).toBe('International airport');
+    expect(d.kind).toBe('airport');
+    expect(d.rows).toEqual([['Type', 'International airport'], ['Code', 'SOU / EGHI'], ['Run by', 'AGS Airports']]);
+    expect(describeFeature('airports', { aeroway: 'aerodrome', military: 'airfield', name: 'RAF Brize Norton' }).typeLine).toBe('Military airfield');
+    expect(describeFeature('airports', { aeroway: 'aerodrome' }).title).toBe('Airport or airfield');
+  });
+
+  it('military: barracks, naval bases and danger areas, kind military', () => {
+    expect(describeFeature('military', { military: 'barracks', name: 'Marchwood', operator: 'British Army', access: 'no' })).toMatchObject({
+      title: 'Marchwood', typeLine: 'Barracks', kind: 'military', rows: [['Type', 'Barracks'], ['Run by', 'British Army'], ['Access', 'No public access']],
+    });
+    expect(describeFeature('military', { military: 'naval_base' }).typeLine).toBe('Naval base');
+    expect(describeFeature('military', { military: 'danger_area' }).typeLine).toBe('Military danger area');
+    expect(describeFeature('military', { landuse: 'military' }).typeLine).toBe('Military land');
+    expect(describeFeature('military', { military: 'radar_station' }).typeLine).toBe('Military land (radar station)');
+  });
+
+  it('health: A&E, beds, dispensing, wheelchair and website; kinds per amenity', () => {
+    const d = describeFeature('health', { name: 'Southampton General Hospital', amenity: 'hospital', emergency: 'yes', beds: '1200', wheelchair: 'yes', website: 'https://uhs.nhs.uk', operator: 'UHS NHS FT' });
+    expect(d.typeLine).toBe('Hospital · emergency department');
+    expect(d.kind).toBe('hospital');
+    expect(d.rows).toEqual([['Type', 'Hospital'], ['Emergency department', 'Yes'], ['Run by', 'UHS NHS FT'], ['Beds', '1200'], ['Wheelchair access', 'Yes'], ['Website', 'https://uhs.nhs.uk']]);
+    expect(describeFeature('health', { amenity: 'pharmacy', dispensing: 'yes' })).toMatchObject({ kind: 'pharmacy', rows: [['Type', 'Pharmacy'], ['Dispenses prescriptions', 'Yes']] });
+    expect(describeFeature('health', { amenity: 'doctors' }).kind).toBe('gp');
+    expect(describeFeature('health', { amenity: 'clinic' }).kind).toBe('clinic');
+    expect(describeFeature('health', { healthcare: 'hospital', emergency: 'yes' }).kind).toBe('hospital');
     expect(describeFeature('health', { amenity: 'pharmacy', phone: null }).title).toBe('Pharmacy');
     expect(describeFeature('health', { name: 'Totton Health Centre', amenity: 'doctors' }).rows).toEqual([['Type', 'GP surgery']]);
   });
 
-  it('fuel: station with operator, hours and fuel types; config title wins when given', () => {
-    const d = describeFeature('fuel', { amenity: 'fuel', name: 'Morrisons', operator: 'WM Morrison Supermarkets Ltd', opening_hours: 'Mo-Sa 06:00-21:00; Su 06:00-22:00', 'fuel:diesel': 'yes', 'fuel:octane_95': 'yes', 'fuel:lpg': 'no', landuse: 'retail' }, { overlayTitle: 'Petrol stations' });
-    expect(d.title).toBe('Morrisons');
-    expect(d.overlay).toBe('Petrol stations');
-    expect(d.rows).toEqual([
-      ['Type', 'Fuel station'],
-      ['Fuel sold', 'diesel, petrol (95)'],
-      ['Run by', 'WM Morrison Supermarkets Ltd'],
-      ['Opening hours', 'Mon to Sat 06:00-21:00; Sun 06:00-22:00'],
-    ]);
-    expect(describeFeature('fuel', { amenity: 'fuel', name: null, operator: null }).title).toBe('Fuel station');
+  it('fuel: brand in the type line, what it sells and whether it has a shop', () => {
+    const d = describeFeature('fuel', { name: 'Tesco Bursledon', brand: 'Tesco', 'fuel:diesel': 'yes', 'fuel:lpg': 'no', 'fuel:electricity': 'yes', shop: 'convenience', opening_hours: '24/7' });
+    expect(d.typeLine).toBe('Fuel station · Tesco');
+    expect(d.kind).toBe('fuel');
+    expect(d.rows).toEqual([['Type', 'Fuel station'], ['Brand', 'Tesco'], ['Diesel', 'Yes'], ['LPG', 'No'], ['Electric charging', 'Yes'], ['Shop', 'Convenience'], ['Opening hours', 'Open 24 hours a day, every day']]);
+    expect(describeFeature('fuel', { name: null, brand: null }).title).toBe('Fuel station');
   });
 
-  it('water: reservoirs and treatment works', () => {
-    expect(describeFeature('water', { name: 'Little Testwood Lake', natural: 'water', water: 'reservoir', operator: 'Southern Water' })).toEqual({
-      title: 'Little Testwood Lake', overlay: 'Reservoirs and water works', rows: [['Type', 'Reservoir'], ['Run by', 'Southern Water']],
-    });
-    expect(describeFeature('water', { natural: 'water', water: 'reservoir' }).title).toBe('Reservoir');
-    expect(describeFeature('water', { man_made: 'water_works', name: 'Testwood Water Supply Works' }).rows[0]).toEqual(['Type', 'Water treatment works']);
+  it('water: works, reservoirs and springs are three kinds', () => {
+    expect(describeFeature('water', { man_made: 'water_works', operator: 'Southern Water' })).toMatchObject({ kind: 'water-works', typeLine: 'Water treatment works', rows: [['Type', 'Water treatment works'], ['Run by', 'Southern Water']] });
+    expect(describeFeature('water', { water: 'reservoir', name: 'Bewl Water' })).toMatchObject({ kind: 'reservoir', typeLine: 'Reservoir' });
+    expect(describeFeature('water', { natural: 'spring', description: 'Chalk spring' })).toMatchObject({ kind: 'spring', typeLine: 'Spring', rows: [['Type', 'Spring'], ['Note', 'Chalk spring']] });
     expect(describeFeature('water', { landuse: 'reservoir' }).title).toBe('Reservoir');
   });
 
-  it('rail: station with network and train operator', () => {
-    expect(describeFeature('rail', { name: 'Totton', network: 'National Rail', operator: 'South Western Railway', railway: 'station' })).toEqual({
-      title: 'Totton', overlay: 'Railway stations', rows: [['Type', 'Railway station'], ['Network', 'National Rail'], ['Train operator', 'South Western Railway']],
-    });
+  it('rail: operator in the type line, platforms and step-free access', () => {
+    const d = describeFeature('rail', { name: 'Eastleigh', railway: 'station', operator: 'South Western Railway', network: 'National Rail', platforms: '4', wheelchair: 'limited' });
+    expect(d.typeLine).toBe('Railway station · South Western Railway');
+    expect(d.kind).toBe('rail-station');
+    expect(d.rows).toEqual([['Type', 'Railway station'], ['Network', 'National Rail'], ['Train operator', 'South Western Railway'], ['Platforms', '4'], ['Wheelchair access', 'Limited']]);
     expect(describeFeature('rail', { name: 'Rio Grande Train Station', network: null, operator: null, railway: 'station' }).rows).toEqual([['Type', 'Railway station']]);
     expect(describeFeature('rail', { railway: 'station', station: 'subway' }).title).toBe('Underground station');
   });
 
   it('nuclear sites: type, status and the note', () => {
-    expect(describeFeature('nuclear-sites', { name: 'Heysham 1', type: 'power-station', status: 'operating', note: 'AGR, EDF; two reactors, scheduled to close 2027' })).toEqual({
-      title: 'Heysham 1', overlay: 'Nuclear sites', rows: [['Type', 'Nuclear power station'], ['Status', 'Operating'], ['Detail', 'AGR, EDF; two reactors, scheduled to close 2027']],
+    expect(describeFeature('nuclear-sites', { name: 'Heysham 1', type: 'power-station', status: 'operating', note: 'AGR, EDF; two reactors, scheduled to close 2027' })).toMatchObject({
+      title: 'Heysham 1', rows: [['Type', 'Nuclear power station'], ['Status', 'Operating'], ['Detail', 'AGR, EDF; two reactors, scheduled to close 2027']],
     });
     expect(describeFeature('nuclear-sites', { name: 'Sellafield', type: 'reprocessing', status: 'decommissioning' }).rows).toEqual([['Type', 'Nuclear reprocessing plant'], ['Status', 'Being decommissioned']]);
     expect(describeFeature('nuclear-sites', { type: 'naval', status: 'defuelling' }).rows).toEqual([['Type', 'Naval nuclear base'], ['Status', 'Closed, fuel being removed']]);
@@ -87,38 +99,25 @@ describe('describeFeature', () => {
   });
 
   it('chemical sites: refinery, chemical works and the hand-authored marker', () => {
-    expect(describeFeature('chemical-sites', { name: 'Fawley refinery and petrochemicals', industrial: 'refinery', source: 'hand-authored' })).toEqual({
-      title: 'Fawley refinery and petrochemicals', overlay: 'Major chemical and fuel sites',
+    expect(describeFeature('chemical-sites', { name: 'Fawley refinery and petrochemicals', industrial: 'refinery', source: 'hand-authored' })).toMatchObject({
+      title: 'Fawley refinery and petrochemicals',
       rows: [['Type', 'Oil refinery'], ['Listed as', 'Major hazard site from the Operation SOS list']],
     });
     expect(describeFeature('chemical-sites', { industrial: 'chemical', operator: 'INEOS' }).rows).toEqual([['Type', 'Chemical works'], ['Run by', 'INEOS']]);
     expect(describeFeature('chemical-sites', { industrial: 'oil' }).title).toBe('Oil terminal or depot');
   });
 
-  it('airports and military: aerodromes, military airfields and other military land', () => {
-    expect(describeFeature('airports-military', { name: 'Southampton Airport', aeroway: 'aerodrome', operator: 'AGS Airports', iata: 'SOU', icao: 'EGHI' }).rows).toEqual([
-      ['Type', 'Airport or airfield'], ['Code', 'SOU / EGHI'], ['Run by', 'AGS Airports'],
-    ]);
-    expect(describeFeature('airports-military', { name: 'RAF Brize Norton', aeroway: 'aerodrome', military: 'airfield' }).rows[0]).toEqual(['Type', 'Military airfield']);
-    expect(describeFeature('airports-military', { aeroway: 'aerodrome', 'aerodrome:type': 'international' }).title).toBe('International airport');
-    expect(describeFeature('airports-military', { military: 'barracks', name: 'Marchwood' }).rows).toEqual([['Type', 'Barracks']]);
-    expect(describeFeature('airports-military', { military: 'naval_base' }).title).toBe('Naval base');
-    expect(describeFeature('airports-military', { military: 'danger_area' }).title).toBe('Military danger area');
-    expect(describeFeature('airports-military', { military: 'yes' }).title).toBe('Military land');
-    expect(describeFeature('airports-military', { military: 'radar_station' }).title).toBe('Military land (radar station)');
-  });
-
   it('footpaths: rights of way by designation, other paths by highway type, with access, surface and difficulty', () => {
-    expect(describeFeature('footpaths', { highway: 'footway', designation: 'public_footpath', prow_ref: 'Copythorne FP 14', foot: 'designated', surface: 'grass' })).toEqual({
-      title: 'Public footpath', overlay: 'Footpaths and rights of way',
+    expect(describeFeature('footpaths', { highway: 'footway', designation: 'public_footpath', prow_ref: 'Copythorne FP 14', foot: 'designated', surface: 'grass' })).toMatchObject({
+      title: 'Public footpath',
       rows: [['Type', 'Public footpath'], ['Who may use it', 'On foot'], ['Right of way number', 'Copythorne FP 14'], ['On foot', 'Signed for this use'], ['Surface', 'Grass']],
     });
     expect(describeFeature('footpaths', { highway: 'bridleway', designation: 'public_bridleway', name: 'Denny Lodge BR 1' }).rows).toEqual([['Type', 'Public bridleway'], ['Who may use it', 'On foot, on horseback and by bicycle']]);
     expect(describeFeature('footpaths', { designation: 'restricted_byway' }).rows[1][1]).toContain('no motor vehicles');
     expect(describeFeature('footpaths', { designation: 'byway_open_to_all_traffic' }).title).toBe('Byway open to all traffic');
     expect(describeFeature('footpaths', { designation: 'core_path' }).title).toBe('Scottish core path');
-    expect(describeFeature('footpaths', { highway: 'path', designation: 'none', access: 'private', surface: 'compacted', sac_scale: 'mountain_hiking', trail_visibility: 'bad' })).toEqual({
-      title: 'Path', overlay: 'Footpaths and rights of way',
+    expect(describeFeature('footpaths', { highway: 'path', designation: 'none', access: 'private', surface: 'compacted', sac_scale: 'mountain_hiking', trail_visibility: 'bad' })).toMatchObject({
+      title: 'Path',
       rows: [['Type', 'Path'], ['Access', 'Private, no public access'], ['Surface', 'Compacted'], ['Difficulty', 'Mountain walking, some steep ground'], ['Visibility', 'Path hard to follow']],
     });
     expect(describeFeature('footpaths', { highway: 'track', name: 'Beechdale Walk', access: 'permissive' }).title).toBe('Beechdale Walk');
@@ -127,8 +126,8 @@ describe('describeFeature', () => {
   });
 
   it('access land: CROW open country and common land with the region', () => {
-    expect(describeFeature('access-land', { Descrip: 'Open Country', source: 'fixture sample', region: 'england' })).toEqual({
-      title: 'Open access land', overlay: 'Open access land',
+    expect(describeFeature('access-land', { Descrip: 'Open Country', source: 'fixture sample', region: 'england' })).toMatchObject({
+      title: 'Open access land',
       rows: [['Designation', 'Open country (CROW Act)'], ['What it means', 'Mountain, moor, heath or down you may walk on freely under the Countryside and Rights of Way Act 2000'], ['Region', 'England']],
     });
     expect(describeFeature('access-land', { Descrip: 'Registered Common Land', region: 'wales' }).rows).toEqual([
@@ -138,9 +137,14 @@ describe('describeFeature', () => {
     expect(describeFeature('access-land', { name: 'Dartmoor' }, { sourceLayer: 'access-land' }).title).toBe('Dartmoor');
   });
 
+  it('access land from a tagged Welsh source reads its designation', () => {
+    expect(describeFeature('access-land', { region: 'wales', designation: 'open_country' })).toMatchObject({ kind: 'access-land', rows: expect.arrayContaining([['Designation', 'Open country (CROW Act)'], ['Region', 'Wales']]) });
+    expect(describeFeature('access-land', { region: 'wales', designation: 'common_land' }).rows[0]).toEqual(['Designation', 'Registered common land']);
+  });
+
   it('flood zones: zone 2 and 3 with what they mean and the region from the vector layer', () => {
-    expect(describeFeature('flood-zones', { zone: '3', source: 'fixture sample' }, { sourceLayer: 'flood_england' })).toEqual({
-      title: 'Flood zone 3', overlay: 'Flood zones',
+    expect(describeFeature('flood-zones', { zone: '3', source: 'fixture sample' }, { sourceLayer: 'flood_england' })).toMatchObject({
+      title: 'Flood zone 3',
       rows: [
         ['Flood zone', '3'],
         ['Chance of flooding', 'High: a 1 in 100 or greater chance of river flooding, or 1 in 200 or greater of sea flooding, in any year'],
@@ -159,8 +163,22 @@ describe('describeFeature', () => {
     expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_ni' }).rows).toEqual([['Chance of flooding', 'Area shown on the official flood map as at risk of flooding'], ['Region', 'Northern Ireland']]);
   });
 
+  it('flood layers carry the region and the zone or the extent kind in their name', () => {
+    expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_wales_z3' })).toMatchObject({ title: 'Flood zone 3', kind: 'flood-zone', rows: expect.arrayContaining([['Flood zone', '3'], ['Region', 'Wales']]) });
+    expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_scotland_river' })).toMatchObject({ title: 'River flood risk area', rows: expect.arrayContaining([['Chance of flooding', 'Medium: a 1 in 200 or greater chance of river flooding in any year (SEPA)'], ['Region', 'Scotland']]) });
+    expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_roi_coastal' })).toMatchObject({ title: 'Coastal flood risk area', rows: expect.arrayContaining([['Chance of flooding', 'A 1 in 200 or greater chance of sea flooding in any year (OPW)'], ['Region', 'Republic of Ireland']]) });
+    expect(describeFeature('flood-zones', { layer: 'Flood Zone 2' }, { sourceLayer: 'flood_england' }).title).toBe('Flood zone 2');
+  });
+
+  it('every overlay maps to a kind; an unknown overlay has none', () => {
+    expect(describeFeature('nuclear-sites', { type: 'power-station', status: 'operating' })).toMatchObject({ kind: 'nuclear', typeLine: 'Nuclear power station · Operating' });
+    expect(describeFeature('chemical-sites', { industrial: 'refinery' }).kind).toBe('chemical');
+    expect(describeFeature('footpaths', { designation: 'public_footpath' })).toMatchObject({ kind: 'footpath', typeLine: 'Public footpath' });
+    expect(describeFeature('whatever', {}).kind).toBeNull();
+  });
+
   it('an unknown overlay still gets a name, a humanised overlay title and the shared rows', () => {
-    expect(describeFeature('shelters', { name: 'Village hall', phone: '01onalone' })).toEqual({ title: 'Village hall', overlay: 'Shelters', rows: [['Phone', '01onalone']] });
+    expect(describeFeature('shelters', { name: 'Village hall', phone: '01onalone' })).toMatchObject({ title: 'Village hall', overlay: 'Shelters', rows: [['Phone', '01onalone']] });
     expect(describeFeature('rest-centres', {}).title).toBe('Rest centres');
   });
 });

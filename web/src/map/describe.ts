@@ -1,7 +1,12 @@
 import { REGIONS } from './overlays';
 
-/** What the map tooltip says about one overlay feature: a title, the overlay it belongs to and plain-English rows. */
-export type FeatureDescription = { title: string; overlay: string; rows: [string, string][] };
+/** The kind of real-world place a feature is, for the place card: null when the overlay has no fixed kind. */
+export type PlaceKind =
+  | 'hospital' | 'pharmacy' | 'gp' | 'clinic' | 'fuel' | 'water-works' | 'reservoir' | 'spring' | 'rail-station'
+  | 'airport' | 'military' | 'nuclear' | 'chemical' | 'flood-zone' | 'footpath' | 'access-land';
+
+/** What the map tooltip says about one overlay feature: a title, the overlay it belongs to, a one-line type and plain-English rows. */
+export type FeatureDescription = { title: string; overlay: string; typeLine: string; kind: PlaceKind | null; rows: [string, string][] };
 
 export type FeatureProperties = Record<string, unknown>;
 
@@ -11,6 +16,9 @@ export type DescribeOptions = {
   /** The overlay title from the map config; falls back to the built-in title for the id. */
   overlayTitle?: string;
 };
+
+/** What a describe* helper produces before the overlay title is attached. */
+type Described = { title: string; typeLine: string; kind: PlaceKind | null; rows: [string, string][] };
 
 /** Titles from manifest/overlays.json, for when the caller has no config to hand. */
 export const OVERLAY_TITLES: Record<string, string> = {
@@ -23,7 +31,8 @@ export const OVERLAY_TITLES: Record<string, string> = {
   rail: 'Railway stations',
   'nuclear-sites': 'Nuclear sites',
   'chemical-sites': 'Major chemical and fuel sites',
-  'airports-military': 'Airports and military bases',
+  airports: 'Airports and airfields',
+  military: 'Military bases and land',
 };
 
 const HEALTH_TYPES: Record<string, string> = {
@@ -86,6 +95,16 @@ const FLOOD_ZONES: Record<string, { title: string; chance: string }> = {
   '1': { title: 'Flood zone 1', chance: 'Low: less than a 1 in 1,000 chance of river or sea flooding in any year' },
 };
 
+/** SEPA (Scotland) and OPW (Ireland) publish river/coastal flood risk as bands rather than the England/Wales zone system. */
+const RIVER_CHANCE: Record<string, string> = {
+  Scotland: 'Medium: a 1 in 200 or greater chance of river flooding in any year (SEPA)',
+  'Republic of Ireland': 'A 1 in 100 or greater chance of river flooding in any year (OPW)',
+};
+const COASTAL_CHANCE: Record<string, string> = {
+  Scotland: 'A 1 in 200 or greater chance of sea flooding in any year (SEPA)',
+  'Republic of Ireland': 'A 1 in 200 or greater chance of sea flooding in any year (OPW)',
+};
+
 function str(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   const s = String(v).trim();
@@ -118,24 +137,6 @@ export function openingHours(value: string): string {
     .replace(/;\s*/g, '; ');
 }
 
-function address(props: FeatureProperties): string | null {
-  const parts = [
-    [first(props, 'addr:housename'), [first(props, 'addr:housenumber'), first(props, 'addr:street')].filter(Boolean).join(' ')].filter(Boolean).join(', '),
-    first(props, 'addr:city', 'addr:town', 'addr:village'),
-    first(props, 'addr:postcode'),
-  ].filter(Boolean);
-  return parts.length ? parts.join(', ') : null;
-}
-
-function fuelTypes(props: FeatureProperties): string | null {
-  const names: Record<string, string> = { diesel: 'diesel', petrol: 'petrol', octane_95: 'petrol (95)', octane_98: 'petrol (98)', octane_97: 'petrol (97)', lpg: 'LPG', e10: 'E10', e5: 'E5', hgv_diesel: 'HGV diesel', adblue: 'AdBlue', electric: 'electric charging', cng: 'CNG', kerosene: 'kerosene' };
-  const found = Object.keys(props)
-    .filter((k) => k.startsWith('fuel:') && ['yes', 'true', '1'].includes(String(props[k]).toLowerCase()))
-    .map((k) => k.slice(5))
-    .map((k) => names[k] ?? humanise(k).toLowerCase());
-  return found.length ? found.join(', ') : null;
-}
-
 function yesNo(v: string): string {
   const s = v.toLowerCase();
   if (s === 'yes' || s === 'true') return 'Yes';
@@ -146,53 +147,88 @@ function yesNo(v: string): string {
 /** Rows most OSM point overlays share, in a fixed order, only where the property exists. */
 function commonRows(props: FeatureProperties): [string, string][] {
   const rows: [string, string][] = [];
-  const operator = first(props, 'operator', 'brand');
+  const operator = first(props, 'operator');
   if (operator) rows.push(['Run by', operator]);
-  const addr = address(props);
-  if (addr) rows.push(['Address', addr]);
   const phone = first(props, 'phone', 'contact:phone');
   if (phone) rows.push(['Phone', phone]);
   const hours = first(props, 'opening_hours');
   if (hours) rows.push(['Opening hours', openingHours(hours)]);
-  const capacity = first(props, 'capacity', 'beds');
-  if (capacity) rows.push(['Capacity', capacity]);
   return rows;
 }
 
+/** The region a flood/access layer or feature names, from the first segment after a `flood_`/`access_` prefix. */
 function regionName(id: string | null): string | null {
   if (!id) return null;
-  const key = id.toLowerCase().replace(/^flood_/, '').replace(/^access_/, '');
+  const stripped = id.toLowerCase().replace(/^flood_/, '').replace(/^access_/, '');
+  const key = stripped.split('_')[0];
   return REGIONS[key] ?? null;
 }
 
-function describeHealth(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeHealth(props: FeatureProperties): Described {
   const amenity = first(props, 'amenity', 'healthcare');
-  const type = amenity ? HEALTH_TYPES[amenity.toLowerCase()] ?? humanise(amenity) : 'Health service';
-  const rows: [string, string][] = [['Type', type]];
+  const amenityLower = amenity?.toLowerCase();
+  const type = amenity ? HEALTH_TYPES[amenityLower as string] ?? humanise(amenity) : 'Health service';
   const emergency = first(props, 'emergency');
+  const emergencyYes = emergency?.toLowerCase() === 'yes';
+
+  let kind: PlaceKind | null = null;
+  if (amenityLower === 'hospital' || emergencyYes) kind = 'hospital';
+  else if (amenityLower === 'pharmacy') kind = 'pharmacy';
+  else if (amenityLower === 'doctors') kind = 'gp';
+  else if (amenityLower === 'clinic') kind = 'clinic';
+
+  const rows: [string, string][] = [['Type', type]];
   if (emergency) rows.push(['Emergency department', yesNo(emergency)]);
+  const dispensing = first(props, 'dispensing');
+  if (dispensing) rows.push(['Dispenses prescriptions', yesNo(dispensing)]);
   rows.push(...commonRows(props));
-  return { title: first(props, 'name') ?? type, rows };
+  const beds = first(props, 'beds');
+  if (beds) rows.push(['Beds', beds]);
+  const wheelchair = first(props, 'wheelchair');
+  if (wheelchair) rows.push(['Wheelchair access', yesNo(wheelchair)]);
+  const website = first(props, 'website');
+  if (website) rows.push(['Website', website]);
+
+  return { title: first(props, 'name') ?? type, typeLine: emergency && emergencyYes ? `${type} · emergency department` : type, kind, rows };
 }
 
-function describeFuel(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeFuel(props: FeatureProperties): Described {
+  const brand = first(props, 'brand');
   const rows: [string, string][] = [['Type', 'Fuel station']];
-  const fuels = fuelTypes(props);
-  if (fuels) rows.push(['Fuel sold', fuels]);
-  rows.push(...commonRows(props));
-  return { title: first(props, 'name') ?? 'Fuel station', rows };
+  if (brand) rows.push(['Brand', brand]);
+  const diesel = first(props, 'fuel:diesel');
+  if (diesel) rows.push(['Diesel', yesNo(diesel)]);
+  const lpg = first(props, 'fuel:lpg');
+  if (lpg) rows.push(['LPG', yesNo(lpg)]);
+  const electric = first(props, 'fuel:electricity');
+  if (electric) rows.push(['Electric charging', yesNo(electric)]);
+  const shop = first(props, 'shop');
+  if (shop) rows.push(['Shop', humanise(shop)]);
+  rows.push(...commonRows(props).filter(([label, value]) => !(label === 'Run by' && value === brand)));
+  return { title: first(props, 'name') ?? 'Fuel station', typeLine: brand ? `Fuel station · ${brand}` : 'Fuel station', kind: 'fuel', rows };
 }
 
-function describeWater(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeWater(props: FeatureProperties): Described {
   const manMade = first(props, 'man_made')?.toLowerCase();
-  const type = manMade === 'water_works' ? 'Water treatment works'
-    : manMade === 'reservoir_covered' || manMade === 'storage_tank' ? 'Covered reservoir or water tank'
-    : first(props, 'water', 'landuse')?.toLowerCase() === 'reservoir' ? 'Reservoir'
-    : manMade ? humanise(manMade) : 'Water body';
-  return { title: first(props, 'name') ?? type, rows: [['Type', type], ...commonRows(props)] };
+  const waterVal = first(props, 'water')?.toLowerCase();
+  const landuse = first(props, 'landuse')?.toLowerCase();
+  const natural = first(props, 'natural')?.toLowerCase();
+  let type: string;
+  let kind: PlaceKind | null;
+  if (manMade === 'water_works') { type = 'Water treatment works'; kind = 'water-works'; }
+  else if (manMade === 'reservoir_covered' || manMade === 'storage_tank') { type = 'Covered reservoir or water tank'; kind = 'reservoir'; }
+  else if (waterVal === 'reservoir' || landuse === 'reservoir') { type = 'Reservoir'; kind = 'reservoir'; }
+  else if (natural === 'spring') { type = 'Spring'; kind = 'spring'; }
+  else if (manMade) { type = humanise(manMade); kind = null; }
+  else { type = 'Water body'; kind = null; }
+
+  const rows: [string, string][] = [['Type', type], ...commonRows(props)];
+  const description = first(props, 'description');
+  if (description) rows.push(['Note', description]);
+  return { title: first(props, 'name') ?? type, typeLine: type, kind, rows };
 }
 
-function describeRail(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeRail(props: FeatureProperties): Described {
   const station = first(props, 'station')?.toLowerCase();
   const type = station === 'subway' ? 'Underground station' : station === 'light_rail' ? 'Light rail station' : station === 'tram' ? 'Tram stop'
     : first(props, 'railway')?.toLowerCase() === 'halt' ? 'Railway halt' : 'Railway station';
@@ -201,49 +237,73 @@ function describeRail(props: FeatureProperties): { title: string; rows: [string,
   if (network) rows.push(['Network', network]);
   const operator = first(props, 'operator');
   if (operator) rows.push(['Train operator', operator]);
+  const platforms = first(props, 'platforms');
+  if (platforms) rows.push(['Platforms', platforms]);
+  const wheelchair = first(props, 'wheelchair');
+  if (wheelchair) rows.push(['Wheelchair access', yesNo(wheelchair)]);
   rows.push(...commonRows({ ...props, operator: null }));
-  return { title: first(props, 'name') ?? type, rows };
+  return { title: first(props, 'name') ?? type, typeLine: operator ? `${type} · ${operator}` : type, kind: 'rail-station', rows };
 }
 
-function describeNuclear(props: FeatureProperties): { title: string; rows: [string, string][] } {
-  const kind = first(props, 'type');
-  const type = kind ? NUCLEAR_TYPES[kind.toLowerCase()] ?? `Nuclear site (${humanise(kind).toLowerCase()})` : 'Nuclear site';
+function describeNuclear(props: FeatureProperties): Described {
+  const rawType = first(props, 'type');
+  const type = rawType ? NUCLEAR_TYPES[rawType.toLowerCase()] ?? `Nuclear site (${humanise(rawType).toLowerCase()})` : 'Nuclear site';
   const rows: [string, string][] = [['Type', type]];
   const status = first(props, 'status');
-  if (status) rows.push(['Status', NUCLEAR_STATUS[status.toLowerCase()] ?? humanise(status)]);
+  const statusLabel = status ? NUCLEAR_STATUS[status.toLowerCase()] ?? humanise(status) : null;
+  if (statusLabel) rows.push(['Status', statusLabel]);
   const note = first(props, 'note');
   if (note) rows.push(['Detail', note]);
   rows.push(...commonRows(props));
-  return { title: first(props, 'name') ?? type, rows };
+  return { title: first(props, 'name') ?? type, typeLine: statusLabel ? `${type} · ${statusLabel}` : type, kind: 'nuclear', rows };
 }
 
-function describeChemical(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeChemical(props: FeatureProperties): Described {
   const industrial = first(props, 'industrial');
   const type = industrial ? INDUSTRIAL_TYPES[industrial.toLowerCase()] ?? humanise(industrial) : 'Chemical (COMAH) site';
   const rows: [string, string][] = [['Type', type], ...commonRows(props)];
+  const hazmat = first(props, 'hazmat');
+  if (hazmat) rows.push(['Hazardous materials', yesNo(hazmat)]);
+  const description = first(props, 'description');
+  if (description) rows.push(['Note', description]);
   if (first(props, 'source')?.toLowerCase() === 'hand-authored') rows.push(['Listed as', 'Major hazard site from the Operation SOS list']);
-  return { title: first(props, 'name') ?? type, rows };
+  return { title: first(props, 'name') ?? type, typeLine: type, kind: 'chemical', rows };
 }
 
-function describeAirportMilitary(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeAirport(props: FeatureProperties): Described {
   const aeroway = first(props, 'aeroway')?.toLowerCase();
   const military = first(props, 'military')?.toLowerCase();
   const aerodromeType = first(props, 'aerodrome:type', 'aerodrome')?.toLowerCase();
   let type: string;
-  if (aeroway === 'aerodrome' && (military || aerodromeType === 'military')) type = 'Military airfield';
+  if (aeroway === 'aerodrome' && military) type = MILITARY_TYPES[military] ?? 'Military airfield';
+  else if (aeroway === 'aerodrome' && aerodromeType === 'military') type = 'Military airfield';
   else if (aeroway === 'aerodrome') type = (aerodromeType && AERODROME_TYPES[aerodromeType]) ?? 'Airport or airfield';
   else if (aeroway === 'heliport' || aeroway === 'helipad') type = 'Heliport';
-  else if (military) type = MILITARY_TYPES[military] ?? (military === 'yes' ? 'Military land' : `Military land (${humanise(military).toLowerCase()})`);
-  else type = aeroway ? humanise(aeroway) : 'Airport or military land';
+  else type = aeroway ? humanise(aeroway) : 'Airport or airfield';
+
   const rows: [string, string][] = [['Type', type]];
   const icao = first(props, 'icao');
   const iata = first(props, 'iata');
   if (icao || iata) rows.push(['Code', [iata, icao].filter(Boolean).join(' / ')]);
   rows.push(...commonRows(props));
-  return { title: first(props, 'name') ?? type, rows };
+  return { title: first(props, 'name') ?? type, typeLine: type, kind: 'airport', rows };
 }
 
-function describeFootpath(props: FeatureProperties): { title: string; rows: [string, string][] } {
+function describeMilitary(props: FeatureProperties): Described {
+  const military = first(props, 'military')?.toLowerCase();
+  let type: string;
+  if (military) type = MILITARY_TYPES[military] ?? (military === 'yes' ? 'Military land' : `Military land (${humanise(military).toLowerCase()})`);
+  else type = 'Military land';
+
+  const rows: [string, string][] = [['Type', type], ...commonRows(props)];
+  const access = first(props, 'access');
+  if (access) rows.push(['Access', ACCESS_VALUES[access.toLowerCase()] ?? humanise(access)]);
+  const description = first(props, 'description');
+  if (description) rows.push(['Note', description]);
+  return { title: first(props, 'name') ?? type, typeLine: type, kind: 'military', rows };
+}
+
+function describeFootpath(props: FeatureProperties): Described {
   const designation = first(props, 'designation')?.toLowerCase();
   const highway = first(props, 'highway')?.toLowerCase();
   const known = designation && designation !== 'none' ? DESIGNATIONS[designation] : undefined;
@@ -263,11 +323,11 @@ function describeFootpath(props: FeatureProperties): { title: string; rows: [str
   if (sac) rows.push(['Difficulty', SAC_SCALE[sac.toLowerCase()] ?? humanise(sac)]);
   const visibility = first(props, 'trail_visibility');
   if (visibility) rows.push(['Visibility', TRAIL_VISIBILITY[visibility.toLowerCase()] ?? humanise(visibility)]);
-  return { title: first(props, 'name') ?? type, rows };
+  return { title: first(props, 'name') ?? type, typeLine: type, kind: 'footpath', rows };
 }
 
 function accessDesignation(value: string | null): { title: string; meaning: string } {
-  const v = (value ?? '').toLowerCase();
+  const v = (value ?? '').replace(/_/g, ' ').toLowerCase();
   if (v.includes('common')) return { title: 'Registered common land', meaning: 'Open to walk on under the Countryside and Rights of Way Act 2000' };
   if (v.includes('open country') || v.includes('mountain') || v.includes('moor') || v.includes('heath') || v.includes('down')) {
     return { title: 'Open country (CROW Act)', meaning: 'Mountain, moor, heath or down you may walk on freely under the Countryside and Rights of Way Act 2000' };
@@ -278,13 +338,13 @@ function accessDesignation(value: string | null): { title: string; meaning: stri
   return { title: value ? humanise(value) : 'Open access land', meaning: 'Land you may walk on freely under the Countryside and Rights of Way Act 2000' };
 }
 
-function describeAccessLand(props: FeatureProperties, sourceLayer?: string): { title: string; rows: [string, string][] } {
+function describeAccessLand(props: FeatureProperties, sourceLayer?: string): Described {
   const designation = accessDesignation(first(props, 'Descrip', 'descrip', 'DESCRIP', 'Description', 'type', 'TYPE', 'designation', 'category'));
   const rows: [string, string][] = [['Designation', designation.title], ['What it means', designation.meaning]];
   const region = regionName(first(props, 'region') ?? sourceLayer ?? null);
   if (region) rows.push(['Region', region]);
   const name = first(props, 'name', 'Name', 'NAME', 'site_name');
-  return { title: name ?? 'Open access land', rows };
+  return { title: name ?? 'Open access land', typeLine: designation.title, kind: 'access-land', rows };
 }
 
 /** The flood zone ("1", "2" or "3") a feature's properties name, whatever the source called the field. */
@@ -295,30 +355,54 @@ export function floodZoneOf(props: FeatureProperties): string | null {
   return m ? m[1] : null;
 }
 
-function describeFloodZone(props: FeatureProperties, sourceLayer?: string): { title: string; rows: [string, string][] } {
-  const zone = floodZoneOf(props);
-  const known = zone ? FLOOD_ZONES[zone] : undefined;
-  const rows: [string, string][] = [];
-  if (known) {
-    rows.push(['Flood zone', zone as string], ['Chance of flooding', known.chance]);
-  } else {
-    const kind = first(props, 'type', 'TYPE', 'flood_type', 'category', 'source_type');
-    rows.push(['Chance of flooding', kind ? `${humanise(kind)} flooding area` : 'Area shown on the official flood map as at risk of flooding']);
-  }
+/** The `z2`/`z3`/`river`/`coastal` tag off the end of a `flood_<region>[_<tag>]` tippecanoe layer name, if any. */
+function floodLayerTag(sourceLayer?: string): string | null {
+  if (!sourceLayer) return null;
+  const m = /^flood_[a-z]+_(z2|z3|river|coastal)$/i.exec(sourceLayer);
+  return m ? m[1].toLowerCase() : null;
+}
+
+function describeFloodZone(props: FeatureProperties, sourceLayer?: string): Described {
+  const tag = floodLayerTag(sourceLayer);
   const region = regionName(sourceLayer ?? first(props, 'region'));
+  const rows: [string, string][] = [];
+  let title: string;
+  if (tag === 'z2' || tag === 'z3') {
+    const zone = tag === 'z2' ? '2' : '3';
+    const known = FLOOD_ZONES[zone];
+    rows.push(['Flood zone', zone], ['Chance of flooding', known.chance]);
+    title = known.title;
+  } else if (tag === 'river') {
+    title = 'River flood risk area';
+    rows.push(['Chance of flooding', (region && RIVER_CHANCE[region]) ?? 'River flooding area']);
+  } else if (tag === 'coastal') {
+    title = 'Coastal flood risk area';
+    rows.push(['Chance of flooding', (region && COASTAL_CHANCE[region]) ?? 'Coastal flooding area']);
+  } else {
+    const zone = floodZoneOf(props);
+    const known = zone ? FLOOD_ZONES[zone] : undefined;
+    if (known) {
+      rows.push(['Flood zone', zone as string], ['Chance of flooding', known.chance]);
+      title = known.title;
+    } else {
+      const kind = first(props, 'type', 'TYPE', 'flood_type', 'category', 'source_type');
+      rows.push(['Chance of flooding', kind ? `${humanise(kind)} flooding area` : 'Area shown on the official flood map as at risk of flooding']);
+      title = 'Flood risk area';
+    }
+  }
   if (region) rows.push(['Region', region]);
   if (region === 'England' || region === 'Wales') rows.push(['Definition', 'Flood Map for Planning zones: undefended river and sea flooding, ignoring flood defences']);
-  return { title: known?.title ?? 'Flood risk area', rows };
+  return { title, typeLine: title, kind: 'flood-zone', rows };
 }
 
 /**
- * Turn an overlay feature's properties into what the tooltip shows: never raw OSM keys, always a title,
- * the overlay name and rows of plain English in UK terms.
+ * Turn an overlay feature's properties into what the tooltip and place card show: never raw OSM keys, always a
+ * title, a type line, a place kind (for the card's icon and layout), the overlay name and rows of plain English.
  */
 export function describeFeature(overlayId: string, properties: FeatureProperties | null | undefined, opts: DescribeOptions = {}): FeatureDescription {
   const props: FeatureProperties = properties ?? {};
   const overlay = opts.overlayTitle ?? OVERLAY_TITLES[overlayId] ?? humanise(overlayId);
-  let out: { title: string; rows: [string, string][] };
+  let out: Described;
   switch (overlayId) {
     case 'health': out = describeHealth(props); break;
     case 'fuel': out = describeFuel(props); break;
@@ -326,11 +410,12 @@ export function describeFeature(overlayId: string, properties: FeatureProperties
     case 'rail': out = describeRail(props); break;
     case 'nuclear-sites': out = describeNuclear(props); break;
     case 'chemical-sites': out = describeChemical(props); break;
-    case 'airports-military': out = describeAirportMilitary(props); break;
+    case 'airports': out = describeAirport(props); break;
+    case 'military': out = describeMilitary(props); break;
     case 'footpaths': out = describeFootpath(props); break;
     case 'access-land': out = describeAccessLand(props, opts.sourceLayer); break;
     case 'flood-zones': out = describeFloodZone(props, opts.sourceLayer); break;
-    default: out = { title: first(props, 'name', 'title') ?? overlay, rows: commonRows(props) };
+    default: out = { title: first(props, 'name', 'title') ?? overlay, typeLine: overlay, kind: null, rows: commonRows(props) };
   }
-  return { title: out.title, overlay, rows: out.rows };
+  return { title: out.title, overlay, typeLine: out.typeLine, kind: out.kind, rows: out.rows };
 }
