@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -130,6 +130,8 @@ export const api = {
   page: (slug: string) => request<Page>('GET', `/pages/${enc(slug)}`),
   mapConfig: () => request<MapConfig>('GET', '/map/config'),
   mapOverlays: () => request<Overlay[]>('GET', '/map/overlays'),
+  /** What to expect at each kind of place, by kind: the place card's own guidance. */
+  mapPlaces: () => request<Record<string, PlaceGuidance>>('GET', '/map/places'),
   places: (q: string, limit?: number, signal?: AbortSignal) => request<Place[]>('GET', `/places${qs({ q, limit })}`, undefined, signal),
   notes: (kind?: 'note' | 'pin' | 'event') => request<Note[]>('GET', `/notes${qs({ kind })}`),
   /** The one number the box is ever told: how many people the kit quantities are scaled for. It is read

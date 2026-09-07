@@ -132,12 +132,17 @@
 .map-tip-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--line-strong); }
 .map-tip { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
 .map-tip-title { font-weight: 700; overflow-wrap: anywhere; }
-.map-tip-overlay { color: var(--ink-muted); font-size: var(--t-meta); }
-.map-tip-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 4px 0 0; }
-.map-tip-rows > div { display: contents; }
-.map-tip-rows dt { color: var(--ink-muted); white-space: nowrap; }
-.map-tip-rows dd { margin: 0; overflow-wrap: anywhere; }
-@media (max-width: 480px) { .map-tip-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .map-tip-rows dt { margin-top: 4px; } }
+.map-tip-type { color: var(--ink-muted); font-size: var(--t-meta); }
+
+/* The place card: what a tap on the map opens. The rows the popup used to carry live here, where
+   there is room to read them, and the box's own guidance sits under them. */
+.map-panel section { display: flex; flex-direction: column; gap: 6px; }
+.place-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 4px 0 0; }
+.place-rows > div { display: contents; }
+.place-rows dt { color: var(--ink-muted); white-space: nowrap; }
+.place-rows dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .place-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .place-rows dt { margin-top: 4px; } }
+.place-expect p { margin: 0 0 8px; }
 .map-note { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; text-align: center; }
 
 /* MapLibre's own controls follow the theme rather than arriving as white boxes on a dark map. */

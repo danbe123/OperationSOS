@@ -61,7 +61,7 @@ test('place search, pin persistence and grid reference for a known point', async
   }
 });
 
-test('hovering a health feature shows what it is; a tap pins it and a tap elsewhere closes it', async ({ page }) => {
+test('hovering a health feature shows what it is; a tap opens its card and a tap elsewhere closes it', async ({ page }) => {
   await page.goto('/map?lat=50.933&lon=-1.435&z=14&overlay=health');
   await waitForMap(page);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
@@ -79,20 +79,23 @@ test('hovering a health feature shows what it is; a tap pins it and a tap elsewh
     return tip.isVisible();
   }, { timeout: 15_000 }).toBe(true);
   await expect(tip).toContainText('Southampton General Hospital');
-  await expect(tip).toContainText('Hospitals, pharmacies, GP surgeries');
-  await expect(tip.locator('dd').first()).toHaveText('Hospital');
+  await expect(tip).toContainText('Hospital');
+  await expect(tip.locator('dd')).toHaveCount(0);
   expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
   expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
 
-  // Moving off the feature hides the hover tooltip; a click pins it until a click on empty map.
+  // Moving off the feature hides the hover tooltip; a tap on it opens the card that answers for it.
   await page.mouse.move(canvas.x + 20, canvas.y + 20);
   await expect(tip).toBeHidden();
   await page.mouse.click(at.x, at.y);
-  await expect(tip).toContainText('Southampton General Hospital');
-  await page.mouse.move(canvas.x + 20, canvas.y + 20);
-  await expect(tip).toBeVisible();
-  await page.mouse.click(canvas.x + 20, canvas.y + 20);
+  const card = page.getByRole('dialog', { name: 'Place' });
+  await expect(card).toContainText('Southampton General Hospital');
+  await expect(card).toContainText('What to expect here');
   await expect(tip).toBeHidden();
+
+  // A tap on empty map closes it again.
+  await page.mouse.click(canvas.x + 20, canvas.y + 20);
+  await expect(card).toBeHidden();
 });
 
 test('share gives one grid reference, the address as a link, and a code sized to the panel', async ({ page }) => {

@@ -2,6 +2,7 @@
 // The shapes here are `GET /api/nearby?lat&lon` exactly as the box answers it.
 import type { NearbyFacility, NearbyPlace } from '../api/types';
 import type { IconName } from '../icons';
+import type { PlaceKind } from './describe';
 import { bearingDeg, distanceKm, formatBearing, formatDistance, formatWalk, naismithMinutes, type LngLat } from './measure';
 
 /** An icon per facility id. The box names the facilities, so an unknown id still draws something. */
@@ -18,6 +19,16 @@ export const NEARBY_ICON: Record<string, IconName> = {
 export function nearbyIcon(id: string): IconName {
   return NEARBY_ICON[id] ?? 'pin';
 }
+
+/** Which kind of place a nearby facility is, so a row from the list opens the same card — with the same
+ * "what to expect here" — as a tap on the map does. Kinds the box has no guidance for are left out. */
+export const NEARBY_KIND: Record<string, PlaceKind> = {
+  'emergency-department': 'hospital',
+  pharmacy: 'pharmacy',
+  gp: 'gp',
+  fuel: 'fuel',
+  'water-works': 'water-works',
+};
 
 export type Route = { km: number; bearing: number; minutes: number; text: string };
 

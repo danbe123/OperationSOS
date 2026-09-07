@@ -6,7 +6,7 @@ import type { Terrain } from './LayerChips';
 import type { Theme } from '../theme/ThemeProvider';
 import { addTerrain, annotationPaint, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainLayerVisible } from './layers';
 import { addOverlay, setOverlayVisible } from './overlays';
-import { attachFeatureTooltip } from './tooltip';
+import { attachFeatureTooltip, type TappedPlace } from './tooltip';
 import type { LngLat } from './measure';
 
 // e2e exposure: window.__sosMap is the live map instance; __styleVersion is bumped on every
@@ -31,6 +31,8 @@ export type MapViewProps = {
   routePoints: LngLat[];
   onMoveEnd: (view: { lon: number; lat: number; zoom: number }) => void;
   onClick: (p: LngLat) => void;
+  /** A tap on an overlay feature, described; `null` when the tap landed on empty map. */
+  onFeatureTap: (place: TappedPlace | null) => void;
   onLongPress: (p: LngLat) => void;
   onReady: (map: MlMap) => void;
 };
@@ -165,7 +167,7 @@ export function MapView(props: MapViewProps) {
       const ev = e as { error?: unknown; sourceId?: string };
       if (ev.sourceId && isEtagMismatch(ev.error)) recreateSource(map, ev.sourceId);
     });
-    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays);
+    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays, (p) => propsRef.current.onFeatureTap(p));
     mapRef.current = map;
     (window as unknown as { __sosMap?: ExposedMap }).__sosMap = map as ExposedMap;
     propsRef.current.onReady(map);

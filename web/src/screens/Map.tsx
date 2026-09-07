@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import type { Map as MlMap } from 'maplibre-gl';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
-import type { Place } from '../api/types';
+import type { NearbyFacility, NearbyPlace, Place } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { QrCode } from '../components/QrCode';
@@ -15,14 +15,16 @@ import { LayerChips, type Terrain } from '../map/LayerChips';
 import { MapPanel, type PanelBodySize } from '../map/MapPanel';
 import { MapView } from '../map/MapView';
 import { bearingDeg, formatBearing, formatDistance, pathLengthKm, type LngLat } from '../map/measure';
-import { describeNearby, describeRoute, leadFacility, nearbyGap, nearbyIcon, placeName, plainNote } from '../map/nearby';
+import { describeNearby, describeRoute, leadFacility, NEARBY_KIND, nearbyGap, nearbyIcon, placeName, plainNote } from '../map/nearby';
+import { PlaceCard, type From } from '../map/PlaceCard';
 import { PlaceSearch } from '../map/PlaceSearch';
+import type { TappedPlace } from '../map/tooltip';
 import { mapQueryString, parseMapQuery } from '../map/query';
 import { PrintButton } from '../components/PrintButton';
 import { Screen } from '../shell/Screen';
 import './map.css';
 
-type Panel = 'none' | 'search' | 'pins' | 'share' | 'home' | 'nearby';
+type Panel = 'none' | 'search' | 'pins' | 'share' | 'home' | 'nearby' | 'place';
 const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 
 export function MapScreen() {
@@ -32,6 +34,8 @@ export function MapScreen() {
   const query = useMemo(() => parseMapQuery(`?${params.toString()}`), [params]);
   const { data: config, error, loading } = useQuery(() => api.mapConfig(), []);
   const pinsQ = useQuery(() => api.notes('pin'), [], { refetchOnFocus: true });
+  // What to expect at each kind of place, once per screen: the card reads its own kind out of it.
+  const placesQ = useQuery(() => api.mapPlaces(), []);
   const homeQ = useQuery(() => api.home(), [], { refetchOnFocus: true });
   const mapRef = useRef<MlMap | null>(null);
 
@@ -49,6 +53,8 @@ export function MapScreen() {
   const [panel, setPanel] = useState<Panel>('none');
   const [view, setView] = useState({ lat: query.lat ?? DEFAULT_VIEW.lat, lon: query.lon ?? DEFAULT_VIEW.lon, zoom: query.z ?? DEFAULT_VIEW.zoom });
   const [tapped, setTapped] = useState<LngLat | null>(null);
+  // The place the last tap landed on, and the card that says what it is.
+  const [place, setPlace] = useState<TappedPlace | null>(null);
   const [measuring, setMeasuring] = useState(false);
   const [measure, setMeasure] = useState<LngLat[]>([]);
   const [pendingPin, setPendingPin] = useState<LngLat | null>(null);
@@ -62,7 +68,9 @@ export function MapScreen() {
   // from wherever the map happened to be — which, with no home in the query string, was the middle
   // of the country — and told a household its nearest A&E was an hour's walk when it was three
   // minutes away. Nothing on the panel said which point it had searched from.
-  const [nearbyOrigin, setNearbyOrigin] = useState<'home' | 'centre'>('home');
+  const [nearbyOrigin, setNearbyOrigin] = useState<'home' | 'centre' | 'place'>('home');
+  // What the panel calls the point it searched from when that point is a place off the card.
+  const [nearbyLabel, setNearbyLabel] = useState('');
   const nearbyQ = useQuery(() => (nearbyAt ? api.nearby(nearbyAt.lat, nearbyAt.lon) : Promise.resolve(null)), [nearbyAt]);
   // Which kind of place the panel is answering for. It survives a fresh search from a new centre, so
   // somebody looking for a pharmacy is still shown a pharmacy after they move the map.
@@ -179,6 +187,17 @@ export function MapScreen() {
     setNearbyAt(at);
   };
 
+  /* A row in the Nearby list is a place like any other on the map: it opens the same card, with the
+     same guidance on it, rather than only flying the map to a dot the household then has to find. */
+  const openFromNearby = (f: NearbyFacility, p: NearbyPlace) => {
+    flyTo(p.lon, p.lat, 15);
+    setPlace({
+      title: placeName(p.name, f.title), typeLine: f.title, overlay: f.title, overlayId: f.id,
+      kind: NEARBY_KIND[f.id] ?? null, rows: [], lat: p.lat, lon: p.lon,
+    });
+    setPanel('place');
+  };
+
   /** The box asks the device where it is where it can, and says why it cannot where it cannot.
    * Either way the answer lives in the Find place panel, so there is one place to look. */
   const locate = () => {
@@ -231,7 +250,10 @@ export function MapScreen() {
   const shareUrl = `http://${status?.hotspot.ip ?? window.location.host}/map${mapQueryString({ lat: view.lat, lon: view.lon, z: view.zoom, overlays: overlaysOn ?? [], label: query.label })}`;
   const legend = (config?.overlays ?? []).filter((o) => overlaysOn?.includes(o.id));
 
+  // Every distance on the card is measured from the same point the rest of the screen measures from.
+  const from: From = homePoint ? { lat: homePoint.lat, lon: homePoint.lon, label: 'home' } : { lat: view.lat, lon: view.lon, label: 'the map centre' };
   const fromHome = nearbyOrigin === 'home' && Boolean(homePoint) && Boolean(nearbyAt);
+  const nearbyFromLabel = nearbyOrigin === 'place' ? nearbyLabel : fromHome ? 'home' : 'the map centre';
   const nearbyFacilities = nearbyQ.data?.facilities ?? [];
   const nearbyLead = leadFacility(nearbyFacilities, nearbyKind);
   const nearbyNearest = nearbyLead?.nearest ?? null;
@@ -275,7 +297,9 @@ export function MapScreen() {
             config={config} theme={theme} overlaysOn={overlaysOn} terrain={terrain}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
             home={homePoint} routePoints={routePoints}
-            onMoveEnd={setView} onClick={onMapClick} onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
+            onMoveEnd={setView} onClick={onMapClick}
+            onFeatureTap={(p) => { if (measuring) return; setPlace(p); setPanel(p ? 'place' : panel === 'place' ? 'none' : panel); }}
+            onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
           />
         )}
         {/* The map's own three controls, in the app's shape: an icon and a word, 48 px, in the
@@ -361,8 +385,7 @@ export function MapScreen() {
                 {/* Which point the answer was measured from, on the panel, in the same place the
                     answer itself is. */}
                 <p className="map-lead-line" role="status">
-                  {fromHome ? <>From <strong>home</strong>, {gridRef(nearbyAt!.lat, nearbyAt!.lon).text}</>
-                    : <>From <strong>the map centre</strong>, {nearbyAt ? gridRef(nearbyAt.lat, nearbyAt.lon).text : centreRef.text}</>}
+                  From <strong>{nearbyFromLabel}</strong>, {nearbyAt ? gridRef(nearbyAt.lat, nearbyAt.lon).text : centreRef.text}
                 </p>
                 {nearbyFacilities.length > 0 && (
                   <select aria-label="Which kind of place do you need?" value={nearbyLead?.id ?? ''} onChange={(e) => setNearbyKind(e.target.value)}>
@@ -400,17 +423,17 @@ export function MapScreen() {
                   {f.nearest ? (
                     <>
                       <div className="nearby-item">
-                        <button type="button" className="btn nearby-go" onClick={() => flyTo(f.nearest!.lon, f.nearest!.lat, 15)}>
+                        <button type="button" className="btn nearby-go" onClick={() => openFromNearby(f, f.nearest!)}>
                           <span><strong>{placeName(f.nearest.name, f.title)}</strong><small>{describeNearby(f.nearest)}</small></span>
                         </button>
                         <button type="button" className="btn btn-small" onClick={() => setRouteTo({ title: f.nearest!.name, lat: f.nearest!.lat, lon: f.nearest!.lon })} aria-label={`Line to ${f.nearest.name}`}>Line to</button>
                       </div>
                       {f.also.length > 0 && (
                         <ul className="list nearby-also" aria-label={`Other ${f.title.toLowerCase()} nearby`}>
-                          {f.also.map((place) => (
-                            <li key={`${place.name}:${place.lat},${place.lon}`}>
-                              <button type="button" className="btn btn-small nearby-go" onClick={() => flyTo(place.lon, place.lat, 15)}>
-                                <span>{placeName(place.name, f.title)}<small>{describeNearby(place)}</small></span>
+                          {f.also.map((other) => (
+                            <li key={`${other.name}:${other.lat},${other.lon}`}>
+                              <button type="button" className="btn btn-small nearby-go" onClick={() => openFromNearby(f, other)}>
+                                <span>{placeName(other.name, f.title)}<small>{describeNearby(other)}</small></span>
                               </button>
                             </li>
                           ))}
@@ -432,8 +455,17 @@ export function MapScreen() {
             )}
             {/* The small print about how the distances were worked out is worth reading once, so it
                 sits under the list rather than in front of the answer. */}
-            <p className="muted">Nearest to {fromHome ? 'your home' : 'the centre of the map'}, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
+            <p className="muted">Nearest to {fromHome ? 'your home' : nearbyOrigin === 'place' ? nearbyLabel : 'the centre of the map'}, as the crow flies. The walking time is a rough one; the box has no route planner.</p>
           </MapPanel>
+        )}
+        {panel === 'place' && place && (
+          <PlaceCard
+            place={place} from={from} guidance={place.kind ? placesQ.data?.[place.kind] ?? null : null}
+            onClose={() => { setPanel('none'); setPlace(null); }}
+            onRoute={() => setRouteTo({ title: place.title, lat: place.lat, lon: place.lon })}
+            onPin={() => { setPendingPin({ lat: place.lat, lon: place.lon }); setPinTitle(place.title); setPanel('pins'); }}
+            onNearby={() => { setNearbyOrigin('place'); setNearbyLabel(place.title); setNearbyAt({ lat: place.lat, lon: place.lon }); setPanel('nearby'); }}
+          />
         )}
         {panel === 'share' && (
           <MapPanel

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { FakeMap } from '../map/fakeMap';
-import { mapConfig, notes, places } from '../fixtures/api';
+import { mapConfig, mapPlaces, nearby, notes, places } from '../fixtures/api';
 
 const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
@@ -186,8 +186,9 @@ describe('Map screen', () => {
     expect(map.getLayer('sos-measure-line')).toBeDefined();
   });
 
-  it('hovering an overlay feature shows a tooltip that survives a theme switch; tapping empty map closes a pinned one', async () => {
+  it('hovering an overlay feature shows what it is; a tap opens the place card and a tap on empty map closes it', async () => {
     mockApis();
+    vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
     const user = userEvent.setup();
     renderRoute('/map?overlay=health');
     await screen.findByRole('group', { name: 'Map layers' });
@@ -197,21 +198,65 @@ describe('Map screen', () => {
     await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     const tip = screen.getByRole('tooltip');
     expect(tip).toHaveTextContent('Southampton General Hospital');
-    expect(tip).toHaveTextContent('Hospitals, pharmacies, GP surgeries');
     expect(tip).toHaveTextContent('Hospital');
     expect(map.getCanvas().style.cursor).toBe('pointer');
+    // The tap replaces the popup with the card: the popup is a label, the card is the answer.
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
-    // The base is fixed now, so the style reload a tooltip has to survive is a theme switch: the
-    // screen's own theme button, the one a household would press.
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(await screen.findByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
+    // The handlers hang off the map rather than the style, so a theme switch (which reloads the
+    // style) leaves both the card and the next hover working.
     await user.click(screen.getByRole('button', { name: /Change the theme/ }));
     expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/osm-mono.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
     await act(async () => {});
     expect(map.style.name).toBe('/maps/styles/osm-mono.json');
+    expect(screen.getByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
+    await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
     map.renderedFeatures = [];
     await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });
-    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Place' })).toBeNull();
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Tapped:');
+  });
+
+  it('tapping a feature opens the place card with the type, the distance from the centre, the rows, the guidance and three actions', async () => {
+    mockApis();
+    vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
+    const user = userEvent.setup();
+    renderRoute('/map?lat=50.9379&lon=-1.4708&z=14&overlay=health');
+    await screen.findByRole('group', { name: 'Map layers' });
+    await act(async () => {});
+    const map = lastMap();
+    map.renderedFeatures = [{ layer: { id: 'sos-overlay-health-point' }, source: 'sos-overlay-health', properties: { name: 'Southampton General Hospital', amenity: 'hospital', emergency: 'yes', beds: '1200' } }];
+    await act(async () => { map.emit('click', { point: { x: 10, y: 10 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
+    const card = await screen.findByRole('dialog', { name: 'Place' });
+    expect(within(card).getByRole('heading', { name: 'Southampton General Hospital' })).toBeInTheDocument();
+    expect(within(card).getByText('Hospital \u00b7 emergency department')).toBeInTheDocument();
+    expect(within(card).getByText(/from the map centre, about \d+ min on foot/)).toBeInTheDocument();
+    expect(within(card).getByText('Beds')).toBeInTheDocument();
+    expect(within(card).getByText(/A&E stays open/)).toBeInTheDocument();
+    // The guide's own link and the button under it both go to the guide, and both navigate in the app.
+    expect(within(card).getByRole('link', { name: 'Medical' })).toHaveAttribute('href', '/m/medical');
+    expect(within(card).getByRole('link', { name: 'Open Medical' })).toHaveAttribute('href', '/m/medical');
+    await user.click(within(card).getByRole('button', { name: 'Route from the centre' }));
+    expect(screen.getByTestId('map-readout')).toHaveTextContent('Southampton General Hospital:');
+    await user.click(within(card).getByRole('button', { name: 'Pin this place' }));
+    expect(screen.getByRole('dialog', { name: 'Pins' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Pin name')).toHaveValue('Southampton General Hospital');
+  });
+
+  it('a Nearby row opens the card for that place and the card can search nearby from it', async () => {
+    mockApis();
+    vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
+    vi.spyOn(api, 'nearby').mockResolvedValue(nearby);
+    const user = userEvent.setup();
+    renderRoute('/map');
+    await user.click(await screen.findByRole('button', { name: /Nearby/ }));
+    await user.click(await screen.findByRole('button', { name: /^Southampton General Hospital/ }));
+    const card = screen.getByRole('dialog', { name: 'Place' });
+    expect(within(card).getByText('Emergency department')).toBeInTheDocument();
+    await user.click(within(card).getByRole('button', { name: 'Nearby from here' }));
+    expect(screen.getByRole('dialog', { name: 'Nearby' })).toHaveTextContent('From Southampton General Hospital');
   });
 
   it('share shows the address as a link and a QR; print is hidden in kiosk', async () => {

@@ -23,13 +23,23 @@ export function pickFeature(features: MapGeoJSONFeature[]): MapGeoJSONFeature | 
   return [...features].sort((a, b) => rank(a) - rank(b))[0];
 }
 
+/** The overlay a feature came from: its source id less the `sos-overlay-` prefix. */
+export function overlayIdOf(feature: MapGeoJSONFeature): string {
+  return feature.source.startsWith(SOURCE_PREFIX) ? feature.source.slice(SOURCE_PREFIX.length) : feature.source;
+}
+
+/** One tapped place: everything the describer said about the feature, plus where on the ground it was tapped. */
+export type TappedPlace = FeatureDescription & { lat: number; lon: number; overlayId: string };
+
 export function describeMapFeature(feature: MapGeoJSONFeature, overlays: Overlay[]): FeatureDescription {
-  const overlayId = feature.source.startsWith(SOURCE_PREFIX) ? feature.source.slice(SOURCE_PREFIX.length) : feature.source;
+  const overlayId = overlayIdOf(feature);
   const overlay = overlays.find((o) => o.id === overlayId);
   return describeFeature(overlayId, feature.properties, { sourceLayer: feature.sourceLayer, overlayTitle: overlay?.title });
 }
 
-/** Plain DOM (text nodes only, so property values are never parsed as HTML). */
+/** Plain DOM (text nodes only, so property values are never parsed as HTML). The hover popup says what
+ * the thing is and no more: everything else — what it has, how far it is, what to expect there — is on
+ * the card a tap opens, where it can be read without holding a finger still. */
 export function renderDescription(d: FeatureDescription): HTMLElement {
   const root = document.createElement('div');
   root.className = 'map-tip';
@@ -38,35 +48,21 @@ export function renderDescription(d: FeatureDescription): HTMLElement {
   title.className = 'map-tip-title';
   title.textContent = d.title;
   root.appendChild(title);
-  const overlay = document.createElement('div');
-  overlay.className = 'map-tip-overlay';
-  overlay.textContent = d.overlay;
-  root.appendChild(overlay);
-  if (d.rows.length) {
-    const list = document.createElement('dl');
-    list.className = 'map-tip-rows';
-    for (const [label, value] of d.rows) {
-      const row = document.createElement('div');
-      const dt = document.createElement('dt');
-      dt.textContent = label;
-      const dd = document.createElement('dd');
-      dd.textContent = value;
-      row.append(dt, dd);
-      list.appendChild(row);
-    }
-    root.appendChild(list);
-  }
+  const type = document.createElement('div');
+  type.className = 'map-tip-type';
+  type.textContent = d.typeLine;
+  root.appendChild(type);
   return root;
 }
 
 /**
- * One popup for every overlay feature: it follows the pointer over points, lines and polygons, and a tap
- * (or click) pins it until the next tap on empty map. The popup is a DOM overlay and the handlers hang off
+ * One popup for every overlay feature: it follows the pointer over points, lines and polygons and says
+ * what the thing is. A tap (or click) hands the place to `onTap` — the screen opens the card — and takes
+ * the popup away; a tap on empty map hands `null`. The popup is a DOM overlay and the handlers hang off
  * the map, not the style, so both survive a base switch through setStyle. Returns a detach function.
  */
-export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[]): () => void {
+export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[], onTap: (place: TappedPlace | null) => void): () => void {
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, closeOnMove: false, focusAfterOpen: false, className: 'map-tip-popup', maxWidth: 'none', offset: 12 });
-  let pinned = false;
   let shownKey: string | null = null;
 
   const featureAt = (point: Point, pad: number): MapGeoJSONFeature | undefined => {
@@ -90,27 +86,24 @@ export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[]): () 
   const hide = () => {
     if (popup.isOpen()) popup.remove();
     shownKey = null;
-    pinned = false;
   };
 
   const onMove = (e: PointerEventLike) => {
     const feature = featureAt(e.point, HOVER_PAD);
     setCursor(Boolean(feature));
-    if (pinned) return;
     if (feature) show(feature, e.lngLat);
     else if (popup.isOpen()) hide();
   };
   const onLeave = () => {
     setCursor(false);
-    if (!pinned) hide();
+    hide();
   };
   const onClick = (e: PointerEventLike) => {
     const touch = e.originalEvent?.pointerType === 'touch';
     const feature = featureAt(e.point, touch ? TAP_PAD : HOVER_PAD);
-    if (!feature) { hide(); return; }
-    pinned = false;
-    show(feature, e.lngLat);
-    pinned = true;
+    hide();
+    if (!feature) { onTap(null); return; }
+    onTap({ ...describeMapFeature(feature, overlays()), overlayId: overlayIdOf(feature), lat: e.lngLat.lat, lon: e.lngLat.lng });
   };
 
   map.on('mousemove', onMove);

@@ -44,21 +44,22 @@ describe('overlayLayerIds and pickFeature', () => {
 });
 
 describe('renderDescription', () => {
-  it('renders title, overlay and rows as text, never HTML', () => {
-    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', typeLine: 'Fuel stations', kind: null, rows: [['Phone', '0123']] });
+  it('renders the title and the type line as text, never HTML, and no rows', () => {
+    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', typeLine: 'Fuel station', kind: 'fuel', rows: [['Phone', '0123']] });
     expect(el.getAttribute('role')).toBe('tooltip');
     expect(el.querySelector('.map-tip-title')?.textContent).toBe('<b>Bold</b>');
     expect(el.querySelector('b')).toBeNull();
-    expect(el.querySelector('.map-tip-overlay')?.textContent).toBe('Fuel stations');
-    expect([...el.querySelectorAll('dt, dd')].map((n) => n.textContent)).toEqual(['Phone', '0123']);
-    expect(renderDescription({ title: 'x', overlay: 'y', typeLine: 'y', kind: null, rows: [] }).querySelector('dl')).toBeNull();
+    expect(el.querySelector('.map-tip-type')?.textContent).toBe('Fuel station');
+    // The rows moved to the card a tap opens: a popup that follows the pointer is not the place to read a list.
+    expect(el.querySelector('dl')).toBeNull();
+    expect(el.textContent).not.toContain('0123');
   });
 });
 
 describe('attachFeatureTooltip', () => {
   it('opens one popup while hovering a feature, sets the pointer cursor, and closes it when the pointer leaves', () => {
     const map = mapWithOverlays();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
     expect(FakePopup.instances).toHaveLength(1);
     expect(popup().options).toMatchObject({ closeButton: false, closeOnClick: false, className: 'map-tip-popup' });
     map.renderedFeatures = [hospital];
@@ -69,8 +70,8 @@ describe('attachFeatureTooltip', () => {
     expect(map.getCanvas().style.cursor).toBe('pointer');
     const tip = document.querySelector('.map-tip')!;
     expect(tip.querySelector('.map-tip-title')?.textContent).toBe('Southampton General Hospital');
-    expect(tip.querySelector('.map-tip-overlay')?.textContent).toBe('Hospitals, pharmacies, GP surgeries');
-    expect([...tip.querySelectorAll('dd')].map((n) => n.textContent)).toEqual(['Hospital', '+44 23 8077 7222']);
+    expect(tip.querySelector('.map-tip-type')?.textContent).toBe('Hospital');
+    expect(tip.querySelector('dl')).toBeNull();
     move(map, 11, 11);
     expect(FakePopup.instances).toHaveLength(1);
     map.renderedFeatures = [];
@@ -81,7 +82,7 @@ describe('attachFeatureTooltip', () => {
 
   it('describes lines and polygons from pmtiles overlays by their source layer', () => {
     const map = mapWithOverlays();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
     map.renderedFeatures = [path];
     move(map);
     expect(document.querySelector('.map-tip-title')?.textContent).toBe('Public footpath');
@@ -92,27 +93,33 @@ describe('attachFeatureTooltip', () => {
     map.renderedFeatures = [zone];
     move(map, 14, 14);
     expect(document.querySelector('.map-tip-title')?.textContent).toBe('Flood zone 3');
-    expect([...document.querySelectorAll('.map-tip dd')].map((n) => n.textContent)).toContain('England');
+    expect(document.querySelector('.map-tip-type')?.textContent).toBe('Flood zone 3');
   });
 
-  it('a tap pins the popup with a wider hit box; a tap on empty map closes it', () => {
+  it('a tap hands the place to onTap with a wider hit box and closes the popup; a tap on empty map hands null', () => {
     const map = mapWithOverlays();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
+    const onTap = vi.fn();
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap);
     map.renderedFeatures = [hospital];
+    move(map);
+    expect(popup().isOpen()).toBe(true);
     click(map, true);
     expect(map.queryRenderedFeatures).toHaveBeenLastCalledWith([[-4, -4], [24, 24]], expect.anything());
-    expect(popup().isOpen()).toBe(true);
-    map.renderedFeatures = [];
-    move(map, 300, 300);
-    map.getCanvas().dispatchEvent(new Event('mouseleave'));
-    expect(popup().isOpen()).toBe(true);
-    click(map);
+    // The popup goes: the card the tap opens says all of this, and more, where it can be read.
     expect(popup().isOpen()).toBe(false);
+    expect(onTap).toHaveBeenCalledWith({
+      title: 'Southampton General Hospital', overlay: 'Hospitals, pharmacies, GP surgeries', typeLine: 'Hospital',
+      kind: 'hospital', rows: [['Type', 'Hospital'], ['Phone', '+44 23 8077 7222']],
+      overlayId: 'health', lat: 50.93, lon: -1.43,
+    });
+    map.renderedFeatures = [];
+    click(map);
+    expect(onTap).toHaveBeenLastCalledWith(null);
   });
 
   it('detaching removes the handlers and the popup', () => {
     const map = mapWithOverlays();
-    const detach = attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
+    const detach = attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
     map.renderedFeatures = [hospital];
     move(map);
     expect(popup().isOpen()).toBe(true);
@@ -126,7 +133,7 @@ describe('attachFeatureTooltip', () => {
   it('does nothing when no overlay layer is on', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays);
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
     map.renderedFeatures = [hospital];
     move(map);
     expect(map.queryRenderedFeatures).not.toHaveBeenCalled();

@@ -1,5 +1,5 @@
 import type {
-  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, PlaceGuidance,
   ExportChunks, ImportSummary, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
@@ -405,6 +405,20 @@ export const nearby: NearbyResponse = {
       why: 'No searchable copy of the emergency-services overlay on this box.',
     },
   ],
+};
+
+/* What to expect at each kind of place on the map, as `GET /api/map/places` answers it. */
+export const mapPlaces: Record<string, PlaceGuidance> = {
+  hospital: {
+    title: 'Hospital',
+    html: '<p>A&E stays open on generators for a few days\u2026 <a href="/m/medical">Medical</a></p>',
+    link: { href: '/m/medical', title: 'Medical' },
+  },
+  fuel: {
+    title: 'Fuel station',
+    html: '<p>The pumps are electric: no mains, no fuel. <a href="/m/power">Power</a></p>',
+    link: { href: '/m/power', title: 'Power' },
+  },
 };
 
 /* Carrying the situation to another box. */
