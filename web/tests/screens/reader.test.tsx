@@ -74,6 +74,8 @@ describe('Reader', () => {
     renderRoute(MAIN);
     const f = await reader();
     expect(f).toHaveAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-modals');
+    // An archived page must not tell anyone where it was read from.
+    expect(f).toHaveAttribute('referrerpolicy', 'no-referrer');
     expect(f).toHaveAttribute('src', `/kiwix/content/${WIKI}/A/Main_Page`);
   });
 

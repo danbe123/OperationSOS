@@ -188,7 +188,7 @@ function ArticleReader() {
       }
     >
       <div className="frame-wrap">
-        <iframe ref={frameRef} title="Article" src={initialSrc} sandbox="allow-same-origin allow-scripts allow-forms allow-modals" onLoad={onLoad} />
+        <iframe ref={frameRef} title="Article" src={initialSrc} sandbox="allow-same-origin allow-scripts allow-forms allow-modals" referrerPolicy="no-referrer" onLoad={onLoad} />
       </div>
     </Screen>
   );

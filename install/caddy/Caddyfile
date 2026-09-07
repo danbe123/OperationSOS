@@ -28,8 +28,17 @@
 			header_up X-Forwarded-For {remote_host}
 		}
 	}
+	# Archived pages carry their own scripts (analytics tags, consent banners, the crawler's replay
+	# shim). The box is offline, but a phone on the hotspot may also have a mobile signal, so the
+	# policy on every archived response keeps everything on the box: no request, no beacon, no font
+	# and no frame may leave it, and the archived page tells nobody where it was read.
 	handle /kiwix/* {
-		reverse_proxy {$SOS_KIWIX_UPSTREAM:127.0.0.1:8090}
+		header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'"
+		header Referrer-Policy no-referrer
+		header -Set-Cookie
+		reverse_proxy {$SOS_KIWIX_UPSTREAM:127.0.0.1:8090} {
+			header_up Referer ""
+		}
 	}
 
 	# Map files: byte-range reads by the pmtiles protocol, so no compression; never served stale.
