@@ -10,16 +10,15 @@ const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
   const { FakeMap } = await import('../map/fakeMap');
   class Map extends FakeMap {
-    constructor(opts: { style: string; center: [number, number]; zoom: number }) {
-      super();
+    constructor(opts: { style: string; center: [number, number]; zoom: number; container: HTMLElement }) {
+      super(opts);
       this.center = { lng: opts.center[0], lat: opts.center[1] };
       this.zoom = opts.zoom;
       this.setStyle(opts.style);
       created.maps.push(this);
     }
   }
-  const { FakePopup } = await import('../map/fakeMap');
-  const stub = { Map, Popup: FakePopup, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
+  const stub = { Map, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
   return { default: stub, ...stub };
 });
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));
@@ -202,6 +201,10 @@ describe('Map screen', () => {
     map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
     await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     const tip = screen.getByRole('tooltip');
+    // The description is a panel docked inside the map — away from the pointer, so it covers ground
+    // rather than the thing being read about — not a popup pinned to the point and cut off by the edge.
+    expect(tip.parentElement).toHaveClass('map-tip-dock', 'map-tip-dock-right');
+    expect(tip.parentElement!.parentElement).toBe(map.getContainer());
     expect(tip).toHaveTextContent('Southampton General Hospital');
     expect(tip).toHaveTextContent('Hospital');
     // The hover is the fast read of the same survival answers the card carries.
@@ -209,7 +212,7 @@ describe('Map screen', () => {
     expect(tip).toHaveTextContent('Mains power on generators for a few days');
     expect(tip).toHaveTextContent('Guide: Medical');
     expect(map.getCanvas().style.cursor).toBe('pointer');
-    // The tap replaces the popup with the card: the popup is a label, the card is the answer.
+    // The tap replaces the panel with the card: the hover is a read, the card is the answer.
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(await screen.findByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
@@ -222,8 +225,10 @@ describe('Map screen', () => {
     expect(map.setStyle.mock.calls.length).toBe(styleCalls);
     expect(map.style.name).toBe('/maps/styles/osm-field.json');
     expect(screen.getByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
-    await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
+    await act(async () => { map.emit('mousemove', { point: { x: 900, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
+    // A hover from the right-hand half of the map docks the panel on the left.
+    expect(screen.getByRole('tooltip').parentElement).toHaveClass('map-tip-dock-left');
     map.renderedFeatures = [];
     await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });
     expect(screen.queryByRole('dialog', { name: 'Place' })).toBeNull();

@@ -11,16 +11,15 @@ const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
   const { FakeMap } = await import('../map/fakeMap');
   class Map extends FakeMap {
-    constructor(opts: { style: string; center: [number, number]; zoom: number }) {
-      super();
+    constructor(opts: { style: string; center: [number, number]; zoom: number; container: HTMLElement }) {
+      super(opts);
       this.center = { lng: opts.center[0], lat: opts.center[1] };
       this.zoom = opts.zoom;
       this.setStyle(opts.style);
       created.maps.push(this);
     }
   }
-  const { FakePopup } = await import('../map/fakeMap');
-  const stub = { Map, Popup: FakePopup, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
+  const stub = { Map, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
   return { default: stub, ...stub };
 });
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));

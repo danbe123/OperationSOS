@@ -117,21 +117,22 @@
 .nearby-note { font-size: var(--t-meta); }
 .nearby-route { border-top: 1px solid var(--line); padding-top: 8px; }
 
-/* The feature tooltip: one popup that follows the pointer and carries the whole description — the
-   name, the type, the rows and the four guidance sections. It never takes pointer events, so the map
-   underneath keeps hovering, a tap "through" it still counts, and its links are ink rather than links;
-   the guide is named as a line at the foot instead. Wide enough to read the bullets, and never wider
-   than the map: on a phone it is the viewport less the margins. */
-.maplibregl-popup.map-tip-popup { pointer-events: none; z-index: 8; max-width: min(420px, calc(100vw - 24px)); }
-.map-tip-popup .maplibregl-popup-content { padding: 10px 12px; background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius); font: 400 var(--t-body)/1.4 var(--font-body); text-shadow: none; }
-.map-tip-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
-.map-tip-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
-.map-tip-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--line-strong); }
-.map-tip-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
-.map-tip-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
-.map-tip-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--line-strong); }
-.map-tip-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--line-strong); }
-.map-tip-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--line-strong); }
+/* The feature tooltip: a panel docked inside the map that carries the whole description — the name,
+   the type, the rows and the four guidance sections. Anchored to the point it described, ~600 px of
+   reading was cut off by the edge of the map; docked it has the map's full height, scrolls when even
+   that is not enough, and sits in the half of the map the pointer is not in so it never covers the
+   thing being read about. It takes pointer events, so the pointer can move into it and scroll it.
+   The font is set here because MapLibre's own stylesheet puts 12px on the map container. */
+.map-tip-dock {
+  position: absolute; top: 8px; bottom: 8px; width: min(420px, 48%); z-index: 8; overflow-y: auto;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  padding: 10px 12px; box-shadow: none; font: 400 var(--t-body)/1.4 var(--font-body); text-shadow: none;
+}
+.map-tip-dock-left { left: 8px; }
+.map-tip-dock-right { right: 8px; }
+/* A phone has less map to give away, but the bullets still have to be readable lines, not columns of
+   one word each. */
+@media (max-width: 699px) { .map-tip-dock { width: min(420px, 60%); } }
 /* The text stays at the app's reading size: the tooltip is read on a phone in bad light, and shrinking
    it to fit more words is the one thing that would stop it being read at all. */
 .map-tip { display: flex; flex-direction: column; gap: 4px; min-width: 160px; }

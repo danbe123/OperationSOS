@@ -70,7 +70,7 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   // The fixture health overlay's hospital (web/e2e/fixtures/maps/health.geojson), in screen px.
   const hospital = await page.evaluate(() => (window as MapWindow).__sosMap!.project([-1.4353, 50.9333]));
   const at = { x: canvas.x + hospital.x, y: canvas.y + hospital.y };
-  const tip = page.locator('.map-tip');
+  const tip = page.locator('.map-tip-dock .map-tip');
 
   // Tiles and the overlay render asynchronously; nudge the pointer until the feature is hit.
   await expect.poll(async () => {
@@ -85,8 +85,18 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
   expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
 
+  // The panel is docked inside the map with a margin at top and bottom, so all of it is on screen:
+  // anchored to the point, 600 px of guidance ran off the bottom edge and only the title was readable.
+  const dock = page.locator('.map-tip-dock');
+  const dockBox = (await dock.boundingBox())!;
+  expect(dockBox.y).toBeGreaterThanOrEqual(canvas.y);
+  expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(canvas.y + canvas.height + 1);
+  // Docked away from the pointer, so it never covers the thing being read about.
+  const dockedRight = await dock.evaluate((el) => el.classList.contains('map-tip-dock-right'));
+  const away = { x: dockedRight ? canvas.x + 20 : canvas.x + canvas.width - 20, y: canvas.y + 20 };
+
   // Moving off the feature hides the hover tooltip; a tap on it opens the card that answers for it.
-  await page.mouse.move(canvas.x + 20, canvas.y + 20);
+  await page.mouse.move(away.x, away.y);
   await expect(tip).toBeHidden();
   await page.mouse.click(at.x, at.y);
   const card = page.getByRole('dialog', { name: 'Place' });
@@ -94,7 +104,7 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   await expect(card).toContainText('What to expect here');
   await expect(tip).toBeHidden();
 
-  // A tap on empty map closes it again.
+  // A tap on empty map closes it again — on the left, clear of the card that opened on the right.
   await page.mouse.click(canvas.x + 20, canvas.y + 20);
   await expect(card).toBeHidden();
 });

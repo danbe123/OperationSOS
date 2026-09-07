@@ -15,7 +15,15 @@ export class FakeMap {
   /** What queryRenderedFeatures answers; tests set this to put a feature "under" the pointer. */
   renderedFeatures: FakeFeature[] = [];
   canvas = document.createElement('canvas');
+  /** The element maplibre was pointed at: the docked tooltip is appended to it, and its width decides
+   * which side the tooltip docks to. jsdom lays nothing out, so the width is stated rather than measured. */
+  container: HTMLElement;
   private handlers = new Map<string, Set<(e: unknown) => void>>();
+  constructor(opts?: { container?: HTMLElement }) {
+    this.container = opts?.container ?? document.createElement('div');
+    Object.defineProperty(this.container, 'clientWidth', { value: 1000, configurable: true });
+    this.container.appendChild(this.canvas);
+  }
   queryRenderedFeatures = vi.fn((_box?: unknown, opts?: { layers?: string[] }) => this.renderedFeatures.filter((f) => !opts?.layers || opts.layers.includes(f.layer.id)));
   /** jsdom has no layout: every projection lands at the canvas origin, which is enough to query "the centre". */
   project = vi.fn((lngLat: [number, number]) => ({ x: 0, y: 0, lngLat }));
@@ -56,27 +64,9 @@ export class FakeMap {
     c.toDataURL = () => 'data:image/png;base64,QQ==';
     return c;
   }
+  getContainer() { return this.container; }
   on(ev: string, fn: (e: unknown) => void) { if (!this.handlers.has(ev)) this.handlers.set(ev, new Set()); this.handlers.get(ev)!.add(fn); return this; }
   off(ev: string, fn: (e: unknown) => void) { this.handlers.get(ev)?.delete(fn); return this; }
   emit(ev: string, e: unknown) { this.handlers.get(ev)?.forEach((fn) => fn(e)); }
   visibility(id: string): string { return (this.getLayer(id)?.layout?.visibility as string | undefined) ?? 'visible'; }
-}
-
-/** maplibre Popup double: records its content and appends it to the document while open. */
-export class FakePopup {
-  static instances: FakePopup[] = [];
-  options: Record<string, unknown>;
-  lngLat: [number, number] | null = null;
-  element = document.createElement('div');
-  private map: unknown = null;
-  constructor(options: Record<string, unknown> = {}) {
-    this.options = options;
-    this.element.className = `maplibregl-popup ${String(options.className ?? '')}`.trim();
-    FakePopup.instances.push(this);
-  }
-  setLngLat(ll: [number, number]) { this.lngLat = ll; return this; }
-  setDOMContent(node: Node) { this.element.replaceChildren(node); return this; }
-  addTo(map: unknown) { this.map = map; document.body.appendChild(this.element); return this; }
-  remove = () => { this.map = null; this.element.remove(); return this; };
-  isOpen() { return this.map !== null; }
 }
