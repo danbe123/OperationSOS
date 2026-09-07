@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import type { Map as MlMap } from 'maplibre-gl';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
@@ -29,6 +29,7 @@ const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 export function MapScreen() {
   const { status } = useStatus();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const query = useMemo(() => parseMapQuery(`?${params.toString()}`), [params]);
   const { data: config, error, loading } = useQuery(() => api.mapConfig(), []);
   const pinsQ = useQuery(() => api.notes('pin'), [], { refetchOnFocus: true });
@@ -300,6 +301,7 @@ export function MapScreen() {
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
             home={homePoint} routePoints={routePoints} guidance={placesQ.data ?? null}
             onMoveEnd={setView} onClick={onMapClick}
+            onNavigate={(href) => navigate(href)}
             onFeatureTap={(p) => { if (measuring) return; setPlace(p); setPanel(p ? 'place' : panel === 'place' ? 'none' : panel); }}
             onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}
           />

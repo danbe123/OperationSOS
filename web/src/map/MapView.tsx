@@ -35,6 +35,8 @@ export type MapViewProps = {
   guidance: Record<string, PlaceGuidance> | null;
   /** A tap on an overlay feature, described; `null` when the tap landed on empty map. */
   onFeatureTap: (place: TappedPlace | null) => void;
+  /** A guide link inside the hover panel, sent through the app's router. */
+  onNavigate: (href: string) => void;
   onLongPress: (p: LngLat) => void;
   onReady: (map: MlMap) => void;
 };
@@ -175,7 +177,7 @@ export function MapView(props: MapViewProps) {
       const ev = e as { error?: unknown; sourceId?: string };
       if (ev.sourceId && isEtagMismatch(ev.error)) recreateSource(map, ev.sourceId);
     });
-    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays, (p) => propsRef.current.onFeatureTap(p), () => propsRef.current.guidance);
+    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays, (p) => propsRef.current.onFeatureTap(p), () => propsRef.current.guidance, (href) => propsRef.current.onNavigate(href));
     mapRef.current = map;
     (window as unknown as { __sosMap?: ExposedMap }).__sosMap = map as ExposedMap;
     propsRef.current.onReady(map);

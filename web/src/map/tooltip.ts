@@ -127,10 +127,21 @@ export function attachFeatureTooltip(
   overlays: () => Overlay[],
   onTap: (place: TappedPlace | null) => void,
   guidance: () => Record<string, PlaceGuidance> | null,
+  onNavigate?: (href: string) => void,
 ): () => void {
   const dock = document.createElement('div');
   dock.className = 'map-tip-dock';
   let shownKey: string | null = null;
+  // A guide link inside the panel goes through the app's router, not a page load: the box's own
+  // paths start with a slash; anything else (a website in a row) is left to the browser.
+  const onDockClick = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement | null)?.closest('a');
+    const href = a?.getAttribute('href');
+    if (a && href && href.startsWith('/') && onNavigate) {
+      e.preventDefault();
+      onNavigate(href);
+    }
+  };
 
   const featureAt = (point: Point, pad: number): MapGeoJSONFeature | undefined => {
     const layers = overlayLayerIds(map);
@@ -195,11 +206,13 @@ export function attachFeatureTooltip(
   map.on('click', onClick);
   map.getCanvas().addEventListener('mouseleave', onCanvasLeave);
   dock.addEventListener('mouseleave', onDockLeave);
+  dock.addEventListener('click', onDockClick);
   return () => {
     map.off('mousemove', onMove);
     map.off('click', onClick);
     map.getCanvas().removeEventListener('mouseleave', onCanvasLeave);
     dock.removeEventListener('mouseleave', onDockLeave);
+    dock.removeEventListener('click', onDockClick);
     hide();
   };
 }

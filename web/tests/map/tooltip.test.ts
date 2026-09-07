@@ -240,3 +240,24 @@ describe('attachFeatureTooltip', () => {
     expect(dock(map)).toBeNull();
   });
 });
+
+describe('guide links in the docked panel', () => {
+  it('sends an in-app href through onNavigate and leaves other links alone', () => {
+    const map = mapWithOverlays();
+    const guidance = { hospital: { ...mapPlaces.hospital, sections: [{ id: 'have', title: 'Usually here', html: '<ul><li><a href="/m/water">Water</a> and <a href="https://example.org">site</a></li></ul>' }] } };
+    const onNavigate = vi.fn();
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => guidance as never, onNavigate);
+    map.renderedFeatures = [hospital];
+    move(map);
+    const inApp = map.getContainer().querySelector('a[href="/m/water"]') as HTMLAnchorElement;
+    const inAppEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    inApp.dispatchEvent(inAppEvent);
+    expect(onNavigate).toHaveBeenCalledWith('/m/water');
+    expect(inAppEvent.defaultPrevented).toBe(true);
+    const external = map.getContainer().querySelector('a[href="https://example.org"]') as HTMLAnchorElement;
+    const externalEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+    external.dispatchEvent(externalEvent);
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(externalEvent.defaultPrevented).toBe(false);
+  });
+});
