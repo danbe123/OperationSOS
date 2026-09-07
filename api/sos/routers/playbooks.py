@@ -42,6 +42,13 @@ def list_playbooks(request: Request):
     return [_summary(d) for d in request.app.state.content.list("scenario")]
 
 
+@router.get("/modules")
+def list_modules(request: Request):
+    """The topic guides in their own order: the row of buttons under the situation tiles."""
+    return [{"slug": d.id, "title": d.title, "icon": d.icon, "order": d.order}
+            for d in sorted(request.app.state.content.list("module"), key=lambda d: (d.order, d.id))]
+
+
 @router.get("/playbooks/{slug}")
 def get_playbook(slug: str, request: Request, conn=Depends(get_db)):
     r = _rendered(request, slug, conn)

@@ -80,6 +80,15 @@ def test_search_and_suggest(respx_mock, client, env):
     assert client.get("/api/search").json()["results"] == []
 
 
+def test_modules_list_in_order(client):
+    r = client.get("/api/modules")
+    assert r.status_code == 200
+    rows = r.json()
+    assert rows and all(set(m) == {"slug", "title", "icon", "order"} for m in rows)
+    assert [m["order"] for m in rows] == sorted(m["order"] for m in rows)
+    assert any(m["slug"] == "water" for m in rows)
+
+
 def test_playbooks_list_and_detail(client):
     r = client.get("/api/playbooks")
     assert r.status_code == 200

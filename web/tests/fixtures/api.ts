@@ -1,5 +1,5 @@
 import type {
-  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, PlaceGuidance,
+  AiEvent, Card, Condition, ConditionId, ConditionState, Conditions, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, PlaceGuidance,
   ExportChunks, ImportSummary, Page, Place, Playbook, PlaybookSummary, SearchResponse, Sensors, SituationView, Status, Suggestion, UpdateProgress,
 } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
@@ -113,6 +113,13 @@ const scenarioRows: [string, string, string, string][] = [
 export const playbooks: PlaybookSummary[] = scenarioRows.map(([slug, title, icon, summary], i) => ({
   slug, title, icon, order: i + 1, summary,
 }));
+
+export const modules: ModuleSummary[] = [
+  { slug: 'water', title: 'Water', icon: 'water', order: 1 },
+  { slug: 'food', title: 'Food', icon: 'food', order: 2 },
+  { slug: 'power', title: 'Power', icon: 'bolt', order: 6 },
+  { slug: 'comms', title: 'Communications', icon: 'radio', order: 7 },
+];
 
 export const playbook: Playbook = {
   slug: 'grid-collapse', title: 'National grid collapse', icon: 'power', order: 4,

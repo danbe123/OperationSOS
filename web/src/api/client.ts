@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, Kit, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -119,6 +119,7 @@ export const api = {
     request<SearchResponse>('GET', `/search${qs({ q, sources: opts.sources?.join(','), limit: opts.limit })}`, undefined, opts.signal),
   suggest: (q: string, signal?: AbortSignal) => request<Suggestion[]>('GET', `/suggest${qs({ q })}`, undefined, signal),
   playbooks: () => request<PlaybookSummary[]>('GET', '/playbooks'),
+  modules: () => request<ModuleSummary[]>('GET', '/modules'),
   playbook: (slug: string) => request<Playbook>('GET', `/playbooks/${enc(slug)}`),
   setChecklist: (slug: string, itemId: string, checked: boolean) =>
     request<ChecklistItem[]>('PUT', `/playbooks/${enc(slug)}/checklist/${enc(itemId)}`, { checked }),

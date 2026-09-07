@@ -1,11 +1,27 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { playbooks, powerOffView, view } from '../fixtures/api';
+import { modules, playbooks, powerOffView, view } from '../fixtures/api';
 
 describe('Now', () => {
+  beforeEach(() => { vi.spyOn(api, 'modules').mockResolvedValue(modules); });
+
+  it('puts a row of topic buttons under the tiles, in the guides\' order, each opening its guide', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    renderRoute('/');
+    const row = await screen.findByRole('navigation', { name: 'Guides by topic' });
+    const links = within(row).getAllByRole('link');
+    expect(links.map((l) => l.textContent)).toEqual(['Water', 'Food', 'Power', 'Communications']);
+    expect(links[2]).toHaveAttribute('href', '/m/power');
+    expect(links[2].querySelector('svg.icon')).not.toBeNull();
+    // The tiles come first: the row sits under them.
+    const tiles = await screen.findByRole('navigation', { name: 'Scenarios' });
+    expect(tiles.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('is the front door: the question and the situations, with no app bar of its own', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);

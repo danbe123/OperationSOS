@@ -34,6 +34,7 @@ export type SearchResult = {
 export type SearchResponse = { q: string; query: string; results: SearchResult[]; groups: { source: string; badge: string; count: number }[]; took_ms: number; partial: boolean };
 export type Suggestion = { value: string; label: string; url: string | null; source: string };
 export type PlaybookSummary = { slug: string; title: string; icon: string; summary: string; order: number };
+export type ModuleSummary = { slug: string; title: string; icon: string; order: number };
 export type Section = { id: 'right-now' | 'first-72-hours' | 'first-month' | 'long-term' | 'uk-specifics' | 'go-deeper'; title: string; html: string };
 export type ChecklistItem = { id: string; text: string; checked: boolean; updated_at: string | null };
 export type Playbook = PlaybookSummary & {

@@ -15,3 +15,7 @@
 .now-resume { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; min-height: var(--touch); }
 .now-resume > span { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
 .now-resume small { color: var(--ink-muted); }
+/* The topic buttons under the tiles: a wrapping row of icon-and-word buttons, the same touch height
+   as every other button, so the guide for the problem in hand is one tap from the front door. */
+.topic-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.topic-btn { gap: 6px; }

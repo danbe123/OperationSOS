@@ -22,6 +22,22 @@ import './now.css';
  * about a power cut, a flood, a pandemic") was two taps away on Guides. The tiles are the question's
  * answers, so they are the front door; the kit ticks are on /kit, the drill on /situation, and how
  * a phone joins the box on /system. */
+/** Under the situations, the topics: water, food, power and the rest, one button each, in the
+ * guides' own order. A household that knows its problem is "no power" should not have to pick a
+ * scenario to reach the power guide. */
+function Topics() {
+  const modules = useQuery(() => api.modules(), []);
+  const rows = useMemo(() => (modules.data ?? []).slice().sort((a, b) => a.order - b.order), [modules.data]);
+  if (rows.length === 0) return null;
+  return (
+    <nav className="topic-row" aria-label="Guides by topic">
+      {rows.map((m) => (
+        <Link key={m.slug} className="btn topic-btn" to={`/m/${m.slug}`}><Icon name={m.icon} size={22} /><span>{m.title}</span></Link>
+      ))}
+    </nav>
+  );
+}
+
 function Situations() {
   const playbooks = useQuery(() => api.playbooks(), []);
   const scenarios = useMemo(
@@ -44,6 +60,7 @@ function Situations() {
           ))}
         </nav>
       )}
+      <Topics />
     </>
   );
 }
