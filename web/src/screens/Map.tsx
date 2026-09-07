@@ -8,7 +8,6 @@ import { errorMessage, useQuery } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { QrCode } from '../components/QrCode';
 import { Icon } from '../icons';
-import { useTheme } from '../theme/ThemeProvider';
 import { gridRef } from '../map/grid';
 import { floodZoneAt } from '../map/home';
 import { LayerChips, type Terrain } from '../map/LayerChips';
@@ -28,7 +27,6 @@ type Panel = 'none' | 'search' | 'pins' | 'share' | 'home' | 'nearby' | 'place';
 const DEFAULT_VIEW = { lat: 54.5, lon: -3.5, zoom: 5.5 };
 
 export function MapScreen() {
-  const { theme } = useTheme();
   const { status } = useStatus();
   const [params, setParams] = useSearchParams();
   const query = useMemo(() => parseMapQuery(`?${params.toString()}`), [params]);
@@ -298,7 +296,7 @@ export function MapScreen() {
         {error && <p className="map-note warning">Map unavailable: {error}</p>}
         {config && overlaysOn && (
           <MapView
-            config={config} theme={theme} overlaysOn={overlaysOn} terrain={terrain}
+            config={config} overlaysOn={overlaysOn} terrain={terrain}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
             home={homePoint} routePoints={routePoints}
             onMoveEnd={setView} onClick={onMapClick}

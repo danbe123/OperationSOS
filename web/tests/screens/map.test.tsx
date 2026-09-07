@@ -209,12 +209,14 @@ describe('Map screen', () => {
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(await screen.findByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
-    // The handlers hang off the map rather than the style, so a theme switch (which reloads the
-    // style) leaves both the card and the next hover working.
+    // The black-and-white theme darkens the app around the map, never the map: the sheet stays the
+    // daylight style, nothing reloads, and the card and the next hover carry on.
+    const styleCalls = map.setStyle.mock.calls.length;
     await user.click(screen.getByRole('button', { name: /Change the theme/ }));
-    expect(map.setStyle).toHaveBeenLastCalledWith('/maps/styles/osm-mono.json', expect.objectContaining({ transformStyle: expect.any(Function) }));
     await act(async () => {});
-    expect(map.style.name).toBe('/maps/styles/osm-mono.json');
+    expect(document.documentElement.dataset.theme).toBe('mono');
+    expect(map.setStyle.mock.calls.length).toBe(styleCalls);
+    expect(map.style.name).toBe('/maps/styles/osm-field.json');
     expect(screen.getByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
     await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');

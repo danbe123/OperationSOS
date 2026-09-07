@@ -31,17 +31,13 @@
 .map-chips-note { flex: 0 0 auto; margin: 0; padding: 0 var(--gutter) 6px; font-size: 0.85rem; }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
-/* The map surface is somebody else's cartography and it arrives at somebody else's brightness: a
-   mid-grey OpenStreetMap sheet is the brightest large area on a mono screen at night, on the one
-   screen a household reads outdoors in the dark. A wash in the theme's own ground colour sits over
-   the tiles and under every control; field keeps the paper it was drawn as. */
+/* The map is drawn as the paper it is in every theme: the black-and-white theme darkens the chrome
+   around it, not the sheet. Only the dim setting (a screen being saved) lays a wash over it. */
 .map-host::after {
   content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background: var(--ground); opacity: 0;
 }
-:root[data-theme="mono"] .map-host::after { opacity: 0.5; }
 :root[data-dim="on"] .map-host::after { opacity: 0.55; }
-:root[data-theme="field"] .map-host::after { opacity: 0; }
 @media print { .map-host::after { display: none; } }
 /* The panel's head and its actions are pinned; only its middle scrolls, so the primary action is
    never the sliver at the bottom edge of a 480 px screen with nothing to say it is there. */

@@ -10,13 +10,12 @@ import { attachFeatureTooltip, type TappedPlace } from './tooltip';
 import type { LngLat } from './measure';
 
 // e2e exposure: window.__sosMap is the live map instance; __styleVersion is bumped on every
-// completed style load (theme switches included) so tests can observe a reload without relying on
+// completed style load so tests can observe a reload without relying on
 // a diffed-out setStyle (see the setStyle call below).
 type ExposedMap = MlMap & { __styleVersion?: number };
 
 export type MapViewProps = {
   config: MapConfig;
-  theme: Theme;
   overlaysOn: string[];
   /** Contours and hillshade are two chips, and two answers: either can be on without the other. */
   terrain: Terrain;
@@ -39,8 +38,8 @@ export type MapViewProps = {
 
 const LONG_PRESS_MS = 600;
 
-/** Add a layer the box draws, or — when it is already there, carried across the style reload a theme
- * switch causes — repaint it in the theme it should be wearing now. */
+/** Add a layer the box draws, or — when it is already there, carried across a style reload —
+ * repaint it in the colours it should be wearing. */
 function drawn(map: MlMap, theme: Theme, spec: { id: string; type: 'circle' | 'line' | 'symbol'; source: string; layout?: Record<string, unknown> }): void {
   const props = annotationPaint(theme)[spec.id] ?? {};
   if (!map.getLayer(spec.id)) map.addLayer({ ...spec, paint: props } as LayerSpecification);
@@ -107,8 +106,14 @@ function syncMeasure(map: MlMap, points: LngLat[], theme: Theme): void {
   drawn(map, theme, { id: 'sos-measure-point', type: 'circle', source: 'sos-measure' });
 }
 
+const MAP_THEME: Theme = 'field';
+
 export function MapView(props: MapViewProps) {
-  const { config, theme, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints } = props;
+  const { config, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints } = props;
+  // The map is drawn as the paper it is: the black-and-white theme darkens everything around the
+  // map, not the map, because an inverted OpenStreetMap sheet is one more thing to learn to read
+  // when the lights are out. Every colour the box draws on it is the daylight set for the same reason.
+  const theme: Theme = MAP_THEME;
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const propsRef = useRef(props);
@@ -176,7 +181,7 @@ export function MapView(props: MapViewProps) {
       map.remove();
       mapRef.current = null;
     };
-    // The map is created once; theme changes go through setStyle below.
+    // The map is created once; a style change goes through setStyle below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasStyle]);
 
