@@ -149,6 +149,9 @@ a.chip { text-decoration: none; }
    icon goes before the duration does. */
 .cond-chip-compact .cond-icon { display: none; }
 
+/* Why a passage is on the page: a small labelled rule above the advice a condition brought in. */
+.because { margin: 12px 0 4px; font-size: var(--t-meta); font-weight: 600; color: var(--ink-muted); border-top: 1px solid var(--line); padding-top: 6px; }
+
 /* --- lists ---------------------------------------------------------------------------------- */
 
 .list { list-style: none; margin: 0; padding: 0; }

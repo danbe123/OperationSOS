@@ -259,7 +259,8 @@ PLAYBOOK_LINK = re.compile(r"\]\(playbook:([a-z0-9-]+)\)")
 
 def test_every_scenario_present_and_tree_validates():
     assert sorted(p.stem for p in (PB / "scenarios").glob("*.md")) == sorted(SCENARIOS)
-    assert validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids(), require_all_scenarios=True) == []
+    errors = validate_tree(PB, load_manifests(MANIFEST_DIR), overlay_ids(), require_all_scenarios=True)
+    assert [e for e in errors if not e.startswith("warning: ")] == []
 
 
 def test_every_module_used_by_at_least_two_scenarios():

@@ -50,7 +50,7 @@ def test_word_count_reads_a_links_text_and_not_its_target():
 def test_places_validate_clean_against_the_real_tree():
     items = load_manifests(REPO / "manifest")
     overlay_ids = {i.overlay.id for i in items if i.overlay}
-    assert validate_tree(PB, items, overlay_ids) == []
+    assert [e for e in validate_tree(PB, items, overlay_ids) if not e.startswith("warning: ")] == []
 
 
 SLUGS = {"page": {"fuel-and-power"}, "module": set(), "card": set(), "scenario": set()}

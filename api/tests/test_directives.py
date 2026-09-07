@@ -37,6 +37,10 @@ def append(path: Path, text: str) -> None:
     path.write_text(path.read_text(encoding="utf-8") + text, encoding="utf-8")
 
 
+def errors_only(problems: list[str]) -> list[str]:
+    return [p for p in problems if not p.startswith("warning: ")]
+
+
 # --- the directive language ----------------------------------------------------------------------------------
 
 def test_if_else_branches_on_a_flag():
@@ -175,6 +179,149 @@ def test_the_cache_reloads_when_the_file_changes(tree):
     assert second is not first and "Fill everything now." in second.html
 
 
+# --- badges: why this passage is showing ----------------------------------------------------------------------
+
+BLOCK = "{{#if power}}\nBoil the kettle.\n{{else}}\nUse the stove.\n{{/if}}\n"
+MARKER = "[[because:power-off]]"
+
+
+def test_a_block_level_branch_is_marked_and_the_normal_branch_is_not():
+    flags = directives.default_flags()
+    assert MARKER not in directives.resolve(BLOCK, flags)          # the power is on: nothing to explain
+    out = directives.resolve(BLOCK, flags | {"power": False})
+    assert MARKER in out and out.index(MARKER) < out.index("Use the stove.")
+
+
+def test_an_inline_branch_is_never_marked():
+    flags = directives.default_flags() | {"power": False}
+    assert "[[because:" not in directives.resolve("Kettle {{#if power}}on{{else}}off{{/if}}.", flags)
+    # opened mid-line, even though its content is on its own lines
+    assert "[[because:" not in directives.resolve("Kettle {{#unless power}}\nStove.\n{{/unless}}", flags)
+    # opened at the start of a line, but the content runs on from the directive
+    assert "[[because:" not in directives.resolve("{{#unless power}}Stove.{{/unless}}", flags)
+
+
+def test_an_else_on_its_own_line_makes_the_branch_block_level():
+    flags = directives.default_flags() | {"power": False}
+    assert MARKER in directives.resolve("Kettle {{#if power}}on\n{{else}}\nUse the stove.\n{{/if}}", flags)
+    # the {{else}} is at the start of a line but its branch starts on the same line
+    assert MARKER not in directives.resolve("{{#if power}}\non\n{{else}}Use the stove.\n{{/if}}", flags)
+
+
+@pytest.mark.parametrize("text,flags,keys", [
+    ("{{#unless water}}\nDraw from the tank.\n{{/unless}}", {"water": False}, ["[[because:water-off]]"]),
+    ("{{#if phones}}\nRing.\n{{else}}\nSend a runner.\n{{/if}}", {"phones": False}, ["[[because:phones-off]]"]),
+    ("{{#if dark}}\nUse a torch.\n{{/if}}", {"dark": True}, ["[[because:dark]]"]),
+    ("{{#unless dark}}\nWork outside.\n{{/unless}}", {"dark": False}, []),
+    ("{{#if scenario:grid-collapse}}\nRation it.\n{{/if}}", {"scenario:grid-collapse": True},
+     ["[[because:scenario:grid-collapse]]"]),
+    ("{{#if scenario:grid-collapse}}\nRation it.\n{{else}}\nCarry on.\n{{/if}}", {}, []),
+    ("{{#unless power}}\nStove.\n{{else}}\nKettle.\n{{/unless}}", {"power": True}, []),
+])
+def test_which_branches_are_marked(text, flags, keys):
+    out = directives.resolve(text, directives.default_flags() | flags)
+    assert [m.group(0) for m in content.BECAUSE_RE.finditer(out)] == keys
+
+
+def test_only_the_outermost_block_level_branch_carries_the_badge():
+    nested = "{{#unless power}}\nNo power.\n{{#unless water}}\nNo water either.\n{{/unless}}\n{{/unless}}"
+    flags = directives.default_flags() | {"power": False, "water": False}
+    out = directives.resolve(nested, flags)
+    assert [m.group(0) for m in content.BECAUSE_RE.finditer(out)] == ["[[because:power-off]]"]
+    # an unbadged outer branch does not silence the branch inside it
+    inner = "{{#if power}}\nPower is on.\n{{#unless water}}\nCarry water.\n{{/unless}}\n{{/if}}"
+    assert "[[because:water-off]]" in directives.resolve(inner, directives.default_flags() | {"water": False})
+
+
+@pytest.mark.parametrize("key,wording", [
+    ("power-off", "Because the mains power is off"),
+    ("water-off", "Because the water supply is off"),
+    ("mobile-off", "Because the mobile network is off"),
+    ("landline-off", "Because the landline and 999 is off"),
+    ("internet-off", "Because the internet is off"),
+    ("gas-off", "Because the gas is off"),
+    ("heating-off", "Because the heating is off"),
+    ("roads-off", "Because the roads and transport is off"),
+    ("shops-off", "Because the shops and cash is off"),
+    ("sewage-off", "Because the sewage and drains is off"),
+    ("phones-off", "Because no phone works"),
+    ("dark", "Because it is dark"),
+    ("scenario:grid-collapse", "In the grid collapse scenario"),
+])
+def test_every_badge_wording(key, wording):
+    assert content.because_text(key) == wording
+    assert content.render_markdown(f"[[because:{key}]]") == f'<p class="because">{wording}</p>\n'
+
+
+def test_a_marker_never_survives_rendering():
+    assert content.because_text("smoke-signals") is None
+    html = content.render_markdown("[[because:smoke-signals]]\n\nA [[because:dark]] mid-sentence.")
+    assert "[[because" not in html and 'class="because"' not in html
+    assert "<p>smoke-signals</p>" in html and "A Because it is dark mid-sentence." in html
+
+
+def test_a_scenario_badge_uses_the_playbook_title_when_there_is_one(tree):
+    cache = content.ContentCache(tree)
+    assert content.render_markdown("[[because:grid-collapse]]", scenario_title=cache.scenario_title) == (
+        "<p>grid-collapse</p>\n")
+    html = content.render_markdown("[[because:scenario:grid-collapse]]", scenario_title=cache.scenario_title)
+    assert html == '<p class="because">In the National grid collapse scenario</p>\n'
+
+
+def test_a_card_shows_the_badge_above_the_branch_it_explains(tree):
+    append(tree / "cards" / "bleeding.md", "\n\n" + BLOCK)
+    cache = content.ContentCache(tree)
+    flags = directives.default_flags()
+    on = cache.rendered("card", "bleeding", flags)
+    assert "because" not in on.html and "Boil the kettle." in on.html
+    off = cache.rendered("card", "bleeding", flags | {"power": False})
+    assert '<p class="because">Because the mains power is off</p>' in off.html
+    assert off.html.index('class="because"') < off.html.index("Use the stove.")
+    assert "[[because" not in off.html
+
+
+def test_a_marked_branch_inside_a_checklist_does_not_become_an_item(tree):
+    path = tree / "scenarios" / "grid-collapse.md"
+    path.write_text(path.read_text(encoding="utf-8").replace(
+        "- [ ] Check on neighbours",
+        "{{#if power}}\n- [ ] Check on neighbours\n{{else}}\n- [ ] Knock on every door {#knock}\n{{/if}}"),
+        encoding="utf-8")
+    cache = content.ContentCache(tree)
+    dark = cache.rendered("scenario", "grid-collapse", directives.default_flags() | {"power": False})
+    assert [c["id"] for c in dark.checklist][2] == "knock"
+    assert all("because" not in c["id"] for c in dark.checklist)
+
+
+# --- situational coverage warnings ----------------------------------------------------------------------------
+
+def test_a_card_without_a_phones_or_power_branch_warns(tree, items):
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert "warning: cards/bleeding.md: no situational branch on phones" in out
+    assert "warning: cards/bleeding.md: no situational branch on power" in out
+    assert errors_only(out) == []                                   # a warning, not a failure
+
+
+def test_a_card_that_branches_is_not_warned_about(tree, items):
+    append(tree / "cards" / "bleeding.md",
+           "\n\n{{#unless power}}\nWork by torchlight.\n{{/unless}}\n"
+           "\n{{#unless phones}}\nSend a runner to the surgery.\n{{/unless}}\n")
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert not [e for e in out if e.startswith("warning: cards/bleeding.md")]
+
+
+def test_an_inline_call_alone_does_not_count_as_covering_the_phones(tree, items):
+    append(tree / "cards" / "bleeding.md", "\n\nIf they stop breathing, [[call 999]].\n")
+    out = content.validate_tree(tree, items, OVERLAYS)
+    assert "warning: cards/bleeding.md: no situational branch on phones" in out
+
+
+def test_the_coverage_line_counts_documents_by_kind(tree, items):
+    append(tree / "cards" / "bleeding.md", "\n\n{{#unless power}}\nWork by torchlight.\n{{/unless}}\n")
+    line = [e for e in content.validate_tree(tree, items, OVERLAYS) if e.startswith("warning: situational coverage:")]
+    assert line == ["warning: situational coverage: cards 0/1 phones, 1/1 power; modules 0/1 phones, 0/1 power; "
+                    "pages 0/2 phones, 0/2 power; scenarios 0/1 phones, 0/1 power"]
+
+
 # --- validation ----------------------------------------------------------------------------------------------
 
 def test_validation_checks_the_links_in_both_branches(tree, items):
@@ -187,7 +334,7 @@ def test_validation_checks_the_links_in_both_branches(tree, items):
 
 def test_validation_checks_the_link_the_inline_call_expands_to(tree, items):
     append(tree / "cards" / "bleeding.md", "\n\nIf they stop breathing, [[call 999]].\n")
-    assert content.validate_tree(tree, items, OVERLAYS) == []
+    assert errors_only(content.validate_tree(tree, items, OVERLAYS)) == []
     (tree / "pages" / "no-phones.md").unlink()
     out = content.validate_tree(tree, items, OVERLAYS)
     assert any("page 'no-phones' does not exist" in e for e in out)
@@ -206,7 +353,7 @@ def test_validation_rejects_an_unknown_scenario_flag(tree, items):
     (tree / "pages" / "pmr446.md").write_text(
         (tree / "pages" / "pmr446.md").read_text(encoding="utf-8").replace("alien-invasion", "grid-collapse"),
         encoding="utf-8")
-    assert content.validate_tree(tree, items, OVERLAYS) == []
+    assert errors_only(content.validate_tree(tree, items, OVERLAYS)) == []
 
 
 def test_validation_rejects_an_unbalanced_directive(tree, items):

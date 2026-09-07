@@ -124,7 +124,7 @@ def test_render_standalone_module_and_card(tree):
 
 
 def test_validate_valid_tree(tree, items):
-    assert content.validate_tree(tree, items, OVERLAYS) == []
+    assert [e for e in content.validate_tree(tree, items, OVERLAYS) if not e.startswith("warning: ")] == []
 
 
 @pytest.mark.parametrize("name", list(broken_cases.CASES))

@@ -15,7 +15,7 @@ import jsonschema
 from markdown_it import MarkdownIt
 from mdit_py_plugins.tasklists import tasklists_plugin
 
-from sos import directives
+from sos import conditions, directives
 
 if TYPE_CHECKING:
     from sos.kits import Kit
@@ -43,6 +43,9 @@ LINK_RE = re.compile(r"\[[^\]]*\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?
 # the `{#id}` marker is checklist-id syntax, not prose: it is stripped before rendering
 TASK_ID_MARKER_RE = re.compile(r"^(\s*[-*+] \[[ xX]\] .*?)\s*\{#[A-Za-z0-9][A-Za-z0-9_/-]*\}\s*$")
 _TASK_LI = '<li class="task-list-item">'
+# the marker `directives.resolve` leaves in front of a block-level branch, and the paragraph it renders as
+BECAUSE_RE = re.compile(r"\[\[because:([A-Za-z0-9:_-]+)\]\]")
+BECAUSE_P_RE = re.compile(r"<p>\s*\[\[because:([A-Za-z0-9:_-]+)\]\]\s*</p>")
 
 
 def slugify(text: str) -> str:
@@ -66,7 +69,39 @@ def resolve_link(href: str) -> str:
     return href
 
 
-def make_renderer(resolver: Callable[[str], str] = resolve_link) -> MarkdownIt:
+def because_text(key: str, scenario_title: Callable[[str], str | None] | None = None) -> str | None:
+    """The reader-facing wording for a `[[because:…]]` key, or None when the key means nothing to us."""
+    if key == "dark":
+        return "Because it is dark"
+    if key == "phones-off":
+        return "Because no phone works"
+    if key.startswith("scenario:"):
+        slug = key[len("scenario:"):]
+        title = (scenario_title(slug) if scenario_title else None) or slug.replace("-", " ")
+        return f"In the {title} scenario"
+    if key.endswith("-off"):
+        title = conditions.TITLES.get(key[:-len("-off")])
+        if title:
+            return f"Because the {title[:1].lower()}{title[1:]} is off"
+    return None
+
+
+def apply_because_markers(html_text: str, scenario_title: Callable[[str], str | None] | None = None) -> str:
+    """Turn the marker paragraph into the badge. A marker we cannot name becomes plain text, and no marker
+    ever survives into the page."""
+
+    def paragraph(m: re.Match) -> str:
+        text = because_text(m.group(1), scenario_title)
+        return f'<p class="because">{escape(text)}</p>' if text else f"<p>{escape(m.group(1))}</p>"
+
+    def leftover(m: re.Match) -> str:
+        return escape(because_text(m.group(1), scenario_title) or m.group(1))
+
+    return BECAUSE_RE.sub(leftover, BECAUSE_P_RE.sub(paragraph, html_text))
+
+
+def make_renderer(resolver: Callable[[str], str] = resolve_link,
+                  scenario_title: Callable[[str], str | None] | None = None) -> MarkdownIt:
     md = MarkdownIt("commonmark", {"html": False, "linkify": False, "typographer": False})
     md.enable(["table", "strikethrough"]).use(tasklists_plugin)
 
@@ -77,6 +112,7 @@ def make_renderer(resolver: Callable[[str], str] = resolve_link) -> MarkdownIt:
         return self.renderToken(tokens, idx, options, env)
 
     md.add_render_rule("link_open", link_open)
+    md.sos_scenario_title = scenario_title      # read back by _render for the "In the … scenario" badge
     return md
 
 
@@ -86,11 +122,12 @@ def strip_task_id_markers(md_text: str) -> str:
 
 
 def _render(md: MarkdownIt, md_text: str) -> str:
-    return md.render(strip_task_id_markers(md_text))
+    return apply_because_markers(md.render(strip_task_id_markers(md_text)), getattr(md, "sos_scenario_title", None))
 
 
-def render_markdown(md_text: str, link_resolver: Callable[[str], str] = resolve_link) -> str:
-    return _render(make_renderer(link_resolver), md_text or "")
+def render_markdown(md_text: str, link_resolver: Callable[[str], str] = resolve_link,
+                    scenario_title: Callable[[str], str | None] | None = None) -> str:
+    return _render(make_renderer(link_resolver, scenario_title), md_text or "")
 
 
 @dataclass
@@ -167,7 +204,7 @@ def parse_checklist(md_text: str) -> tuple[list[tuple[str, str]], list[str]]:
     items: list[tuple[str, str]] = []
     errors: list[str] = []
     for line in md_text.splitlines():
-        if not line.strip():
+        if not line.strip() or BECAUSE_RE.fullmatch(line.strip()):    # the badge marker is not an item
             continue
         m = TASK_RE.match(line)
         if not m:
@@ -263,10 +300,11 @@ def render_module(mod: Document, md: MarkdownIt, flags: dict[str, bool] | None =
 
 def render_document(doc: Document, resolver: Callable[[str], str] = resolve_link,
                     modules: dict[str, Document] | None = None,
-                    flags: dict[str, bool] | None = None) -> RenderedDocument:
+                    flags: dict[str, bool] | None = None,
+                    scenario_title: Callable[[str], str | None] | None = None) -> RenderedDocument:
     modules = modules or {}
     doc = apply_directives(doc, flags)
-    md = make_renderer(resolver)
+    md = make_renderer(resolver, scenario_title)
     common = dict(slug=doc.id, title=doc.title, icon=doc.icon, order=doc.order, summary=doc.summary, kind=doc.kind,
                   category=doc.category, reviewed=doc.reviewed, overlays=list(doc.overlays), sources=list(doc.sources))
     if doc.kind != "scenario":
@@ -425,6 +463,25 @@ def _check_branches(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str
     return list(dict.fromkeys(errors))
 
 
+COVERAGE_FLAGS = ("phones", "power")
+
+
+def flags_used(doc: Document) -> set[str]:
+    """The situation flags a document branches on. An inline `[[call 999]]` swaps itself out when the phones
+    are down but says nothing about what to do instead, so it does not count as covering `phones`."""
+    return set(directives.flag_names(doc.body))
+
+
+def _coverage_warnings(coverage: dict[str, dict[str, int]], totals: dict[str, int]) -> list[str]:
+    """One line saying how much of each kind adapts to the phones and the power, so the gap is visible."""
+    parts = []
+    for kind in sorted(totals, key=lambda k: DIR_BY_KIND[k]):
+        if totals[kind]:
+            counts = ", ".join(f"{coverage[kind][f]}/{totals[kind]} {f}" for f in COVERAGE_FLAGS)
+            parts.append(f"{DIR_BY_KIND[kind]} {counts}")
+    return [f"warning: situational coverage: {'; '.join(parts)}"] if parts else []
+
+
 def _check_sources(rel: str, doc: Document, zim_ids: set[str], doc_ids: set[str]) -> list[str]:
     out: list[str] = []
     for src in doc.sources:
@@ -502,9 +559,16 @@ def validate_tree(playbooks_dir: Path, manifest_items: list, overlay_ids: set[st
             if doc.id != path.stem:
                 errors.append(f"{rel}: id '{doc.id}' must equal the file name '{path.stem}'")
     slugs = {kind: set(docs) for kind, docs in tree.items()}
+    coverage = {kind: {f: 0 for f in COVERAGE_FLAGS} for kind in tree}
     for kind, docs in tree.items():
         for slug, doc in docs.items():
             rel = f"{DIR_BY_KIND[kind]}/{slug}.md"
+            used = flags_used(doc)
+            for flag in COVERAGE_FLAGS:
+                if flag in used:
+                    coverage[kind][flag] += 1
+                elif kind == "card":
+                    errors.append(f"warning: {rel}: no situational branch on {flag}")
             if kind == "scenario":
                 errors += _check_scenario(rel, doc, slugs["module"], overlay_ids, tree["module"])
             errors += _check_branches(rel, doc, zim_ids, doc_ids, slugs, overlay_ids)
@@ -523,7 +587,7 @@ def validate_tree(playbooks_dir: Path, manifest_items: list, overlay_ids: set[st
 
     if require_all_scenarios:
         errors += [f"scenarios/{s}.md: missing" for s in SCENARIO_SLUGS if s not in tree["scenario"]]
-    return errors
+    return errors + _coverage_warnings(coverage, {kind: len(docs) for kind, docs in tree.items()})
 
 
 class ContentCache:
@@ -567,6 +631,11 @@ class ContentCache:
         docs = [self.document(kind, p.stem) for p in sorted(folder.glob("*.md"))] if folder.is_dir() else []
         return sorted([d for d in docs if d is not None], key=lambda d: (d.order, d.title))
 
+    def scenario_title(self, slug: str) -> str | None:
+        """The title of a scenario, for the "In the … scenario" badge; None when there is no such playbook."""
+        doc = self.document("scenario", slug)
+        return doc.title if doc is not None else None
+
     def kit(self, slug: str) -> Kit | None:
         """One kit, parsed on demand and cached by mtime, like documents."""
         from sos import kits as kits_mod
@@ -593,7 +662,7 @@ class ContentCache:
         hit = self._rendered.get(key)
         if hit is not None:
             return hit
-        rendered = render_document(doc, self.resolver, modules, flags)
+        rendered = render_document(doc, self.resolver, modules, flags, self.scenario_title)
         # keep the other flag variants of this document, drop anything rendered from older files
         self._rendered = {k: v for k, v in self._rendered.items() if k[:2] != (kind, slug) or k[2:4] == mtimes}
         self._rendered[key] = rendered

@@ -11,9 +11,13 @@ from itertools import product
 from typing import Iterable
 
 FLAG_IDS = ("power", "water", "mobile", "landline", "internet", "gas", "heating", "roads", "shops", "sewage", "phones", "dark")
+# the flags that name something that can be off; `dark` and `scenario:…` are not services and read differently
+SERVICE_IDS = tuple(n for n in FLAG_IDS if n != "dark")
+BECAUSE = "[[because:{key}]]"     # a marker paragraph the Markdown renderer turns into the "Because …" badge
 # one token at a time, so blocks may nest to any depth: an open tag, an {{else}}, or a close tag
 _TOKEN = re.compile(r"\{\{#(if|unless)\s+([\w:-]+)\s*\}\}|\{\{(else)\}\}|\{\{/(if|unless)\}\}")
 _INLINE_CALL = re.compile(r"\[\[call\s+(999|112|111|105|101|0800[\d ]+|0345[\d ]+|0300[\d ]+)\]\]")
+_OPENS_A_LINE = re.compile(r"[ \t]*\r?\n")     # a branch is block-level when its content starts on the next line
 NO_PHONES_TEXT = "{n} will not connect while the phones are down: [get help without phones](page:no-phones)"
 
 
@@ -38,12 +42,42 @@ def check_flags(names: Iterable[str]) -> list[str]:
 class _Block:
     """One `{{#if}}` … `{{else}}` … `{{/if}}`, with whatever is inside it (text or more blocks)."""
 
-    __slots__ = ("kind", "name", "then", "otherwise")
+    __slots__ = ("kind", "name", "then", "otherwise", "open_at_line_start", "else_at_line_start")
 
-    def __init__(self, kind: str, name: str) -> None:
+    def __init__(self, kind: str, name: str, open_at_line_start: bool = False) -> None:
         self.kind, self.name = kind, name
         self.then: list = []
         self.otherwise: list | None = None
+        # where the directive that starts each branch sat: only a branch opened at the start of a line is block-level
+        self.open_at_line_start = open_at_line_start
+        self.else_at_line_start = False
+
+
+def _at_line_start(text: str, pos: int) -> bool:
+    return pos == 0 or text[pos - 1] == "\n"
+
+
+def _content_starts_on_a_new_line(nodes: list) -> bool:
+    """A branch is block-level when its content begins with a newline; a branch that opens straight into a
+    nested block, or into words, is inline and never carries a badge."""
+    return bool(nodes) and isinstance(nodes[0], str) and _OPENS_A_LINE.match(nodes[0]) is not None
+
+
+def because_key(block: "_Block", took_then: bool) -> str | None:
+    """The badge key for the branch being shown, or None when this is the everything-is-normal branch.
+    Badged: the `{{else}}` of `{{#if <service>}}`, the body of `{{#unless <service>}}`, `{{#if dark}}` and
+    `{{#if scenario:x}}`. `{{#if power}}` (power on) and `{{#unless dark}}` (daylight) say nothing."""
+    if took_then:
+        if not (block.open_at_line_start and _content_starts_on_a_new_line(block.then)):
+            return None
+        if block.kind == "unless":
+            return f"{block.name}-off" if block.name in SERVICE_IDS else None
+        if block.name == "dark":
+            return "dark"
+        return block.name if block.name.startswith("scenario:") else None
+    if not (block.else_at_line_start and _content_starts_on_a_new_line(block.otherwise or [])):
+        return None
+    return f"{block.name}-off" if block.kind == "if" and block.name in SERVICE_IDS else None
 
 
 def _parse(md_text: str) -> list:
@@ -57,7 +91,7 @@ def _parse(md_text: str) -> list:
         current.append(text[pos:m.start()])
         pos = m.end()
         if m.group(1):
-            block = _Block(m.group(1), m.group(2))
+            block = _Block(m.group(1), m.group(2), _at_line_start(text, m.start()))
             stack.append((block, current))
             current = block.then
         elif m.group(3):
@@ -67,6 +101,7 @@ def _parse(md_text: str) -> list:
             if block.otherwise is not None:
                 raise DirectiveError(f"two {{{{else}}}} in one {{{{#{block.kind} {block.name}}}}} block")
             block.otherwise = []
+            block.else_at_line_start = _at_line_start(text, m.start())
             current = block.otherwise
         else:
             if not stack:
@@ -90,21 +125,27 @@ def _walk(nodes: list):
             yield from _walk(node.otherwise or [])
 
 
-def _render(nodes: list, lookup) -> str:
+def _render(nodes: list, lookup, badges: bool = True) -> str:
     out = []
     for node in nodes:
         if isinstance(node, _Block):
-            value = lookup(node.name)
+            took_then = lookup(node.name)
             if node.kind == "unless":
-                value = not value
-            out.append(_render(node.then if value else (node.otherwise or []), lookup))
+                took_then = not took_then
+            key = because_key(node, took_then) if badges else None
+            if key:
+                out.append("\n\n" + BECAUSE.format(key=key) + "\n\n")
+            # only the outermost badged block explains itself: a badge inside one would repeat the reason
+            out.append(_render(node.then if took_then else (node.otherwise or []), lookup, badges and not key))
         else:
             out.append(node)
     return "".join(out)
 
 
-def resolve(md_text: str, flags: dict[str, bool]) -> str:
-    """Apply the directives. Blocks may nest to any depth, and an {{else}} belongs to its own block."""
+def resolve(md_text: str, flags: dict[str, bool], badges: bool = True) -> str:
+    """Apply the directives. Blocks may nest to any depth, and an {{else}} belongs to its own block.
+    A block-level branch that is showing because a condition holds is preceded by a `[[because:<key>]]`
+    marker paragraph, which `content.render_markdown` turns into the badge the reader sees."""
 
     def lookup(name: str) -> bool:
         if name in flags:
@@ -116,7 +157,7 @@ def resolve(md_text: str, flags: dict[str, bool]) -> str:
     tree = _parse(md_text)
     for block in _walk(tree):          # a typo in a branch nobody is reading is still a mistake
         lookup(block.name)
-    text = _render(tree, lookup)
+    text = _render(tree, lookup, badges)
     phones = flags.get("phones", True)
     return _INLINE_CALL.sub(lambda m: f"call {m.group(1)}" if phones else NO_PHONES_TEXT.format(n=m.group(1)), text)
 
