@@ -349,7 +349,8 @@ function describeAccessLand(props: FeatureProperties, sourceLayer?: string): Des
 
 /** The flood zone ("1", "2" or "3") a feature's properties name, whatever the source called the field. */
 export function floodZoneOf(props: FeatureProperties): string | null {
-  const raw = first(props, 'zone', 'Zone', 'ZONE', 'flood_zone', 'FLOOD_ZONE', 'fz', 'layer', 'type', 'TYPE');
+  // `risk` is Natural Resources Wales's field ("Flood Zone 3"); the rest are the Environment Agency's and older exports'.
+  const raw = first(props, 'zone', 'Zone', 'ZONE', 'flood_zone', 'FLOOD_ZONE', 'fz', 'risk', 'layer', 'type', 'TYPE');
   if (!raw) return null;
   const m = /([123])\b/.exec(raw);
   return m ? m[1] : null;

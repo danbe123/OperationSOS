@@ -168,6 +168,7 @@ describe('describeFeature', () => {
     expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_scotland_river' })).toMatchObject({ title: 'River flood risk area', rows: expect.arrayContaining([['Chance of flooding', 'Medium: a 1 in 200 or greater chance of river flooding in any year (SEPA)'], ['Region', 'Scotland']]) });
     expect(describeFeature('flood-zones', {}, { sourceLayer: 'flood_roi_coastal' })).toMatchObject({ title: 'Coastal flood risk area', rows: expect.arrayContaining([['Chance of flooding', 'A 1 in 200 or greater chance of sea flooding in any year (OPW)'], ['Region', 'Republic of Ireland']]) });
     expect(describeFeature('flood-zones', { layer: 'Flood Zone 2' }, { sourceLayer: 'flood_england' }).title).toBe('Flood zone 2');
+    expect(describeFeature('flood-zones', { risk: 'Flood Zone 2', risk_cy: 'Parth Llifogydd 2' }, { sourceLayer: 'flood_wales' })).toMatchObject({ title: 'Flood zone 2', rows: expect.arrayContaining([['Region', 'Wales']]) });
   });
 
   it('every overlay maps to a kind; an unknown overlay has none', () => {
