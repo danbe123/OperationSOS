@@ -23,7 +23,7 @@ Four changes to the Map screen and the data behind it:
 
 ## 4. Airports and military
 
-- `manifest/overlays.json`: `airports-military` becomes two items, `airports` (`nwr/aeroway=aerodrome`; icon `plane`; colour as today) and `military` (`nwr/military=*` plus `nwr/landuse=military`; icon `shield`; colour `#4b6b2f` (the spec first said `#8c564b`, which chemical-sites already uses)), both pmtiles, same coverage. The build (`api/sos/mapbuild/overlays.py`), the verifier, the style layer list (`tools/map-styles/layers/overlays.json`), the describer's titles, and the three scenarios that switch the old overlay on (`invasion`, `volcanic`, `nuclear-war`: their `overlays:` lists and any `map:?overlay=` links) are updated; `sos validate-playbooks` must pass.
+- `manifest/overlays.json`: `airports-military` becomes two items, `airports` (`nwr/aeroway=aerodrome`; icon `plane`; colour as today) and `military` (`nwr/military=*` plus `nwr/landuse=military`; icon `shield`; colour `#4b6b2f` (the spec first said `#8c564b`, which chemical-sites already uses)), same coverage; the full build measured airports at 1.4 MB, so it ships as geojson, and military at 1.8 MB of tiles, pmtiles. The build (`api/sos/mapbuild/overlays.py`), the verifier, the style layer list (`tools/map-styles/layers/overlays.json`), the describer's titles, and the three scenarios that switch the old overlay on (`invasion`, `volcanic`, `nuclear-war`: their `overlays:` lists and any `map:?overlay=` links) are updated; `sos validate-playbooks` must pass.
 - The overlays are rebuilt on this PC from the OSM extract (`sos build-maps --steps overlays --force`, then the `verify` step), copied into the dev content root, and the manifest's `size_bytes`/`as_at` refreshed.
 
 ## 5. Richer data

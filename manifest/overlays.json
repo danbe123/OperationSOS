@@ -330,16 +330,16 @@
     {
       "id": "airports",
       "title": "Airports and airfields",
-      "kind": "pmtiles",
+      "kind": "geojson",
       "tier": "core",
       "category": "maps",
       "scenarios": [],
       "source": {
         "type": "build",
         "tool": "build-maps",
-        "artifact": "overlays/airports.pmtiles"
+        "artifact": "overlays/airports.geojson"
       },
-      "dest": "maps/overlays/airports.pmtiles",
+      "dest": "maps/overlays/airports.geojson",
       "size_bytes": 1995792,
       "as_at": "2026-09-02",
       "licence": "ODbL 1.0 (OpenStreetMap contributors)",
@@ -349,7 +349,7 @@
       "suggest": false,
       "overlay": {
         "id": "airports",
-        "kind": "pmtiles",
+        "kind": "geojson",
         "default_on": false,
         "coverage": [
           "england",

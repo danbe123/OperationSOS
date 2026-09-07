@@ -1,30 +1,102 @@
 {
   "sources": {
-    "water": {"type": "vector", "url": "pmtiles:///maps/overlays/water.pmtiles"},
-    "airports": {"type": "vector", "url": "pmtiles:///maps/overlays/airports.pmtiles"},
-    "military": {"type": "vector", "url": "pmtiles:///maps/overlays/military.pmtiles"},
-    "access-land": {"type": "vector", "url": "pmtiles:///maps/overlays/access-land.pmtiles"}
+    "water": {
+      "type": "vector",
+      "url": "pmtiles:///maps/overlays/water.pmtiles"
+    },
+    "military": {
+      "type": "vector",
+      "url": "pmtiles:///maps/overlays/military.pmtiles"
+    },
+    "access-land": {
+      "type": "vector",
+      "url": "pmtiles:///maps/overlays/access-land.pmtiles"
+    }
   },
   "layers": [
-    {"id": "water-fill", "type": "fill", "source": "water", "source-layer": "water",
-     "paint": {"fill-color": "#1ca3c9", "fill-opacity": 0.45, "fill-outline-color": "#0e6f8a"}},
-    {"id": "water-label", "type": "symbol", "source": "water", "source-layer": "water", "minzoom": 11,
-     "filter": ["has", "name"],
-     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
-     "paint": {"text-color": "#0e6f8a", "text-halo-color": "#ffffff", "text-halo-width": 1}},
-    {"id": "airports-fill", "type": "fill", "source": "airports", "source-layer": "airports",
-     "paint": {"fill-color": "#555555", "fill-opacity": 0.35}},
-    {"id": "airports-label", "type": "symbol", "source": "airports", "source-layer": "airports",
-     "minzoom": 9, "filter": ["has", "name"],
-     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
-     "paint": {"text-color": "#3a0000", "text-halo-color": "#ffffff", "text-halo-width": 1}},
-    {"id": "military-fill", "type": "fill", "source": "military", "source-layer": "military",
-     "paint": {"fill-color": "#8b0000", "fill-opacity": 0.35}},
-    {"id": "military-label", "type": "symbol", "source": "military", "source-layer": "military",
-     "minzoom": 9, "filter": ["has", "name"],
-     "layout": {"text-field": ["get", "name"], "text-font": ["Noto Sans Regular"], "text-size": 11},
-     "paint": {"text-color": "#3a0000", "text-halo-color": "#ffffff", "text-halo-width": 1}},
-    {"id": "access-land-fill", "type": "fill", "source": "access-land", "source-layer": "access-land",
-     "paint": {"fill-color": "#f2b705", "fill-opacity": 0.3, "fill-outline-color": "#a07800"}}
+    {
+      "id": "water-fill",
+      "type": "fill",
+      "source": "water",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#1ca3c9",
+        "fill-opacity": 0.45,
+        "fill-outline-color": "#0e6f8a"
+      }
+    },
+    {
+      "id": "water-label",
+      "type": "symbol",
+      "source": "water",
+      "source-layer": "water",
+      "minzoom": 11,
+      "filter": [
+        "has",
+        "name"
+      ],
+      "layout": {
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": 11
+      },
+      "paint": {
+        "text-color": "#0e6f8a",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1
+      }
+    },
+    {
+      "id": "military-fill",
+      "type": "fill",
+      "source": "military",
+      "source-layer": "military",
+      "paint": {
+        "fill-color": "#8b0000",
+        "fill-opacity": 0.35
+      }
+    },
+    {
+      "id": "military-label",
+      "type": "symbol",
+      "source": "military",
+      "source-layer": "military",
+      "minzoom": 9,
+      "filter": [
+        "has",
+        "name"
+      ],
+      "layout": {
+        "text-field": [
+          "get",
+          "name"
+        ],
+        "text-font": [
+          "Noto Sans Regular"
+        ],
+        "text-size": 11
+      },
+      "paint": {
+        "text-color": "#3a0000",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1
+      }
+    },
+    {
+      "id": "access-land-fill",
+      "type": "fill",
+      "source": "access-land",
+      "source-layer": "access-land",
+      "paint": {
+        "fill-color": "#f2b705",
+        "fill-opacity": 0.3,
+        "fill-outline-color": "#a07800"
+      }
+    }
   ]
 }

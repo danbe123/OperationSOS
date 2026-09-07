@@ -312,7 +312,7 @@ def test_verify_manifest_kinds_passes_against_the_real_merged_manifest(tmp_path)
     ctx = make_ctx(tmp_path, fixture=False)
     index = {
         "water": {"kind": "pmtiles", "file": "overlays/water.pmtiles"},
-        "airports": {"kind": "pmtiles", "file": "overlays/airports.pmtiles"},
+        "airports": {"kind": "geojson", "file": "overlays/airports.geojson"},
         "military": {"kind": "pmtiles", "file": "overlays/military.pmtiles"},
         "health": {"kind": "pmtiles", "file": "overlays/health.pmtiles"},
         "access-land": {"kind": "pmtiles", "file": "overlays/access-land.pmtiles"},
