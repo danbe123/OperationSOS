@@ -1,25 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { modules, playbooks, powerOffView, view } from '../fixtures/api';
+import { condition, playbooks, powerOffView, view } from '../fixtures/api';
 
 describe('Now', () => {
-  beforeEach(() => { vi.spyOn(api, 'modules').mockResolvedValue(modules); });
-
-  it('puts a row of topic buttons under the tiles, in the guides\' order, each opening its guide', async () => {
+  it('puts the services under the tiles: a tap says a service is off, a second tap says it is back', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const viewQ = vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const set = vi.spyOn(api, 'setCondition').mockResolvedValue(condition('power', 'off'));
+    const user = userEvent.setup();
     renderRoute('/');
-    const row = await screen.findByRole('navigation', { name: 'Guides by topic' });
-    const links = within(row).getAllByRole('link');
-    expect(links.map((l) => l.textContent)).toEqual(['Water', 'Food', 'Power', 'Communications']);
-    expect(links[2]).toHaveAttribute('href', '/m/power');
-    expect(links[2].querySelector('svg.icon')).not.toBeNull();
+    const row = await screen.findByRole('navigation', { name: 'Services' });
+    const buttons = within(row).getAllByRole('button');
+    expect(buttons.map((b) => b.textContent)).toEqual(['Poweron', 'Wateron', 'Mobileon', 'Landlineon', 'Interneton', 'Gason', 'Heatingon', 'Roadson', 'Shopson', 'Sewageon']);
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
     // The tiles come first: the row sits under them.
     const tiles = await screen.findByRole('navigation', { name: 'Scenarios' });
     expect(tiles.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    viewQ.mockResolvedValue(powerOffView);
+    await user.click(buttons[0]);
+    expect(set).toHaveBeenCalledWith('power', expect.objectContaining({ state: 'off', since: expect.any(String) }));
+    // Power off is an event: the front door turns into the briefing, with the services still on it.
+    const after = await screen.findByRole('navigation', { name: 'Services' });
+    await waitFor(() => expect(within(after).getByRole('button', { name: /Mains power: off/ })).toHaveAttribute('aria-pressed', 'true'));
+    await user.click(within(after).getByRole('button', { name: /Mains power: off/ }));
+    expect(set).toHaveBeenLastCalledWith('power', expect.objectContaining({ state: 'working' }));
   });
 
   it('is the front door: the question and the situations, with no app bar of its own', async () => {

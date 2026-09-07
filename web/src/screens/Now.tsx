@@ -1,6 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
+import { errorMessage } from '../api/useQuery';
+import { notify } from '../components/Notice';
+import { CONDITION_IDS, type ConditionId, type ConditionState } from '../api/types';
+import { CONDITION_INFO, STATE_LABEL } from '../situation/conditions';
 import { useStatus } from '../api/status';
 import { useQuery } from '../api/useQuery';
 import { tileLine } from '../api/words';
@@ -22,18 +26,46 @@ import './now.css';
  * about a power cut, a flood, a pandemic") was two taps away on Guides. The tiles are the question's
  * answers, so they are the front door; the kit ticks are on /kit, the drill on /situation, and how
  * a phone joins the box on /system. */
-/** Under the situations, the topics: water, food, power and the rest, one button each, in the
- * guides' own order. A household that knows its problem is "no power" should not have to pick a
- * scenario to reach the power guide. */
-function Topics() {
-  const modules = useQuery(() => api.modules(), []);
-  const rows = useMemo(() => (modules.data ?? []).slice().sort((a, b) => a.order - b.order), [modules.data]);
-  if (rows.length === 0) return null;
+/** Under the situations, the services: power, water, gas, mobile and the rest, one button each.
+ * Tapping one tells the box that service is off (or working again), which is what the situation
+ * engine runs on: the tasks, the forecasts and the briefing all follow from these. The full row of
+ * detail (since when, a note, patchy rather than off) stays on /situation. */
+function Services() {
+  const { view, refresh } = useSituation();
+  const [busy, setBusy] = useState<ConditionId | null>(null);
+  if (!view) return null;
+  const flip = async (id: ConditionId) => {
+    const current = view.conditions[id];
+    const next: ConditionState = current.state === 'working' ? 'off' : 'working';
+    setBusy(id);
+    try {
+      await api.setCondition(id, { state: next, since: new Date().toISOString(), expected_updated_at: current.updated_at });
+      await refresh();
+    } catch (e) {
+      notify(`Could not change ${CONDITION_INFO[id].title}: ${errorMessage(e)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
   return (
-    <nav className="topic-row" aria-label="Guides by topic">
-      {rows.map((m) => (
-        <Link key={m.slug} className="btn topic-btn" to={`/m/${m.slug}`}><Icon name={m.icon} size={22} /><span>{m.title}</span></Link>
-      ))}
+    <nav className="service-row" aria-label="Services">
+      {CONDITION_IDS.map((id) => {
+        const c = view.conditions[id];
+        const off = c.state !== 'working';
+        const info = CONDITION_INFO[id];
+        return (
+          <button
+            key={id} type="button" className={off ? 'btn service-btn service-off' : 'btn service-btn'}
+            aria-pressed={off} aria-label={`${info.title}: ${off ? STATE_LABEL[c.state] : 'working'}`}
+            title={off ? `${info.title} is ${STATE_LABEL[c.state]}. Tap when it is working again.` : `${info.title} is working. Tap if it has gone off.`}
+            disabled={busy === id} onClick={() => void flip(id)}
+          >
+            <Icon name={info.icon} size={22} />
+            <span>{info.short}</span>
+            <small>{off ? STATE_LABEL[c.state] : 'on'}</small>
+          </button>
+        );
+      })}
     </nav>
   );
 }
@@ -60,7 +92,7 @@ function Situations() {
           ))}
         </nav>
       )}
-      <Topics />
+      <Services />
     </>
   );
 }
@@ -136,7 +168,7 @@ export function Now() {
         {/* Nothing at all until the engine has answered: painting the question over a situation that
             is still being read is the front door telling a household the wrong thing first. With the
             engine down the tiles are the whole answer, so they come up anyway. */}
-        {eventful ? <Briefing blockRef={briefing} /> : (view || !loading) && <Situations />}
+        {eventful ? <><Services /><Briefing blockRef={briefing} /></> : (view || !loading) && <Situations />}
       </Body>
     </Screen>
   );

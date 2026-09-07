@@ -15,7 +15,10 @@
 .now-resume { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; min-height: var(--touch); }
 .now-resume > span { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
 .now-resume small { color: var(--ink-muted); }
-/* The topic buttons under the tiles: a wrapping row of icon-and-word buttons, the same touch height
-   as every other button, so the guide for the problem in hand is one tap from the front door. */
-.topic-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
-.topic-btn { gap: 6px; }
+/* The services under the tiles: one button each, pressed when the service is off. The state is said
+   in a word under the name as well as in the fill, so mono reads it without colour. */
+.service-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.service-btn { flex-direction: column; gap: 2px; min-width: 88px; padding: 8px 10px; line-height: 1.15; }
+.service-btn small { font-size: var(--t-meta); color: var(--ink-muted); }
+.service-btn.service-off { background: var(--ink); color: var(--ground); }
+.service-btn.service-off small { color: var(--ground); opacity: 0.8; }
