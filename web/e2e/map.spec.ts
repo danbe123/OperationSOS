@@ -80,7 +80,8 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   }, { timeout: 15_000 }).toBe(true);
   await expect(tip).toContainText('Southampton General Hospital');
   await expect(tip.locator('.map-tip-type')).toHaveText('Hospital');
-  await expect(tip.locator('dd')).toHaveCount(0);
+  // The whole description, not a label: what it has, then what the guides say about going there.
+  await expect(tip).toContainText('Usually here');
   expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
   expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
 

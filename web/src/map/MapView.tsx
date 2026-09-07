@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl, { type LayerSpecification, type Map as MlMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { MapConfig, Note } from '../api/types';
+import type { MapConfig, Note, PlaceGuidance } from '../api/types';
 import type { Terrain } from './LayerChips';
 import type { Theme } from '../theme/ThemeProvider';
 import { addTerrain, annotationPaint, carryStyleAcross, isEtagMismatch, recreateSource, registerPmtilesProtocol, setTerrainLayerVisible } from './layers';
@@ -30,6 +30,9 @@ export type MapViewProps = {
   routePoints: LngLat[];
   onMoveEnd: (view: { lon: number; lat: number; zoom: number }) => void;
   onClick: (p: LngLat) => void;
+  /** What to expect at each kind of place, keyed by `PlaceKind`: the hover tooltip reads the feature's
+   * kind out of it. `null` until `GET /api/map/places` answers, and the tooltip then picks it up. */
+  guidance: Record<string, PlaceGuidance> | null;
   /** A tap on an overlay feature, described; `null` when the tap landed on empty map. */
   onFeatureTap: (place: TappedPlace | null) => void;
   onLongPress: (p: LngLat) => void;
@@ -172,7 +175,7 @@ export function MapView(props: MapViewProps) {
       const ev = e as { error?: unknown; sourceId?: string };
       if (ev.sourceId && isEtagMismatch(ev.error)) recreateSource(map, ev.sourceId);
     });
-    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays, (p) => propsRef.current.onFeatureTap(p));
+    const detachTooltip = attachFeatureTooltip(map, () => propsRef.current.config.overlays, (p) => propsRef.current.onFeatureTap(p), () => propsRef.current.guidance);
     mapRef.current = map;
     (window as unknown as { __sosMap?: ExposedMap }).__sosMap = map as ExposedMap;
     propsRef.current.onReady(map);

@@ -58,9 +58,12 @@ export type MapConfig = {
   overlays: Overlay[];
   packs: { title: string; url: string; size_bytes: number }[]; packs_index_url: string | null;
 };
-/** What to expect at one kind of place on the map: a paragraph the box has already rendered, and the
- * guide it came from. Keyed by `PlaceKind` in `GET /api/map/places`. */
-export type PlaceGuidance = { title: string; html: string; link: { href: string; title: string } };
+/** One block of survival guidance for a kind of place: a heading and a rendered list of short bullets
+ * (what is usually there, when it is worth going, when to stay away, how to go about it). */
+export type PlaceSection = { id: 'have' | 'useful' | 'avoid' | 'approach'; title: string; html: string };
+/** What to expect at one kind of place on the map: a paragraph and four lists the box has already
+ * rendered, and the guide they came from. Keyed by `PlaceKind` in `GET /api/map/places`. */
+export type PlaceGuidance = { title: string; html: string; sections: PlaceSection[]; link: { href: string; title: string } };
 export type Place = { name: string; kind: string; lat: number; lon: number; region: string; postcode: string | null };
 export type Note = { id: number; kind: 'note' | 'pin' | 'event'; title: string; body: string; lat: number | null; lon: number | null; updated_at: string };
 /** `GET/PUT /api/settings/people`: how many people the kits are scaled for, 1 to 20. */

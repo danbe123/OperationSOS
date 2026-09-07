@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Map as MlMap, MapGeoJSONFeature } from 'maplibre-gl';
 import { FakeMap, FakePopup, type FakeFeature } from './fakeMap';
 import { attachFeatureTooltip, overlayLayerIds, pickFeature, renderDescription } from '../../src/map/tooltip';
-import { mapConfig } from '../fixtures/api';
+import { mapConfig, mapPlaces } from '../fixtures/api';
 
 vi.mock('maplibre-gl', async () => {
   const { FakePopup } = await import('./fakeMap');
@@ -46,25 +46,49 @@ describe('overlayLayerIds and pickFeature', () => {
 });
 
 describe('renderDescription', () => {
-  it('renders the title and the type line as text, never HTML, and no rows', () => {
-    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', typeLine: 'Fuel station', kind: 'fuel', rows: [['Phone', '0123']] });
+  it('renders the title, the type line and the rows as text, never HTML', () => {
+    const el = renderDescription({ title: '<b>Bold</b>', overlay: 'Fuel stations', typeLine: 'Fuel station', kind: 'fuel', rows: [['Type', 'Fuel station'], ['Phone', '0123']] });
     expect(el.getAttribute('role')).toBe('tooltip');
     expect(el.querySelector('.map-tip-title')?.textContent).toBe('<b>Bold</b>');
     expect(el.querySelector('b')).toBeNull();
     expect(el.querySelector('.map-tip-type')?.textContent).toBe('Fuel station');
+    const rows = [...el.querySelectorAll('.map-tip-rows > div')].map((r) => [r.querySelector('dt')?.textContent, r.querySelector('dd')?.textContent]);
+    // The type is the line above the rows; repeating it as a row says nothing the reader has not read.
+    expect(rows).toEqual([['Phone', '0123']]);
+    // No guidance for the kind: the name, the type and the rows, and nothing invented under them.
+    expect(el.querySelector('.map-tip-section')).toBeNull();
+    expect(el.querySelector('.map-tip-guide')).toBeNull();
+  });
+
+  it('an unnamed place says its type once and carries no type line', () => {
     const unnamed = renderDescription({ title: 'Flood zone 3', overlay: 'Flood zones', typeLine: 'Flood zone 3', kind: 'flood-zone', rows: [] });
     expect(unnamed.querySelector('.map-tip-type')).toBeNull();
     expect(unnamed.textContent).toBe('Flood zone 3');
-    // The rows moved to the card a tap opens: a popup that follows the pointer is not the place to read a list.
-    expect(el.querySelector('dl')).toBeNull();
-    expect(el.textContent).not.toContain('0123');
+  });
+
+  it('carries the four guidance sections, their bullets and the guide it came from', () => {
+    const el = renderDescription(
+      { title: 'Southampton General Hospital', overlay: 'Hospitals', typeLine: 'Hospital', kind: 'hospital', rows: [['Beds', '1200']] },
+      mapPlaces.hospital,
+    );
+    expect([...el.querySelectorAll('.map-tip-section h4')].map((h) => h.textContent))
+      .toEqual(['Usually here', 'Worth going when', 'Stay away when', 'How to go about it']);
+    const bullets = [...el.querySelectorAll('.map-tip-section li')].map((li) => li.textContent);
+    expect(bullets).toContain('Mains power on generators for a few days');
+    expect(bullets).toContain('Take medicines and a written list');
+    // The guidance is the box's own rendered HTML, so its markup is markup...
+    expect(el.querySelector('.map-tip-section a')?.getAttribute('href')).toBe('/m/water');
+    // ...while the feature's own values stay text, whatever OSM put in them.
+    expect(el.querySelector('.map-tip-rows dd')?.textContent).toBe('1200');
+    // The popup takes no pointer events, so the guide is named rather than linked.
+    expect(el.querySelector('.map-tip-guide')?.textContent).toBe('Guide: Medical');
   });
 });
 
 describe('attachFeatureTooltip', () => {
   it('opens one popup while hovering a feature, sets the pointer cursor, and closes it when the pointer leaves', () => {
     const map = mapWithOverlays();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => null);
     expect(FakePopup.instances).toHaveLength(1);
     expect(popup().options).toMatchObject({ closeButton: false, closeOnClick: false, className: 'map-tip-popup' });
     map.renderedFeatures = [hospital];
@@ -76,7 +100,7 @@ describe('attachFeatureTooltip', () => {
     const tip = document.querySelector('.map-tip')!;
     expect(tip.querySelector('.map-tip-title')?.textContent).toBe('Southampton General Hospital');
     expect(tip.querySelector('.map-tip-type')?.textContent).toBe('Hospital');
-    expect(tip.querySelector('dl')).toBeNull();
+    expect(tip.querySelector('.map-tip-rows dd')?.textContent).toBe('+44 23 8077 7222');
     move(map, 11, 11);
     expect(FakePopup.instances).toHaveLength(1);
     map.renderedFeatures = [];
@@ -85,9 +109,29 @@ describe('attachFeatureTooltip', () => {
     expect(map.getCanvas().style.cursor).toBe('');
   });
 
+  it('puts the guidance for the feature\'s kind in the popup, even when it arrives after the first hover', () => {
+    const map = mapWithOverlays();
+    // `GET /api/map/places` answers after the map is up: a hospital hovered in that gap is a label,
+    // and the same hospital hovered again once the answer lands must carry the sections.
+    let places: Record<string, typeof mapPlaces.hospital> | null = null;
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => places);
+    map.renderedFeatures = [hospital];
+    move(map);
+    expect(document.querySelector('.map-tip-section')).toBeNull();
+    places = mapPlaces;
+    move(map, 11, 11);
+    expect([...document.querySelectorAll('.map-tip-section h4')].map((h) => h.textContent))
+      .toEqual(['Usually here', 'Worth going when', 'Stay away when', 'How to go about it']);
+    expect(document.querySelector('.map-tip-guide')?.textContent).toBe('Guide: Medical');
+    // A kind the box has no guidance for stays the name, the type and the rows.
+    map.renderedFeatures = [path];
+    move(map, 12, 12);
+    expect(document.querySelector('.map-tip-section')).toBeNull();
+  });
+
   it('describes lines and polygons from pmtiles overlays by their source layer', () => {
     const map = mapWithOverlays();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => null);
     map.renderedFeatures = [path];
     move(map);
     expect(document.querySelector('.map-tip-title')?.textContent).toBe('Public footpath');
@@ -104,7 +148,7 @@ describe('attachFeatureTooltip', () => {
   it('a tap hands the place to onTap with a wider hit box and closes the popup; a tap on empty map hands null', () => {
     const map = mapWithOverlays();
     const onTap = vi.fn();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap);
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap, () => null);
     map.renderedFeatures = [hospital];
     move(map);
     expect(popup().isOpen()).toBe(true);
@@ -125,7 +169,7 @@ describe('attachFeatureTooltip', () => {
   it('a tapped point is the feature\'s own position, not the finger\'s; a polygon has only the tap', () => {
     const map = mapWithOverlays();
     const onTap = vi.fn();
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap);
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap, () => null);
     // The tap lands 400 m off the hospital: within the 14 px box, but the card must say where the
     // hospital is, because its grid reference, its distance and the pin it drops all come off this point.
     map.renderedFeatures = [hospitalAt];
@@ -140,7 +184,7 @@ describe('attachFeatureTooltip', () => {
 
   it('detaching removes the handlers and the popup', () => {
     const map = mapWithOverlays();
-    const detach = attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
+    const detach = attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => null);
     map.renderedFeatures = [hospital];
     move(map);
     expect(popup().isOpen()).toBe(true);
@@ -154,7 +198,7 @@ describe('attachFeatureTooltip', () => {
   it('does nothing when no overlay layer is on', () => {
     const map = new FakeMap();
     map.setStyle('/maps/styles/osm-field.json');
-    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn());
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, vi.fn(), () => null);
     map.renderedFeatures = [hospital];
     move(map);
     expect(map.queryRenderedFeatures).not.toHaveBeenCalled();

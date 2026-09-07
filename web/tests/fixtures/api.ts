@@ -426,11 +426,23 @@ export const mapPlaces: Record<string, PlaceGuidance> = {
   hospital: {
     title: 'Hospital',
     html: '<p>A&E stays open on generators for a few days\u2026 <a href="/m/medical">Medical</a></p>',
+    sections: [
+      { id: 'have', title: 'Usually here', html: '<ul><li>Mains power on generators for a few days</li><li>Drinking water taps and <a href="/m/water">Water</a></li></ul>' },
+      { id: 'useful', title: 'Worth going when', html: '<ul><li>Someone is bleeding badly or cannot breathe</li><li>A serious injury will not wait for a GP</li></ul>' },
+      { id: 'avoid', title: 'Stay away when', html: '<ul><li>The problem is not urgent: the queue is hours</li><li>A chemical plume is between you and the door</li></ul>' },
+      { id: 'approach', title: 'How to go about it', html: '<ul><li>Take medicines and a written list</li><li>Walk in daylight and expect no parking</li></ul>' },
+    ],
     link: { href: '/m/medical', title: 'Medical' },
   },
   fuel: {
     title: 'Fuel station',
     html: '<p>The pumps are electric: no mains, no fuel. <a href="/m/power">Power</a></p>',
+    sections: [
+      { id: 'have', title: 'Usually here', html: '<ul><li>Petrol, diesel and a shop</li></ul>' },
+      { id: 'useful', title: 'Worth going when', html: '<ul><li>The tank is low and the mains are still on</li></ul>' },
+      { id: 'avoid', title: 'Stay away when', html: '<ul><li>The queue has turned angry</li></ul>' },
+      { id: 'approach', title: 'How to go about it', html: '<ul><li>Take cash and a jerrycan under 30 L</li></ul>' },
+    ],
     link: { href: '/m/power', title: 'Power' },
   },
 };

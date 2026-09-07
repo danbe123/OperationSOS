@@ -56,13 +56,23 @@ export function PlaceCard({ place, from, guidance, onClose, onRoute, onPin, onNe
         </section>
       )}
       {guidance && (
-        <section className="place-section">
-          <h3>What to expect here</h3>
-          {/* The box's own guidance, rendered on the box: its links navigate in the app like every
-              other rendered guide, and the button under it opens the guide they came from. */}
-          <Html className="place-expect" html={guidance.html} />
+        <>
+          <section className="place-section">
+            <h3>What to expect here</h3>
+            {/* The box's own guidance, rendered on the box: its links navigate in the app like every
+                other rendered guide, and the button under it opens the guide they came from. */}
+            <Html className="place-expect" html={guidance.html} />
+          </section>
+          {/* What is usually here, when it is worth going, when to stay away and how to go about it:
+              the same four lists the hover tooltip carries, for the finger that opened the card. */}
+          {guidance.sections.map((part) => (
+            <section className="place-section" key={part.id}>
+              <h3>{part.title}</h3>
+              <Html html={part.html} />
+            </section>
+          ))}
           <Link className="btn" to={guidance.link.href}><Icon name="book" size={18} /><span>Open {guidance.link.title}</span></Link>
-        </section>
+        </>
       )}
     </MapPanel>
   );

@@ -1,5 +1,5 @@
 import maplibregl, { type Map as MlMap, type MapGeoJSONFeature, type MapMouseEvent } from 'maplibre-gl';
-import type { Overlay } from '../api/types';
+import type { Overlay, PlaceGuidance } from '../api/types';
 import { describeFeature, type FeatureDescription } from './describe';
 
 const SOURCE_PREFIX = 'sos-overlay-';
@@ -50,10 +50,16 @@ export function placePoint(feature: MapGeoJSONFeature, tap: { lng: number; lat: 
   return { lat: tap.lat, lon: tap.lng };
 }
 
-/** Plain DOM (text nodes only, so property values are never parsed as HTML). The hover popup says what
- * the thing is and no more: everything else — what it has, how far it is, what to expect there — is on
- * the card a tap opens, where it can be read without holding a finger still. */
-export function renderDescription(d: FeatureDescription): HTMLElement {
+/** Everything the box knows about the thing under the pointer: the name, the type, the rows off its own
+ * data, and — where the kind has guidance — what is usually there, when it is worth going, when to stay
+ * away and how to go about it. A household hovering a hospital is looking for survival answers, not a
+ * label, and the popup is the fastest way to read them; the card a tap opens says the same words with
+ * the framing paragraph and the actions, for a finger that cannot hold still.
+ *
+ * The feature's own values are text nodes, so an OSM name is never parsed as HTML. The guidance is the
+ * box's own rendered content and goes in as HTML; the popup takes no pointer events, so its links are
+ * only ink and the guide is named as a line instead. */
+export function renderDescription(d: FeatureDescription, guidance?: PlaceGuidance | null): HTMLElement {
   const root = document.createElement('div');
   root.className = 'map-tip';
   root.setAttribute('role', 'tooltip');
@@ -68,16 +74,54 @@ export function renderDescription(d: FeatureDescription): HTMLElement {
     type.textContent = d.typeLine;
     root.appendChild(type);
   }
+  // The type is already the line above the rows, exactly as on the card.
+  const rows = d.rows.filter(([label]) => label !== 'Type');
+  if (rows.length) {
+    const list = document.createElement('dl');
+    list.className = 'map-tip-rows';
+    for (const [label, value] of rows) {
+      const row = document.createElement('div');
+      const dt = document.createElement('dt');
+      dt.textContent = label;
+      const dd = document.createElement('dd');
+      dd.textContent = value;
+      row.append(dt, dd);
+      list.appendChild(row);
+    }
+    root.appendChild(list);
+  }
+  if (guidance) {
+    for (const part of guidance.sections) {
+      const section = document.createElement('section');
+      section.className = 'map-tip-section';
+      const heading = document.createElement('h4');
+      heading.textContent = part.title;
+      section.appendChild(heading);
+      section.insertAdjacentHTML('beforeend', part.html);
+      root.appendChild(section);
+    }
+    const guide = document.createElement('div');
+    guide.className = 'map-tip-guide';
+    guide.textContent = `Guide: ${guidance.link.title}`;
+    root.appendChild(guide);
+  }
   return root;
 }
 
 /**
  * One popup for every overlay feature: it follows the pointer over points, lines and polygons and says
- * what the thing is. A tap (or click) hands the place to `onTap` — the screen opens the card — and takes
- * the popup away; a tap on empty map hands `null`. The popup is a DOM overlay and the handlers hang off
- * the map, not the style, so both survive a base switch through setStyle. Returns a detach function.
+ * what the thing is and what it is worth to somebody surviving. A tap (or click) hands the place to
+ * `onTap` — the screen opens the card — and takes the popup away; a tap on empty map hands `null`.
+ * `guidance` is read on every show, because `GET /api/map/places` lands after the first hover can.
+ * The popup is a DOM overlay and the handlers hang off the map, not the style, so both survive a base
+ * switch through setStyle. Returns a detach function.
  */
-export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[], onTap: (place: TappedPlace | null) => void): () => void {
+export function attachFeatureTooltip(
+  map: MlMap,
+  overlays: () => Overlay[],
+  onTap: (place: TappedPlace | null) => void,
+  guidance: () => Record<string, PlaceGuidance> | null,
+): () => void {
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, closeOnMove: false, focusAfterOpen: false, className: 'map-tip-popup', maxWidth: 'none', offset: 12 });
   let shownKey: string | null = null;
 
@@ -91,9 +135,13 @@ export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[], onTa
   const setCursor = (pointer: boolean) => { map.getCanvas().style.cursor = pointer ? 'pointer' : ''; };
 
   const show = (feature: MapGeoJSONFeature, at: { lng: number; lat: number }) => {
-    const key = keyOf(feature);
+    const described = describeMapFeature(feature, overlays());
+    const guide = described.kind ? guidance()?.[described.kind] ?? null : null;
+    // The guidance is part of the key: it arrives from the API after the map does, and the first
+    // feature hovered must pick it up rather than stay a bare label until the pointer moves on.
+    const key = `${keyOf(feature)}:${guide ? 'guided' : 'plain'}`;
     if (key !== shownKey) {
-      popup.setDOMContent(renderDescription(describeMapFeature(feature, overlays())));
+      popup.setDOMContent(renderDescription(described, guide));
       shownKey = key;
     }
     popup.setLngLat([at.lng, at.lat]);

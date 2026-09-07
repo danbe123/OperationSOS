@@ -298,7 +298,7 @@ export function MapScreen() {
           <MapView
             config={config} overlaysOn={overlaysOn} terrain={terrain}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
-            home={homePoint} routePoints={routePoints}
+            home={homePoint} routePoints={routePoints} guidance={placesQ.data ?? null}
             onMoveEnd={setView} onClick={onMapClick}
             onFeatureTap={(p) => { if (measuring) return; setPlace(p); setPanel(p ? 'place' : panel === 'place' ? 'none' : panel); }}
             onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}

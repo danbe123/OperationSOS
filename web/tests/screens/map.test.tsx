@@ -204,6 +204,10 @@ describe('Map screen', () => {
     const tip = screen.getByRole('tooltip');
     expect(tip).toHaveTextContent('Southampton General Hospital');
     expect(tip).toHaveTextContent('Hospital');
+    // The hover is the fast read of the same survival answers the card carries.
+    expect(tip).toHaveTextContent('Usually here');
+    expect(tip).toHaveTextContent('Mains power on generators for a few days');
+    expect(tip).toHaveTextContent('Guide: Medical');
     expect(map.getCanvas().style.cursor).toBe('pointer');
     // The tap replaces the popup with the card: the popup is a label, the card is the answer.
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
@@ -243,6 +247,10 @@ describe('Map screen', () => {
     expect(within(card).getByText(/^from the map centre · SU /)).toBeInTheDocument();
     expect(within(card).getByText('Beds')).toBeInTheDocument();
     expect(within(card).getByText(/A&E stays open/)).toBeInTheDocument();
+    // The four lists off the guidance, under the paragraph and above the guide button.
+    expect(within(card).getAllByRole('heading', { level: 3 }).map((h) => h.textContent))
+      .toEqual(['What it has', 'What to expect here', 'Usually here', 'Worth going when', 'Stay away when', 'How to go about it']);
+    expect(within(card).getByText('Take medicines and a written list')).toBeInTheDocument();
     // The guide's own link and the button under it both go to the guide, and both navigate in the app.
     expect(within(card).getByRole('link', { name: 'Medical' })).toHaveAttribute('href', '/m/medical');
     expect(within(card).getByRole('link', { name: 'Open Medical' })).toHaveAttribute('href', '/m/medical');
