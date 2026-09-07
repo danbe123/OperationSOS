@@ -83,7 +83,7 @@
         "artifact": "overlays/flood-zones.pmtiles"
       },
       "dest": "maps/overlays/flood-zones.pmtiles",
-      "size_bytes": 973783670,
+      "size_bytes": 919624113,
       "as_at": "2026-09-07",
       "licence": "OGL v3 (Environment Agency, Natural Resources Wales, SEPA); CC BY-NC-ND 4.0 (OPW, Ireland)",
       "priority": 72,
