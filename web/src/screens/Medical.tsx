@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import type { Card, LibraryItem } from '../api/types';
@@ -42,6 +42,30 @@ export const CARD_GROUPS: { id: string; title: string; slugs: string[] }[] = [
   { id: 'illness', title: 'Illness', slugs: ['sepsis', 'asthma-attack', 'low-blood-sugar', 'fever-child', 'dental-abscess'] },
   { id: 'birth', title: 'Pregnancy and birth', slugs: ['childbirth', 'pregnancy-emergencies'] },
 ];
+
+/** The words on a card tile. The summary is clamped to two lines by the stylesheet; when it is cut,
+ * the tile says so with a "Read more" under it, measured rather than guessed, so a short summary
+ * never carries the label and a long one never ends mid-sentence with nothing said. */
+function QuickCardText({ title, summary }: { title: string; summary?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [clamped, setClamped] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    observer?.observe(el);
+    return () => observer?.disconnect();
+  }, [summary]);
+  return (
+    <span className="quick-card-text">
+      <span className="quick-card-title">{title}</span>
+      {summary && <span className="quick-card-sub" ref={ref}>{summary}</span>}
+      {summary && <span className={clamped ? "quick-card-more" : "quick-card-more quick-card-more-off"} aria-hidden="true">… Read more</span>}
+    </span>
+  );
+}
 
 export function groupCards(cards: Card[], term = ''): { id: string; title: string; cards: Card[] }[] {
   const t = term.trim().toLowerCase();
@@ -90,10 +114,7 @@ export function Medical() {
                     <li key={c.slug}>
                       <Link className={g.id === 'first-minute' ? 'quick-card quick-card-urgent' : 'quick-card'} to={`/medical/card/${c.slug}`}>
                         <Icon name={c.icon} size={28} />
-                        <span className="quick-card-text">
-                          <span className="quick-card-title">{c.title}</span>
-                          {c.summary && <span className="quick-card-sub">{c.summary}</span>}
-                        </span>
+                        <QuickCardText title={c.title} summary={c.summary} />
                         <Icon name="forward" size={22} className="quick-card-go" />
                       </Link>
                     </li>
