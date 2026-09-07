@@ -36,17 +36,6 @@ rules:
     link: module:water
     source: module:water
 
-  - id: oxygen
-    kind: consequence
-    when: {power: "off"}
-    needs: oxygen
-    title: "{name}'s oxygen: back-up cylinders running low"
-    after: 6h
-    severity: danger
-    why: A concentrator needs mains power.
-    link: card:bleeding
-    source: card:bleeding
-
   - id: fill-bath
     kind: task
     when: {power: "off", water: working}
@@ -63,16 +52,6 @@ rules:
     title: Boil or treat every drop
     bucket: now
     why: A rolling boil for one minute kills what matters.
-    link: module:water
-    source: module:water
-
-  - id: water-stock-low
-    kind: task
-    when: {}
-    stock: {category: water, days_lt: 3}
-    title: "Top up the stored water"
-    bucket: week
-    why: Three days is the standard to hold.
     link: module:water
     source: module:water
 
@@ -95,25 +74,6 @@ rules:
     when: {power: "off"}
     open: [page:pmr446, module:water]
     why: What still works, then water.
-    source: page:pmr446
-
-  - id: neighbours-power-off
-    kind: task
-    when: {power: "off"}
-    who: neighbours
-    needs: [oxygen, "over 75"]
-    title: Check on {name}{at_address}
-    bucket: now
-    why: A concentrator needs mains power.
-    link: module:water
-    source: module:water
-
-  - id: neighbour-skills
-    kind: reading
-    when: {power: "off"}
-    who: neighbours
-    skills: [nurse, generator]
-    why: Who on the street can help.
     source: page:pmr446
 
 bulletins:

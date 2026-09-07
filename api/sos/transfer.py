@@ -4,7 +4,10 @@ The export is one JSON document with a version and a checksum. Two boxes on the 
 between them, so the same document is also offered as a sequence of short strings, each small enough to be a QR
 code on a phone screen: gzip, base64, then cut into pieces of at most 800 characters. Importing merges rather
 than overwrites, because both boxes have been watching different halves of the same emergency: a condition is
-taken from whichever box saw it more recently, people and stock match by name, and events simply join the log."""
+taken from whichever box saw it more recently, and notes and events simply join the list.
+
+An export taken before the no-setup cut still carries a household register, a stock list and a street list.
+It is read and imported, minus those three: the box no longer keeps them, and the import summary says so."""
 from __future__ import annotations
 
 import base64
@@ -17,8 +20,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from sos import conditions as cond
-from sos import neighbours as nb
-from sos import situation
+from sos import situation, system
 from sos.db import get_setting, now_iso, set_setting
 
 VERSION = 1
@@ -26,11 +28,13 @@ KIND = "sos-situation-export"
 EVENT_LIMIT = 50               # the last fifty entries: enough to hand over, small enough to scan
 MAX_CHUNK = 800                # characters in one QR chunk, including the {"i","n","d"} wrapper
 CHUNK_PAYLOAD = 740
-PARTS = ("conditions", "scenario", "tasks", "checklist", "household", "stock", "neighbours", "home", "events")
-_PERSON_FIELDS = ("name", "age", "needs", "medications", "contacts", "updated_at")
-_STOCK_FIELDS = ("name", "category", "quantity", "unit", "per_person_day", "expires", "notes", "updated_at", "kit_item")
-_NEIGHBOUR_FIELDS = ("name", "address", "needs", "skills", "contacts", "notes", "updated_at")
+PARTS = ("conditions", "scenario", "tasks", "checklist", "notes", "home", "events", "settings")
+# What a document must carry to be read at all. `notes` and `settings` are not on the list: an export
+# taken before the no-setup cut has neither, and it is still a perfectly good picture of a situation.
+REQUIRED_PARTS = ("conditions", "scenario", "tasks", "checklist", "home", "events")
+GONE_PARTS = ("household", "stock", "neighbours")     # what an older box exported and this one no longer keeps
 _TASK_FIELDS = ("task_id", "done", "done_at", "person", "updated_at", "drill")
+_NOTE_FIELDS = ("kind", "title", "body", "lat", "lon", "updated_at")
 
 
 class TransferError(ValueError):
@@ -65,12 +69,11 @@ def data_for(conn: sqlite3.Connection) -> dict:
         "tasks": _rows(conn, "SELECT * FROM task_state ORDER BY task_id", _TASK_FIELDS),
         "checklist": _rows(conn, "SELECT * FROM checklist_state ORDER BY playbook, item_id",
                            ("playbook", "item_id", "checked", "updated_at")),
-        "household": _rows(conn, "SELECT * FROM household ORDER BY id", _PERSON_FIELDS),
-        "stock": _rows(conn, "SELECT * FROM stock ORDER BY id", _STOCK_FIELDS),
-        "neighbours": _rows(conn, "SELECT * FROM neighbours ORDER BY id", _NEIGHBOUR_FIELDS),
+        "notes": _rows(conn, "SELECT * FROM notes WHERE kind IN ('note','pin') ORDER BY id", _NOTE_FIELDS),
         "home": {"lat": float(home_lat) if home_lat else None, "lon": float(home_lon) if home_lon else None,
                  "label": get_setting(conn, "home_label", "Home"), "flood_zone": get_setting(conn, "home_flood_zone")},
         "events": events,
+        "settings": {"people": system.people_count(conn)},
     }
 
 
@@ -138,8 +141,8 @@ def decode(body: Any) -> dict:
     if int(payload.get("version") or 0) != VERSION:
         raise TransferError(f"this box reads version {VERSION} exports, not version {payload.get('version')}")
     data = payload.get("data")
-    if not isinstance(data, dict) or not set(PARTS) <= set(data):
-        raise TransferError("the export is incomplete: " + ", ".join(sorted(set(PARTS) - set(data or {}))))
+    if not isinstance(data, dict) or not set(REQUIRED_PARTS) <= set(data):
+        raise TransferError("the export is incomplete: " + ", ".join(sorted(set(REQUIRED_PARTS) - set(data or {}))))
     if payload.get("checksum") != checksum(data):
         raise TransferError("the checksum does not match: the export was changed or arrived incomplete")
     return payload
@@ -153,10 +156,6 @@ def _when(value) -> datetime:
 
 def _newer(incoming, mine) -> bool:
     return _when(incoming) > _when(mine)
-
-
-def _key(name) -> str:
-    return str(name or "").strip().lower()
 
 
 def _merge_conditions(conn: sqlite3.Connection, rows: dict, changes: list[str]) -> dict:
@@ -182,28 +181,23 @@ def _merge_conditions(conn: sqlite3.Connection, rows: dict, changes: list[str]) 
     return counts
 
 
-def _merge_people(conn: sqlite3.Connection, table: str, fields: tuple[str, ...], rows: list, label: str,
-                  changes: list[str]) -> dict:
-    counts = {"added": 0, "updated": 0, "kept": 0}
-    mine = {_key(r["name"]): r for r in conn.execute(f"SELECT * FROM {table}")}
-    columns = [f for f in fields if f != "updated_at"]
+def _merge_notes(conn: sqlite3.Connection, rows: list) -> dict:
+    """The notes and pins the other box holds, added once. The same note imported twice is one note."""
+    counts = {"added": 0, "skipped": 0}
+    mine = {(r["kind"], r["title"] or "", r["body"] or "")
+            for r in conn.execute("SELECT kind, title, body FROM notes WHERE kind IN ('note','pin')")}
     for row in rows or []:
-        if not isinstance(row, dict) or not _key(row.get("name")):
+        if not isinstance(row, dict) or row.get("kind") not in ("note", "pin"):
             continue
-        current = mine.get(_key(row.get("name")))
-        values = [row.get(f) for f in columns]
-        if current is None:
-            conn.execute(f"INSERT INTO {table}({', '.join(columns)}, updated_at) "
-                         f"VALUES ({', '.join('?' * len(columns))}, ?)", (*values, row.get("updated_at") or now_iso()))
-            counts["added"] += 1
-            changes.append(f"{label} added: {row.get('name')}")
-        elif _newer(row.get("updated_at"), current["updated_at"]):
-            conn.execute(f"UPDATE {table} SET {', '.join(f'{c}=?' for c in columns)}, updated_at=? WHERE id=?",
-                         (*values, row.get("updated_at"), current["id"]))
-            counts["updated"] += 1
-            changes.append(f"{label} updated: {row.get('name')}")
-        else:
-            counts["kept"] += 1
+        key = (row["kind"], row.get("title") or "", row.get("body") or "")
+        if key in mine:
+            counts["skipped"] += 1
+            continue
+        mine.add(key)
+        conn.execute("INSERT INTO notes(kind, title, body, lat, lon, updated_at) VALUES (?,?,?,?,?,?)",
+                     (row["kind"], row.get("title") or "", row.get("body") or "", row.get("lat"), row.get("lon"),
+                      row.get("updated_at") or now_iso()))
+        counts["added"] += 1
     conn.commit()
     return counts
 
@@ -271,13 +265,15 @@ def merge(conn: sqlite3.Connection, body: Any) -> dict:
     changes: list[str] = []
     counts = {
         "conditions": _merge_conditions(conn, data.get("conditions") or {}, changes),
-        "household": _merge_people(conn, "household", _PERSON_FIELDS, data.get("household"), "Person", changes),
-        "stock": _merge_people(conn, "stock", _STOCK_FIELDS, data.get("stock"), "Stock", changes),
-        "neighbours": _merge_people(conn, "neighbours", _NEIGHBOUR_FIELDS, data.get("neighbours"), "Neighbour", changes),
         "tasks": _merge_tasks(conn, data.get("tasks")),
         "checklist": _merge_checklist(conn, data.get("checklist")),
+        "notes": _merge_notes(conn, data.get("notes")),
         "events": _merge_events(conn, data.get("events")),
     }
+    dropped = [part for part in GONE_PARTS if data.get(part)]
+    if dropped:
+        changes.append(f"{_and_list(dropped)} in this export {'was' if len(dropped) == 1 else 'were'} not "
+                       f"imported: the box no longer keeps {'it' if len(dropped) == 1 else 'them'}")
 
     home = data.get("home") or {}
     home_state = "kept"
@@ -289,6 +285,15 @@ def merge(conn: sqlite3.Connection, body: Any) -> dict:
         home_state = "set"
         changes.append(f"Home set to {home.get('label') or 'Home'} from the other box")
 
+    people = (data.get("settings") or {}).get("people")
+    settings_state = "kept"
+    if get_setting(conn, "people") is None and isinstance(people, int) and not isinstance(people, bool):
+        lo, hi = system.PEOPLE_RANGE
+        if lo <= people <= hi:
+            set_setting(conn, "people", str(people))
+            settings_state = "set"
+            changes.append(f"People set to {people} from the other box")
+
     scenario = data.get("scenario") or {}
     scenario_state = "kept"
     if scenario.get("slug") and not situation.brief(conn):
@@ -296,14 +301,20 @@ def merge(conn: sqlite3.Connection, body: Any) -> dict:
         scenario_state = f"started: {scenario['slug']}"
         changes.append(f"Situation started from the other box: {scenario['slug']}")
     return {"ok": True, "version": payload["version"], "exported_at": payload.get("exported_at"),
-            "counts": counts, "home": home_state, "scenario": scenario_state, "changes": changes}
+            "counts": counts, "home": home_state, "scenario": scenario_state, "settings": settings_state,
+            "changes": changes}
+
+
+def _and_list(words: list[str]) -> str:
+    """"household, stock and neighbours": a list a person would read out."""
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + f" and {words[-1]}"
 
 
 def summary_line(summary: dict) -> str:
     """One line for the event log: what an import actually moved."""
     counts = summary["counts"]
     parts = [f"{counts['conditions']['updated']} condition(s)",
-             f"{counts['household']['added'] + counts['household']['updated']} person/people",
-             f"{counts['neighbours']['added'] + counts['neighbours']['updated']} neighbour(s)",
+             f"{counts['tasks']['updated']} task(s)",
+             f"{counts['notes']['added']} note(s)",
              f"{counts['events']['added']} event(s)"]
     return ", ".join(parts)

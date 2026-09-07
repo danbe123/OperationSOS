@@ -27,3 +27,10 @@ def test_not_a_number_is_refused(client):
 
 def test_status_carries_the_count(client):
     assert client.get("/api/status").json()["people"] == 2
+
+
+def test_the_endpoints_a_household_had_to_fill_in_are_gone(client):
+    """The register, the street list and Stock: nothing to type in, so nothing to answer (no-setup spec)."""
+    for path in ("/api/household", "/api/stock", "/api/neighbours", "/api/street-list"):
+        assert client.get(path).status_code == 404, path
+    assert client.post("/api/household", json={"name": "Sam"}).status_code == 404

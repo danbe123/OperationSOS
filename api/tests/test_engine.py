@@ -1,4 +1,7 @@
-"""The engine: three golden models at a fixed clock, plus the pieces they do not reach."""
+"""The engine: three golden models at a fixed clock, plus the pieces they do not reach.
+
+Nothing is typed into the box before it is useful, so no model here has a household, a street list or a
+store cupboard in it: every line the engine writes is written for anybody (no-setup spec)."""
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -25,26 +28,11 @@ def off(cid: str, since: str, *, state: str = "off", source: str = "manual", set
     return Condition(cid, state=state, since=since, source=source, set_by=set_by, updated_at=since, confirmed_at=since)
 
 
-def household(**kwargs) -> dict:
-    return {"name": "?", "age": None, "needs": "", "medications": "", "contacts": "", **kwargs}
-
-
-def stock(name: str, category: str, days_left: float | None, notes: str = "") -> dict:
-    return {"name": name, "category": category, "days_left": days_left, "notes": notes}
-
-
 # --- (a) peacetime: nothing off ------------------------------------------------------------------------------
 
 @pytest.fixture
 def peacetime() -> engine.Model:
-    return engine.Model(
-        now=at("2026-09-06T14:00:00+00:00"),
-        household=(household(name="Dan", contacts="Gran 01703 555 123"), household(name="Sam", age=7),
-                   household(name="Ali")),
-        stock=(stock("Bottled water", "water", 4.0), stock("Tins and pasta", "food", 9.0),
-               stock("Repeat prescriptions", "medicine", 21.0)),
-        home=dict(HOME), meeting_point=True, last_drill_at="2026-07-01T10:00:00+00:00",
-    )
+    return engine.Model(now=at("2026-09-06T14:00:00+00:00"), home=dict(HOME))
 
 
 def test_golden_peacetime(peacetime, ruleset):
@@ -55,54 +43,13 @@ def test_golden_peacetime(peacetime, ruleset):
     assert set(view["conditions"]) == set(engine.cond.IDS)
     assert view["inferred"] == [] and view["forecast"] == [] and view["tasks"] == [] and view["briefing"] == []
     assert view["modes"] == {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
-    assert view["readiness"]["score"] == 100 and view["readiness"]["gaps"] == []
     assert view["bulletins"]["next"] == {
         "station": "BBC local radio", "frequency": "FM, see the comms module for your station",
         "at": "2026-09-06T16:00:00+00:00",
         "note": "Local radio is where the council, the police and the water company say what is happening in your town."}
 
 
-def test_peacetime_gaps_name_what_is_missing(peacetime, ruleset):
-    thin = engine.Model(now=peacetime.now, household=(household(name="Dan"),), stock=(stock("Bottled water", "water", 1.5),))
-    view = engine.compute(thin, ruleset)
-    # thin model total under the new weights: 6 (water) + 30 (household, no needs) + 15 (kits, no kit content) = 51
-    assert view["readiness"]["score"] == 51
-    assert view["readiness"]["gaps"][0]["points"] >= view["readiness"]["gaps"][-1]["points"]
-    assert {"title": "Water: 1.5 days for 1 person", "link": "/plan#stock", "points": 6} in view["readiness"]["gaps"]
-    assert any(g["title"] == "Home is not set on the map" for g in view["readiness"]["gaps"])
-    assert [t["id"] for t in view["tasks"]] == ["medicine-stock-missing", "water-stock-low"]
-
-
-def test_readiness_counts_the_basic_tier_of_relevant_kits(peacetime, ruleset):
-    kitted = engine.Model(now=peacetime.now, household=peacetime.household, stock=peacetime.stock, home=dict(HOME),
-                          meeting_point=True, last_drill_at=peacetime.last_drill_at,
-                          kits=({"slug": "water", "title": "Water", "relevant": True, "basic_done": 1, "basic_total": 2},
-                                {"slug": "food", "title": "Food", "relevant": True, "basic_done": 3, "basic_total": 3},
-                                {"slug": "baby-child", "title": "Baby and child", "relevant": False, "basic_done": 0, "basic_total": 4}))
-    view = engine.compute(kitted, ruleset)
-    # 85 outside kits; kits: 15 points split over the two relevant kits, water half done = 3.75 + 7.5 = 11.25 -> 11
-    assert view["readiness"]["score"] == 96
-    assert view["readiness"]["gaps"] == [{"title": "Water kit: 1 of 2 basic items", "link": "/kit/water", "points": 4}]
-
-
-def test_equal_kit_gaps_put_the_emptiest_kit_first(peacetime, ruleset):
-    """Two kits worth the same rounded points: the one with the most left to do is the one to go and fill."""
-    kitted = engine.Model(now=peacetime.now, household=peacetime.household, stock=peacetime.stock, home=dict(HOME),
-                          meeting_point=True, last_drill_at=peacetime.last_drill_at,
-                          kits=({"slug": "food", "title": "Food", "relevant": True, "basic_done": 1, "basic_total": 4},
-                                {"slug": "water", "title": "Water", "relevant": True, "basic_done": 1, "basic_total": 5}))
-    gaps = engine.compute(kitted, ruleset)["readiness"]["gaps"]
-    # share 7.5: water has 80 % left (6.0), food 75 % (5.625); both round to 6, and "Food" would win on title alone
-    assert [g["points"] for g in gaps] == [6, 6]
-    assert [g["link"] for g in gaps] == ["/kit/water", "/kit/food"]
-    assert all("remaining" not in g for g in gaps)
-
-
-def test_readiness_without_kit_content_keeps_the_full_kit_points(peacetime, ruleset):
-    assert engine.compute(peacetime, ruleset)["readiness"]["score"] == 100
-
-
-# --- (b) power off five hours, with insulin and oxygen in the house ------------------------------------------
+# --- (b) power off five hours -------------------------------------------------------------------------------
 
 @pytest.fixture
 def blackout() -> engine.Model:
@@ -111,11 +58,7 @@ def blackout() -> engine.Model:
     return engine.Model(
         now=now,
         conditions={"power": off("power", since)},
-        household=(household(name="Dan", contacts="Gran 01703 555 123"),
-                   household(name="Nan", age=81, needs="oxygen concentrator", medications="insulin, salbutamol")),
-        stock=(stock("Bottled water", "water", 4.0), stock("Tins and pasta", "food", 9.0),
-               stock("Insulin and oxygen spares", "medicine", 21.0, notes="insulin in the fridge, spare oxygen cylinder")),
-        home=dict(HOME), meeting_point=True, last_drill_at="2026-07-01T10:00:00+00:00",
+        home=dict(HOME),
         titles={"page:what-still-works": "What still works in an outage", "module:power": "Power"},
     )
 
@@ -143,31 +86,23 @@ def test_golden_blackout_conditions_and_inferred(blackout, ruleset):
 def test_golden_blackout_forecast_is_ordered_by_due_time(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     ids = [f["id"] for f in view["forecast"]]
-    assert ids == ["fridge", "oxygen-concentrator:nan", "phone-batteries", "hot-water",
-                   "cold-medicines-insulin:nan", "freezer"]
+    assert ids == ["fridge", "phone-batteries", "hot-water", "freezer"]
     fridge = view["forecast"][0]
     assert fridge["due_at"] == "2026-09-06T13:00:00+00:00" and fridge["passed"] is True and fridge["severity"] == "warn"
-    oxygen = view["forecast"][1]
-    assert oxygen["title"] == "Nan's oxygen: back-up cylinders running low" and oxygen["severity"] == "danger"
-    assert oxygen["due_at"] == "2026-09-06T15:00:00+00:00" and oxygen["passed"] is False and oxygen["link"] == "module:medical"
     assert view["forecast"][-1]["id"] == "freezer" and view["forecast"][-1]["due_at"] == "2026-09-08T09:00:00+00:00"
 
 
 def test_golden_blackout_tasks_buckets_modes_and_briefing(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
     now_tasks = [t["id"] for t in view["tasks"] if t["bucket"] == "now"]
-    assert set(now_tasks) == {"fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power", "check-dependent:nan"}
+    assert set(now_tasks) == {"fill-bath", "fridge-doors-shut", "cooker-off", "co-alarm-power"}
     assert now_tasks == sorted(now_tasks, key=lambda i: next(t["title"] for t in view["tasks"] if t["id"] == i))
-    assert [t["id"] for t in view["tasks"] if t["bucket"] == "hour"] == ["medicines-cold-box:nan"]
-    assert not any(t["bucket"] == "week" for t in view["tasks"])       # the store cupboard is stocked
+    assert not any(t["bucket"] == "week" for t in view["tasks"])
     fill = next(t for t in view["tasks"] if t["id"] == "fill-bath")
     assert fill["done"] is False and fill["person"] is None and fill["source"] == "rule:fill-bath" and fill["link"] == "module:water"
-    check = next(t for t in view["tasks"] if t["id"] == "check-dependent:nan")
-    assert check["title"] == "Check on Nan and everything of theirs that needed a plug"
     assert view["modes"] == {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
     assert view["briefing"] == [{"title": "What still works in an outage", "kind": "page", "ref": "what-still-works"},
                                 {"title": "Power", "kind": "module", "ref": "power"}]
-    assert view["readiness"]["score"] == 100
 
 
 def test_done_and_assigned_tasks_come_from_task_state(blackout, ruleset):
@@ -203,10 +138,7 @@ def flood() -> engine.Model:
                     "landline": off("landline", "2026-12-21T20:00:00+00:00")},
         scenario={"slug": "storms-flooding", "title": "Storms and flooding",
                   "started_at": "2026-12-21T19:00:00+00:00", "elapsed_s": 3 * 3600, "phase": "right-now"},
-        household=(household(name="Dan", contacts="Gran 01703 555 123"),),
-        stock=(stock("Bottled water", "water", 4.0), stock("Tins and pasta", "food", 9.0),
-               stock("Repeat prescriptions", "medicine", 21.0)),
-        home=dict(HOME), meeting_point=True, last_drill_at="2026-11-01T10:00:00+00:00",
+        home=dict(HOME),
         checklist=({"id": "move-upstairs", "text": "Move what matters upstairs"},
                    {"id": "sandbags", "text": "Sandbag the doors"}),
         checklist_state={"sandbags": True},
@@ -303,7 +235,8 @@ def test_drill_shows_in_the_meta_and_the_report(flood, ruleset):
 
 def test_report_of_a_blackout_lists_the_forecast(blackout, ruleset):
     text = engine.report(engine.compute(blackout, ruleset))
-    assert "Freezer food unsafe" in text and "PASSED" in text and "Readiness 100 of 100." in text
+    assert "Freezer food unsafe" in text and "PASSED" in text
+    assert "Readiness" not in text and "## Neighbours" not in text
 
 
 def test_summary_line(blackout, ruleset):
@@ -335,13 +268,6 @@ def test_season_matching(ruleset):
     assert engine.matches({"season": "summer"}, {}, model, False) is False
 
 
-def test_stock_predicates(blackout):
-    water_low = rules.Rule(id="x", kind="task", when={}, source="module:water", stock={"category": "water", "days_lt": 3})
-    assert engine.stock_matches(water_low, blackout) is False
-    fuel_missing = rules.Rule(id="y", kind="task", when={}, source="module:power", stock={"category": "fuel", "missing": True})
-    assert engine.stock_matches(fuel_missing, blackout) is True
-
-
 def test_an_unknown_timezone_falls_back_to_utc(blackout, ruleset):
     blackout.tz = "Mars/Olympus"
     assert engine.compute(blackout, ruleset)["bulletins"]["next"]["at"].endswith("+00:00")
@@ -370,71 +296,9 @@ def test_a_mode_theme_the_box_has_no_palette_for_is_no_theme(blackout):
     assert engine.compute(blackout, mode_rule("light", theme="field"))["modes"]["theme"] == "field"
 
 
-# --- the street list (spec section 8) ------------------------------------------------------------------------
+# --- no setup: the View names nobody (no-setup spec) -----------------------------------------------------------
 
-def neighbour(**kwargs) -> dict:
-    return {"name": "?", "address": "", "needs": "", "skills": "", "contacts": "", "notes": "", **kwargs}
-
-
-@pytest.fixture
-def street(blackout) -> engine.Model:
-    blackout.neighbours = (
-        neighbour(name="Mrs Khan", address="12 Elm Road", needs="oxygen concentrator", skills="retired nurse",
-                  contacts="07700 900123"),
-        neighbour(name="Mr Ali", address="9 Elm Road", skills="electrician, generator"),
-        neighbour(name="Joan", needs="over 75"),
-    )
-    return blackout
-
-
-def test_a_blackout_says_who_on_the_street_to_check_on(street, ruleset):
-    view = engine.compute(street, ruleset)
-    check_on = view["neighbours"]["check_on"]
-    assert [(c["id"], c["title"]) for c in check_on] == [
-        ("neighbour:joan", "Check on Joan"),
-        ("neighbour:mrs-khan", "Check on Mrs Khan at 12 Elm Road")]
-    assert check_on[1]["needs"] == "oxygen concentrator" and check_on[1]["contacts"] == "07700 900123"
-    assert check_on[1]["rule"] == "neighbours-power-off" and check_on[1]["bucket"] == "now"
-    assert [t["id"] for t in view["tasks"] if t["id"].startswith("neighbour:")] == ["neighbour:joan", "neighbour:mrs-khan"]
-
-
-def test_a_neighbour_is_only_on_the_list_once_however_many_rules_point_at_them(street, ruleset):
-    street.scenario = {"slug": "grid-collapse", "title": "National grid collapse",
-                       "started_at": "2026-09-06T09:00:00+00:00", "elapsed_s": 18000, "phase": "first-72-hours"}
-    view = engine.compute(street, ruleset)
-    ids = [c["id"] for c in view["neighbours"]["check_on"]]
-    assert ids == ["neighbour:joan", "neighbour:mrs-khan", "neighbour:mr-ali"]   # now, now, then today
-    assert len(ids) == len(set(ids))
-    khan = next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mrs-khan")
-    assert khan["rule"] == "neighbours-power-off"             # the more urgent rule keeps the door
-    ali = next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mr-ali")
-    assert ali["rule"] == "neighbours-scenario" and ali["bucket"] == "today"
-
-
-def test_a_ticked_neighbour_shows_as_done_on_both_lists(street, ruleset):
-    street.task_state = {"neighbour:mrs-khan": {"done": True, "done_at": "2026-09-06T14:05:00+00:00", "person": "Sam"}}
-    view = engine.compute(street, ruleset)
-    assert next(c for c in view["neighbours"]["check_on"] if c["id"] == "neighbour:mrs-khan")["done"] is True
-    assert next(t for t in view["tasks"] if t["id"] == "neighbour:mrs-khan")["person"] == "Sam"
-
-
-def test_the_street_s_skills_are_listed_with_the_right_article(street, ruleset):
-    """A trade is something you are, a generator is something you have, and only one of them takes "an"."""
-    view = engine.compute(street, ruleset)
-    assert [(s["name"], s["skill"], s["text"]) for s in view["neighbours"]["skills"]] == [
-        ("Mrs Khan", "nurse", "Mrs Khan is a nurse"),
-        ("Mr Ali", "electrician", "Mr Ali is an electrician"),
-        ("Mr Ali", "generator", "Mr Ali has a generator")]
-
-
-def test_the_report_carries_the_street(street, ruleset):
-    text = engine.report(engine.compute(street, ruleset))
-    assert "## Neighbours" in text
-    assert "- [ ] Check on Mrs Khan at 12 Elm Road (oxygen concentrator) — 07700 900123" in text
-    assert "- Mrs Khan is a nurse at 12 Elm Road — 07700 900123" in text
-
-
-def test_no_neighbours_no_section(blackout, ruleset):
+def test_the_view_has_no_readiness_and_no_neighbours(blackout, ruleset):
     view = engine.compute(blackout, ruleset)
-    assert view["neighbours"] == {"check_on": [], "skills": []}
-    assert "## Neighbours" not in engine.report(view)
+    assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "briefing", "modes",
+                         "bulletins"}

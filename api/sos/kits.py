@@ -1,15 +1,13 @@
 """Kits: tiered, tickable lists of things to have (kits spec, 2026-09-06).
 
-A kit is one YAML file under playbooks/kits/. This module loads it, scales an item's quantity to the household
-and a tier's day count, decides whether a kit is relevant to the household on the register, and validates the
-kit tree for `sos validate-playbooks`. Ticks and Stock live in the router; the readiness part in the engine."""
+A kit is one YAML file under playbooks/kits/. This module loads it, scales an item's quantity to the people
+count and a tier's day count, and validates the kit tree for `sos validate-playbooks`. Nothing is typed in
+before the box is useful, so every kit is relevant to everybody and the ticks live in the router."""
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
 
 import jsonschema
 import yaml
@@ -136,53 +134,20 @@ def scaled(item: KitItem, days: int, people: int) -> dict | None:
     return {"amount": item.qty.get("amount", 1), "unit": unit, "scaled": total, "text": " ".join(text.split())}
 
 
-def _need_words(person: dict) -> list[str]:
-    """The person's needs and medications, split the way the rules engine splits them (`engine.need_words`)."""
-    from sos import engine   # deferred: engine is the owner of the split, and nothing there needs a kit
+def matching_people(kit: Kit, people: int) -> int:
+    """How many people this kit is for: the people count, whatever the kit's own gate used to ask.
 
-    return engine.need_words(person)
-
-
-def _term_matches(term: str, words: Iterable[str]) -> bool:
-    """A gate term matches a need as a whole word, with a plural allowed: `cat` catches "two cats" but
-    not "regular medication", and `hen` does not catch "when walking". A term may itself be two words."""
-    pattern = re.compile(rf"\b{re.escape(term.strip().lower())}s?\b")
-    return any(pattern.search(word) for word in words)
+    With no register there is nothing for `relevant_when` to test, so a gated kit (baby and child)
+    scales by the household count like every other. Never less than one, so a quantity always shows."""
+    return max(1, int(people))
 
 
-def _matches(person: dict, when: dict) -> bool:
-    """Does this one person satisfy every clause of a `relevant_when` gate?"""
-    if "age_under" in when:
-        age = person.get("age")
-        if age is None or int(age) >= int(when["age_under"]):
-            return False
-    if "needs_any" in when:
-        words = _need_words(person)
-        if not any(_term_matches(str(term), words) for term in when["needs_any"]):
-            return False
+def relevant(kit: Kit) -> bool:
+    """Every kit is relevant: the box knows nothing about who lives here, so it hides nothing (no-setup spec).
+
+    A kit's `relevant_when` stays in its file as content -- it says who the kit is for in words -- but
+    nothing reads it any more."""
     return True
-
-
-def matching_people(kit: Kit, household: Iterable[dict]) -> int:
-    """How many people this kit is actually for: everyone on the register, or only those its gate matches.
-
-    A gated kit (baby and child) scales by the babies, not by the whole household, so six nappies a day
-    for a one-year-old stays six a day when three adults live in the same house. Never less than one, so a
-    kit still shows a quantity before anyone is on the register."""
-    people = list(household)
-    if not kit.relevant_when:
-        return max(1, len(people))
-    return max(1, sum(1 for p in people if _matches(p, kit.relevant_when)))
-
-
-def relevant(kit: Kit, household: Iterable[dict]) -> bool:
-    """A kit with no `relevant_when` is for everyone; otherwise one person must satisfy every clause of the gate.
-
-    One predicate for both questions: a kit gated on `age_under` *and* `needs_any` is for a household with a
-    baby who has a cat, not for one with a baby and, separately, a neighbourly interest in cats."""
-    if not kit.relevant_when:
-        return True
-    return any(_matches(person, kit.relevant_when) for person in household)
 
 
 def basic_progress(kit: Kit, checked: set[str]) -> tuple[int, int]:

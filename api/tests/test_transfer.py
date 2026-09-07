@@ -17,10 +17,9 @@ def hours_ago(n: float) -> str:
 def filled(client):
     """A box with something in every part of the situation."""
     client.put("/api/conditions/power", json={"state": "off", "since": hours_ago(5), "note": "Whole street"})
-    client.post("/api/household", json={"name": "Sam", "needs": "insulin", "contacts": "07700 900000"})
-    client.post("/api/stock", json={"name": "Bottled water", "category": "water", "quantity": 30, "unit": "l",
-                                    "per_person_day": 3})
-    client.post("/api/neighbours", json={"name": "Mrs Khan", "address": "12 Elm Road", "needs": "oxygen"})
+    client.put("/api/settings/people", json={"people": 3})
+    client.post("/api/notes", json={"kind": "note", "title": "Stopcock", "body": "Under the sink"})
+    client.post("/api/notes", json={"kind": "pin", "title": "Standpipe", "lat": 50.93, "lon": -1.43})
     client.put("/api/home", json={"lat": 50.93, "lon": -1.43, "label": "Home", "flood_zone": "3"})
     client.post("/api/situation", json={"slug": "grid-collapse"})
     client.put("/api/tasks/fill-bath", json={"done": True, "person": "Sam"})
@@ -35,13 +34,11 @@ def test_the_export_carries_the_whole_situation_with_a_checksum(filled):
     assert body["exported_at"] and body["checksum"].startswith("sha256:")
     assert body["checksum"] == transfer.checksum(body["data"])
     data = body["data"]
-    assert set(data) == {"conditions", "scenario", "tasks", "checklist", "household", "stock", "neighbours",
-                         "home", "events"}
+    assert set(data) == set(transfer.PARTS)
     assert data["conditions"]["power"]["state"] == "off" and data["conditions"]["power"]["note"] == "Whole street"
     assert data["scenario"]["slug"] == "grid-collapse" and data["scenario"]["drill"] is False
-    assert [p["name"] for p in data["household"]] == ["Sam"]
-    assert [s["name"] for s in data["stock"]] == ["Bottled water"]
-    assert [n["name"] for n in data["neighbours"]] == ["Mrs Khan"]
+    assert [n["title"] for n in data["notes"]] == ["Stopcock", "Standpipe"]
+    assert data["settings"] == {"people": 3}
     assert data["home"]["lat"] == 50.93 and data["home"]["flood_zone"] == "3"
     assert [t["task_id"] for t in data["tasks"]] == ["fill-bath"] and data["tasks"][0]["person"] == "Sam"
     assert data["events"] and len(data["events"]) <= transfer.EVENT_LIMIT
@@ -125,42 +122,12 @@ def test_import_takes_the_newer_condition_and_keeps_the_newer_local_one(filled, 
     assert any("Water supply" in line for line in summary["changes"])
 
 
-def test_a_transferred_stock_row_keeps_its_kit_link(client):
-    """A row added from a kit carries `kit_item` out and back in, so the kit screen still owns it after a transfer."""
-    client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}})
-    body = client.get("/api/situation/export").json()
-    assert body["data"]["stock"][0]["kit_item"] == "water/stored-water"
-
-    row_id = client.get("/api/stock").json()["items"][0]["id"]
-    client.delete(f"/api/stock/{row_id}")
-    assert client.get("/api/stock").json()["items"] == []
-
-    assert client.post("/api/situation/import", json=body).status_code == 200
-    rows = client.get("/api/stock").json()["items"]
-    assert [r["kit_item"] for r in rows] == ["water/stored-water"]
-    assert rows[0]["kit_title"] == "Water"
-    assert client.get("/api/kits/water").json()["tiers"][0]["items"][0]["stock_item"]["quantity"] == 9
-
-
-def test_import_matches_people_and_stock_by_name(filled):
+def test_import_brings_the_notes_across_once(filled, client):
     body = filled.get("/api/situation/export").json()
-    later = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
-    body["data"]["household"][0] = {**body["data"]["household"][0], "needs": "insulin, asthma", "updated_at": later}
-    body["data"]["household"].append({"name": "Ada", "age": 8, "needs": "", "medications": "", "contacts": "",
-                                      "updated_at": later})
-    body["data"]["stock"][0] = {**body["data"]["stock"][0], "quantity": 60.0, "updated_at": later}
-    body["data"]["neighbours"].append({"name": "Mr Ali", "address": "9 Elm Road", "needs": "", "skills": "generator",
-                                       "contacts": "", "notes": "", "updated_at": later})
-    body["checksum"] = transfer.checksum(body["data"])
-
-    summary = filled.post("/api/situation/import", json=body).json()
-    assert summary["counts"]["household"] == {"added": 1, "updated": 1, "kept": 0}
-    assert summary["counts"]["stock"] == {"added": 0, "updated": 1, "kept": 0}
-    assert summary["counts"]["neighbours"] == {"added": 1, "updated": 0, "kept": 1}
-    people = filled.get("/api/household").json()
-    assert [p["name"] for p in people] == ["Sam", "Ada"] and people[0]["needs"] == "insulin, asthma"
-    assert filled.get("/api/stock").json()["items"][0]["quantity"] == 60.0
-    assert [n["name"] for n in filled.get("/api/neighbours").json()] == ["Mr Ali", "Mrs Khan"]
+    first = filled.post("/api/situation/import", json=body).json()
+    assert first["counts"]["notes"] == {"added": 0, "skipped": 2}       # they are this box's own notes
+    titles = [n["title"] for n in filled.get("/api/notes").json() if n["kind"] in ("note", "pin")]
+    assert titles == ["Stopcock", "Standpipe"]
 
 
 def test_import_appends_events_without_repeating_them(filled):
@@ -183,8 +150,9 @@ def test_import_into_an_empty_box_brings_everything_across(filled, tmp_path):
     db.init_schema(other)
     summary = transfer.merge(other, body)
     assert summary["ok"] is True
-    assert summary["counts"]["household"]["added"] == 1 and summary["counts"]["neighbours"]["added"] == 1
+    assert summary["counts"]["notes"]["added"] == 2 and summary["counts"]["events"]["added"] >= 1
     assert summary["home"] == "set" and summary["scenario"].startswith("started")
+    assert db.get_setting(other, "people") == "3"
     assert other.execute("SELECT state FROM conditions WHERE id='power'").fetchone()[0] == "off"
     assert db.get_setting(other, "situation_slug") == "grid-collapse"
     assert db.get_setting(other, "home_lat") == "50.930000"
@@ -202,3 +170,52 @@ def test_rubbish_is_refused(client):
     assert client.post("/api/situation/import", json={"hello": "world"}).status_code == 422
     assert client.post("/api/situation/import", json=["not a chunk"]).status_code == 422
     assert client.post("/api/situation/import", json=[{"i": 0, "n": 1, "d": "not base64 gzip"}]).status_code == 422
+
+
+# --- no setup: the parts list, the people setting and an old export ----------------------------------------
+
+def test_the_parts_are_the_no_setup_list():
+    assert transfer.PARTS == ("conditions", "scenario", "tasks", "checklist", "notes", "home", "events", "settings")
+
+
+def test_the_export_carries_the_notes_and_the_people_count(client):
+    client.put("/api/settings/people", json={"people": 6})
+    client.post("/api/notes", json={"kind": "note", "title": "Meter cupboard", "body": "Under the stairs"})
+    data = client.get("/api/situation/export").json()["data"]
+    assert set(data) == set(transfer.PARTS)
+    assert data["settings"] == {"people": 6}
+    assert [n["title"] for n in data["notes"]] == ["Meter cupboard"]
+
+
+def test_an_import_brings_the_people_count_to_a_box_that_has_none(client, tmp_path):
+    from sos import db
+
+    client.put("/api/settings/people", json={"people": 6})
+    body = client.get("/api/situation/export").json()
+    other = db.connect(tmp_path / "other-box.db")
+    db.init_schema(other)
+    assert transfer.merge(other, body)["settings"] == "set"
+    assert db.get_setting(other, "people") == "6"
+    db.set_setting(other, "people", "3")
+    assert transfer.merge(other, body)["settings"] == "kept"
+    assert db.get_setting(other, "people") == "3"
+    other.close()
+
+
+def test_an_old_export_still_imports_and_says_what_it_dropped(client):
+    body = client.get("/api/situation/export").json()
+    body["data"]["household"] = [{"name": "Sam", "age": 8, "needs": "insulin", "medications": "",
+                                  "contacts": "", "updated_at": hours_ago(1)}]
+    body["data"]["stock"] = [{"name": "Bottled water", "category": "water", "quantity": 30.0, "unit": "l",
+                              "per_person_day": 3.0, "expires": None, "notes": "", "updated_at": hours_ago(1),
+                              "kit_item": None}]
+    body["data"]["neighbours"] = [{"name": "Mrs Khan", "address": "12 Elm Road", "needs": "oxygen", "skills": "",
+                                   "contacts": "", "notes": "", "updated_at": hours_ago(1)}]
+    del body["data"]["notes"], body["data"]["settings"]
+    body["checksum"] = transfer.checksum(body["data"])
+    response = client.post("/api/situation/import", json=body)
+    assert response.status_code == 200
+    summary = response.json()
+    assert "household" not in summary["counts"] and "stock" not in summary["counts"]
+    assert ("household, stock and neighbours in this export were not imported: the box no longer keeps them"
+            in summary["changes"])

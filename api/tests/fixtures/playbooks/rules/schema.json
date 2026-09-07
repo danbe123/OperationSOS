@@ -24,12 +24,13 @@
       }
     },
     "stateOrList": { "oneOf": [{ "$ref": "#/$defs/state" }, { "type": "array", "items": { "$ref": "#/$defs/state" }, "minItems": 1 }] },
-    "terms": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 }] },
     "duration": { "type": "string", "pattern": "^\\d+(\\.\\d+)?[mhd]$", "description": "Minutes, hours or days: 30m, 4h, 2d" },
     "link": { "type": "string", "pattern": "^(playbook|module|page|card|doc|map|kiwix):" },
     "rule": {
       "type": "object",
       "required": ["id", "kind", "when", "source"],
+      "additionalProperties": false,
+      "description": "A rule names nobody. There is no household register, no street list and no stock list to read, so needs, who, skills and stock are not fields a rule may carry.",
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "kind": { "enum": ["implication", "consequence", "task", "mode", "reading"] },
@@ -39,15 +40,10 @@
         "expect": { "type": "object", "required": ["condition", "state", "after"], "additionalProperties": false,
           "properties": { "condition": { "type": "string" }, "state": { "$ref": "#/$defs/state" }, "after": { "$ref": "#/$defs/duration" }, "where": { "type": "string" } } },
         "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-        "title": { "type": "string", "description": "The consequence's or task's line, with {name}, {address} and {at_address} filled in per person; on a reading rule with `skills` it is the sentence template, where {article} and {skill} are also available (the default is '{name} is {article} {skill}')" },
+        "title": { "type": "string", "description": "The consequence's or task's line, written for anybody" },
         "after": { "$ref": "#/$defs/duration" },
         "severity": { "enum": ["info", "warn", "danger"] },
         "link": { "$ref": "#/$defs/link" },
-        "needs": { "$ref": "#/$defs/terms", "description": "One term or a list of them, matched against the needs and medications of whoever `who` names (case-insensitive substring); one item per matching person, with {name}, {address} and {at_address} available in the title. '*' means anyone with something recorded, 'any' means everyone on the list" },
-        "skills": { "$ref": "#/$defs/terms", "description": "Reading rules only: one term or a list of them, matched against a neighbour's skills; each match is listed as '<name> is a nurse'" },
-        "who": { "enum": ["household", "neighbours"], "description": "Which register `needs` and `skills` read: the household register (the default) or the street list" },
-        "stock": { "type": "object", "additionalProperties": false, "required": ["category"],
-          "properties": { "category": { "enum": ["water", "food", "fuel", "medicine", "other"] }, "days_lt": { "type": "number" }, "missing": { "type": "boolean" } } },
         "bucket": { "enum": ["now", "hour", "today", "week"] },
         "until": { "$ref": "#/$defs/when" },
         "set": { "type": "object", "additionalProperties": false,
@@ -59,10 +55,7 @@
         { "if": { "properties": { "kind": { "const": "consequence" } } }, "then": { "required": ["title", "after", "severity"] } },
         { "if": { "properties": { "kind": { "const": "task" } } }, "then": { "required": ["title", "bucket"] } },
         { "if": { "properties": { "kind": { "const": "mode" } } }, "then": { "required": ["set"] } },
-        { "if": { "properties": { "kind": { "const": "reading" } } },
-          "then": { "anyOf": [{ "required": ["open"] }, { "required": ["skills"] }] } },
-        { "if": { "properties": { "skills": true }, "required": ["skills"] },
-          "then": { "properties": { "kind": { "const": "reading" }, "who": { "const": "neighbours" } }, "required": ["who"] } }
+        { "if": { "properties": { "kind": { "const": "reading" } } }, "then": { "required": ["open"] } }
       ]
     },
     "bulletin": {

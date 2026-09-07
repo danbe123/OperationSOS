@@ -56,7 +56,7 @@ def test_parse_duration_rejects_nonsense(text):
 def test_the_repository_rules_load(loaded):
     assert list(loaded.files) == EXPECTED_FILES
     counts = rules.counts(loaded)
-    assert counts["implication"] >= 8 and counts["consequence"] >= 10 and counts["task"] >= 14
+    assert counts["implication"] >= 8 and counts["consequence"] >= 6 and counts["task"] >= 12
     assert counts["mode"] >= 4 and counts["reading"] >= 8 and counts["bulletins"] >= 3
     assert loaded.get("fill-bath").bucket == "now" and loaded.get("fill-bath").kind == "task"
     assert loaded.get("freezer").after_td == timedelta(hours=48)
@@ -177,52 +177,26 @@ def test_the_fixture_rules_use_the_committed_schema():
     assert fixture.read_text(encoding="utf-8") == (RULES_DIR / "schema.json").read_text(encoding="utf-8")
 
 
-# --- the street list: `who` and `skills` (spec section 8) ----------------------------------------------
+# --- no setup: the register fields are gone (no-setup spec section 2) ------------------------------------
 
-def test_neighbour_rules_read_the_street_list(loaded):
-    rule = loaded.get("neighbours-power-off")
-    assert rule.who == "neighbours" and rule.kind == "task"
-    assert set(rule.need_terms) == {"oxygen", "dialysis", "stairlift", "insulin", "over 75"}
-    assert "{name}" in rule.title and "{at_address}" in rule.title
-    assert loaded.get("neighbours-scenario").need_terms == ("any",)
-    assert loaded.get("neighbour-skills-medical").skill_terms[:2] == ("nurse", "doctor")
-    assert loaded.get("fill-bath").who == "household" and loaded.get("fill-bath").need_terms == ()
-
-
-def test_needs_takes_one_term_or_a_list(rules_dir):
-    write(rules_dir, "needs.yaml",
-          'rules:\n  - id: one\n    kind: task\n    when: {power: "off"}\n    needs: oxygen\n'
-          "    title: T\n    bucket: now\n    why: W\n    source: module:water\n"
-          '  - id: many\n    kind: task\n    when: {power: "off"}\n    needs: [oxygen, "over 75"]\n'
-          "    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
-    loaded = rules.load(rules_dir)
-    assert loaded.get("one").need_terms == ("oxygen",) and loaded.get("many").need_terms == ("oxygen", "over 75")
-
-
-def test_an_unknown_who_is_refused(rules_dir):
-    write(rules_dir, "who.yaml", 'rules:\n  - id: martians\n    kind: task\n    when: {power: "off"}\n'
-                                 "    who: martians\n    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
+@pytest.mark.parametrize("field,value", [("needs", "oxygen"), ("who", "neighbours"), ("skills", "nurse"),
+                                         ("stock", "{category: water, days_lt: 3}")])
+def test_a_rule_that_reads_a_register_is_refused(rules_dir, field, value):
+    write(rules_dir, "old.yaml", 'rules:\n  - id: old\n    kind: task\n    when: {power: "off"}\n'
+                                 f"    {field}: {value}\n"
+                                 "    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
     with pytest.raises(rules.RulesError) as exc:
         rules.load(rules_dir)
-    assert "martians" in str(exc.value) and "who" in str(exc.value)
+    assert "old.yaml" in str(exc.value) and field in str(exc.value)
 
 
-def test_skills_belong_to_a_neighbour_reading_rule(rules_dir):
-    write(rules_dir, "skills.yaml", "rules:\n  - id: skilled\n    kind: task\n    when: {}\n    skills: nurse\n"
-                                    "    title: T\n    bucket: now\n    why: W\n    source: module:water\n")
-    with pytest.raises(rules.RulesError) as exc:
-        rules.load(rules_dir)
-    assert "skilled" in str(exc.value)
+def test_no_repository_rule_reads_a_register(loaded):
+    for rule in loaded.all:
+        for field in ("needs", "who", "skills", "stock"):
+            assert not hasattr(rule, field), f"{rule.id}: {field}"
 
 
-def test_a_reading_rule_may_list_skills_instead_of_opening_anything(rules_dir):
-    write(rules_dir, "skills.yaml", "rules:\n  - id: skilled\n    kind: reading\n    when: {}\n"
-                                    "    who: neighbours\n    skills: [nurse]\n    why: W\n    source: module:water\n")
-    assert rules.load(rules_dir).get("skilled").open == ()
-
-
-def test_a_reading_rule_with_neither_open_nor_skills_is_refused(rules_dir):
-    write(rules_dir, "silent.yaml", "rules:\n  - id: silent\n    kind: reading\n    when: {}\n"
-                                    "    why: W\n    source: module:water\n")
-    with pytest.raises(rules.RulesError):
-        rules.load(rules_dir)
+def test_no_rule_title_has_a_name_shaped_hole_in_it(loaded):
+    """`{name}` and `{at_address}` used to be filled in from the register. Nothing fills them now."""
+    for rule in loaded.all:
+        assert "{" not in rule.title, rule.id

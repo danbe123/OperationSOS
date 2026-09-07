@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from sos import conditions as cond
-from sos import engine, nearby, neighbours as nb, readiness, rules as rules_mod, sensors, situation, transfer
+from sos import engine, nearby, rules as rules_mod, sensors, situation, transfer
 from sos.db import get_setting, now_iso, set_setting
 from sos.routers import LOCALHOSTS, get_db
 
@@ -65,19 +65,6 @@ def _home(conn: sqlite3.Connection) -> dict:
             "label": get_setting(conn, "home_label", "Home"), "flood_zone": get_setting(conn, "home_flood_zone")}
 
 
-def _stock(conn: sqlite3.Connection) -> tuple[dict, ...]:
-    """The same rows and the same days_left as `GET /stock`, so the engine never disagrees with the API.
-
-    Without the kit titles, though: `_item` only uses `content` to name the kit a row came from, and
-    the engine reads a row's category, name, notes, days_left and days_raw and nothing else. Passing
-    the cache in made every model build stat one kit file per kit-sourced row for a string nobody
-    downstream reads, so this takes no content cache at all."""
-    from sos.routers.household import _item, people_count
-
-    people = people_count(conn)
-    return tuple(_item(r, people, None) for r in conn.execute("SELECT * FROM stock ORDER BY category, id"))
-
-
 def _titles(content, ruleset: rules_mod.Rules, scenario: Optional[str]) -> dict[str, str]:
     """Titles for everything the reading rules can open, so the briefing reads like a list of pages."""
     kinds = {"playbook": "scenario", "module": "module", "page": "page", "card": "card"}
@@ -106,8 +93,8 @@ def ruleset_for(settings) -> rules_mod.Rules:
 def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[datetime] = None) -> engine.Model:
     """Everything in the database that the engine is allowed to see, as one immutable snapshot.
 
-    Takes the content cache and the settings rather than the request, so the background tasks (the nightly
-    readiness recompute) can build the same model as a screen does."""
+    Takes the content cache and the settings rather than the request, so a background task can build the
+    same model as a screen does."""
     now = now or datetime.now(timezone.utc).replace(microsecond=0)
     ruleset = ruleset_for(settings)
     slug = get_setting(conn, "situation_slug")
@@ -130,11 +117,6 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
                 "SELECT item_id, checked FROM checklist_state WHERE playbook=?", (slug,))}
     task_state = {r["task_id"]: {"done": bool(r["done"]), "done_at": r["done_at"], "person": r["person"]}
                   for r in conn.execute("SELECT * FROM task_state")}
-    household = tuple({"name": r["name"], "age": r["age"], "needs": r["needs"] or "",
-                       "medications": r["medications"] or "", "contacts": r["contacts"] or ""}
-                      for r in conn.execute("SELECT * FROM household ORDER BY id"))
-    meeting = conn.execute("SELECT 1 FROM notes WHERE kind IN ('note','pin') AND "
-                           "(lower(title) LIKE '%meeting point%' OR lower(body) LIKE '%meeting point%') LIMIT 1").fetchone()
     from sos import kits as kits_mod
 
     # Every kit's ticks in one read, not one query per kit: fifteen kits is fifteen round trips on a screen refresh.
@@ -144,14 +126,12 @@ def build_model_for(content, settings, conn: sqlite3.Connection, now: Optional[d
     kit_rows: list[dict] = []
     for kit in content.kits():
         done, total = kits_mod.basic_progress(kit, ticked.get(kit.id, set()))
-        kit_rows.append({"slug": kit.id, "title": kit.title, "relevant": kits_mod.relevant(kit, household),
+        kit_rows.append({"slug": kit.id, "title": kit.title, "relevant": kits_mod.relevant(kit),
                          "basic_done": done, "basic_total": total})
     return engine.Model(
-        now=now, conditions=cond.load(conn), scenario=scenario, household=household, neighbours=tuple(nb.listing(conn)),
-        stock=_stock(conn), home=home,
+        now=now, conditions=cond.load(conn), scenario=scenario, home=home,
         drill=situation.is_drill(conn), checklist=checklist, checklist_state=checklist_state, task_state=task_state,
-        titles=_titles(content, ruleset, slug), meeting_point=meeting is not None,
-        last_drill_at=situation.last_drill_at(conn), tz=get_setting(conn, "timezone", "Europe/London"),
+        titles=_titles(content, ruleset, slug), tz=get_setting(conn, "timezone", "Europe/London"),
         detected=sensors.detected_states(conn, now),
         kits=tuple(kit_rows),
     )
@@ -275,7 +255,7 @@ def get_export_qr(conn=Depends(get_db)):
 
 @router.post("/situation/import")
 async def post_import(request: Request, conn=Depends(get_db)):
-    """Merge another box's export: the newer of each condition, people and stock by name, events appended."""
+    """Merge another box's export: the newer of each condition, the notes and events appended."""
     try:
         body = await request.json()
     except ValueError:
@@ -286,7 +266,6 @@ async def post_import(request: Request, conn=Depends(get_db)):
         raise HTTPException(status_code=422, detail=str(exc)) from None
     event(conn, f"Situation imported from {summary['exported_at']} ({actor(request, conn)})",
           transfer.summary_line(summary))
-    readiness.refresh(request, conn)
     return summary
 
 
@@ -395,7 +374,6 @@ def put_home(body: HomeBody, request: Request, conn=Depends(get_db)):
     set_setting(conn, "home_label", body.label or "Home")
     set_setting(conn, "home_flood_zone", body.flood_zone)
     home = _home(conn)
-    readiness.refresh(request, conn)               # the home on the map is worth eight points of the plan score
     event(conn, f"Home set to {home['label']} at {body.lat:.4f}, {body.lon:.4f} ({actor(request, conn)})",
           f"Flood zone {home['flood_zone']}" if home["flood_zone"] else "")
     return home
@@ -443,5 +421,4 @@ def end_drill(request: Request, conn=Depends(get_db)):
     length = f"{summary['elapsed_s'] // 60} min" if hours < 1 else f"{hours:.0f} h"
     jobs = f"{summary['tasks_done']} job{'s' if summary['tasks_done'] != 1 else ''} ticked"
     event(conn, f"Drill ended after {length}: {jobs} ({who})")
-    readiness.refresh(request, conn)               # a drill just now is ten points of practice
     return view_for(request, conn)

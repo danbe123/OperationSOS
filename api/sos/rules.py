@@ -2,7 +2,8 @@
 
 Rules are pure data. Each one says when it applies (`when`), what follows (an implication, a consequence, a task,
 an interface mode or something to read), why, and where the timing or advice comes from (`source`, a content link).
-The loader caches by file mtime so the box parses them once and the engine stays a pure function of the model."""
+A rule names nobody: there is no register to read, so a rule that carries `needs`, `who`, `skills` or `stock` is
+refused by the schema (no-setup spec). The loader caches by file mtime so the box parses them once and the engine stays a pure function of the model."""
 from __future__ import annotations
 
 import json
@@ -17,9 +18,7 @@ import yaml
 KINDS = ("implication", "consequence", "task", "mode", "reading")
 BUCKETS = ("now", "hour", "today", "week")
 _DURATION_UNITS = {"m": 60, "h": 3600, "d": 86400}
-_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "needs", "skills", "who", "stock", "bucket",
-           "until", "set", "open")
-WHO = ("household", "neighbours")
+_FIELDS = ("expect", "confidence", "title", "after", "severity", "link", "bucket", "until", "set", "open")
 
 
 class RulesError(ValueError):
@@ -54,10 +53,6 @@ class Rule:
     after: str | None = None
     severity: str = "info"
     link: str | None = None
-    needs: str | tuple[str, ...] | None = None
-    skills: str | tuple[str, ...] | None = None
-    who: str = "household"
-    stock: dict | None = None
     bucket: str | None = None
     until: dict | None = None
     set: dict = field(default_factory=dict)
@@ -66,15 +61,6 @@ class Rule:
     @property
     def after_td(self) -> timedelta:
         return parse_duration(self.after) if self.after else timedelta(0)
-
-    @property
-    def need_terms(self) -> tuple[str, ...]:
-        """The `needs:` terms, always a tuple: `*` means anyone with something recorded, `any` means everybody."""
-        return _terms(self.needs)
-
-    @property
-    def skill_terms(self) -> tuple[str, ...]:
-        return _terms(self.skills)
 
     @property
     def where(self) -> str:
@@ -119,19 +105,10 @@ class Rules:
         return next((r for r in self.all if r.id == rule_id), None)
 
 
-def _terms(value) -> tuple[str, ...]:
-    """`needs` and `skills` take one term or a list of them; either way the engine sees a tuple of lower-case words."""
-    if value is None:
-        return ()
-    items = value if isinstance(value, (list, tuple)) else [value]
-    return tuple(str(x).strip().lower() for x in items if str(x).strip())
-
-
 def _rule_from(raw: dict, filename: str) -> Rule:
     kwargs: dict[str, Any] = {k: raw[k] for k in _FIELDS if k in raw}
-    for key in ("open", "needs", "skills"):
-        if isinstance(kwargs.get(key), list):
-            kwargs[key] = tuple(kwargs[key])
+    if isinstance(kwargs.get("open"), list):
+        kwargs["open"] = tuple(kwargs["open"])
     return Rule(id=raw["id"], kind=raw["kind"], when=dict(raw.get("when") or {}), source=raw["source"],
                 why=str(raw.get("why", "")), file=filename, **kwargs)
 

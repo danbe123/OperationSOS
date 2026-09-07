@@ -1,49 +1,30 @@
-"""Kits: tiered lists of things to have, their shared ticks, and the hand-off into Stock (kits spec)."""
-from typing import Optional
-
+"""Kits: tiered lists of things to have and their shared ticks (kits spec, cut back by the no-setup spec)."""
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from sos import content as content_mod, directives, kits as kits_mod, readiness
+from sos import content as content_mod, directives, kits as kits_mod, system
 from sos.db import now_iso
 from sos.routers import get_db
-from sos.routers.household import _item as stock_item_view, people_count
 from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["kits"])
 
 
-class StockAdd(BaseModel):
-    quantity: float
-    expires: Optional[str] = None
-    notes: str = ""
-
-
 class ItemBody(BaseModel):
+    # A tick is the only thing a kit item takes now: an old client's `stock` block is a 422, not a
+    # silent no-op, so nobody thinks a hand-off into a Stock list that no longer exists has happened.
+    model_config = ConfigDict(extra="forbid")
+
     checked: bool
-    stock: Optional[StockAdd] = None
 
 
 def _key(slug: str) -> str:
     return f"kit:{slug}"
 
 
-def _household(conn) -> list[dict]:
-    return [{"name": r["name"], "age": r["age"], "needs": r["needs"] or "", "medications": r["medications"] or ""}
-            for r in conn.execute("SELECT * FROM household ORDER BY id")]
-
-
 def _ticks(conn, slug: str) -> dict[str, dict]:
     return {r["item_id"]: {"checked": bool(r["checked"]), "updated_at": r["updated_at"]}
             for r in conn.execute("SELECT item_id, checked, updated_at FROM checklist_state WHERE playbook=?", (_key(slug),))}
-
-
-def _stock_rows(conn, slug: str, people: int) -> dict[str, dict]:
-    out = {}
-    for r in conn.execute("SELECT * FROM stock WHERE kit_item LIKE ? ORDER BY id", (f"{slug}/%",)):
-        item_id = r["kit_item"].partition("/")[2]
-        out.setdefault(item_id, stock_item_view(r, people))
-    return out
 
 
 def _tier_counts(kit, ticks: dict[str, dict]) -> dict[str, dict]:
@@ -77,10 +58,8 @@ def _get_kit(request: Request, slug: str):
 
 
 def kit_view(kit, conn, request: Request) -> dict:
-    household = _household(conn)
-    people = kits_mod.matching_people(kit, household)   # a gated kit scales by the people it is for, not the register
+    people = kits_mod.matching_people(kit, system.people_count(conn))
     ticks = _ticks(conn, kit.id)
-    stock_rows = _stock_rows(conn, kit.id, people)
     flags = current_flags(request, conn)
     intro_md = directives.resolve(kit.intro, flags) if kit.intro else ""
     intro_html = content_mod.render_markdown(intro_md, request.app.state.content.resolver) if intro_md else ""
@@ -91,33 +70,27 @@ def kit_view(kit, conn, request: Request) -> dict:
         items = []
         for item in kit.items_in(tier_id):
             tick = ticks.get(item.id, {})
-            stock_row = stock_rows.get(item.id)
             items.append({
                 "id": item.id, "name": item.name, "why": item.why, "note": item.note, "link": item.link,
                 "why_html": _inline(item.why, request), "note_html": _inline(item.note, request),
                 "href": content_mod.resolve_link(item.link) if item.link else None,
                 "qty": kits_mod.scaled(item, days, people),
-                "stock": dict(item.stock) if item.stock else None,
                 "checked": bool(tick.get("checked", False)), "updated_at": tick.get("updated_at"),
-                "stock_item": None if stock_row is None else {
-                    "id": stock_row["id"], "quantity": stock_row["quantity"], "unit": stock_row["unit"],
-                    "expires": stock_row["expires"], "days_left": stock_row["days_left"]},
             })
         tiers.append({"id": tier_id, "title": tier.get("title", tier_id.title()), "days": days, "why": tier.get("why", ""),
                       "done": sum(1 for i in items if i["checked"]), "total": len(items), "items": items})
     return {"slug": kit.id, "title": kit.title, "icon": kit.icon, "order": kit.order, "summary": kit.summary,
-            "intro_html": intro_html, "sources": kit.sources, "relevant": kits_mod.relevant(kit, household),
+            "intro_html": intro_html, "sources": kit.sources, "relevant": kits_mod.relevant(kit),
             "people": people, "tiers": tiers}
 
 
 @router.get("/kits")
 def list_kits(request: Request, conn=Depends(get_db)):
-    household = _household(conn)
     out = []
     for kit in request.app.state.content.kits():
         out.append({"slug": kit.id, "title": kit.title, "icon": kit.icon, "order": kit.order, "summary": kit.summary,
-                    "relevant": kits_mod.relevant(kit, household), "tiers": _tier_counts(kit, _ticks(conn, kit.id))})
-    return {"people": people_count(conn), "kits": out}
+                    "relevant": kits_mod.relevant(kit), "tiers": _tier_counts(kit, _ticks(conn, kit.id))})
+    return {"people": system.people_count(conn), "kits": out}
 
 
 @router.get("/kits/{slug}")
@@ -131,27 +104,10 @@ def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Dep
     item = next((i for i in kit.items if i.id == item_id), None)
     if item is None:
         raise HTTPException(status_code=404, detail="Kit item not found")
-    if body.stock is not None:
-        if not item.stock:
-            raise HTTPException(status_code=400, detail="This item is not tracked in Stock")
-        if body.stock.quantity <= 0:
-            # A zero row is not a stock row: it locked the item behind a 409 no amount of re-adding could clear.
-            raise HTTPException(status_code=400, detail="Quantity must be more than zero")
-        key = f"{kit.id}/{item_id}"
-        if conn.execute("SELECT 1 FROM stock WHERE kit_item=?", (key,)).fetchone():
-            raise HTTPException(status_code=409, detail="This item is already in Stock")
-        rate = float(item.qty["amount"]) if item.qty and item.qty.get("per") == "person-day" else None
-        conn.execute("INSERT INTO stock(name, category, quantity, unit, per_person_day, expires, notes, updated_at, kit_item) "
-                     "VALUES (?,?,?,?,?,?,?,?,?)",
-                     (item.name, item.stock["category"], body.stock.quantity, item.stock["unit"], rate,
-                      body.stock.expires, body.stock.notes, now_iso(), key))
-    # Adding to Stock ticks the item (spec section 3): you have the thing, whatever the checkbox said.
-    checked = True if body.stock is not None else body.checked
     conn.execute("INSERT INTO checklist_state(playbook, item_id, checked, updated_at) VALUES (?,?,?,?) "
                  "ON CONFLICT(playbook, item_id) DO UPDATE SET checked=excluded.checked, updated_at=excluded.updated_at",
-                 (_key(kit.id), item_id, int(checked), now_iso()))
+                 (_key(kit.id), item_id, int(body.checked), now_iso()))
     conn.commit()
-    readiness.refresh(request, conn)
     return kit_view(kit, conn, request)
 
 
@@ -160,5 +116,4 @@ def reset_ticks(slug: str, request: Request, conn=Depends(get_db)):
     kit = _get_kit(request, slug)
     conn.execute("DELETE FROM checklist_state WHERE playbook=?", (_key(kit.id),))
     conn.commit()
-    readiness.refresh(request, conn)
     return kit_view(kit, conn, request)

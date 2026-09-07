@@ -32,8 +32,8 @@ def power_off(client, n: float = 5):
 
 def test_view_in_peacetime(client):
     view = client.get("/api/situation/view").json()
-    assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "neighbours", "briefing",
-                         "modes", "readiness", "bulletins"}
+    assert set(view) == {"meta", "scenario", "conditions", "inferred", "forecast", "tasks", "briefing",
+                         "modes", "bulletins"}
     assert view["scenario"] is None and view["meta"]["drill"] is False
     assert set(view["conditions"]) == {"power", "water", "mobile", "landline", "internet", "gas", "heating", "roads",
                                        "shops", "sewage"}
@@ -41,9 +41,8 @@ def test_view_in_peacetime(client):
                                            "source": "manual", "confidence": 1.0, "note": "", "set_by": "",
                                            "updated_at": None, "confirmed_at": None, "for_s": 0, "stale": False}
     assert view["inferred"] == [] and view["forecast"] == [] and view["briefing"] == []
-    assert view["neighbours"] == {"check_on": [], "skills": []}
+    assert view["tasks"] == []                                  # nothing typed in, nothing to do in peacetime
     assert view["modes"] == {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
-    assert 0 <= view["readiness"]["score"] <= 100 and view["readiness"]["gaps"]
     assert view["bulletins"]["next"]["station"] == "BBC Radio 4"
 
 
@@ -54,32 +53,9 @@ def test_the_view_reacts_to_a_power_cut(client):
     assert [(i["condition"], i["state"]) for i in view["inferred"]] == [("internet", "off"), ("mobile", "degraded")]
     assert [f["id"] for f in view["forecast"]] == ["fridge", "freezer"]
     assert view["forecast"][0]["passed"] is True and view["forecast"][1]["passed"] is False
-    assert [t["id"] for t in view["tasks"]] == ["fill-bath", "water-stock-low"]
+    assert [t["id"] for t in view["tasks"]] == ["fill-bath"]
     assert view["briefing"] == [{"title": "PMR446 radio channels", "kind": "page", "ref": "pmr446"},
                                 {"title": "Water", "kind": "module", "ref": "water"}]
-
-
-def test_the_model_reads_the_stock_without_opening_a_kit_file(client, monkeypatch):
-    """The engine reads a row's category, name, notes, days_left and days_raw, and nothing else -- so
-    the model is built without the content cache, and without a `kit()` lookup (a file stat) per row."""
-    from sos.routers import situation as situation_mod
-
-    client.put("/api/kits/water/items/stored-water", json={"checked": True, "stock": {"quantity": 9}})
-    conn = db.connect(client.app.state.settings.db_path)
-    rows = situation_mod._stock(conn)
-    row = next(r for r in rows if r["kit_item"])
-    # The unrounded run is what the engine adds rows by, and it is still on every row.
-    assert row["days_raw"] is not None and row["days_left"] == round(row["days_raw"], 1)
-    assert row["kit_title"] is None                       # the one thing the content cache was for
-
-    cache = client.app.state.content
-    opened = []
-    real = cache.kit
-    monkeypatch.setattr(cache, "kit", lambda slug: opened.append(slug) or real(slug))
-    situation_mod._stock(conn)
-    assert opened == []                                   # no kit file stat'd per kit-sourced row
-    # And the View the engine builds off those rows is still built.
-    assert client.get("/api/situation/view").status_code == 200
 
 
 # --- conditions ------------------------------------------------------------------------------------------
@@ -145,7 +121,7 @@ def test_accepting_an_inferred_state(client):
 
 def test_tasks_can_be_ticked_and_assigned(client):
     power_off(client, 2)
-    assert [t["id"] for t in client.get("/api/tasks").json()] == ["fill-bath", "water-stock-low"]
+    assert [t["id"] for t in client.get("/api/tasks").json()] == ["fill-bath"]
     r = client.put("/api/tasks/fill-bath", json={"done": True, "person": "Sam"})
     assert r.status_code == 200 and r.json()["done"] is True and r.json()["person"] == "Sam" and r.json()["done_at"]
     assert [t for t in client.get("/api/tasks").json() if t["id"] == "fill-bath"][0]["done"] is True
@@ -232,13 +208,12 @@ def test_a_drill_needs_a_real_playbook_and_real_conditions(client):
     assert client.post("/api/drill", json={"scenario": "grid-collapse", "conditions": {"power": "wobbly"}}).status_code == 422
 
 
-def test_a_finished_drill_counts_as_practice(client):
-    before = client.get("/api/situation/view").json()["readiness"]
+def test_a_finished_drill_is_logged_and_leaves_the_view_alone(client):
     client.post("/api/drill", json={"scenario": "grid-collapse", "conditions": {"power": "off"}})
-    client.delete("/api/drill")
-    after = client.get("/api/situation/view").json()["readiness"]
-    assert after["score"] == before["score"] + 10
-    assert not any(g["title"] == "No drill in the last six months" for g in after["gaps"])
+    assert client.get("/api/situation/view").json()["meta"]["drill"] is True
+    view = client.delete("/api/drill").json()
+    assert view["meta"]["drill"] is False and view["scenario"] is None
+    assert any(t.startswith("Drill ended after") for t in events(client))
 
 
 # --- the report and the status ---------------------------------------------------------------------------
@@ -250,7 +225,7 @@ def test_the_report_is_markdown(client):
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/markdown")
     text = r.text
     assert text.startswith("# Situation report") and "**Mains power**: off" in text
-    assert "Freezer food unsafe" in text and "## Tasks" in text and "Readiness" in text
+    assert "Freezer food unsafe" in text and "## Tasks" in text and "Readiness" not in text
     assert "Situation started: National grid collapse (kiosk)" in text
 
 
@@ -260,7 +235,7 @@ def test_status_carries_the_situation_and_no_services(client):
     assert "services" not in body
     assert body["conditions"]["power"] == "off" and body["conditions"]["water"] == "working"
     assert body["modes"] == {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
-    assert body["drill"] is False and isinstance(body["readiness_score"], int)
+    assert body["drill"] is False and "readiness_score" not in body and body["people"] == 2
     assert client.get("/api/services").status_code == 404
 
 

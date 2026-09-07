@@ -1,7 +1,6 @@
 """A random walk over the situation, to catch what fixed examples never will.
 
-Hundreds of steps of conditions changing, scenarios starting and ending, drills, neighbours moving in and out,
-ticks and the clock moving on. After every step the View is computed twice and checked against the invariants the
+Hundreds of steps of conditions changing, scenarios starting and ending, drills, ticks and the clock moving on. After every step the View is computed twice and checked against the invariants the
 whole app relies on, including the one that matters most: no rendered instruction ever tells someone to ring a
 number that will not connect. Seeded, so a failure is reproducible:
 
@@ -26,9 +25,6 @@ RULES_DIR = REPO / "playbooks" / "rules"
 PLAYBOOKS = REPO / "playbooks"
 START = datetime(2026, 1, 5, 8, 0, tzinfo=timezone.utc)
 SCENARIOS = ("grid-collapse", "storms-flooding", "severe-winter", "pandemic", "heat-drought")
-NEEDS = ("insulin", "oxygen", "cpap", "stairlift", "asthma", "")
-NEIGHBOUR_NEEDS = ("oxygen", "dialysis", "over 75", "stairlift", "", "baby")
-NEIGHBOUR_SKILLS = ("nurse", "generator", "electrician", "4x4", "", "chainsaw")
 PHASE_TITLES = ("National grid collapse", "Storms and flooding", "Severe winter", "Pandemic", "Heat and drought")
 SEEDS = (1234, 7, 2026, 99, 31415, 8, 555, 271828, 42, 17)
 
@@ -128,15 +124,11 @@ def _check(view: dict, model: engine.Model, ruleset: rules_mod.Rules, step: int)
     for item in view["inferred"]:
         assert 0 < item["confidence"] <= 1 and item["why"] and item["due_at"], f"{where}: {item}"
 
-    names = [c["id"] for c in view["neighbours"]["check_on"]]
-    assert len(names) == len(set(names)), f"{where}: the same door twice on the check-on list"
-    assert set(names) <= set(ids), f"{where}: a neighbour to check on with no task"
-    for item in view["neighbours"]["skills"]:
-        assert item["name"] and item["skill"] and item["text"].startswith(item["name"]), f"{where}: {item}"
+    for item in view["tasks"] + view["forecast"]:
+        assert "{" not in item["title"], f"{where}: {item['title']!r} still has a name-shaped hole in it"
 
     if states["mobile"] == "off" and states["landline"] == "off":
         assert view["modes"]["calls"] == "hidden", f"{where}: numbers still on show with no phones"
-    assert 0 <= view["readiness"]["score"] <= 100, where
     assert view["meta"]["now"] == model.now.isoformat(), where
 
 
@@ -148,9 +140,6 @@ def walk(seed: int = 1234, steps: int = 400, content: bool = True) -> dict:
     cards = _card_slugs() if content else ()
     now = START
     conditions: dict[str, cond.Condition] = {cid: cond.Condition(cid) for cid in cond.IDS}
-    household: list[dict] = []
-    neighbours: list[dict] = []
-    stock: list[dict] = [{"name": "Bottled water", "category": "water", "days_left": 4.0, "notes": ""}]
     scenario_slug: str | None = None
     scenario_started = now
     drill = False
@@ -159,14 +148,12 @@ def walk(seed: int = 1234, steps: int = 400, content: bool = True) -> dict:
     tasks_seen: set[str] = set()
     forecast_seen: set[str] = set()
     modes_seen: set[str] = set()
-    check_on_seen: set[str] = set()
-    skills_seen: set[str] = set()
     content_seen: set = set()
     rendered_checked = 0
 
     for step in range(steps):
         action = rng.choice(["condition", "condition", "condition", "clock", "clock", "scenario", "drill",
-                             "task", "household", "stock", "neighbour"])
+                             "task", "task"])
         if action == "condition":
             cid = rng.choice(cond.IDS)
             state = rng.choice(cond.STATES)
@@ -185,36 +172,13 @@ def walk(seed: int = 1234, steps: int = 400, content: bool = True) -> dict:
                 scenario_started = now - timedelta(hours=rng.choice([0, 1, 20, 100, 800]))
         elif action == "drill":
             drill = not drill
-        elif action == "task":
+        else:
             if task_ids := [t for t in task_state] or ["fill-bath", "boil-water", "meeting-point"]:
                 task_state[rng.choice(task_ids)] = {"done": rng.random() < 0.5, "done_at": now.isoformat(),
                                                     "person": rng.choice([None, "Sam", "Ali"])}
-        elif action == "household":
-            if household and rng.random() < 0.3:
-                household.pop()
-            else:
-                household.append({"name": f"Person {len(household) + 1}", "needs": rng.choice(NEEDS),
-                                  "medications": rng.choice(NEEDS), "contacts": rng.choice(["", "Gran 01703 555 123"])})
-        elif action == "neighbour":
-            if neighbours and rng.random() < 0.3:
-                neighbours.pop()
-            else:
-                number = len(neighbours) + 1
-                neighbours.append({"name": f"Neighbour {number}",
-                                   "address": rng.choice([f"{number} Elm Road", ""]),
-                                   "needs": rng.choice(NEIGHBOUR_NEEDS), "skills": rng.choice(NEIGHBOUR_SKILLS),
-                                   "contacts": rng.choice(["", "07700 900123"]), "notes": ""})
-        else:
-            if stock and rng.random() < 0.3:
-                stock.pop()
-            else:
-                stock.append({"name": rng.choice(["Tins", "Insulin", "Nappies", "Diesel"]),
-                              "category": rng.choice(["water", "food", "medicine", "fuel", "other"]),
-                              "days_left": rng.choice([None, 0.5, 2.0, 9.0, 30.0]), "notes": ""})
 
         model = engine.Model(
-            now=now, conditions=dict(conditions), household=tuple(household), neighbours=tuple(neighbours),
-            stock=tuple(stock),
+            now=now, conditions=dict(conditions),
             scenario=_scenario(scenario_slug, scenario_started, now) if scenario_slug else None,
             home={"lat": 50.93, "lon": -1.43, "label": "Home", "flood_zone": "3"}, drill=drill,
             checklist=({"id": "one", "text": "The first thing"}, {"id": "two", "text": "The second thing"})
@@ -229,14 +193,10 @@ def walk(seed: int = 1234, steps: int = 400, content: bool = True) -> dict:
         tasks_seen.update(t["id"] for t in view["tasks"])
         forecast_seen.update(f["id"] for f in view["forecast"])
         modes_seen.add(repr(sorted(view["modes"].items())))
-        check_on_seen.update(c["id"] for c in view["neighbours"]["check_on"])
-        skills_seen.update(s["text"] for s in view["neighbours"]["skills"])
         engine.report(view)                                    # the report must survive every situation too
 
-    return {"seed": seed, "steps": steps, "states_seen": len(seen_states), "people": len(household),
-            "neighbours": len(neighbours), "stock": len(stock), "now": now.isoformat(),
+    return {"seed": seed, "steps": steps, "states_seen": len(seen_states), "now": now.isoformat(),
             "tasks_seen": len(tasks_seen), "forecast_seen": len(forecast_seen), "modes_seen": len(modes_seen),
-            "check_on_seen": len(check_on_seen), "skills_seen": len(skills_seen),
             "rendered_checked": rendered_checked}
 
 
@@ -244,7 +204,7 @@ def run(steps: int = 400, seeds: int = 1, first: int | None = None, content: boo
     """Several walks, and one line saying what they covered."""
     chosen = [first] if first is not None else [SEEDS[i % len(SEEDS)] for i in range(max(1, seeds))]
     started = time.monotonic()
-    totals = {"tasks_seen": 0, "forecast_seen": 0, "modes_seen": 0, "check_on_seen": 0, "rendered_checked": 0}
+    totals = {"tasks_seen": 0, "forecast_seen": 0, "modes_seen": 0, "rendered_checked": 0}
     for seed in chosen:
         summary = walk(seed=seed, steps=steps, content=content)
         for key in totals:
@@ -257,8 +217,8 @@ def run(steps: int = 400, seeds: int = 1, first: int | None = None, content: boo
 def summary_line(result: dict) -> str:
     return (f"simulate: {len(result['seeds'])} seed(s) x {result['steps']} steps = {result['views']} views, "
             f"{result['tasks_seen']} task ids, {result['forecast_seen']} forecast ids, {result['modes_seen']} mode sets, "
-            f"{result['check_on_seen']} doors, {result['rendered_checked']} rendered sections checked for dead "
-            f"numbers, no invariant broken in {result['seconds']}s")
+            f"{result['rendered_checked']} rendered sections checked for dead numbers, no invariant broken in "
+            f"{result['seconds']}s")
 
 
 def main(argv: list[str] | None = None) -> int:                # pragma: no cover - a hand-run and make-run tool

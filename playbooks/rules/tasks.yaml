@@ -1,5 +1,5 @@
-# What to do, in the order it matters. `until` retires a task when the situation moves past it; `needs` makes
-# one task per person in the household register; `stock` fires on the days left in the store cupboard.
+# What to do, in the order it matters. `until` retires a task when the situation moves past it. Every task is
+# written for whoever is reading it: the box holds no register, so no task names anybody.
 rules:
   - id: fill-bath
     kind: task
@@ -57,27 +57,6 @@ rules:
     until: {power: "off"}
     source: module:power
 
-  - id: medicines-cold-box
-    kind: task
-    when: {power: "off"}
-    needs: insulin
-    after: 2h
-    title: Move {name}'s insulin into a cold box with ice packs
-    bucket: hour
-    why: The freezer's ice packs are still cold in the first hours of a cut; used early they keep insulin at fridge temperature for a day or more.
-    link: module:medical
-    source: module:medical
-
-  - id: check-dependent
-    kind: task
-    when: {power: "off"}
-    needs: "*"
-    title: Check on {name} and everything of theirs that needed a plug
-    bucket: now
-    why: Anyone on powered equipment or refrigerated medicine is the first person to think about, and the Priority Services Register wants to know they are affected.
-    link: module:medical
-    source: module:medical
-
   - id: fill-containers
     kind: task
     when: {water: degraded}
@@ -132,70 +111,3 @@ rules:
     why: One room warmed by bodies, a stove or a bottled-gas heater is the whole house's heating; the rest can go cold.
     link: module:shelter-heat
     source: module:shelter-heat
-
-  - id: water-stock-low
-    kind: task
-    when: {}
-    stock: {category: water, days_lt: 3}
-    title: "Top up the stored water: less than three days for the household"
-    bucket: week
-    why: Three days of drinking water is the standard the national advice asks households to hold, at three litres a person a day.
-    link: module:water
-    source: module:water
-
-  - id: medicine-stock-missing
-    kind: task
-    when: {}
-    stock: {category: medicine, missing: true}
-    title: Put the medicine box on the stock list
-    bucket: week
-    why: Two weeks of every repeat prescription, plus painkillers and dressings, is what the box counts as covered.
-    link: module:medical
-    source: module:medical
-
-# The street list (spec section 8). `who: neighbours` reads the neighbours register instead of the household one,
-# and `{at_address}` disappears when nobody wrote an address down. One task per neighbour however many rules
-# point at them, so a long emergency does not turn into a list of the same door four times over.
-  - id: neighbours-power-off
-    kind: task
-    when: {power: "off"}
-    who: neighbours
-    needs: [oxygen, dialysis, stairlift, insulin, "over 75"]
-    title: Check on {name}{at_address}
-    bucket: now
-    why: Powered medical equipment, a stairlift and refrigerated medicine all stop with the mains, and the people who depend on them are the ones nobody else will notice.
-    link: module:community
-    source: module:community
-
-  - id: neighbours-water-off
-    kind: task
-    when: {water: "off"}
-    who: neighbours
-    needs: [dialysis, stairlift, oxygen, "over 75"]
-    title: Take water to {name}{at_address}
-    bucket: hour
-    why: Anyone who cannot carry a full container up a flight of stairs is cut off by a standpipe, and home dialysis needs water as well as power.
-    link: module:water
-    source: module:community
-
-  - id: neighbours-heating-off-winter
-    kind: task
-    when: {heating: "off", season: winter}
-    who: neighbours
-    needs: ["over 75", baby, oxygen, copd]
-    title: Check {name}{at_address} is warm enough
-    bucket: hour
-    why: Cold indoors kills the very old and the very young first, and it does it quietly over a night rather than in an hour.
-    link: card:hypothermia
-    source: module:community
-
-  - id: neighbours-scenario
-    kind: task
-    when: {scenario: any}
-    who: neighbours
-    needs: any
-    title: Knock on {name}{at_address} and say what is happening
-    bucket: today
-    why: A street that has been round its own doors once knows who is away, who is alone and who has what, which is the whole of a community emergency plan on the first day.
-    link: module:community
-    source: module:community

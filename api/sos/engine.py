@@ -1,12 +1,14 @@
 """The situation engine: one pure function from the model to the View that every screen reads.
 
-`compute(model, rules)` takes the conditions, the scenario clock, the household, the stock, the home and the time,
-and returns the View: effective conditions, inferred proposals, a forecast with due times, the task list, what to
-read, the interface modes, the readiness score and the next radio bulletin. No I/O, no clock of its own, no
-randomness: the same model and the same rules always give the same View, which is what makes it testable."""
+`compute(model, rules)` takes the conditions, the scenario clock, the home and the time, and returns the View:
+effective conditions, inferred proposals, a forecast with due times, the task list, what to read, the interface
+modes and the next radio bulletin. No I/O, no clock of its own, no randomness: the same model and the same rules
+always give the same View, which is what makes it testable.
+
+It knows nothing about who lives in the house: there is no register to read, so every line it writes is written
+for anybody (no-setup spec)."""
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Optional
@@ -25,17 +27,8 @@ LINK_KINDS = {"playbook": "playbook", "module": "module", "page": "page", "card"
 DEFAULT_MODES = {"theme": None, "dim": False, "calls": "shown", "map_first": False, "board": False}
 DEFAULT_HOME: dict[str, Any] = {"lat": None, "lon": None, "label": "Home", "flood_zone": None}
 FALLBACK_LATLON = (54.0, -2.0)               # the middle of the country until the house is set on the map
-STOCK_TARGETS = (("water", "Water", 3.0, 12), ("food", "Food", 7.0, 11), ("medicine", "Medicine", 14.0, 7))
-KIT_POINTS = 15
-DRILL_FRESH = timedelta(days=183)            # a drill counts as practice for six months
 WINTER_MONTHS = {11, 12, 1, 2, 3}
 SUMMER_MONTHS = {5, 6, 7, 8, 9}
-_SLUG = re.compile(r"[^a-z0-9]+")
-_SPLIT_NEEDS = re.compile(r"[,;/]| and ")
-
-
-def _slug(text: str) -> str:
-    return _SLUG.sub("-", (text or "").lower()).strip("-") or "x"
 
 
 @dataclass
@@ -44,9 +37,6 @@ class Model:
     now: datetime
     conditions: dict[str, cond.Condition] = field(default_factory=dict)
     scenario: Optional[dict] = None                       # {slug, title, started_at, elapsed_s, phase}
-    household: tuple[dict, ...] = ()
-    neighbours: tuple[dict, ...] = ()                     # the street list: name, address, needs, skills, contacts
-    stock: tuple[dict, ...] = ()                          # rows with category, days_left and days_raw
     home: dict = field(default_factory=lambda: dict(DEFAULT_HOME))
     drill: bool = False
     checklist: tuple[dict, ...] = ()                      # {id, text} for the active scenario
@@ -55,8 +45,6 @@ class Model:
     task_state: dict[str, dict] = field(default_factory=dict)
     detected: dict[str, dict] = field(default_factory=dict)   # condition id -> {state, at, confidence, sensor}
     titles: dict[str, str] = field(default_factory=dict)      # content link -> title, for the briefing
-    meeting_point: bool = False
-    last_drill_at: Optional[str] = None
     tz: str = "Europe/London"
 
     def __post_init__(self) -> None:
@@ -64,10 +52,6 @@ class Model:
             self.now = self.now.replace(tzinfo=timezone.utc)
         self.conditions = {cid: self.conditions.get(cid) or cond.Condition(cid) for cid in cond.IDS}
         self.home = {**DEFAULT_HOME, **(self.home or {})}
-
-    @property
-    def people(self) -> int:
-        return max(1, len(self.household))
 
     @property
     def latlon(self) -> tuple[float, float]:
@@ -131,80 +115,6 @@ def trigger_since(clause: dict, model: Model, states: dict[str, str]) -> datetim
             if started is not None:
                 candidates.append(started)
     return max(candidates) if candidates else model.now
-
-
-# --- household and stock ------------------------------------------------------------------------------------
-
-def need_words(person: dict) -> list[str]:
-    text = f"{person.get('needs') or ''}, {person.get('medications') or ''}"
-    return [w.strip().lower() for w in _SPLIT_NEEDS.split(text) if w.strip()]
-
-
-def matches_needs(terms: tuple[str, ...], words: list[str]) -> bool:
-    """`any` is everyone on the list, `*` is anyone with something recorded, otherwise a substring of a need."""
-    if not terms:
-        return False
-    if "any" in terms:
-        return True
-    if "*" in terms and words:
-        return True
-    return any(term in word for term in terms if term not in ("*", "any") for word in words)
-
-
-def register(rule: Rule, model: Model) -> tuple[dict, ...]:
-    return model.neighbours if rule.who == "neighbours" else model.household
-
-
-def people_for(rule: Rule, model: Model) -> list[dict]:
-    """The people a `needs:` rule is about, from the household register or the street list (`who: neighbours`)."""
-    return [person for person in register(rule, model) if matches_needs(rule.need_terms, need_words(person))]
-
-
-class _Fields(dict):
-    """Whatever a rule's title asks for; anything the register has not got is simply left out."""
-
-    def __missing__(self, key: str) -> str:
-        return ""
-
-
-def fill(text: str, person: dict) -> str:
-    """`{name}`, `{address}` and `{at_address}` (which disappears when nobody wrote the address down)."""
-    address = str(person.get("address") or "").strip()
-    return str(text).format_map(_Fields({**person, "name": person.get("name", ""), "address": address,
-                                         "at_address": f" at {address}" if address else ""}))
-
-
-def stock_matches(rule: Rule, model: Model) -> bool:
-    predicate = rule.stock or {}
-    if not predicate:
-        return True
-    items = [i for i in model.stock if i.get("category") == predicate.get("category")]
-    if predicate.get("missing"):
-        return not items
-    if "days_lt" in predicate:
-        if not items:
-            return True                       # nothing at all is certainly less than the target
-        return _days(items) < float(predicate["days_lt"])
-    return bool(items)
-
-
-def _row_days(item: dict) -> float:
-    """One row's run. `days_raw` is the API's unrounded figure and is what rows are added by; a row
-    built by hand in a test carries only `days_left`, and falls back to it."""
-    value = item.get("days_raw")
-    if value is None:
-        value = item.get("days_left")
-    return float(value or 0.0)
-
-
-def _days(items: Iterable[dict]) -> float:
-    """Rows summed unrounded and rounded once, so the engine's figure is the one `GET /stock` sends:
-    two food rows of three at a rate of one for four people are 1.5 days, not 0.8 twice over."""
-    return round(sum(_row_days(i) for i in items), 1)
-
-
-def stock_days(model: Model, category: str) -> float:
-    return _days(i for i in model.stock if i.get("category") == category)
 
 
 # --- the parts of the View ----------------------------------------------------------------------------------
@@ -281,18 +191,12 @@ def _strongest_per_condition(proposals: list[dict]) -> list[dict]:
 def forecast(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
     items: list[dict] = []
     for rule in rules.consequences:
-        if not matches(rule.when, states, model, dark) or not stock_matches(rule, model):
+        if not matches(rule.when, states, model, dark):
             continue
         since = trigger_since(rule.when, model, states)
         due_at = since + rule.after_td
-        base = {"due_at": due_at.isoformat(), "severity": rule.severity, "why": rule.why, "link": rule.link,
-                "passed": due_at <= model.now, "rule": rule.id}
-        if rule.need_terms:
-            for person in people_for(rule, model):
-                items.append({"id": f"{rule.id}:{_slug(person['name'])}",
-                              "title": fill(rule.title, person), **base})
-        else:
-            items.append({"id": rule.id, "title": rule.title, **base})
+        items.append({"id": rule.id, "title": rule.title, "due_at": due_at.isoformat(), "severity": rule.severity,
+                      "why": rule.why, "link": rule.link, "passed": due_at <= model.now, "rule": rule.id})
     items.sort(key=lambda i: (i["due_at"], i["title"]))
     return items
 
@@ -306,55 +210,11 @@ def _task(model: Model, task_id: str, title: str, bucket: str, why: str, link: O
 
 
 def task_rule_applies(rule: Rule, model: Model, states: dict[str, str], dark: bool) -> bool:
-    if not matches(rule.when, states, model, dark) or not stock_matches(rule, model):
+    if not matches(rule.when, states, model, dark):
         return False
     if rule.until and matches(rule.until, states, model, dark):
         return False
     return not (rule.after and trigger_since(rule.when, model, states) + rule.after_td > model.now)
-
-
-def check_on(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
-    """Who on the street to knock on, once each however many rules point at them, most urgent first."""
-    out: list[dict] = []
-    seen: set[str] = set()
-    for rule in rules.tasks:
-        if rule.who != "neighbours" or not task_rule_applies(rule, model, states, dark):
-            continue
-        for person in people_for(rule, model):
-            task_id = f"neighbour:{_slug(person.get('name', ''))}"
-            if task_id in seen:
-                continue
-            seen.add(task_id)
-            state = model.task_state.get(task_id) or {}
-            out.append({"id": task_id, "name": person.get("name", ""), "address": person.get("address") or "",
-                        "needs": person.get("needs") or "", "contacts": person.get("contacts") or "",
-                        "title": fill(rule.title, person), "why": rule.why, "rule": rule.id, "link": rule.link,
-                        "bucket": rule.bucket, "done": bool(state.get("done"))})
-    out.sort(key=lambda c: (BUCKETS.index(c["bucket"]) if c["bucket"] in BUCKETS else len(BUCKETS), c["name"]))
-    return out
-
-
-def neighbour_skills(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
-    """"Mrs Khan is a nurse": what the street can do, from the reading rules that ask for a skill."""
-    out: list[dict] = []
-    seen: set[tuple[str, str]] = set()
-    for rule in rules.readings:
-        if not rule.skill_terms or not matches(rule.when, states, model, dark):
-            continue
-        for person in model.neighbours:
-            words = [w.strip().lower() for w in _SPLIT_NEEDS.split(person.get("skills") or "") if w.strip()]
-            for term in rule.skill_terms:
-                key = (person.get("name", ""), term)
-                if key in seen or not any(term in word for word in words):
-                    continue
-                seen.add(key)
-                article = "an" if term[:1] in "aeiou" else "a"
-                template = rule.title or "{name} is {article} {skill}"
-                out.append({"name": person.get("name", ""), "address": person.get("address") or "", "skill": term,
-                            "text": fill(template, {**person, "skill": term, "article": article}),
-                            "contacts": person.get("contacts") or "", "why": rule.why, "rule": rule.id,
-                            "link": rule.link})
-    return out
 
 
 def tasks(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> list[dict]:
@@ -367,17 +227,9 @@ def tasks(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> lis
             out.append(task)
 
     for rule in rules.tasks:
-        if rule.who == "neighbours" or not task_rule_applies(rule, model, states, dark):
+        if not task_rule_applies(rule, model, states, dark):
             continue
-        if rule.need_terms:
-            for person in people_for(rule, model):
-                add(_task(model, f"{rule.id}:{_slug(person['name'])}", fill(rule.title, person),
-                          rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
-        else:
-            add(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
-    for entry in check_on(model, rules, states, dark):
-        add(_task(model, entry["id"], entry["title"], entry["bucket"], entry["why"], entry["link"],
-                  f"rule:{entry['rule']}"))
+        add(_task(model, rule.id, rule.title, rule.bucket, rule.why, rule.link, f"rule:{rule.id}"))
     if model.scenario:
         slug = model.scenario["slug"]
         title = model.scenario.get("title") or slug
@@ -439,75 +291,6 @@ def modes(model: Model, rules: Rules, states: dict[str, str], dark: bool) -> dic
     return out
 
 
-def readiness(model: Model, rules: Rules) -> dict:
-    """Kits spec section 4: 30 points stock, 30 household coverage, 15 plan, 10 practice, 15 kits (basic tier)."""
-    score = 0
-    gaps: list[dict] = []
-    for category, label, target, points in STOCK_TARGETS:
-        days = stock_days(model, category)
-        got = int(round(points * min(1.0, days / target)))
-        score += got
-        if got < points:
-            people = "1 person" if model.people == 1 else f"{model.people} people"
-            gaps.append({"title": f"{label}: {days:g} days for {people}", "link": "/plan#stock", "points": points - got})
-    watched = [t for r in rules.all if r.who == "household" for t in r.need_terms if t not in ("*", "any")]
-    with_needs = [p for p in model.household if need_words(p)]
-    if not with_needs:
-        score += 30
-    else:
-        rule_points = stock_points = 0.0
-        for person in with_needs:
-            words = need_words(person)
-            covered_by_rule = any(term in word for term in watched for word in words)
-            covered_by_stock = any(any(word in f"{i.get('name', '')} {i.get('notes', '')}".lower() for word in words)
-                                   for i in model.stock)
-            rule_points += 15 / len(with_needs) if covered_by_rule else 0
-            stock_points += 15 / len(with_needs) if covered_by_stock else 0
-            if not covered_by_stock:
-                gaps.append({"title": f"Nothing in the stock list covers {person['name']}'s {words[0]}",
-                             "link": "/plan#stock", "points": int(round(15 / len(with_needs)))})
-            if not covered_by_rule:
-                gaps.append({"title": f"No rule watches {person['name']}'s {words[0]}", "link": "/plan#household",
-                             "points": int(round(15 / len(with_needs)))})
-        score += int(round(rule_points + stock_points))
-    if model.home.get("lat") is not None and model.home.get("lon") is not None:
-        score += 6
-    else:
-        gaps.append({"title": "Home is not set on the map", "link": "/map", "points": 6})
-    if any((p.get("contacts") or "").strip() for p in model.household):
-        score += 5
-    else:
-        gaps.append({"title": "No contact numbers in the household register", "link": "/plan#household", "points": 5})
-    if model.meeting_point:
-        score += 4
-    else:
-        gaps.append({"title": "No meeting point written down", "link": "/plan", "points": 4})
-    last = cond.parse_iso(model.last_drill_at)
-    if last is not None and model.now - last <= DRILL_FRESH:
-        score += 10
-    else:
-        gaps.append({"title": "No drill in the last six months", "link": "/situation", "points": 10})
-    relevant_kits = [k for k in model.kits if k.get("relevant") and k.get("basic_total")]
-    if not relevant_kits:
-        score += KIT_POINTS                       # no kit content on this box: nothing to hold against it
-    else:
-        share = KIT_POINTS / len(relevant_kits)
-        earned = 0.0
-        for k in relevant_kits:
-            frac = k["basic_done"] / k["basic_total"]
-            earned += share * frac
-            if k["basic_done"] < k["basic_total"]:
-                gaps.append({"title": f"{k['title']} kit: {k['basic_done']} of {k['basic_total']} basic items",
-                             "link": f"/kit/{k['slug']}", "points": int(round(share * (1 - frac))),
-                             "remaining": share * (1 - frac)})
-        score += int(round(earned))
-    # Points round to whole numbers, so two kits often tie; the emptier one is the one to go and fill.
-    gaps.sort(key=lambda g: (-g["points"], -g.get("remaining", 0.0), g["title"]))
-    for gap in gaps:
-        gap.pop("remaining", None)
-    return {"score": max(0, min(100, score)), "gaps": gaps}
-
-
 def next_bulletin(model: Model, rules: Rules) -> dict:
     """The next scheduled bulletin today or tomorrow, in the box's local zone."""
     try:
@@ -551,11 +334,8 @@ def compute(model: Model, rules: Rules) -> dict:
         "inferred": inferred(model, rules, states, dark),
         "forecast": forecast(model, rules, states, dark),
         "tasks": tasks(model, rules, states, dark),
-        "neighbours": {"check_on": check_on(model, rules, states, dark),
-                       "skills": neighbour_skills(model, rules, states, dark)},
         "briefing": briefing(model, rules, states, dark),
         "modes": modes(model, rules, states, dark),
-        "readiness": readiness(model, rules),
         "bulletins": next_bulletin(model, rules),
     }
 
@@ -615,21 +395,8 @@ def report(view: dict, events: Iterable[dict] = ()) -> str:
             who = f" — {task['person']}" if task.get("person") else ""
             lines.append(f"- [{'x' if task['done'] else ' '}] {task['title']}{who}")
         lines.append("")
-    neighbours = view.get("neighbours") or {}
-    if neighbours.get("check_on") or neighbours.get("skills"):
-        lines += ["## Neighbours", ""]
-        for item in neighbours.get("check_on") or []:
-            contacts = f" — {item['contacts']}" if item.get("contacts") else ""
-            lines.append(f"- [{'x' if item['done'] else ' '}] {item['title']}"
-                         + (f" ({item['needs']})" if item.get("needs") else "") + contacts)
-        for item in neighbours.get("skills") or []:
-            where = f" at {item['address']}" if item.get("address") else ""
-            contacts = f" — {item['contacts']}" if item.get("contacts") else ""
-            lines.append(f"- {item['text']}{where}{contacts}")
-        lines.append("")
     if view["briefing"]:
         lines += ["## Read", ""] + [f"- {b['title']} ({b['kind']} {b['ref']})" for b in view["briefing"]] + [""]
-    lines += [f"Readiness {view['readiness']['score']} of 100.", ""]
     events = list(events)
     if events:
         lines += ["## Log", ""] + [f"- {e.get('updated_at')}: {e.get('title')}" for e in events] + [""]
