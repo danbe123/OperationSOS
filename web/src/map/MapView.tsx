@@ -26,6 +26,8 @@ export type MapViewProps = {
   measurePoints: LngLat[];
   /** Where the household lives: its own marker, so it is never mistaken for a pin. */
   home: { lat: number; lon: number; label: string } | null;
+  /** Where the device says it is, once it has said; drawn as the blue dot and not moved by anything else. */
+  here: LngLat | null;
   /** Two points: the straight line drawn to a facility, with its bearing shown in the readout. */
   routePoints: LngLat[];
   onMoveEnd: (view: { lon: number; lat: number; zoom: number }) => void;
@@ -79,6 +81,18 @@ function syncHome(map: MlMap, home: MapViewProps['home'], theme: Theme): void {
   }
 }
 
+function syncHere(map: MlMap, here: LngLat | null, theme: Theme): void {
+  const data = {
+    type: 'FeatureCollection' as const,
+    features: here ? [{ type: 'Feature' as const, properties: {}, geometry: { type: 'Point' as const, coordinates: [here.lon, here.lat] } }] : [],
+  };
+  const existing = map.getSource('sos-here') as { setData?: (d: unknown) => void } | undefined;
+  if (existing?.setData) existing.setData(data);
+  else map.addSource('sos-here', { type: 'geojson', data });
+  drawn(map, theme, { id: 'sos-here-halo', type: 'circle', source: 'sos-here' });
+  drawn(map, theme, { id: 'sos-here-point', type: 'circle', source: 'sos-here' });
+}
+
 function syncRoute(map: MlMap, points: LngLat[], theme: Theme): void {
   const coords = points.map((p) => [p.lon, p.lat]);
   const data = {
@@ -110,7 +124,7 @@ function syncMeasure(map: MlMap, points: LngLat[], theme: Theme): void {
 const MAP_THEME: Theme = 'field';
 
 export function MapView(props: MapViewProps) {
-  const { config, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints } = props;
+  const { config, overlaysOn, terrain, pins, labelPoint, measurePoints, home, here, routePoints } = props;
   // The map is drawn as the paper it is: the black-and-white theme darkens everything around the
   // map, not the map, because an inverted OpenStreetMap sheet is one more thing to learn to read
   // when the lights are out. Every colour the box draws on it is the daylight set for the same reason.
@@ -207,8 +221,9 @@ export function MapView(props: MapViewProps) {
     syncPins(map, pins, labelPoint, theme);
     syncMeasure(map, measurePoints, theme);
     syncHome(map, home, theme);
+    syncHere(map, here, theme);
     syncRoute(map, routePoints, theme);
-  }, [styleVersion, config, theme, overlaysOn, terrain, pins, labelPoint, measurePoints, home, routePoints]);
+  }, [styleVersion, config, theme, overlaysOn, terrain, pins, labelPoint, measurePoints, home, here, routePoints]);
 
   if (!hasStyle) return <p className="map-note warning">No base map is installed. Run the map build on the PC and copy the outputs to the box.</p>;
   return <div ref={hostRef} className="map-canvas" data-testid="map-canvas" />;

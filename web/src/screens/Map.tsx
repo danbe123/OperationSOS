@@ -111,6 +111,18 @@ export function MapScreen() {
      silent: the country view is the fallback, and Find place still offers Locate me. */
   const canLocate = typeof window !== 'undefined' && window.isSecureContext && Boolean(navigator.geolocation);
   const locatedRef = useRef(false);
+  // The blue dot. Set by whichever locate ran first, then kept up by the device while the map is open,
+  // without the map chasing it: a household walking with the phone sees itself move on a still map.
+  const [here, setHere] = useState<LngLat | null>(null);
+  useEffect(() => {
+    if (!canLocate || !navigator.geolocation.watchPosition) return;
+    const id = navigator.geolocation.watchPosition(
+      (pos) => setHere({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => undefined,
+      { enableHighAccuracy: true, maximumAge: 15_000 },
+    );
+    return () => navigator.geolocation.clearWatch?.(id);
+  }, [canLocate]);
   useEffect(() => {
     if (locatedRef.current || homedRef.current || query.lat !== null || query.lon !== null) return;
     if (homeQ.loading) return;                       // a home may still be on its way
@@ -118,7 +130,7 @@ export function MapScreen() {
     if ((at && (at.lat !== null || at.lon !== null)) || !canLocate) return;
     locatedRef.current = true;
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setView({ lat: pos.coords.latitude, lon: pos.coords.longitude, zoom: 14 }); flyTo(pos.coords.longitude, pos.coords.latitude, 14); },
+      (pos) => { setHere({ lat: pos.coords.latitude, lon: pos.coords.longitude }); setView({ lat: pos.coords.latitude, lon: pos.coords.longitude, zoom: 14 }); flyTo(pos.coords.longitude, pos.coords.latitude, 14); },
       () => undefined,
       { timeout: 10_000 },
     );
@@ -204,7 +216,7 @@ export function MapScreen() {
    * Either way the answer lives in the Find place panel, so there is one place to look. */
   const locate = () => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => { flyTo(pos.coords.longitude, pos.coords.latitude, 14); setPanel('none'); },
+      (pos) => { setHere({ lat: pos.coords.latitude, lon: pos.coords.longitude }); flyTo(pos.coords.longitude, pos.coords.latitude, 14); setPanel('none'); },
       () => notify('No position available on this device.'),
       { timeout: 10_000 },
     );
@@ -298,7 +310,7 @@ export function MapScreen() {
           <MapView
             config={config} overlaysOn={overlaysOn} terrain={terrain}
             center={[view.lon, view.lat]} zoom={view.zoom} pins={pinsQ.data ?? []} labelPoint={labelPoint} measurePoints={measure}
-            home={homePoint} routePoints={routePoints}
+            home={homePoint} here={here} routePoints={routePoints}
             onMoveEnd={setView} onClick={onMapClick}
             onFeatureTap={(p) => { if (measuring) return; setPlace(p); setPanel(p ? 'place' : panel === 'place' ? 'none' : panel); }}
             onLongPress={(p) => { setPendingPin(p); setPanel('pins'); }} onReady={(m) => { mapRef.current = m; }}

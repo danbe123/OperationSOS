@@ -138,6 +138,10 @@ describe('Map screen', () => {
     renderRoute('/map');
     await waitFor(() => expect(getCurrentPosition).toHaveBeenCalledTimes(1));
     expect(lastMap().flyTo).toHaveBeenLastCalledWith(expect.objectContaining({ center: [-2.98, 53.4], zoom: 14 }));
+    // And it says where that is: the blue dot sits on the point the device gave.
+    await waitFor(() => expect(lastMap().getLayer('sos-here-point')).toBeDefined());
+    const src = lastMap().style.sources['sos-here'] as { data: { features: { geometry: { coordinates: number[] } }[] } };
+    expect(src.data.features[0].geometry.coordinates).toEqual([-2.98, 53.4]);
     Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
   });
 

@@ -49,6 +49,8 @@ export type Annotations = {
   pinStroke: string;
   /** Where the household lives: a filled disc and the ring around it. */
   home: string;
+  /** The device's own position: a blue dot with a white ring, the mark every phone map has taught. */
+  here: string; hereStroke: string;
   homeStroke: string;
   /** The straight line drawn to a facility, and the line being measured. */
   route: string;
@@ -66,6 +68,7 @@ export type Annotations = {
 const FIELD_ANNOTATIONS: Annotations = {
   pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
   home: '#1b5e20', homeStroke: '#ffffff',
+  here: '#1e88e5', hereStroke: '#ffffff',
   route: '#1b5e20', measure: '#ff3d00',
   labelInk: '#000000', halo: '#ffffff', measureRing: 0,
 };
@@ -74,6 +77,7 @@ const FIELD_ANNOTATIONS: Annotations = {
 const MONO_ANNOTATIONS: Annotations = {
   pin: '#ffffff', label: '#d0d0d0', pinStroke: '#000000',
   home: '#000000', homeStroke: '#ffffff',
+  here: '#ffffff', hereStroke: '#000000',
   route: '#ffffff', measure: '#ffffff',
   labelInk: '#ffffff', halo: '#000000', measureRing: 1.5,
 };
@@ -100,6 +104,8 @@ export function annotationPaint(theme: Theme): Record<string, Record<string, unk
     'sos-pins-label': { ...caption },
     'sos-home-point': { 'circle-radius': 11, 'circle-color': c.home, 'circle-stroke-color': c.homeStroke, 'circle-stroke-width': 3 },
     'sos-home-label': { ...caption },
+    'sos-here-halo': { 'circle-radius': 22, 'circle-color': c.here, 'circle-opacity': 0.18 },
+    'sos-here-point': { 'circle-radius': 8, 'circle-color': c.here, 'circle-stroke-color': c.hereStroke, 'circle-stroke-width': 3 },
     'sos-route-line': { 'line-color': c.route, 'line-width': 4, 'line-dasharray': [3, 1.5] },
     'sos-measure-line': { 'line-color': c.measure, 'line-width': 3, 'line-dasharray': [2, 1] },
     'sos-measure-point': { 'circle-radius': 5, 'circle-color': c.measure, 'circle-stroke-color': c.pinStroke, 'circle-stroke-width': c.measureRing },

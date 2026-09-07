@@ -77,6 +77,7 @@ describe('annotation colours', () => {
     expect(annotations('field')).toEqual({
       pin: '#ffb000', label: '#1e88e5', pinStroke: '#000000',
       home: '#1b5e20', homeStroke: '#ffffff',
+      here: '#1e88e5', hereStroke: '#ffffff',
       route: '#1b5e20', measure: '#ff3d00',
       labelInk: '#000000', halo: '#ffffff', measureRing: 0,
     });
@@ -95,6 +96,8 @@ describe('annotation colours', () => {
     expect(p['sos-measure-point']).toEqual({ 'circle-radius': 5, 'circle-color': '#ff3d00', 'circle-stroke-color': '#000000', 'circle-stroke-width': 0 });
     expect(p['sos-measure-line']).toEqual({ 'line-color': '#ff3d00', 'line-width': 3, 'line-dasharray': [2, 1] });
     expect(p['sos-home-point']).toEqual({ 'circle-radius': 11, 'circle-color': '#1b5e20', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 });
+    expect(p['sos-here-point']).toEqual({ 'circle-radius': 8, 'circle-color': '#1e88e5', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 3 });
+    expect(annotationPaint('mono')['sos-here-point']).toMatchObject({ 'circle-color': '#ffffff', 'circle-stroke-color': '#000000' });
     expect(p['sos-route-line']).toEqual({ 'line-color': '#1b5e20', 'line-width': 4, 'line-dasharray': [3, 1.5] });
     expect(p['sos-pins-point']).toEqual({
       'circle-radius': 8, 'circle-color': ['match', ['get', 'kind'], 'label', '#1e88e5', '#ffb000'],
@@ -115,7 +118,7 @@ describe('annotation colours', () => {
   });
 
   it('names a paint entry for every layer the box draws, in both themes', () => {
-    const ids = ['sos-pins-point', 'sos-pins-label', 'sos-home-point', 'sos-home-label', 'sos-route-line', 'sos-measure-line', 'sos-measure-point'];
+    const ids = ['sos-pins-point', 'sos-pins-label', 'sos-home-point', 'sos-home-label', 'sos-here-halo', 'sos-here-point', 'sos-route-line', 'sos-measure-line', 'sos-measure-point'];
     for (const theme of ['field', 'mono'] as const) expect(Object.keys(annotationPaint(theme)).sort()).toEqual([...ids].sort());
   });
 
