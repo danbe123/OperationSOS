@@ -73,15 +73,15 @@ The lasting damage from a cyber attack is to records, not wires: where data is d
 
 ## Checklist
 
-- [ ] Work out which service is down and whether 999 works on any phone in the house {#which-service-down}
-- [ ] Paper record per person: medicines, doses, allergies, conditions, GP {#paper-medical-record}
-- [ ] Two weeks of cash in small notes; cheque book found {#cash-fortnight}
-- [ ] Repeat prescriptions collected early; two weeks of medicines in hand {#prescriptions-early}
-- [ ] Stored water used if a do-not-drink notice is issued; boiling not assumed safe {#stored-water-notice}
-- [ ] Battery radio on; Emergency Alerts on; SHARE checklist before forwarding anything {#radio-and-share}
-- [ ] Paper copies of bank statements, insurance and key documents printed while you can {#paper-documents}
-- [ ] Rolling-cut schedule for your area found and pinned up {#rota-schedule}
-- [ ] Neighbours with one bank account or a hospital appointment checked on {#check-neighbours}
+- [ ] Work out which service is down and whether 999 works on any phone in the house {#which-service-down now}
+- [ ] Battery radio on; Emergency Alerts on; SHARE checklist before believing or forwarding anything {#radio-and-share now}
+- [ ] If a do-not-drink notice is issued: stored or bottled water only, because boiling may not make it safe {#stored-water-notice now}
+- [ ] Cash spent on essentials only; two weeks of it in small notes; cheque book found {#cash-fortnight hour}
+- [ ] Repeat prescriptions collected early; two weeks of medicines in hand {#prescriptions-early hour}
+- [ ] Paper record per person: medicines, doses, allergies, conditions, GP {#paper-medical-record today}
+- [ ] Rolling-cut schedule for your area found and pinned up {#rota-schedule today}
+- [ ] Neighbours with one bank account or a hospital appointment checked on {#check-neighbours today}
+- [ ] Paper copies of bank statements, insurance and key documents printed while you can {#paper-documents week}
 
 ## Go deeper
 

@@ -92,18 +92,19 @@ The 1953 North Sea surge killed 307 people on the English coast in one night and
 
 ## Checklist
 
-- [ ] Flood warnings signed up for this address; Floodline number on the fridge {#flood-warnings-signed-up}
-- [ ] Long-term flood risk for the address checked; flood zone on the map looked at {#flood-risk-checked}
-- [ ] Flood kit upstairs: torch, radio, medicines, documents, warm clothes, water, phone charger {#flood-kit-upstairs}
-- [ ] Stopcock, gas valve and consumer unit found and labelled {#mains-labelled}
-- [ ] Car moved to high ground before the water; never driven through floodwater {#car-high-ground}
-- [ ] Sandbags or flood boards fitted; airbricks covered; valuables raised {#defences-fitted}
-- [ ] Rest centre location and evacuation route written down {#rest-centre-route}
-- [ ] Hands washed after any floodwater contact; food it touched thrown away {#floodwater-hygiene}
-- [ ] Pumps and generators outdoors only; CO alarm on {#pumps-outdoors}
-- [ ] Every damaged item photographed before disposal; {{#if phones}}insurer called{{else}}the claim written up on paper for the insurer{{/if}} {#photograph-damage}
-- [ ] Electrics and gas checked by a professional before reconnection {#check-before-reconnect}
-- [ ] Chainsaw kit complete or the job left to someone with it {#chainsaw-safety}
+- [ ] People, pets, medicines, documents and the flood kit upstairs or to higher ground: go up, not out, unless you are told to leave {#flood-kit-upstairs now}
+- [ ] Gas, electricity and water off at the mains as the water comes in; stopcock, gas valve and consumer unit found and labelled {#mains-labelled now}
+- [ ] Never walk or drive through floodwater; the car moved to high ground before the water, not through it {#car-high-ground now}
+- [ ] {{#if phones}}Warning in force checked with Floodline on 0345 988 1188 (NI 0300 2000 100){{else}}Warning in force taken from BBC local radio, since Floodline needs a phone{{/if}} {#flood-warnings-signed-up now}
+- [ ] In a storm: everyone in and away from windows, off the coast and sea walls, cars parked away from trees {#stay-in-from-the-storm now}
+- [ ] Sandbags or flood boards fitted; airbricks covered; valuables raised {#defences-fitted hour}
+- [ ] Rest centre location and evacuation route written down {#rest-centre-route hour}
+- [ ] Pumps and generators outdoors only; CO alarm on {#pumps-outdoors hour}
+- [ ] Hands washed after any floodwater contact; food it touched thrown away {#floodwater-hygiene today}
+- [ ] Every damaged item photographed before disposal; {{#if phones}}insurer called{{else}}the claim written up on paper for the insurer{{/if}} {#photograph-damage today}
+- [ ] Electrics and gas checked by a professional before reconnection {#check-before-reconnect week}
+- [ ] Chainsaw kit complete, or the job left to someone with it {#chainsaw-safety week}
+- [ ] Long-term flood risk for the address checked; flood zone on the map looked at {#flood-risk-checked week}
 
 ## Go deeper
 

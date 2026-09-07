@@ -96,16 +96,16 @@ The register expects a war involving a NATO ally to produce "impacts lasting sev
 
 ## Checklist
 
-- [ ] Blast room chosen: no windows, two walls from outside, ground floor or basement {#blast-room}
-- [ ] Nearest likely targets found on the map; route away from them planned on foot {#targets-mapped}
-- [ ] Grab bag with documents, medicines, cash, photos of the house, the box's address card {#grab-bag-documents}
-- [ ] Evacuate only when told; route and rest centre written down {#evacuate-when-told}
-- [ ] Bleeding kit: pressure dressings, packing gauze, a tourniquet, gloves {#bleeding-kit}
-- [ ] Ordnance rule taught to children: do not touch, mark, tell an adult {#uxo-rule}
-- [ ] PMR446 channel and check-in times agreed with the street {#street-radio}
-- [ ] Two weeks of food, a garden plan and seed; hens if you can keep them {#food-for-the-long-haul}
-- [ ] Household registered with the council or rest centre if displaced {#register-if-displaced}
-- [ ] Routine, sleep and honest answers for children every day {#children-routine}
+- [ ] Everyone into the blast room and lying down: no windows, two walls from outside, ground floor or basement {#blast-room now}
+- [ ] Away from substations, depots, ports, airfields, barracks, bridges and masts; the route round them found on the map {#targets-mapped now}
+- [ ] Radio and Emergency Alerts on: they say stay or go, and an evacuation you are told to make is not delayed {#evacuate-when-told now}
+- [ ] Bleeding kit out: pressure dressings, packing gauze, a tourniquet, gloves {#bleeding-kit now}
+- [ ] Grab bag by the door: documents, medicines, cash, photos of the house, the box's address card {#grab-bag-documents hour}
+- [ ] Ordnance rule taught to children: do not touch, mark it, tell an adult {#uxo-rule hour}
+- [ ] PMR446 channel and check-in times agreed with the street {#street-radio hour}
+- [ ] Routine, sleep and honest answers for children every day {#children-routine today}
+- [ ] Household registered with the council or rest centre if displaced {#register-if-displaced today}
+- [ ] Two weeks of food, a garden plan and seed; hens if you can keep them {#food-for-the-long-haul week}
 
 ## Go deeper
 

@@ -83,15 +83,15 @@ sources:
 
 ## Checklist
 
-- [ ] Faraday tin filled: radio, torch, PMR446 pair, phone, chargers, solar panel, spare drive, multimeter {#faraday-tin}
-- [ ] Attack-warning actions from the nuclear war playbook done in the first minutes {#treat-as-attack}
-- [ ] Blackout routine: water filled, fridge shut, cooker off, cash counted {#blackout-routine}
-- [ ] Every device tested; dead ones kept for battery pulls and power-supply repairs {#test-devices}
-- [ ] Vehicles tried; the one that runs is kept for essentials only {#test-vehicles}
-- [ ] Medical device users' plans written: pump, CPAP, oxygen, stairlift {#medical-device-plans}
-- [ ] Street radio channel and check-in times agreed {#street-radio-plan}
-- [ ] Paper map and compass out; grid references written for key places {#paper-navigation}
-- [ ] Two weeks of food and water; supply chain playbook started {#two-weeks-store}
+- [ ] First minutes: torch out, every container filled, fridge and freezer shut, cooker knobs off, cash counted {#blackout-routine now}
+- [ ] Treated as an attack warning: the nuclear war playbook's first actions — everyone in, mains off, windows shut, radio on {#treat-as-attack now}
+- [ ] Faraday tin opened: radio, torch, PMR446 pair, phone, chargers, solar panel, spare drive, multimeter {#faraday-tin now}
+- [ ] Every device tried; the dead ones kept for battery pulls and power-supply repairs {#test-devices hour}
+- [ ] Vehicles tried; the one that runs kept for essentials only {#test-vehicles hour}
+- [ ] Street radio channel and check-in times agreed {#street-radio-plan hour}
+- [ ] Medical device users' plans written: pump, CPAP, oxygen, stairlift {#medical-device-plans today}
+- [ ] Paper map and compass out; grid references written for key places {#paper-navigation today}
+- [ ] Two weeks of food and water counted; the supply chain playbook started {#two-weeks-store week}
 
 ## Go deeper
 

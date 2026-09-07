@@ -101,16 +101,17 @@ Currency failures end with a new currency, a peg or a foreign one: Germany's 192
 
 ## Checklist
 
-- [ ] Cash for two weeks of essentials in small notes, kept in two places {#cash-month}
-- [ ] Savings spread across banking groups; the FSCS limit checked {#spread-savings}
-- [ ] Two weeks of food, medicines and the things that break bought while cards work {#buy-essentials-now}
-- [ ] Lender, landlord and utilities spoken to before any missed payment; notes kept {#talk-to-creditors}
-- [ ] Tank half full; bicycle serviced {#fuel-and-bike}
-- [ ] Skills and goods to trade listed; the street's ledger started {#trade-ledger}
-- [ ] Seed potatoes, seed and a bed dug; hens or rabbits considered {#grow-and-keep}
-- [ ] Nothing valuable visible; locks and lights checked {#nothing-visible}
-- [ ] One conversation a week with anyone in the household who has gone quiet {#check-in-weekly}
-- [ ] Paper copies of bank statements, policies and payslips {#paper-records}
+- [ ] Nothing sold at panic prices, no bank queue joined on a rumour, no savings moved on the strength of a message {#no-panic-moves now}
+- [ ] Cash for two weeks of essentials drawn in small notes and kept in two places {#cash-month now}
+- [ ] Two weeks of food, medicines and the things that break bought while cards still work {#buy-essentials-now now}
+- [ ] Savings spread across banking groups; the FSCS limit checked in the library, not from a rumour {#spread-savings today}
+- [ ] Lender, landlord and utilities spoken to before any missed payment; notes kept {#talk-to-creditors today}
+- [ ] Tank half full; bicycle serviced {#fuel-and-bike today}
+- [ ] Nothing valuable visible; locks and lights checked {#nothing-visible today}
+- [ ] Paper copies of bank statements, policies and payslips {#paper-records week}
+- [ ] Skills and goods to trade listed; the street's ledger started {#trade-ledger week}
+- [ ] Seed potatoes, seed and a bed dug; hens or rabbits considered {#grow-and-keep week}
+- [ ] One conversation a week with anyone in the household who has gone quiet {#check-in-weekly week}
 
 ## Go deeper
 

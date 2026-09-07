@@ -1,11 +1,452 @@
-# What to do, in the order it matters. `until` retires a task when the situation moves past it. Every task is
-# written for whoever is reading it: the box holds no register, so no task names anybody.
+# What to do, in the order it matters, most urgent bucket first and the author's order inside it.
+#
+# Within one bucket `rank` decides who leads (100 by default, which is what a scenario's checklist items
+# carry). The four ranks used here:
+#
+#   10   a scenario's leading branch: the thing that kills, or the mistake that has to be headed off,
+#        before the household starts working down its own list (`when: {scenario: <slug>, …}`).
+#   100  the running scenario's own checklist, in the order its author wrote it. Nothing in this file.
+#   110  a scenario's conditional refinements: what the written line cannot say because it depends on
+#        which services are up — the wash with stored water, the 105 call while a phone still works.
+#   150  the generic housekeeping below. It follows a running scenario's own actions rather than leading
+#        them, and with no scenario every task rule here shares the rank, so the list reads in file order.
+#
+# `until` retires a task when the situation moves past it; `unless` stands a generic job down in the
+# scenarios whose own checklist already carries it (nuclear war's "mains off" supersedes cooker-off).
+# Every task is written for whoever is reading it: the box holds no register, so no task names anybody.
 rules:
+
+  # --- the first actions of each scenario: the branches a fixed checklist line cannot carry ------------------
+
+  - id: nuclear-war-mains-off-now
+    kind: task
+    when: {scenario: nuclear-war, power: working}
+    title: Turn the gas and electricity off at the mains while you can still see to do it
+    bucket: now
+    rank: 110
+    why: Fallout starts to come down within minutes to hours of the burst, and the mains has to be off and the fires damped before the house is shut up and everyone goes into the fall-out room.
+    link: page:mains-electricity
+    source: playbook:nuclear-war
+
+  - id: nuclear-war-water-in-first
+    kind: task
+    when: {scenario: nuclear-war, water: working}
+    title: "Carry the water in before you shut the room: 3 litres a person a day, covered"
+    bucket: now
+    rank: 110
+    why: Nobody comes out for 48 hours, so what is in the room is what there is; the mains may stop with the power or come back unfit.
+    link: module:water
+    source: playbook:nuclear-war
+
+  - id: nuclear-war-radio-is-the-all-clear
+    kind: task
+    when: {scenario: nuclear-war, phones: "off"}
+    title: "The wind-up radio is the only all-clear you will get: keep it on and write down each bulletin"
+    bucket: now
+    rank: 110
+    why: With no phone there is no Emergency Alert and no news; the radio is the one route in, and a written note of each bulletin is what the household decides on.
+    link: page:no-phones
+    source: playbook:nuclear-war
+
+  - id: nuclear-accident-shelter-nearest-building
+    kind: task
+    when: {scenario: nuclear-accident}
+    title: Shelter in the nearest building, not at home if home is a journey away
+    bucket: now
+    rank: 110
+    why: Going in, staying in and tuning in is the standing instruction for any release, and a journey through the plume costs more than being in the wrong building.
+    link: module:radiation
+    source: playbook:nuclear-accident
+
+  - id: nuclear-accident-leave-the-children
+    kind: task
+    when: {scenario: nuclear-accident}
+    title: Do not go out to collect children from school or nursery
+    bucket: now
+    rank: 10
+    why: Schools and nurseries keep children in and are told what to do; a parent on the road is out in the plume and takes the child out into it too.
+    link: module:radiation
+    source: playbook:nuclear-accident
+
+  - id: pandemic-hand-washing-without-mains
+    kind: task
+    when: {scenario: pandemic, water: [degraded, "off"]}
+    title: Hand washing is a jug poured over a bowl after every contact, gel only as a stopgap
+    bucket: now
+    rank: 110
+    why: Twenty seconds of soap and running water after every contact with the sick is the one thing that protects the carer, and a jug and bowl still give running water when the mains does not.
+    link: module:sanitation
+    source: playbook:pandemic
+
+  - id: pandemic-999-on-foot
+    kind: task
+    when: {scenario: pandemic, phones: "off"}
+    title: Agree now who runs for an ambulance, and where to, if someone cannot finish a sentence
+    bucket: now
+    rank: 110
+    why: The emergency signs still justify a hospital when the wards are overwhelmed, and with no phone the only way to fetch help is to send somebody.
+    link: page:no-phones
+    source: playbook:pandemic
+
+  - id: grid-collapse-tell-the-operator
+    kind: task
+    when: {scenario: grid-collapse, phones: working}
+    title: "Tell the network operator: 105 in Great Britain, NIE Networks 03457 643 643 in Northern Ireland"
+    bucket: now
+    rank: 110
+    why: The operator is the only source of a restoration estimate, and the call puts the address on the list that the Priority Services Register works from.
+    link: page:uk-numbers
+    source: playbook:grid-collapse
+
+  - id: grid-collapse-lift-alarm
+    kind: task
+    when: {scenario: grid-collapse}
+    title: Anyone stuck in a lift presses the alarm and waits; nobody forces the doors
+    bucket: now
+    rank: 10
+    why: Only a lift designated for emergency use carries a second power supply, so an ordinary one stops where it is and the engineer or the fire brigade opens it safely.
+    link: module:power
+    source: playbook:grid-collapse
+
+  - id: solar-storm-use-the-warning-hours
+    kind: task
+    when: {scenario: solar-storm, power: [working, degraded]}
+    title: "Use the warning hours while the power is still on: water, charging, cash, fuel"
+    bucket: now
+    rank: 110
+    why: A coronal mass ejection takes one to three days to arrive and the fastest fifteen to twenty hours, so the storm is forecast; everything that needs a socket or a card has to be done before it lands.
+    link: module:power
+    source: playbook:solar-storm
+
+  - id: solar-storm-no-satnav
+    kind: task
+    when: {scenario: solar-storm}
+    title: "Do not trust GPS or satellite: paper map and compass for any journey"
+    bucket: now
+    rank: 10
+    why: The planning case for a severe storm includes loss of GPS, satellite communications and HF radio for one to two weeks, and a satnav that is wrong is worse than none.
+    link: module:navigation
+    source: playbook:solar-storm
+
+  - id: emp-no-restoration-date
+    kind: task
+    when: {scenario: emp}
+    title: "Ration the batteries from the first hour: there is no restoration date"
+    bucket: now
+    rank: 10
+    why: The grid-failure planning assumptions apply without the "up to seven days", so every cell in the house is the whole household's power until something is repaired.
+    link: module:power
+    source: playbook:emp
+
+  - id: emp-test-one-device-at-a-time
+    kind: task
+    when: {scenario: emp}
+    title: Test what survived one device at a time, and keep the dead ones for parts
+    bucket: now
+    rank: 110
+    why: Everything electronic stopped at the same instant, so what still works has to be found rather than assumed, and a dead device is a battery, a fuse and a power supply.
+    link: module:tools-repair
+    source: playbook:emp
+
+  - id: cyber-attack-999-on-another-network
+    kind: task
+    when: {scenario: cyber-attack, mobile: [degraded, "off"]}
+    title: "999 may be unreachable on that network: try another phone, a neighbour's landline, or go in person"
+    bucket: now
+    rank: 10
+    why: An attack on one telecoms network takes 999 and 112 down for everyone on it, while another network, a landline or the front desk of a fire or police station still works.
+    link: page:what-still-works
+    source: playbook:cyber-attack
+
+  - id: cyber-attack-do-not-drink-notice
+    kind: task
+    when: {scenario: cyber-attack, water: [degraded, "off"]}
+    title: "On a do-not-drink notice, boiling may not make it safe: stored or bottled water only"
+    bucket: now
+    rank: 110
+    why: The planning case for an attack on a water company is water unfit for human consumption even after boiling, so the usual rolling boil is not the answer until the notice is lifted.
+    link: module:water
+    source: playbook:cyber-attack
+
+  - id: invasion-do-not-go-and-look
+    kind: task
+    when: {scenario: invasion}
+    title: Do not go out to look at a strike, do not film it, do not drive towards it
+    bucket: now
+    rank: 10
+    why: Turning up at the scene is dangerous and overwhelms the emergency services, and a second strike or a collapse takes the people who gathered.
+    link: doc:nrr-2025#page=23
+    source: doc:nrr-2025#page=23
+
+  - id: invasion-unexploded-ordnance
+    kind: task
+    when: {scenario: invasion}
+    title: Nobody touches unexploded ordnance or the debris that may hide it; mark it and tell the police
+    bucket: now
+    rank: 110
+    why: A missile or a bomb that failed to go off is still armed and is set off by handling; the rule has to be taught before a child finds one.
+    link: module:security-law
+    source: playbook:invasion
+
+  - id: civil-unrest-fire-still-answered
+    kind: task
+    when: {scenario: civil-unrest, phones: working}
+    title: "Fire is what still gets answered in a riot: 999 for fire, even when a burglary will not be attended"
+    bucket: now
+    rank: 10
+    why: Arson is the killer in disorder and the fire service is still dispatched to it, while property crimes wait; knowing which call is worth making saves the phone and the time.
+    link: page:uk-numbers
+    source: playbook:civil-unrest
+
+  - id: civil-unrest-no-phone-fire-plan
+    kind: task
+    when: {scenario: civil-unrest, phones: "off"}
+    title: "With no phone there is no 999: agree the back way out and who runs where before dark"
+    bucket: now
+    rank: 10
+    why: An arson attack on the front door is the danger in disorder, and with no phone the fire brigade is fetched on foot by somebody who already knows the route.
+    link: page:no-phones
+    source: playbook:civil-unrest
+
+  - id: economic-collapse-machines-are-dead
+    kind: task
+    when: {scenario: economic-collapse, power: "off"}
+    title: "The cash machines are dead with the power: the notes in the house are the money you have"
+    bucket: now
+    rank: 110
+    why: Card payments and cash machines fail with the mains, so what is in the house is spent on essentials in small amounts, with a note of what is owed to whom.
+    link: page:what-still-works
+    source: playbook:economic-collapse
+
+  - id: economic-collapse-check-the-guarantee
+    kind: task
+    when: {scenario: economic-collapse}
+    title: Check the deposit guarantee in the library before you move a penny
+    bucket: now
+    rank: 10
+    why: Deposits are protected by the Financial Services Compensation Scheme up to its published limit per person per banking group, and a run is a queue that makes the failure it fears.
+    link: kiwix:wikipedia_en_all_maxi/Financial_Services_Compensation_Scheme
+    source: playbook:economic-collapse
+
+  - id: supply-chain-do-not-join-the-queue
+    kind: task
+    when: {scenario: supply-chain, shops: [working, degraded]}
+    title: "Do not join the queue: buy the gaps only, in ordinary quantities, from ordinary shops"
+    bucket: now
+    rank: 110
+    why: The 2021 fuel crisis was a driver shortage turned into empty forecourts by panic buying within two days; a tank above half and a fortnight in the cupboard is the useful thing already done.
+    link: module:food
+    source: playbook:supply-chain
+
+  - id: supply-chain-formula-is-the-tightest-line
+    kind: task
+    when: {scenario: supply-chain}
+    title: "A baby on formula is the tightest supply line in the house: read the fallback before the tin runs out"
+    bucket: now
+    rank: 10
+    why: Formula cannot be improvised safely at home and a shortage arrives without warning, so the alternatives have to be known while there is still a tin left.
+    link: page:infant-feeding
+    source: playbook:supply-chain
+
+  - id: storms-flooding-never-drive-through-it
+    kind: task
+    when: {scenario: storms-flooding, roads: [degraded, "off"]}
+    title: "The road is under water: turn back rather than drive on, and send nobody to wade it"
+    bucket: now
+    rank: 110
+    why: Shallow moving water knocks an adult over and floats a car, and it hides open manholes and sewage; the depths are in the evacuation module.
+    link: module:evacuation
+    source: playbook:storms-flooding
+
+  - id: storms-flooding-electrics-stay-off
+    kind: task
+    when: {scenario: storms-flooding, power: [degraded, "off"]}
+    title: Leave the electrics and the gas off until they have been checked; never touch a wet consumer unit
+    bucket: now
+    rank: 110
+    why: Water reaching sockets, the consumer unit or a gas appliance is what turns a flooded ground floor into an electrocution or a fire, and only a professional can say when it is safe to switch back on.
+    link: page:mains-electricity
+    source: playbook:storms-flooding
+
+  - id: storms-flooding-floodline
+    kind: task
+    when: {scenario: storms-flooding, phones: working}
+    title: "Get the warning in force: Floodline 0345 988 1188, or 0300 2000 100 in Northern Ireland"
+    bucket: now
+    rank: 110
+    why: An alert means prepare, a warning means act and a severe flood warning means danger to life; Floodline says which one is in force for this address, and BBC local radio carries it when the phones are down.
+    link: page:uk-numbers
+    source: playbook:storms-flooding
+
+  - id: severe-winter-one-room-now
+    kind: task
+    when: {scenario: severe-winter, heating: [degraded, "off"]}
+    title: One room heated and everyone in it, doors shut on the rest of the house
+    bucket: now
+    rank: 110
+    why: Cold kills indoors and slowly; one room warmed by bodies, a stove or a bottled-gas heater is the whole house's heating, and the first hour is spent choosing it and moving the bedding in.
+    link: module:shelter-heat
+    source: playbook:severe-winter
+
+  - id: severe-winter-no-journeys
+    kind: task
+    when: {scenario: severe-winter, roads: [degraded, "off"]}
+    title: No journey in a red warning; if you must go, winter kit in the car and somebody told the route
+    bucket: now
+    rank: 10
+    why: Falls and road accidents are the commonest injuries in deep snow, and a car stuck on a blocked road in a night below minus 10 °C is a hypothermia case.
+    link: module:vehicles-fuel
+    source: playbook:severe-winter
+
+  - id: heat-drought-heatstroke-is-999
+    kind: task
+    when: {scenario: heat-drought}
+    title: "Hot skin, confusion or a fit and no better after 30 minutes is heatstroke: cool them and call 999"
+    bucket: now
+    rank: 10
+    why: Heat exhaustion cools and rehydrates within 30 minutes; heatstroke does not, and it is the one that kills, so cold water on the skin goes on while the ambulance is called.
+    link: card:heat-stroke
+    source: playbook:heat-drought
+
+  - id: heat-drought-find-the-bowser
+    kind: task
+    when: {scenario: heat-drought, water: [degraded, "off"]}
+    title: Find the bowser or bottled water station the company has announced
+    bucket: now
+    rank: 110
+    why: Two to three litres a person a day has to come from somewhere once the tap fails in the heat, and the Priority Services Register gets deliveries to the door.
+    link: module:water
+    source: playbook:heat-drought
+
+  - id: volcanic-cover-the-water-first
+    kind: task
+    when: {scenario: volcanic, water: working}
+    title: Cover the butts and pull the downpipes out before the ash arrives, and fill containers first
+    bucket: now
+    rank: 110
+    why: Ash and the fluoride it carries settle on butts, troughs and open tanks, and a roof washes the lot into the store at the first rain.
+    link: module:water
+    source: playbook:volcanic
+
+  - id: volcanic-bad-air-day
+    kind: task
+    when: {scenario: volcanic}
+    title: On a bad-air day nobody exerts themselves outdoors; anyone who cannot speak in sentences needs 999
+    bucket: now
+    rank: 10
+    why: A gas-rich eruption is the dangerous one — Laki's haze killed an estimated 23,000 people in England in 1783 — and it is asthma and heart disease that it kills through.
+    link: card:asthma-attack
+    source: playbook:volcanic
+
+  - id: chemical-heavy-gas-go-up
+    kind: task
+    when: {scenario: chemical}
+    title: "Go up, not down: chlorine and most industrial gases pool in cellars, pits and low ground"
+    bucket: now
+    rank: 110
+    why: Which way to move is the whole of it — heavier-than-air gases collect at the bottom of a building and of the ground, while ammonia rises — and upstairs with the fewest openings is the shelter room.
+    link: card:chemical-exposure
+    source: playbook:chemical
+
+  - id: chemical-wash-with-stored-water
+    kind: task
+    when: {scenario: chemical, water: [degraded, "off"]}
+    title: "Wash the exposed with stored water, poured slowly and generously: a shortage is no reason to skimp"
+    bucket: now
+    rank: 110
+    why: Remove, remove, remove — away from the source, the clothing cut off, the skin blotted then washed — is what decides the outcome, and the wash is not the place to ration.
+    link: card:chemical-exposure
+    source: playbook:chemical
+
+  - id: famine-refeeding-kills
+    kind: task
+    when: {scenario: famine}
+    title: Anyone who has gone hungry is fed small meals first
+    bucket: now
+    rank: 10
+    why: A starved body given a full meal can die of refeeding; small amounts, often, are how somebody is brought back, and children, pregnant women and the sick are fed first at every meal.
+    link: module:medical
+    source: playbook:famine
+
+  - id: famine-water-for-the-beds
+    kind: task
+    when: {scenario: famine, water: [degraded, "off"]}
+    title: Grey water and butt water keep the beds alive when the mains does not
+    bucket: now
+    rank: 110
+    why: A crop lost to a dry August is a winter without it, and washing-up and bath water is what a bed needs when there is no tap to spare.
+    link: module:growing-food
+    source: playbook:famine
+
+  - id: impact-winter-seed-before-supper
+    kind: task
+    when: {scenario: impact-winter}
+    title: Set next year's seed aside before anyone eats this year's harvest
+    bucket: now
+    rank: 110
+    why: The dimming lasts years, not months, so the harvest is stored as if it must last two, and seed eaten in the first winter is a spring with nothing to sow.
+    link: module:growing-food
+    source: playbook:impact-winter
+
+  - id: impact-winter-fuel-before-the-cold
+    kind: task
+    when: {scenario: impact-winter, heating: [degraded, "off"]}
+    title: One warm room and a season's fuel at the door before the first winter
+    bucket: now
+    rank: 110
+    why: Wood cut this year burns next year, because green wood will not, and there will be no other delivery; the warm room comes before the rest of the house.
+    link: module:shelter-heat
+    source: playbook:impact-winter
+
+  - id: terrorism-tourniquet-and-the-time
+    kind: task
+    when: {scenario: terrorism}
+    title: "Catastrophic limb bleeding: a tourniquet high and tight, and write the time on it"
+    bucket: now
+    rank: 110
+    why: Ambulances wait until the scene is declared safe, which can be a long time, so pressure, packing and a tourniquet in the first minutes are what save the person.
+    link: card:severe-bleeding
+    source: playbook:terrorism
+
+  - id: terrorism-tell-them-in-person
+    kind: task
+    when: {scenario: terrorism, phones: "off"}
+    title: "Tell them in person: the nearest police or fire station, once you are away and safe"
+    bucket: now
+    rank: 110
+    why: Run, hide, tell ends with telling the police what you saw, where and when; with no phone that is a walk to a station rather than a call.
+    link: page:no-phones
+    source: playbook:terrorism
+
+  - id: long-rebuild-shelter-and-water-first
+    kind: task
+    when: {scenario: long-rebuild}
+    title: "Order of work: shelter and water together, then sanitation, then food, then security"
+    bucket: now
+    rank: 10
+    why: In a British winter exposure kills before thirst does, and cholera and typhoid, not violence, emptied the cities that lost their sewers.
+    link: module:sanitation
+    source: doc:fm-21-76-survival#page=38
+
+  - id: long-rebuild-boil-until-it-is-tested
+    kind: task
+    when: {scenario: long-rebuild, water: [degraded, "off"]}
+    title: Every drop boiled or treated until the street's source has been tested
+    bucket: now
+    rank: 110
+    why: A well, a spring or a stream is safe only once it has been tested and protected; until then a rolling boil for one minute is what makes it drinkable.
+    link: page:water-disinfection
+    source: playbook:long-rebuild
+
+  # --- generic housekeeping: rank 150, so a running scenario's own actions lead the list ---------------------
+
   - id: fill-bath
     kind: task
     when: {power: "off", water: working}
+    unless: {scenario: [nuclear-war, grid-collapse, solar-storm, emp, storms-flooding, heat-drought, supply-chain]}
     title: Fill the bath and every container while the water is still on
     bucket: now
+    rank: 150
     why: Mains pressure usually lasts hours to days in a power cut, but pumped and high-rise supplies fail first, and a full bath is a day of flushing.
     link: module:water
     until: {water: [degraded, "off"]}
@@ -14,8 +455,10 @@ rules:
   - id: fridge-doors-shut
     kind: task
     when: {power: "off"}
+    unless: {scenario: [grid-collapse, solar-storm, emp, heat-drought]}
     title: Keep the fridge and freezer doors shut, and write the time on them
     bucket: now
+    rank: 150
     why: Every opening costs an hour of cold; a shut fridge holds about four hours and a full freezer about 48.
     link: module:food
     source: module:food
@@ -23,8 +466,10 @@ rules:
   - id: cooker-off
     kind: task
     when: {power: "off"}
+    unless: {scenario: [nuclear-war, grid-collapse, solar-storm, emp, storms-flooding]}
     title: Turn the cooker, the iron and any electric heater off at the knobs
     bucket: now
+    rank: 150
     why: When the power comes back a ring or heater left switched on starts a fire in an empty kitchen.
     link: page:mains-electricity
     source: page:mains-electricity
@@ -32,8 +477,10 @@ rules:
   - id: co-alarm-power
     kind: task
     when: {power: "off"}
+    unless: {scenario: [grid-collapse, severe-winter, storms-flooding, impact-winter]}
     title: Test the carbon monoxide alarm before you burn anything indoors
     bucket: now
+    rank: 150
     why: Stoves, generators and barbecues brought inside in a power cut are what kill people, and carbon monoxide gives no warning.
     link: card:carbon-monoxide
     source: card:carbon-monoxide
@@ -43,6 +490,7 @@ rules:
     when: {gas: degraded}
     title: Test the carbon monoxide alarm and open a window
     bucket: now
+    rank: 150
     why: A wobbling gas supply means appliances burn badly, and badly burning gas makes carbon monoxide.
     link: card:carbon-monoxide
     source: card:carbon-monoxide
@@ -50,8 +498,10 @@ rules:
   - id: charge-everything
     kind: task
     when: {power: degraded}
+    unless: {scenario: [solar-storm, grid-collapse]}
     title: Charge every phone, power bank, torch and radio now
     bucket: now
+    rank: 150
     why: A wobbling supply is the warning; charge while it is there, because after it goes the box's power bank is the only socket.
     link: module:power
     until: {power: "off"}
@@ -62,6 +512,7 @@ rules:
     when: {water: degraded}
     title: Fill every container while there is still pressure
     bucket: now
+    rank: 150
     why: A failing supply comes back dirty or not at all; three litres a person a day is the minimum to store.
     link: module:water
     until: {water: "off"}
@@ -72,6 +523,7 @@ rules:
     when: {water: [degraded, "off"]}
     title: Boil or treat every drop, including the first day the mains comes back
     bucket: now
+    rank: 150
     why: A rolling boil for one minute kills what matters; the mains stays suspect until the water company says otherwise.
     link: page:water-disinfection
     source: page:water-disinfection
@@ -81,6 +533,7 @@ rules:
     when: {sewage: [degraded, "off"]}
     title: Flush with a bucket of grey water, and bag it if the drains back up
     bucket: hour
+    rank: 150
     why: "A cistern needs mains pressure but the pan does not: a bucket of bath or rain water flushes it, unless the sewer itself is backing up."
     link: module:sanitation
     source: module:sanitation
@@ -90,6 +543,7 @@ rules:
     when: {phones: "off"}
     title: Agree the meeting point and who runs where
     bucket: now
+    rank: 150
     why: "With no phones, help is fetched on foot: a runner in a pair with a written note, and a place everyone comes back to."
     link: page:no-phones
     source: page:no-phones
@@ -99,6 +553,7 @@ rules:
     when: {shops: degraded}
     title: Draw cash while the machines are still paying out
     bucket: hour
+    rank: 150
     why: Card payments and cash machines fail together, and small shops go cash-only long before they close.
     link: page:what-still-works
     source: page:what-still-works
@@ -106,8 +561,10 @@ rules:
   - id: one-warm-room
     kind: task
     when: {heating: "off"}
+    unless: {scenario: [severe-winter, impact-winter, grid-collapse]}
     title: Heat one room, close the doors on the rest and sleep in it
     bucket: today
+    rank: 150
     why: One room warmed by bodies, a stove or a bottled-gas heater is the whole house's heating; the rest can go cold.
     link: module:shelter-heat
     source: module:shelter-heat
@@ -115,8 +572,10 @@ rules:
   - id: check-on-people-nearby
     kind: task
     when: {power: "off"}
+    unless: {scenario: [grid-collapse, severe-winter, civil-unrest, pandemic, cyber-attack, heat-drought]}
     title: Check on anyone nearby who would struggle on their own
     bucket: now
+    rank: 150
     why: Powered medical equipment, a stairlift and refrigerated medicine all stop with the mains, and the people who depend on them are the ones nobody else will notice; a street that has been round its own doors once knows who is alone, who is away and who has what.
     link: module:community
     source: module:community
@@ -126,6 +585,7 @@ rules:
     when: {water: "off", power: working}
     title: Take water to anyone nearby who would struggle to fetch it
     bucket: hour
+    rank: 150
     why: A dry tap means carrying water home from a standpipe or a tanker, and three litres a person a day weighs three kilos; anyone frail, pregnant or on their own goes without rather than asks.
     link: module:community
     source: module:community
@@ -135,6 +595,7 @@ rules:
     when: {heating: "off", season: winter}
     title: Check anyone nearby who is old or very young is warm
     bucket: hour
+    rank: 150
     why: Cold kills indoors and slowly, and the very old and the very young stop feeling it before they are in danger; an unheated house is below the safe temperature within a day.
     link: module:shelter-heat
     source: module:shelter-heat

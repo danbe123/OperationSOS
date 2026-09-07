@@ -94,16 +94,17 @@ The register's unmitigated case has half the population fall ill over the course
 
 ## Checklist
 
-- [ ] Sickroom chosen: door, window, own bathroom or a lidded bucket {#sickroom}
-- [ ] One carer named, and a second in case the first falls ill; masks, gloves and hand-washing station at the door {#one-carer}
-- [ ] Paracetamol (adult and children's), rehydration salts, thermometer, oximeter, bleach in the room {#sickroom-kit}
-- [ ] Two weeks of prescription medicines and the sick day rules written down {#medicines-two-weeks}
-- [ ] Temperature, breathing rate and fluids logged twice a day per patient {#patient-log}
-- [ ] Emergency signs list on the wall: breathless, blue lips, confused, no urine, rash {#red-flags-on-wall}
-- [ ] Two weeks of food and a way to cook it without leaving the house {#two-weeks-food}
-- [ ] One person does all outside errands; strips and washes at the door {#single-runner}
-- [ ] Check on neighbours by phone, note or through the window every day {#daily-neighbour-check}
-- [ ] Cash for two weeks of essentials in small notes in case banks and cards stop {#cash-reserve}
+- [ ] Anyone ill into one room, door shut and window open, own bathroom or a lidded bucket {#sickroom now}
+- [ ] One carer named and a second in reserve; mask on (FFP2 or FFP3 if you have them), gloves and apron at the door {#one-carer now}
+- [ ] Hand-washing station at the door: 20 seconds of soap and water after every contact, and a separate cup, plate, towel and bedding {#hand-washing now}
+- [ ] Rehydration salts mixed and to hand; paracetamol, thermometer, oximeter and bleach in the room {#sickroom-kit now}
+- [ ] Emergency signs on the wall: breathless, blue lips, confused, no urine, rash that does not fade {#red-flags-on-wall now}
+- [ ] Non-essential trips stopped; one person does all outside errands and strips and washes at the door {#single-runner now}
+- [ ] Temperature, breathing rate and fluids logged twice a day per patient {#patient-log today}
+- [ ] Two weeks of prescription medicines in hand and the sick day rules written down {#medicines-two-weeks today}
+- [ ] Two weeks of food and a way to cook it without leaving the house {#two-weeks-food today}
+- [ ] Neighbours checked by phone, note or through the window every day {#daily-neighbour-check today}
+- [ ] Cash for two weeks of essentials in small notes in case banks and cards stop {#cash-reserve week}
 
 ## Go deeper
 

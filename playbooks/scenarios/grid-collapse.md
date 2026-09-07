@@ -96,18 +96,18 @@ A grid does not simply switch back on; it is black-started. A battery starts a s
 
 ## Checklist
 
-- [ ] {{#if phones}}Call 105 (GB) or NIE 03457 643 643 (NI); note what they say and when{{else}}Note the time the power went and how far the dark street runs; nobody can be told until a phone works{{/if}} {#call-105}
-- [ ] Torch, radio on BBC local FM, phone brightness down, power bank found {#torch-radio-powerbank}
-- [ ] Cooker and hob off at the knobs; computers and TV unplugged against the return surge {#appliances-off}
-- [ ] Kettle, pans, bottles and bath filled while the water still runs {#fill-water}
-- [ ] Fridge and freezer doors shut; note the time they lost power {#fridge-freezer-shut}
-- [ ] One warm room chosen; curtains shut at dusk; everyone sleeps there {#one-warm-room}
-- [ ] {{#if phones}}Anyone medically dependent on power identified; PSR status checked; 105 told{{else}}Anyone medically dependent on power identified and checked on in person, hour by hour{{/if}} {#medical-dependents}
-- [ ] Generator, barbecue and stove outdoors only; CO alarm working {#no-co-indoors}
-- [ ] Cash counted; card-free shopping list; tank above half {#cash-and-fuel}
-- [ ] Neighbours checked, especially older people living alone {#check-neighbours}
-- [ ] Bucket-flush routine and grey water saved once the mains stops {#bucket-flush}
-- [ ] Time off and time on written down for the compensation claim {#log-outage-times}
+- [ ] {{#if phones}}Trip switches checked, then 105 called (GB) or NIE 03457 643 643 (NI); note what they say and when{{else}}Trip switches checked; the time the power went and how far the dark street runs written down, because nobody can be told until a phone works{{/if}} {#call-105 now}
+- [ ] Torch out, radio on BBC local FM, phone brightness down, power bank found {#torch-radio-powerbank now}
+- [ ] Kettle, pans, bottles and bath filled while the water still runs {#fill-water now}
+- [ ] Fridge and freezer doors shut, and the time they lost power written on them {#fridge-freezer-shut now}
+- [ ] Cooker and hob off at the knobs; computers and TV unplugged against the return surge {#appliances-off now}
+- [ ] Generator, barbecue and stove outdoors only; CO alarm tested {#no-co-indoors now}
+- [ ] {{#if phones}}Anyone medically dependent on power identified; PSR status checked; 105 told{{else}}Anyone medically dependent on power identified and checked on in person, hour by hour{{/if}} {#medical-dependents hour}
+- [ ] Neighbours checked, especially older people living alone {#check-neighbours hour}
+- [ ] Cash counted; card-free shopping list written; tank above half {#cash-and-fuel hour}
+- [ ] One warm room chosen; curtains shut at dusk; everyone sleeps there {#one-warm-room today}
+- [ ] Bucket-flush routine started and grey water saved once the mains stops {#bucket-flush today}
+- [ ] Time off and time on written down for the compensation claim {#log-outage-times week}
 
 ## Go deeper
 

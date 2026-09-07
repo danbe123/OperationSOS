@@ -88,16 +88,16 @@ The 7 July 2005 bombings killed 52 people on three trains and a bus; the inquest
 
 ## Checklist
 
-- [ ] Run, hide, tell taught to every member of the household, children included {#run-hide-tell}
-- [ ] Exits noted on arrival at any crowded place; meeting point agreed outside {#exits-and-meeting-point}
-- [ ] Bleeding kit carried in the bag: two dressings, packing gauze, a tourniquet, gloves {#carry-bleeding-kit}
-- [ ] After an explosion: away and out of sight; no gathering, no filming {#second-device-rule}
-- [ ] One phone kept free; one person at home by it {#phone-free-at-home}
-- [ ] Anyone near a blast seen by a doctor even if they feel fine {#blast-check}
-- [ ] SHARE checklist before forwarding any name, number or rumour {#share-before-forward}
-- [ ] Non-urgent care routed to 111 and the cards for the weeks of hospital delay {#route-around-hospitals}
-- [ ] Four-week rule for trauma symptoms known; help sought if they persist {#four-week-rule}
-- [ ] Children's routine kept; news limited {#children-routine}
+- [ ] Run if there is a route away, hide if there is not — out of sight, phone silent, door barricaded — and tell the police on 999 once you are safe {#run-hide-tell now}
+- [ ] After an explosion: away from the scene and out of sight of it, no gathering, no filming, nothing gone back for {#second-device-rule now}
+- [ ] Once you are clear, stop the bleeding: pressure, packing, a tourniquet on a limb, and keep them warm {#carry-bleeding-kit now}
+- [ ] One phone kept free; one person at home by it {#phone-free-at-home hour}
+- [ ] SHARE checklist before forwarding any name, number or rumour {#share-before-forward hour}
+- [ ] Anyone near a blast seen by a doctor even if they feel fine {#blast-check hour}
+- [ ] Non-urgent care routed to 111, and the cards read for the weeks of hospital delay {#route-around-hospitals today}
+- [ ] Children's routine kept; news limited {#children-routine today}
+- [ ] Exits noted on arrival at any crowded place; meeting point agreed outside {#exits-and-meeting-point week}
+- [ ] Four-week rule for trauma symptoms known; help sought if they persist {#four-week-rule week}
 
 ## Go deeper
 

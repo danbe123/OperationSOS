@@ -93,17 +93,18 @@ Global supply chains failed for two years after 2020 and the container ship stuc
 
 ## Checklist
 
-- [ ] Stock count on the fridge door: food, medicines, fuel, cash, nappies, pet food, gas {#stock-count}
-- [ ] Repeat prescriptions ordered early; alternatives discussed with the pharmacist {#prescriptions-early}
-- [ ] Tank above half; any stored petrol within the lawful limit and outside the house {#fuel-half-tank}
-- [ ] Two weeks of staples built up over several ordinary shops, not one trolley {#two-weeks-staples}
-- [ ] Water containers filled and stored in the dark {#water-filled}
-- [ ] Bicycle serviced; car-share and lift rota agreed with neighbours {#bike-and-lifts}
-- [ ] Freezer contents cooked or preserved first; USDA rules for low-acid canning {#preserve-first}
-- [ ] Seeds, seed potatoes and a bed ready; sowing calendar checked {#sow-something}
-- [ ] Village bulk order or shared delivery organised {#bulk-order}
-- [ ] Spares for the things that break: fuses, tape, wire, filters, tyre patches {#spares}
-- [ ] Formula fallback read; insulin-without-a-fridge plan agreed with the pharmacist {#infant-and-insulin}
+- [ ] Do not join the queue: buy the gaps only, in ordinary quantities, from ordinary shops {#dont-panic-buy now}
+- [ ] Stock count written on the fridge door: food, medicines, fuel, cash, nappies, pet food, gas {#stock-count now}
+- [ ] {{#if phones}}Repeat prescriptions ordered early and alternatives discussed with the pharmacist{{else}}The repeat slip or the labelled box taken to the pharmacy counter in person, and alternatives asked about while you are there{{/if}} {#prescriptions-early now}
+- [ ] Tank above half; any stored petrol within the lawful limit and outside the house {#fuel-half-tank hour}
+- [ ] Water containers filled and stored in the dark {#water-filled hour}
+- [ ] Formula fallback read; insulin-without-a-fridge plan agreed with the pharmacist {#infant-and-insulin hour}
+- [ ] Two weeks of staples built up over several ordinary shops, not one trolley {#two-weeks-staples today}
+- [ ] Freezer contents cooked or preserved first, to the USDA rules for low-acid canning {#preserve-first today}
+- [ ] Bicycle serviced; car-share and lift rota agreed with neighbours {#bike-and-lifts week}
+- [ ] Village bulk order or shared delivery organised {#bulk-order week}
+- [ ] Seeds, seed potatoes and a bed ready; sowing calendar checked {#sow-something week}
+- [ ] Spares for the things that break: fuses, tape, wire, filters, tyre patches {#spares week}
 
 ## Go deeper
 

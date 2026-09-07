@@ -106,19 +106,19 @@ sources:
 
 ## Checklist
 
-- [ ] Cause-specific playbook worked through for the first month {#first-month-done}
-- [ ] Street water source found, tested, filtered and disinfected; hand pump planned {#street-water}
-- [ ] Latrines 30 metres from water and downhill; burial ground sited to the burial distances {#latrines-sited}
-- [ ] Skills, tools, animals, land, seed and medicines registered on paper in the hall {#asset-register}
-- [ ] Enough ground under cultivation to feed everyone the valley holds; a grain crop and a mill planned; second year's seed in store {#food-year-one}
-- [ ] Animals kept and bred: hens, rabbits, goats, bees; hay for winter {#animals-bred}
-- [ ] Watch rota, locks and agreements with neighbours; no weapons {#security-rota}
-- [ ] Ledger started: who has what, who owes what, decisions taken {#ledger}
-- [ ] Coppice cut on rotation; a year of firewood drying {#coppice}
-- [ ] Panels, turbine or water wheel and a battery keeping this box and the lights on {#village-power}
-- [ ] Medical kit built to the WHO essential list; a midwife and a first-aider trained {#village-medicine}
-- [ ] Parish or community council meeting monthly with minutes {#council-meets}
-- [ ] Second copy of this box's drive stored dry in a tin {#spare-library}
+- [ ] The cause's playbook worked through for the first month before this one starts {#first-month-done now}
+- [ ] Shelter and water together: the street's water source found, tested, filtered and disinfected; a hand pump planned {#street-water now}
+- [ ] Latrines dug 30 metres from water and downhill, before anyone is ill; burial ground sited to the burial distances {#latrines-sited now}
+- [ ] Skills, tools, animals, land, seed and medicines registered on paper in the hall {#asset-register now}
+- [ ] Watch rota, locks and agreements with neighbours; no weapons {#security-rota today}
+- [ ] Ledger started: who has what, who owes what, decisions taken {#ledger today}
+- [ ] Enough ground under cultivation to feed everyone the valley holds; a grain crop and a mill planned; second year's seed in store {#food-year-one week}
+- [ ] Animals kept and bred: hens, rabbits, goats, bees; hay for winter {#animals-bred week}
+- [ ] Coppice cut on rotation; a year of firewood drying {#coppice week}
+- [ ] Panels, turbine or water wheel and a battery keeping this box and the lights on {#village-power week}
+- [ ] Medical kit built to the WHO essential list; a midwife and a first-aider trained {#village-medicine week}
+- [ ] Parish or community council meeting monthly with minutes {#council-meets week}
+- [ ] Second copy of this box's drive stored dry in a tin {#spare-library week}
 
 ## Go deeper
 

@@ -89,16 +89,16 @@ Heatwaves are becoming more likely and mortality "increases significantly with i
 
 ## Checklist
 
-- [ ] Blinds shut by day on the sunny side; windows open at night; sleep low {#shade-and-ventilate}
-- [ ] Two to three litres of water a person a day drunk; rehydration salts to hand {#drink-enough}
-- [ ] Older neighbours and anyone alone checked twice a day in a red alert {#check-vulnerable}
-- [ ] Fridge kept shut and full; chilled food above 8 °C for four hours thrown away {#fridge-discipline}
-- [ ] Water butts filled and covered; grey water saved for the garden and the toilet {#butts-and-greywater}
-- [ ] Two weeks of drinking water stored at 3 litres a person a day; bowser and bottled water station located {#drinking-water-stored}
-- [ ] No fires or barbecues outdoors; wildfire escape route known {#no-open-fires}
-- [ ] Inhalers and heart medicines within reach; midday indoors {#medicines-midday}
-- [ ] Garden mulched; animals shaded and watered {#mulch-and-shade}
-- [ ] Flood kit ready for the thunderstorm that follows {#flood-after-heat}
+- [ ] Blinds and curtains shut on the sunny side; windows opened only when it is cooler outside; sleep on the lowest floor {#shade-and-ventilate now}
+- [ ] Two to three litres of water a person a day drunk; rehydration salts to hand {#drink-enough now}
+- [ ] Inhalers and heart medicines within reach; nobody out at midday {#medicines-midday now}
+- [ ] Older neighbours, babies and anyone alone checked twice a day in a red alert {#check-vulnerable now}
+- [ ] Fridge kept shut and full; chilled food above 8 °C for four hours thrown away {#fridge-discipline hour}
+- [ ] Water butts filled and covered; grey water saved for the garden and the toilet {#butts-and-greywater hour}
+- [ ] Two weeks of drinking water stored at 3 litres a person a day; bowser and bottled water station located {#drinking-water-stored today}
+- [ ] No fires or barbecues outdoors; wildfire escape route known {#no-open-fires today}
+- [ ] Garden mulched; animals shaded and watered {#mulch-and-shade today}
+- [ ] Flood kit ready for the thunderstorm that follows {#flood-after-heat week}
 
 ## Go deeper
 

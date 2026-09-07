@@ -98,17 +98,18 @@ Britain's worst industrial accidents, Flixborough in 1974 with 28 dead and Bunce
 
 ## Checklist
 
-- [ ] Nearest chemical, fuel and refinery sites found on the map; wind direction noted {#sites-and-wind}
-- [ ] Shelter room chosen: upstairs, few windows, tape and towels stored in it {#shelter-room}
-- [ ] Doors, windows, fans, extractors and the boiler off; radio on {#go-in-stay-in}
-- [ ] Anyone exposed: clothes off and bagged, skin blotted then washed, eyes flushed {#remove-remove-remove}
-- [ ] Nobody enters a cellar, tank or building to rescue a collapsed person {#no-confined-space-rescue}
-- [ ] Water butts covered; open-source water not drunk {#cover-water}
-- [ ] Pets in; livestock under cover {#animals-in}
-- [ ] Evacuate only when told, by the route given {#evacuate-when-told}
-- [ ] Symptoms and times written down for everyone exposed {#symptom-log}
-- [ ] After the all-clear: ventilate, wash surfaces, launder, discard exposed food {#clean-up-after}
-- [ ] Registered with the incident helpline; exposure recorded in GP notes; every letter kept {#register-and-records}
+- [ ] Everyone in and upwind of it: outdoors, move across the wind and uphill, away from the smell, and never drive into it {#go-in-stay-in now}
+- [ ] Into the room with the fewest openings, upstairs for a heavy gas: doors, windows, fans, extractors and the boiler off, gaps taped or towelled {#shelter-room now}
+- [ ] Anyone exposed: away from the source, clothing cut off rather than pulled over the head, skin blotted then washed, clothes bagged {#remove-remove-remove now}
+- [ ] Radio on and Emergency Alerts on: what was released, which way it is going, and whether to stay in or leave {#radio-on now}
+- [ ] Nobody enters a cellar, tank or building to rescue a collapsed person {#no-confined-space-rescue now}
+- [ ] Pets in; livestock under cover {#animals-in hour}
+- [ ] Water butts covered; open-source water not drunk {#cover-water hour}
+- [ ] Nearest chemical, fuel and refinery sites found on the map; wind direction noted {#sites-and-wind hour}
+- [ ] Evacuate only when told, by the route given {#evacuate-when-told hour}
+- [ ] Symptoms and times written down for everyone exposed {#symptom-log today}
+- [ ] After the all-clear: ventilate, wash surfaces, launder, discard exposed food {#clean-up-after week}
+- [ ] Registered with the incident helpline; exposure recorded in GP notes; every letter kept {#register-and-records week}
 
 ## Go deeper
 

@@ -90,16 +90,16 @@ Restrictions on upland sheep in Wales and Cumbria after Chernobyl in 1986 lasted
 
 ## Checklist
 
-- [ ] Find the nearest nuclear site on the map and note which way the wind is blowing from it {#site-and-wind}
-- [ ] Doors and windows shut, fans and extractors off, everyone and pets inside {#go-in-stay-in}
-- [ ] Radio on; Emergency Alerts switched on in every phone {#tune-in}
-- [ ] Anyone who was outside: outer clothes bagged at the door, shower, no conditioner {#decontaminate}
-- [ ] Bag of contaminated clothes labelled and kept outside the living space {#bag-clothes}
-- [ ] Iodine tablets only when the authorities say, doses by age written down {#iodine-when-told}
-- [ ] Livestock and poultry under cover on stored feed and covered water {#animals-under-cover}
-- [ ] No milk, leafy greens, game or foraged food from the area until cleared {#food-restrictions}
-- [ ] Water butts covered; drink mains, tank or bottled water only {#covered-water}
-- [ ] Record where everyone was, for how long, and what they did afterwards {#exposure-record}
+- [ ] Everyone and the pets into the nearest building, not home if home is a journey; doors and windows shut, fans, extractors and the boiler off {#go-in-stay-in now}
+- [ ] Radio on; Emergency Alerts switched on in every phone; nobody goes out to collect children, who are kept in and told what to do {#tune-in now}
+- [ ] Anyone who was outside: outer clothes bagged at the door, shower, no conditioner {#decontaminate now}
+- [ ] Nearest nuclear site found on the map and the wind direction from it noted {#site-and-wind now}
+- [ ] Bag of contaminated clothes labelled and kept outside the living space {#bag-clothes hour}
+- [ ] Iodine tablets only when the authorities say, doses by age written down {#iodine-when-told hour}
+- [ ] Water butts covered; mains, tank or bottled water only {#covered-water hour}
+- [ ] Livestock and poultry under cover on stored feed and covered water {#animals-under-cover hour}
+- [ ] No milk, leafy greens, game or foraged food from the area until cleared {#food-restrictions today}
+- [ ] Where everyone was, for how long, and what they did afterwards written down {#exposure-record today}
 
 ## Go deeper
 

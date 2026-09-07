@@ -43,6 +43,8 @@ sources:
 
 **Then get inside and stay inside.** Fallout starts to come down where the wind carries it within minutes to hours of the burst ([Nuclear fallout](kiwix:wikipedia_en_all_maxi/Nuclear_fallout)). Go into the nearest solid building, to a basement or the middle of the ground floor, away from windows and outside walls, and stay there ([FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)).
 
+**Once you are inside, in this order:** everybody and the pets in and the door shut; gas and electricity off at the mains and any fire damped down; every window, door and vent shut and the curtains drawn; anyone who was outside stripped of their outer clothes at the door and washed; the radio on and left on; then into the fall-out room — a basement or the middle of the ground floor, away from outside walls — with the water, the food and the torch, and nobody out of the house for 48 hours ([Protect and Survive, p. 5](doc:protect-and-survive-1980#page=5); [FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)).
+
 **Caught outdoors, or in a car far from home:** if you can reach home in a couple of minutes, go; if not, take cover where you are or in the nearest building; if there is no building within a couple of minutes, use any cover or lie flat in a ditch with the skin of head and hands covered, and if no blast wave has come after ten minutes, move to the nearest building ([Protect and Survive, p. 11](doc:protect-and-survive-1980#page=11)). A car or a tent is not a shelter: leave it for a building as soon as you safely can, and do not drive home through fallout to shelter there ([UKHSA, what to do](kiwix:govuk_resilience/www.gov.uk/government/publications/radiation-emergencies-information-for-the-public/what-to-do-in-a-radiation-emergency); [FEMA, p. 74](doc:fema-nuclear-detonation-2022#page=74)). While fallout is still falling on you, do not strip: dust yourself off without breathing the dust, and take the outer layer off only once you are under cover ([FEMA, p. 116](doc:fema-nuclear-detonation-2022#page=116)).
 
 **If you were outside when fallout fell:** outer clothes off and bagged at the door, then wash; the steps are in the [radiation module](module:radiation) below. **Do not take iodine tablets unless told to** ([NRPB, p. 8](doc:nrpb-stable-iodine#page=8)); the module explains why.
@@ -108,18 +110,19 @@ Whether a large exchange cools the climate for years is disputed: the 1987 survi
 
 ## Checklist
 
-- [ ] Choose the fall-out room now: basement or ground-floor middle room, fewest outside walls {#choose-fallout-room}
-- [ ] Store 14 days of covered drinking water (3 litres a person a day) and 14 days of tinned food {#fourteen-days-water-food}
-- [ ] Battery or wind-up radio, spare batteries, torch, candles, matches in the room {#radio-and-light}
-- [ ] Lidded bucket, bin liners, disinfectant, toilet paper, a second bin for refuse {#bucket-toilet}
-- [ ] Materials to block windows and pack round the inner refuge: earth, sand, books, boxes {#refuge-materials}
-- [ ] Turn off gas and electricity at the mains, damp fires, shut windows, draw curtains {#mains-off-windows-shut}
-- [ ] Everyone in the room; stay in for 48 hours minimum, then reassess by radio {#stay-48-hours}
-- [ ] Outer clothes off and bagged at the door; wash hair and skin if you were outside {#decontaminate-at-door}
-- [ ] No iodine tablets unless the authorities say so; note who took what and when {#iodine-only-if-told}
-- [ ] Write down the time of any vomiting after exposure, per person {#log-vomiting-times}
-- [ ] Wipe tins before opening; no fresh milk, leafy greens or open-grown food until cleared {#no-milk-or-greens}
-- [ ] Mark the nearest nuclear site and the wind direction on the map {#map-sites-and-wind}
+- [ ] Everyone and the pets in, doors shut: nobody leaves the house for 48 hours, then reassess by radio {#stay-48-hours now}
+- [ ] Gas and electricity off at the mains, any fire damped, every window, door and vent shut, curtains drawn {#mains-off-windows-shut now}
+- [ ] Anyone who was outside: outer clothes off and bagged at the door, then wash hair and skin {#decontaminate-at-door now}
+- [ ] Radio on and left on, torch and spare batteries beside it, candles and matches out of the way {#radio-and-light now}
+- [ ] Into the fall-out room: basement or ground-floor middle room, fewest outside walls {#choose-fallout-room now}
+- [ ] Water and food carried in: 3 litres a person a day, 14 days of it, covered, and tinned food that needs no cooking {#fourteen-days-water-food now}
+- [ ] Inner refuge packed round with earth, sand, books and boxes; windows blocked {#refuge-materials hour}
+- [ ] Lidded bucket, bin liners, disinfectant, toilet paper and a second bin for refuse set up in the room {#bucket-toilet hour}
+- [ ] Nearest nuclear site and the wind direction marked on the map {#map-sites-and-wind hour}
+- [ ] No iodine tablets unless the authorities say so; note who took what and when {#iodine-only-if-told hour}
+- [ ] Time of any vomiting after exposure written down, per person {#log-vomiting-times today}
+- [ ] Tins wiped before opening; no fresh milk, leafy greens or open-grown food until cleared {#no-milk-or-greens today}
+- [ ] The first trip outside kept short, skin covered, outer layer and boots left at the door {#first-trip-outside week}
 
 ## Go deeper
 

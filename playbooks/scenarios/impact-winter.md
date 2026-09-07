@@ -94,17 +94,17 @@ So the long plan is built on four things. Crops chosen for cold and low light, r
 
 ## Checklist
 
-- [ ] This year's harvest stored for two years; seed set aside before anyone eats {#store-and-seed}
-- [ ] Wood cut and stacked to dry a year ahead; coppice planted {#wood-a-year-ahead}
-- [ ] Stove, flue and carbon monoxide alarm sound; a season's fuel by the door {#stove-ready}
-- [ ] Loft, walls, floors and windows insulated as far as materials allow {#insulate-the-house}
-- [ ] Greenhouse, tunnel or cold frames built; grow lights and trays ready for when there is power {#grow-under-cover}
-- [ ] Cold crops chosen: potatoes, kale, leeks, roots, broad beans, oats {#cold-crops}
-- [ ] Vitamin D for every child and adult: fish, eggs, liver, tablets while they last {#vitamin-d}
-- [ ] Herd cut to what stored hay will feed; the rest killed and preserved in autumn {#efficient-animals}
-- [ ] Pipes buried or lagged; indoor water store; snow-melting routine {#water-in-cold}
-- [ ] Wind or hydro power explored; solar expectations lowered {#power-without-sun}
-- [ ] Daily routine, midday light and a watch on everyone's mood {#mood-and-routine}
+- [ ] This year's harvest brought in and stored for two years; seed set aside before anyone eats {#store-and-seed now}
+- [ ] Stove, flue and carbon monoxide alarm checked sound; a season's fuel by the door {#stove-ready now}
+- [ ] Wood cut and stacked to dry a year ahead, because green wood will not burn; coppice planted {#wood-a-year-ahead now}
+- [ ] Cold crops chosen and sown: potatoes, kale, leeks, roots, broad beans, oats {#cold-crops today}
+- [ ] Greenhouse, tunnel or cold frames built; grow lights and trays ready for when there is power {#grow-under-cover today}
+- [ ] Vitamin D for every child and adult: fish, eggs, liver, tablets while they last {#vitamin-d today}
+- [ ] Daily routine, midday light and a watch on everyone's mood {#mood-and-routine today}
+- [ ] Loft, walls, floors and windows insulated as far as materials allow {#insulate-the-house week}
+- [ ] Herd cut to what stored hay will feed; the rest killed and preserved in autumn {#efficient-animals week}
+- [ ] Pipes buried or lagged; indoor water store; snow-melting routine {#water-in-cold week}
+- [ ] Wind or hydro power explored; solar expectations lowered {#power-without-sun week}
 
 ## Go deeper
 

@@ -91,16 +91,17 @@ Order in Britain has broken locally and briefly, never nationally for long: the 
 
 ## Checklist
 
-- [ ] Everyone home; doors locked, curtains closed, car moved quietly off the street {#everyone-home}
-- [ ] Smoke alarms tested; stairs clear; back way out known; buckets of water by the front door {#fire-ready}
-- [ ] Radio on BBC local; Emergency Alerts on; SHARE checklist before forwarding anything {#official-sources}
-- [ ] Nothing valuable or edible visible from the street {#nothing-visible}
-- [ ] Street numbers list and PMR446 channel agreed; vulnerable neighbours named {#street-network}
-- [ ] First-aid kit out: dressings, burns kit, gloves {#first-aid-out}
-- [ ] Two weeks of food and cash in the house {#two-weeks-food-cash}
-- [ ] Grab bag by the back door in case of fire or attack {#grab-bag-back-door}
-- [ ] Curfew times and any emergency regulations written down and obeyed {#know-the-orders}
-- [ ] Damage photographed and reported for a crime number {#photograph-report}
+- [ ] Everyone home; doors locked, curtains closed, car moved quietly off the street {#everyone-home now}
+- [ ] Nobody goes out to watch, to film or to guard a shop {#do-not-go-out now}
+- [ ] Smoke alarms tested; stairs clear; back way out known; buckets of water by the front door {#fire-ready now}
+- [ ] Radio on BBC local; Emergency Alerts on; SHARE checklist before forwarding anything {#official-sources now}
+- [ ] Nothing valuable or edible visible from the street; keep away from street-side windows {#nothing-visible now}
+- [ ] First-aid kit out: dressings, burns kit, gloves {#first-aid-out hour}
+- [ ] Grab bag by the back door in case of fire or attack {#grab-bag-back-door hour}
+- [ ] Street numbers list and PMR446 channel agreed; vulnerable neighbours named {#street-network hour}
+- [ ] Curfew times and any emergency regulations written down and obeyed {#know-the-orders today}
+- [ ] Two weeks of food and cash in the house {#two-weeks-food-cash today}
+- [ ] Damage photographed and reported for a crime number {#photograph-report week}
 
 ## Go deeper
 

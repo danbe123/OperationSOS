@@ -241,8 +241,6 @@ def test_scenario_sections_citations_checklist_and_includes(slug):
     assert "NOMAD" not in post.content
 
 
-@pytest.mark.xfail(reason="the scenario author marks each checklist's first actions `now` "
-                          "(task-priority design, 2026-09-07 section 4)", strict=False)
 @pytest.mark.parametrize("slug", WRITTEN)
 def test_scenario_checklist_leads_with_at_least_three_now_items(slug):
     """The first actions lead the list: a household reads from the top and does what it says."""

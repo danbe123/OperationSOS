@@ -83,15 +83,15 @@ The storm passes in a fortnight; three things outlast it. **Timing.** The regist
 
 ## Checklist
 
-- [ ] On the warning: fill water, charge every battery, get cash, fill the tank {#warning-hours}
-- [ ] Unplug computers, TV, router and chargers before the storm arrives {#unplug-electronics}
-- [ ] Paper map or this box's grid reference for every place you may need to reach {#paper-navigation}
-- [ ] Battery FM radio and PMR446 sets ready; know that HF and satellite will fail {#vhf-radio-ready}
-- [ ] Two weeks of food and water on the shelf {#two-week-store}
-- [ ] Blackout routine from the grid collapse playbook rehearsed with the household {#blackout-routine}
-- [ ] Cash for two weeks of essentials in small notes; card and cash machine failure expected {#cash-month}
-- [ ] Medical equipment users on the Priority Services Register {#psr-registered}
-- [ ] Watch for repeat storms for two weeks; do not restock the freezer until it is over {#expect-repeats}
+- [ ] On the warning: every container filled, every battery and power bank charged, cash drawn, tank filled {#warning-hours now}
+- [ ] Computers, TV, router and chargers unplugged before the storm arrives {#unplug-electronics now}
+- [ ] Battery FM radio on and PMR446 sets ready; expect HF, satellite and GPS to fail {#vhf-radio-ready now}
+- [ ] When the lights go: the grid collapse routine — fridge shut, cooker off, one warm room, radio on {#blackout-routine now}
+- [ ] Paper map out, or this box's grid reference written down for every place you may need to reach {#paper-navigation hour}
+- [ ] Two weeks of food and water on the shelf {#two-week-store today}
+- [ ] Cash for two weeks of essentials in small notes; card and cash machine failure expected {#cash-month today}
+- [ ] Medical equipment users on the Priority Services Register {#psr-registered week}
+- [ ] Repeat storms watched for over two weeks; the freezer not restocked until it is over {#expect-repeats week}
 
 ## Go deeper
 

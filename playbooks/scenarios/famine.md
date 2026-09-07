@@ -89,17 +89,18 @@ Ireland lost a million people to hunger and a million to emigration between 1845
 
 ## Checklist
 
-- [ ] Store counted in days at 2,000 to 2,500 kcal a person; weekly ration written {#count-calories}
-- [ ] Every bed, tub and lawn edge sown with what the month allows; seed potatoes chitting {#plant-everything}
-- [ ] A year's fertility found without bought fertiliser: manure source agreed with someone who keeps animals {#feed-the-soil}
-- [ ] Hens registered; housing-order rules known; rabbits or goats considered {#animals-lawful}
-- [ ] Pressure canner or drying racks ready for the glut; botulism rule learned {#preserve-safely}
-- [ ] Foraging rules and the two deadly plants learned by every adult {#foraging-rules}
-- [ ] Rod licence, permission and seasons checked before fishing or shooting {#fishing-and-shooting-law}
-- [ ] Vitamin C and vitamin D sources for children planned: rosehips, eggs, sun {#vitamins-for-children}
-- [ ] Community kitchen or shared cooker organised in the hall {#community-kitchen}
-- [ ] Refeeding rule known: small meals first for anyone who has gone hungry {#refeeding-rule}
-- [ ] Grain or flour in sealed bulk store; hand mill found; allotment request drafted {#bulk-grain-and-mill}
+- [ ] Store counted in days at 2,000 to 2,500 kcal a person, and the weekly ration written down today {#count-calories now}
+- [ ] Children, pregnant women, nursing mothers and the sick fed first, at every meal {#feed-the-weakest-first now}
+- [ ] Every bed, tub and lawn edge sown with what the month allows; seed potatoes chitting {#plant-everything now}
+- [ ] Nothing eaten that cannot be named: the two deadly plants learned by every adult before anyone forages {#foraging-rules now}
+- [ ] Refeeding rule known: small meals first for anyone who has gone hungry {#refeeding-rule today}
+- [ ] Vitamin C and vitamin D sources for children planned: rosehips, eggs, sun {#vitamins-for-children today}
+- [ ] Rod licence, permission and seasons checked before fishing or shooting {#fishing-and-shooting-law today}
+- [ ] A year's fertility found without bought fertiliser: manure source agreed with someone who keeps animals {#feed-the-soil week}
+- [ ] Hens registered; housing-order rules known; rabbits or goats considered {#animals-lawful week}
+- [ ] Pressure canner or drying racks ready for the glut; botulism rule learned {#preserve-safely week}
+- [ ] Community kitchen or shared cooker organised in the hall {#community-kitchen week}
+- [ ] Grain or flour in sealed bulk store; hand mill found; allotment request drafted {#bulk-grain-and-mill week}
 
 ## Go deeper
 

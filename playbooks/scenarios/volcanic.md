@@ -95,17 +95,17 @@ A large enough eruption cools the world for a year or two: Tambora in 1815 gave 
 
 ## Checklist
 
-- [ ] FFP2 or FFP3 masks and goggles for every adult; children kept in on bad-air days {#masks-and-goggles}
-- [ ] Doors, windows and vents shut; damp cloths at sills; extractors off in ashfall {#seal-the-house}
-- [ ] Inhalers and heart medicines to hand; asthma plan written {#inhalers-ready}
-- [ ] Water butts, troughs and tanks covered; downpipes disconnected; two weeks of drinking water at 3 litres a person a day {#cover-water}
-- [ ] Livestock and poultry under cover on stored feed; pets in {#animals-in}
-- [ ] Ash swept wet from paths; roofs cleared from the ground or left {#ash-wet-sweep}
-- [ ] Car left in the garage; cabin and engine filters checked after ashfall {#car-filters}
-- [ ] Air-freighted medicines and essentials reordered early {#air-freight-gap}
-- [ ] Leafy crops rinsed; cold frames covered {#rinse-crops}
-- [ ] Harvest stored and next year's planting planned for a cold summer {#plan-cold-summer}
-- [ ] Gutters cleared before rain; ash-touched butts emptied and rinsed before reuse {#gutters-and-butts}
+- [ ] Doors, windows and vents shut; damp cloths at the sills; extractors off in ashfall {#seal-the-house now}
+- [ ] Water butts, troughs and tanks covered and the downpipes disconnected before the ash arrives; two weeks of drinking water at 3 litres a person a day {#cover-water now}
+- [ ] Inhalers and heart medicines to hand; asthma plan written; anyone who cannot speak in sentences needs 999 {#inhalers-ready now}
+- [ ] FFP2 or FFP3 masks and goggles for anyone who must go out; children kept in on bad-air days {#masks-and-goggles now}
+- [ ] Livestock and poultry under cover on stored feed; pets in {#animals-in now}
+- [ ] Air-freighted medicines and essentials reordered early {#air-freight-gap hour}
+- [ ] Car left in the garage; cabin and engine filters checked after ashfall {#car-filters today}
+- [ ] Ash swept wet from paths; roofs cleared from the ground or left {#ash-wet-sweep today}
+- [ ] Leafy crops rinsed; cold frames covered {#rinse-crops today}
+- [ ] Gutters cleared before rain; ash-touched butts emptied and rinsed before reuse {#gutters-and-butts week}
+- [ ] Harvest stored and next year's planting planned for a cold summer {#plan-cold-summer week}
 
 ## Go deeper
 

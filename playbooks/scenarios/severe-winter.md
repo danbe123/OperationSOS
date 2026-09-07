@@ -96,18 +96,18 @@ The winter of 1962 to 1963 froze Britain from Boxing Day to March, the sea iced 
 
 ## Checklist
 
-- [ ] One warm room chosen; 18 °C target; thermometer in it {#warm-room-18}
-- [ ] Curtains shut at dusk, doors closed, draughts blocked, hats and layers on {#curtains-and-layers}
-- [ ] CO alarm tested; nothing burning indoors that should be outdoors {#co-alarm-tested}
-- [ ] Stove flue swept and checked; a week of fuel by the stove {#stove-and-fuel}
-- [ ] Stopcock found; exposed pipes, loft tank and boiler condensate pipe lagged {#pipes-protected}
-- [ ] Path gritted; boots with grip; older people kept in until the thaw {#grit-and-boots}
-- [ ] Warm food, oats, soup and stock for two weeks {#warm-food-store}
-- [ ] Winter kit in the car; no journeys in a red warning {#car-winter-kit}
-- [ ] Neighbours over 65 or alone knocked on every day {#daily-knock}
-- [ ] Cold Weather Payment eligibility and PSR registration checked {#payments-and-psr}
-- [ ] Prescriptions for a fortnight collected before the snow {#prescriptions-collected}
-- [ ] Flat roof and conservatory cleared from the ground; nearest warm hub and its hours known {#snow-load-and-warm-hub}
+- [ ] One warm room chosen and everyone in it; 18 °C target; thermometer in it {#warm-room-18 now}
+- [ ] Curtains shut at dusk, doors closed, draughts blocked, hats and layers on {#curtains-and-layers now}
+- [ ] CO alarm tested; nothing burning indoors that belongs outdoors {#co-alarm-tested now}
+- [ ] Stove flue swept and checked; a week of fuel by the stove {#stove-and-fuel hour}
+- [ ] Stopcock found; exposed pipes, loft tank and boiler condensate pipe lagged {#pipes-protected hour}
+- [ ] Path gritted; boots with grip; older people kept in until the thaw {#grit-and-boots hour}
+- [ ] Neighbours over 65 or living alone knocked on every day {#daily-knock hour}
+- [ ] Warm food, oats, soup and stock for two weeks {#warm-food-store today}
+- [ ] Prescriptions for a fortnight collected before the snow {#prescriptions-collected today}
+- [ ] Flat roof and conservatory cleared from the ground; nearest warm hub and its hours known {#snow-load-and-warm-hub today}
+- [ ] Winter kit in the car; no journeys in a red warning {#car-winter-kit today}
+- [ ] Cold Weather Payment eligibility and PSR registration checked {#payments-and-psr week}
 
 ## Go deeper
 
