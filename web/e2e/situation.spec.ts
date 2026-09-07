@@ -15,8 +15,7 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await page.goto('/situation');
   await setCondition(page, 'power', 'Off', 'About an hour ago');
 
-  // Now leads with what to do, and the band says what is off
-  await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
+  // the sheet leads with what to do, and the band says what is off
   const band = page.getByRole('group', { name: 'Situation now' });
   await expect(band.getByRole('link', { name: '1 off' })).toBeVisible();
   const coming = page.getByRole('region', { name: 'Coming up' });
@@ -24,6 +23,17 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   await expect(coming).toContainText('in 23 h');
   const doing = page.getByRole('region', { name: 'Right now' }).first();
   await expect(doing).toContainText('Fill the bath and every container');
+
+  // Now itself does not change shape: the question, the tiles and the services stay put, and the
+  // one line under the row is the way to the rest.
+  await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Scenarios' })).toBeVisible();
+  const services = page.getByRole('navigation', { name: 'Services' });
+  await expect(services.getByRole('button', { name: /Mains power: off/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByText('1 service off.')).toBeVisible();
+  await page.getByRole('link', { name: 'What to do now' }).click();
+  await expect(page).toHaveURL(/\/situation$/);
 
   // tick the bath off; the box saves it and the tick sticks
   await doing.getByRole('checkbox', { name: /Fill the bath/ }).click();
@@ -86,10 +96,12 @@ test('the sheet and Now fit a phone as well as the kiosk', async ({ page }) => {
   await page.goto('/situation');
   await setCondition(page, 'water', 'Off');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
-  // A phone's band carries the count and the way to the sheet; the heading names the service.
-  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('1 off');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Water off');
+  await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
+  // A phone's band carries the count and the way to the sheet; the front door keeps its question.
+  await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('1 off');
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
+  await expect(page.getByText('1 service off.')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

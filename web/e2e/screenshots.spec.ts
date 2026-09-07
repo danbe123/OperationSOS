@@ -36,7 +36,9 @@ async function settle(page: Page) {
 
 const SHOTS: Shot[] = [
   { name: 'now-peacetime', go: async (p) => { await p.goto('/'); await expect(p.getByRole('navigation', { name: 'Scenarios' })).toBeVisible(); } },
-  { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
+  // The front door with something off: the same question, tiles and services, with the row's own
+  // "off" and one line to the sheet. The briefing it used to turn into is `situation-power-off`.
+  { name: 'now-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('link', { name: 'What to do now' })).toBeVisible(); } },
   { name: 'now-phones-down', go: async (p, s) => { off(s, 'mobile', 'landline'); await p.goto('/'); await expect(p.getByText('999 will not connect')).toBeVisible(); } },
   { name: 'now-drill', go: async (p, s) => { off(s, 'power'); s.drill = true; s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/'); await expect(p.getByRole('group', { name: 'Situation now' })).toBeVisible(); } },
   { name: 'now-engine-down', go: async (p) => { await p.route('**/api/situation/view', (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"detail":"the engine is not answering"}' })); await p.goto('/'); await expect(p.getByText(/The box cannot read the situation/)).toBeVisible(); } },
@@ -44,7 +46,8 @@ const SHOTS: Shot[] = [
   // it is useful in — the front door asks what the situation is and every answer is a tile, with no
   // form to fill in first.
   { name: 'now-nothing-typed-in', go: async (p) => { await p.goto('/'); await expect(p.getByRole('link', { name: /National grid collapse/ })).toBeVisible(); } },
-  { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('heading', { level: 1, name: 'Situation' })).toBeVisible(); } },
+  { name: 'situation-power-off', go: async (p, s) => { off(s, 'power'); await p.goto('/situation'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
+  { name: 'situation-sheet', go: async (p, s) => { off(s, 'power', 'water'); await p.goto('/situation'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
   { name: 'situation-carry', go: async (p) => { await p.goto('/situation'); await p.getByRole('button', { name: 'Export as codes' }).click(); await expect(p.getByRole('group', { name: 'Situation codes' })).toBeVisible(); await p.getByRole('group', { name: 'Situation codes' }).scrollIntoViewIfNeeded(); } },
   { name: 'situation-drill', go: async (p) => { await p.goto('/situation#drill'); await p.getByLabel('Drill scenario').selectOption('grid-collapse'); await p.getByRole('region', { name: 'Practise a drill' }).scrollIntoViewIfNeeded(); } },
   { name: 'tasks', go: async (p, s) => { off(s, 'power'); await p.goto('/tasks'); await expect(p.getByRole('heading', { level: 1, name: 'Things to do' })).toBeVisible(); } },
@@ -97,7 +100,7 @@ const SHOTS: Shot[] = [
 /* The dim mode, which nothing in round 1 photographed at all: the engine raises it when the power is
    off and it is dark, and it is the state the box was built for. */
 const DIM: Shot[] = [
-  { name: 'now-power-off-dim', dim: true, go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('region', { name: 'Right now' })).toBeVisible(); } },
+  { name: 'now-power-off-dim', dim: true, go: async (p, s) => { off(s, 'power'); await p.goto('/'); await expect(p.getByRole('link', { name: 'What to do now' })).toBeVisible(); } },
   { name: 'board-dim', dim: true, go: async (p, s) => { off(s, 'power', 'water'); s.situation = { slug: 'grid-collapse', title: 'National grid collapse', started_at: hour(), elapsed_s: 3600, phase: 'right-now' }; await p.goto('/board'); await expect(p.getByRole('region', { name: 'What is working' })).toBeVisible(); } },
   { name: 'quick-card-dim', dim: true, go: async (p) => { await p.goto('/medical/card/cpr-adult'); await expect(p.getByRole('heading', { level: 1, name: 'CPR (adult)' })).toBeVisible(); } },
   { name: 'keyboard-dim', dim: true, go: async (p) => { await p.goto('/search?kiosk=1'); await expect(p.getByTestId('keyboard')).toBeVisible(); await p.getByRole('combobox', { name: 'Search' }).first().fill('wat'); } },

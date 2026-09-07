@@ -2,8 +2,8 @@ import type { Page } from '@playwright/test';
 import { test, expect, setCondition } from './test';
 
 /** One tick everywhere. A ticked job stays exactly where it is, struck through, with an Undo for ten
- * seconds — on Things to do, on Now and on a guide. A row that vanishes under the finger is
- * unrecoverable without finding and clearing a filter nobody knows about. */
+ * seconds — on Things to do, on the situation sheet and on a guide. A row that vanishes under the
+ * finger is unrecoverable without finding and clearing a filter nobody knows about. */
 async function powerOff(page: Page) {
   await page.goto('/situation');
   await setCondition(page, 'power', 'Off');
@@ -23,13 +23,13 @@ async function tickAndUndo(page: Page, title: RegExp) {
   await expect(row).toBeVisible();
 }
 
-test('a ticked job stays in place with an Undo, on Things to do, on Now and on a guide', async ({ page }) => {
+test('a ticked job stays in place with an Undo, on Things to do, on the sheet and on a guide', async ({ page }) => {
   await powerOff(page);
 
   await page.goto('/tasks');
   await tickAndUndo(page, /Fill the bath/);
 
-  await page.goto('/');
+  await page.goto('/situation');
   await tickAndUndo(page, /Fill the bath/);
 
   await page.goto('/s/grid-collapse');

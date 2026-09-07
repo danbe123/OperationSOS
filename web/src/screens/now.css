@@ -2,19 +2,6 @@
 .now-box { list-style: none; margin: 0 0 12px; padding: 0; gap: 6px 18px; font-size: var(--t-meta); color: var(--ink-muted); }
 .now-box li { display: inline-flex; align-items: center; gap: 4px; }
 .now-box strong { color: var(--ink); }
-.briefing-block { display: flex; flex-direction: column; gap: 8px; }
-.briefing-list > li { display: flex; flex-direction: column; gap: 6px; }
-.briefing-title { margin: 0; font-weight: 600; }
-.briefing-list .btn { align-self: flex-start; }
-.forecast-when { font-weight: 400; color: var(--ink-muted); }
-.forecast-danger { border-left: 2px solid var(--danger); padding-left: 10px; }
-.forecast-warn { border-left: 2px solid var(--warn); padding-left: 10px; }
-.briefing-reading { list-style: none; margin: 0; padding: 0; gap: 8px; }
-.briefing-reading li { border: 0; padding: 0; }
-.now-carry { display: flex; flex-direction: column; gap: 8px; }
-.now-resume { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; min-height: var(--touch); }
-.now-resume > span { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
-.now-resume small { color: var(--ink-muted); }
 /* The services under the tiles: one button each, pressed when the service is off. The state is said
    in a word under the name as well as in the fill, so mono reads it without colour. */
 .service-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
@@ -22,3 +9,6 @@
 .service-btn small { font-size: var(--t-meta); color: var(--ink-muted); }
 .service-btn.service-off { background: var(--ink); color: var(--ground); }
 .service-btn.service-off small { color: var(--ground); opacity: 0.8; }
+/* One line under the services when something is off: the count, and the way to what the box makes
+   of it. The briefing itself is on the sheet, not on the front door. */
+.now-what-to-do { margin: 10px 0 0; }

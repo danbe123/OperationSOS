@@ -10,7 +10,9 @@ test('the first tab stop is a way past the furniture, on every screen', async ({
   state.conditions = { ...state.conditions, power: { ...state.conditions.power, state: 'off', since: hour, set_by: 'phone' } };
   for (const viewport of [{ width: 853, height: 480 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
-    await page.goto('/');
+    // The jobs are on the sheet: the front door registers what is off and says where to read the
+    // rest, so this measures the screen the first job is actually on.
+    await page.goto('/situation');
     await expect(page.getByRole('region', { name: 'Right now' })).toBeVisible();
 
     // Tab 1 is the skip link, and it is visible the moment it has focus.
@@ -77,7 +79,7 @@ test('a section is named by its own heading, and the map has words on its contro
   const hour = new Date(Date.now() - 3_600_000).toISOString();
   state.conditions = { ...state.conditions, power: { ...state.conditions.power, state: 'off', since: hour, set_by: 'phone' } };
   await page.setViewportSize({ width: 853, height: 480 });
-  await page.goto('/');
+  await page.goto('/situation');
   // "Briefing" was a region wrapping four regions, named after a word that is nowhere on the screen.
   await expect(page.getByRole('region', { name: 'Briefing' })).toHaveCount(0);
   for (const region of await page.getByRole('region').all()) {

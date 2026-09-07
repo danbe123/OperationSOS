@@ -59,7 +59,7 @@ describe('the briefing: a proposal the sensors raised', () => {
       ...powerOffView,
       inferred: [{ ...powerOffView.inferred[0], condition: 'internet', state: 'off', detected: true, rule: 'sensor:internet', why: 'The box has not reached the internet for 10 minutes.' }],
     }));
-    renderRoute('/');
+    renderRoute('/situation');
     const block = await screen.findByRole('region', { name: 'The box thinks' });
     expect(block).toHaveTextContent('detected by the box');
     expect(block).toHaveTextContent('Internet — probably off');

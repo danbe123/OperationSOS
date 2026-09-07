@@ -22,7 +22,8 @@ describe('Now', () => {
     viewQ.mockResolvedValue(powerOffView);
     await user.click(buttons[0]);
     expect(set).toHaveBeenCalledWith('power', expect.objectContaining({ state: 'off', since: expect.any(String) }));
-    // Power off is an event: the front door turns into the briefing, with the services still on it.
+    // The tap registers that the service is off and nothing else: the screen stays where it was,
+    // with the same tiles and the same row, and the button says so.
     const after = await screen.findByRole('navigation', { name: 'Services' });
     await waitFor(() => expect(within(after).getByRole('button', { name: /Mains power: off/ })).toHaveAttribute('aria-pressed', 'true'));
     await user.click(within(after).getByRole('button', { name: /Mains power: off/ }));
@@ -102,19 +103,27 @@ describe('Now', () => {
     expect(within(grid).getAllByRole('link')).toHaveLength(20);
   });
 
-  it('leads with what to do once something is off', async () => {
+  it('stays the front door once something is off, and points at the sheet for the rest', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/');
-    const now = await screen.findByRole('region', { name: 'Right now' });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
-    expect(within(now).getAllByRole('listitem')).toHaveLength(3);
-    expect(within(now).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
-    // The situation itself is the answer to the question, so the tiles that ask it stand down.
-    expect(screen.queryByRole('navigation', { name: 'Scenarios' })).toBeNull();
-    expect(await screen.findByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
-    expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
-    expect(screen.getByRole('region', { name: 'Read' })).toHaveTextContent('Right now');
+    // The question, the tiles and the row are exactly where they were: a household that tapped
+    // Power to say the power was off was taken to a briefing it had not asked for, and the button
+    // it had just pressed was gone off the screen.
+    expect(await screen.findByRole('heading', { level: 1, name: "What's the situation?" })).toBeInTheDocument();
+    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(20);
+    const row = screen.getByRole('navigation', { name: 'Services' });
+    const power = within(row).getByRole('button', { name: /Mains power: off/ });
+    expect(power).toHaveAttribute('aria-pressed', 'true');
+    expect(power).toHaveTextContent('off');
+    // One line under the row is the whole of what the front door says about it.
+    expect(screen.getByText(/2 services off\./)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'What to do now' })).toHaveAttribute('href', '/situation');
+    // and none of the briefing is on it
+    for (const name of ['Right now', 'Coming up', 'The box thinks', 'Read']) {
+      expect(screen.queryByRole('region', { name })).toBeNull();
+    }
+    expect(screen.queryByRole('button', { name: 'Read aloud' })).toBeNull();
   });
 
   it('says so, and still offers the situations, when the engine cannot be read', async () => {

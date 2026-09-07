@@ -107,7 +107,7 @@ describe('the situation band', () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue([]);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/');
-    // On a phone the band carries the count; Now's own heading names the services.
+    // On a phone the band carries the count; Now itself keeps its question.
     expect(await screen.findByRole('group', { name: 'Situation now' })).toHaveTextContent('2 off');
   });
 

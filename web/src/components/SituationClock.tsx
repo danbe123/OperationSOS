@@ -48,7 +48,7 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
   if (active && situation.slug) {
     return (
       /* The band above this already says the scenario's name and how long it has been running, and
-         Now's own heading says it a third time: the head used to add "Started Sun 06:11" and "just
+         the sheet's own heading says it a third time: the head used to add "Started Sun 06:11" and "just
          started, right now" on top of that — one fact stated four ways across one screen. What is
          left here is the two things this control is for. */
       <div className="situation-clock" role="status">

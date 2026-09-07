@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { playbook, playbooks, status } from '../fixtures/api';
+import { playbook } from '../fixtures/api';
 
 describe('Situation clock', () => {
   it('starts the clock from the playbook and marks the current phase tab', async () => {
@@ -41,15 +41,5 @@ describe('Situation clock', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm end' }));
     expect(end).toHaveBeenCalled();
     expect(await screen.findByRole('button', { name: /This has started/ })).toBeInTheDocument();
-  });
-
-  it('shows the active situation on Home', async () => {
-    vi.spyOn(api, 'status').mockResolvedValue({ ...status, situation: { slug: 'grid-collapse', started_at: new Date(Date.now() - 5 * 3600 * 1000).toISOString() } });
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    renderRoute('/');
-    const card = await screen.findByRole('link', { name: /Active situation/ });
-    expect(card).toHaveAttribute('href', '/s/grid-collapse');
-    expect(card).toHaveTextContent('5 h in, right now');
-    expect(card).toHaveTextContent('National grid collapse');
   });
 });

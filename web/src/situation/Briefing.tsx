@@ -17,7 +17,7 @@ const DAY_S = 86_400;
  * Undo button is offered for, so nothing ever moves under the finger that ticked it. */
 export const SETTLE_MS = 10_000;
 
-/** The front door answers "what do I do now", so a job that was already done before this screen
+/** The briefing answers "what do I do now", so a job that was already done before this screen
  * opened belongs under the ones that are not. A job ticked here stays exactly where it was ticked
  * until its Undo has expired. */
 export function useSunkTasks(tasks: { id: string; done: boolean }[]): Set<string> {
@@ -68,9 +68,10 @@ function ForecastRow({ item, now }: { item: Forecast; now: number }) {
   );
 }
 
-/** Now, while something is happening: what to do, what is coming, what the box is guessing, and what
- * to read. Done jobs stay, struck through, until the engine retires them: a task must not vanish
- * under the finger. */
+/** The sheet, while something is happening: what to do, what is coming, what the box is guessing,
+ * and what to read. It sits at the top of /situation, above the services it was worked out from —
+ * on the front door it replaced the question and the tiles the moment anything went off. Done jobs
+ * stay, struck through, until the engine retires them: a task must not vanish under the finger. */
 export function Briefing({ blockRef }: { blockRef?: RefObject<HTMLDivElement | null> } = {}) {
   const { view, apply } = useSituation();
   const own = useRef<HTMLDivElement>(null);
@@ -86,7 +87,7 @@ export function Briefing({ blockRef }: { blockRef?: RefObject<HTMLDivElement | n
   const now = Date.parse(view.meta.now) || Date.now();
   // One guess per service. The engine can raise the same conclusion from a rule and from its own
   // sensors — "Internet — probably off" twice, each with its own Accept and Not now — which is four
-  // buttons of data entry on the front door for one question.
+  // buttons of data entry for one question.
   const guesses = new Map<string, typeof view.inferred[number]>();
   for (const i of view.inferred) {
     if (dismissed.includes(i.rule)) continue;

@@ -5,16 +5,18 @@ import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { condition, playbooks, powerOffView } from '../fixtures/api';
 
-function mockNow() {
+function mockSheet() {
   vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
   vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
 }
 
-describe('Now: the briefing', () => {
+/* The briefing is the sheet's, not the front door's: tapping a service off on Home says that service
+ * is off and nothing else, and what the box makes of it is one tap away at /situation. */
+describe('the sheet: the briefing', () => {
   it("offers the box's guess with Accept and Not now", async () => {
-    mockNow();
+    mockSheet();
     const accept = vi.spyOn(api, 'acceptInferred').mockResolvedValue(condition('mobile', 'off'));
-    renderRoute('/');
+    renderRoute('/situation');
     const block = await screen.findByRole('region', { name: 'The box thinks' });
     expect(block).toHaveTextContent('Mobile network — probably off');
     expect(block).toHaveTextContent('Masts run about 8 hours on battery.');
@@ -24,9 +26,9 @@ describe('Now: the briefing', () => {
   });
 
   it('dismisses a guess with Not now without writing anything', async () => {
-    mockNow();
+    mockSheet();
     const accept = vi.spyOn(api, 'acceptInferred');
-    renderRoute('/');
+    renderRoute('/situation');
     const block = await screen.findByRole('region', { name: 'The box thinks' });
     await userEvent.setup().click(within(block).getByRole('button', { name: 'Not now' }));
     expect(screen.queryByRole('region', { name: 'The box thinks' })).toBeNull();
@@ -34,8 +36,8 @@ describe('Now: the briefing', () => {
   });
 
   it('counts down the forecast due in the next day only', async () => {
-    mockNow();
-    renderRoute('/');
+    mockSheet();
+    renderRoute('/situation');
     const coming = await screen.findByRole('region', { name: 'Coming up' });
     const items = within(coming).getAllByRole('listitem');
     expect(items).toHaveLength(2);
@@ -48,9 +50,9 @@ describe('Now: the briefing', () => {
   });
 
   it('lists the now and hour jobs with names, and ticks one', async () => {
-    mockNow();
+    mockSheet();
     const set = vi.spyOn(api, 'setTask').mockResolvedValue({ ...powerOffView.tasks[0], done: true });
-    renderRoute('/');
+    renderRoute('/situation');
     const block = await screen.findByRole('region', { name: 'Right now' });
     const items = within(block).getAllByRole('listitem');
     expect(items.map((li) => li.querySelector('.task-title')?.textContent)).toEqual([
@@ -62,9 +64,9 @@ describe('Now: the briefing', () => {
     expect(await within(block).findByRole('checkbox', { name: /Fill the bath/ })).toBeChecked();
   });
 
-  it('does not ask who is doing a job on the front door', async () => {
-    mockNow();
-    renderRoute('/');
+  it('does not ask who is doing a job in the briefing', async () => {
+    mockSheet();
+    renderRoute('/situation');
     const block = await screen.findByRole('region', { name: 'Right now' });
     // The name is typed on Things to do; a briefing of open jobs is not a form to fill in.
     expect(within(block).queryByRole('textbox', { name: /Who is doing this/ })).toBeNull();
@@ -73,8 +75,8 @@ describe('Now: the briefing', () => {
   });
 
   it('links the reading and names the next bulletin', async () => {
-    mockNow();
-    renderRoute('/');
+    mockSheet();
+    renderRoute('/situation');
     const reading = await screen.findByRole('region', { name: 'Read' });
     expect(within(reading).getByRole('link', { name: 'Right now' })).toHaveAttribute('href', '/s/grid-collapse#right-now');
     expect(within(reading).getByRole('link', { name: 'Power' })).toHaveAttribute('href', '/m/power');

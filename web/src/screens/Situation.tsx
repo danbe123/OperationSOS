@@ -9,13 +9,16 @@ import { Screen, Body } from '../shell/Screen';
 import { SituationExport } from '../situation/SituationExport';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
+import { Briefing } from '../situation/Briefing';
 import { ConditionRow } from '../situation/ConditionRow';
 import { EventLog } from './plan/EventLog';
 import { SensorsPanel } from '../situation/SensorsPanel';
 import { CONDITION_INFO, describeDuration, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL } from '../situation/conditions';
 import { ukWhen } from '../tools/dates';
 import { withCondition } from '../situation/apply';
-import { useSituation } from '../situation/SituationProvider';
+import { nowTitle } from '../situation/nowTitle';
+import { ReadAloud } from '../situation/ReadAloud';
+import { isEventful, useSituation } from '../situation/SituationProvider';
 import { describeElapsed, phaseFor } from '../tools/situation';
 import './situation.css';
 
@@ -70,6 +73,13 @@ export function Situation() {
   const conditions = view ? CONDITION_IDS.map((id) => view.conditions[id]).filter(Boolean) : [];
   const broken = conditions.filter((c) => c.state !== 'working');
 
+  // While something is off, the sheet leads with what the box makes of it: what to do now, what is
+  // coming up, what it thinks and what to read. The front door used to turn into this the moment a
+  // service was tapped off; here it sits above the ten services it was worked out from. What is
+  // read aloud is the briefing itself, so the speaker button belongs in the screen's own actions.
+  const eventful = isEventful(view);
+  const briefing = useRef<HTMLDivElement>(null);
+
   // A `/situation#log` link lands on a screen whose ten services are still empty, so the browser's
   // own anchor scroll puts the log where the log is about to stop being: by the time the view
   // arrives, ten rows have grown above it and the reader is looking at the drill form. The screen
@@ -88,11 +98,12 @@ export function Situation() {
 
   return (
     <Screen
-      title="Situation"
+      title={eventful ? nowTitle(view) : 'Situation'}
       search={false}
       className="situation-screen"
       actions={
         <>
+          {eventful && <ReadAloud id="briefing" target={briefing} label="Read aloud" />}
           <Link className="btn btn-small" to="/board"><Icon name="plan" size={18} /><span>Board</span></Link>
           <a className="btn btn-small" href="/api/situation/report" target="_blank" rel="noreferrer"><Icon name="print" size={18} /><span>Print report</span></a>
         </>
@@ -101,6 +112,8 @@ export function Situation() {
       <Body>
       {error && <p className="warning">The situation is unavailable: {error}</p>}
       {loading && !view && <p className="muted">Reading the situation…</p>}
+
+      {eventful && <Briefing blockRef={briefing} />}
 
       <section className="panel no-print" aria-label="What is working">
         <div className="panel-head"><h2>What is working</h2></div>

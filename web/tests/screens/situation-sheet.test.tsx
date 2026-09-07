@@ -276,4 +276,33 @@ describe('The situation sheet', () => {
     expect(within(rowFor(rows, 'power')).getByRole('button', { name: 'Details: Mains power' })).toHaveAttribute('aria-expanded', 'false');
     expect(rowFor(rows, 'power')).toHaveClass('cond-row-danger');
   });
+
+  /* The briefing is the sheet's: the front door used to turn into it the moment a service went off,
+     which is what a household tapping "power" to say the power was off was taken to. */
+  it('leads with the briefing while something is off', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
+    renderRoute('/situation');
+    const doing = await screen.findByRole('region', { name: 'Right now' });
+    expect(within(doing).getAllByRole('listitem')).toHaveLength(3);
+    expect(within(doing).getByRole('link', { name: /All of them/ })).toHaveAttribute('href', '/tasks');
+    expect(screen.getByRole('region', { name: 'Coming up' })).toHaveTextContent('Fridge food unsafe');
+    expect(screen.getByRole('region', { name: 'The box thinks' })).toHaveTextContent('Mobile network — probably off');
+    // above the ten services it was worked out from, and the heading says what is happening
+    const rows = screen.getByRole('region', { name: 'What is working' });
+    expect(doing.compareDocumentPosition(rows) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Power off, mobile patchy' })).toBeInTheDocument();
+  });
+
+  it('is the sheet and nothing else while everything is working', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    renderRoute('/situation');
+    await screen.findByRole('region', { name: 'What is working' });
+    expect(screen.getByRole('heading', { level: 1, name: 'Situation' })).toBeInTheDocument();
+    for (const name of ['Right now', 'Coming up', 'The box thinks', 'Read']) {
+      expect(screen.queryByRole('region', { name })).toBeNull();
+    }
+  });
+
 });

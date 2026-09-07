@@ -46,10 +46,6 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
       expect(box!.x + box!.width).toBeLessThanOrEqual(strip.x + strip.width + 1);
     }
 
-    // Now remembers the guide this device last opened
-    await nav.getByRole('link', { name: 'Now' }).click();
-    await expect(page.getByRole('region', { name: 'Carry on' })).toContainText('Continue: National grid collapse');
-
     // a timer keeps running while the rest of the box is read
     await nav.getByRole('link', { name: 'Guides' }).click();
     await page.getByRole('navigation', { name: 'Tools' }).getByRole('link', { name: /Timers/ }).click();
@@ -60,16 +56,13 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     await page.getByRole('navigation', { name: 'Tools' }).getByRole('link', { name: /Timers/ }).click();
     await expect(page.getByRole('list', { name: 'Running timers' })).toContainText('Next dose in 4 hours');
 
-    // the situation clock on a guide, and the card it puts on Now
+    // the situation clock on a guide, and the band it puts on every screen
     await page.goto('/s/grid-collapse');
     await page.getByRole('button', { name: /This has started/ }).click();
-    // The band and Now's heading say how long it has been running; the control says only that it is on.
+    // The band says how long it has been running; the control says only that it is on.
     await expect(page.getByRole('status').first()).toContainText('Active');
     await expect(page.getByRole('tab', { name: /Right now/ })).toHaveAttribute('aria-current', 'time');
-    await nav.getByRole('link', { name: 'Now' }).click();
-    const carryOn = page.getByRole('region', { name: 'Carry on' });
-    await expect(carryOn).toContainText('Active situation');
-    await carryOn.getByRole('link', { name: /Active situation/ }).click();
+    await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('National grid collapse');
     await page.getByRole('button', { name: 'End situation' }).click();
     await page.getByRole('button', { name: 'Confirm end' }).click();
     await expect(page.getByRole('button', { name: /This has started/ })).toBeVisible();

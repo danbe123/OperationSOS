@@ -58,21 +58,18 @@ describe('modes: map first', () => {
     expect(scenarioMapHref('storms-flooding')).toBe('/map?overlay=flood-zones');
   });
 
-  it('puts an Open the map button at the top of Now, carrying the flood overlay', async () => {
+  it('never rearranges the front door: the map is where it always is, on the rail', async () => {
+    // A flood used to put an Open the map button above everything else on Now. The front door is
+    // the same door in every situation now — the question, the tiles and the services — and the
+    // map is one of the five destinations, on every screen.
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(makeView({
       scenario: { slug: 'storms-flooding', title: 'Storms and flooding', started_at: '2026-09-06T12:00:00.000Z', elapsed_s: 7200, phase: 'right-now' },
       modes: { ...view.modes, map_first: true },
     }));
     renderRoute('/');
-    expect(await screen.findByRole('link', { name: /Open the map/ })).toHaveAttribute('href', '/map?overlay=flood-zones');
-  });
-
-  it('leaves the map button off Now when the modes do not ask for it', async () => {
-    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
-    vi.spyOn(api, 'situationView').mockResolvedValue(view);
-    renderRoute('/');
     await screen.findByRole('navigation', { name: 'Scenarios' });
     expect(screen.queryByRole('link', { name: /Open the map/ })).toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
   });
 });

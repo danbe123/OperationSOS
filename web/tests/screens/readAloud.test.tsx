@@ -48,12 +48,12 @@ describe('Read aloud', () => {
     expect(screen.getByText(/no voice installed/)).toBeInTheDocument();
   });
 
-  it('reads the briefing on Home', async () => {
+  it('reads the briefing on the situation sheet', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue([]);
     vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     const speak = vi.spyOn(api, 'speak').mockResolvedValue(new Blob(['x']));
     const user = userEvent.setup();
-    renderRoute('/');
+    renderRoute('/situation');
     await user.click(await screen.findByRole('button', { name: 'Read aloud' }));
     await waitFor(() => expect(speak).toHaveBeenCalled());
     const spoken = speak.mock.calls.map((c) => c[0]).join(' ');
