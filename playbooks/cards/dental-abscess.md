@@ -21,6 +21,14 @@ Throbbing toothache, a swollen gum or face, pus or a foul taste, pain on biting,
 7. A cold compress on the cheek eases swelling. If a gum boil bursts, rinse and spit; the pain eases but the infection is still there ([Where There Is No Dentist, p. 55](doc:where-there-is-no-dentist#page=55)).
 8. Keep the teeth clean to stop the next one: the cause is decay reaching the nerve ([Where There Is No Dentist, p. 55](doc:where-there-is-no-dentist#page=55)).
 
+{{#unless power}}
+You cannot judge a mouth by feel. Use a head torch and a small mirror in daylight if you can, with the person sitting where the light falls into the mouth, and look at the gum, the cheek and under the tongue for swelling. Heat the salt-water rinse on the gas hob or a camping stove and let it cool to warm. Keep a cold cloth wrung out in cold water for the cheek, since the freezer packs are gone.
+{{/unless}}
+
+{{#unless water}}
+Rinsing still matters: half a teaspoon of salt in a cup of boiled and cooled water, swill and spit into a bowl, after every meal and at bedtime. Never rinse the mouth with untreated water from a butt, a stream or a flooded street ([Water module](module:water)). Brush with a wetted brush and spit rather than rinsing under a tap, and keep a covered jug of clean water by the bed for the night rinses.
+{{/unless}}
+
 ## Warnings
 
 **Warning:** Swelling spreading towards the eye or down into the neck, difficulty swallowing, breathing or opening the mouth, or a swollen tongue can close the airway (Ludwig's angina) — [[call 999]] ([Dental abscess (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Dental_abscess)).
@@ -29,6 +37,14 @@ Throbbing toothache, a swollen gum or face, pus or a foul taste, pain on biting,
 ## Stop or escalate
 
 Airway swelling as above, or fever with confusion or shivering ([sepsis](card:sepsis)) — [[call 999]]. Any abscess, a broken or knocked-out tooth, or pain that painkillers do not touch — [[call 111]] for emergency dental care. If nobody can come: an abscess with swelling, pus or fever gets antibiotics, amoxicillin or phenoxymethylpenicillin with metronidazole ([Survival and Austere Medicine, p. 212](doc:survival-austere-medicine-2017#page=212); [Where There Is No Doctor, p. 280](doc:where-there-is-no-doctor#page=280)); if it keeps coming back the tooth is dying and has to come out, following Where There Is No Dentist step by step ([Where There Is No Dentist, p. 156](doc:where-there-is-no-dentist#page=156)).
+
+{{#unless phones}}
+No 111 and no emergency dentist, so the job is pain relief, antibiotics and watching the airway. Paracetamol and ibuprofen together at the doses above beat either alone, salt rinses and a propped-up head at night. Start the antibiotics for swelling, pus or fever. The one thing that cannot wait at home is swelling that spreads to the eye, the floor of the mouth or the neck, or trouble swallowing, breathing or opening the mouth: carry them at once to the nearest crewed help on [the map's health layer](map:?overlay=health), sitting up, and keep them sitting up all the way.
+{{/unless}}
+
+{{#if scenario:long-rebuild}}
+With no dentist for years, teeth are a survival problem: an abscess that keeps coming back ends in taking the tooth out, and doing that badly is dangerous. Prevention is the whole plan, so brush twice a day with fluoride paste while it lasts, keep sugar down to mealtimes, and treat a hole early rather than waiting for pain ([Where There Is No Dentist, p. 16](doc:where-there-is-no-dentist#page=16)). Keep a dental kit and the antibiotics you can get, and read the extraction chapter before you ever need it ([Where There Is No Dentist, p. 156](doc:where-there-is-no-dentist#page=156)).
+{{/if}}
 
 ## Source
 

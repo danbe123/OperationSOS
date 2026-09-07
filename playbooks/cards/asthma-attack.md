@@ -20,6 +20,10 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 6. Do not lie them down and do not leave them.
 7. Keep windows open if the air is clean; close them if smoke, ash or pollen is the trigger.
 
+{{#unless power}}
+A mains nebuliser and an oxygen concentrator both stop when the power does. Ten puffs of the blue reliever through a spacer is the treatment on this card and it needs no mains at all, so use the inhaler and the spacer and do not wait for a machine ([Asthma attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/)). If a cylinder of oxygen is running, keep every flame, candle, cigarette and stove well away from it. Work by head torch, and charge the phone and the torch from the box's power bank while there is charge in it ([Power module](module:power)).
+{{/unless}}
+
 ## Warnings
 
 **Warning:** Blue lips, exhaustion, a silent chest or drowsiness mean a life-threatening attack.
@@ -27,7 +31,19 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 
 ## Stop or escalate
 
+{{#if scenario:volcanic}}
+Ash irritates the airways and will set attacks off. Stay indoors with the windows and doors shut, seal the gaps you can, and damp a towel along the bottom of the door. Go out only if you must, and then in the best-fitting mask you hold and goggles. Keep the reliever on the person rather than in a drawer, and never sweep ash dry indoors: damp it down first, and take the dusty clothes off outside ([volcanic eruption](playbook:volcanic)).
+{{/if}}
+
+{{#if scenario:supply-chain}}
+Inhalers run out. Count the doses left on the reliever, keep the daily preventer going even when the chest feels fine, because the preventer is what stops the next attack ([chronic conditions](page:chronic-conditions)), and ask the pharmacy about an emergency supply before the last inhaler is empty rather than after. Do not ration the reliever during an attack: the ten puffs are the treatment, and a rationed attack is the one that kills. Do not share an inhaler between people.
+{{/if}}
+
 If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours. If nobody can come: keep repeating the reliever through the spacer every 15 minutes while it helps, move them to the cleanest air you have, give plenty to drink to loosen the mucus, and if fever comes or the attack drags on for more than three days treat it as a chest infection with the antibiotics you hold under the rules in Where There Is No Doctor ([WTIND, p. 216](doc:where-there-is-no-doctor#page=216)).
+
+{{#unless phones}}
+No ambulance is coming and no hospital nebuliser is waiting. Keep the ten puffs through the spacer going every 15 minutes while they help, sit them upright, and stay with them: exhaustion, drowsiness, blue lips or a chest that has gone quiet mean they are losing. If the puffs stop working, carry them, do not walk them, to the nearest crewed help on [the map's health layer](map:?overlay=health), upright the whole way, taking the inhaler and spacer with you and sending someone ahead to say you are coming.
+{{/unless}}
 
 ## Source
 
