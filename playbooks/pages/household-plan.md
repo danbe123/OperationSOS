@@ -9,7 +9,7 @@ category: plan
 
 ## Why fill this in
 
-This page follows the sections of the government's Household Emergency Plan ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). Print it, fill it in with pen, and keep it on the fridge or in the grab bag. Your own filled-in notes, once written, live on the `/plan` screen of this box.
+This page follows the sections of the government's Household Emergency Plan ([Prepare](kiwix:prepare_uk/prepare.campaign.gov.uk/get-prepared-for-emergencies/)). Print it, fill it in with pen, and keep it on the fridge or in the grab bag. Your own notes about it, once written, live on the `/notes` screen of this box.
 
 ## Who lives here
 

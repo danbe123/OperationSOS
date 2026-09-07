@@ -35,7 +35,7 @@ Unchanged from the tools spec (`situation_slug`, `situation_started_at`), now pa
 
 ### Household, stock, home
 
-Household and stock as built. Home is a setting (`home_lat`, `home_lon`, `home_label`, `home_flood_zone`), set from the map ("Set as home"), which also captures the flood zone under the point from the flood overlay when it is loaded.
+Household and stock as built at the time. Removed by the no-setup cut (`2026-09-07-no-setup-design.md`): the household register, the neighbours list and Stock; the tables stay in the database, unread. Home is still a setting (`home_lat`, `home_lon`, `home_label`, `home_flood_zone`), set from the map ("Set as home"), which also captures the flood zone under the point from the flood overlay when it is loaded — a household is never asked to describe itself, only the map is asked where it is. The one number that survives is `settings.people` (default 2), which the kits use to scale quantities.
 
 ### Sensors
 
@@ -91,13 +91,13 @@ Markdown may contain `{{#if <cond>}} … {{else}} … {{/if}}` and `{{#unless <c
 - **Read aloud**: a speaker button on the briefing and on any page; `POST /speak` runs Piper with a bundled British voice and returns WAV; the kiosk plays it. Piper and its voice are manifest items (`ai` category, `piper` and `piper-voice-en_GB`).
 - **Radio**: the comms pages carry a bulletin schedule (`playbooks/rules/bulletins.yaml`); the board shows the next one; with the dongle present the box records it.
 
-## 7. Readiness and drills
+## 7. Drills
 
-`POST /drill` starts a drill: a scenario plus a set of conditions with `since` in the past, flagged `drill`. The engine runs as normal; the board says DRILL; tasks tick as normal into `task_state` with `drill: true`; `DELETE /drill` ends it and writes a summary event (tasks done, time taken). The readiness score is recomputed nightly and on every stock or household change: 30 points stock (water, food, medicine days against 3, 7 and 14), 30 points household coverage (each need with a task template and a stock item), 15 points plan (home set, meeting point in the plan page, contacts), 10 points practice (a drill in the last 6 months) and 15 points kits (the basic tier of every relevant kit). The kits spec (`2026-09-06-kits-design.md`, section 4) owns these weights and rebalanced them from the original 40/30/20/10.
+`POST /drill` starts a drill: a scenario plus a set of conditions with `since` in the past, flagged `drill`. The engine runs as normal; the board says DRILL; tasks tick as normal into `task_state` with `drill: true`; `DELETE /drill` ends it and writes a summary event (tasks done, time taken). Removed by the no-setup cut (`2026-09-07-no-setup-design.md`): the readiness score that used to recompute on every stock or household change, and the `readiness_score` field on `/status`. Kits still track their own basic-tier progress (kits spec, `2026-09-06-kits-design.md`, section 4), but score nothing.
 
-## 8. Community
+## 8. Community (removed 2026-09-07)
 
-`neighbours` table (name, address, needs, skills, contacts, notes). Reading rules and task rules can target neighbours (`needs: oxygen` → "Check on Mrs Khan at number 12"). A printable street list. Situation report export and import as JSON, shown as a QR sequence on one phone and scanned by another (the box's camera-free path is a text paste).
+Removed entirely by the no-setup cut (`2026-09-07-no-setup-design.md`); kept here as a historical record. The `neighbours` table (name, address, needs, skills, contacts, notes) stays in the database, unread. Reading rules and task rules could target neighbours (`needs: oxygen` → "Check on Mrs Khan at number 12"); every rule that carried `who: neighbours` is deleted along with the rest of the `needs:`/`skills:`/`who:`/`stock:` rules. The printable street list is gone. Situation report export and import as JSON, shown as a QR sequence on one phone and scanned by another (the box's camera-free path is a text paste), continues for what is left (conditions, scenario, tasks, checklist, notes, home, events, settings); an import that carries the removed parts ignores them with a note in its summary.
 
 ## 9. Audit and reports
 

@@ -34,7 +34,7 @@ kiosk 853x480                                   phone 390
                                                 └──────────────────────┘
 ```
 
-Six destinations: **Now** (the situation, the briefing, the tasks; in peacetime the readiness and a plain "start here"), **Guides** (the manual: scenarios first, then modules, field craft, phone and radio, pages, all searchable and filterable by situation), **Kit** (tiered lists of what to have, ticked by everyone, feeding Stock), **Medical** (cards, doses, NHS, medical library), **Map**, **Find** (search across everything with the library behind it). Household, stock, plan, notes, tools, timers, system and the AI assistant live one tap inside the destination they serve (Household and stock under Now; timers, sun, calculators under Guides as tools; system and AI in the rail's footer).
+Six destinations: **Now** (the situation, the briefing, the tasks; in peacetime, no setup asked of anyone, just "Start here"), **Guides** (the manual: scenarios first, then modules, field craft, phone and radio, pages, all searchable and filterable by situation), **Kit** (tiered lists of what to have, ticked by everyone, scaled by a one-tap people count), **Medical** (cards, doses, NHS, medical library), **Map**, **Find** (search across everything with the library behind it). Notes, tools, timers, system and the AI assistant live one tap inside the destination they serve (Notes under Now; timers, sun, calculators under Guides as tools; system and AI in the rail's footer). Superseded by the no-setup cut (`2026-09-07-no-setup-design.md`): Household and stock are gone, not merely relocated.
 
 **Principles**:
 1. Now is the front door. The first screen answers "what do I do" from the engine, or says "nothing is wrong, here is how to get ready" in peacetime.
@@ -46,9 +46,9 @@ Six destinations: **Now** (the situation, the briefing, the tasks; in peacetime 
 
 ## 3. Screens
 
-- **Now**: band, "Do now" tasks (tick, assign, why), "Coming up" forecast, "The box thinks" proposals, "Read" links, then Household and stock summary with a link. Peacetime: readiness with its gaps as the to-do list, the drill button, the household and stock summary.
+- **Now**: band, "Do now" tasks (tick, assign, why), "Coming up" forecast, "The box thinks" proposals, "Read" links. Peacetime, per the no-setup cut (`2026-09-07-no-setup-design.md`): no band, no score, no household-and-stock summary — the title "Everything is working" then "Start here": the kits' basic-tier progress in one line, the drill button, and the guide tiles.
 - **Guides**: a search field, then Scenarios (twenty, icon plus name plus one line), Modules, Field craft, Phone and radio, Reference, Tools. A scenario opens with tabs as today but the checklist becomes the shared task list filtered to that scenario.
-- **Medical**: 999 line first (through the directives), quick cards, children's doses, household medical needs, NHS A to Z, library.
+- **Medical**: 999 line first (through the directives), quick cards, children's doses, NHS A to Z, library. Superseded by the no-setup cut: the household medical needs panel is gone with the register it read.
 - **Map**: as today with the panels reorganised into one toolbar (Layers, Find, Pins, Home, Nearby, Measure, Share, Print).
 - **Find**: search with source chips, then the library browse (categories, availability), then the AI assistant when it is on.
 - **Situation sheet** and **Tasks**: reached from the band; tasks also from Now. **Board**: unchanged in purpose, restyled with the scale.
@@ -74,14 +74,14 @@ The redesign is not done until every entry below has been restyled inside the sh
 
 | Route | Screen | States to cover |
 |---|---|---|
-| `/` (`/now`) | Now | peacetime (readiness, gaps, drill button), scenario active, conditions off, proposals pending, drill, loading, engine unreachable, empty household and stock |
+| `/` (`/now`) | Now | peacetime ("Start here": kits basic-tier line, drill button, guide tiles — no score, no setup asked), scenario active, conditions off, proposals pending, drill, loading, engine unreachable |
 | `/situation` | Situation sheet | all ten conditions in each state, stale prompt, conflict (409), note editing, clock controls, drill start and end, sensors present and absent, print report, the event log beneath the rows (`#log` deep link) with empty and populated states and its entry form |
-| `/tasks` | Tasks | four buckets, empty bucket, done filter, assignment with and without a household, checklist tasks, drill ticks |
-| `/board` | Board | scenario active, conditions off, peacetime, no bulletin, no stock, tap to leave |
+| `/tasks` | Tasks | four buckets, empty bucket, done filter, assignment by a typed name, checklist tasks, drill ticks |
+| `/board` | Board | scenario active, conditions off, peacetime, no bulletin, tap to leave |
 | `/s/:slug` | Scenario | six tabs, current phase marked, modules as accordions, checklist as the task list, sources, reviewed and unreviewed, print (all tabs open), loading, missing |
 | `/m/:slug` | Module | standalone, with checklist items, print |
 | `/p/:slug` | Page | reference, comms, fieldcraft and plan categories, calls-hidden notice, read aloud present and absent, print |
-| `/medical` | Medical | 999 line through the directives, quick cards, household needs present and absent, NHS installed, NHS on a missing drive, NHS absent |
+| `/medical` | Medical | 999 line through the directives, quick cards, NHS installed, NHS on a missing drive, NHS absent |
 | `/medical/card/:slug` | Quick card | extra-large type, steps, warnings, stop or escalate with phones on and off, print |
 | `/medical/dose` | Children's doses | both medicines, every form, an age under the table, 18 and over, source link to either NHS book |
 | `/map` | Map | base switch, terrain, layers panel, find place, locate me (kiosk only), pins, home (set, not set, flood zone), nearby (with results, with missing kinds, no home), measure, share, print, tooltips on hover and tap, calls hidden |
@@ -90,7 +90,7 @@ The redesign is not done until every entry below has been restyled inside the sh
 | `/read/:id/*` | Reader | article, theme injected, text size, external link notice, missing article |
 | `/doc/:id` | Document | PDF with thumbnails and search, EPUB, `#page=` deep link, missing file |
 | `/ai` | Assistant | off, starting, ready, busy by this screen, busy by another, thermal off, error, streaming answer with citations, refusal |
-| `/plan` | Household hub | one row per section (People, Neighbours, Stock, The plan, Notes and pins, What happened) each stating its own state or empty state, old-anchor redirects (`#household`, `#stock`, `#notes`, `#pins`, `#log`) to the sub-screen; `/plan/people`, `/plan/neighbours`, `/plan/stock`, `/plan/plan`, `/plan/notes` each with their list, empty state, add-behind-a-button form, edit and remove, and Back to the hub |
+| `/plan`, `/plan/*` | — | removed by the no-setup cut (`2026-09-07-no-setup-design.md`): the Household hub and every sub-screen (People, Neighbours, Stock, The plan, Notes and pins, What happened) are gone; the route now falls through to the not-found page. What replaces it: `/notes` ("Notes and pins", the notes-and-pins list and its add form) and `/p/household-plan` (content, covered by `/p/:slug`); the event log stays on `/situation#log` |
 | `/fieldcraft` | Field craft | the ten pages |
 | `/radio` | Phone and radio | comms pages, calls hidden |
 | `/tools` | Tools | tile list |

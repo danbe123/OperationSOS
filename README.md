@@ -10,7 +10,7 @@ The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs
 - **One search** across Wikipedia, the NHS, repair manuals, survival libraries, maps and the playbooks.
 - **Maps** of the UK, the Republic of Ireland, the Isle of Man and the Channel Islands with footpaths, contours, hillshade and scenario overlays (hospitals, fuel, water, nuclear sites, flood zones), served from the box to any phone.
 - **Medical quick cards** plus comms, legal and household-plan reference pages.
-- **Kits**: fifteen tiered lists of what to have (medical, water, food, power, comms, fallout and more), ticked by everyone on the box, with quantities scaled to the household and a one-tap hand-off into Stock.
+- **Kits**: fifteen tiered lists of what to have (medical, water, food, power, comms, fallout and more), ticked by everyone on the box, with quantities scaled to a one-tap people count.
 - **An optional AI assistant** that only answers from the library and cites its sources; off by default.
 - Plain HTTP on the hotspot at `http://10.42.0.1` (or `http://sos.box`), no accounts, no internet dependency at runtime.
 

@@ -417,7 +417,7 @@ Detected via `?kiosk=1` on the launch URL and persisted in `sessionStorage`.
 | `/map` | Section 9 |
 | `/library` | Categories, item cards with kind, size, as-at, tier, availability and drive badge |
 | `/radio` and `/p/:slug` | Comms pages |
-| `/plan` | Household plan template, shared notes, pins list |
+| `/p/household-plan`, `/notes` | Superseded by the no-setup cut (`2026-09-07-no-setup-design.md`): the household plan template is now a content page (`/p/household-plan`, covered by `/p/:slug` above); shared notes and the pins list moved to `/notes` |
 | `/ai` | Assistant when AI is ready; otherwise a card explaining how to turn it on |
 | `/system` | Status, storage, hotspot settings, ethernet mode, power mode, backlight, AI toggle, thermal threshold, update progress, theme default, admin PIN |
 | `/starting`, `/welcome` | Static pages in the build (kiosk boot page; captive-portal landing page) |

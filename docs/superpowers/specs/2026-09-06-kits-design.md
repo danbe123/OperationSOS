@@ -73,9 +73,11 @@ Endpoints, on the `/api` prefix, in a new `routers/kits.py`:
 - `GET /kits/{slug}` reports `people` as the number the kit is scaled by, which for a gated kit is the count of matching people (`kits.matching_people`), so its quantities, its `qty.text` and the days-left figure on a Stock hand-off all use that count. `GET /kits` keeps the plain register count as its top-level `people`.
 - Every change to a tick or to Stock calls `readiness.refresh`, as the household router does today.
 
-## 4. Readiness
+## 4. Readiness (superseded 2026-09-07)
 
-The score stays 0 to 100. The weights in the situation-engine spec (section 7) change from 40/30/20/10 to:
+Removed by the no-setup cut (`2026-09-07-no-setup-design.md`): the score, the household register, Stock and the weighted table below are gone, and kits no longer feed anything. Kept as a historical record of the design that shipped between 2026-09-06 and 2026-09-07.
+
+The score stayed 0 to 100. The weights in the situation-engine spec (section 7) changed from 40/30/20/10 to:
 
 | Part | Points | Detail |
 |---|---|---|
@@ -85,7 +87,9 @@ The score stays 0 to 100. The weights in the situation-engine spec (section 7) c
 | Practice | 10 | unchanged |
 | Kits, basic tier | 15 | proportion of basic-tier items ticked across relevant kits |
 
-The engine's `Model` gains `kits: tuple[dict, ...]` (`{slug, title, relevant, basic_total, basic_done}`), built by `build_model_for` from the content cache and `checklist_state`. Gaps: one line per relevant kit whose basic tier is not complete ("Water kit: 2 of 5 basic items", link `/kit/water`, points = that kit's share of the 15, rounded), so the peacetime Now screen sends people to the kit that needs them. Existing tests that assert the stock-gap point values move to the new numbers.
+The engine's `Model` gained `kits: tuple[dict, ...]` (`{slug, title, relevant, basic_total, basic_done}`), built by `build_model_for` from the content cache and `checklist_state`. Gaps: one line per relevant kit whose basic tier was not complete ("Water kit: 2 of 5 basic items", link `/kit/water`, points = that kit's share of the 15, rounded), so the peacetime Now screen sent people to the kit that needed them.
+
+What replaces it: no household register means every kit is relevant to everybody (`kits.relevant`, always `True`); an item's quantity scales by `settings.people` (`kits.matching_people`), a one-tap stepper on the Kit screen, default 2, rather than by who is on a register. Basic-tier progress still shows on the Kit screen and, in one line, on the peacetime Now screen ("Kits: 12 of 84 basic items ticked") — it scores nothing.
 
 ## 5. Screens
 

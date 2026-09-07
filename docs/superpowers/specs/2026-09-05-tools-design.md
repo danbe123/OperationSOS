@@ -1,6 +1,8 @@
-# Tools: stock, household, doses, situation clock, timers, sun and moon, calculators, event log
+# Tools: doses, situation clock, timers, sun and moon, calculators, event log
 
 Design for the tool expansion agreed on 2026-09-05. Extends the application spec (`2026-09-03-operation-sos-design.md`); nothing here changes the content, search, map or AI sections.
+
+Superseded 2026-09-07 by the no-setup cut (`2026-09-07-no-setup-design.md`): household and stock, named in this document's original title, are removed — the sections below that describe them are kept as a historical record and marked as such. Doses, the situation clock, timers, sun and moon, calculators and the event log are unaffected and still work as designed here.
 
 ## 1. Why
 
@@ -11,9 +13,9 @@ Non-goals: mesh radio, sensors, photo identification, live data (tides, forecast
 ## 2. Navigation
 
 - Home gets a sixth tile after Plan: **Tools** (icon `hammer`, subtitle "Timers, sun, sums, log"). The tiles grid already wraps.
-- `/tools` lists: Timers (`/tools/timers`), Sun and moon (`/tools/sun`), Calculators (`/tools/calc`), Event log (`/tools/log`), Children's doses (`/medical/dose`), Stock (`/plan#stock`).
-- `/medical` gains a **Children's doses** tile in the NHS A to Z row and a **Household** panel (people with medical needs or medications) when the register has any, linking to `/plan#household`.
-- `/plan` sections in order: Household, Stock, Household plan (existing page), Shared notes, Pins, Event log. Each has an `id` anchor.
+- `/tools` lists: Timers (`/tools/timers`), Sun and moon (`/tools/sun`), Calculators (`/tools/calc`), Event log (`/tools/log`), Children's doses (`/medical/dose`). Superseded: the Stock entry (`/plan#stock`) is gone with Stock itself.
+- `/medical` gains a **Children's doses** tile in the NHS A to Z row. Superseded: the Household panel (people with medical needs or medications), and its `/plan#household` link, are gone with the household register.
+- Superseded: `/plan` (Household, Stock, Household plan, Shared notes, Pins, Event log as sections with `id` anchors) is gone entirely. What replaces it: the household plan is a content page at `/p/household-plan`; shared notes and pins moved to `/notes`; the event log stays reachable from `/situation#log`.
 - `/s/:slug` gains the situation clock in the intro strip.
 
 Design rules from the main spec apply: 48px targets, plain body text, an icon always has a word, warnings use colour plus a symbol.
@@ -29,23 +31,27 @@ stock     (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TE
            quantity REAL NOT NULL, unit TEXT NOT NULL, per_person_day REAL, expires TEXT, notes TEXT, updated_at TEXT)
 ```
 
-- `stock.category` is one of `water | food | fuel | medicine | other`. `per_person_day` is optional; when set, days left = `quantity / (per_person_day × people)` where `people` is the household count (minimum 1). Water items default to 3 litres per person per day (UK guidance covers drinking plus basic hygiene); other categories default to none.
-- `expires` is an ISO date or null.
-- The situation clock uses the `settings` table: `situation_slug`, `situation_started_at` (ISO UTC). One active situation per box.
-- Events are `notes` rows with `kind = 'event'`; `title` holds the text, `updated_at` the time it was logged. Editing an event changes its text only; the time is kept (the router preserves `updated_at` for events on PUT).
+Superseded 2026-09-07: the `household` and `stock` routers and endpoints are removed; the tables above stay in the database, unread, so an existing box loses nothing on upgrade. The one number that survives is `settings.people` (default 2), which the kits use to scale quantities (kits spec, `2026-09-06-kits-design.md`).
+
+- `stock.category` was one of `water | food | fuel | medicine | other`. `per_person_day` was optional; when set, days left was `quantity / (per_person_day × people)` where `people` was the household count (minimum 1). Water items defaulted to 3 litres per person per day (UK guidance covers drinking plus basic hygiene); other categories defaulted to none.
+- `expires` was an ISO date or null.
+- The situation clock uses the `settings` table: `situation_slug`, `situation_started_at` (ISO UTC). One active situation per box. Unaffected by the no-setup cut.
+- Events are `notes` rows with `kind = 'event'`; `title` holds the text, `updated_at` the time it was logged. Editing an event changes its text only; the time is kept (the router preserves `updated_at` for events on PUT). Unaffected by the no-setup cut.
 
 ## 4. Endpoints (all under `/api`, JSON, no PIN)
 
+Superseded 2026-09-07: `/household` and `/stock` and every row below for them are removed and answer 404. `/situation` and `/notes?kind=event` are unaffected.
+
 | Method and path | Body | Returns |
 |---|---|---|
-| `GET /household` | | `[{id, name, age, needs, medications, contacts, updated_at}]` |
-| `POST /household` | `{name, age?, needs?, medications?, contacts?}` | the row |
-| `PUT /household/{id}` | partial | the row |
-| `DELETE /household/{id}` | | `{ok: true}` |
-| `GET /stock` | | `{people, items: [{..., days_left}]}` |
-| `POST /stock` | `{name, category, quantity, unit, per_person_day?, expires?, notes?}` | the item with `days_left` |
-| `PUT /stock/{id}` | partial | the item |
-| `DELETE /stock/{id}` | | `{ok: true}` |
+| `GET /household` (removed) | | `[{id, name, age, needs, medications, contacts, updated_at}]` |
+| `POST /household` (removed) | `{name, age?, needs?, medications?, contacts?}` | the row |
+| `PUT /household/{id}` (removed) | partial | the row |
+| `DELETE /household/{id}` (removed) | | `{ok: true}` |
+| `GET /stock` (removed) | | `{people, items: [{..., days_left}]}` |
+| `POST /stock` (removed) | `{name, category, quantity, unit, per_person_day?, expires?, notes?}` | the item with `days_left` |
+| `PUT /stock/{id}` (removed) | partial | the item |
+| `DELETE /stock/{id}` (removed) | | `{ok: true}` |
 | `GET /situation` | | `{slug, title, started_at, elapsed_s, phase}` or `{slug: null}` |
 | `POST /situation` | `{slug}` | as GET (404 for an unknown playbook) |
 | `DELETE /situation` | | `{slug: null}` |
@@ -75,11 +81,11 @@ Screens:
 - `SunMoon.tsx`: location (last pin, else the map default; place search via `/places`; manual lat/lon), date (default today, arrows for previous/next day), results table and moon phase.
 - `Calculators.tsx`: four cards, inputs with sensible defaults, results update live, each card links to the page or module the figures come from.
 - `Dose.tsx`: medicine, form, age in years and months; result in large type with the maximum in 24 hours, the interval and the notes, the warning strip (999/111) and the source link. Never shows a dose outside the NHS bands.
-- `Plan.tsx` is split: `plan/Household.tsx`, `plan/Stock.tsx`, `plan/EventLog.tsx`, `plan/Notes.tsx`, `plan/Pins.tsx`, with `Plan.tsx` composing them.
+- `Plan.tsx` was split: `plan/Household.tsx`, `plan/Stock.tsx`, `plan/EventLog.tsx`, `plan/Notes.tsx`, `plan/Pins.tsx`, with `Plan.tsx` composing them. Superseded 2026-09-07: `plan/Household.tsx` and `plan/Stock.tsx` are gone with the screens they served; `plan/EventLog.tsx` moved under `Situation.tsx`; `plan/Notes.tsx` and `plan/Pins.tsx` moved under `Notes.tsx` at `/notes`.
 - `Scenario.tsx`: a `SituationClock` component in the intro: "This has started" button (confirm when another situation is active), then "Started 5 h ago, first 72 hours" with an End button (confirm). The current phase tab gets a "now" badge and `aria-current`. Home's resume card shows the same line when a situation is active.
-- `Medical.tsx`: dose tile and household panel.
+- `Medical.tsx`: dose tile. Superseded 2026-09-07: the household panel is gone with the register it read.
 
-API client gains `household*`, `stock*`, `situation*` calls and the event helpers; `types.ts` gains the types.
+API client gained `household*`, `stock*`, `situation*` calls and the event helpers; `types.ts` gained the types. Superseded 2026-09-07: the `household*` and `stock*` client calls and types are removed with the endpoints.
 
 ## 6. Error handling
 
@@ -87,8 +93,8 @@ Every mutation follows the notes pattern: optimistic where cheap, `notify()` wit
 
 ## 7. Testing
 
-- Backend: `test_household.py`, `test_stock.py` (including `days_left` and the household count), `test_situation.py` (phases, unknown slug, status field), notes events (time preserved on edit) in `test_api.py`.
-- Frontend: unit tests for every module in `web/src/tools/`; screen tests for Tools, Timers (fake timers), SunMoon, Calculators, Dose, Plan sections, the Scenario clock and the Medical panel; the Home test gains the sixth tile.
+- Backend: `test_household.py` and `test_stock.py` are removed along with the routers they tested. `test_situation.py` (phases, unknown slug, status field) and notes events (time preserved on edit) in `test_api.py` are unaffected.
+- Frontend: unit tests for every module in `web/src/tools/`; screen tests for Tools, Timers (fake timers), SunMoon, Calculators, Dose, the Scenario clock; the Plan-section and Medical-panel tests were removed or rewritten for `/notes` and the panel-free Medical screen; the Home test gains the sixth tile.
 - The unified `make test` target stays the gate. Playwright: `ux.spec.ts` gains a pass over the Tools tile and the situation clock.
 
 ## 8. Order of work
