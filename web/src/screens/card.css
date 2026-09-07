@@ -69,8 +69,10 @@
 /* Every card the same height: the title on one line, the summary on two, and a card whose summary runs
    longer says "… Read more" instead of pushing its row taller than its neighbours. The card page carries
    the whole thing, which is what the tile opens. */
-.quick-card-title { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-.quick-card-sub { font-size: var(--t-meta); color: var(--ink-muted); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Cut at a whole word, never mid-word with the browser's own ellipsis: the summary box is exactly two
+   lines tall and hides the rest; the Read more line under it is the only sign there is more. */
+.quick-card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quick-card-sub { font-size: var(--t-meta); color: var(--ink-muted); line-height: 1.3; max-height: 2.6em; overflow: hidden; }
 /* The third line is always there, so a card that needs the label and one that does not stand the
    same height; the label is simply invisible when the summary fits. */
 .quick-card-more { font-size: var(--t-meta); color: var(--ink-muted); font-weight: 600; }

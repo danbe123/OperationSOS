@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import type { RouteObject } from 'react-router';
+import { useRouteError, type RouteObject } from 'react-router';
 import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Now } from './screens/Now';
@@ -62,7 +62,22 @@ export function NotFound() {
   );
 }
 
+/** A tab left open across an update asks for chunks that no longer exist: the failure is the app's, not
+ * the household's, so the page reloads itself once before it says anything. Anything else is shown. */
+const STALE_CHUNK = /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i;
+
 export function RouteError() {
+  const error = useRouteError();
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  if (STALE_CHUNK.test(message) && typeof window !== 'undefined') {
+    const key = `sos.reloaded:${window.location.pathname}`;
+    let done = false;
+    try { done = sessionStorage.getItem(key) === '1'; if (!done) sessionStorage.setItem(key, '1'); } catch { done = false; }
+    if (!done) {
+      window.location.reload();
+      return null;
+    }
+  }
   return (
     <Screen title="Unable to open this page" back={false} search={false}>
       <Body>

@@ -62,7 +62,7 @@ function QuickCardText({ title, summary }: { title: string; summary?: string }) 
     <span className="quick-card-text">
       <span className="quick-card-title">{title}</span>
       {summary && <span className="quick-card-sub" ref={ref}>{summary}</span>}
-      {summary && <span className={clamped ? "quick-card-more" : "quick-card-more quick-card-more-off"} aria-hidden="true">… Read more</span>}
+      {summary && <span className={clamped ? "quick-card-more" : "quick-card-more quick-card-more-off"} aria-hidden="true">Read more</span>}
     </span>
   );
 }
