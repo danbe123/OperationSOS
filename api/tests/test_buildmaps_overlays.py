@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -66,6 +67,33 @@ def test_ogr_to_assembles_reprojection_with_optional_spat(tmp_path):
                                "-spat", "-1.56", "50.87", "-1.46", "50.97", "-oo", "X=Y", str(tmp_path / "out.fgb"), "/vsizip//tmp/a.zip", "layer1"]
     overlays.ogr_to(ctx, "GeoJSON", tmp_path / "out.geojson", overlays.VectorSource("in.geojson"))
     assert runner.calls[1] == ["ogr2ogr", "-f", "GeoJSON", "-t_srs", "EPSG:4326", "-nlt", "PROMOTE_TO_MULTI", str(tmp_path / "out.geojson"), "in.geojson"]
+
+
+def test_ogr_to_retries_a_remote_source_and_passes_gdal_retry_options(tmp_path):
+    attempts = {"n": 0}
+
+    def flaky(cmd, *, cwd=None, capture=False, binary=False):
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            raise overlays.BuildError("command failed (exit 1): ogr2ogr\nERROR 1: Recv failure: Connection reset by peer")
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    ctx = make_ctx(tmp_path, runner=flaky)
+    src = overlays.VectorSource("https://x/FeatureServer/2/query?where=1%3D1&outFields=*&f=json", ("-oo", "FEATURE_SERVER_PAGING=YES"))
+    overlays.ogr_to(ctx, "FlatGeobuf", tmp_path / "out.fgb", src)
+    assert attempts["n"] == 3
+
+    always = FakeRunner()
+    ctx = make_ctx(tmp_path, runner=always)
+    overlays.ogr_to(ctx, "FlatGeobuf", tmp_path / "out.fgb", src)
+    assert always.calls[0][7:13] == ["--config", "GDAL_HTTP_MAX_RETRY", "5", "--config", "GDAL_HTTP_RETRY_DELAY", "10"]
+
+    def broken(cmd, *, cwd=None, capture=False, binary=False):
+        raise overlays.BuildError("command failed (exit 1): ogr2ogr")
+
+    ctx = make_ctx(tmp_path, runner=broken)
+    with pytest.raises(overlays.BuildError):
+        overlays.ogr_to(ctx, "GeoJSON", tmp_path / "out.geojson", overlays.VectorSource("/vsizip//tmp/a.zip"))
 
 
 def test_finalise_applies_the_5mb_rule(tmp_path):

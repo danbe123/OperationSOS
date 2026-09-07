@@ -74,15 +74,32 @@ def vector_source(ctx: Context, spec: str, name: str) -> VectorSource:
     return VectorSource(url, (), layer)
 
 
+# A paged FeatureServer pull of half a million polygons takes minutes over one connection, and the
+# Welsh flood service reset it partway through the first full build. GDAL retries a reset or a 5xx
+# itself with these; the loop below starts the whole translation again when it still gives up.
+HTTP_RETRY_OPTIONS = ("--config", "GDAL_HTTP_MAX_RETRY", "5", "--config", "GDAL_HTTP_RETRY_DELAY", "10")
+HTTP_ATTEMPTS = 3
+
+
 def ogr_to(ctx: Context, fmt: str, dest: Path, src: VectorSource, *, spat: BBox | None = None) -> None:
+    remote = src.source.startswith(("http://", "https://"))
     cmd = ["ogr2ogr", "-f", fmt, "-t_srs", "EPSG:4326", "-nlt", "PROMOTE_TO_MULTI"]
+    if remote:
+        cmd += HTTP_RETRY_OPTIONS
     if spat:
         cmd += ["-spat", *bbox_args(spat)]
     cmd += [*src.open_options, str(dest), src.source]
     if src.layer:
         cmd.append(src.layer)
-    dest.unlink(missing_ok=True)
-    ctx.run(cmd)
+    for attempt in range(1, (HTTP_ATTEMPTS if remote else 1) + 1):
+        dest.unlink(missing_ok=True)
+        try:
+            ctx.run(cmd)
+            return
+        except BuildError:
+            if attempt == HTTP_ATTEMPTS or not remote:
+                raise
+            log.warning("[overlays] %s attempt %d failed; trying again", src.source.split("?")[0], attempt)
 
 
 def region_sources(ctx: Context, regions: tuple[tuple[str, str], ...], *, fixture_sample: str) -> list[tuple[str, str | None, VectorSource]]:
