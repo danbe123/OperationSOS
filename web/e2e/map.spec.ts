@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import { test, expect } from './test';
 
-type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers: { id: string; type: string; source?: string }[] }; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; project(lngLat: [number, number]): { x: number; y: number }; __styleVersion?: number } };
+type MapWindow = Window & { __sosMap?: { loaded(): boolean; getStyle(): { layers: { id: string; type: string; source?: string }[] }; getLayer(id: string): unknown; getLayoutProperty(id: string, k: string): string | undefined; getCenter(): { lng: number; lat: number }; project(lngLat: [number, number]): { x: number; y: number }; panBy(offset: [number, number], opts?: { duration?: number }): unknown; __styleVersion?: number } };
 
 async function waitForMap(page: Page) {
   await page.waitForFunction(() => Boolean((window as MapWindow).__sosMap?.loaded()));
@@ -69,53 +69,69 @@ test('hovering a health feature shows what it is; a tap opens its card and a tap
   if (!canvas) throw new Error('map canvas has no box');
   // The fixture health overlay's hospital (web/e2e/fixtures/maps/health.geojson), in screen px.
   const hospital = await page.evaluate(() => (window as MapWindow).__sosMap!.project([-1.4353, 50.9333]));
-  const at = { x: canvas.x + hospital.x, y: canvas.y + hospital.y };
-  const tip = page.locator('.map-tip-dock .map-tip');
+  let at = { x: canvas.x + hospital.x, y: canvas.y + hospital.y };
+  const tip = page.locator('.map-tip-popup .map-tip');
 
   // Tiles and the overlay render asynchronously; nudge the pointer until the feature is hit.
-  await expect.poll(async () => {
+  const hover = async () => {
     await page.mouse.move(at.x + 1, at.y + 1);
     await page.mouse.move(at.x, at.y);
     return tip.isVisible();
-  }, { timeout: 15_000 }).toBe(true);
+  };
+  await expect.poll(hover, { timeout: 15_000 }).toBe(true);
+  // Three lines and no more: the name, the type of building, and the way to the rest of it.
   await expect(tip).toContainText('Southampton General Hospital');
   await expect(tip.locator('.map-tip-type')).toHaveText('Hospital');
-  // The whole description, not a label: what it has, then what the guides say about going there.
-  await expect(tip).toContainText('Usually here');
+  await expect(tip.locator('.map-tip-more')).toHaveText('Click for more');
+  await expect(tip).not.toContainText('Usually here');
+  await expect(tip.locator('.map-tip-section')).toHaveCount(0);
   expect(await page.getByTestId('map-canvas').locator('canvas').evaluate((c) => getComputedStyle(c).cursor)).toBe('pointer');
   expect(await tip.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
-  // Four bands, each with its own rule and its own icon, and the guide as a button at the foot.
-  await expect(tip.locator('.map-tip-section')).toHaveCount(4);
-  await expect(tip.locator('.map-tip-section-avoid .map-tip-section-head svg.map-tip-icon')).toBeVisible();
-  const bullet = tip.locator('.map-tip-section-have li').first();
-  expect(await bullet.evaluate((li) => getComputedStyle(li).listStyleType)).toBe('none');
-  expect(await bullet.evaluate((li) => parseFloat(getComputedStyle(li).fontSize))).toBeGreaterThanOrEqual(16);
-  const guide = tip.locator('a.map-tip-guide');
-  await expect(guide).toHaveText(/^Open the .+ guide$/);
-  await expect(guide).toHaveAttribute('href', /^\//);
-
-  // The panel is docked inside the map with a margin at top and bottom, so all of it is on screen:
-  // anchored to the point, 600 px of guidance ran off the bottom edge and only the title was readable.
-  const dock = page.locator('.map-tip-dock');
-  const dockBox = (await dock.boundingBox())!;
-  expect(dockBox.y).toBeGreaterThanOrEqual(canvas.y);
-  expect(dockBox.y + dockBox.height).toBeLessThanOrEqual(canvas.y + canvas.height + 1);
-  // Docked away from the pointer, so it never covers the thing being read about.
-  const dockedRight = await dock.evaluate((el) => el.classList.contains('map-tip-dock-right'));
-  const away = { x: dockedRight ? canvas.x + 20 : canvas.x + canvas.width - 20, y: canvas.y + 20 };
+  // The label is anchored to the point it names, inside the map.
+  const tipBox = (await tip.boundingBox())!;
+  expect(tipBox.y).toBeGreaterThanOrEqual(canvas.y);
+  expect(tipBox.y + tipBox.height).toBeLessThanOrEqual(canvas.y + canvas.height + 1);
 
   // Moving off the feature hides the hover tooltip; a tap on it opens the card that answers for it.
-  await page.mouse.move(away.x, away.y);
+  await page.mouse.move(canvas.x + 20, canvas.y + canvas.height - 20);
   await expect(tip).toBeHidden();
   await page.mouse.click(at.x, at.y);
   const card = page.getByRole('dialog', { name: 'Place' });
   await expect(card).toContainText('Southampton General Hospital');
+  await expect(card).toContainText('Usually here');
   await expect(card).toContainText('What to expect here');
-  // The card says the same four bands, off the same file, so the two readings cannot drift apart.
+  // The card is where the four bands are read, off placeSections.ts, with the guide at the foot.
   await expect(card.locator('.map-tip-section')).toHaveCount(4);
   await expect(card.locator('.map-tip-section-approach .map-tip-section-head svg.map-tip-icon')).toBeVisible();
   await expect(card.locator('a.map-tip-guide')).toHaveText(/^Open the .+ guide$/);
   await expect(tip).toBeHidden();
+
+  // The card covers the right of the map, so a feature hovered beside it puts the label half over the
+  // card. It has to be read there, not disappear behind it. Pan the hospital to just clear of the
+  // card's left edge — the pointer stays on the map — and hover it again.
+  const cardBox = (await card.boundingBox())!;
+  const want = { x: cardBox.x - 8 - canvas.x, y: cardBox.y + cardBox.height / 2 - canvas.y };
+  await page.evaluate((to) => {
+    const m = (window as MapWindow).__sosMap!;
+    const from = m.project([-1.4353, 50.9333]);
+    m.panBy([from.x - to.x, from.y - to.y], { duration: 0 });
+  }, want);
+  const moved = await page.evaluate(() => (window as MapWindow).__sosMap!.project([-1.4353, 50.9333]));
+  at = { x: canvas.x + moved.x, y: canvas.y + moved.y };
+  await expect.poll(hover, { timeout: 15_000 }).toBe(true);
+  const overBox = (await tip.boundingBox())!;
+  // Where the label and the card overlap: a real overlap, then the topmost thing painted in it.
+  const box = {
+    left: Math.max(overBox.x, cardBox.x), right: Math.min(overBox.x + overBox.width, cardBox.x + cardBox.width),
+    top: Math.max(overBox.y, cardBox.y), bottom: Math.min(overBox.y + overBox.height, cardBox.y + cardBox.height),
+  };
+  expect(box.right - box.left).toBeGreaterThan(2);
+  expect(box.bottom - box.top).toBeGreaterThan(2);
+  const onTop = await page.evaluate(({ x, y }) => {
+    const el = document.elementFromPoint(x, y);
+    return Boolean(el?.closest('.map-tip-popup'));
+  }, { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 });
+  expect(onTop).toBe(true);
 
   // A tap on empty map closes it again — on the left, clear of the card that opened on the right.
   await page.mouse.click(canvas.x + 20, canvas.y + 20);

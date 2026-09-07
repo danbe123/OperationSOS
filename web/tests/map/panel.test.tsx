@@ -10,7 +10,7 @@ import { mapConfig, nearby, notes } from '../fixtures/api';
 
 const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
-  const { FakeMap } = await import('./fakeMap');
+  const { FakeMap, FakePopup } = await import('./fakeMap');
   class Map extends FakeMap {
     constructor(opts: { style: string; center: [number, number]; zoom: number; container: HTMLElement }) {
       super(opts);
@@ -20,7 +20,7 @@ vi.mock('maplibre-gl', async () => {
       created.maps.push(this);
     }
   }
-  const stub = { Map, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
+  const stub = { Map, Popup: FakePopup, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
   return { default: stub, ...stub };
 });
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));

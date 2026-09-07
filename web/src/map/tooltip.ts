@@ -1,7 +1,6 @@
-import type { Map as MlMap, MapGeoJSONFeature, MapMouseEvent } from 'maplibre-gl';
-import type { Overlay, PlaceGuidance } from '../api/types';
+import maplibregl, { type Map as MlMap, type MapGeoJSONFeature, type MapMouseEvent } from 'maplibre-gl';
+import type { Overlay } from '../api/types';
 import { describeFeature, type FeatureDescription } from './describe';
-import { buildGuideLink, buildSection } from './placeSections';
 
 const SOURCE_PREFIX = 'sos-overlay-';
 /** Half-width in px of the box queried around the pointer: thin footpath lines are hard to hit exactly, and a finger is wider than a mouse. */
@@ -51,101 +50,53 @@ export function placePoint(feature: MapGeoJSONFeature, tap: { lng: number; lat: 
   return { lat: tap.lat, lon: tap.lng };
 }
 
-/** Everything the box knows about the thing under the pointer: the name, the type, the rows off its own
- * data, and — where the kind has guidance — what is usually there, when it is worth going, when to stay
- * away and how to go about it. A household hovering a hospital is looking for survival answers, not a
- * label, and the docked panel is the fastest way to read them; the card a tap opens says the same words
- * with the framing paragraph and the actions, for a finger that cannot hold still.
+/** What the label under the pointer says, and all it says: the name of the place, what sort of building it
+ * is, and that there is more behind a click. A hover is a pointer passing over ground — it is not somewhere
+ * to read four lists of survival advice from, and a panel that tall covered the map it was describing. The
+ * answers live on the card a click opens, where they can be read at leisure and with a finger.
  *
- * Three blocks, in the order somebody in a bad moment reads them. The head names the place — the name
- * in the display face, the type under it, the facts as a tight two-column grid of muted labels — and
- * a rule closes it off. Then the four sections, each a band with its own icon and its own left rule,
- * built by `placeSections` so the card says them in exactly the same shape. Then the guide as a real
- * button at the foot, rather than a "Guide:" line that looks like a caption and does nothing.
- *
- * The feature's own values are text nodes, so an OSM name is never parsed as HTML. The guidance is the
- * box's own rendered content and goes in as HTML. */
-export function renderDescription(d: FeatureDescription, guidance?: PlaceGuidance | null): HTMLElement {
+ * A place with no name of its own is titled by its type, and saying the type again under it tells nobody
+ * anything, so the second line is left off. The feature's own values are text nodes, so an OSM name is
+ * never parsed as HTML. */
+export function renderDescription(d: FeatureDescription): HTMLElement {
   const root = document.createElement('div');
   root.className = 'map-tip';
   root.setAttribute('role', 'tooltip');
-  const head = document.createElement('div');
-  head.className = 'map-tip-head';
   const title = document.createElement('strong');
   title.className = 'map-tip-title';
   title.textContent = d.title;
-  head.appendChild(title);
-  // An unnamed place is titled by its type; saying it twice tells nobody anything.
+  root.appendChild(title);
   if (d.typeLine && d.typeLine !== d.title) {
     const type = document.createElement('div');
     type.className = 'map-tip-type';
     type.textContent = d.typeLine;
-    head.appendChild(type);
+    root.appendChild(type);
   }
-  // The type is already the line above the rows, exactly as on the card.
-  const rows = d.rows.filter(([label]) => label !== 'Type');
-  if (rows.length) {
-    const list = document.createElement('dl');
-    list.className = 'map-tip-rows';
-    for (const [label, value] of rows) {
-      const row = document.createElement('div');
-      const dt = document.createElement('dt');
-      dt.textContent = label;
-      const dd = document.createElement('dd');
-      dd.textContent = value;
-      row.append(dt, dd);
-      list.appendChild(row);
-    }
-    head.appendChild(list);
-  }
-  root.appendChild(head);
-  if (guidance) {
-    for (const part of guidance.sections) root.appendChild(buildSection(part));
-    root.appendChild(buildGuideLink(guidance));
-  }
+  const more = document.createElement('div');
+  more.className = 'map-tip-more';
+  more.textContent = 'Click for more';
+  root.appendChild(more);
   return root;
 }
 
 /**
- * One panel for every overlay feature: it says what the thing is and what it is worth to somebody
- * surviving. It is docked inside the map — top and bottom margins, and on the side away from the
- * pointer — rather than anchored to the point it describes, because the whole description is some
- * 600 px of reading and a popup that tall is cut off by the edge of the map on the box's own screen.
- * Docked, it has the map's full height to use and scrolls when it still does not fit, and it takes
- * pointer events, so the pointer can move into it and read or scroll it without it vanishing.
+ * One small popup for every overlay feature: it follows the pointer over points, lines and polygons and
+ * names the thing under it. It never takes pointer events, so the map underneath keeps hovering and a
+ * click "through" it still counts, and it is stacked above the map's panels (`.map-tip-popup` in map.css),
+ * so a card open on the right of the map never hides the label for a feature underneath it.
  *
- * A tap (or click) hands the place to `onTap` — the screen opens the card — and takes the panel away;
- * a tap on empty map hands `null`. `guidance` is read on every show, because `GET /api/map/places`
- * lands after the first hover can. The panel is a plain DOM child of the map container and the
- * handlers hang off the map, not the style, so both survive a base switch through setStyle.
- * Returns a detach function.
+ * A tap (or click) hands the place to `onTap` — the screen opens the card, which carries the rows, the
+ * paragraph and the four guidance sections — and takes the popup away; a tap on empty map hands `null`.
+ * The popup is a DOM overlay and the handlers hang off the map, not the style, so both survive a base
+ * switch through setStyle. Returns a detach function.
  */
 export function attachFeatureTooltip(
   map: MlMap,
   overlays: () => Overlay[],
   onTap: (place: TappedPlace | null) => void,
-  guidance: () => Record<string, PlaceGuidance> | null,
-  onNavigate?: (href: string) => void,
 ): () => void {
-  const dock = document.createElement('div');
-  dock.className = 'map-tip-dock';
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, closeOnMove: false, focusAfterOpen: false, className: 'map-tip-popup', maxWidth: 'none', offset: 12 });
   let shownKey: string | null = null;
-  /** A panel with more in it than fits says so, with a fade at its bottom edge, and stops saying it
-   * at the end of the scroll. Without it the panel ends mid-sentence on a short kiosk map and reads
-   * as the whole answer. */
-  const showScrollCue = () => {
-    dock.classList.toggle('map-tip-dock-more', dock.scrollHeight - dock.clientHeight - dock.scrollTop > 1);
-  };
-  // A guide link inside the panel goes through the app's router, not a page load: the box's own
-  // paths start with a slash; anything else (a website in a row) is left to the browser.
-  const onDockClick = (e: MouseEvent) => {
-    const a = (e.target as HTMLElement | null)?.closest('a');
-    const href = a?.getAttribute('href');
-    if (a && href && href.startsWith('/') && onNavigate) {
-      e.preventDefault();
-      onNavigate(href);
-    }
-  };
 
   const featureAt = (point: Point, pad: number): MapGeoJSONFeature | undefined => {
     const layers = overlayLayerIds(map);
@@ -156,49 +107,28 @@ export function attachFeatureTooltip(
   const keyOf = (f: MapGeoJSONFeature) => `${f.layer.id}:${f.id ?? JSON.stringify(f.properties)}`;
   const setCursor = (pointer: boolean) => { map.getCanvas().style.cursor = pointer ? 'pointer' : ''; };
 
-  const show = (feature: MapGeoJSONFeature, point: Point) => {
-    const described = describeMapFeature(feature, overlays());
-    const guide = described.kind ? guidance()?.[described.kind] ?? null : null;
-    // The guidance is part of the key: it arrives from the API after the map does, and the first
-    // feature hovered must pick it up rather than stay a bare label until the pointer moves on.
-    const key = `${keyOf(feature)}:${guide ? 'guided' : 'plain'}`;
-    const fresh = key !== shownKey;
-    if (fresh) {
-      dock.replaceChildren(renderDescription(described, guide));
-      dock.scrollTop = 0;
-      // The side is settled once per feature, off the pointer that found it: the panel goes to the
-      // half of the map the pointer is not in, so it never covers the thing being read about. Moving
-      // the pointer around the same feature must not make it jump from side to side.
-      const left = point.x >= map.getContainer().clientWidth / 2;
-      dock.classList.toggle('map-tip-dock-left', left);
-      dock.classList.toggle('map-tip-dock-right', !left);
+  const show = (feature: MapGeoJSONFeature, at: { lng: number; lat: number }) => {
+    const key = keyOf(feature);
+    if (key !== shownKey) {
+      popup.setDOMContent(renderDescription(describeMapFeature(feature, overlays())));
       shownKey = key;
     }
-    if (!dock.isConnected) map.getContainer().appendChild(dock);
-    // Measured once the panel is in the map and only when what is in it changed: reading scrollHeight
-    // costs a layout, and this runs off mousemove.
-    if (fresh) showScrollCue();
+    popup.setLngLat([at.lng, at.lat]);
+    if (!popup.isOpen()) popup.addTo(map);
   };
   const hide = () => {
-    dock.remove();
+    if (popup.isOpen()) popup.remove();
     shownKey = null;
   };
 
   const onMove = (e: PointerEventLike) => {
     const feature = featureAt(e.point, HOVER_PAD);
     setCursor(Boolean(feature));
-    if (feature) show(feature, e.point);
+    if (feature) show(feature, e.lngLat);
     else hide();
   };
-  /** The pointer left the canvas. If it went into the panel it is still reading, so the panel stays. */
-  const onCanvasLeave = (e: MouseEvent) => {
+  const onLeave = () => {
     setCursor(false);
-    if (e.relatedTarget instanceof Node && dock.contains(e.relatedTarget)) return;
-    hide();
-  };
-  /** The pointer left the panel. Back onto the map is the next mousemove's business; anywhere else ends it. */
-  const onDockLeave = (e: MouseEvent) => {
-    if (e.relatedTarget instanceof Node && map.getCanvas().contains(e.relatedTarget)) return;
     hide();
   };
   const onClick = (e: PointerEventLike) => {
@@ -212,17 +142,11 @@ export function attachFeatureTooltip(
 
   map.on('mousemove', onMove);
   map.on('click', onClick);
-  map.getCanvas().addEventListener('mouseleave', onCanvasLeave);
-  dock.addEventListener('mouseleave', onDockLeave);
-  dock.addEventListener('click', onDockClick);
-  dock.addEventListener('scroll', showScrollCue);
+  map.getCanvas().addEventListener('mouseleave', onLeave);
   return () => {
     map.off('mousemove', onMove);
     map.off('click', onClick);
-    map.getCanvas().removeEventListener('mouseleave', onCanvasLeave);
-    dock.removeEventListener('mouseleave', onDockLeave);
-    dock.removeEventListener('click', onDockClick);
-    dock.removeEventListener('scroll', showScrollCue);
+    map.getCanvas().removeEventListener('mouseleave', onLeave);
     hide();
   };
 }

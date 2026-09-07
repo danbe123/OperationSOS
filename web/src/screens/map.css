@@ -117,51 +117,43 @@
 .nearby-note { font-size: var(--t-meta); }
 .nearby-route { border-top: 1px solid var(--line); padding-top: 8px; }
 
-/* The feature tooltip: a panel docked inside the map that carries the whole description — the name,
-   the type, the rows and the four guidance sections. Anchored to the point it described, ~600 px of
-   reading was cut off by the edge of the map; docked it has the map's full height, scrolls when even
-   that is not enough, and sits in the half of the map the pointer is not in so it never covers the
-   thing being read about. It takes pointer events, so the pointer can move into it and scroll it.
-   The font is set here because MapLibre's own stylesheet puts 12px on the map container. */
-.map-tip-dock {
-  position: absolute; top: 8px; bottom: 8px; width: min(420px, 48%); z-index: 8; overflow-y: auto;
-  background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--radius);
-  padding: 12px 14px; box-shadow: none; font: 400 var(--t-body)/1.4 var(--font-body); text-shadow: none;
+/* The feature tooltip: a small label anchored to the point under the pointer, saying the name, the
+   type of building and that a click opens the rest. It carried the whole description once — the rows
+   and four sections of bullets — which as a panel covered half the map it was describing; the place
+   card a click opens is where that is read now.
+
+   It never takes pointer events, so the map underneath keeps hovering and a click "through" it still
+   counts. z-index 12 puts it above every map panel (`.map-panel` is 10): the popup is a child of
+   `.map-canvas`, which is positioned but has no z-index of its own, so nothing between it and the
+   panel opens a stacking context that could trap the label under an open card.
+
+   The font is set here because MapLibre's own stylesheet puts 12 px on the map container, and the
+   tooltip is read on a phone in bad light: the app's reading size or nothing. */
+.maplibregl-popup.map-tip-popup { z-index: 12; pointer-events: none; max-width: min(320px, calc(100vw - 24px)); }
+.map-tip-popup .maplibregl-popup-content {
+  padding: 8px 10px; background: var(--panel); color: var(--ink);
+  border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: none;
+  font: 400 var(--t-body)/1.4 var(--font-body); text-shadow: none;
 }
-.map-tip-dock-left { left: 8px; }
-.map-tip-dock-right { right: 8px; }
-/* There is more below the fold: a soft fade at the bottom edge, put on by the code from the panel's
-   own scrollHeight and taken off at the end of the scroll. Without it a panel that ends mid-sentence
-   at the bottom of a 600 px kiosk map reads as the whole answer. It is a sticky block in the flow
-   rather than an absolutely positioned one, because an absolute box inside a scroller scrolls with
-   the content it is meant to be fading. */
-.map-tip-dock-more::after {
-  content: ''; display: block; position: sticky; bottom: 0; height: 28px;
-  margin: -28px -14px 0; pointer-events: none;
-  background: linear-gradient(to top, var(--panel), transparent);
-}
-/* A phone has less map to give away, but the bullets still have to be readable lines, not columns of
-   one word each. */
-@media (max-width: 699px) { .map-tip-dock { width: min(420px, 60%); } }
-/* The text stays at the app's reading size: the tooltip is read on a phone in bad light, and shrinking
-   it to fit more words is the one thing that would stop it being read at all. */
-.map-tip { display: flex; flex-direction: column; gap: 10px; min-width: 160px; }
-/* The head: what the place is called, what it is, and its own facts — closed off by one rule, so the
-   four sections under it start somewhere the eye can find. */
-.map-tip-head { display: flex; flex-direction: column; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+/* MapLibre draws the arrow as a bordered zero-size box, so its colour is a border colour and there is
+   one per anchor: the popup flips to whichever side of the point has room. */
+.map-tip-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip { border-bottom-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.map-tip-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip { border-top-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--line-strong); }
+.map-tip-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--line-strong); }
+/* Three lines, in the order they are read: the name, what sort of place it is, and what to do next. */
+.map-tip { display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
 .map-tip-title { font: 700 var(--t-lead)/1.15 var(--font-heading); overflow-wrap: anywhere; }
 .map-tip-type { color: var(--ink-muted); font-size: var(--t-meta); }
-/* Label and value in two columns, the labels muted and aligned down the left. The label column is
-   allowed to shrink and wrap ("Hazardous materials") and a website in the value column breaks rather
-   than pushing the panel wider; a phone number breaks at its spaces, as a phone number should. */
-.map-tip-rows { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 3px 12px; margin: 6px 0 0; }
-.map-tip-rows > div { display: contents; }
-.map-tip-rows dt { color: var(--ink-muted); font-size: var(--t-meta); overflow-wrap: break-word; }
-.map-tip-rows dd { margin: 0; overflow-wrap: break-word; }
-@media (max-width: 480px) { .map-tip-rows { grid-template-columns: minmax(0, 1fr); gap: 0; } .map-tip-rows dt { margin-top: 4px; } }
+/* The invitation, not an instruction: muted and small, under the two lines that say what the thing is. */
+.map-tip-more { margin-top: 2px; color: var(--ink-muted); font-size: var(--t-meta); }
 
-/* The four survival sections, in the panel and on the card alike (src/map/placeSections.ts builds
-   both). Each is a band with a rule down its left edge and a small icon by its heading: what is
+/* The four survival sections on the place card (src/map/placeSections.ts names them and holds their
+   icons). Each is a band with a rule down its left edge and a small icon by its heading: what is
    usually here is neutral, worth going is the signal green, stay away is the danger red, and how to
    go about it is a dotted neutral. --rule is the edge, --mark the icon and the bullets; the two are
    split because the pale line colour that reads as a rule is not a colour to draw an icon in. */
@@ -183,9 +175,8 @@ section.map-tip-section :is(ul, ol) { list-style: none; margin: 0; padding: 0; d
 section.map-tip-section li { position: relative; margin: 0; padding-left: 16px; line-height: 1.35; }
 section.map-tip-section li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 8px; height: 2px; background: var(--mark); }
 section.map-tip-section p { margin: 0; }
-/* The guide the section came from, as the thing it is: a full-width button at the foot of the panel
-   and at the foot of the card. In the panel it is an anchor with an in-app href, and the dock's
-   click handler sends it through the router. */
+/* The guide the section came from, as the thing it is: a full-width button at the foot of the card,
+   a router Link so a dead network never costs a page load. */
 .btn.map-tip-guide { width: 100%; border-color: var(--line-strong); }
 
 /* Nothing above is allowed to depend on its colour. In the black-and-white theme every token is a
@@ -193,8 +184,8 @@ section.map-tip-section p { margin: 0; }
    for what is worth going, dashed for stay away, dotted for how to go about it. */
 :root[data-theme="mono"] .map-tip-section-avoid { border-left-style: dashed; }
 
-/* The place card: what a tap on the map opens. The rows the popup used to carry live here, where
-   there is room to read them, and the box's own guidance sits under them. */
+/* The place card: what a tap on the map opens. The rows and the guidance the hover label does not
+   carry live here, where there is room to read them. */
 .place-section { display: flex; flex-direction: column; gap: 6px; }
 .place-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 4px 0 0; }
 .place-rows > div { display: contents; }

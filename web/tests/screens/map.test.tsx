@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, act, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -8,7 +10,7 @@ import { mapConfig, mapPlaces, nearby, nearbyWithFireStation, notes, places } fr
 
 const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
-  const { FakeMap } = await import('../map/fakeMap');
+  const { FakeMap, FakePopup } = await import('../map/fakeMap');
   class Map extends FakeMap {
     constructor(opts: { style: string; center: [number, number]; zoom: number; container: HTMLElement }) {
       super(opts);
@@ -18,13 +20,28 @@ vi.mock('maplibre-gl', async () => {
       created.maps.push(this);
     }
   }
-  const stub = { Map, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
+  const stub = { Map, Popup: FakePopup, NavigationControl: class {}, ScaleControl: class {}, addProtocol: vi.fn() };
   return { default: stub, ...stub };
 });
 vi.mock('pmtiles', () => ({ Protocol: class { tile = () => undefined; }, EtagMismatch: class extends Error {} }));
 
 function lastMap(): FakeMap {
   return created.maps[created.maps.length - 1] as FakeMap;
+}
+/** The popup container the label sits in: `.maplibregl-popup`, which is what map.css stacks. */
+function popupOf(tip: HTMLElement): HTMLElement {
+  return tip.closest('.maplibregl-popup') as HTMLElement;
+}
+/** jsdom applies no stylesheet, so the z-index that decides what covers what is read out of the
+ * sheet itself rather than off a computed style that would come back empty either way. */
+const mapCssPath = ['src/screens/map.css', 'web/src/screens/map.css']
+  .map((rel) => resolve(process.cwd(), rel)).find((abs) => existsSync(abs))!;
+const mapCss = readFileSync(mapCssPath, 'utf8');
+function cssZIndex(selector: string): number {
+  const rule = new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{([^}]*)\\}`).exec(mapCss);
+  const value = /z-index:\s*(\d+)/.exec(rule?.[1] ?? '');
+  if (!value) throw new Error(`no z-index on ${selector}`);
+  return Number(value[1]);
 }
 function mockApis() {
   vi.spyOn(api, 'mapConfig').mockResolvedValue(mapConfig);
@@ -201,18 +218,17 @@ describe('Map screen', () => {
     map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
     await act(async () => { map.emit('mousemove', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     const tip = screen.getByRole('tooltip');
-    // The description is a panel docked inside the map — away from the pointer, so it covers ground
-    // rather than the thing being read about — not a popup pinned to the point and cut off by the edge.
-    expect(tip.parentElement).toHaveClass('map-tip-dock', 'map-tip-dock-right');
-    expect(tip.parentElement!.parentElement).toBe(map.getContainer());
+    // The hover is a small label anchored to the point: the name, the type of building, and the way in.
+    expect(popupOf(tip).className).toBe('maplibregl-popup map-tip-popup');
     expect(tip).toHaveTextContent('Southampton General Hospital');
-    expect(tip).toHaveTextContent('Hospital');
-    // The hover is the fast read of the same survival answers the card carries.
-    expect(tip).toHaveTextContent('Usually here');
-    expect(tip).toHaveTextContent('Mains power on generators for a few days');
-    expect(tip).toHaveTextContent('Open the Medical guide');
+    expect(tip.querySelector('.map-tip-type')).toHaveTextContent('Hospital');
+    expect(tip.querySelector('.map-tip-more')).toHaveTextContent('Click for more');
+    // Not a panel of survival advice: that is what the click it invites opens.
+    expect(tip).not.toHaveTextContent('Usually here');
+    expect(tip.querySelector('.map-tip-rows')).toBeNull();
+    expect(tip.querySelector('.map-tip-section')).toBeNull();
     expect(map.getCanvas().style.cursor).toBe('pointer');
-    // The tap replaces the panel with the card: the hover is a read, the card is the answer.
+    // The tap replaces the label with the card: the hover is a name, the card is the answer.
     await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(await screen.findByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
@@ -227,12 +243,33 @@ describe('Map screen', () => {
     expect(screen.getByRole('dialog', { name: 'Place' })).toHaveTextContent('Southampton General Hospital');
     await act(async () => { map.emit('mousemove', { point: { x: 900, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
     expect(screen.getByRole('tooltip')).toHaveTextContent('Southampton General Hospital');
-    // A hover from the right-hand half of the map docks the panel on the left.
-    expect(screen.getByRole('tooltip').parentElement).toHaveClass('map-tip-dock-left');
     map.renderedFeatures = [];
     await act(async () => { map.emit('click', { point: { x: 300, y: 300 }, lngLat: { lng: -1.4, lat: 50.9 }, originalEvent: {} }); });
     expect(screen.queryByRole('dialog', { name: 'Place' })).toBeNull();
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Tapped:');
+  });
+
+  it('the hover label is drawn above the open place card, not under it', async () => {
+    mockApis();
+    vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
+    renderRoute('/map?overlay=health');
+    await screen.findByRole('group', { name: 'Map layers' });
+    await act(async () => {});
+    const map = lastMap();
+    map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
+    await act(async () => { map.emit('click', { point: { x: 40, y: 40 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: { pointerType: 'touch' } }); });
+    const card = await screen.findByRole('dialog', { name: 'Place' });
+    // The card sits over the right-hand side of the map, so a feature under it is still hoverable and
+    // its label must be readable: on a wide screen that is exactly where the pointer ends up.
+    await act(async () => { map.emit('mousemove', { point: { x: 900, y: 200 }, lngLat: { lng: -1.4353, lat: 50.9333 }, originalEvent: {} }); });
+    const popup = popupOf(screen.getByRole('tooltip'));
+    expect(popup).toHaveClass('map-tip-popup');
+    // The popup is a child of the map canvas, which is positioned but has no z-index of its own, so
+    // nothing between the two opens a stacking context and the numbers decide it outright.
+    expect(map.getContainer().contains(popup)).toBe(true);
+    expect(card.contains(popup)).toBe(false);
+    expect(map.getContainer().closest('.map-host')).toBe(card.closest('.map-host'));
+    expect(cssZIndex('.maplibregl-popup.map-tip-popup')).toBeGreaterThan(cssZIndex('.map-panel'));
   });
 
   it('tapping a feature opens the place card with the type, the distance from the centre, the rows, the guidance and three actions', async () => {

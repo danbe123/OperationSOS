@@ -15,8 +15,7 @@ export class FakeMap {
   /** What queryRenderedFeatures answers; tests set this to put a feature "under" the pointer. */
   renderedFeatures: FakeFeature[] = [];
   canvas = document.createElement('canvas');
-  /** The element maplibre was pointed at: the docked tooltip is appended to it, and its width decides
-   * which side the tooltip docks to. jsdom lays nothing out, so the width is stated rather than measured. */
+  /** The element maplibre was pointed at: popups are appended to it, exactly as the real map does. */
   container: HTMLElement;
   private handlers = new Map<string, Set<(e: unknown) => void>>();
   constructor(opts?: { container?: HTMLElement }) {
@@ -69,4 +68,35 @@ export class FakeMap {
   off(ev: string, fn: (e: unknown) => void) { this.handlers.get(ev)?.delete(fn); return this; }
   emit(ev: string, e: unknown) { this.handlers.get(ev)?.forEach((fn) => fn(e)); }
   visibility(id: string): string { return (this.getLayer(id)?.layout?.visibility as string | undefined) ?? 'visible'; }
+}
+
+/** maplibre Popup double: records its options and its content, and puts its container in the map
+ * while it is open — the real popup is a child of the map container too, which is what lets the
+ * `.map-tip-popup` z-index be compared with the map panel's. */
+export class FakePopup {
+  static instances: FakePopup[] = [];
+  options: Record<string, unknown>;
+  lngLat: [number, number] | null = null;
+  element = document.createElement('div');
+  private map: { getContainer?: () => HTMLElement } | null = null;
+  constructor(options: Record<string, unknown> = {}) {
+    this.options = options;
+    this.element.className = `maplibregl-popup ${String(options.className ?? '')}`.trim();
+    FakePopup.instances.push(this);
+  }
+  setLngLat(ll: [number, number]) { this.lngLat = ll; return this; }
+  setDOMContent(node: Node) {
+    const content = document.createElement('div');
+    content.className = 'maplibregl-popup-content';
+    content.appendChild(node);
+    this.element.replaceChildren(content);
+    return this;
+  }
+  addTo(map: { getContainer?: () => HTMLElement }) {
+    this.map = map;
+    (map.getContainer?.() ?? document.body).appendChild(this.element);
+    return this;
+  }
+  remove = () => { this.map = null; this.element.remove(); return this; };
+  isOpen() { return this.map !== null; }
 }
