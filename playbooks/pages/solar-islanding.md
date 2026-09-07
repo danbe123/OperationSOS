@@ -28,7 +28,7 @@ Over days, run the panel and battery to a routine rather than to demand: charge 
 {{/if}}
 
 {{#if scenario:severe-winter}}
-Do not plan a winter around the panels. London receives about 0.5 kWh of sunshine per square metre a day in December against 4.7 in July, so a 1 kWp array gives well under 1 kWh a day in midwinter and a 100 W folding panel is realistically a phone charger, not a heater ([Solar power in the United Kingdom](kiwix:wikipedia_en_all_maxi/Solar_power_in_the_United_Kingdom)). Keep snow and frost off the panel, expect several dull short days in a row, and treat the battery as a store to refill slowly rather than a supply ([Severe winter](playbook:severe-winter)).
+Do not plan a winter around the panels. London receives about 0.7 kWh of sunshine per square metre a day in December against 5.2 in July, so a well-sited 1 kWp array gives roughly one kilowatt-hour a day in midwinter, less if it faces east or west, and a 100 W folding panel is realistically a phone charger, not a heater ([Solar power in the United Kingdom](kiwix:wikipedia_en_all_maxi/Solar_power_in_the_United_Kingdom)). Keep snow and frost off the panel, expect several dull short days in a row, and treat the battery as a store to refill slowly rather than a supply ([Severe winter](playbook:severe-winter)).
 {{/if}}
 
 ## Go deeper

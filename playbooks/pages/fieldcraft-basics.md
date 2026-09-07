@@ -20,7 +20,7 @@ The order of priorities is the same everywhere but the weights are British:
 5. **Food**: you have weeks. Foraging is a skill for the long rebuild, not for the first night ([Wild food](page:fieldcraft-food)).
 
 {{#if dark}}
-In the dark that order tightens: stop, shelter and wait for light rather than press on. Walking on in poor visibility is what causes most accidents here, and a night out in a group shelter is survivable in a way a fall is not ([Shelter and staying warm](page:fieldcraft-shelter)). If you must move, keep the party within talking distance, follow a wall, track or stream rather than a bearing across open ground, use the torch on its lowest useful setting to save night vision and cells, and expect to cover half the distance you planned ([Map, compass and tides](page:fieldcraft-navigation)).
+In the dark that order tightens: stop, shelter and wait for light rather than press on. Walking on in poor visibility is what causes most accidents here, and a night out in a group shelter is survivable in a way a fall is not ([Shelter and staying warm](page:fieldcraft-shelter)). If you must move, keep the party within talking distance, follow a wall, track or stream rather than a bearing across open ground, use the torch on its lowest useful setting to save night vision and cells, and expect to cover far less ground than you planned — halving it is a rule of thumb rather than a published figure ([Map, compass and tides](page:fieldcraft-navigation)).
 {{/if}}
 
 ## Weather is the enemy and the timetable

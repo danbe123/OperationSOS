@@ -23,7 +23,7 @@ The law does not lapse because the shops are shut. Picking wild fruit, foliage, 
 {{/unless}}
 
 {{#if scenario:famine}}
-Hunger is not a defence, and the rules worth keeping are the ones that leave the hedge producing next year: take a share and leave the rest, never uproot, leave the rare Schedule 8 plants alone, and keep off the reserves and forests whose byelaws forbid picking entirely ([WCA s13](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/13)). Eggs and nesting birds are protected everywhere in the UK, whatever the species, and a snare is unlawful unless you have checked the current law where you are ([WCA s1](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/1); [WCA Part I](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/part/I)).
+Hunger is not a defence, and the rules worth keeping are the ones that leave the hedge producing next year: take a share and leave the rest, never uproot, leave the rare Schedule 8 plants alone, and keep off the reserves and forests whose byelaws forbid picking entirely ([WCA s13](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/13)). Wild birds, their nests and their eggs are protected throughout the UK unless a close-season quarry species, a general licence or an individual licence applies, and Northern Ireland runs on its own 1985 Order; a snare is banned outright in Wales and Scotland and lawful only in limited form in England, so check the current law where you are ([WCA s1](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/section/1); [WCA Part I](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/1981/69/part/I)).
 {{/if}}
 
 {{#if scenario:long-rebuild}}

@@ -6,8 +6,8 @@ summary: A radio that runs on batteries, numbers on paper, and short-range sets 
 intro: |
   The National Risk Register carries the simultaneous loss of all fixed and mobile communications among
   its reasonable worst cases ([NRR 2025, p. 88](doc:nrr-2025#page=88)). Long before that, an ordinary power
-  cut does most of the damage: the landline now runs over broadband and stops with the power, and most
-  mobile masts hold about an hour of battery
+  cut does most of the damage: the landline now runs over broadband and stops with the power, and only about a fifth of
+  mobile masts hold an hour of battery
   ([Prepare, phone outages](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/phone-broadband-outages/);
   [What still works](page:what-still-works)). So this kit starts with receiving rather than transmitting.
   A battery or wind-up radio hears BBC Radio 4 on 92.5 to 96.1 MHz and BBC local radio when nothing else

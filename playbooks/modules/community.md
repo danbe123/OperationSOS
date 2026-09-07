@@ -39,11 +39,11 @@ sources:
 4. Rehearse it: plan with the council's emergency planning team so you work well together, agree with other local groups how you will work with them, practise with your volunteers how they will respond safely to the local risks, and decide in advance how you will communicate, whether at a meeting place, over a messaging group or by radio ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)).
 
 {{#if scenario:grid-collapse}}
-**Start the register of who needs what on the first day.** Anyone on oxygen, a stairlift, dialysis or refrigerated medicine, every household with a baby, and everyone living alone and frail: address, what they need, and who is checking on them ([UK numbers](page:uk-numbers)). Check at the door twice a day, morning and dusk, because nothing electronic will find them now. Councils open rest centres and warm hubs in a large emergency ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)): find out which hall it is once and put it on the noticeboard with the opening times, rather than having forty households each go and ask.
+**Start the register of who needs what on the first day.** Anyone on oxygen, a stairlift, dialysis or refrigerated medicine, every household with a baby, and everyone living alone and frail: address, what they need, and who is checking on them ([UK numbers](page:uk-numbers)). Check at the door twice a day, morning and dusk, because nothing electronic will find them now. Councils open rest centres and warm hubs in a large emergency; though the published advice goes only as far as naming community buildings as assets, so check your council's own plan ([Ready Scotland](kiwix:govuk_resilience/ready.campaign.gov.scot/community-emergency-planning)). Find out which hall it is once and put it on the noticeboard with the opening times, rather than having forty households each go and ask.
 {{/if}}
 
 {{#if scenario:severe-winter}}
-**Grit the paths, then check the frail twice a day.** Falls are the commonest injury when snow lies and ice forms ([NRR 2025, p. 143](doc:nrr-2025#page=143)), so the shared paths, the steps and the route to the hall are cleared before anything else, and older neighbours stay in while someone else carries what they need to the door. A warm hub with heat, hot drinks and a chair is the most useful thing a village hall does in a cold snap ([Wales Resilience Framework, p. 29](doc:wales-resilience-framework-2025#page=29)): agree who holds the key, who fuels the generator and who stays with it.
+**Grit the paths, then check the frail twice a day.** The register expects more falls, fractures, road accidents and hypothermia when snow lies and ice forms ([NRR 2025, p. 143](doc:nrr-2025#page=143)), so the shared paths, the steps and the route to the hall are cleared before anything else, and older neighbours stay in while someone else carries what they need to the door. A warm hub with heat, hot drinks and a chair is the most useful thing a village hall does in a cold snap, though that is local practice rather than a published instruction: agree who holds the key, who fuels the generator and who stays with it.
 {{/if}}
 
 {{#if scenario:pandemic}}
@@ -60,7 +60,7 @@ sources:
 
 ## UK specifics
 
-- Storm Darragh in December 2024 demonstrated the value of village hubs in Wales when normal services were disrupted ([Wales Resilience Framework, p. 29](doc:wales-resilience-framework-2025#page=29)).
+- Community and village hubs were widely used in Wales during Storm Darragh in December 2024; how Welsh responders and communities are meant to work together is set out in the framework ([Wales Resilience Framework](doc:wales-resilience-framework-2025)).
 - Get involved locally through the routes the government itself signposts for volunteering and community resilience ([Prepare, get involved in your community](kiwix:prepare_uk/prepare.campaign.gov.uk/get-involved-in-your-community/)).
 
 ## Go deeper

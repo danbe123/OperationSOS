@@ -56,7 +56,7 @@ There is no callsign lookup, no online repeater directory and no cluster to tell
 {{/unless}}
 
 {{#if scenario:emp}}
-**Test on receive before you transmit.** Assume anything that was plugged into the mains or an outside aerial is a loss, and that short, unplugged equipment, a handheld that sat in a metal tin above all, most likely came through ([Nuclear electromagnetic pulse](kiwix:wikipedia_en_all_maxi/Nuclear_electromagnetic_pulse); [EMP](playbook:emp)). Listen on the FM broadcast band and on 145.500 MHz at agreed times rather than continuously, keep the cells for those schedules, and expect which transmitters survived to be the thing nobody can tell you in advance.
+**Test on receive before you transmit.** Nobody can tell you in advance what survived: treat anything that was plugged into the mains or an outside aerial as a likely loss, and test everything else on receive first ([Nuclear electromagnetic pulse](kiwix:wikipedia_en_all_maxi/Nuclear_electromagnetic_pulse); [EMP](playbook:emp)). Listen on the FM broadcast band and on 145.500 MHz at agreed times rather than continuously, keep the cells for those schedules, and expect which transmitters survived to be the thing nobody can tell you in advance.
 {{/if}}
 
 ## Go deeper

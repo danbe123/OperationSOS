@@ -86,7 +86,7 @@ Carriers, food, medication, microchip details, and where they go if the house is
 Store at least 3 litres of drinking water per person per day: the government asks every household for three days' worth, and every playbook in this box plans for 14 ([Water module](module:water)). Litres stored: _____. Date to rotate: _____. Food that needs no cooking for the same period ([Food module](module:food)).
 
 {{#unless water}}
-Write down where the stored water is, how many litres are left, how many days that is at 3 litres a person a day, and where the household is collecting more: the bottled-water point your water company sets up, a neighbour's butt, or a stream to be treated ([Water module](module:water); [Water disinfection](page:water-disinfection)). Add who carries it, because water is heavy and it is a two-person job for most households, and who checks that the neighbours on the list below have some.
+Write down where the stored water is, how many litres are left, how many days that is at 3 litres a person a day for drinking, and at the government's comfort figure of 10 litres a head if you are cooking and washing too, and where the household is collecting more: the bottled-water point your water company sets up, a neighbour's butt, or a stream to be treated ([Water module](module:water); [Water disinfection](page:water-disinfection)). Add who carries it, because water is heavy and it is a two-person job for most households, and who checks that the neighbours on the list below have some.
 {{/unless}}
 
 {{#unless shops}}

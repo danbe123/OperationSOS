@@ -17,6 +17,10 @@ sources:
   - title: Help during a flood (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/help-during-flood
     as_at: 2026-09-05
+  - title: Flash flooding (GOV.UK)
+    kiwix: govuk_resilience/www.gov.uk/guidance/flash-flooding
+    url: https://www.gov.uk/guidance/flash-flooding
+    as_at: 2026-09
   - title: Motor Vehicle Maintenance and Repair Q&A
     kiwix: mechanics.stackexchange.com_en_all/questions
     as_at: 2026-08-04
@@ -38,7 +42,7 @@ sources:
 ## What to do
 
 1. Store fuel outside the house, in a ventilated place away from any source of ignition ([HSE INDG370, p. 1](doc:hse-indg370#page=1)).
-2. Never drive through floodwater: 30 cm of it will float a car ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)).
+2. Never drive through floodwater: as little as 30 cm of moving water will float a car, and around 60 cm will carry away a vehicle of any size ([flash flooding](kiwix:govuk_resilience/www.gov.uk/guidance/flash-flooding)).
 3. Pack a winter kit for the car: blanket, shovel, grit, torch, food, water, a charger and snow socks.
 4. Keep a bicycle or hand cart as a fallback when fuel or a working car are not available ([bicycles Q&A](kiwix:bicycles.stackexchange.com_en_all/questions)).
 5. Diagnose faults yourself where you can before assuming a garage visit is possible ([motor vehicle Q&A](kiwix:mechanics.stackexchange.com_en_all/questions)).
@@ -52,11 +56,11 @@ sources:
 {{/unless}}
 
 {{#unless roads}}
-**Do not drive.** Closed, blocked, flooded or drifted roads strand cars exactly where nobody can reach them, and 30 cm of floodwater floats one ([help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). A bicycle, a hand cart or a wheelbarrow will move what matters. If you are already out when the road closes, park clear of the carriageway, leave a note on the dashboard with your name and where you have gone, take documents, keys, medicines and warm clothing, and walk out by the shortest safe route ([Navigation module](module:navigation)).
+**Do not drive.** Closed, blocked, flooded or drifted roads strand cars exactly where nobody can reach them, and as little as 30 cm of moving water floats one, with around 60 cm enough to carry away a vehicle of any size ([flash flooding](kiwix:govuk_resilience/www.gov.uk/guidance/flash-flooding)). A bicycle, a hand cart or a wheelbarrow will move what matters. If you are already out when the road closes, park clear of the carriageway, leave a note on the dashboard with your name and where you have gone, take documents, keys, medicines and warm clothing, and walk out by the shortest safe route ([Navigation module](module:navigation)).
 {{/unless}}
 
 {{#if scenario:supply-chain}}
-**Do not join the queue.** The September 2021 crisis was a shortage of lorry drivers turned into empty forecourts by panic buying within two days ([2021 UK fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)). Keep the tank above half as a habit rather than filling in the rush, buy in ordinary amounts, and share journeys instead of each household taking a car. Order heating oil and gas bottles early and jointly with neighbours, because those deliveries fail in the same conditions as diesel ([NRR 2025, p. 69](doc:nrr-2025#page=69)); store petrol only within the household limit and outside the house.
+**Do not join the queue.** The September 2021 crisis was a shortage of lorry drivers turned into empty forecourts by panic buying within two days ([2021 UK fuel supply crisis](kiwix:wikipedia_en_all_maxi/2021_United_Kingdom_fuel_supply_crisis)). Keep the tank above half as a habit rather than filling in the rush, buy in ordinary amounts, and share journeys instead of each household taking a car. Order heating oil and gas bottles early and jointly with neighbours, because those deliveries fail in the same conditions as diesel ([NRR 2025, p. 69](doc:nrr-2025#page=69)); store petrol outside the house and only within the household limit: up to 30 litres with no notification, in containers no bigger than 10 litres plastic or 20 litres metal, marked PETROL ([Petroleum Regulations 2014](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2014/1637/contents)).
 {{/if}}
 
 ## UK specifics

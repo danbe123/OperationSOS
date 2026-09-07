@@ -34,7 +34,7 @@ Sepsis is what kills in a pandemic, and the person nursing is the one who catche
 {{/if}}
 
 {{#if scenario:famine}}
-Hunger makes infection more likely and hides it: a starved person may not run a fever and a wound may not go red. Trust confusion, fast breathing, a fast pulse and passing no urine instead. Feed as well as treat, because nothing heals on no food, and give the rehydration drink even when they will not eat ([dehydration](card:dehydration)). Spend the antibiotics you hold on the people with real signs of infection rather than on every fever, because what you have cannot be replaced.
+Hunger makes infection more likely and hides it: WHO's guidance on severe malnutrition describes blunted signs, so a starved person may not run a fever and a wound may not go red. Trust confusion, fast breathing, a fast pulse and passing no urine instead. Feed as well as treat, because nothing heals on no food, and give the rehydration drink even when they will not eat ([dehydration](card:dehydration)). Spend the antibiotics you hold on the people with real signs of infection rather than on every fever, because what you have cannot be replaced.
 {{/if}}
 
 {{#if scenario:long-rebuild}}
@@ -48,7 +48,7 @@ With no health service at all, antibiotics are finite and sepsis is the reason t
 
 ## Stop or escalate
 
-Any of the signs above — [[call 999]]. An infection that is getting worse without them — [[call 111]] the same day. If nobody can come: start the strongest broad-spectrum antibiotic you hold at once and give the full course, co-amoxiclav first choice and ciprofloxacin second ([Survival and Austere Medicine, p. 212](doc:survival-austere-medicine-2017#page=212)); open and drain any abscess, clean the wound, push oral fluids or rehydration drink ([dehydration](card:dehydration)) and treat for [shock](card:shock); a pulse over 110, confusion or a falling blood pressure means the infection is winning ([Survival and Austere Medicine, p. 110](doc:survival-austere-medicine-2017#page=110)). Antibiotic rules in a collapse: [medical module](module:medical).
+Any of the signs above — [[call 999]]. An infection that is getting worse without them — [[call 111]] the same day, or in Northern Ireland the GP out-of-hours service ([UK numbers](page:uk-numbers)). If nobody can come: start the strongest broad-spectrum antibiotic you hold at once and give the full course, co-amoxiclav first choice and ciprofloxacin second ([Survival and Austere Medicine, p. 212](doc:survival-austere-medicine-2017#page=212)); open and drain any abscess, clean the wound, push oral fluids or rehydration drink ([dehydration](card:dehydration)) and treat for [shock](card:shock); a pulse over 110, confusion or a falling blood pressure means the infection is winning ([Survival and Austere Medicine, p. 110](doc:survival-austere-medicine-2017#page=110)). Antibiotic rules in a collapse: [medical module](module:medical).
 
 {{#unless phones}}
 No ambulance and no hospital means no antibiotics into a vein, no drip and no intensive care, and sepsis kills quickly without them. What can still be given: the strongest broad-spectrum antibiotic you hold, started now and the full course finished; the source found and drained or cleaned; rehydration drink in constant sips; warmth, and the legs raised ([shock](card:shock)). If any hospital is crewed and reachable, go, even if it takes hours, because that is where the treatment is ([the map's health layer](map:?overlay=health)). Tell the family plainly what the chances are.

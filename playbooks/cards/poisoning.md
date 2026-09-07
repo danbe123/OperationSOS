@@ -26,7 +26,7 @@ You need light to read a label and to see the pupils and the colour of the lips:
 {{/unless}}
 
 {{#unless water}}
-Rinsing costs water you may not have to spare. Skin and eyes come first if the chemical is on them, and an eye is rinsed for longer than anything else, with any clean stored or bottled water you hold ([eye injury](card:eye-injury); [chemical exposure](card:chemical-exposure)). For a corrosive swallowed, rinse the mouth out and spit it away, then sips of water or milk if they are fully awake. Never use untreated stream or floodwater on an eye or in a mouth.
+Rinsing costs water you may not have to spare. Skin and eyes come first if the chemical is on them, and an eye is rinsed for longer than anything else, with any clean stored or bottled water you hold ([eye injury](card:eye-injury); [chemical exposure](card:chemical-exposure)). For a corrosive swallowed, rinse the mouth out and spit it away, and give nothing to swallow — not water, not milk — because the NHS is plain that a poisoned person is given nothing to eat or drink, and diluting a corrosive can bring it back up over the gullet a second time ([Poisoning (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/poisoning/)). Never use untreated stream or floodwater on an eye or in a mouth.
 {{/unless}}
 
 ## Warnings
@@ -36,10 +36,10 @@ Rinsing costs water you may not have to spare. Skin and eyes come first if the c
 
 ## Stop or escalate
 
-Unconscious, fitting, struggling to breathe, or any swallowing of paracetamol, opioids, corrosives, antifreeze, a battery or an unknown fungus — [[call 999]]. Anything else swallowed that should not have been — [[call 111]]. If nobody can come: give activated charcoal from a first-aid kit (not barbecue charcoal) as soon as possible after most swallowed poisons, never after corrosives or petrol and never to anyone drowsy; give water or milk to dilute corrosives; keep them on their side and watch the breathing for a day ([Where There Is No Doctor, p. 152](doc:where-there-is-no-doctor#page=152); [Survival and Austere Medicine, p. 466](doc:survival-austere-medicine-2017#page=466)).
+Unconscious, fitting, struggling to breathe, or any swallowing of paracetamol, opioids, corrosives, antifreeze, a battery or an unknown fungus — [[call 999]]. Anything else swallowed that should not have been — [[call 111]], or in Northern Ireland the GP out-of-hours service ([UK numbers](page:uk-numbers)). If nobody can come: give activated charcoal from a first-aid kit (not barbecue charcoal) as soon as possible after most swallowed poisons, never after corrosives or petrol and never to anyone drowsy; give nothing at all to eat or drink after a swallowed corrosive, only a mouth rinse spat out ([Poisoning (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/poisoning/)); keep them on their side and watch the breathing for a day ([Where There Is No Doctor, p. 152](doc:where-there-is-no-doctor#page=152); [Survival and Austere Medicine, p. 466](doc:survival-austere-medicine-2017#page=466)).
 
 {{#unless phones}}
-111 and the poisons information service cannot be reached, so the packet is your reference: keep it, and read the label and the leaflet for what it contains and what it says about swallowing. Anything you cannot identify is treated as dangerous. Watch them on their side for a full day and night, in turns, checking the breathing; most poisons show what they are going to do within hours. Paracetamol, opioids, corrosives, antifreeze, a button battery or an unknown fungus need a hospital, so carry them there if one is crewed and reachable ([the map's health layer](map:?overlay=health)).
+111 and the poisons information service cannot be reached, so the packet is your reference: keep it, and read the label and the leaflet for what it contains and what it says about swallowing. Anything you cannot identify is treated as dangerous. Watch them on their side for a full day and night, in turns, checking the breathing. Some poisons show nothing for a day and still kill — paracetamol and antifreeze above all — so a normal-looking person is not a safe one. Paracetamol, opioids, corrosives, antifreeze, a button battery or an unknown fungus need a hospital, so carry them there if one is crewed and reachable ([the map's health layer](map:?overlay=health)).
 {{/unless}}
 
 ## Source

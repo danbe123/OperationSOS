@@ -20,7 +20,7 @@ A group living outside a working sewer for a week will meet norovirus, campyloba
 - On sensitive ground (peat, sand dunes, caves, above the treeline) everything is carried out.
 
 {{#unless sewage}}
-With the sewers out, the toilet indoors is a lined bucket rather than a hole dug fresh each day: sawdust, soil or ash after every use, a separate one for urine if you can manage it, a lid, and the contents emptied into a deep pit at least 30 metres from any well, spring or watercourse and downhill of it ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35); [Sanitation module](module:sanitation)). Do not flush into a blocked sewer. Keep the emptying to one person, with gloves and their own washing point.
+With the sewers out, the toilet indoors is a lined bucket: sawdust, soil or ash after every use, a separate one for urine if you can manage it, and a lid. In a house the CMOs' advice is to seal the bags and put them out with the household waste; the deep pit, 30 metres from any well, spring or watercourse and downhill of it, is for camps and open ground ([FM 4-25.12, p. 35](doc:fm-4-25-12-field-sanitation#page=35); [Sanitation module](module:sanitation)). Do not flush into a blocked sewer. Keep the emptying to one person, with gloves and their own washing point.
 {{/unless}}
 
 ## Hands
@@ -60,7 +60,7 @@ Diarrhoea and vomiting: isolate them with their own latrine and bowl, the rest o
 {{/if}}
 
 {{#if scenario:storms-flooding}}
-Floodwater is sewage. Keep children and pets out of it, wash hands and any skin it touched, throw away food and tins whose seals were under it, and cover and watch every cut, because a fever with muscle pain about a week later can be leptospirosis ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public); [Leptospirosis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Leptospirosis)). Move the latrine and the camp above the water and off the flooded ground, and treat every local water source as contaminated until it has been boiled ([Water disinfection](page:water-disinfection)).
+Floodwater is sewage. Keep children and pets out of it, wash hands and any skin it touched, throw away food in porous packaging and any tin that is dented, crushed or swollen, while keeping sealed undamaged tins and washing the outside before opening them ([food safety after a flood (FSA)](kiwix:govuk_resilience/www.gov.uk/government/publications/food-safety-after-a-flood-consumer-advice)), and cover and watch every cut, because a fever with muscle pain about a week later can be leptospirosis ([UKHSA flooding and health](kiwix:govuk_resilience/www.gov.uk/government/publications/flooding-and-health-public-advice/flooding-and-health-advice-for-the-public); [Leptospirosis (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Leptospirosis)). Move the latrine and the camp above the water and off the flooded ground, and treat every local water source as contaminated until it has been boiled ([Water disinfection](page:water-disinfection)).
 {{/if}}
 
 ## Leaving

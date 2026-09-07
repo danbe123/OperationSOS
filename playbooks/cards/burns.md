@@ -18,7 +18,7 @@ Skin is burned by heat, steam, hot liquid, chemicals or electricity.
 4. {{#if water}}Cooling helps up to three hours after the burn.{{else}}With the mains off, pour from bottles, the bath or a water butt: any clean cool water will do, and cooling still helps up to three hours after the burn.{{/if}} Never use ice, butter, creams or toothpaste.
 5. Cover loosely with cling film laid lengthways, or a clean non-fluffy cloth or plastic bag. Do not wrap tightly.
 6. Give paracetamol for pain: for an adult two 500 mg tablets, at least four hours apart and no more than four times in 24 hours ([NHS paracetamol](kiwix:nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/)). Keep the person warm; a big burn loses heat fast.
-7. Chemical burns: brush off dry powder, then rinse for 20 minutes or more; keep the run-off away from you ([chemical exposure](card:chemical-exposure)).
+7. Chemical burns: blot or brush the substance off dry first, then rinse only if the skin itches or burns, and for about an hour, not twenty minutes; keep the run-off away from you ([chemical exposure](card:chemical-exposure)).
 
 {{#unless power}}
 Cool water is all this needs, and it does not need to be heated, pumped or lit. Work by head torch and keep naked flames away from a burned person and from any oxygen. The twenty minutes of cooling chills the whole body, so warm the rest of them while the burn is cooling: blankets over everything except the burn, and the warmest room in the house afterwards. Keep clean water back for later dressing changes rather than using every drop now.

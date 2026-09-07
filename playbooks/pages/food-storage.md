@@ -16,7 +16,7 @@ category: reference
 5. **Rotate.** Date every container, put new stock at the back and eat from the front, and open the long-term store one container at a time.
 
 {{#unless power}}
-The dry store is untouched by a power cut, but the cold store is now on a clock: a closed fridge holds about four hours and a freezer about 48 hours full, or 24 hours half full ([CMO food advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media); [What still works](page:what-still-works)). Keep both shut, eat the fridge down first and the freezer in the order it thaws, cook what has thawed thoroughly and do not refreeze it. Wheat becomes flour by hand now, so know where the mill or the quern is ([Grain mill (Appropedia)](kiwix:appropedia_en_all/Grain_mill)).
+The dry store is untouched by a power cut, but the cold store is now on a clock: a closed fridge holds about four hours and a freezer about 48 hours full, or 24 hours half full ([CMO food advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media); [What still works](page:what-still-works)). Keep both shut, eat the fridge down first and the freezer in the order it thaws, cook what has thawed thoroughly: raw thawed food is never refrozen, but once cooked it can be frozen again and reheated only once. Wheat becomes flour by hand now, so know where the mill or the quern is ([Grain mill (Appropedia)](kiwix:appropedia_en_all/Grain_mill)).
 {{/unless}}
 
 {{#unless shops}}
@@ -24,7 +24,7 @@ The store is now the whole supply, so count it before you eat into it: work out 
 {{/unless}}
 
 {{#if scenario:heat-drought}}
-Heat is the enemy of a store: oils and fats turn rancid faster the warmer they are, and tins keep indefinitely only if they are never frozen and never kept above 32 °C ([Rancidification](kiwix:wikipedia_en_all_maxi/Rancidification); [Canning](kiwix:wikipedia_en_all_maxi/Canning)). Move the store to the coolest place you have, a cellar or a north-facing cupboard at floor level rather than a loft or a sunny outbuilding, keep oil in dark glass or metal, check more often for insects, and freeze or heat any new stock before it joins the long-term store ([Rice weevil](kiwix:wikipedia_en_all_maxi/Rice_weevil)).
+Heat is the enemy of a store: oils and fats turn rancid faster the warmer they are, and tins keep longest below about 29 °C, are harmed above about 38 °C and should never be frozen ([Rancidification](kiwix:wikipedia_en_all_maxi/Rancidification); [Canning](kiwix:wikipedia_en_all_maxi/Canning)). Move the store to the coolest place you have, a cellar or a north-facing cupboard at floor level rather than a loft or a sunny outbuilding, keep oil in dark glass or metal, check more often for insects, and freeze or heat any new stock before it joins the long-term store ([Rice weevil](kiwix:wikipedia_en_all_maxi/Rice_weevil)).
 {{/if}}
 
 ## Weevils, moths and rats

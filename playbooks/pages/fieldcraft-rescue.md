@@ -23,11 +23,11 @@ This is the home page for calling rescue; the other pages only point here.
 Mountain rescue teams are volunteers called out by the police; they are free, they would rather come out for a sprained ankle at dusk than a body in the morning, and they ask only that you call before you are exhausted ([Mountain rescue in England and Wales](kiwix:wikipedia_en_all_maxi/Mountain_rescue_in_England_and_Wales)).
 
 {{#unless roads}}
-With the roads closed no ambulance, fire engine or team vehicle reaches the road head, so the help that comes is on foot and slower, and getting the casualty towards it becomes part of the plan. Say in the call, or in the note you send with a runner, that the road is blocked and where a vehicle could actually reach. Move the casualty only if it is safe to, using the carries and the improvised stretcher on [Rope, knots and tools](page:fieldcraft-rope-tools), and signal from ground a helicopter could use: flat, clear, everything weighted down.
+With the roads closed no ambulance, fire engine or team vehicle reaches the road head, so the help that comes is on foot and slower, and getting the casualty towards it becomes part of the plan. Say in the call, or in the note you send with a runner, that the road is blocked and where a vehicle could actually reach. Move the casualty only if it is safe to, using the carries and the improvised stretcher on [Rope, knots and tools](page:fieldcraft-rope-tools), and signal from ground a helicopter could use: flat, clear, everything weighted down — practice rather than published guidance, but it is what a crew looks for.
 {{/unless}}
 
 {{#if scenario:storms-flooding}}
-When a call gets through, ask for the **fire service** for anyone trapped by water and the **coastguard** on the shore, and say how deep the water is and how fast it is moving ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Never go into floodwater after a person, a pet or a possession: reach or throw, do not go. Get to the highest floor or the highest ground with a torch, a whistle and something bright to hang from a window, and keep a phone dry and charged, because it is worth more than any other signal here ([Storms and flooding](playbook:storms-flooding)).
+When a call gets through, ask for the **fire service** for anyone trapped by water and the **coastguard** on the shore, and say how deep the water is and how fast it is moving ([Help during a flood](kiwix:govuk_resilience/www.gov.uk/help-during-flood)). Never go into floodwater after a person, a pet or a possession: reach or throw, do not go, not even the shallows. The fire-and-coastguard split is ordinary 999 triage rather than something the flood guidance states. Get to the highest floor or the highest ground with a torch, a whistle and something bright to hang from a window, and keep a phone dry and charged, because it is worth more than any other signal here ([Storms and flooding](playbook:storms-flooding)).
 {{/if}}
 
 ## When the phones are down
@@ -44,7 +44,7 @@ Then the route card, the whistle and staying put are the plan. A lost person who
 - **A torch pointed at a helicopter at night**: on, and steady, then switched off once they have seen you, never pointed into the cockpit.
 
 {{#if dark}}
-Darkness makes you easier to find and harder to move, so stop and signal. A torch is visible for miles where a jacket is not: six flashes spread over a minute, a minute's silence, then six again, and keep going after you hear the three that answer ([Alpine distress signal](kiwix:wikipedia_en_all_maxi/Alpine_distress_signal)). Hold a steady torch on an approaching helicopter until the crew have seen you, then switch it off. Searchers do go out at night here, because hypothermia does not wait for morning: get insulated, stay put and keep making noise ([Hypothermia card](card:hypothermia)).
+Darkness makes you easier to find and harder to move, so stop and signal. A torch is visible for miles where a jacket is not: six flashes in quick succession, a minute's silence, then six again, and do not stop because you think you have heard a reply ([Alpine distress signal](kiwix:wikipedia_en_all_maxi/Alpine_distress_signal)). Hold a steady torch on an approaching helicopter until the crew have seen you, never into the cockpit, then switch it off. Searchers do go out at night here, because hypothermia does not wait for morning: get insulated, stay put and keep making noise ([Hypothermia card](card:hypothermia)).
 {{/if}}
 
 ## Helicopters

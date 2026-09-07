@@ -49,7 +49,7 @@ sources:
 5. Never eat a wild fungus you cannot name with certainty, and never identify one from a photo on this box.
 
 {{#unless power}}
-**Eat in this order while the cold lasts:** the fridge first, then the freezer as it softens, then the cupboard. Cook one big pot for everyone rather than reheating twice. Food that has thawed but is still cold can be cooked and eaten at once, but raw food that has thawed is never refrozen ([FSA chill, freeze and defrost](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)). In winter an unheated porch or shed is a cold store; in summer nothing is, so open a tin rather than gamble on a thawed one ([CMO food and nutrition advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media)).
+**Eat in this order while the cold lasts:** the fridge first, then the freezer as it softens, then the cupboard. Cook one big pot for everyone rather than reheating twice. Food that has thawed but is still cold is cooked and used within 24 hours: raw thawed food is never refrozen, but once it is cooked it can be frozen again and reheated only once ([FSA chill, freeze and defrost](kiwix:govuk_resilience/www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely)). In winter an unheated porch or shed is a cold store while it stays reliably below 8 °C; in summer nothing is, so open a tin rather than gamble on a thawed one ([CMO food and nutrition advice](kiwix:govuk_resilience/www.gov.uk/government/publications/public-health-advice-from-uk-cmos-during-a-national-power-outage/food-and-nutrition-scripts-for-broadcast-media)).
 {{/unless}}
 
 {{#unless shops}}
@@ -61,7 +61,7 @@ sources:
 {{/if}}
 
 {{#if scenario:supply-chain}}
-**Do not join the queue.** The UK produces about 60% of the food it eats and runs its shops on daily deliveries ([Agriculture in the United Kingdom](kiwix:wikipedia_en_all_maxi/Agriculture_in_the_United_Kingdom)), so shelves empty from panic buying long before the country is short: fresh produce goes first, then bread and milk, then tins. Buy the gaps in your list in ordinary quantities from ordinary shops, and buy them early rather than in the rush. A baby on formula is the tightest supply line in the house; the fallback when the tin runs out is on [Infant feeding](page:infant-feeding).
+**Do not join the queue.** The UK produces about 62% of all the food it eats and runs its shops on daily deliveries ([Agriculture in the United Kingdom](kiwix:wikipedia_en_all_maxi/Agriculture_in_the_United_Kingdom)), so shelves empty from panic buying long before the country is short: fresh produce goes first, then bread and milk, then tins. Buy the gaps in your list in ordinary quantities from ordinary shops, and buy them early rather than in the rush. A baby on formula is the tightest supply line in the house: if formula runs short, ask a health visitor, GP or pharmacist at once, and never make up your own formula or give cow's milk to a baby under twelve months ([Infant feeding](page:infant-feeding)).
 {{/if}}
 
 ## UK specifics

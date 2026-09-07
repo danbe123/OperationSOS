@@ -9,7 +9,7 @@ category: reference
 
 ## Emergency
 
-**Always try 999.** 999 and 112 connect from any mobile, on any network that has signal, without credit and without a SIM: the call roams onto whichever network can carry it, so try it even when your own network shows no bars ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). {{#if phones}}The rest of the numbers below need a working network.{{else}}Try 999 anyway, and if nothing connects at all, [getting help without phones](page:no-phones) is the page to use until the network comes back.{{/if}}
+**Always try 999.** 999 and 112 connect from any mobile, on any network that has signal, without credit — though the phone does still need a SIM in it: the call roams onto whichever network can carry it, so try it even when your own network shows no bars ([Prepare, power cuts](kiwix:prepare_uk/prepare.campaign.gov.uk/be-informed-about-hazards/power-cuts/)). {{#if phones}}The rest of the numbers below need a working network.{{else}}Try 999 anyway, and if nothing connects at all, [getting help without phones](page:no-phones) is the page to use until the network comes back.{{/if}}
 
 | Number | For | Notes |
 |---|---|---|
@@ -20,7 +20,7 @@ category: reference
 | 101 | Police non-emergency | Crime that has already happened, no danger to life |
 
 {{#unless phones}}
-Every number on this page is dead while the network is: 999, 112, 111, 101 and 105 all need a mast or a line ([getting help without phones](page:no-phones)). What replaces them is legs and radio. For police, fire or ambulance, send a pair of runners with a written note, who, what, where, when, how many, to the nearest fire station, police station or ambulance station; fire stations stay crewed and have their own radio to control. For a medical emergency, take the patient to the nearest emergency department or open pharmacy, marked on [the map's health layer](map:?overlay=health).
+Every number on this page is dead while the network is: 999, 112, 111, 101 and 105 all need a mast or a line ([getting help without phones](page:no-phones)). What replaces them is legs and radio. For police, fire or ambulance, send a pair of runners with a written note, who, what, where, when, how many, to the largest town-centre fire, police or ambulance station you can reach; many fire stations are on-call and stand empty between shouts, and an empty station cannot be alerted without the network. For a medical emergency, take the patient to the nearest emergency department or open pharmacy, marked on [the map's health layer](map:?overlay=health).
 {{/unless}}
 
 ## Health
@@ -32,7 +32,7 @@ Every number on this page is dead while the network is: 999, 112, 111, 101 and 1
 | — | Pharmacy First | England: a pharmacist can treat some conditions without a GP. Scotland has NHS Pharmacy First Scotland; Wales and Northern Ireland run their own common-ailments schemes |
 
 {{#unless internet}}
-The routes that need the internet have gone: NHS 111 online, the 999 BSL video relay and any app or website ([What still works](page:what-still-works)). 111 by voice, 999 by voice and 999 by text still work over the mobile or landline network, and Relay UK on 18000 is text relay over the phone network rather than the internet. Anyone who has registered for emergency SMS should use it now rather than hunting for a working video service.
+The routes that need the internet have gone: NHS 111 online, the 999 BSL video relay and any app or website ([What still works](page:what-still-works)). 111 by voice, 999 by voice and 999 by text still work over the mobile or landline network, and Relay UK on 18000 is text relay over the phone network from a textphone, though the Relay UK app needs the internet. Anyone who has registered for emergency SMS should use it now rather than hunting for a working video service.
 {{/unless}}
 
 ## Utilities
@@ -53,7 +53,7 @@ The routes that need the internet have gone: NHS 111 online, the 999 BSL video r
 | — | Water, Northern Ireland | NI Water; the number is on the bill ([Northern Ireland Water](kiwix:wikipedia_en_all_maxi/Northern_Ireland_Water)) |
 
 {{#unless phones}}
-None of the utility numbers connect either. Tell the network operator's engineers, the council's rest centre or the police in person that the power is off here and that someone in the house depends on electrical medical equipment ([Mains electricity](page:mains-electricity)). If you smell gas, get everyone out, leave the doors open, turn the gas off at the meter if you can reach it safely, and send someone to the fire station. For water, the company opens bottled-water points and the local radio says where they are ([Water module](module:water)).
+None of the utility numbers connect either. Tell the network operator's engineers — 105 in Great Britain, 03457 643643 in Northern Ireland, once the lines are back — the council's rest centre or the police in person that the power is off here and that someone in the house depends on electrical medical equipment ([Mains electricity](page:mains-electricity)). If you smell gas, get everyone out, leave the doors open, turn the gas off at the meter if you can reach it safely, and send someone to the fire station. For water, the company opens bottled-water points and the local radio says where they are ([Water module](module:water)).
 {{/unless}}
 
 ## Flooding

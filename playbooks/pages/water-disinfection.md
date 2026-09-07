@@ -25,7 +25,7 @@ This is the home page for making water safe; the water module and the field-craf
 {{#if power}}Boiling is the surest of these, on the hob or in the kettle.{{else}}Boiling is still the surest of these, but with the power off it means a gas hob lit with a match or a stove used outdoors, so the tablets and the bleach doses may be the practical answer ([Power module](module:power)).{{/if}}
 
 {{#unless water}}
-With the mains off, treat everything you collect, whatever it looks like: rain from a clean sheet or butt, a stream, a spring, a private borehole, the hot water tank, the cistern above the toilet ([Water outdoors](page:fieldcraft-water); [Water module](module:water)). Boil where you have the fuel and use the tablet or bleach doses where you do not. Keep treated and untreated containers apart and labelled, store the treated water covered, cool and dark, use it within a day or two, and re-treat anything that has stood in the warm.
+With the mains off, treat everything you collect, whatever it looks like: rain from a clean sheet or butt, a stream, a spring, a private borehole, the hot water tank, the cistern above the toilet ([Water outdoors](page:fieldcraft-water); [Water module](module:water)). Boil where you have the fuel and use the tablet or bleach doses where you do not. Keep treated and untreated containers apart and labelled, store the treated water covered, cool and dark, use it within 24 hours, which is the figure a boil-water notice gives, and re-treat anything that has stood in the warm.
 {{/unless}}
 
 {{#if scenario:storms-flooding}}
@@ -33,7 +33,7 @@ Flooding puts sewage into the mains, into wells and into every stream, so drink 
 {{/if}}
 
 {{#if scenario:nuclear-war}}
-**Covered water, not clear-looking water.** Sealed food and covered water stay safe, so use what was indoors and closed before the fallout came: the tank, the cistern, sealed bottles, anything with a lid ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). Nothing in the table above removes radioactive particles, so stay sheltered rather than fetching from a stream or a butt catching what has fallen. Where open water is all there is, let it stand, pour off the clear water and then treat it for microbes as usual.
+**Covered water, not clear-looking water.** Sealed food and covered water stay safe, so use what was indoors and closed before the fallout came: the tank, the cistern, sealed bottles, anything with a lid ([NWSS, p. 158](doc:nwss#page=158); [Radiation module](module:radiation)). Nothing in the table above removes radioactive particles, so stay sheltered rather than fetching from a stream or a butt catching what has fallen. Where open water is all there is, let it stand at least six hours and pour off the clear water — that removes the particles, not anything dissolved — then treat it for microbes as usual.
 {{/if}}
 
 {{#if scenario:nuclear-accident}}

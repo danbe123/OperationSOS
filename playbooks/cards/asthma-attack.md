@@ -16,7 +16,7 @@ Wheezing, tight chest, coughing, too breathless to finish a sentence, and the re
 2. One puff of the blue reliever (salbutamol) every 30 to 60 seconds.
 3. Use a spacer if there is one. Up to 10 puffs.
 4. If no better after 10 puffs, or they cannot speak, {{#if phones}}[[call 999]]{{else}}send someone to a landline, a neighbour or a payphone: 999 will not connect from here{{/if}}.
-5. While waiting, repeat 10 puffs after 15 minutes if the ambulance has not come.
+5. While waiting, repeat the 10 puffs after 10 minutes if help has not come.
 6. Do not lie them down and do not leave them.
 7. Keep windows open if the air is clean; close them if smoke, ash or pollen is the trigger.
 
@@ -39,10 +39,10 @@ Ash irritates the airways and will set attacks off. Stay indoors with the window
 Inhalers run out. Count the doses left on the reliever, keep the daily preventer going even when the chest feels fine, because the preventer is what stops the next attack ([chronic conditions](page:chronic-conditions)), and ask the pharmacy about an emergency supply before the last inhaler is empty rather than after. Do not ration the reliever during an attack: the ten puffs are the treatment, and a rationed attack is the one that kills. Do not share an inhaler between people.
 {{/if}}
 
-If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours. If nobody can come: keep repeating the reliever through the spacer every 15 minutes while it helps, move them to the cleanest air you have, give plenty to drink to loosen the mucus, and if fever comes or the attack drags on for more than three days treat it as a chest infection with the antibiotics you hold under the rules in Where There Is No Doctor ([WTIND, p. 216](doc:where-there-is-no-doctor#page=216)).
+If 10 puffs do not help, symptoms get worse, they cannot speak, or lips go blue — [[call 999]]. After any attack, they need a GP review within 48 hours. If nobody can come: keep repeating the reliever through the spacer every 10 minutes while it helps ([Asthma attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/)), move them to the cleanest air you have, give plenty to drink to loosen the mucus, and if fever comes or the attack drags on for more than three days treat it as a chest infection with the antibiotics you hold under the rules in Where There Is No Doctor ([WTIND, p. 216](doc:where-there-is-no-doctor#page=216)).
 
 {{#unless phones}}
-No ambulance is coming and no hospital nebuliser is waiting. Keep the ten puffs through the spacer going every 15 minutes while they help, sit them upright, and stay with them: exhaustion, drowsiness, blue lips or a chest that has gone quiet mean they are losing. If the puffs stop working, carry them, do not walk them, to the nearest crewed help on [the map's health layer](map:?overlay=health), upright the whole way, taking the inhaler and spacer with you and sending someone ahead to say you are coming.
+No ambulance is coming and no hospital nebuliser is waiting. Keep the ten puffs through the spacer going every 10 minutes while they help, which is the interval Asthma + Lung UK gives ([Asthma attack (NHS)](kiwix:nhs_uk/www.nhs.uk/conditions/asthma/)), sit them upright, and stay with them: exhaustion, drowsiness, blue lips or a chest that has gone quiet mean they are losing. If the puffs stop working, carry them, do not walk them, to the nearest crewed help on [the map's health layer](map:?overlay=health), upright the whole way, taking the inhaler and spacer with you and sending someone ahead to say you are coming.
 {{/unless}}
 
 ## Source

@@ -11,6 +11,10 @@ sources:
   - title: Bird flu, latest situation in England (GOV.UK)
     kiwix: govuk_resilience/www.gov.uk/guidance/bird-flu-avian-influenza-latest-situation-in-england
     as_at: 2026-09
+  - title: Never feed catering waste, kitchen scraps or meat to farm animals (APHA)
+    kiwix: govuk_resilience/www.gov.uk/guidance/never-feed-catering-waste-or-meat-to-farm-animals
+    url: https://www.gov.uk/guidance/never-feed-catering-waste-or-meat-to-farm-animals
+    as_at: 2026-09
   - title: Animal Welfare Act 2006
     kiwix: legislation_uk/www.legislation.gov.uk/ukpga/2006/45/contents
     as_at: 2026-09
@@ -52,7 +56,7 @@ sources:
 5. Killing an animal for your own consumption at home is lawful only with proper stunning, under the 2015 regulations ([Welfare of Animals at the Time of Killing Regulations 2015](kiwix:legislation_uk/www.legislation.gov.uk/uksi/2015/1782/contents)); how to kill, bleed, skin, pluck, draw, hang and preserve rabbits, poultry, sheep and goats is on the [butchery page](page:butchery).
 
 {{#unless shops}}
-**No bought feed is coming.** Hens will live on scraps, greens, grass and what they find if they can range, though they lay far less on it; rabbits manage on greens, hay and prunings; goats and sheep need the browse and hay you already have. Work out today how many animals your own ground and scraps can carry through to spring, and reduce the number to that rather than watching them all go thin ([Butchery](page:butchery)). The duty of care applies whatever else is happening ([Animal Welfare Act 2006](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2006/45/contents)).
+**No bought feed is coming.** Hens can range for grass, insects and greens and be given feed bought or grown for the purpose, though they lay far less on it; it is illegal to feed them kitchen scraps or any catering waste, including peelings from your own kitchen ([registering as a bird keeper](kiwix:govuk_resilience/www.gov.uk/government/collections/register-as-a-bird-keeper)). Rabbits manage on greens, hay and prunings; goats and sheep need the browse and hay you already have. Work out today how many animals your own ground and stored feed can carry through to spring, and reduce the number to that rather than watching them all go thin ([Butchery](page:butchery)). The duty of care applies whatever else is happening ([Animal Welfare Act 2006](kiwix:legislation_uk/www.legislation.gov.uk/ukpga/2006/45/contents)).
 {{/unless}}
 
 {{#if scenario:supply-chain}}
@@ -60,11 +64,11 @@ sources:
 {{/if}}
 
 {{#if scenario:famine}}
-**Feed animals only what people cannot eat.** A hen or a rabbit fed on grain a person could have eaten is a net loss in a famine; one living on scraps, weeds and forage is not. A flock or herd that cannot be fed through the winter is culled in the autumn, while the animals still carry flesh, and the meat preserved, rather than starved into February ([Culling](kiwix:wikipedia_en_all_maxi/Culling); [Butchery](page:butchery)). Keep the smallest breeding core you can genuinely feed, and remember that killing at home is lawful only with proper stunning.
+**Feed animals only what people cannot eat.** A hen fed on grain a person could have eaten is a net loss in a famine; one ranging on grass, weeds and insects is not, and kitchen scraps remain illegal feed. A flock that cannot be fed through the winter is culled in the autumn while the animals still carry flesh, and the meat preserved ([Culling](kiwix:wikipedia_en_all_maxi/Culling); [Butchery](page:butchery)). Keep the smallest breeding core you can feed. Home slaughter is lawful only with stunning, only by the owner or a licensed slaughterer under supervision, and the meat is for your own household — never sold or given away; fallen stock goes to an approved knacker or renderer, never buried on the holding.
 {{/if}}
 
 {{#if scenario:long-rebuild}}
-**Keep the breeding line going.** Keep a cockerel, a buck or a ram, or agree with a neighbour who has one: a flock with no male is a flock with one generation left. Hatch your own eggs, write down who is out of whom so that you can avoid close breeding, and use everything the animal gives — hide, tallow, feathers, bone and manure for the ground ([Growing food module](module:growing-food)). With no vet coming, prevention is the whole of medicine: dry housing, clean water, room to move, and a sick animal separated early ([WikiVet](kiwix:wikivet.net_en_all/New_Front_Page)).
+**Keep the breeding line going.** Keep a cockerel, a buck or a ram, or agree with a neighbour who has one: a flock with no male is a flock with one generation left. Hatch your own eggs, write down who is out of whom so that you can avoid close breeding, and use everything the animal gives — hide, tallow, feathers, bone and manure for the ground ([Growing food module](module:growing-food)). With no vet coming, prevention is the whole of medicine: dry housing, clean water, room to move, and a sick animal separated early. That is settled husbandry rather than published guidance ([WikiVet](kiwix:wikivet.net_en_all/New_Front_Page)).
 {{/if}}
 
 ## UK specifics

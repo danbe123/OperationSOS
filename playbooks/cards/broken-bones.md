@@ -42,7 +42,7 @@ No ambulance is coming, so splint first and move second. Pad and tie the limb wh
 {{/unless}}
 
 {{#unless roads}}
-With the roads blocked you are carrying them. Make a stretcher from two poles and three coats, or use a door, a wheelbarrow or a garden trolley, and pad under the splint; four carriers if you have them, feet first downhill, swapping often. Tie the person on so a stumble does not throw them off. It is slow, so send a runner ahead to say who is coming and with what ([getting help without phones](page:no-phones); [Rope, knots and tools](page:fieldcraft-rope-tools)).
+With the roads blocked you are carrying them. Make a stretcher from two poles and three coats, or use a door, a wheelbarrow or a garden trolley, and pad under the splint; four carriers if you have them, feet first downhill, swapping often: that is mountain-rescue practice rather than published guidance, but it is what keeps a stretcher level and a carry going. Tie the person on so a stumble does not throw them off. It is slow, so send a runner ahead to say who is coming and with what ([getting help without phones](page:no-phones); [Rope, knots and tools](page:fieldcraft-rope-tools)).
 {{/unless}}
 
 {{#if scenario:storms-flooding}}

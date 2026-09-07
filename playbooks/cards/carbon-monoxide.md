@@ -17,7 +17,7 @@ Headache, dizziness, nausea or flu-like feeling in several people or pets at onc
 3. Turn off the generator, stove, heater or barbecue if safe to do so.
 4. Do not go back in. Count everyone.
 5. {{#if phones}}Call the gas emergency line: 0800 111 999 in Great Britain, 0800 002 001 in Northern Ireland; [[call 999]] if anyone is unconscious or has chest pain.{{else}}No line will connect: keep everyone out in the fresh air and send someone to the nearest fire station, which is crewed and has its own radio ([getting help without phones](page:no-phones)).{{/if}}
-6. Everyone exposed needs a medical check even if they feel better — go to A&E, or [[call 111]].
+6. Everyone exposed needs a medical check even if they feel better — go to A&E, or [[call 111]], or in Northern Ireland the GP out-of-hours service ([UK numbers](page:uk-numbers)).
 7. Never run a generator, barbecue or camping stove indoors, in a garage, tent or conservatory; fit a CO alarm before any stove is used.
 
 {{#unless power}}
@@ -34,7 +34,7 @@ The power cut is what causes this. A generator runs outside, well away from door
 Anyone unconscious, confused, fitting or with chest pain — [[call 999]]. If breathing stops, [CPR](card:cpr-adult) in fresh air. If nobody can come: fresh air alone clears half the carbon monoxide from the blood in a little over five hours, and oxygen from a cylinder or concentrator does it in under an hour and a half, so keep everyone resting outdoors or by a wide-open window for the rest of the day, give any oxygen you have, and do not let anyone back into the building until the appliance is off and the place aired ([Carbon monoxide poisoning (WikiMed)](kiwix:wikipedia_en_medicine_maxi/Carbon_monoxide_poisoning); [Ship Captain's Medical Guide ch. 2](doc:scmg-ch02)). Poisoning by other gases and swallowed poisons is on the [poisoning card](card:poisoning).
 
 {{#unless phones}}
-Neither the gas emergency line nor 999 will connect, so everything is done on foot. Get everyone out and keep them out, in the fresh air, sitting still: exertion uses more oxygen than they have to spare. Anyone who was unconscious, is confused, has chest pain, or is pregnant needs carrying to the nearest crewed help on [the map's health layer](map:?overlay=health), or a runner sent to the nearest fire station, which stays crewed and has its own radio ([getting help without phones](page:no-phones)). Nobody goes back in until the appliance is off and the place has been aired for hours.
+Neither the gas emergency line nor 999 will connect, so everything is done on foot. Get everyone out and keep them out, in the fresh air, sitting still: exertion uses more oxygen than they have to spare. Anyone who was unconscious, is confused, has chest pain, or is pregnant needs carrying to the nearest crewed help on [the map's health layer](map:?overlay=health), or a runner sent to the largest town-centre station you can reach, knowing many fire stations are on-call and stand empty ([getting help without phones](page:no-phones)). Nobody goes back in until the appliance is off and the place has been aired for hours.
 {{/unless}}
 
 {{#if scenario:severe-winter}}

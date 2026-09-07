@@ -16,7 +16,7 @@ With the shops shut the temptation is to eat the countryside, and that is exactl
 {{/unless}}
 
 {{#if scenario:famine}}
-**Hunger is when foragers take the risk they would not take fed.** Hemlock water dropwort, the most poisonous plant in Britain, grows in ditches and wet meadows everywhere and has killed people who took it for wild celery or parsnip ([Hemlock water dropwort](kiwix:wikipedia_en_all_maxi/Oenanthe_crocata)). So keep the rule, and spend the effort where the calories are: hazelnuts and sweet chestnuts in autumn, acorns leached in many changes of water, shellfish and seaweed from a clean shore, and roots only if someone genuinely knows them ([Famine](playbook:famine)). Have a second person confirm every identification.
+**Hunger is when foragers take the risk they would not take fed.** Hemlock water dropwort, one of the most poisonous plants in Britain, grows in ditches and wet meadows everywhere, and its root has been eaten in mistake for parsnip ([Hemlock water dropwort](kiwix:wikipedia_en_all_maxi/Oenanthe_crocata)). So keep the rule, and spend the effort where the calories are: hazelnuts and sweet chestnuts in autumn, acorns leached in many changes of water, shellfish and seaweed from a clean shore, and roots only if someone genuinely knows them ([Famine](playbook:famine)). Have a second person confirm every identification.
 {{/if}}
 
 ## Plants that are common, easy and safe
@@ -37,7 +37,7 @@ With the shops shut the temptation is to eat the countryside, and that is exactl
 - **Yew**: every part except the red flesh of the berry, and the seed inside that flesh is deadly ([Yew](kiwix:wikipedia_en_all_maxi/Taxus_baccata)).
 - **Deadly nightshade**, **lords-and-ladies** (bright orange berries in woods), **laburnum**, **daffodil bulbs** (mistaken for onions), **bryony**, **monkshood**, **giant hogweed** (sap blisters skin in sunlight; do not touch) ([Deadly nightshade](kiwix:wikipedia_en_all_maxi/Atropa_bella-donna); [Giant hogweed](kiwix:wikipedia_en_all_maxi/Heracleum_mantegazzianum)).
 
-If someone has eaten something and you are not sure: keep a sample of the plant and do not induce vomiting. {{#if phones}}Then get advice — [[call 111]], or [[call 999]] if they are ill ([Medical module](module:medical)).{{else}}Then take them, and the sample, to a pharmacy or a hospital in person ([getting help without phones](page:no-phones); [Medical module](module:medical)).{{/if}}
+If someone has eaten something and you are not sure: keep a sample of the plant and do not induce vomiting. {{#if phones}}Then get advice — [[call 111]], or in Northern Ireland the GP out-of-hours service ([UK numbers](page:uk-numbers)), or [[call 999]] if they are ill ([Medical module](module:medical)).{{else}}Then take them, and the sample, to a pharmacy or a hospital in person ([getting help without phones](page:no-phones); [Medical module](module:medical)).{{/if}}
 
 ## Fungi
 
