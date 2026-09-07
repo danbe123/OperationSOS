@@ -111,6 +111,16 @@ Tapping a place on the map opens a card, and the "What to expect here" paragraph
 - **The sixteen kinds**, and they are a closed set because the overlays produce them: `hospital`, `pharmacy`, `gp`, `clinic`, `fuel`, `water-works`, `reservoir`, `spring`, `rail-station`, `airport`, `military`, `nuclear`, `chemical`, `flood-zone`, `footpath`, `access-land`. A missing kind is an error, so a new overlay kind needs a paragraph before it ships.
 - **`expect`** is one Markdown paragraph of 40 to 120 words, plain UK English, second person, present tense, no bullet lists and no headings. It is read by a frightened person on a phone standing in the street, so it says what the place is for, what it will and will not do for them in an emergency, and what to do instead. It ends with one guide link, `([Vehicles and fuel](module:vehicles-fuel))`.
 - **`link`** is the guide the card's button opens, `page:<slug>`, `module:<slug>` or `card:<slug>`, and it is the same guide the paragraph ends with. The endpoint resolves it to a URL and looks its title up, so nothing is repeated here.
+- **The four lists.** Besides `expect`, every kind carries four lists of short bullets, all four required, shown under fixed headings in this order:
+
+  | Key | Heading | What it says | Count |
+  |---|---|---|---|
+  | `have` | Usually here | the resources a place of this kind normally holds and whether they survive an outage: water, food, fuel, power, heat, shelter, tools, medical, comms, people with skills | 3 to 7 |
+  | `useful` | Worth going when | the situations in which this place helps, by scenario (blackout, flood, cold, no water, evacuation, injury, war) | 2 to 5 |
+  | `avoid` | Stay away when | when it is dangerous, pointless or a target: crowds, looting, contamination, closure | 2 to 5 |
+  | `approach` | How to go about it | what to bring, when in the day, who to ask, how to behave, what to offer, the law | 2 to 6 |
+
+  Each bullet is **6 to 30 words and 20 to 220 characters**, plain UK English, present tense, imperative where it is an instruction. Inline Markdown is allowed, and a bullet that carries a figure carries the guide link that already holds that figure (`([Vehicles and fuel](module:vehicles-fuel))`); a bullet that carries no figure needs no link. `sos validate-playbooks` checks the counts and lengths against the schema, every link in every bullet, and the word range, reporting `map/places.yaml: <kind>: <key>[<n>]: …`. `GET /api/map/places` returns them as `sections: [{id, title, html}]` in that order, each `html` one rendered `<ul>`.
 - **Figures.** Every number, distance or law in a paragraph is one the linked guide already carries, taken from that guide, rather than a new fact introduced here: the 30 litre petrol limit from [Vehicles and fuel](module:vehicles-fuel), the 15 cm and 30 cm of floodwater from [Evacuation](module:evacuation), the one-minute rolling boil from [Water disinfection](page:water-disinfection).
 - **The test tree** carries its own `api/tests/fixtures/playbooks/map/places.yaml`: the same prose with the guide links rewritten to slugs the fixture tree holds. Change the real file and change that copy too.
 

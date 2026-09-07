@@ -24,6 +24,22 @@ def test_places_yaml_has_every_kind_with_guidance_and_a_link():
         assert place.title
 
 
+COUNTS = {"have": (3, 7), "useful": (2, 5), "avoid": (2, 5), "approach": (2, 6)}
+
+
+def test_every_kind_carries_the_four_lists_within_their_counts_and_word_limits():
+    places = map_places.load_places(PB / "map" / "places.yaml")
+    assert sorted(places) == sorted(KINDS)
+    assert [key for key, _ in map_places.SECTIONS] == ["have", "useful", "avoid", "approach"]
+    for kind, place in places.items():
+        for key, (low, high) in COUNTS.items():
+            bullets = place.bullets(key)
+            assert low <= len(bullets) <= high, (kind, key, len(bullets))
+            for n, bullet in enumerate(bullets):
+                assert 6 <= len(bullet.split()) <= 30, (kind, key, n, bullet)
+                assert 20 <= len(bullet) <= 220, (kind, key, n, bullet)
+
+
 def test_places_validate_clean_against_the_real_tree():
     items = load_manifests(REPO / "manifest")
     overlay_ids = {i.overlay.id for i in items if i.overlay}
@@ -61,9 +77,36 @@ def test_a_broken_link_the_paragraph_also_cites_is_reported_once(tmp_path):
         "map/places.yaml: fuel: link page:no-such-page: page 'no-such-page' does not exist"]
 
 
+def test_validation_reports_a_broken_link_inside_a_bullet_with_its_key_and_index(tmp_path):
+    src = yaml.safe_load((PB / "map" / "places.yaml").read_text())
+    src["places"]["fuel"]["avoid"][1] = "Panic buying, not shortage, emptied the pumps ([Gone](page:no-such-page))."
+    errors = map_places.validate_places(_tree(tmp_path, src), set(), set(), SLUGS, set())
+    assert "map/places.yaml: fuel: avoid[1]: link page:no-such-page: page 'no-such-page' does not exist" in errors
+
+
+def test_validation_reports_a_bullet_outside_the_word_limits(tmp_path):
+    src = yaml.safe_load((PB / "map" / "places.yaml").read_text())
+    src["places"]["spring"]["have"][0] = "A spring, and nothing else at all, " + "on and on " * 10
+    errors = map_places.validate_places(_tree(tmp_path, src), set(), set(), SLUGS, set())
+    assert any(e.startswith("map/places.yaml: spring: have[0]:") and "words" in e for e in errors)
+
+
 def test_places_endpoint_renders_html(client):
     body = client.get("/api/map/places").json()
     assert sorted(body) == sorted(KINDS)
     fuel = body["fuel"]
     assert fuel["title"] and fuel["html"].startswith("<p>") and 'href="/' in fuel["html"]
     assert fuel["link"]["href"].startswith("/") and fuel["link"]["title"]
+
+
+def test_places_endpoint_returns_the_four_sections_in_order_for_every_kind(client):
+    body = client.get("/api/map/places").json()
+    for kind in KINDS:
+        sections = body[kind]["sections"]
+        assert [s["id"] for s in sections] == ["have", "useful", "avoid", "approach"], kind
+        assert [s["title"] for s in sections] == [
+            "Usually here", "Worth going when", "Stay away when", "How to go about it"], kind
+        for section in sections:
+            assert section["html"].startswith("<ul>") and "<li>" in section["html"], (kind, section["id"])
+    fuel = body["fuel"]["sections"]
+    assert any('href="/' in section["html"] for section in fuel)

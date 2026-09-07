@@ -14,6 +14,13 @@ import yaml
 KINDS = ("hospital", "pharmacy", "gp", "clinic", "fuel", "water-works", "reservoir", "spring", "rail-station",
          "airport", "military", "nuclear", "chemical", "flood-zone", "footpath", "access-land")
 
+#: The four bullet lists every kind carries, in the order the card and the tooltip show them, with the
+#: heading each one is given (spec section 10.1).
+SECTIONS = (("have", "Usually here"), ("useful", "Worth going when"),
+            ("avoid", "Stay away when"), ("approach", "How to go about it"))
+
+MIN_WORDS, MAX_WORDS = 6, 30
+
 
 @dataclass(frozen=True)
 class PlaceKind:
@@ -21,6 +28,17 @@ class PlaceKind:
     title: str
     expect: str
     link: str
+    have: tuple[str, ...] = ()
+    useful: tuple[str, ...] = ()
+    avoid: tuple[str, ...] = ()
+    approach: tuple[str, ...] = ()
+
+    def bullets(self, key: str) -> tuple[str, ...]:
+        return getattr(self, key)
+
+
+def _bullets(value) -> tuple[str, ...]:
+    return tuple(str(b) for b in value) if isinstance(value, list) else ()
 
 
 def load_places(path: Path | str) -> dict[str, PlaceKind]:
@@ -29,7 +47,8 @@ def load_places(path: Path | str) -> dict[str, PlaceKind]:
     if not path.is_file():
         return {}
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return {k: PlaceKind(k, str(v.get("title", "")), str(v.get("expect", "")), str(v.get("link", "")))
+    return {k: PlaceKind(k, str(v.get("title", "")), str(v.get("expect", "")), str(v.get("link", "")),
+                         *(_bullets(v.get(key)) for key, _ in SECTIONS))
             for k, v in (raw.get("places") or {}).items() if isinstance(v, dict)}
 
 
@@ -63,4 +82,14 @@ def validate_places(playbooks_dir, zim_ids, doc_ids, slugs, overlay_ids,
             body = f"{body}\n\n[{place.title}]({place.link})"
         errors += [e.replace(rel, f"{rel}: {kind}", 1)
                    for e in content._check_links(rel, body, zim_ids, doc_ids, slugs, overlay_ids)]
+        # Every bullet is checked the same way, and reported with the list it sits in and its position,
+        # so a broken link in a long file is one edit away from being found.
+        for key, _ in SECTIONS:
+            for n, bullet in enumerate(place.bullets(key)):
+                where = f"{rel}: {kind}: {key}[{n}]"
+                errors += [e.replace(rel, where, 1)
+                           for e in content._check_links(rel, bullet, zim_ids, doc_ids, slugs, overlay_ids)]
+                words = len(bullet.split())
+                if not MIN_WORDS <= words <= MAX_WORDS:
+                    errors.append(f"{where}: {words} words, not {MIN_WORDS} to {MAX_WORDS}")
     return errors

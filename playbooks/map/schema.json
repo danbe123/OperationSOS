@@ -3,20 +3,82 @@
   "title": "Operation SOS map places",
   "description": "playbooks/map/places.yaml: what to expect at each kind of place on the map. Rules in playbooks/README.md.",
   "type": "object",
-  "required": ["places"],
+  "required": [
+    "places"
+  ],
   "additionalProperties": false,
   "properties": {
     "places": {
       "type": "object",
-      "propertyNames": {"pattern": "^[a-z][a-z-]*$"},
+      "propertyNames": {
+        "pattern": "^[a-z][a-z-]*$"
+      },
       "additionalProperties": {
         "type": "object",
-        "required": ["title", "expect", "link"],
+        "required": [
+          "title",
+          "expect",
+          "link",
+          "have",
+          "useful",
+          "avoid",
+          "approach"
+        ],
         "additionalProperties": false,
         "properties": {
-          "title": {"type": "string", "minLength": 3, "maxLength": 60},
-          "expect": {"type": "string", "minLength": 200},
-          "link": {"type": "string", "pattern": "^(page|module|card):[a-z0-9-]+$"}
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 60
+          },
+          "expect": {
+            "type": "string",
+            "minLength": 200
+          },
+          "link": {
+            "type": "string",
+            "pattern": "^(page|module|card):[a-z0-9-]+$"
+          },
+          "have": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 7,
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 220
+            }
+          },
+          "useful": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 220
+            }
+          },
+          "avoid": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 220
+            }
+          },
+          "approach": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "minLength": 20,
+              "maxLength": 220
+            }
+          }
         }
       }
     }

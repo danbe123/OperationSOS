@@ -92,6 +92,19 @@ def map_places_guidance(request: Request):
     """What to expect at each kind of place on the map, rendered so the frontend never parses Markdown."""
     resolver = request.app.state.content.resolver
     places = map_places.load_places(request.app.state.settings.playbooks / "map" / "places.yaml")
+
+    def sections(place: map_places.PlaceKind) -> list[dict]:
+        """The four bullet lists, each rendered as one Markdown list so it comes back as a <ul>."""
+        out = []
+        for key, heading in map_places.SECTIONS:
+            bullets = place.bullets(key)
+            if not bullets:
+                continue
+            md = "\n".join(f"- {b}" for b in bullets)
+            out.append({"id": key, "title": heading, "html": content_mod.render_markdown(md, resolver)})
+        return out
+
     return {kind: {"title": place.title, "html": content_mod.render_markdown(place.expect, resolver),
+                   "sections": sections(place),
                    "link": {"href": resolver(place.link), "title": _link_title(request, place.link)}}
             for kind, place in places.items()}
