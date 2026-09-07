@@ -7,6 +7,9 @@ export const REGIONS: Record<string, string> = {
   england: 'England', wales: 'Wales', scotland: 'Scotland', ni: 'Northern Ireland', roi: 'Republic of Ireland', iom: 'Isle of Man', ci: 'Channel Islands',
 };
 
+/** Why an overlay stops where it does, for the chip's title and the line under the chip row. The note is
+ * hand-written in the manifest — the build only knows which regions went in, so it cannot say why one is
+ * missing — and where nobody wrote one, the regions absent from that built `coverage` list stand in. */
 export function coverageNote(overlay: Overlay): string | null {
   if (overlay.coverage_note) return overlay.coverage_note;
   const missing = Object.keys(REGIONS).filter((r) => !overlay.coverage.includes(r));

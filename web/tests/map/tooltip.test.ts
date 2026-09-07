@@ -15,6 +15,8 @@ const asMap = (m: FakeMap) => m as unknown as MlMap;
 const hospital: FakeFeature = { id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital', phone: '+44 23 8077 7222' } };
 const zone: FakeFeature = { id: 7, source: 'sos-overlay-flood-zones', sourceLayer: 'flood_england', layer: { id: 'sos-overlay-flood-zones-flood_england-fill' }, properties: { zone: '3' } };
 const path: FakeFeature = { id: 3, source: 'sos-overlay-footpaths', sourceLayer: 'footpaths', layer: { id: 'sos-overlay-footpaths-footpaths-line' }, properties: { designation: 'public_footpath', highway: 'path' } };
+const hospitalAt: FakeFeature = { ...hospital, geometry: { type: 'Point', coordinates: [-1.4353, 50.9333] } };
+const zoneAt: FakeFeature = { ...zone, geometry: { type: 'Polygon', coordinates: [[[-1.44, 50.93], [-1.43, 50.93], [-1.43, 50.94], [-1.44, 50.93]]] } };
 
 function mapWithOverlays(): FakeMap {
   const map = new FakeMap();
@@ -115,6 +117,22 @@ describe('attachFeatureTooltip', () => {
     map.renderedFeatures = [];
     click(map);
     expect(onTap).toHaveBeenLastCalledWith(null);
+  });
+
+  it('a tapped point is the feature\'s own position, not the finger\'s; a polygon has only the tap', () => {
+    const map = mapWithOverlays();
+    const onTap = vi.fn();
+    attachFeatureTooltip(asMap(map), () => mapConfig.overlays, onTap);
+    // The tap lands 400 m off the hospital: within the 14 px box, but the card must say where the
+    // hospital is, because its grid reference, its distance and the pin it drops all come off this point.
+    map.renderedFeatures = [hospitalAt];
+    map.emit('click', { point: { x: 10, y: 10 }, lngLat: { lng: -1.4300, lat: 50.9300 }, originalEvent: { pointerType: 'touch' } });
+    expect(onTap).toHaveBeenLastCalledWith(expect.objectContaining({ lat: 50.9333, lon: -1.4353 }));
+    // A flood zone has no one point to give, so the tap is the only place worth measuring from.
+    map.setLayoutProperty('sos-overlay-flood-zones-flood_england-fill', 'visibility', 'visible');
+    map.renderedFeatures = [zoneAt];
+    map.emit('click', { point: { x: 10, y: 10 }, lngLat: { lng: -1.4300, lat: 50.9300 }, originalEvent: { pointerType: 'touch' } });
+    expect(onTap).toHaveBeenLastCalledWith(expect.objectContaining({ title: 'Flood zone 3', lat: 50.9300, lon: -1.4300 }));
   });
 
   it('detaching removes the handlers and the popup', () => {

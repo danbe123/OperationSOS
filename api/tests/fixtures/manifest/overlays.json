@@ -34,7 +34,7 @@
           "ci"
         ],
         "color": "#3fb950",
-        "icon": "footpath"
+        "icon": "boot"
       }
     },
     {
@@ -139,7 +139,7 @@
           "ci"
         ],
         "color": "#d62728",
-        "icon": "hospital"
+        "icon": "medical"
       }
     },
     {
@@ -176,7 +176,7 @@
           "ci"
         ],
         "color": "#ff7f0e",
-        "icon": "fuel"
+        "icon": "bolt"
       }
     },
     {
@@ -250,7 +250,7 @@
           "ci"
         ],
         "color": "#9467bd",
-        "icon": "rail"
+        "icon": "train"
       }
     },
     {
@@ -324,7 +324,7 @@
           "ci"
         ],
         "color": "#8c564b",
-        "icon": "chemical"
+        "icon": "flask"
       }
     },
     {
@@ -361,7 +361,7 @@
           "ci"
         ],
         "color": "#7f7f7f",
-        "icon": "airport"
+        "icon": "plane"
       }
     },
     {
@@ -397,7 +397,7 @@
           "iom",
           "ci"
         ],
-        "color": "#8c564b",
+        "color": "#4b6b2f",
         "icon": "shield"
       }
     }

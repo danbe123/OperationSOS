@@ -3,7 +3,8 @@ import { vi } from 'vitest';
 export type FakeLayer = { id: string; type: string; source?: string; 'source-layer'?: string; layout?: Record<string, unknown>; paint?: Record<string, unknown> };
 export type FakeStyle = { version: 8; sources: Record<string, unknown>; layers: FakeLayer[]; glyphs?: string; name?: string };
 
-export type FakeFeature = { id?: string | number; source: string; sourceLayer?: string; layer: { id: string }; properties: Record<string, unknown> };
+export type FakeFeature = { id?: string | number; source: string; sourceLayer?: string; layer: { id: string };
+  properties: Record<string, unknown>; geometry?: { type: string; coordinates: unknown } };
 
 /** Minimal maplibre Map double: keeps a style, exposes the add/remove/get API and a tiny event emitter. */
 export class FakeMap {

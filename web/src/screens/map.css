@@ -26,6 +26,9 @@
 .map-chip:disabled { opacity: 0.45; }
 .map-chip-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--line-strong); }
 .map-chip.active .map-chip-dot { border-color: var(--ground); }
+/* Why a layer that is on stops where it does, under the chip that turned it on: the chip's title says
+   the same thing, and a title is unreachable on a touch screen. */
+.map-chips-note { flex: 0 0 auto; margin: 0; padding: 0 var(--gutter) 6px; font-size: 0.85rem; }
 .map-host { position: relative; flex: 1; min-height: 200px; }
 .map-canvas { position: absolute; inset: 0; }
 /* The map surface is somebody else's cartography and it arrives at somebody else's brightness: a

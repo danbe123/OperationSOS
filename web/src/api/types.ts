@@ -47,7 +47,9 @@ export type Page = { slug: string; title: string; icon: string; order: number; h
 export type Overlay = {
   id: string; title: string; kind: 'geojson' | 'pmtiles' | 'style-layer'; layer_id: string | null; url: string | null;
   default_on: boolean; scenarios_on: string[]; coverage: string[]; color: string; icon: string | null; available: boolean;
-  /** What the build knows about this overlay's coverage, in its own words; the regions list is the fallback. */
+  /** Why this overlay stops where it does, hand-written in the manifest: the `coverage` list is what the
+   * build knows, and this says what is missing from it and why. Null on an overlay with nothing to explain,
+   * and the regions missing from `coverage` are the fallback. */
   coverage_note: string | null;
 };
 export type MapConfig = {

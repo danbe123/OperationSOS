@@ -15,7 +15,7 @@ describe('coverageNote', () => {
     expect(coverageNote(health)).toBeNull();
     expect(coverageNote(accessLand)).toBe('No data for Scotland, Northern Ireland, Republic of Ireland, Isle of Man, Channel Islands');
   });
-  it('says what the build said when the build said it', () => {
+  it('prefers the hand-written note in the manifest over the regions list', () => {
     expect(coverageNote({ ...accessLand, coverage_note: 'England and Wales only.' })).toBe('England and Wales only.');
   });
 });

@@ -86,8 +86,9 @@ places:
       A station is a landmark and a roof, not a service. Trains stop early in almost every emergency,
       because power, signalling and staff all have to hold for the line to run, so do not build a plan
       around one. What it is good for is a dry, lit, well-known place to meet people who are walking to
-      you. The track itself is fenced off and dangerous. If you are leaving, keep the tank at least
-      half full, and remember that bicycles get through where cars jam
+      you. The track itself is fenced off and dangerous. If you are walking out, the line itself is a
+      handrail you can follow to the next town, but from the far side of the fence: never the ballast,
+      and never a tunnel or a cutting
       ([Water module](module:water)).
     link: module:water
   airport:

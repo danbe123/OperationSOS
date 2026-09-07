@@ -188,12 +188,16 @@ export function MapScreen() {
   };
 
   /* A row in the Nearby list is a place like any other on the map: it opens the same card, with the
-     same guidance on it, rather than only flying the map to a dot the household then has to find. */
+     same guidance on it, rather than only flying the map to a dot the household then has to find. A
+     facility the box has no guidance for (a fire station, a rest centre) has nothing to put on that card
+     but the name already in the list, so those rows only fly the map, as every row used to. */
   const openFromNearby = (f: NearbyFacility, p: NearbyPlace) => {
     flyTo(p.lon, p.lat, 15);
+    const kind = NEARBY_KIND[f.id];
+    if (!kind) return;
     setPlace({
       title: placeName(p.name, f.title), typeLine: f.title, overlay: f.title, overlayId: f.id,
-      kind: NEARBY_KIND[f.id] ?? null, rows: [], lat: p.lat, lon: p.lon,
+      kind, rows: [], lat: p.lat, lon: p.lon,
     });
     setPanel('place');
   };

@@ -37,6 +37,19 @@ export function describeMapFeature(feature: MapGeoJSONFeature, overlays: Overlay
   return describeFeature(overlayId, feature.properties, { sourceLayer: feature.sourceLayer, overlayTitle: overlay?.title });
 }
 
+/** Where the card should say the place is. A tap is a fat finger with a 14 px hit box around it, so for a
+ * point — a hospital, a pump, a station — the feature's own coordinates are the answer, and the card's grid
+ * reference, distance and pinned position are the building's, not the finger's. A line or a polygon has no
+ * one point to give, so there the tap itself is the best thing to measure from. */
+export function placePoint(feature: MapGeoJSONFeature, tap: { lng: number; lat: number }): { lat: number; lon: number } {
+  const geometry = feature.geometry;
+  if (geometry?.type === 'Point') {
+    const [lon, lat] = geometry.coordinates as [number, number];
+    return { lat, lon };
+  }
+  return { lat: tap.lat, lon: tap.lng };
+}
+
 /** Plain DOM (text nodes only, so property values are never parsed as HTML). The hover popup says what
  * the thing is and no more: everything else — what it has, how far it is, what to expect there — is on
  * the card a tap opens, where it can be read without holding a finger still. */
@@ -103,7 +116,8 @@ export function attachFeatureTooltip(map: MlMap, overlays: () => Overlay[], onTa
     const feature = featureAt(e.point, touch ? TAP_PAD : HOVER_PAD);
     hide();
     if (!feature) { onTap(null); return; }
-    onTap({ ...describeMapFeature(feature, overlays()), overlayId: overlayIdOf(feature), lat: e.lngLat.lat, lon: e.lngLat.lng });
+    const at = placePoint(feature, e.lngLat);
+    onTap({ ...describeMapFeature(feature, overlays()), overlayId: overlayIdOf(feature), lat: at.lat, lon: at.lon });
   };
 
   map.on('mousemove', onMove);

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { FakeMap } from '../map/fakeMap';
-import { mapConfig, mapPlaces, nearby, notes, places } from '../fixtures/api';
+import { mapConfig, mapPlaces, nearby, nearbyWithFireStation, notes, places } from '../fixtures/api';
 
 const created = vi.hoisted(() => ({ maps: [] as unknown[] }));
 vi.mock('maplibre-gl', async () => {
@@ -67,6 +67,11 @@ describe('Map screen', () => {
     expect(within(chips).getByRole('button', { name: 'Footpaths' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(chips).getByRole('button', { name: 'Flood zones' })).toBeDisabled();
     expect(within(chips).getByRole('button', { name: 'Access land' })).toHaveAttribute('title', 'No data for Scotland, Northern Ireland, Republic of Ireland, Isle of Man, Channel Islands');
+    // Footpaths is on and covers the lot, so nothing is said until a layer that stops somewhere is on.
+    expect(document.querySelector('.map-chips-note')).toBeNull();
+    await user.click(within(chips).getByRole('button', { name: 'Access land' }));
+    // A title is a mouse thing; on a phone the only way to learn why a layer looks empty is to read it.
+    expect(screen.getByText('Access land: No data for Scotland, Northern Ireland, Republic of Ireland, Isle of Man, Channel Islands')).toBeVisible();
     await user.click(within(chips).getByRole('button', { name: 'Hillshade' }));
     expect(lastMap().visibility('sos-hillshade')).toBe('none');
     expect(lastMap().visibility('sos-contours')).toBe('visible');
@@ -238,7 +243,7 @@ describe('Map screen', () => {
     // The guide's own link and the button under it both go to the guide, and both navigate in the app.
     expect(within(card).getByRole('link', { name: 'Medical' })).toHaveAttribute('href', '/m/medical');
     expect(within(card).getByRole('link', { name: 'Open Medical' })).toHaveAttribute('href', '/m/medical');
-    await user.click(within(card).getByRole('button', { name: 'Route from the centre' }));
+    await user.click(within(card).getByRole('button', { name: 'Route from the map centre' }));
     expect(screen.getByTestId('map-readout')).toHaveTextContent('Southampton General Hospital:');
     await user.click(within(card).getByRole('button', { name: 'Pin this place' }));
     expect(screen.getByRole('dialog', { name: 'Pins' })).toBeInTheDocument();
@@ -257,6 +262,21 @@ describe('Map screen', () => {
     expect(within(card).getByText('Emergency department')).toBeInTheDocument();
     await user.click(within(card).getByRole('button', { name: 'Nearby from here' }));
     expect(screen.getByRole('dialog', { name: 'Nearby' })).toHaveTextContent('From Southampton General Hospital');
+  });
+
+  it('a Nearby row the box has no guidance for only flies the map, rather than opening an empty card', async () => {
+    mockApis();
+    vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
+    vi.spyOn(api, 'nearby').mockResolvedValue(nearbyWithFireStation);
+    const user = userEvent.setup();
+    renderRoute('/map');
+    await user.click(await screen.findByRole('button', { name: /Nearby/ }));
+    await user.click(await screen.findByRole('button', { name: /^Shirley Fire Station/ }));
+    // There is no "what to expect at a fire station" in this box, so a card would say the name the row
+    // already said and nothing else. The map goes there and the list stays up.
+    expect(lastMap().flyTo).toHaveBeenLastCalledWith(expect.objectContaining({ center: [-1.4460, 50.9290], zoom: 15 }));
+    expect(screen.queryByRole('dialog', { name: 'Place' })).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Nearby' })).toBeInTheDocument();
   });
 
   it('share shows the address as a link and a QR; print is hidden in kiosk', async () => {

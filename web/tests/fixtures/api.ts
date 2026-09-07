@@ -407,6 +407,20 @@ export const nearby: NearbyResponse = {
   ],
 };
 
+/* The same answer with a facility the box has no "what to expect" for: a fire station is in NEARBY_KINDS
+   but not in NEARBY_KIND, so its row has a card's worth of nothing to show. */
+export const nearbyWithFireStation: NearbyResponse = {
+  ...nearby,
+  facilities: [
+    ...nearby.facilities,
+    {
+      id: 'fire-station', title: 'Fire station', found: true, searched: ['emergency'], note: null,
+      nearest: { name: 'Shirley Fire Station', lat: 50.9290, lon: -1.4460, distance_m: 1400, bearing_deg: 200, compass: 'SSW', walk_minutes: 17, source: 'overlay:emergency', properties: {} },
+      also: [],
+    },
+  ],
+};
+
 /* What to expect at each kind of place on the map, as `GET /api/map/places` answers it. */
 export const mapPlaces: Record<string, PlaceGuidance> = {
   hospital: {

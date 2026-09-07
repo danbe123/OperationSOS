@@ -37,7 +37,7 @@ export function PlaceCard({ place, from, guidance, onClose, onRoute, onPin, onNe
       }
       actions={
         <>
-          <button type="button" className="btn btn-small" onClick={onRoute}><Icon name="compass" size={18} /><span>Route from {from.label === 'home' ? 'home' : 'the centre'}</span></button>
+          <button type="button" className="btn btn-small" onClick={onRoute}><Icon name="compass" size={18} /><span>Route from {from.label === 'home' ? 'home' : 'the map centre'}</span></button>
           <button type="button" className="btn btn-small" onClick={onPin}><Icon name="pin" size={18} /><span>Pin this place</span></button>
           <button type="button" className="btn btn-small" onClick={onNearby}><Icon name="search" size={18} /><span>Nearby from here</span></button>
         </>
