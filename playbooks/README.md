@@ -25,7 +25,7 @@ The file name is the slug: lower-case letters, digits and hyphens. It must equal
 | `order` | sort position within its kind (scenarios use the numbers from spec section 2) |
 | `summary` | one sentence for tiles and lists |
 
-Scenarios add `modules` (slugs of the modules the body includes), `overlays` (map overlay ids from `manifest/overlays.json` that switch on when the map opens from the playbook), `reviewed` (the owner's sign-off date `YYYY-MM-DD`, or `null` until reviewed) and `sources`. Modules, cards and pages may carry `sources`; pages must carry `category`: `comms`, `reference`, `plan`, `about` or `fieldcraft`, which picks the list the page appears in (`fieldcraft` pages are the UK field-craft set on the Field craft screen).
+Scenarios add `modules` (slugs of the modules the body includes), `overlays` (map overlay ids from `manifest/overlays.json` that switch on when the map opens from the playbook), `reviewed` (the owner's sign-off date `YYYY-MM-DD`, or `null` until reviewed) and `sources`. Modules, cards and pages may carry `sources`; pages must carry `category`: `comms`, `reference`, `plan`, `about`, `fieldcraft` or `rebuild`, which picks the list the page appears in (`rebuild` pages are the Rebuilding section, the long recovery after a scenario; `fieldcraft` pages are the UK field-craft set on the Field craft screen).
 
 ```yaml
 ---
