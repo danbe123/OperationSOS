@@ -89,7 +89,7 @@
         "artifact": "styles"
       },
       "dest": "maps/styles",
-      "size_bytes": 707910,
+      "size_bytes": 458878,
       "as_at": "2026-09",
       "licence": "BSD-3 (Protomaps basemaps); OGL v3 (OS Open Zoomstack stylesheets)",
       "priority": 56,
