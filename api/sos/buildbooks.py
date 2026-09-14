@@ -11,18 +11,26 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from pathlib import Path
 from typing import Callable
 
 import httpx
 
+from sos import docs
 from sos.config import Settings
 from sos.manifest import Item, load_manifests
 from sos.sync import SyncError, download
 
+# Below this fraction of the PDF's pdftotext word count, the EPUB is worse than the original: a scanned
+# PDF whose "text" is a hidden OCR layer (or an odd font encoding) converts to page images or garbage,
+# not readable text.
+MIN_TEXT_COVERAGE = 0.5
+
 
 def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
                 client: httpx.Client | None = None, which: Callable[[str], str | None] = shutil.which,
-                use_aria2: bool | None = None) -> tuple[bool, str]:
+                use_aria2: bool | None = None,
+                text_runner: Callable[[Path], str] | None = None) -> tuple[bool, str]:
     """Produce `item.dest` (the EPUB) under the item's tier root, fetching `item.pdf_dest` (the
     original) from `item.source.url` first if it is not already on disk. Returns (ok, message)."""
     if item.source.tool != "pdf2epub":
@@ -49,7 +57,9 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
             return False, f"{item.id}: could not fetch {item.source.url}: {exc}"
         os.replace(part, pdf_path)
     epub_path.parent.mkdir(parents=True, exist_ok=True)
-    proc = run(["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title],
+    # --enable-heuristics unwraps Calibre's default one-paragraph-per-PDF-line output into real
+    # paragraphs (verified on scmg-ch01 and fm-21-76-survival: identical text coverage, readable prose).
+    proc = run(["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title, "--enable-heuristics"],
               capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         # Clean up any partially-written file before returning failure
@@ -59,19 +69,33 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     if not epub_path.exists():
         message = (proc.stderr or proc.stdout or "").strip()[:200]
         return False, f"{item.id}: ebook-convert failed: {message}"
+    # Text-coverage gate: some scanned PDFs (hidden OCR layer, odd font encoding) convert to an EPUB
+    # that is almost all page images or garbage. Compare word counts against the same sidecar-cached
+    # pdftotext extraction the indexer uses, so a bad conversion is caught here rather than shipped.
+    pdf_word_count = sum(len(page.split()) for page in docs.extract_pages(pdf_path, "pdf", text_runner))
+    if pdf_word_count:
+        epub_word_count = sum(len(page.split()) for page in docs.epub_pages(epub_path))
+        pct = round(epub_word_count / pdf_word_count * 100)
+        if epub_word_count / pdf_word_count < MIN_TEXT_COVERAGE:
+            epub_path.unlink(missing_ok=True)
+            return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text "
+                            f"(scanned or hidden-text PDF?); left as pdf")
+        return True, f"{item.id}: {epub_path} ({pct}% of the PDF's text)"
     return True, f"{item.id}: {epub_path}"
 
 
 def main(settings: Settings, only: list[str] | None = None, run: Callable = subprocess.run,
         client: httpx.Client | None = None, which: Callable[[str], str | None] = shutil.which,
-        use_aria2: bool | None = None) -> int:
+        use_aria2: bool | None = None,
+        text_runner: Callable[[Path], str] | None = None) -> int:
     items = [i for i in load_manifests(settings.manifests) if i.source.tool == "pdf2epub"]
     if only:
         wanted = set(only)
         items = [i for i in items if i.id in wanted]
     failures = 0
     for item in items:
-        ok, message = convert_one(item, settings, run=run, client=client, which=which, use_aria2=use_aria2)
+        ok, message = convert_one(item, settings, run=run, client=client, which=which, use_aria2=use_aria2,
+                                  text_runner=text_runner)
         print(("OK   " if ok else "FAIL ") + message)
         if not ok:
             failures += 1

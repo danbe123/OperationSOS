@@ -1,4 +1,5 @@
 import subprocess
+import zipfile
 from pathlib import Path
 
 import httpx
@@ -7,17 +8,34 @@ from sos import buildbooks
 from sos.manifest import load_manifests
 
 
-class FakeRun:
-    """Records every command; simulates ebook-convert writing the EPUB, instead of running it."""
+def _write_fake_epub(path: Path, words: int) -> None:
+    """A tiny but real EPUB (zip with mimetype, container.xml, content.opf, one xhtml) with a single
+    spine document holding `words` words, so sos.docs.epub_pages can read it back."""
+    body = " ".join(f"w{i}" for i in range(words)) if words else "placeholder"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("mimetype", "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+        zf.writestr("META-INF/container.xml",
+                    '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                    '<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
+        zf.writestr("OEBPS/content.opf",
+                    '<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">'
+                    '<metadata/><manifest><item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest>'
+                    '<spine><itemref idref="c1"/></spine></package>')
+        zf.writestr("OEBPS/ch1.xhtml", f"<html><body><p>{body}</p></body></html>")
 
-    def __init__(self, ok: bool = True):
+
+class FakeRun:
+    """Records every command; simulates ebook-convert writing a tiny real EPUB, instead of running it."""
+
+    def __init__(self, ok: bool = True, epub_words: int = 10):
         self.calls: list[list[str]] = []
         self.ok = ok
+        self.epub_words = epub_words
 
     def __call__(self, cmd, **kwargs):
         self.calls.append(list(cmd))
         if cmd[0] == "ebook-convert" and self.ok:
-            Path(cmd[2]).write_bytes(b"EPUB fake")
+            _write_fake_epub(Path(cmd[2]), self.epub_words)
         return subprocess.CompletedProcess(cmd, 0 if self.ok else 1, stdout="",
                                            stderr="" if self.ok else "conversion failed")
 
@@ -30,16 +48,28 @@ def _item(env):
     return next(i for i in load_manifests(env.manifests) if i.id == "sos-test-epub")
 
 
+def _no_text(pdf: Path) -> str:
+    """A text_runner standing in for pdftotext on a PDF with no extractable text at all."""
+    return ""
+
+
+def _pdf_words(n: int):
+    def runner(pdf: Path) -> str:
+        return " ".join(f"pdfword{i}" for i in range(n))
+    return runner
+
+
 def test_convert_one_runs_ebook_convert_with_the_items_title_and_writes_the_epub(env):
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True)
-    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
     assert ok, message
     epub_path = env.core / "docs" / "sos-test-converted.epub"
-    assert epub_path.read_bytes() == b"EPUB fake"
+    assert epub_path.exists()
     pdf_path = env.core / "docs" / "sos-test-original.pdf"
-    assert run.calls == [["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title]]
+    assert run.calls == [["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title,
+                          "--enable-heuristics"]]
 
 
 def test_convert_one_reports_failure_and_leaves_no_partial_epub(env):
@@ -91,7 +121,8 @@ def test_convert_one_fetches_the_source_pdf_when_not_already_on_disk(env):
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
     run = FakeRun(ok=True)
-    ok, message = buildbooks.convert_one(item, env, run=run, client=client, which=_which_installed, use_aria2=False)
+    ok, message = buildbooks.convert_one(item, env, run=run, client=client, which=_which_installed,
+                                         use_aria2=False, text_runner=_no_text)
     assert ok, message
     assert (env.core / "docs" / "sos-test-original.pdf").read_bytes() == b"%PDF fetched"
 
@@ -123,7 +154,7 @@ def test_convert_one_leaves_no_truncated_pdf_when_the_fetch_fails(env):
 def test_main_reports_ok_and_returns_zero(env):
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True)
-    code = buildbooks.main(env, run=run, which=_which_installed)
+    code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_no_text)
     assert code == 0
     assert (env.core / "docs" / "sos-test-converted.epub").exists()
 
@@ -140,3 +171,49 @@ def test_main_only_filters_to_the_named_ids(env):
     code = buildbooks.main(env, only=["does-not-exist"], run=run, which=_which_installed)
     assert code == 0
     assert run.calls == []
+
+
+def test_convert_one_fails_when_conversion_loses_most_of_the_pdfs_text(env):
+    """Scanned PDFs with a hidden OCR layer (or odd font encodings) convert to an EPUB that is almost
+    all page images or garbage: below MIN_TEXT_COVERAGE, that's worse than the original PDF."""
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    run = FakeRun(ok=True, epub_words=10)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed,
+                                         text_runner=_pdf_words(100))
+    assert not ok
+    assert "10%" in message and "left as pdf" in message and item.id in message
+    epub_path = env.core / "docs" / "sos-test-converted.epub"
+    assert not epub_path.exists()
+    pdf_path = env.core / "docs" / "sos-test-original.pdf"
+    assert pdf_path.exists() and pdf_path.read_bytes() == b"%PDF fake"
+
+
+def test_convert_one_ok_message_reports_text_coverage_at_the_threshold(env):
+    """Coverage at or above MIN_TEXT_COVERAGE (0.5) is a pass, not just above it."""
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    run = FakeRun(ok=True, epub_words=50)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed,
+                                         text_runner=_pdf_words(100))
+    assert ok, message
+    assert "50%" in message and "of the PDF's text" in message
+    assert (env.core / "docs" / "sos-test-converted.epub").exists()
+
+
+def test_convert_one_skips_the_coverage_gate_when_the_pdf_has_no_extractable_text(env):
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    run = FakeRun(ok=True, epub_words=5)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
+    assert ok, message
+    assert "%" not in message
+    assert (env.core / "docs" / "sos-test-converted.epub").exists()
+
+
+def test_main_threads_text_runner_and_returns_nonzero_on_a_coverage_failure(env):
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    run = FakeRun(ok=True, epub_words=1)
+    code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_pdf_words(100))
+    assert code == 1
+    assert not (env.core / "docs" / "sos-test-converted.epub").exists()
