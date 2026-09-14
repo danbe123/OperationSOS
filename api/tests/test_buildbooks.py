@@ -217,3 +217,61 @@ def test_main_threads_text_runner_and_returns_nonzero_on_a_coverage_failure(env)
     code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_pdf_words(100))
     assert code == 1
     assert not (env.core / "docs" / "sos-test-converted.epub").exists()
+
+
+def test_convert_one_reports_a_corrupt_epub_as_fail_without_crashing(env):
+    """A real Calibre crash mode: ebook-convert exits 0 but writes a corrupt or non-zip EPUB. The
+    coverage gate's `docs.epub_pages` read of that file must never propagate: a FAIL is never
+    batch-blocking (spec section 4)."""
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+
+    class FakeRunWritesGarbage:
+        def __init__(self):
+            self.calls = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            if cmd[0] == "ebook-convert":
+                Path(cmd[2]).write_bytes(b"not a zip file")
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    ok, message = buildbooks.convert_one(item, env, run=FakeRunWritesGarbage(), which=_which_installed,
+                                         text_runner=_pdf_words(100))
+    assert not ok
+    assert "unreadable EPUB" in message and item.id in message
+    assert not (env.core / "docs" / "sos-test-converted.epub").exists()
+
+
+def test_main_continues_past_a_corrupt_epub_and_still_converts_the_next_item(env, monkeypatch):
+    """The bug this guards: an unguarded epub_pages() read let a BadZipFile/ParseError propagate out of
+    convert_one, and main()'s loop has no per-item try/except -- so the whole batch aborted and every
+    remaining item was skipped. Two items: the fixture manifest only carries one pdf2epub item, so the
+    second is a synthesized copy (via monkeypatch on load_manifests) rather than a fixture edit."""
+    item1 = _item(env)
+    item2 = item1.model_copy(update={"id": "sos-test-epub-2", "dest": "docs/sos-test-converted-2.epub",
+                                     "pdf_dest": "docs/sos-test-original-2.pdf"})
+    monkeypatch.setattr(buildbooks, "load_manifests", lambda paths: [item1, item2])
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    (env.core / "docs" / "sos-test-original-2.pdf").write_bytes(b"%PDF fake 2")
+
+    class FakeRunFirstCorruptSecondOk:
+        def __init__(self):
+            self.calls = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            if cmd[0] == "ebook-convert":
+                if cmd[1].endswith("sos-test-original.pdf"):
+                    Path(cmd[2]).write_bytes(b"not a zip file")
+                else:
+                    _write_fake_epub(Path(cmd[2]), 60)
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run = FakeRunFirstCorruptSecondOk()
+    code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_pdf_words(100))
+    assert code == 1
+    # both items were attempted -- the batch did not abort after the first item's failure
+    assert len([c for c in run.calls if c[0] == "ebook-convert"]) == 2
+    assert not (env.core / "docs" / "sos-test-converted.epub").exists()
+    assert (env.core / "docs" / "sos-test-converted-2.epub").exists()
