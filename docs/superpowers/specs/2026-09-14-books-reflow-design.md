@@ -64,7 +64,10 @@ without invoking Calibre). For every manifest item with `source.tool == "pdf2epu
 
 1. Locate the source PDF (already present from an earlier `sos sync core`, or fetched from `source.url`).
 2. Run `ebook-convert <pdf> <epub>`, using the item's `title` for EPUB metadata.
-3. Write the `.epub` to `dest` and copy the original PDF to `pdf_dest`.
+3. Write the `.epub` to `dest`; the original PDF stays (or is fetched) at `pdf_dest` — nothing is copied.
+   (Amended 2026-09-14 after the build: the tool also passes `--enable-heuristics` so Calibre unwraps PDF lines into
+   paragraphs, retries once with `--flow-size 0` when Calibre's splitter gives up, and reports FAIL — leaving the
+   item as `kind: "pdf"` — when the PDF has no text layer or the EPUB keeps under half of the PDF's words.)
 4. Report `OK`/`FAIL` per item, in the same style as `sos sync`'s per-item output.
 
 A `FAIL` is not a blocking error for the batch: that book's manifest entry simply isn't migrated (stays
