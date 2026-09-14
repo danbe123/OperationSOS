@@ -82,25 +82,28 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     # that is almost all page images or garbage. Compare word counts against the same sidecar-cached
     # pdftotext extraction the indexer uses, so a bad conversion is caught here rather than shipped.
     pdf_word_count = sum(len(page.split()) for page in docs.extract_pages(pdf_path, "pdf", text_runner))
-    if pdf_word_count:
-        try:
-            epub_word_count = sum(len(page.split()) for page in docs.epub_pages(epub_path))
-        except (zipfile.BadZipFile, ET.ParseError, OSError) as exc:
-            # A real Calibre crash mode: ebook-convert exits 0 but writes a corrupt or non-zip EPUB.
-            # A FAIL here must never propagate: main()'s loop has no per-item try/except, and the
-            # spec's binding rule (section 4) is that a FAIL is never batch-blocking.
-            epub_path.unlink(missing_ok=True)
-            return False, f"{item.id}: ebook-convert produced an unreadable EPUB: {exc}"
-        ratio = epub_word_count / pdf_word_count
-        pct = round(ratio * 100)
-        if ratio < MIN_TEXT_COVERAGE:
-            epub_path.unlink(missing_ok=True)
-            return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text "
-                            f"(scanned or hidden-text PDF?); left as pdf")
-        flow_note = " (flow splitting off)" if flow_splitting_off else ""
-        return True, f"{item.id}: {epub_path}{flow_note} ({pct}% of the PDF's text)"
+    if not pdf_word_count:
+        # A PDF with no extractable text at all (a pure image scan) can never yield a reflowable EPUB:
+        # Calibre still "succeeds", producing page-image paragraphs with near-zero real text, which the
+        # ratio-based coverage gate below can't catch (0/0 is undefined, not a pass). FAIL outright.
+        epub_path.unlink(missing_ok=True)
+        return False, f"{item.id}: the PDF has no extractable text (image-only scan); left as pdf"
+    try:
+        epub_word_count = sum(len(page.split()) for page in docs.epub_pages(epub_path))
+    except (zipfile.BadZipFile, ET.ParseError, OSError) as exc:
+        # A real Calibre crash mode: ebook-convert exits 0 but writes a corrupt or non-zip EPUB.
+        # A FAIL here must never propagate: main()'s loop has no per-item try/except, and the
+        # spec's binding rule (section 4) is that a FAIL is never batch-blocking.
+        epub_path.unlink(missing_ok=True)
+        return False, f"{item.id}: ebook-convert produced an unreadable EPUB: {exc}"
+    ratio = epub_word_count / pdf_word_count
+    pct = round(ratio * 100)
+    if ratio < MIN_TEXT_COVERAGE:
+        epub_path.unlink(missing_ok=True)
+        return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text "
+                        f"(scanned or hidden-text PDF?); left as pdf")
     flow_note = " (flow splitting off)" if flow_splitting_off else ""
-    return True, f"{item.id}: {epub_path}{flow_note}"
+    return True, f"{item.id}: {epub_path}{flow_note} ({pct}% of the PDF's text)"
 
 
 def main(settings: Settings, only: list[str] | None = None, run: Callable = subprocess.run,

@@ -63,7 +63,7 @@ def test_convert_one_runs_ebook_convert_with_the_items_title_and_writes_the_epub
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True)
-    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_pdf_words(10))
     assert ok, message
     epub_path = env.core / "docs" / "sos-test-converted.epub"
     assert epub_path.exists()
@@ -122,7 +122,7 @@ def test_convert_one_fetches_the_source_pdf_when_not_already_on_disk(env):
     client = httpx.Client(transport=httpx.MockTransport(handler))
     run = FakeRun(ok=True)
     ok, message = buildbooks.convert_one(item, env, run=run, client=client, which=_which_installed,
-                                         use_aria2=False, text_runner=_no_text)
+                                         use_aria2=False, text_runner=_pdf_words(10))
     assert ok, message
     assert (env.core / "docs" / "sos-test-original.pdf").read_bytes() == b"%PDF fetched"
 
@@ -154,7 +154,7 @@ def test_convert_one_leaves_no_truncated_pdf_when_the_fetch_fails(env):
 def test_main_reports_ok_and_returns_zero(env):
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True)
-    code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_no_text)
+    code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_pdf_words(10))
     assert code == 0
     assert (env.core / "docs" / "sos-test-converted.epub").exists()
 
@@ -201,14 +201,24 @@ def test_convert_one_ok_message_reports_text_coverage_at_the_threshold(env):
     assert (env.core / "docs" / "sos-test-converted.epub").exists()
 
 
-def test_convert_one_skips_the_coverage_gate_when_the_pdf_has_no_extractable_text(env):
+def test_convert_one_fails_when_the_pdf_has_no_extractable_text(env):
+    """migration-brief-3: st-31-91b-sf-medical-handbook.pdf is a pure image scan (pdftotext gives 0
+    words); Calibre still produces an EPUB of near-empty page-image paragraphs, and the old behavior
+    ("no gate" when pdf_word_count is 0) reported that as OK. A PDF with no extractable text can never
+    yield a reflowable EPUB, so this must FAIL and leave the item as pdf (spec section 4)."""
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True, epub_words=5)
     ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
-    assert ok, message
-    assert "%" not in message
-    assert (env.core / "docs" / "sos-test-converted.epub").exists()
+    assert not ok
+    assert message == f"{item.id}: the PDF has no extractable text (image-only scan); left as pdf"
+    epub_path = env.core / "docs" / "sos-test-converted.epub"
+    assert not epub_path.exists()
+    pdf_path = env.core / "docs" / "sos-test-original.pdf"
+    assert pdf_path.exists() and pdf_path.read_bytes() == b"%PDF fake"
+
+    code = buildbooks.main(env, run=FakeRun(ok=True, epub_words=5), which=_which_installed, text_runner=_no_text)
+    assert code == 1
 
 
 def test_main_threads_text_runner_and_returns_nonzero_on_a_coverage_failure(env):
@@ -265,7 +275,7 @@ def test_convert_one_retries_with_flow_splitting_off_after_a_split_error(env):
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     run = FakeRunSplitErrorThenOk()
-    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_pdf_words(10))
     assert ok, message
     assert "(flow splitting off)" in message
     epub_path = env.core / "docs" / "sos-test-converted.epub"
