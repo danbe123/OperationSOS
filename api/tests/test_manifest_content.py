@@ -150,11 +150,11 @@ def test_build_items_have_artifact_and_seed_lists():
     for it in items("core.json"):
         src = it["source"]
         if src["type"] == "build":
-            assert src["tool"] in {"zimit", "build-nhs", "build-crawl", "manual"}, it["id"]
+            assert src["tool"] in {"zimit", "build-nhs", "build-crawl", "manual", "pdf2epub"}, it["id"]
             if it["kind"] == "dir":                 # a directory item is unpacked in place: artifact is its dest
                 assert src == {"type": "build", "tool": "manual", "artifact": it["dest"]}, it["id"]
                 continue
-            assert src["artifact"].endswith((".zim", ".pdf", ".gguf")), it["id"]
+            assert src["artifact"].endswith((".zim", ".pdf", ".gguf", ".epub")), it["id"]
             if src["tool"] == "zimit":
                 seeds = (ZIMIT_DIR / f"{it['id']}.txt").read_text(encoding="utf-8").split()
                 assert seeds and all(s.startswith("https://") for s in seeds), it["id"]
