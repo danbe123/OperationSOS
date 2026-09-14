@@ -7,10 +7,10 @@ from pathlib import Path
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS library_items (
-  id TEXT PRIMARY KEY, title, kind, tier, category, scenarios_json, dest, size_bytes INTEGER, as_at, licence,
+  id TEXT PRIMARY KEY, title, kind, tier, category, scenarios_json, dest, pdf_dest, size_bytes INTEGER, as_at, licence,
   priority INTEGER, reader_home, description, search_weight REAL NOT NULL DEFAULT 1.0, suggest INTEGER NOT NULL DEFAULT 0,
   overlay_json, available INTEGER NOT NULL DEFAULT 0, local_path, fts INTEGER NOT NULL DEFAULT 0,
-  resolved_name, resolved_size INTEGER, resolved_as_at);
+  resolved_name, resolved_size INTEGER, resolved_as_at, pdf_available INTEGER NOT NULL DEFAULT 0);
 CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(
   title, body, doc_id UNINDEXED, kind UNINDEXED, category UNINDEXED, scenarios UNINDEXED, page UNINDEXED, url UNINDEXED,
   tokenize='porter unicode61 remove_diacritics 2');
@@ -55,6 +55,8 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, decl: str)
 def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     _ensure_column(conn, "stock", "kit_item", "TEXT")
+    _ensure_column(conn, "library_items", "pdf_dest", "TEXT")
+    _ensure_column(conn, "library_items", "pdf_available", "INTEGER NOT NULL DEFAULT 0")
     conn.commit()
 
 

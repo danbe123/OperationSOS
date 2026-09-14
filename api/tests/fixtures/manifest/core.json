@@ -39,6 +39,17 @@
       "description": "Not present in the fixture tree; exercises the unavailable path.", "search_weight": 1.4
     },
     {
+      "id": "sos-test-epub",
+      "title": "SOS test converted book",
+      "kind": "epub", "tier": "core", "category": "books", "scenarios": [],
+      "source": { "type": "build", "tool": "pdf2epub", "artifact": "docs/sos-test-converted.epub",
+                  "url": "https://example.invalid/sos-test-original.pdf" },
+      "dest": "docs/sos-test-converted.epub",
+      "pdf_dest": "docs/sos-test-original.pdf",
+      "size_bytes": 900, "as_at": "2026-09", "licence": "CC0", "priority": 50,
+      "description": "Two-page fixture book, converted from PDF.", "search_weight": 1.0
+    },
+    {
       "id": "gemma-4-E2B-it-Q4_K_M",
       "title": "Gemma 4 E2B (Q4_K_M)",
       "kind": "model", "tier": "core", "category": "ai", "scenarios": [],

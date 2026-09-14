@@ -49,7 +49,7 @@ def test_library_and_rescan(client, env):
     assert wiki["available"] is False and wiki["url"] is None
     _install_zims(env)
     r = client.post("/api/system/rescan")
-    assert r.status_code == 200 and r.json() == {"items": 26, "available": 2}
+    assert r.status_code == 200 and r.json() == {"items": 27, "available": 2}
     r = client.get(f"/api/library/{WIKI}")
     assert r.status_code == 200
     assert r.json()["available"] is True and r.json()["url"] == f"/read/{WIKI}/" and r.json()["drive_label"] == "Core"

@@ -52,7 +52,7 @@ def test_refresh_availability_and_labels(conn, env):
     _install_zims(env)
     (env.core / "docs" / "sos-test.pdf").write_bytes(b"%PDF-1.4\n")
     total, available = library.refresh_items(conn, env)
-    assert total == 26 and available == 3
+    assert total == 27 and available == 3
     rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
     assert rows["wikipedia_en_100_mini_2026-01"]["local_path"] == str(env.core / "zim" / "wikipedia_en_100_mini_2026-01.zim")
     assert rows["nrr-2025"]["available"] == 0
@@ -84,6 +84,30 @@ def test_reader_urls(conn, env):
     assert library.reader_url(row) == "/read/wikipedia_en_100_mini_2026-01/A/Main_Page"
 
 
+def test_pdf_fallback_url_only_appears_once_the_fallback_file_is_present(conn, env):
+    total, available = library.refresh_items(conn, env)
+    row = conn.execute("SELECT * FROM library_items WHERE id='sos-test-epub'").fetchone()
+    assert library.pdf_fallback_url(row) is None  # neither file exists yet
+
+    (env.core / "docs" / "sos-test-converted.epub").write_bytes(b"EPUB")
+    library.refresh_items(conn, env)
+    row = conn.execute("SELECT * FROM library_items WHERE id='sos-test-epub'").fetchone()
+    assert library.file_url(row) == "/docs/core/sos-test-converted.epub"
+    assert library.pdf_fallback_url(row) is None  # epub present, but not the fallback PDF yet
+
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF-1.4\n")
+    library.refresh_items(conn, env)
+    row = conn.execute("SELECT * FROM library_items WHERE id='sos-test-epub'").fetchone()
+    assert library.pdf_fallback_url(row) == "/docs/core/sos-test-original.pdf"
+
+
+def test_pdf_fallback_url_is_none_for_a_book_that_was_never_a_pdf(conn, env):
+    library.refresh_items(conn, env)
+    row = conn.execute("SELECT * FROM library_items WHERE id='wikipedia_en_100_mini_2026-01'").fetchone()
+    assert row["pdf_dest"] is None
+    assert library.pdf_fallback_url(row) is None
+
+
 def test_library_response_groups_by_category_in_order(conn, env):
     _install_zims(env)
     library.refresh_items(conn, env)
@@ -94,7 +118,7 @@ def test_library_response_groups_by_category_in_order(conn, env):
     ref = next(c for c in resp["categories"] if c["id"] == "reference")
     item = ref["items"][0]
     assert set(item) == {"id", "title", "kind", "tier", "category", "scenarios", "size_bytes", "as_at", "licence",
-                         "available", "url", "file_url", "description", "drive_label"}
+                         "available", "url", "file_url", "pdf_fallback_url", "description", "drive_label"}
     assert item["available"] is True and item["url"].startswith("/read/")
 
 
@@ -124,7 +148,7 @@ def test_rescan_with_extended_missing_flushes_cache(conn, env):
     conn.execute("INSERT INTO search_cache(q, results_json, created_at) VALUES ('water','[]','2026-01-01')")
     conn.commit()
     result = library.rescan(conn, env)
-    assert result == {"items": 26, "available": 2}
+    assert result == {"items": 27, "available": 2}
     assert conn.execute("SELECT count(*) FROM search_cache").fetchone()[0] == 0
     assert db.get_setting(conn, "zim_languages") is not None
     assert not env.ext.exists()

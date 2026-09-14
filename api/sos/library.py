@@ -29,15 +29,15 @@ def upsert_items(conn: sqlite3.Connection, items: list[Item]) -> None:
     ids = [i.id for i in items]
     for it in items:
         conn.execute(
-            """INSERT INTO library_items(id, title, kind, tier, category, scenarios_json, dest, size_bytes, as_at, licence,
+            """INSERT INTO library_items(id, title, kind, tier, category, scenarios_json, dest, pdf_dest, size_bytes, as_at, licence,
                  priority, reader_home, description, search_weight, suggest, overlay_json)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(id) DO UPDATE SET title=excluded.title, kind=excluded.kind, tier=excluded.tier,
-                 category=excluded.category, scenarios_json=excluded.scenarios_json, dest=excluded.dest,
+                 category=excluded.category, scenarios_json=excluded.scenarios_json, dest=excluded.dest, pdf_dest=excluded.pdf_dest,
                  size_bytes=excluded.size_bytes, as_at=excluded.as_at, licence=excluded.licence, priority=excluded.priority,
                  reader_home=excluded.reader_home, description=excluded.description, search_weight=excluded.search_weight,
                  suggest=excluded.suggest, overlay_json=excluded.overlay_json""",
-            (it.id, it.title, it.kind, it.tier, it.category, json.dumps(it.scenarios), it.dest, it.size_bytes, it.as_at,
+            (it.id, it.title, it.kind, it.tier, it.category, json.dumps(it.scenarios), it.dest, it.pdf_dest, it.size_bytes, it.as_at,
              it.licence, it.priority, it.reader_home, it.description, it.search_weight, int(it.suggest),
              json.dumps(it.overlay.model_dump()) if it.overlay else None),
         )
@@ -58,15 +58,19 @@ def ext_mounted(settings: Settings) -> bool:
 def refresh_items(conn: sqlite3.Connection, settings: Settings) -> tuple[int, int]:
     ext_ok = ext_mounted(settings)
     total = available = 0
-    for row in conn.execute("SELECT id, tier, dest FROM library_items").fetchall():
+    for row in conn.execute("SELECT id, tier, dest, pdf_dest FROM library_items").fetchall():
         total += 1
         root = settings.tier_root(row["tier"])
         path = root / row["dest"]
         ok = path.exists() and (row["tier"] == "core" or ext_ok)
         if ok:
             available += 1
-        conn.execute("UPDATE library_items SET available=?, local_path=? WHERE id=?",
-                     (int(ok), str(path) if ok else None, row["id"]))
+        pdf_ok = 0
+        if row["pdf_dest"]:
+            pdf_path = root / row["pdf_dest"]
+            pdf_ok = int(pdf_path.exists() and (row["tier"] == "core" or ext_ok))
+        conn.execute("UPDATE library_items SET available=?, local_path=?, pdf_available=? WHERE id=?",
+                     (int(ok), str(path) if ok else None, pdf_ok, row["id"]))
     conn.commit()
     return total, available
 
@@ -168,12 +172,22 @@ def file_url(row: sqlite3.Row) -> str | None:
     return f"/docs/{'extended' if row['tier'] == 'extended' else 'core'}/{name}" if name else None
 
 
+def pdf_fallback_url(row: sqlite3.Row) -> str | None:
+    """Where a converted book's original PDF sits, for the reader's one-tap fallback (spec section 6).
+    None for a book that was never a PDF, and None until the fallback file is confirmed on this box —
+    never a link to a file that might not be there."""
+    if row["kind"] != "epub" or not row["pdf_dest"] or not row["pdf_available"]:
+        return None
+    name = str(row["pdf_dest"]).rsplit("/", 1)[-1]
+    return f"/docs/{'extended' if row['tier'] == 'extended' else 'core'}/{name}" if name else None
+
+
 def item_dict(row: sqlite3.Row, ext_ok: bool) -> dict:
     return {
         "id": row["id"], "title": row["title"], "kind": row["kind"], "tier": row["tier"], "category": row["category"],
         "scenarios": json.loads(row["scenarios_json"] or "[]"), "size_bytes": row["size_bytes"] or 0,
         "as_at": row["resolved_as_at"] or row["as_at"], "licence": row["licence"], "available": bool(row["available"]),
-        "url": reader_url(row), "file_url": file_url(row), "description": row["description"],
+        "url": reader_url(row), "file_url": file_url(row), "pdf_fallback_url": pdf_fallback_url(row), "description": row["description"],
         "drive_label": drive_label(row, ext_ok),
     }
 
