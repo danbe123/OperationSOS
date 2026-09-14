@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
 import ePub, { type Rendition } from 'epubjs';
 import { api } from '../api/client';
@@ -58,7 +58,7 @@ function appOf(frame: HTMLIFrameElement | null): PdfApp | null {
  * document, the way forward and back, a page to jump to, a search of the text and the size of the
  * page. PDF.js's own toolbar is hidden (`pdfViewerCss`); this replaces it, at 48 px, with a word
  * beside every icon. Three rows of it used to cost a 480 px screen 150 pixels before the book. */
-function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElement | null>; onMissing: () => void }) {
+function PdfChrome({ frame, onMissing, leading }: { frame: React.RefObject<HTMLIFrameElement | null>; onMissing: () => void; leading?: ReactNode }) {
   const [pages, setPages] = useState(0);
   const [page, setPage] = useState(1);
   const [typed, setTyped] = useState('');
@@ -126,6 +126,7 @@ function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElem
 
   return (
     <div className="doc-tools no-print">
+      {leading}
       <button type="button" className="btn btn-small" disabled={page <= 1} onClick={() => goTo(page - 1)}><Icon name="back" size={18} /><span>Previous</span></button>
       {/* "Page 4 of 210", with the number itself the thing you can change. Before the file has been
           read the count is not zero, it is not yet known, and the screen says so. */}
@@ -149,7 +150,7 @@ function PdfChrome({ frame, onMissing }: { frame: React.RefObject<HTMLIFrameElem
   );
 }
 
-export function PdfFrame({ url, theme, hash, onMissing }: { url: string; theme: Theme; hash: string; onMissing?: () => void }) {
+export function PdfFrame({ url, theme, hash, onMissing, leading }: { url: string; theme: Theme; hash: string; onMissing?: () => void; leading?: ReactNode }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [initialSrc] = useState(() => pdfViewerUrl(url, theme, hash));
   const themeRef = useRef(theme);
@@ -185,7 +186,7 @@ export function PdfFrame({ url, theme, hash, onMissing }: { url: string; theme: 
 
   return (
     <>
-      <PdfChrome frame={frameRef} onMissing={missed} />
+      <PdfChrome frame={frameRef} onMissing={missed} leading={leading} />
       <div className="frame-wrap">
         <iframe ref={frameRef} title="Document" src={initialSrc} onLoad={apply} />
       </div>
@@ -230,7 +231,7 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
   };
 }
 
-function EpubReader({ url, theme }: { url: string; theme: Theme }) {
+function EpubReader({ url, theme, leading }: { url: string; theme: Theme; leading?: ReactNode }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<Rendition | null>(null);
   const [size, setSize] = useState(100);
@@ -265,11 +266,12 @@ function EpubReader({ url, theme }: { url: string; theme: Theme }) {
 
   return (
     <div className="epub">
-      <div className="row epub-controls no-print screen-body">
-        <button type="button" className="btn" onClick={() => void renditionRef.current?.prev()}><Icon name="back" /><span>Previous</span></button>
-        <button type="button" className="btn" onClick={() => void renditionRef.current?.next()}><span>Next</span><Icon name="forward" /></button>
-        <button type="button" className="btn" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])} aria-label={`Text size, ${size} per cent now`}>
-          <Icon name="text-size" /><span>Text size</span>
+      <div className="doc-tools no-print">
+        {leading}
+        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.prev()}><Icon name="back" size={18} /><span>Previous</span></button>
+        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.next()}><span>Next</span><Icon name="forward" size={18} /></button>
+        <button type="button" className="btn btn-small" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])} aria-label={`Text size, ${size} per cent now`}>
+          <Icon name="text-size" size={18} /><span>Text size</span>
         </button>
       </div>
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
@@ -309,22 +311,22 @@ export function Doc() {
   const isDocument = item?.kind === 'pdf' || item?.kind === 'epub';
   const gone = Boolean(item) && isDocument && (missing || !item!.available || !file);
   const hasOriginal = item?.kind === 'epub' && Boolean(item.pdf_fallback_url);
+  // The original/reflowed toggle is one button, owned here, and rendered as the leading button of
+  // whichever `.doc-tools` bar is on screen — EpubReader's or PdfFrame's — never a row of its own.
+  const originalToggle = hasOriginal ? (
+    <button type="button" className="btn btn-small" onClick={() => setShowOriginal((v) => !v)}>
+      <Icon name={showOriginal ? 'book' : 'pdf'} size={18} />
+      <span>{showOriginal ? 'Reflowed text' : 'Original PDF layout'}</span>
+    </button>
+  ) : undefined;
   return (
     <Screen title={item ? documentTitle(item.title) : 'Document'} fill={Boolean(item) && isDocument && !gone} search={false}>
       {loading && <p className="screen-body muted">Loading…</p>}
       {error && <p className="screen-body warning">Could not load this document: {error}</p>}
       {item && gone && <DocumentMissing item={item} />}
-      {item && !gone && hasOriginal && (
-        <div className="row no-print screen-body doc-original-toggle">
-          <button type="button" className="btn btn-small" onClick={() => setShowOriginal((v) => !v)}>
-            <Icon name={showOriginal ? 'book' : 'pdf'} size={18} />
-            <span>{showOriginal ? 'Reflowed text' : 'Original PDF layout'}</span>
-          </button>
-        </div>
-      )}
       {item && !gone && file && item.kind === 'pdf' && <PdfFrame url={file} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
-      {item && !gone && file && item.kind === 'epub' && !showOriginal && <EpubReader url={file} theme={theme} />}
-      {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash={location.hash} />}
+      {item && !gone && file && item.kind === 'epub' && !showOriginal && <EpubReader url={file} theme={theme} leading={originalToggle} />}
+      {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash={location.hash} leading={originalToggle} />}
       {item && !isDocument && <p className="screen-body warning">{documentTitle(item.title)} is not a PDF or EPUB.</p>}
     </Screen>
   );

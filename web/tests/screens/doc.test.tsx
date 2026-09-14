@@ -182,4 +182,40 @@ describe('Doc', () => {
     expect(screen.queryByRole('button', { name: /Original PDF layout/ })).toBeNull();
     expect(screen.queryByTitle('Document')).toBeNull();
   });
+
+  it('puts the epub toolbar and the original-layout toggle in one compact bar, never stacked in a screen-body row', async () => {
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    const toggle = screen.getByRole('button', { name: 'Original PDF layout' });
+    const previous = screen.getByRole('button', { name: 'Previous' });
+    const next = screen.getByRole('button', { name: 'Next' });
+    const textSize = screen.getByRole('button', { name: /Text size/ });
+    const bar = toggle.closest('.doc-tools');
+    expect(bar).not.toBeNull();
+    expect(previous.closest('.doc-tools')).toBe(bar);
+    expect(next.closest('.doc-tools')).toBe(bar);
+    expect(textSize.closest('.doc-tools')).toBe(bar);
+    // and nothing between the bar and the screen stacks these buttons into a column
+    const screenEl = bar!.closest('.screen')!;
+    expect(screenEl).not.toBeNull();
+    let node: Element | null = bar;
+    while (node && node !== screenEl) {
+      expect(node.classList.contains('screen-body')).toBe(false);
+      node = node.parentElement;
+    }
+  });
+
+  it('moves the Reflowed text toggle into PdfFrame\'s own toolbar for the original PDF layout', async () => {
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
+    renderRoute('/doc/where-there-is-no-doctor#page=9');
+    await screen.findByTitle('Document');
+    const reflowed = screen.getByRole('button', { name: 'Reflowed text' });
+    const previous = screen.getByRole('button', { name: 'Previous' });
+    const bar = reflowed.closest('.doc-tools');
+    expect(bar).not.toBeNull();
+    expect(previous.closest('.doc-tools')).toBe(bar);
+  });
 });
