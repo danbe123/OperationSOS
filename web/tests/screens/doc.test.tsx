@@ -133,4 +133,28 @@ describe('Doc', () => {
     expect(await screen.findByText(/is not a PDF or EPUB/)).toBeInTheDocument();
     expect(extItem.available).toBe(false);
   });
+
+  it('offers the original PDF layout for a converted book, and switches between the two viewers', async () => {
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    expect(screen.queryByTitle('Document')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Original PDF layout' }));
+    const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
+    expect(frame).toHaveAttribute('src', expect.stringContaining('file=%2Fdocs%2Fcore%2Fwhere-there-is-no-doctor.pdf'));
+
+    await user.click(screen.getByRole('button', { name: 'Reflowed text' }));
+    expect(await screen.findByRole('button', { name: 'Next' })).toBeInTheDocument();
+    expect(screen.queryByTitle('Document')).toBeNull();
+  });
+
+  it('shows no original-layout toggle for a book that was never converted from a PDF', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    expect(screen.queryByRole('button', { name: /Original PDF layout/ })).toBeNull();
+  });
 });

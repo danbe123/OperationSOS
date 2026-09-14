@@ -287,6 +287,8 @@ export function Doc() {
   // the app route, which is served by the SPA and answers 200 for everything — before drawing a
   // viewer that would otherwise fail silently behind a vendor toolbar.
   const [missing, setMissing] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  useEffect(() => { setShowOriginal(false); }, [id]);
   const file = useMemo(() => documentFileUrl(item), [item]);
   useEffect(() => {
     setMissing(false);
@@ -300,13 +302,23 @@ export function Doc() {
 
   const isDocument = item?.kind === 'pdf' || item?.kind === 'epub';
   const gone = Boolean(item) && isDocument && (missing || !item!.available || !file);
+  const hasOriginal = item?.kind === 'epub' && Boolean(item.pdf_fallback_url);
   return (
     <Screen title={item ? documentTitle(item.title) : 'Document'} fill={Boolean(item) && isDocument && !gone} search={false}>
       {loading && <p className="screen-body muted">Loading…</p>}
       {error && <p className="screen-body warning">Could not load this document: {error}</p>}
       {item && gone && <DocumentMissing item={item} />}
+      {item && !gone && hasOriginal && (
+        <div className="row no-print screen-body doc-original-toggle">
+          <button type="button" className="btn btn-small" onClick={() => setShowOriginal((v) => !v)}>
+            <Icon name={showOriginal ? 'book' : 'pdf'} size={18} />
+            <span>{showOriginal ? 'Reflowed text' : 'Original PDF layout'}</span>
+          </button>
+        </div>
+      )}
       {item && !gone && file && item.kind === 'pdf' && <PdfFrame url={file} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
-      {item && !gone && file && item.kind === 'epub' && <EpubReader url={file} theme={theme} />}
+      {item && !gone && file && item.kind === 'epub' && !showOriginal && <EpubReader url={file} theme={theme} />}
+      {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash="" />}
       {item && !isDocument && <p className="screen-body warning">{documentTitle(item.title)} is not a PDF or EPUB.</p>}
     </Screen>
   );

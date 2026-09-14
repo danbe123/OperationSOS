@@ -23,6 +23,10 @@ export type LibraryItem = {
   /** Where the file itself is served: `/docs/core/<file>` or `/docs/extended/<file>`. Null for a ZIM,
    * and null on a box built before the field existed. The PDF and EPUB viewers load this. */
   file_url?: string | null;
+  /** Where a converted book's original PDF sits, for the reader's one-tap fallback (spec section 6).
+   * Absent for a book that was never a PDF, and absent until the fallback file is confirmed on this
+   * box — never a link to a file that might not be there. */
+  pdf_fallback_url?: string | null;
   description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
 };
 export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
