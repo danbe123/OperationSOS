@@ -8,6 +8,7 @@ it is fixed and retried; nothing elsewhere needs to know about a partially migra
 """
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 from typing import Callable
@@ -36,11 +37,17 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     if not pdf_path.exists():
         if not item.source.url:
             return False, f"{item.id}: no PDF at {pdf_path} and source has no url to fetch it from"
+        # Stage into a `.part` sibling and only rename on success, exactly as `sos.sync.sync()` does:
+        # aria2c (on by default when installed) writes straight to the path it is given, so an
+        # interrupted fetch would otherwise leave a truncated file at `pdf_path` — which the
+        # `exists()` check above then treats as the finished download on the next run.
+        part = pdf_path.with_name(pdf_path.name + ".part")
         try:
-            download(item.source.url, pdf_path, item.source.sha256, item.source.mirrors,
+            download(item.source.url, part, item.source.sha256, item.source.mirrors,
                      use_aria2=use_aria2, run=run, client=client)
         except (SyncError, httpx.HTTPError) as exc:
             return False, f"{item.id}: could not fetch {item.source.url}: {exc}"
+        os.replace(part, pdf_path)
     epub_path.parent.mkdir(parents=True, exist_ok=True)
     proc = run(["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title],
               capture_output=True, text=True, check=False)

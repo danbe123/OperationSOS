@@ -151,10 +151,35 @@ describe('Doc', () => {
     expect(screen.queryByTitle('Document')).toBeNull();
   });
 
-  it('shows no original-layout toggle for a book that was never converted from a PDF', async () => {
-    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+  it('opens a #page= citation into a converted book at that page of the original PDF', async () => {
+    // The 805 `doc:<id>#page=N` citations in the playbooks were authored against the original PDF's
+    // own page numbers; the reflowed EPUB has no such page, so the citation lands on the PDF.
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor#page=9');
+    const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
+    expect(frame).toHaveAttribute('src', '/pdfjs/web/viewer.html?file=%2Fdocs%2Fcore%2Fwhere-there-is-no-doctor.pdf&theme=field#page=9');
+    // and the reflowed text is still one press away
+    await user.click(screen.getByRole('button', { name: 'Reflowed text' }));
+    expect(await screen.findByRole('button', { name: 'Next' })).toBeInTheDocument();
+    expect(screen.queryByTitle('Document')).toBeNull();
+  });
+
+  it('opens a converted book reflowed when nothing cites a page', async () => {
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     renderRoute('/doc/where-there-is-no-doctor');
     await screen.findByRole('button', { name: 'Next' });
+    expect(screen.queryByTitle('Document')).toBeNull();
+  });
+
+  it('shows no original-layout toggle for a book that was never converted from a PDF', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    // even under a #page= citation: with no original beside it there is nothing to fall back to
+    renderRoute('/doc/where-there-is-no-doctor#page=9');
+    await screen.findByRole('button', { name: 'Next' });
     expect(screen.queryByRole('button', { name: /Original PDF layout/ })).toBeNull();
+    expect(screen.queryByTitle('Document')).toBeNull();
   });
 });

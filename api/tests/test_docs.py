@@ -80,6 +80,63 @@ def test_epub_pages_follow_spine_order(tmp_path):
     assert pages[1].startswith("Chapter two")
 
 
+def test_page_chunks_splits_an_epub_spine_document_and_caps_a_pdf_page():
+    # A PDF "page" is one real, numbered page: one chunk, capped exactly as cap_words caps it, so the
+    # fts row's page number stays the PDF's own page number.
+    assert docs._page_chunks("a b c d", "pdf") == ["a b c d"]
+    long_page = " ".join(f"w{i}" for i in range(1500))
+    pdf_chunks = docs._page_chunks(long_page, "pdf")
+    assert len(pdf_chunks) == 1 and pdf_chunks[0] == docs.cap_words(long_page)
+    assert len(pdf_chunks[0].split()) == docs.PAGE_WORD_CAP
+
+    # An EPUB "page" is a whole spine document: as many chunks as it takes, losing nothing.
+    epub_chunks = docs._page_chunks(long_page, "epub")
+    assert len(epub_chunks) == 3
+    assert [len(c.split()) for c in epub_chunks] == [docs.PAGE_WORD_CAP, docs.PAGE_WORD_CAP, 300]
+    assert " ".join(epub_chunks).split() == long_page.split()
+
+    # An exact multiple of the cap leaves no empty trailing chunk, and an empty page is one empty chunk.
+    exact = " ".join(["w"] * (docs.PAGE_WORD_CAP * 2))
+    assert len(docs._page_chunks(exact, "epub")) == 2
+    assert docs._page_chunks("", "epub") == [""] and docs._page_chunks("   ", "epub") == [""]
+
+
+def _make_long_epub(path: Path, words: int = 1500) -> None:
+    """One spine document far longer than PAGE_WORD_CAP: what Calibre's PDF->EPUB output looks like."""
+    body = " ".join(f"word{i}" for i in range(words))
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("mimetype", "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+        zf.writestr("META-INF/container.xml",
+                    '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+                    '<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
+        zf.writestr("OEBPS/content.opf",
+                    '<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">'
+                    '<metadata/><manifest><item id="c1" href="ch1.xhtml" media-type="application/xhtml+xml"/></manifest>'
+                    '<spine><itemref idref="c1"/></spine></package>')
+        zf.writestr("OEBPS/ch1.xhtml", f"<html><body><p>{body}</p></body></html>")
+
+
+def test_index_docs_keeps_a_whole_epub_spine_document(env):
+    """The bug this guards: a converted book's spine document was truncated to the first 600 words and
+    the rest of the book silently never reached search or AI grounding."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    library.upsert_items(conn, load_manifests(env.manifests))
+    _make_long_epub(env.core / "docs" / "sos-test-converted.epub")
+    library.refresh_items(conn, env)
+    n = docs.index_docs(conn)
+    rows = conn.execute("SELECT * FROM fts_docs WHERE doc_id LIKE 'sos-test-epub#%' ORDER BY page").fetchall()
+    assert n == len(rows) == 3
+    assert [r["doc_id"] for r in rows] == ["sos-test-epub#p1", "sos-test-epub#p2", "sos-test-epub#p3"]
+    assert [len(r["body"].split()) for r in rows] == [600, 600, 300]
+    # every word of the 1500 is indexed, not only the first 600
+    assert sum(len(r["body"].split()) for r in rows) == 1500
+    for word in ("word0", "word599", "word600", "word1400", "word1499"):
+        hit = conn.execute("SELECT doc_id FROM fts_docs WHERE fts_docs MATCH ?", (f'"{word}"',)).fetchone()
+        assert hit is not None, f"{word} fell out of the index"
+    assert conn.execute("SELECT doc_id FROM fts_docs WHERE fts_docs MATCH '\"word1400\"'").fetchone()["doc_id"] == "sos-test-epub#p3"
+
+
 def test_index_docs_rows_and_shapes(env):
     conn = db.connect(env.db_path)
     db.init_schema(conn)

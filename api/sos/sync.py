@@ -206,7 +206,12 @@ def sync(settings: Settings, tier: str, only: list[str] | None = None, dry_run: 
         for item in items:
             target = root / item.dest
             if item.source.type == "build":
-                out(f"BUILD {item.id}: run `sos {item.source.tool}` on the PC and copy {item.source.artifact} to {target}")
+                # `source.tool` names the builder, not always the command: a converted book's tool is
+                # "pdf2epub" and there is no `sos pdf2epub`. And the original PDF beside the EPUB has
+                # to be copied on too, or the reader's "Original PDF layout" toggle never appears.
+                cmd = "build-books" if item.source.tool == "pdf2epub" else item.source.tool
+                extra = f" (and {item.pdf_dest} to {root / item.pdf_dest})" if item.pdf_dest else ""
+                out(f"BUILD {item.id}: run `sos {cmd}` on the PC and copy {item.source.artifact} to {target}{extra}")
                 continue
             try:
                 resolved = resolve_item(item, client)

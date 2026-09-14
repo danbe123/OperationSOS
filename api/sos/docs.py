@@ -58,6 +58,20 @@ def cap_words(text: str, n: int = PAGE_WORD_CAP) -> str:
     return " ".join((text or "").split()[:n])
 
 
+def _page_chunks(page: str, kind: str) -> list[str]:
+    """A PDF page is already one real, page-numbered unit: always exactly one (capped) chunk, so the fts
+    row's page number stays the PDF's own page number — playbooks cite `#page=N` against it. An EPUB
+    "page" is a whole spine document, often far longer than PAGE_WORD_CAP words: split it into as many
+    chunks as it takes so no part of the book falls out of search, instead of keeping only the first
+    PAGE_WORD_CAP words and discarding the rest."""
+    if kind != "epub":
+        return [cap_words(page)]
+    words = (page or "").split()
+    if not words:
+        return [""]
+    return [" ".join(words[i:i + PAGE_WORD_CAP]) for i in range(0, len(words), PAGE_WORD_CAP)]
+
+
 def sidecar_path(file: Path) -> Path:
     file = Path(file)
     return file.with_name(file.name + ".txt")
@@ -85,14 +99,16 @@ def index_docs(conn: sqlite3.Connection, runner: Callable[[Path], str] | None = 
             log.warning("skipping %s: %s", row["id"], exc)
             continue
         scenarios = " ".join(json.loads(row["scenarios_json"] or "[]"))
-        for n, page in enumerate(pages, 1):
-            body = cap_words(page)
-            if not body:
-                continue
-            conn.execute(
-                "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
-                (row["title"], body, f"{row['id']}#p{n}", "doc", row["category"], scenarios, n, f"/doc/{row['id']}#page={n}"),
-            )
-            count += 1
+        n = 0
+        for page in pages:
+            for body in _page_chunks(page, row["kind"]):
+                n += 1
+                if not body:
+                    continue
+                conn.execute(
+                    "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
+                    (row["title"], body, f"{row['id']}#p{n}", "doc", row["category"], scenarios, n, f"/doc/{row['id']}#page={n}"),
+                )
+                count += 1
     conn.commit()
     return count

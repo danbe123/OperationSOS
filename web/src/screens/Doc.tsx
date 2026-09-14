@@ -288,7 +288,13 @@ export function Doc() {
   // viewer that would otherwise fail silently behind a vendor toolbar.
   const [missing, setMissing] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
-  useEffect(() => { setShowOriginal(false); }, [id]);
+  // A playbook cites a document as `doc:<id>#page=N`, authored against the original PDF's own page
+  // numbers. The reflowed EPUB has no such page: its own "pages" come from the spine, and mean
+  // nothing to a `#page=` link. The original PDF beside it is the exact file the citation was written
+  // against, so a cited link into a converted book opens that, at the cited page.
+  useEffect(() => {
+    setShowOriginal(Boolean(item?.pdf_fallback_url) && location.hash.startsWith('#page='));
+  }, [id, item?.pdf_fallback_url, location.hash]);
   const file = useMemo(() => documentFileUrl(item), [item]);
   useEffect(() => {
     setMissing(false);
@@ -318,7 +324,7 @@ export function Doc() {
       )}
       {item && !gone && file && item.kind === 'pdf' && <PdfFrame url={file} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
       {item && !gone && file && item.kind === 'epub' && !showOriginal && <EpubReader url={file} theme={theme} />}
-      {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash="" />}
+      {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash={location.hash} />}
       {item && !isDocument && <p className="screen-body warning">{documentTitle(item.title)} is not a PDF or EPUB.</p>}
     </Screen>
   );

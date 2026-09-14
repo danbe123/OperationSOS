@@ -181,6 +181,35 @@ ITEMS = [
 ]
 
 
+# A converted book: built by `sos build-books` (not `sos pdf2epub`, which is not a command), and it
+# carries a second file — the original PDF the reader falls back to — that also has to reach the box.
+CONVERTED_BOOK = {
+    "id": "sos-test-epub", "title": "Test book", "kind": "epub", "tier": "core", "category": "books",
+    "source": {"type": "build", "tool": "pdf2epub", "artifact": "docs/sos-test-converted.epub",
+               "url": "https://files.test/sos-test-original.pdf"},
+    "dest": "docs/sos-test-converted.epub", "pdf_dest": "docs/sos-test-original.pdf", "priority": 5,
+}
+
+
+def test_sync_build_line_names_build_books_and_the_fallback_pdf(env, tmp_path, monkeypatch):
+    """`source.tool` names the builder, not the command. A pdf2epub item must send the operator to
+    `sos build-books` and tell them the fallback PDF is a second file to copy — without it the
+    reader's "Original PDF layout" toggle never appears on the box."""
+    monkeypatch.setattr(env, "manifest_dir", _manifest(tmp_path, [ITEMS[2], CONVERTED_BOOK]))
+    lines = []
+    with httpx.Client() as client:
+        rc = sync.sync(env, "core", dry_run=True, out=lines.append, client=client)
+    assert rc == 0
+    assert [line for line in lines if line.startswith("BUILD")] == [
+        # unchanged for a tool that is its own command and has no second file
+        "BUILD prepare_uk: run `sos build-nhs` on the PC and copy prepare_uk.zim to "
+        + str(env.core / "zim" / "prepare_uk.zim"),
+        "BUILD sos-test-epub: run `sos build-books` on the PC and copy docs/sos-test-converted.epub to "
+        + str(env.core / "docs" / "sos-test-converted.epub")
+        + " (and docs/sos-test-original.pdf to " + str(env.core / "docs" / "sos-test-original.pdf") + ")",
+    ]
+
+
 def _meta4_for(sha: str, size: int) -> str:
     text = (FX / "opds" / "zimgit-water_en_2024-08.zim.meta4").read_text()
     return text.replace("392c7bc970a44fddd61dd17f6eabf1f4e21936f2d5c27c83093e1dc475cb56b6", sha).replace("<size>20924451</size>", f"<size>{size}</size>")
