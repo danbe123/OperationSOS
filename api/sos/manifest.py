@@ -47,6 +47,7 @@ class Item(BaseModel):
     scenarios: list[str] = Field(default_factory=list)
     source: Source
     dest: str
+    pdf_dest: str | None = None
     size_bytes: int = 0
     as_at: str | None = None
     licence: str | None = None
@@ -110,10 +111,18 @@ def validate_manifests(dir: Path) -> list[str]:
                 errors.append(f"{path.name}: duplicate dest '{dest}' (also in {seen_dests[dest]})")
             else:
                 seen_dests[dest] = path.name
+            pdf_dest = raw.get("pdf_dest")
+            if pdf_dest:
+                if pdf_dest in seen_dests:
+                    errors.append(f"{path.name}: duplicate dest '{pdf_dest}' (also in {seen_dests[pdf_dest]})")
+                else:
+                    seen_dests[pdf_dest] = path.name
             if raw.get("kind") == "zim" and dest != f"zim/{iid}.zim":
                 errors.append(f"{path.name}: {iid}: zim dest must be 'zim/{iid}.zim', got '{dest}'")
             if source.get("type") == "build" and not source.get("artifact"):
                 errors.append(f"{path.name}: {iid}: build items need source.artifact")
+            if source.get("tool") == "pdf2epub" and not pdf_dest:
+                errors.append(f"{path.name}: {iid}: pdf2epub build items need pdf_dest")
             if path.name == "overlays.json" and not raw.get("overlay"):
                 errors.append(f"{path.name}: {iid}: overlay object required in overlays.json")
     return errors

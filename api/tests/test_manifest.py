@@ -108,3 +108,37 @@ def test_invalid_json_reported(tmp_path):
 def test_item_model_rejects_extra_fields():
     with pytest.raises(Exception):
         Item.model_validate(_zim("z", bogus=1))
+
+
+def test_pdf_dest_collision_with_another_items_dest_is_reported(tmp_path):
+    a = _zim("a", kind="epub", dest="docs/a.epub",
+             source={"type": "build", "tool": "pdf2epub", "artifact": "docs/a.epub", "url": "https://example.invalid/a.pdf"},
+             pdf_dest="docs/shared.pdf")
+    b = _zim("b", kind="pdf", dest="docs/shared.pdf", source={"type": "url", "url": "https://example.invalid/b.pdf"})
+    d = _tree(tmp_path, [a, b])
+    errors = validate_manifests(d)
+    assert any("duplicate dest 'docs/shared.pdf'" in e for e in errors)
+
+
+def test_pdf2epub_tool_requires_pdf_dest(tmp_path):
+    item = _zim("a", kind="epub", dest="docs/a.epub",
+               source={"type": "build", "tool": "pdf2epub", "artifact": "docs/a.epub", "url": "https://example.invalid/a.pdf"})
+    d = _tree(tmp_path, [item])
+    errors = validate_manifests(d)
+    assert any("pdf2epub build items need pdf_dest" in e for e in errors)
+
+
+def test_converted_epub_item_is_valid_and_loads_pdf_dest_and_source_url(tmp_path):
+    item = _zim("a", kind="epub", dest="docs/a.epub",
+               source={"type": "build", "tool": "pdf2epub", "artifact": "docs/a.epub", "url": "https://example.invalid/a.pdf"},
+               pdf_dest="docs/a.pdf")
+    d = _tree(tmp_path, [item])
+    assert validate_manifests(d) == []
+    loaded = load_manifests(d)[0]
+    assert loaded.pdf_dest == "docs/a.pdf"
+    assert loaded.source.url == "https://example.invalid/a.pdf"
+
+
+def test_pdf_dest_defaults_to_none():
+    items = load_manifests(FIXTURES / "manifest")
+    assert next(i for i in items if i.id == "sos-test-pdf").pdf_dest is None
