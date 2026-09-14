@@ -137,6 +137,28 @@ def test_index_docs_keeps_a_whole_epub_spine_document(env):
     assert conn.execute("SELECT doc_id FROM fts_docs WHERE fts_docs MATCH '\"word1400\"'").fetchone()["doc_id"] == "sos-test-epub#p3"
 
 
+def test_index_docs_indexes_a_converted_books_original_pdf_when_present(env):
+    """A book converted from PDF (pdf_dest set, pdf_available=1) must index from its original PDF, not
+    from the reflowed EPUB's chunk ordinals -- otherwise search results and playbook `#page=N` citations
+    land on a chunk number the PDF viewer wrongly treats as a real page."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    library.upsert_items(conn, load_manifests(env.manifests))
+    _make_long_epub(env.core / "docs" / "sos-test-converted.epub")
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF-1.4\n")
+    library.refresh_items(conn, env)
+    calls = []
+    docs.index_docs(conn, runner=fake_runner(calls))
+    rows = conn.execute("SELECT * FROM fts_docs WHERE doc_id LIKE 'sos-test-epub#%' ORDER BY page").fetchall()
+    assert len(rows) == 2
+    assert [r["doc_id"] for r in rows] == ["sos-test-epub#p1", "sos-test-epub#p2"]
+    assert [r["page"] for r in rows] == [1, 2]
+    assert [r["url"] for r in rows] == ["/doc/sos-test-epub#page=1", "/doc/sos-test-epub#page=2"]
+    assert rows[0]["body"].startswith("PAGE ONE") and rows[1]["body"].startswith("PAGE TWO")
+    assert "word0" not in rows[0]["body"] and "word0" not in rows[1]["body"]
+    assert calls == [env.core / "docs" / "sos-test-original.pdf"]
+
+
 def test_index_docs_rows_and_shapes(env):
     conn = db.connect(env.db_path)
     db.init_schema(conn)

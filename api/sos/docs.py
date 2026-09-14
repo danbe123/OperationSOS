@@ -1,5 +1,12 @@
 """PDF and EPUB text extraction into per-page fts_docs rows. Sidecar `.txt` files next to each document
-hold the extracted pages separated by form feeds so the Pi never re-runs pdftotext for an unchanged file."""
+hold the extracted pages separated by form feeds so the Pi never re-runs pdftotext for an unchanged file.
+
+A book converted from a PDF (`pdf_dest`/`pdf_available` on its `library_items` row, set by
+`sos.buildbooks`) is indexed from that original PDF, not from the reflowed EPUB: search hits and
+playbook citations both address `#page=N` as a real PDF page, and the reflowed EPUB -- deliberately
+just a word stream, split into PAGE_WORD_CAP chunks for search -- has no page concept a citation could
+target. Falling back to the EPUB's own chunk ordinals here would make `#page=N` a chunk number that
+`web/src/screens/Doc.tsx` then wrongly opens as a page of the original PDF."""
 from __future__ import annotations
 
 import json
@@ -11,6 +18,7 @@ import zipfile
 from pathlib import Path
 from typing import Callable
 
+from sos.config import Settings, get_settings
 from sos.kiwix import extract_text
 
 log = logging.getLogger(__name__)
@@ -87,21 +95,30 @@ def extract_pages(file: Path, kind: str, runner: Callable[[Path], str] | None = 
     return pages
 
 
-def index_docs(conn: sqlite3.Connection, runner: Callable[[Path], str] | None = None) -> int:
+def index_docs(conn: sqlite3.Connection, runner: Callable[[Path], str] | None = None, settings: Settings | None = None) -> int:
+    settings = settings or get_settings()
     rows = conn.execute("SELECT * FROM library_items WHERE kind IN ('pdf','epub') AND available=1 ORDER BY priority").fetchall()
     conn.execute("DELETE FROM fts_docs WHERE kind='doc'")
     count = 0
     for row in rows:
         file = Path(row["local_path"] or "")
+        kind = row["kind"]
+        # Same resolution refresh_items/pdf_fallback_url use for pdf_dest (sos/library.py): the tier root
+        # joined with the manifest-relative pdf_dest. pdf_available already confirms it exists as of the
+        # last rescan; re-check here too since index can run a while after rescan.
+        if kind == "epub" and row["pdf_dest"] and row["pdf_available"]:
+            pdf_path = settings.tier_root(row["tier"]) / row["pdf_dest"]
+            if pdf_path.exists():
+                file, kind = pdf_path, "pdf"
         try:
-            pages = extract_pages(file, row["kind"], runner)
+            pages = extract_pages(file, kind, runner)
         except (OSError, subprocess.CalledProcessError, zipfile.BadZipFile, ET.ParseError) as exc:
             log.warning("skipping %s: %s", row["id"], exc)
             continue
         scenarios = " ".join(json.loads(row["scenarios_json"] or "[]"))
         n = 0
         for page in pages:
-            for body in _page_chunks(page, row["kind"]):
+            for body in _page_chunks(page, kind):
                 n += 1
                 if not body:
                     continue
