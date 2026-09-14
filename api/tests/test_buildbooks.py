@@ -243,6 +243,68 @@ def test_convert_one_reports_a_corrupt_epub_as_fail_without_crashing(env):
     assert not (env.core / "docs" / "sos-test-converted.epub").exists()
 
 
+def test_convert_one_retries_with_flow_splitting_off_after_a_split_error(env):
+    """Calibre's flow splitter can crash on a book it cannot find a reasonable split point for
+    (calibre.ebooks.oeb.transforms.split.SplitError). That's a Calibre limitation, not a property of
+    the book -- the same PDF converts cleanly with --flow-size 0 -- so the tool retries once with flow
+    splitting off rather than reporting a permanent failure."""
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+
+    class FakeRunSplitErrorThenOk:
+        def __init__(self):
+            self.calls: list[list[str]] = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            if len(self.calls) == 1:
+                return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=(
+                    "calibre.ebooks.oeb.transforms.split.SplitError: Could not find reasonable "
+                    "point at which to split: index.html Sub-tree size: 347 KB"))
+            _write_fake_epub(Path(cmd[2]), 10)
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run = FakeRunSplitErrorThenOk()
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed, text_runner=_no_text)
+    assert ok, message
+    assert "(flow splitting off)" in message
+    epub_path = env.core / "docs" / "sos-test-converted.epub"
+    assert epub_path.exists()
+    pdf_path = env.core / "docs" / "sos-test-original.pdf"
+    base_cmd = ["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title, "--enable-heuristics"]
+    assert run.calls == [base_cmd, base_cmd + ["--flow-size", "0"]]
+
+
+def test_convert_one_does_not_retry_a_non_split_error_failure(env):
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+    run = FakeRun(ok=False)
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed)
+    assert not ok and "ebook-convert failed" in message
+    assert len(run.calls) == 1
+
+
+def test_convert_one_fails_when_the_retry_also_hits_a_split_error(env):
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+
+    class FakeRunSplitErrorTwice:
+        def __init__(self):
+            self.calls: list[list[str]] = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr=(
+                "calibre.ebooks.oeb.transforms.split.SplitError: Could not find reasonable point "
+                "at which to split: index.html Sub-tree size: 347 KB"))
+
+    run = FakeRunSplitErrorTwice()
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed)
+    assert not ok and "ebook-convert failed" in message
+    assert len(run.calls) == 2
+    assert not (env.core / "docs" / "sos-test-converted.epub").exists()
+
+
 def test_main_continues_past_a_corrupt_epub_and_still_converts_the_next_item(env, monkeypatch):
     """The bug this guards: an unguarded epub_pages() read let a BadZipFile/ParseError propagate out of
     convert_one, and main()'s loop has no per-item try/except -- so the whole batch aborted and every

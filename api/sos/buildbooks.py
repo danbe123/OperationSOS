@@ -61,8 +61,15 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     epub_path.parent.mkdir(parents=True, exist_ok=True)
     # --enable-heuristics unwraps Calibre's default one-paragraph-per-PDF-line output into real
     # paragraphs (verified on scmg-ch01 and fm-21-76-survival: identical text coverage, readable prose).
-    proc = run(["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title, "--enable-heuristics"],
-              capture_output=True, text=True, check=False)
+    cmd = ["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title, "--enable-heuristics"]
+    proc = run(cmd, capture_output=True, text=True, check=False)
+    flow_splitting_off = False
+    if proc.returncode != 0 and "SplitError" in ((proc.stdout or "") + (proc.stderr or "")):
+        # Calibre's flow splitter can crash trying to find a split point in some books' HTML; that's
+        # a Calibre limitation, not a property of the book, so retry once with flow splitting off
+        # (page-break splitting still applies) rather than reporting a permanent failure.
+        flow_splitting_off = True
+        proc = run(cmd + ["--flow-size", "0"], capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         # Clean up any partially-written file before returning failure
         epub_path.unlink(missing_ok=True)
@@ -90,8 +97,10 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
             epub_path.unlink(missing_ok=True)
             return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text "
                             f"(scanned or hidden-text PDF?); left as pdf")
-        return True, f"{item.id}: {epub_path} ({pct}% of the PDF's text)"
-    return True, f"{item.id}: {epub_path}"
+        flow_note = " (flow splitting off)" if flow_splitting_off else ""
+        return True, f"{item.id}: {epub_path}{flow_note} ({pct}% of the PDF's text)"
+    flow_note = " (flow splitting off)" if flow_splitting_off else ""
+    return True, f"{item.id}: {epub_path}{flow_note}"
 
 
 def main(settings: Settings, only: list[str] | None = None, run: Callable = subprocess.run,
