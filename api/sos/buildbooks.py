@@ -44,7 +44,12 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     epub_path.parent.mkdir(parents=True, exist_ok=True)
     proc = run(["ebook-convert", str(pdf_path), str(epub_path), "--title", item.title],
               capture_output=True, text=True, check=False)
-    if proc.returncode != 0 or not epub_path.exists():
+    if proc.returncode != 0:
+        # Clean up any partially-written file before returning failure
+        epub_path.unlink(missing_ok=True)
+        message = (proc.stderr or proc.stdout or "").strip()[:200]
+        return False, f"{item.id}: ebook-convert failed: {message}"
+    if not epub_path.exists():
         message = (proc.stderr or proc.stdout or "").strip()[:200]
         return False, f"{item.id}: ebook-convert failed: {message}"
     return True, f"{item.id}: {epub_path}"

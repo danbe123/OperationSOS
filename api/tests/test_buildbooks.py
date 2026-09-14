@@ -45,9 +45,23 @@ def test_convert_one_runs_ebook_convert_with_the_items_title_and_writes_the_epub
 def test_convert_one_reports_failure_and_leaves_no_partial_epub(env):
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
-    run = FakeRun(ok=False)
+
+    # Custom fake that writes partial bytes before failing (simulates real ebook-convert behavior)
+    class FakeRunWritesPartial:
+        def __init__(self):
+            self.calls = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            if cmd[0] == "ebook-convert":
+                # Simulate ebook-convert writing partial bytes before failing
+                Path(cmd[2]).write_bytes(b"EPUB partial")
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="conversion failed")
+
+    run = FakeRunWritesPartial()
     ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed)
     assert not ok and "ebook-convert failed" in message
+    # This must prove cleanup happened, not pass by construction
     assert not (env.core / "docs" / "sos-test-converted.epub").exists()
 
 
