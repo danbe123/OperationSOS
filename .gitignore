@@ -41,3 +41,6 @@ install/answers.env
 # Python packaging metadata and local development logs
 *.egg-info/
 .vite-dev.log
+
+# subagent-driven-development scratch: ledgers, briefs and review packages
+.superpowers/
