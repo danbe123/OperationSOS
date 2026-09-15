@@ -1,0 +1,405 @@
+{
+  "items": [
+    {
+      "id": "footpaths",
+      "title": "Footpaths and rights of way",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/footpaths.pmtiles"
+      },
+      "dest": "maps/overlays/footpaths.pmtiles",
+      "size_bytes": 402062558,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 70,
+      "description": "Public footpaths, bridleways, restricted byways, byways, Scottish core paths and other paths from OpenStreetMap, styled by designation.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "footpaths",
+        "kind": "pmtiles",
+        "default_on": true,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#3fb950",
+        "icon": "boot"
+      }
+    },
+    {
+      "id": "access-land",
+      "title": "Open access land",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/access-land.pmtiles"
+      },
+      "dest": "maps/overlays/access-land.pmtiles",
+      "size_bytes": 42071921,
+      "as_at": "2026-09-07",
+      "licence": "OGL v3 (Natural England, Natural Resources Wales)",
+      "priority": 71,
+      "description": "CRoW Act open access land in England and Wales; Scotland's right of responsible access is explained in the navigation module.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "access-land",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales"
+        ],
+        "color": "#b58900",
+        "icon": null,
+        "coverage_note": "England and Wales only. Scotland has a right of responsible access to almost all land; Northern Ireland, Ireland, the Isle of Man and the Channel Islands have no open-access designation."
+      }
+    },
+    {
+      "id": "flood-zones",
+      "title": "Flood zones",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/flood-zones.pmtiles"
+      },
+      "dest": "maps/overlays/flood-zones.pmtiles",
+      "size_bytes": 919624113,
+      "as_at": "2026-09-07",
+      "licence": "OGL v3 (Environment Agency, Natural Resources Wales, SEPA); CC BY-NC-ND 4.0 (OPW, Ireland)",
+      "priority": 72,
+      "description": "Flood zones 2 and 3 for England, NRW zones for Wales, SEPA river and coastal outlines for Scotland, OPW CFRAM river and coastal outlines for Ireland.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "flood-zones",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "roi"
+        ],
+        "color": "#1f77b4",
+        "icon": null,
+        "coverage_note": "No flood map for Northern Ireland (its flood maps are not open data), the Isle of Man or the Channel Islands."
+      }
+    },
+    {
+      "id": "health",
+      "title": "Hospitals, pharmacies and GP surgeries",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/health.pmtiles"
+      },
+      "dest": "maps/overlays/health.pmtiles",
+      "size_bytes": 2322933,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 73,
+      "description": "Every hospital, pharmacy and doctors' surgery in OpenStreetMap with name, phone and opening hours where mapped.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "health",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#d62728",
+        "icon": "medical"
+      }
+    },
+    {
+      "id": "fuel",
+      "title": "Fuel stations",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/fuel.geojson"
+      },
+      "dest": "maps/overlays/fuel.geojson",
+      "size_bytes": 4282757,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 74,
+      "description": "Petrol and diesel stations from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "fuel",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#ff7f0e",
+        "icon": "bolt"
+      }
+    },
+    {
+      "id": "water",
+      "title": "Reservoirs and water works",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/water.pmtiles"
+      },
+      "dest": "maps/overlays/water.pmtiles",
+      "size_bytes": 3646255,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 75,
+      "description": "Reservoirs and water treatment works from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "water",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#17becf",
+        "icon": "water"
+      }
+    },
+    {
+      "id": "rail",
+      "title": "Railway stations",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/rail.geojson"
+      },
+      "dest": "maps/overlays/rail.geojson",
+      "size_bytes": 1031445,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 76,
+      "description": "Railway stations from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "rail",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#9467bd",
+        "icon": "train"
+      }
+    },
+    {
+      "id": "nuclear-sites",
+      "title": "Nuclear sites",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/nuclear-sites.geojson"
+      },
+      "dest": "maps/overlays/nuclear-sites.geojson",
+      "size_bytes": 8310,
+      "as_at": "2026-09-07",
+      "licence": "CC0 (hand-authored from public sources)",
+      "priority": 77,
+      "description": "Civil nuclear power stations, fuel and reprocessing plants, weapons establishments and naval nuclear bases, hand-authored in tools/map-styles/data/nuclear-sites.geojson.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "nuclear-sites",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#e6c700",
+        "icon": "radiation"
+      }
+    },
+    {
+      "id": "chemical-sites",
+      "title": "Major chemical and fuel sites",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/chemical-sites.geojson"
+      },
+      "dest": "maps/overlays/chemical-sites.geojson",
+      "size_bytes": 105217,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors) plus hand-authored additions",
+      "priority": 78,
+      "description": "Chemical works, refineries and oil terminals from OpenStreetMap plus plan 04's hand-authored list.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "chemical-sites",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#8c564b",
+        "icon": "flask"
+      }
+    },
+    {
+      "id": "airports",
+      "title": "Airports and airfields",
+      "kind": "geojson",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/airports.geojson"
+      },
+      "dest": "maps/overlays/airports.geojson",
+      "size_bytes": 1482466,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 79,
+      "description": "Every aerodrome in OpenStreetMap, with its type, codes and operator where mapped.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "airports",
+        "kind": "geojson",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#7f7f7f",
+        "icon": "plane"
+      }
+    },
+    {
+      "id": "military",
+      "title": "Military bases and land",
+      "kind": "pmtiles",
+      "tier": "core",
+      "category": "maps",
+      "scenarios": [],
+      "source": {
+        "type": "build",
+        "tool": "build-maps",
+        "artifact": "overlays/military.pmtiles"
+      },
+      "dest": "maps/overlays/military.pmtiles",
+      "size_bytes": 1853353,
+      "as_at": "2026-09-07",
+      "licence": "ODbL 1.0 (OpenStreetMap contributors)",
+      "priority": 80,
+      "description": "Barracks, airfields, naval bases, ranges and danger areas from OpenStreetMap.",
+      "search_weight": 1.0,
+      "suggest": false,
+      "overlay": {
+        "id": "military",
+        "kind": "pmtiles",
+        "default_on": false,
+        "coverage": [
+          "england",
+          "wales",
+          "scotland",
+          "ni",
+          "roi",
+          "iom",
+          "ci"
+        ],
+        "color": "#4b6b2f",
+        "icon": "shield"
+      }
+    }
+  ]
+}

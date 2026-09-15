@@ -172,6 +172,91 @@ def test_osm_overlay_table_matches_the_spec():
     assert table["military"] == (("nwr/military=*", "nwr/landuse=military"), False)
 
 
+def _point(name, amenity, lon, lat, **extra):
+    props = {"name": name, "amenity": amenity, **extra}
+    return {"type": "Feature", "properties": props, "geometry": {"type": "Point", "coordinates": [lon, lat]}}
+
+
+# 0.0002 degrees of longitude/latitude in southern England is a little over 15m: close enough to be the
+# same site tagged twice (a POI node and the building around it), never close enough to be two branches
+# of the same chain on opposite sides of a street.
+NEAR = 0.0002
+FAR = 0.01  # ~1.1km: a different branch of the same chain, never the same site.
+
+
+def test_merge_duplicate_points_collapses_a_node_and_its_building_tagged_the_same():
+    # osmium's `nwr` filter keeps both a hospital's entrance node and its building outline; ST_PointOnSurface
+    # turns the second into a point too, a few metres from the first.
+    a = _point("Haywood Hospital", "hospital", -2.15, 53.05, phone=None)
+    b = _point("Haywood Hospital", "hospital", -2.15 + NEAR, 53.05, phone="+44 1782 000000")
+    merged = overlays.merge_duplicate_points([a, b])
+    assert len(merged) == 1
+    # The richer record survives: the one with a phone number, not whichever came first.
+    assert merged[0]["properties"]["phone"] == "+44 1782 000000"
+
+
+def test_merge_duplicate_points_keeps_different_branches_of_the_same_chain():
+    a = _point("Well Pharmacy", "pharmacy", -1.5, 52.0)
+    b = _point("Well Pharmacy", "pharmacy", -1.5 + FAR, 52.0)
+    assert overlays.merge_duplicate_points([a, b]) == [a, b]
+
+
+def test_merge_duplicate_points_never_merges_across_different_amenities():
+    # A hospital and an on-site pharmacy can share a name; they are not the same facility.
+    a = _point("City General", "hospital", 0.0, 51.5)
+    b = _point("City General", "pharmacy", 0.0 + NEAR, 51.5)
+    assert overlays.merge_duplicate_points([a, b]) == [a, b]
+
+
+def test_merge_duplicate_points_never_merges_unnamed_points():
+    # No name means no safe signal the two points are the same site rather than two different ones.
+    a = _point(None, "doctors", 0.0, 51.5)
+    b = _point(None, "doctors", 0.0 + NEAR, 51.5)
+    assert overlays.merge_duplicate_points([a, b]) == [a, b]
+
+
+def test_merge_duplicate_points_is_case_and_whitespace_insensitive_on_name():
+    a = _point("Well Pharmacy", "pharmacy", -1.5, 52.0)
+    b = _point("  well   PHARMACY ", "pharmacy", -1.5 + NEAR, 52.0)
+    assert len(overlays.merge_duplicate_points([a, b])) == 1
+
+
+def test_merge_duplicate_points_merges_a_chain_of_near_neighbours_transitively():
+    # A within range of B, B within range of C, but A more than the radius from C directly: still one site.
+    a = _point("Riverside Surgery", "doctors", 0.0, 51.5)
+    b = _point("Riverside Surgery", "doctors", 0.0 + NEAR, 51.5)
+    c = _point("Riverside Surgery", "doctors", 0.0 + 2 * NEAR, 51.5)
+    merged = overlays.merge_duplicate_points([a, b, c])
+    assert len(merged) == 1
+
+
+def test_merge_duplicate_points_is_deterministic_on_a_tie():
+    # Equally-filled records: the earliest in the input wins, so a rebuild from the same OSM extract
+    # always keeps the same one rather than an arbitrary one.
+    a = _point("Corner Pharmacy", "pharmacy", 0.0, 51.5)
+    b = _point("Corner Pharmacy", "pharmacy", 0.0 + NEAR, 51.5)
+    assert overlays.merge_duplicate_points([a, b]) == [a]
+    assert overlays.merge_duplicate_points([b, a]) == [b]
+
+
+def test_build_osm_overlay_deduplicates_the_points_it_writes(tmp_path):
+    dupes = json.dumps({"type": "FeatureCollection", "features": [
+        _point("Haywood Hospital", "hospital", -2.15, 53.05),
+        _point("Haywood Hospital", "hospital", -2.15 + NEAR, 53.05),
+        _point("Ashdale Pharmacy", "pharmacy", -1.9, 52.4),
+    ]}).encode()
+    runner = FakeRunner(files={"_raw.geojson": dupes, "health.geojson": dupes})
+    ctx = make_ctx(tmp_path, runner=runner)
+    work = tmp_path / "work"
+    work.mkdir()
+    health = next(o for o in overlays.OSM_OVERLAYS if o.id == "health")
+    out = overlays.build_osm_overlay(ctx, health, ctx.src / "in.pbf", work)
+    written = json.loads(out.read_text())
+    assert len(written["features"]) == 2
+    names = sorted(f["properties"]["name"] for f in written["features"])
+    assert names == ["Ashdale Pharmacy", "Haywood Hospital"]
+
+
 def test_osm_overlay_kept_tags_match_the_spec():
     tags = {o.id: o.tags for o in overlays.OSM_OVERLAYS}
     assert tags["health"] == ("name", "amenity", "healthcare", "emergency", "beds", "operator", "phone", "website", "opening_hours", "wheelchair", "dispensing")

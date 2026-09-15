@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +14,11 @@ SIZE_RULE_BYTES = 5 * 1024 * 1024
 MIN_NUCLEAR_SITES = 20
 PATH_HIGHWAYS = "w/highway=path,footway,bridleway,track,cycleway,steps"
 FOOTPATH_FILTER = '{"footpaths":["any",[">=","$zoom",13],["has","designation"]]}'
+DEDUPE_RADIUS_M = 30.0
+"""OSM commonly tags the same site twice -- a POI node plus the building or grounds outline around
+it, both carrying the same amenity tag -- and `nwr` plus `ST_PointOnSurface` keep both. Points this
+close together, sharing a name and an amenity, are merged. Narrow enough that two branches of the
+same chain across a street from each other are never merged into one."""
 
 
 @dataclass(frozen=True)
@@ -164,6 +170,72 @@ def export_config_for(ctx: Context, overlay: OsmOverlay, work: Path) -> Path:
     return path
 
 
+def _normalised_name(value: object) -> str:
+    return " ".join(str(value or "").split()).casefold()
+
+
+def _haversine_m(a: list[float], b: list[float]) -> float:
+    lon1, lat1, lon2, lat2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    dlat, dlon = lat2 - lat1, lon2 - lon1
+    h = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    return 2 * 6371000 * math.asin(math.sqrt(h))
+
+
+def _filled_tag_count(feature: dict) -> int:
+    return sum(1 for v in feature.get("properties", {}).values() if v not in (None, ""))
+
+
+def merge_duplicate_points(features: list[dict], radius_m: float = DEDUPE_RADIUS_M) -> list[dict]:
+    """Collapse points that are the same real-world site tagged more than once in OSM.
+
+    Two points merge only when they share a name (case- and whitespace-insensitive) and an amenity
+    value, and sit within `radius_m` of each other; a chain of near neighbours merges transitively, so
+    three points each within range of the next but not of each other directly still become one. An
+    unnamed point never merges with anything -- there is no signal that it is the same site rather
+    than a different one nearby -- and two points with the same name but a different amenity never
+    merge either, since that is two real things sharing a name (a hospital and its own pharmacy), not
+    one thing counted twice. Where a cluster merges, the surviving feature is the one with the most
+    filled-in tags, so the record kept is the more complete one; a tie keeps the earliest in the input,
+    so a rebuild from the same extract always keeps the same feature rather than an arbitrary one.
+    """
+    groups: dict[tuple[str, str], list[int]] = {}
+    keep = set()
+    for i, f in enumerate(features):
+        name = _normalised_name(f.get("properties", {}).get("name"))
+        if not name:
+            keep.add(i)
+            continue
+        key = (name, f.get("properties", {}).get("amenity") or "")
+        groups.setdefault(key, []).append(i)
+
+    for indices in groups.values():
+        if len(indices) == 1:
+            keep.add(indices[0])
+            continue
+        parent = {i: i for i in indices}
+
+        def find(i: int) -> int:
+            while parent[i] != i:
+                parent[i] = parent[parent[i]]
+                i = parent[i]
+            return i
+
+        for a in range(len(indices)):
+            for b in range(a + 1, len(indices)):
+                i, j = indices[a], indices[b]
+                if _haversine_m(features[i]["geometry"]["coordinates"], features[j]["geometry"]["coordinates"]) <= radius_m:
+                    ra, rb = find(i), find(j)
+                    if ra != rb:
+                        parent[ra] = rb
+        clusters: dict[int, list[int]] = {}
+        for i in indices:
+            clusters.setdefault(find(i), []).append(i)
+        for members in clusters.values():
+            keep.add(max(members, key=lambda i: (_filled_tag_count(features[i]), -i)))
+
+    return [features[i] for i in sorted(keep)]
+
+
 def build_osm_overlay(ctx: Context, overlay: OsmOverlay, pbf: Path, work: Path) -> Path:
     filtered = work / f"{overlay.id}.osm.pbf"
     ctx.run(["osmium", "tags-filter", "--overwrite", "-o", str(filtered), str(pbf), *overlay.filters])
@@ -176,6 +248,14 @@ def build_osm_overlay(ctx: Context, overlay: OsmOverlay, pbf: Path, work: Path) 
     out.unlink(missing_ok=True)
     ctx.run(["ogr2ogr", "-f", "GeoJSON", str(out), str(raw), "-dialect", "sqlite",
              "-sql", f'SELECT ST_PointOnSurface(geometry) AS geometry, * FROM "{raw.stem}"'])
+    data = json.loads(out.read_text())
+    before = len(data["features"])
+    data["features"] = merge_duplicate_points(data["features"])
+    after = len(data["features"])
+    if after != before:
+        log.info("[overlays] %s: merged %d duplicate point(s) tagged twice in OSM (%d -> %d)",
+                 overlay.id, before - after, before, after)
+        out.write_text(json.dumps(data))
     return out
 
 
