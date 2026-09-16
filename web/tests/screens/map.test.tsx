@@ -211,6 +211,25 @@ describe('Map screen', () => {
     expect(map.getLayer('sos-measure-line')).toBeDefined();
   });
 
+  it('measure: Undo point removes only the last tap, not the whole chain, and is not offered before a first tap', async () => {
+    mockApis();
+    const user = userEvent.setup();
+    renderRoute('/map');
+    await user.click(await screen.findByRole('button', { name: /Measure/ }));
+    expect(screen.queryByRole('button', { name: /Undo point/ })).not.toBeInTheDocument();
+    const map = lastMap();
+    // A three-point chain, then a mis-tap: Undo point should drop only the mis-tap, leaving the
+    // first two points -- and their distance/bearing -- exactly as they were.
+    await act(async () => { map.emit('click', { lngLat: { lng: -0.1278, lat: 51.5074 } }); });
+    await act(async () => { map.emit('click', { lngLat: { lng: 2.3522, lat: 48.8566 } }); });
+    expect(screen.getByTestId('map-readout')).toHaveTextContent('343.6 km');
+    await act(async () => { map.emit('click', { lngLat: { lng: 0, lat: 0 } }); }); // the mis-tap
+    expect(screen.getByTestId('map-readout')).not.toHaveTextContent('343.6 km');
+    await user.click(screen.getByRole('button', { name: /Undo point/ }));
+    expect(screen.getByTestId('map-readout')).toHaveTextContent('343.6 km');
+    expect(screen.getByTestId('map-readout')).toHaveTextContent('148° SSE');
+  });
+
   it('hovering an overlay feature shows what it is; a tap opens the place card and a tap on empty map closes it', async () => {
     mockApis();
     vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);

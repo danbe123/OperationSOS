@@ -287,6 +287,12 @@ export function MapScreen() {
         <button type="button" className={panel === 'home' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'home'} onClick={() => setPanel(panel === 'home' ? 'none' : 'home')}><Icon name="home" size={18} /><span>Home</span></button>
         <button type="button" className={panel === 'nearby' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'nearby'} onClick={() => (panel === 'nearby' ? setPanel('none') : openNearby())}><Icon name="locate" size={18} /><span>Nearby</span></button>
         <button type="button" className={measuring ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={measuring} onClick={() => { setMeasuring(!measuring); if (measuring) setMeasure([]); }}><Icon name="measure" size={18} /><span>Measure</span></button>
+        {/* One stray tap on a touchscreen used to cost the whole chain -- toggling Measure off is the
+            only way to clear it, and that also throws away every good point already placed. This
+            removes just the last one, so a mis-tap costs a tap back, not the measurement. */}
+        {measuring && measure.length > 0 && (
+          <button type="button" className="btn btn-small" onClick={() => setMeasure((m) => m.slice(0, -1))}><Icon name="undo" size={18} /><span>Undo point</span></button>
+        )}
         <button type="button" className={panel === 'share' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'share'} onClick={() => setPanel(panel === 'share' ? 'none' : 'share')}><Icon name="share" size={18} /><span>Share</span></button>
         <PrintButton onPrint={print} />
       </div>
@@ -500,7 +506,7 @@ export function MapScreen() {
       <div className="map-readout chrome" data-testid="map-readout">
         <span>Centre: {centreRef.text}</span>
         {tappedRef && <span> · Tapped: {tappedRef.text}</span>}
-        {measureText && <span> · {measureText}</span>}
+        {measureText && <span> · <strong>{measureText}</strong></span>}
         {route && <span> · {route.text}</span>}
       </div>
       {printImage && (
