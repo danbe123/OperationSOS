@@ -175,18 +175,59 @@ def test_main_only_filters_to_the_named_ids(env):
 
 def test_convert_one_fails_when_conversion_loses_most_of_the_pdfs_text(env):
     """Scanned PDFs with a hidden OCR layer (or odd font encodings) convert to an EPUB that is almost
-    all page images or garbage: below MIN_TEXT_COVERAGE, that's worse than the original PDF."""
+    all page images or garbage: below MIN_TEXT_COVERAGE, that's worse than the original PDF. FakeRun
+    writes the same low word count regardless of input, so the text-fallback retry (see
+    test_convert_one_falls_back_to_extracted_text_...) also comes up short, and this book stays a
+    genuine, final failure -- exercising two ebook-convert calls, not one."""
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
     run = FakeRun(ok=True, epub_words=10)
     ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed,
                                          text_runner=_pdf_words(100))
     assert not ok
-    assert "10%" in message and "left as pdf" in message and item.id in message
+    assert "10%" in message and "even from the extracted text" in message and "left as pdf" in message
+    assert item.id in message
     epub_path = env.core / "docs" / "sos-test-converted.epub"
     assert not epub_path.exists()
     pdf_path = env.core / "docs" / "sos-test-original.pdf"
     assert pdf_path.exists() and pdf_path.read_bytes() == b"%PDF fake"
+    # the direct PDF attempt, then the text-extracted retry
+    assert len([c for c in run.calls if c[0] == "ebook-convert"]) == 2
+    assert run.calls[1][1].endswith(".txt")
+
+
+def test_convert_one_falls_back_to_extracted_text_and_succeeds_when_direct_conversion_has_low_coverage(env):
+    """The case this fallback exists for (proven against real books: Kephart's Camping and Woodcraft,
+    Hesperian's Where There Is No Doctor -- both over 98% coverage this way): Calibre's PDF input
+    plugin pastes a scanned page in as a picture instead of using the very OCR text pdftotext already
+    extracts, so the direct conversion fails the coverage gate -- but feeding that same extracted text
+    through Calibre's TXT input instead succeeds cleanly."""
+    item = _item(env)
+    (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
+
+    class FakeRunLowFromPdfHighFromText:
+        def __init__(self):
+            self.calls: list[list[str]] = []
+
+        def __call__(self, cmd, **kwargs):
+            self.calls.append(list(cmd))
+            if cmd[0] == "ebook-convert":
+                _write_fake_epub(Path(cmd[2]), 10 if cmd[1].endswith(".pdf") else 90)
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run = FakeRunLowFromPdfHighFromText()
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed,
+                                         text_runner=_pdf_words(100))
+    assert ok, message
+    assert "90%" in message and "from extracted text" in message
+    epub_path = env.core / "docs" / "sos-test-converted.epub"
+    assert epub_path.exists()
+    ebook_convert_calls = [c for c in run.calls if c[0] == "ebook-convert"]
+    assert len(ebook_convert_calls) == 2
+    assert ebook_convert_calls[0][1].endswith("sos-test-original.pdf")
+    assert ebook_convert_calls[1][1].endswith(".txt")
+    # the temp .txt file used for the fallback is cleaned up, not left behind
+    assert not Path(ebook_convert_calls[1][1]).exists()
 
 
 def test_convert_one_ok_message_reports_text_coverage_at_the_threshold(env):
@@ -232,7 +273,8 @@ def test_main_threads_text_runner_and_returns_nonzero_on_a_coverage_failure(env)
 def test_convert_one_reports_a_corrupt_epub_as_fail_without_crashing(env):
     """A real Calibre crash mode: ebook-convert exits 0 but writes a corrupt or non-zip EPUB. The
     coverage gate's `docs.epub_pages` read of that file must never propagate: a FAIL is never
-    batch-blocking (spec section 4)."""
+    batch-blocking (spec section 4). Garbage from both the direct and text-fallback attempts is a
+    genuine, final failure -- exercising two ebook-convert calls, not one."""
     item = _item(env)
     (env.core / "docs" / "sos-test-original.pdf").write_bytes(b"%PDF fake")
 
@@ -246,11 +288,13 @@ def test_convert_one_reports_a_corrupt_epub_as_fail_without_crashing(env):
                 Path(cmd[2]).write_bytes(b"not a zip file")
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
-    ok, message = buildbooks.convert_one(item, env, run=FakeRunWritesGarbage(), which=_which_installed,
+    run = FakeRunWritesGarbage()
+    ok, message = buildbooks.convert_one(item, env, run=run, which=_which_installed,
                                          text_runner=_pdf_words(100))
     assert not ok
-    assert "unreadable EPUB" in message and item.id in message
+    assert "0%" in message and "even from the extracted text" in message and item.id in message
     assert not (env.core / "docs" / "sos-test-converted.epub").exists()
+    assert len([c for c in run.calls if c[0] == "ebook-convert"]) == 2
 
 
 def test_convert_one_retries_with_flow_splitting_off_after_a_split_error(env):
@@ -319,7 +363,11 @@ def test_main_continues_past_a_corrupt_epub_and_still_converts_the_next_item(env
     """The bug this guards: an unguarded epub_pages() read let a BadZipFile/ParseError propagate out of
     convert_one, and main()'s loop has no per-item try/except -- so the whole batch aborted and every
     remaining item was skipped. Two items: the fixture manifest only carries one pdf2epub item, so the
-    second is a synthesized copy (via monkeypatch on load_manifests) rather than a fixture edit."""
+    second is a synthesized copy (via monkeypatch on load_manifests) rather than a fixture edit.
+
+    Item 1 writes garbage on both its direct-PDF attempt AND its text-fallback retry (a genuinely
+    unconvertible book), so the fake distinguishes attempts by call order rather than by path -- the
+    fallback's temp .txt file has a random name unrelated to the original PDF's."""
     item1 = _item(env)
     item2 = item1.model_copy(update={"id": "sos-test-epub-2", "dest": "docs/sos-test-converted-2.epub",
                                      "pdf_dest": "docs/sos-test-original-2.pdf"})
@@ -330,20 +378,22 @@ def test_main_continues_past_a_corrupt_epub_and_still_converts_the_next_item(env
     class FakeRunFirstCorruptSecondOk:
         def __init__(self):
             self.calls = []
+            self.ebook_convert_calls = 0
 
         def __call__(self, cmd, **kwargs):
             self.calls.append(list(cmd))
             if cmd[0] == "ebook-convert":
-                if cmd[1].endswith("sos-test-original.pdf"):
+                self.ebook_convert_calls += 1
+                if self.ebook_convert_calls <= 2:  # item 1: direct attempt, then its text fallback
                     Path(cmd[2]).write_bytes(b"not a zip file")
-                else:
+                else:  # item 2: succeeds on its first (direct) attempt
                     _write_fake_epub(Path(cmd[2]), 60)
             return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
     run = FakeRunFirstCorruptSecondOk()
     code = buildbooks.main(env, run=run, which=_which_installed, text_runner=_pdf_words(100))
     assert code == 1
-    # both items were attempted -- the batch did not abort after the first item's failure
-    assert len([c for c in run.calls if c[0] == "ebook-convert"]) == 2
+    # item 1's two attempts (direct + fallback), then item 2's one successful attempt
+    assert run.ebook_convert_calls == 3
     assert not (env.core / "docs" / "sos-test-converted.epub").exists()
     assert (env.core / "docs" / "sos-test-converted-2.epub").exists()

@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -27,6 +28,20 @@ from sos.sync import SyncError, download
 # PDF whose "text" is a hidden OCR layer (or an odd font encoding) converts to page images or garbage,
 # not readable text.
 MIN_TEXT_COVERAGE = 0.5
+
+
+def _convert_from_text(pages: list[str], epub_path: Path, item: Item, run: Callable) -> subprocess.CompletedProcess:
+    """Fallback for a scanned PDF whose hidden OCR text layer Calibre's own PDF input plugin discards
+    in favour of pasting each page in as a picture: feed it the same pdftotext extraction the coverage
+    gate already trusts, through Calibre's TXT input, which has no image-or-text page to misjudge."""
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as fh:
+        fh.write("\f".join(pages))
+        txt_path = Path(fh.name)
+    try:
+        cmd = ["ebook-convert", str(txt_path), str(epub_path), "--title", item.title, "--enable-heuristics"]
+        return run(cmd, capture_output=True, text=True, check=False)
+    finally:
+        txt_path.unlink(missing_ok=True)
 
 
 def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
@@ -81,27 +96,45 @@ def convert_one(item: Item, settings: Settings, run: Callable = subprocess.run,
     # Text-coverage gate: some scanned PDFs (hidden OCR layer, odd font encoding) convert to an EPUB
     # that is almost all page images or garbage. Compare word counts against the same sidecar-cached
     # pdftotext extraction the indexer uses, so a bad conversion is caught here rather than shipped.
-    pdf_word_count = sum(len(page.split()) for page in docs.extract_pages(pdf_path, "pdf", text_runner))
+    pages = docs.extract_pages(pdf_path, "pdf", text_runner)
+    pdf_word_count = sum(len(page.split()) for page in pages)
     if not pdf_word_count:
-        # A PDF with no extractable text at all (a pure image scan) can never yield a reflowable EPUB:
-        # Calibre still "succeeds", producing page-image paragraphs with near-zero real text, which the
-        # ratio-based coverage gate below can't catch (0/0 is undefined, not a pass). FAIL outright.
+        # A PDF with no extractable text at all (a pure image scan, no OCR layer) can never yield a
+        # reflowable EPUB by any path: Calibre still "succeeds", producing page-image paragraphs with
+        # near-zero real text, which the ratio-based coverage gate below can't catch (0/0 is undefined,
+        # not a pass), and there is no text here for the text-fallback below to work from either.
+        # FAIL outright.
         epub_path.unlink(missing_ok=True)
         return False, f"{item.id}: the PDF has no extractable text (image-only scan); left as pdf"
-    try:
-        epub_word_count = sum(len(page.split()) for page in docs.epub_pages(epub_path))
-    except (zipfile.BadZipFile, ET.ParseError, OSError) as exc:
-        # A real Calibre crash mode: ebook-convert exits 0 but writes a corrupt or non-zip EPUB.
-        # A FAIL here must never propagate: main()'s loop has no per-item try/except, and the
-        # spec's binding rule (section 4) is that a FAIL is never batch-blocking.
+
+    def coverage(path: Path) -> int:
+        # -1 covers the real Calibre crash mode where ebook-convert exits 0 but writes a corrupt or
+        # non-zip EPUB. A FAIL here must never propagate: main()'s loop has no per-item try/except, and
+        # the spec's binding rule (section 4) is that a FAIL is never batch-blocking -- so this is
+        # reported as a coverage of 0%, same as any other unreadable conversion, rather than raising.
+        try:
+            return sum(len(page.split()) for page in docs.epub_pages(path))
+        except (zipfile.BadZipFile, ET.ParseError, OSError):
+            return -1
+
+    def pct_of(count: int) -> int:
+        return round(100 * max(count, 0) / pdf_word_count)
+
+    epub_word_count = coverage(epub_path)
+    if epub_word_count < 0 or epub_word_count / pdf_word_count < MIN_TEXT_COVERAGE:
+        # Calibre's PDF input plugin can decide a scanned page is a picture rather than using the very
+        # text pdftotext already extracted (proven above: pdf_word_count > 0) -- retry from that same
+        # text through Calibre's TXT input instead, which has no image-or-text page to misjudge.
         epub_path.unlink(missing_ok=True)
-        return False, f"{item.id}: ebook-convert produced an unreadable EPUB: {exc}"
-    ratio = epub_word_count / pdf_word_count
-    pct = round(ratio * 100)
-    if ratio < MIN_TEXT_COVERAGE:
-        epub_path.unlink(missing_ok=True)
-        return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text "
-                        f"(scanned or hidden-text PDF?); left as pdf")
+        proc = _convert_from_text(pages, epub_path, item, run)
+        epub_word_count = coverage(epub_path) if proc.returncode == 0 and epub_path.exists() else -1
+        pct = pct_of(epub_word_count)
+        if epub_word_count < 0 or epub_word_count / pdf_word_count < MIN_TEXT_COVERAGE:
+            epub_path.unlink(missing_ok=True)
+            return False, (f"{item.id}: ebook-convert kept only {pct}% of the PDF's text, even from "
+                            f"the extracted text (scanned or hidden-text PDF?); left as pdf")
+        return True, f"{item.id}: {epub_path} (from extracted text, {pct}% of the PDF's text)"
+    pct = pct_of(epub_word_count)
     flow_note = " (flow splitting off)" if flow_splitting_off else ""
     return True, f"{item.id}: {epub_path}{flow_note} ({pct}% of the PDF's text)"
 
