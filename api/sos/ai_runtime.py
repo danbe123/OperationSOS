@@ -54,7 +54,7 @@ def llama_argv(settings: Settings) -> list[str]:
     port = urlparse(settings.llama_url).port or 8081
     return ["llama-server", "-m", str(Path(settings.core) / "models" / settings.model),
             "--host", "127.0.0.1", "--port", str(port), "-c", "4096", "-t", "4", "-ngl", "0", "-fa", "on",
-            "-ctk", "q4_0", "-ctv", "q4_0", "-np", "1", "--no-webui", "--reasoning-budget", "0"]
+            "-np", "1", "--no-webui", "--reasoning", "off"]
 
 
 def get_setting(conn: sqlite3.Connection, key: str, default: Optional[str] = None) -> Optional[str]:

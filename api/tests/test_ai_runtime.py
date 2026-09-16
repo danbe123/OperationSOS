@@ -52,7 +52,7 @@ def test_llama_argv_matches_the_unit_flags(ai_settings):
     argv = llama_argv(ai_settings)
     assert argv[:3] == ["llama-server", "-m", str(Path(ai_settings.core) / "models" / "gemma-4-E2B-it-Q4_K_M.gguf")]
     assert argv[3:] == ["--host", "127.0.0.1", "--port", "8081", "-c", "4096", "-t", "4", "-ngl", "0", "-fa", "on",
-                        "-ctk", "q4_0", "-ctv", "q4_0", "-np", "1", "--no-webui", "--reasoning-budget", "0"]
+                        "-np", "1", "--no-webui", "--reasoning", "off"]
     assert model_stem(ai_settings) == "gemma-4-E2B-it-Q4_K_M"
 
 

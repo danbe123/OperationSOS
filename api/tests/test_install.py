@@ -153,7 +153,7 @@ def test_units_match_spec_section_5():
     assert "Restart=on-failure" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
     llama = unit("sos-llama.service")
     assert ("ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 "
-            "-c 4096 -t 4 -ngl 0 -fa on -ctk q4_0 -ctv q4_0 -np 1 --no-webui --reasoning-budget 0") in llama
+            "-c 4096 -t 4 -ngl 0 -fa on -np 1 --no-webui --reasoning off") in llama
     for line in ("EnvironmentFile=/srv/sos/state/config/ai.env", "Nice=10", "CPUWeight=30", "IOWeight=50",
                  "MemoryMax=4500M", "OOMScoreAdjust=500", "User=sos"):
         assert line in llama, line

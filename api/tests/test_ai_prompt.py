@@ -26,7 +26,9 @@ async def test_stream_chat_parses_sse_and_sends_the_spec_fields(llama, fake_llam
     body = fake_llama.requests[0]
     assert body["stream"] is True and body["cache_prompt"] is True
     assert body["max_tokens"] == 400 and body["temperature"] == 0.2
-    assert body["chat_template_kwargs"] == {"enable_thinking": False}
+    # Thinking is disabled server-side by --reasoning off (sos-llama.service), not per-request:
+    # chat_template_kwargs/enable_thinking is deprecated in llama.cpp and unreliable on Gemma 4.
+    assert "chat_template_kwargs" not in body
     assert body["messages"] == [{"role": "user", "content": "hi"}]
 
 

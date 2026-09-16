@@ -146,6 +146,14 @@ Built after phase 1 ships and its catalogue exists.
   with `--embedding` on a second port, or by a second unit `sos-embed.service` if the chat model's server cannot
   serve both. A core `model` manifest item carries it. If the model or the vector files are absent, everything
   below is silently off and search behaves as phase 1.
+  **Mandatory query prefix:** bge-small-en-v1.5 was trained with an asymmetric instruction applied to the query
+  side only — every query embedded on the box must be prefixed with `"Represent this sentence for searching
+  relevant passages: "` before the embedding call; passages indexed by `sos build-embeddings` are NOT prefixed.
+  Getting this backwards produces no error, just silently worse retrieval (2026-09-16 model review) — the
+  `api/tests/test_embeddings.py` fixture in section 11 must assert the prefix is applied to queries and absent
+  from indexed passage text. `granite-embedding-small-english-r2` (Apache 2.0, same 384 dimensions, no prefix
+  requirement, 8192-token window vs bge-small's 512) is a same-format bake-off candidate if bge-small's fixed
+  512-token window or MIT licence ever become a problem; the vector format is identical either way.
 - **Build** (`sos build-embeddings`, PC only, the GPU): one vector per Gutenberg book from
   "<title> by <author>. <subjects>. <first 300 words of <id>.html>" (needs the ZIM attached; about an hour on
   the RTX 4070); one vector per `fts_docs` row of the Library (about 20,000 chunks, minutes). Output:

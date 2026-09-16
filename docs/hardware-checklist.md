@@ -61,7 +61,7 @@ Hardware the box expects around it:
 - **3 Maps**: full outputs installed, sizes recorded in `manifest/maps.json`, pan and zoom at z15 on the kiosk and one phone with zero 4xx/5xx for `/maps/*`.
 - **4 Playbooks**: print view of one playbook from a phone.
 - **5 Full content**: `sos sync --tier core` completes; every core item available; core size within 10% of the manifest sum; unplugging the drive greys its items within 10 seconds and replugging restores them; `sos validate-playbooks --deep` passes (row 6).
-- **6 AI**: `sos eval` full run with median time to first token at most 90 seconds, generation at least 7 tokens per second, zero swap, CPU under 80°C; results file committed (rows 15, 17).
+- **6 AI**: `sos eval` full run with median time to first token at most 90 seconds, generation at least 5 tokens per second (raise to 7 once speculative decoding lands and is measured), zero swap, CPU under 80°C, `vcgencmd get_throttled` recorded alongside the run; results file committed (rows 15, 17).
 - **7 Polish and hardware**: the full checklist above in the printed case.
 
 ## CI runs

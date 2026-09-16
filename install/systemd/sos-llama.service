@@ -14,7 +14,7 @@ Environment=SOS_MODEL=gemma-4-E2B-it-Q4_K_M.gguf
 EnvironmentFile=/srv/sos/state/config/ai.env
 # The + prefix runs the governor switches as root even though the server runs as sos.
 ExecStartPre=+/bin/sh -c 'echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
-ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 -c 4096 -t 4 -ngl 0 -fa on -ctk q4_0 -ctv q4_0 -np 1 --no-webui --reasoning-budget 0
+ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 -c 4096 -t 4 -ngl 0 -fa on -np 1 --no-webui --reasoning off
 ExecStopPost=+/bin/sh -c 'echo ondemand | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null || true'
 # Search, the kiosk and the hotspot pre-empt generation (spec section 3).
 Nice=10

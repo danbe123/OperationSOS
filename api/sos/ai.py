@@ -713,8 +713,11 @@ class LlamaClient:
     async def stream_chat(self, messages: list[dict], max_tokens: int = ANSWER_MAX_TOKENS,
                           temperature: float = TEMPERATURE) -> AsyncIterator[str]:
         """Yield text deltas from POST /v1/chat/completions (OpenAI-style SSE, ends with 'data: [DONE]')."""
+        # Thinking is disabled server-side by --reasoning off (sos-llama.service); enable_thinking via
+        # chat_template_kwargs is deprecated in llama.cpp and at least one report found it unreliable
+        # on Gemma 4 -- --reasoning off is the supported lever (2026-09-16 model review).
         body = {"messages": messages, "stream": True, "max_tokens": max_tokens, "temperature": temperature,
-                "cache_prompt": True, "chat_template_kwargs": {"enable_thinking": False}}
+                "cache_prompt": True}
         try:
             async with self._client.stream("POST", f"{self.base_url}/v1/chat/completions", json=body) as r:
                 if r.status_code != 200:
