@@ -264,6 +264,16 @@ def test_suggest_finds_a_book_by_its_author(respx_mock, conn, env):
     assert any(s["url"] == "/book/gutenberg/2701" for s in out)
 
 
+@respx.mock(base_url=BASE)
+def test_books_survive_the_result_cap(respx_mock, conn, env):
+    _seed_books(conn)
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search.xml").read_text()))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water", limit=2, use_cache=False))
+    sources = [r["source"] for r in resp["results"]]
+    assert sources.count("books") == 1 and len(sources) == 3      # the cap plus the one book hit
+    assert resp["results"][-1]["title"] == "Water Babies"
+
+
 def test_classify_puts_core_book_zims_in_their_own_class():
     assert search.classify({"tier": "core", "category": "books", "id": "survivorlibrary.com_en_all"}) == "books"
 

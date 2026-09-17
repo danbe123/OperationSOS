@@ -27,6 +27,7 @@ PLAYBOOK_WEIGHT = 1.6
 MEDICAL_BOOST = 1.5
 PLACE_WEIGHT = 2.0
 BOOK_WEIGHT = 0.6   # a novel matching "fire" must never read like the survival guide; see results.ts ORDER too
+BOOKS_KEPT = 5      # catalogue hits the result cap may not squeeze out: their group is meant to be seen, low as it scores
 SUGGEST_MAX = 10
 WARM_QUERIES = ("water", "bleeding", "power cut")
 
@@ -255,7 +256,12 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     if sources:
         wanted = set(sources)
         results = [r for r in results if r["source"] in wanted]
-    results = results[:limit]
+    kept = results[:limit]
+    # Books score below everything else by design, so a busy query would cut them all; keep a few past the cap.
+    book_hits = sum(1 for r in kept if r["source"] == "books")
+    if book_hits < BOOKS_KEPT:
+        kept += [r for r in results[limit:] if r["source"] == "books"][:BOOKS_KEPT - book_hits]
+    results = kept
     for r in results:
         r.pop("_cat", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
