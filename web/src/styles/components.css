@@ -117,7 +117,9 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 /* --- chips and badges: colour plus a symbol, never colour alone ----------------------------- */
 
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip { min-height: var(--touch); padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--raised); color: var(--ink); font: 600 var(--t-meta)/1.2 var(--font-body); cursor: pointer; }
+/* A chip is a button or a link and looks the same either way: a button centres its word on its own,
+   a link does not, and the quick finds sat with their words at the top of the pill. */
+.chip { display: inline-flex; align-items: center; justify-content: center; min-height: var(--touch); padding: 6px 14px; border-radius: var(--radius-pill); border: 1px solid transparent; background: var(--raised); color: var(--ink); font: 600 var(--t-meta)/1.2 var(--font-body); cursor: pointer; }
 .chip.active, .chip[aria-current="page"] { background: var(--signal); color: var(--on-signal); }
 a.chip { text-decoration: none; }
 /* A badge is a word on a tinted ground: the state's own colour at low strength behind its own ink,
