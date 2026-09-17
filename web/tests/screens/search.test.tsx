@@ -21,8 +21,8 @@ describe('Search screen', () => {
     // matches inside one authored page are one row.
     const items = screen.getAllByRole('listitem').filter((li) => li.closest('.results'));
     expect(items).toHaveLength(7);
-    // "Playbook" is the box's word; a household reads "Guide".
-    expect(within(items[0]).getByText('Guide')).toHaveClass('badge');
+    // "Playbook" is the box's word; a household reads "Guide" — a word before the title, not a pill above it.
+    expect(within(items[0]).getByText('Guide')).toHaveClass('result-source');
     expect(within(screen.getByRole('region', { name: 'UK official' })).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
     const wiki = within(screen.getByRole('region', { name: /^Wikipedia/ })).getByRole('link');
     await act(async () => { wiki.click(); });
@@ -36,13 +36,13 @@ describe('Search screen', () => {
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
     // The chips count the very rows underneath them, the box's own group leads, and past one row
     // of them the rest wait behind one control rather than pushing the first result off the screen.
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (2)', 'Place (1)', 'UK official (1)', 'NHS (2)', 'More sources (1)']);
-    await user.click(within(chips).getByRole('button', { name: 'More sources (1)' }));
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box (2)', 'Place (1)', 'UK official (1)', 'NHS (2)', 'Wikipedia (1)', 'Fewer sources']);
-    await user.click(within(chips).getByRole('button', { name: 'NHS (2)' }));
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Place 1', 'UK official 1', 'NHS 2', 'More (1)']);
+    await user.click(within(chips).getByRole('button', { name: 'More (1)' }));
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Place 1', 'UK official 1', 'NHS 2', 'Wikipedia 1', 'Fewer']);
+    await user.click(within(chips).getByRole('button', { name: 'NHS 2' }));
     expect(router.state.location.search).toBe('?q=water&sources=nhs');
     expect(spy).toHaveBeenLastCalledWith('water', { sources: ['nhs'] });
-    expect(within(chips).getByRole('button', { name: 'NHS (2)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(chips).getByRole('button', { name: 'NHS 2' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('shows the partial notice, the empty state and the error state', async () => {

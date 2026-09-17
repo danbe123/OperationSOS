@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { AiAskRequest, AiEvent, Passage } from '../api/types';
@@ -78,7 +78,10 @@ function TurnView({ turn, now }: { turn: Turn; now: number }) {
 
 export function Ai() {
   const { status, error } = useStatus();
-  const [question, setQuestion] = useState('');
+  // Find hands over what was searched for ("Not what you were after? Ask the assistant"), so the
+  // question is there to send, or to change, rather than typed a second time.
+  const [params] = useSearchParams();
+  const [question, setQuestion] = useState(() => params.get('q') ?? '');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [, tick] = useReducer((n: number) => n + 1, 0);
   const nextId = useRef(1);

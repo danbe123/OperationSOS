@@ -1,0 +1,11 @@
+/* Find: the field is the first row; before a search the quick finds sit under it, after one the
+   source chips and the count share a row, and the results follow in their groups. */
+.find { gap: 12px; }
+.find > .searchbar { margin-top: 6px; }
+.find-quick { margin-top: 2px; }
+.find-hint { margin: 0; font-size: var(--t-meta); }
+.find-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.find-count { margin: 0; font-size: var(--t-meta); white-space: nowrap; margin-left: auto; }
+/* The count in a chip is quieter than its name: "Document 6", not "Document (6)". */
+.find-chip-count { opacity: 0.7; font-weight: 400; margin-left: 2px; }
+.find-ask { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 8px 0 0; }

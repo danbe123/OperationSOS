@@ -158,13 +158,16 @@ a.chip { text-decoration: none; }
 .list > li { border-bottom: 1px solid var(--line); padding: 10px 0; }
 .list > li:last-child { border-bottom: 0; }
 .results > li { padding: 0; }
-.result-row { display: flex; flex-direction: column; gap: 2px; min-height: var(--touch); padding: 10px 0; color: var(--ink); text-decoration: none; }
-/* The source is its own line above the title: run together they read as one long sentence. */
-.result-source { display: block; }
-.result-title { font-weight: 700; text-decoration: underline; }
-.result-snippet { display: block; color: var(--ink-muted); }
-.results-group { display: flex; flex-direction: column; gap: 4px; }
-.results-group h2 { margin: 8px 0 0; font-size: var(--t-body); color: var(--ink-muted); }
+.result-row { display: flex; flex-direction: column; gap: 2px; min-height: var(--touch); padding: 8px 0; color: var(--ink); text-decoration: none; }
+@media (hover: hover) { .result-row:hover .result-title { text-decoration: underline; } }
+/* The source is a word before the title, set apart by its tone: "Page · Water disinfection". */
+.result-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.result-source { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; white-space: nowrap; }
+.result-source::after { content: '·'; margin-left: 8px; }
+.result-title { font-weight: 700; }
+.result-snippet { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-muted); font-size: var(--t-meta); line-height: 1.35; }
+.results-group { display: flex; flex-direction: column; gap: 0; }
+.results-group h2 { margin: 6px 0 0; font-size: var(--t-meta); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* --- the one task row: engine tasks, playbook checklists and drill jobs all look like this --- */
 

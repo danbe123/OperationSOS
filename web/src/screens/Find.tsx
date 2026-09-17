@@ -9,11 +9,18 @@ import { Icon } from '../icons';
 import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
 import { Screen, Body } from '../shell/Screen';
+import './find.css';
 
 /** How many source chips stand on the screen before the rest go behind "More sources". */
 export const CHIP_ROW = 4;
 
-/** Find: one search across everything, then the library behind it, then the assistant when it is on. */
+/** What a household reaches for first: one tap each, before the keyboard. */
+export const QUICK_FINDS = ['CPR', 'Bleeding', 'Burns', 'Water', 'Power cut', 'Hypothermia', 'Radio', 'Iodine'];
+
+/** Find: the field first, and nothing above it. Before a search, the handful of things people look
+ * for most as one-tap chips; after one, the source chips with the count, then the box's own guidance
+ * and every other source in a group of its own. No heading, no paragraph: the rail says Find, and
+ * the row they took was a row of results on the kiosk. */
 export function Find() {
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
@@ -24,7 +31,6 @@ export function Find() {
     () => (q.trim() ? api.search(q, { sources: sources.length ? sources : undefined }) : Promise.resolve(null)),
     [q, sourcesParam],
   );
-  const libQ = useQuery(() => api.library(), []);
   // One row per target, the box's own first, and the chips counted from the very rows below them.
   const shown = useMemo(() => (data ? dedupe(data.results) : []), [data]);
   const grouped = useMemo(() => groupResults(shown), [shown]);
@@ -44,7 +50,7 @@ export function Find() {
   // under it has not arrived. Scrolling the count line up instead pushed the field off the top, so
   // the screen showed "5 results." and two results with no way to see or edit what was typed. The
   // content column goes to the top: the field, the count and the first results are visible together.
-  const found = useRef<HTMLParagraphElement>(null);
+  const found = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!data || data.results.length === 0) return;
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb-height'));
@@ -60,45 +66,58 @@ export function Find() {
     setParams(p);
   };
 
-  const categories = libQ.data?.categories ?? [];
-  const all = categories.flatMap((c) => c.items);
   const ai = status?.ai.state ?? 'off';
+  const searching = Boolean(q.trim());
 
   return (
-    <Screen title="Find" search={false} back={false}>
-      <Body>
+    <Screen title="Find" search={false} back={false} head={false}>
+      <Body className="find">
         {/* Arriving with a query is arriving to read: on the kiosk an autofocused field brings the
             keyboard up over the forty results somebody came for. */}
-        <SearchBar initial={q} autoFocus={!q.trim()} />
-        {!q.trim() && <p className="muted">Search Wikipedia, the NHS pages, the manuals, the maps and the guides. A place name or a postcode opens the map.</p>}
-        {chips.length > 0 && (
-          <div className="chips" role="group" aria-label="Filter by source">
-            {shownChips.map((g) => {
-              const on = g.sources.every((x) => sources.includes(x));
-              return (
-                <button key={g.key} type="button" className={on ? 'chip active' : 'chip'} aria-pressed={on} onClick={() => toggle(g.sources)}>
-                  {g.title} ({g.count})
-                </button>
-              );
-            })}
-            {(hiddenChips > 0 || moreSources) && (
-              <button type="button" className="chip" aria-expanded={moreSources} onClick={() => setMoreSources((v) => !v)}>
-                {moreSources ? 'Fewer sources' : `More sources (${hiddenChips})`}
-              </button>
+        <SearchBar initial={q} autoFocus={!searching} placeholder="Search the box" />
+        {!searching && (
+          <>
+            <nav className="chips find-quick" aria-label="Quick finds">
+              {QUICK_FINDS.map((term) => <Link key={term} className="chip" to={`/search?q=${encodeURIComponent(term)}`}>{term}</Link>)}
+            </nav>
+            <p className="muted find-hint">
+              Wikipedia, the NHS, the manuals, the maps and the guides. A place name or a postcode opens the map.
+              {' '}<Link to="/library">Or browse the Library.</Link>
+            </p>
+          </>
+        )}
+        {searching && (
+          <div className="find-bar" ref={found}>
+            {chips.length > 0 && (
+              <div className="chips" role="group" aria-label="Filter by source">
+                {shownChips.map((g) => {
+                  const on = g.sources.every((x) => sources.includes(x));
+                  return (
+                    <button key={g.key} type="button" className={on ? 'chip active' : 'chip'} aria-pressed={on} onClick={() => toggle(g.sources)}>
+                      {g.title} <span className="find-chip-count">{g.count}</span>
+                    </button>
+                  );
+                })}
+                {(hiddenChips > 0 || moreSources) && (
+                  <button type="button" className="chip" aria-expanded={moreSources} onClick={() => setMoreSources((v) => !v)}>
+                    {moreSources ? 'Fewer' : `More (${hiddenChips})`}
+                  </button>
+                )}
+              </div>
+            )}
+            {shown.length > 0 && data && (
+              <p className="muted find-count">
+                {shown.length === 1 ? '1 result' : `${shown.length} results`}
+                {data.query !== data.q ? ` for “${data.query}”` : ''}
+              </p>
             )}
           </div>
         )}
         {data?.partial && <p className="warning">Some sources timed out, so these results may be incomplete. Try again in a moment.</p>}
-        {loading && q.trim() && <p className="muted">Searching…</p>}
+        {loading && searching && <p className="muted">Searching…</p>}
         {error && <p className="warning">Search failed: {error}</p>}
         {data && !loading && shown.length === 0 && (
           <p>Nothing found for “{data.q}”. Try fewer words, or a place name or postcode for the map.</p>
-        )}
-        {shown.length > 0 && data && (
-          <p className="muted" ref={found}>
-            {shown.length === 1 ? '1 result' : `${shown.length} results`}
-            {data.query !== data.q ? ` for “${data.query}”` : ''}.
-          </p>
         )}
         {/* The box's own guides, quick cards, modules and pages first, under their own heading: they
             are what this box was built to answer with, and the engine's one ranked list put them
@@ -109,31 +128,12 @@ export function Find() {
             <ResultList results={g.results} label={g.title} />
           </section>
         ))}
-
-        {(ai === 'ready' || ai === 'busy') && (
-          <section className="panel" aria-label="Ask the assistant">
-            <div className="panel-head"><h2>Ask the assistant</h2></div>
-            <p className="muted">It answers only from the library on this box, and shows the pages it used.</p>
-            <p><Link className="btn" to="/ai"><Icon name="ai" size={18} /><span>Open the assistant</span></Link></p>
-          </section>
+        {searching && data && !loading && (ai === 'ready' || ai === 'busy') && (
+          <p className="find-ask" role="region" aria-label="Ask the assistant">
+            <span className="muted">Not what you were after?</span>
+            <Link className="btn btn-small" to={`/ai?q=${encodeURIComponent(q)}`}><Icon name="ai" size={18} /><span>Ask the assistant</span></Link>
+          </p>
         )}
-
-        <section aria-label="Browse the library">
-          <h2>Browse the library</h2>
-          {libQ.loading && <p className="muted">Loading the library…</p>}
-          {libQ.error && <p className="warning">Library unavailable: {libQ.error}</p>}
-          {libQ.data && (
-            <>
-              <p className="muted">{all.length} items, {all.filter((i) => i.available).length} available on this box.</p>
-              <div className="chips" role="group" aria-label="Library categories">
-                {categories.map((c) => (
-                  <Link key={c.id} className="chip" to={`/library/sources/${c.id}`}>{c.title} ({c.items.length})</Link>
-                ))}
-              </div>
-              <p><Link className="btn" to="/library/sources"><Icon name="library" size={18} /><span>Open the library</span></Link></p>
-            </>
-          )}
-        </section>
       </Body>
     </Screen>
   );

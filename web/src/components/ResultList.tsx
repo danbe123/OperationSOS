@@ -1,7 +1,6 @@
 import type { SearchResult } from '../api/types';
 import { useAppLink } from '../links';
 import { cleanBadge, cleanSnippet, cleanTitle, highlightParts } from '../api/results';
-import { Badge } from './Badge';
 
 /** The engine marks what it matched with `<b>`; the screen renders that as bold text, never as HTML
  * it was handed. Before this the tags were printed as words: "&lt;b&gt;Adders&lt;/b&gt; The
@@ -16,10 +15,10 @@ export function Snippet({ text }: { text: string }) {
   );
 }
 
-/** A result is one target: the whole row is the link, not the sixteen pixels of its underlined
- * title, and the badge rides above it on its own line — glued to the front of the title it read as
- * one long sentence ("NHS Medicines A to Z Kiwix build December 2025 How and when to take
- * memantine - NHS"), with no way to see where the answer came from. */
+/** A result is one target: the whole row is the link, not the sixteen pixels of its title. The
+ * source is a word before the title, quieter and set apart, never glued to it: "NHS Medicines A to Z
+ * Kiwix build December 2025 How and when to take memantine - NHS" read as one sentence, and a pill
+ * above the title on its own line made every row three lines before the snippet. */
 export function ResultList({ results, label = 'Results' }: { results: SearchResult[]; label?: string }) {
   const follow = useAppLink();
   if (results.length === 0) return null;
@@ -28,8 +27,10 @@ export function ResultList({ results, label = 'Results' }: { results: SearchResu
       {results.map((r, i) => (
         <li key={`${r.url}#${i}`}>
           <a className="result-row" href={r.url} onClick={(e) => { if (follow(r.url)) e.preventDefault(); }}>
-            <span className="result-source"><Badge>{cleanBadge(r.badge)}</Badge></span>
-            <span className="result-title">{cleanTitle(r.title)}</span>
+            <span className="result-line">
+              <span className="result-source">{cleanBadge(r.badge)}</span>
+              <span className="result-title">{cleanTitle(r.title)}</span>
+            </span>
             {r.snippet && <Snippet text={r.snippet} />}
           </a>
         </li>
