@@ -68,6 +68,7 @@ describe('Doc', () => {
   });
 
   it('puts the chrome away for the book and brings it back with a tap on the middle of the page', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // the taps on either side are page turns
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
@@ -103,28 +104,30 @@ describe('Doc', () => {
     expect(document.documentElement.dataset.reading).toBeUndefined();
   });
 
-  it('scrolls instead of turning pages on request, reopening at the same place, and remembers the choice and the size', async () => {
+  it('scrolls by default, turns pages on request at the same place, and remembers the choice and the size', async () => {
     localStorage.setItem('sos.reader.size', '125');
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
     await readerUp();
     expect(mocks.rendition.themes.fontSize).toHaveBeenLastCalledWith('125%');   // the size you chose last time
-    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'paginated', spread: 'none' }));
-    mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
-    mocks.rendition.display.mockClear();
-    await user.click(screen.getByRole('button', { name: 'Pages' }));
-    expect(mocks.book.destroy).toHaveBeenCalled();
-    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'scrolled', manager: 'continuous' }));
-    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
+    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'scrolled', manager: 'continuous', spread: 'none' }));
     expect(screen.getByRole('button', { name: 'Scrolling' })).toHaveAttribute('aria-pressed', 'true');
-    expect(localStorage.getItem('sos.reader.flow')).toBe('scrolled');
     // scrolling, a tap on the right of the page is not a page turn: there are none
     const host = document.querySelector('.epub-host') as HTMLElement;
     Object.defineProperty(host, 'clientWidth', { value: 900, configurable: true });
     act(() => { mocks.handlers.click({ clientX: 800, target: host } as unknown as MouseEvent); });
     expect(mocks.rendition.next).not.toHaveBeenCalled();
     expect(document.documentElement.dataset.reading).toBe('on');
+    mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
+    mocks.rendition.display.mockClear();
+    act(() => { mocks.handlers.click({ clientX: 450, target: host } as unknown as MouseEvent); });   // the controls back
+    await user.click(screen.getByRole('button', { name: 'Scrolling' }));
+    expect(mocks.book.destroy).toHaveBeenCalled();
+    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'paginated', spread: 'none' }));
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
+    expect(screen.getByRole('button', { name: 'Pages' })).toHaveAttribute('aria-pressed', 'false');
+    expect(localStorage.getItem('sos.reader.flow')).toBe('paginated');
   });
 
   it('opens a Library EPUB where it was left and saves the position once per pause', async () => {

@@ -26,8 +26,10 @@ export function write(key: string, value: string): void {
   }
 }
 
+/** Scrolling is the default: the owner read both and found the scroll "works much better". Pages
+ * remain a choice, remembered once made. */
 export function storedFlow(): Flow {
-  return read(FLOW_KEY) === 'scrolled' ? 'scrolled' : 'paginated';
+  return read(FLOW_KEY) === 'paginated' ? 'paginated' : 'scrolled';
 }
 
 export function storedSize(): number {
