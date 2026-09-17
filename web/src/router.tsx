@@ -6,7 +6,7 @@ import { Now } from './screens/Now';
 import { Kit } from './screens/Kit';
 import { Kits } from './screens/Kits';
 import { Library } from './screens/Library';
-import { Collections } from './screens/Collections';
+import { Sources, SourceCategory } from './screens/Sources';
 import { Guides } from './screens/Guides';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
@@ -109,7 +109,9 @@ export const routes: RouteObject[] = [
       { path: 'find', element: <Find /> },
       { path: 'library', element: <Library /> },
       { path: 'library/guides', element: <Guides /> },
-      { path: 'library/collections', element: <Collections /> },
+      { path: 'library/sources', element: <Sources /> },
+      { path: 'library/sources/:category', element: <SourceCategory /> },
+      { path: 'library/collections', element: <Navigate to="/library/sources" replace /> },
       { path: 'library/books', element: <Later title="Books"><Books /></Later> },
       { path: 'map', element: <Later title="Map"><MapScreen /></Later> },
       { path: 'medical', element: <Medical /> },

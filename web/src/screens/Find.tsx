@@ -127,10 +127,10 @@ export function Find() {
               <p className="muted">{all.length} items, {all.filter((i) => i.available).length} available on this box.</p>
               <div className="chips" role="group" aria-label="Library categories">
                 {categories.map((c) => (
-                  <Link key={c.id} className="chip" to={`/library/collections#cat-${c.id}`}>{c.title} ({c.items.length})</Link>
+                  <Link key={c.id} className="chip" to={`/library/sources/${c.id}`}>{c.title} ({c.items.length})</Link>
                 ))}
               </div>
-              <p><Link className="btn" to="/library/collections"><Icon name="library" size={18} /><span>Open the library</span></Link></p>
+              <p><Link className="btn" to="/library/sources"><Icon name="library" size={18} /><span>Open the library</span></Link></p>
             </>
           )}
         </section>

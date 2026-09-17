@@ -19,6 +19,18 @@ function readStoredSize(): number {
   return (TEXT_SIZES as readonly number[]).includes(n) ? n : 100;
 }
 
+/** Where "Open in library" goes: the item's own kind of source, scrolled to its card, once the
+ * catalogue has said which kind that is; the Sources shelf until then or for an archive outside it. */
+function useLibraryHref(id: string): string {
+  const [category, setCategory] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void api.libraryItem(id).then((item) => { if (active) setCategory(item.category); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [id]);
+  return category ? `/library/sources/${category}#item-${id}` : '/library/sources';
+}
+
 function frameBase(win: Window, fallbackPath: string): string {
   return sameOriginFrameUrl(win)?.href ?? new URL(fallbackPath, window.location.origin).href;
 }
@@ -28,6 +40,7 @@ export function Reader() {
   const location = useLocation();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const libraryHref = useLibraryHref(id);
   useEffect(() => {
     let active = true;
     // Saved links may use a dated archive name from before the full library was installed.
@@ -44,7 +57,7 @@ export function Reader() {
   if (/\.pdf$/i.test(path)) {
     let title = path.split('/').pop() ?? 'PDF';
     try { title = decodeURIComponent(title); } catch { /* Keep malformed names readable. */ }
-    return <Screen title={title} search={false} fill actions={<Link className="btn btn-small" to={`/library/collections#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>}>
+    return <Screen title={title} search={false} fill actions={<Link className="btn btn-small" to={libraryHref}><Icon name="library" size={18} /><span>Open in library</span></Link>}>
       <PdfFrame url={kiwixContentUrl(id, path) + location.search} theme={theme} hash={location.hash} />
     </Screen>;
   }
@@ -53,6 +66,7 @@ export function Reader() {
 
 function ArticleReader() {
   const { id = '' } = useParams();
+  const libraryHref = useLibraryHref(id);
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
@@ -185,7 +199,7 @@ function ArticleReader() {
           {/* A verb and a word, not a reading: "Text size 100%" told a reader a number, not what
               pressing it would do. The percentage is in the accessible name. */}
           <button type="button" className="btn btn-small" onClick={cycleSize} aria-label={`Text size, ${textSize} per cent now`}><Icon name="text-size" size={18} /><span>Text size</span></button>
-          <Link className="btn btn-small" to={`/library/collections#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>
+          <Link className="btn btn-small" to={libraryHref}><Icon name="library" size={18} /><span>Open in library</span></Link>
           {!kiosk && <button type="button" className="btn btn-small" onClick={print}><Icon name="print" size={18} /><span>Print</span></button>}
         </>
       }

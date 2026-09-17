@@ -5,7 +5,7 @@ import { Screen, Body } from '../shell/Screen';
 import { TOOL_TILES } from './Tools';
 
 /** The Library is the box's whole bookshelf, as three shelves a household can tell apart at a glance:
- * the guides the box wrote itself, the books it carries to read, and the collections it searches.
+ * the guides the box wrote itself, the books it carries to read, and the sources it searches.
  * Each shelf is its own page; the hub stays short enough to sit on the kiosk without scrolling. */
 export function Library() {
   const pagesQ = useQuery(() => api.pages(), []);
@@ -17,14 +17,16 @@ export function Library() {
   const booksLine = booksQ.data
     ? (booksQ.data.available ? `${booksQ.data.total.toLocaleString('en-GB')} books to read, Project Gutenberg` : 'Project Gutenberg is not on this box yet')
     : 'Novels, histories, classics to read';
-  const collectionsLine = libQ.data ? `${items.length} items, ${items.filter((i) => i.available).length} on this box` : 'Wikipedia, the NHS, manuals and maps';
+  const sourcesLine = libQ.data
+    ? `Wikipedia, the NHS, manuals, maps: ${items.length} sources, ${items.filter((i) => i.available).length} on this box`
+    : 'Wikipedia, the NHS, manuals, maps';
   return (
     <Screen title="Library" back={false}>
       <Body>
         <nav className="tiles tiles-wide" aria-label="Shelves">
           <Tile to="/library/guides" icon="book" title="Guides" subtitle={guidesLine} big />
           <Tile to="/library/books" icon="library" title="Books" subtitle={booksLine} big disabled={booksQ.data ? !booksQ.data.available : false} />
-          <Tile to="/library/collections" icon="globe" title="Collections" subtitle={collectionsLine} big />
+          <Tile to="/library/sources" icon="globe" title="Sources" subtitle={sourcesLine} big />
         </nav>
       </Body>
     </Screen>
