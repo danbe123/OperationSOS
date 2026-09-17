@@ -191,8 +191,10 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
                 closed_short = False
                 open_kind, open_text = "li", _BULLET.sub("", line, count=1)
                 continue
-            if closed_short and line[:1].islower() and blocks and blocks[-1].kind in ("p", "li"):
-                # "ensure your own safety;" was closed as a short line, but "if necessary, ..." carries it on.
+            continues_item = open_kind is None and blocks and blocks[-1].kind == "li" and not blocks[-1].text.endswith(".")
+            if line[:1].islower() and (closed_short and blocks and blocks[-1].kind in ("p", "li") or continues_item):
+                # "ensure your own safety;" was closed (as a short line, or by a blank the columns left), but
+                # "if necessary, ..." carries it on: a paragraph does not start with a lowercase letter.
                 last = blocks.pop()
                 open_kind, open_text = last.kind, last.text
             closed_short = False

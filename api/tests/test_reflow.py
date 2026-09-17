@@ -79,8 +79,8 @@ def test_a_chapter_title_repeated_at_the_top_of_its_pages_is_kept_once():
 
 
 def test_a_short_item_carries_on_when_the_next_line_starts_lowercase():
-    page = ["On finding a casualty:", "• ensure your own safety;", "if necessary, remove the casualty from danger (but see",
-            "the note below on enclosed spaces);", "• give immediate treatment to the casualty who is not",
+    page = ["On finding a casualty:", "• ensure your own safety;", "", "if necessary, remove the casualty from danger (but see",
+            "the note below on enclosed spaces);", "• give immediate treatment to the casualty who is not", "",
             "breathing and/or whose heart has stopped;", "", "Others can be treated later, when the ship is safe and the",
             "sea is calm."]
     blocks = blocks_from_pages([page])
