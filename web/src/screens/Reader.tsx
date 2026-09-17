@@ -6,7 +6,7 @@ import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 import { attachKeyboardTo } from '../kiosk/editable';
 import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl, unlinkExternal } from '../links';
-import { injectStyle, isDim, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss, viewerTokens } from '../theme/readerTheme';
+import { DECLUTTER_CSS, DECLUTTER_STYLE_ID, injectStyle, isDim, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss, viewerTokens } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
 import { PdfFrame } from './Doc';
 import { api } from '../api/client';
@@ -96,6 +96,7 @@ function ArticleReader() {
     const root = document.documentElement;
     injectStyle(doc, READER_STYLE_ID, readerCss(themeRef.current, viewerTokens(root, themeRef.current), isDim(root)));
     injectStyle(doc, TEXT_SIZE_STYLE_ID, textSizeCss(sizeRef.current));
+    injectStyle(doc, DECLUTTER_STYLE_ID, DECLUTTER_CSS);
   }, []);
 
   useEffect(() => { applyStyles(); }, [theme, textSize, applyStyles]);

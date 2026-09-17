@@ -33,6 +33,7 @@ const P = {
      a drop, an arc, a thermometer, a lorry and a stack of coins only hinted at. */
   tap: <><path d="M5 9h9a4 4 0 0 1 4 4v2" /><path d="M8 9V6h3V4M6 4h7" /><path d="M5 9v4h4V9" /><path d="M18 18c0 1.2-1 2-1 2s-1-.8-1-2 1-2.5 1-2.5 1 1.3 1 2.5z" /></>,
   signal: <path d="M4 20v-3M9 20v-7M14 20v-11M19 20V5" />,
+  clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   radiator: <><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7.5 6v12M12 6v12M16.5 6v12" /><path d="M6 18v3M18 18v3" /></>,
   road: <><path d="M8 21L10 3h4l2 18z" /><path d="M12 6v3M12 12v3M12 18v3" /><path d="M3 21h18" /></>,
   shop: <><path d="M4 9l1.5-5h13L20 9" /><path d="M3 9h18v2a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-3-2.4V9z" /><path d="M5 13v8h14v-8" /><path d="M10 21v-5h4v5" /></>,

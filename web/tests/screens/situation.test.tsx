@@ -13,15 +13,19 @@ describe('Situation clock', () => {
     const start = vi.spyOn(api, 'startSituation').mockResolvedValue({ slug: 'grid-collapse', title: 'National grid collapse', started_at: startedAt, elapsed_s: 72000, phase: 'first-72-hours' });
     renderRoute('/s/grid-collapse');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: /This has started/ }));
+    await user.click(await screen.findByRole('button', { name: /Start the clock/ }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
-    // The band and Now's heading already say how long it has been running; the control says only that it is active and how to end it.
-    expect(await screen.findByRole('status')).toHaveTextContent('Active');
+    // The slot that held Start now says how long it has been running and which phase that is; ending is behind it.
+    expect(await screen.findByRole('status')).toHaveTextContent('20 h in');
+    expect(screen.getByRole('button', { name: '20 h in, first 72 hours' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'End situation' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /20 h in/ }));
     expect(screen.getByRole('button', { name: 'End situation' })).toBeInTheDocument();
+    expect(screen.getByText(/Started \d\d:\d\d/)).toBeInTheDocument();
     const tabs = screen.getByRole('tablist', { name: 'Sections' });
     const now = within(tabs).getByRole('tab', { name: /First 72 hours/ });
     expect(now).toHaveAttribute('aria-current', 'time');
-    expect(within(now).getByText('now')).toBeInTheDocument();
+    expect(now.querySelector('.tab-now')).not.toBeNull();   // a dot, not a badge: the tab row keeps its shape
     expect(within(tabs).getByRole('tab', { name: 'Right now' })).not.toHaveAttribute('aria-current');
   });
 
@@ -32,14 +36,15 @@ describe('Situation clock', () => {
     const end = vi.spyOn(api, 'endSituation').mockResolvedValue({ slug: null });
     renderRoute('/s/grid-collapse');
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: /This has started/ }));
+    await user.click(await screen.findByRole('button', { name: /Start the clock/ }));
     expect(start).not.toHaveBeenCalled();
     expect(screen.getByText(/replaces the situation that is running \(Severe storms and flooding\)/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Confirm start' }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
-    await user.click(await screen.findByRole('button', { name: 'End situation' }));
+    await user.click(await screen.findByRole('button', { name: /just started/ }));
+    await user.click(screen.getByRole('button', { name: 'End situation' }));
     await user.click(screen.getByRole('button', { name: 'Confirm end' }));
     expect(end).toHaveBeenCalled();
-    expect(await screen.findByRole('button', { name: /This has started/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Start the clock/ })).toBeInTheDocument();
   });
 });

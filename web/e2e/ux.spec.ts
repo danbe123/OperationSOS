@@ -58,14 +58,15 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
 
     // the situation clock on a guide, and the band it puts on every screen
     await page.goto('/s/grid-collapse');
-    await page.getByRole('button', { name: /This has started/ }).click();
-    // The band says how long it has been running; the control says only that it is on.
-    await expect(page.getByRole('status').first()).toContainText('Active');
+    await page.getByRole('button', { name: /Start the clock/ }).click();
+    // The slot that held Start now says how long it has been running.
+    await expect(page.getByRole('status').first()).toContainText('just started');
     await expect(page.getByRole('tab', { name: /Right now/ })).toHaveAttribute('aria-current', 'time');
     await expect(page.getByRole('group', { name: 'Situation now' })).toContainText('National grid collapse');
+    await page.getByRole('button', { name: /just started/ }).click();
     await page.getByRole('button', { name: 'End situation' }).click();
     await page.getByRole('button', { name: 'Confirm end' }).click();
-    await expect(page.getByRole('button', { name: /This has started/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Start the clock/ })).toBeVisible();
     await nav.getByRole('link', { name: 'Now' }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }

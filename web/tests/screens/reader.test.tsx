@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, act, fireEvent } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { replaceFrameLocation, NOT_IN_LIBRARY } from '../../src/links';
-import { READER_STYLE_ID, TEXT_SIZE_STYLE_ID } from '../../src/theme/readerTheme';
+import { DECLUTTER_STYLE_ID, READER_STYLE_ID, TEXT_SIZE_STYLE_ID } from '../../src/theme/readerTheme';
 import { WIKI } from '../fixtures/api';
 
 vi.mock('../../src/links', async (importOriginal) => {
@@ -85,6 +85,8 @@ describe('Reader', () => {
     // Field is the box default and leaves the ZIM's own light styling alone.
     expect(doc.getElementById(READER_STYLE_ID)?.textContent).toBe('');
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:100% !important}');
+    // The archived site's cookie banner is furniture from a place that no longer exists here.
+    expect(doc.getElementById(DECLUTTER_STYLE_ID)?.textContent).toContain('.govuk-cookie-banner');
     expect(screen.getByRole('heading', { name: 'Main Page' })).toBeInTheDocument();
     await act(async () => { screen.getByRole('button', { name: /Text size/ }).click(); });
     expect(doc.getElementById(TEXT_SIZE_STYLE_ID)?.textContent).toBe('html{font-size:125% !important}');

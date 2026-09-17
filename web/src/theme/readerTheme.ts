@@ -2,6 +2,19 @@ import type { Theme } from './ThemeProvider';
 
 export const READER_STYLE_ID = 'sos-reader-theme';
 export const TEXT_SIZE_STYLE_ID = 'sos-reader-size';
+export const DECLUTTER_STYLE_ID = 'sos-reader-declutter';
+
+/** Cookie banners in archived pages. The box sets no cookies and makes no request that could carry
+ * one, so a banner asking for consent is furniture from a site that no longer exists here: GOV.UK's
+ * (`govuk-cookie-banner`, on prepare.campaign.gov.uk and the departmental sites), legislation.gov.uk's
+ * (`cookie-preferences-banner`), the NHS's, and the common consent widgets, by their own class names,
+ * never a wildcard on "cookie" that would hide a recipe. */
+export const DECLUTTER_CSS = [
+  '.govuk-cookie-banner,#global-cookie-message,.gem-c-cookie-banner,.cookie-preferences-banner,.nhsuk-cookie-banner,#nhsuk-cookie-banner',
+  '.cookie-banner,#cookie-banner,.cookie-consent,#cookie-consent,.cookieconsent,.cc-window,.cc-banner,#cookiebanner,.cookiebanner',
+  '#onetrust-consent-sdk,#onetrust-banner-sdk,.optanon-alert-box-wrapper,#CybotCookiebotDialog,#CybotCookiebotDialogBodyUnderlay',
+  '.cookie-notice,#cookie-notice,.cookie-bar,#cookie-bar,.js-cookie-banner,.cookie-popup,.cookie-policy-banner,#cookie-law-info-bar,.cli-modal-backdrop,.moove-gdpr-info-bar,#moove_gdpr_cookie_info_bar',
+].join(',') + '{display:none !important}';
 
 export function textSizeCss(percent: number): string {
   return `html{font-size:${percent}% !important}`;

@@ -6,18 +6,25 @@
 .scenario-workspace > .scenario-guidance { grid-area: guidance; }
 .scenario-workspace > .scenario-tasks { grid-area: tasks; }
 .scenario-workspace > .scenario-sources { grid-area: sources; }
-/* The clock rides in the screen head beside Map and Print. */
-.screen-head .situation-clock { gap: 6px; }
-.clock-start-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.2; }
-.clock-start-text small { font-weight: 400; color: var(--ink-muted); }
-/* The kiosk is 480 px tall: the verb is enough there, and the sheet's own copy says what the clock does. */
-@media (max-height: 560px) { .clock-start-text small { display: none; } }
+/* The clock rides in the screen head beside Map and Print: one slot before and after, so the head
+   keeps its shape when the clock starts. Ending lives in a small panel under the chip. */
+.screen-head .situation-clock { gap: 6px; position: relative; }
+.clock-chip span { white-space: nowrap; }
+.clock-panel {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 5;
+  display: flex; gap: 10px; align-items: center; white-space: nowrap;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.scenario-hint { margin: -6px 0 8px; font-size: var(--t-meta); }
 .scenario-guidance { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .scenario-panel { min-width: 0; scroll-margin-top: 80px; }
 .scenario-panel > h2 { margin-top: 0; }
 .scenario-tasks { min-width: 0; scroll-margin-top: 80px; }
 .scenario-sources { border-top: 1px solid var(--line); padding-top: 8px; }
-.tab-now { margin-left: 6px; }
+/* The phase the clock is in: a dot in the tab's corner, so the tab row keeps its shape when the clock starts. */
+.tabs .btn { position: relative; }
+.tab-now { position: absolute; top: 5px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
 .situation-clock { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 /* 800 px is the kiosk with its rail taken off (853 - 96 = 757 for the content column, which fits a
    490 px guidance pane beside a 240 px task list). Below it the two panes become one. */

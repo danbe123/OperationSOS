@@ -87,6 +87,13 @@ def test_reader_urls(conn, env):
     assert library.reader_url(row) == "/read/wikipedia_en_100_mini_2026-01/A/Main_Page"
 
 
+def test_file_url_follows_the_kind_not_a_half_converted_dest(conn, env):
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, pdf_dest, priority, available) VALUES "
+                 "('half', 'Half converted', 'pdf', 'core', 'uk-official', 'docs/half.epub', 'docs/half.pdf', 5, 1)")
+    row = conn.execute("SELECT * FROM library_items WHERE id='half'").fetchone()
+    assert library.file_url(row) == "/docs/core/half.pdf"
+
+
 def test_pdf_fallback_url_only_appears_once_the_fallback_file_is_present(conn, env):
     total, available = library.refresh_items(conn, env)
     row = conn.execute("SELECT * FROM library_items WHERE id='sos-test-epub'").fetchone()

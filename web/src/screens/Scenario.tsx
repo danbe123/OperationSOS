@@ -157,10 +157,13 @@ export function Scenario() {
       <div className="screen-body">
         <Emergency999 onlyWhenHidden />
         <p className="muted measure scenario-summary">{data.summary}</p>
+        {situation && situation.slug === null && !printing && (
+          <p className="muted scenario-hint no-print">Start the clock and the tabs, the jobs and the forecasts follow the time.</p>
+        )}
         <div className="tabs no-print" role="tablist" aria-label="Sections">
           {data.sections.map((s) => (
             <button key={s.id} type="button" role="tab" id={`tab-${s.id}`} aria-selected={s.id === current.id} aria-controls={`panel-${s.id}`} aria-current={s.id === nowPhase ? 'time' : undefined} className={s.id === current.id ? 'btn active' : 'btn'} onClick={() => selectTab(s.id)}>
-              {s.title}{s.id === nowPhase && <span className="badge badge-warn tab-now">now</span>}
+              {s.title}{s.id === nowPhase && <span className="tab-now" aria-hidden="true" />}
             </button>
           ))}
         </div>

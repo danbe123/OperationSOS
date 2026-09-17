@@ -171,7 +171,12 @@ def file_url(row: sqlite3.Row) -> str | None:
     is `reader_url`. Viewers must load this, never the app route."""
     if not row["available"] or row["kind"] not in ("pdf", "epub"):
         return None
-    name = str(row["dest"] or "").rsplit("/", 1)[-1]
+    dest = str(row["dest"] or "")
+    # The kind picks the viewer, so the file must match it: a `pdf` row whose dest is the EPUB it was
+    # converted to (the manifest mid-conversion) hands the PDF viewer its PDF, not a blank page.
+    if row["kind"] == "pdf" and dest.endswith(".epub") and row["pdf_dest"]:
+        dest = str(row["pdf_dest"])
+    name = dest.rsplit("/", 1)[-1]
     return f"/docs/{'extended' if row['tier'] == 'extended' else 'core'}/{name}" if name else None
 
 

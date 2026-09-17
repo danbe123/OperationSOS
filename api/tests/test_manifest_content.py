@@ -201,6 +201,17 @@ def test_core_size_near_target():
     assert 600e9 < total < 850e9, total
 
 
+def test_document_kind_matches_its_file():
+    """A `pdf` item whose dest is an EPUB opened PDF.js on an EPUB and showed a blank page (NRR 2025, 2026-09-17):
+    the kind is what picks the viewer, so it must agree with the file, and a converted book keeps its PDF beside it."""
+    for name in ("core.json", "extended.json"):
+        for it in items(name):
+            if it["kind"] in ("pdf", "epub"):
+                assert it["dest"].endswith(f".{it['kind']}"), (it["id"], it["kind"], it["dest"])
+            if it["kind"] == "epub" and it["source"]["type"] == "build" and it["source"].get("tool") == "pdf2epub":
+                assert it.get("pdf_dest", "").endswith(".pdf"), it["id"]
+
+
 def test_core_has_the_book_collections():
     core = by_id("core.json")
     for book_zim in ("gutenberg_en_all", "survivorlibrary.com_en_all"):
