@@ -169,7 +169,7 @@ describe('Doc', () => {
     renderRoute('/doc/nrr-2025');
     expect(await screen.findByText('The box does not have this document.')).toBeInTheDocument();
     expect(screen.queryByTitle('Document')).toBeNull();
-    expect(screen.getByRole('link', { name: /Open the library entry/ })).toHaveAttribute('href', '/library');
+    expect(screen.getByRole('link', { name: /Open the library entry/ })).toHaveAttribute('href', '/library/collections');
     expect(screen.getByRole('link', { name: /Search the box for this/ })).toHaveAttribute('href', '/search?q=National%20Risk%20Register%202025');
     // and the probe asked the drive for the file, never the app's own route, which the SPA answers
     // 200 for whatever you ask it

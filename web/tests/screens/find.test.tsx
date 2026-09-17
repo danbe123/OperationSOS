@@ -18,7 +18,7 @@ describe('Find', () => {
     expect(screen.getAllByRole('listitem').filter((li) => li.closest('.results'))).toHaveLength(7);
     const lib = await screen.findByRole('region', { name: 'Browse the library' });
     expect(lib).toHaveTextContent('8 items, 7 available on this box.');
-    expect(within(lib).getByRole('link', { name: /Open the library/ })).toHaveAttribute('href', '/library');
+    expect(within(lib).getByRole('link', { name: /Open the library/ })).toHaveAttribute('href', '/library/collections');
   });
 
   it('/find is the same screen as /search', async () => {

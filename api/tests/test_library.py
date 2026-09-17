@@ -81,7 +81,7 @@ def test_reader_urls(conn, env):
     assert library.reader_url(rows["uk-ie"]) is None
     conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available) VALUES "
                  "('gutenberg_en_all', 'Project Gutenberg', 'zim', 'core', 'books', 'zim/gutenberg_en_all.zim', 100, 1)")
-    assert library.reader_url(conn.execute("SELECT * FROM library_items WHERE id='gutenberg_en_all'").fetchone()) == "/books"
+    assert library.reader_url(conn.execute("SELECT * FROM library_items WHERE id='gutenberg_en_all'").fetchone()) == "/library/books"
     conn.execute("UPDATE library_items SET reader_home='A/Main_Page' WHERE id='wikipedia_en_100_mini_2026-01'")
     row = conn.execute("SELECT * FROM library_items WHERE id='wikipedia_en_100_mini_2026-01'").fetchone()
     assert library.reader_url(row) == "/read/wikipedia_en_100_mini_2026-01/A/Main_Page"

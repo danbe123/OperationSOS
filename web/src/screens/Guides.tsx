@@ -31,10 +31,10 @@ function matches(term: string, ...text: (string | undefined)[]): boolean {
   return text.some((x) => (x ?? '').toLowerCase().includes(t));
 }
 
-/** Guides: the manual — the pages and the tools, filterable in one field. The twenty situations
- * used to head this screen; they are the front door itself now, under "What's the situation?", so
- * the guide a household wants in a power cut is on the first screen the box shows. */
-export function Guides() {
+/** The guides: the manual the box wrote itself — the pages and the tools, filterable in one field.
+ * The twenty situations used to head a screen of their own; they are the front door now, under
+ * "What's the situation?", and the guides are the first shelf of the Library. */
+export function GuidesSection() {
   const pagesQ = useQuery(() => api.pages(), []);
   const { view } = useSituation();
   const [term, setTerm] = useState('');
@@ -58,8 +58,7 @@ export function Guides() {
   const found = shown.reduce((n, g) => n + g.entries.length, 0);
 
   return (
-    <Screen title="Guides" back={false} search={false}>
-      <Body>
+    <>
         <div className="guides-filter">
           <label className="field">
             <span>Filter these guides</span>
@@ -99,7 +98,15 @@ export function Guides() {
             </nav>
           </section>
         ))}
-      </Body>
+    </>
+  );
+}
+
+/** The Guides shelf of the Library: its own page under the Library hub. */
+export function Guides() {
+  return (
+    <Screen title="Guides" backTo="/library" search={false}>
+      <Body><GuidesSection /></Body>
     </Screen>
   );
 }

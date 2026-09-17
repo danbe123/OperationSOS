@@ -8,7 +8,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
 
     // the same five destinations, in the same order, drawn as a rail on the kiosk and a bar on a phone
     const nav = page.getByRole('navigation', { name: 'Sections' });
-    await expect(nav.locator('.rail-dest')).toHaveText(kiosk ? ['Now', 'Guides', 'Medical', 'Map', 'Find', 'AI', 'System'] : ['Now', 'Guides', 'Medical', 'Map', 'Find']);
+    await expect(nav.locator('.rail-dest')).toHaveText(kiosk ? ['Now', 'Library', 'Medical', 'Map', 'Find', 'AI', 'System'] : ['Now', 'Library', 'Medical', 'Map', 'Find']);
     await expect(nav.getByRole('link', { name: 'Now' })).toHaveAttribute('aria-current', 'page');
     const navBox = (await nav.boundingBox())!;
     const mainBox = (await page.locator('.app-main').boundingBox())!;
@@ -27,7 +27,7 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
 
     // two taps from Now to a scenario's Right now
     await nav.getByRole('link', { name: 'Now' }).click();
-    await nav.getByRole('link', { name: 'Guides' }).click();
+    await nav.getByRole('link', { name: 'Library' }).click();
     await page.getByRole('navigation', { name: 'Scenarios' }).getByRole('link', { name: /National grid collapse/ }).click();
     await expect(page.getByRole('heading', { name: 'Do this first' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Right now', selected: true })).toBeVisible();
@@ -47,12 +47,12 @@ test('the shell, the two-tap rule and the guides work on the kiosk and on a phon
     }
 
     // a timer keeps running while the rest of the box is read
-    await nav.getByRole('link', { name: 'Guides' }).click();
+    await nav.getByRole('link', { name: 'Library' }).click();
     await page.getByRole('navigation', { name: 'Tools' }).getByRole('link', { name: /Timers/ }).click();
     await page.getByRole('button', { name: 'Next dose in 4 hours' }).click();
     await expect(page.getByRole('list', { name: 'Running timers' })).toContainText('Next dose in 4 hours');
     await nav.getByRole('link', { name: 'Now' }).click();
-    await nav.getByRole('link', { name: 'Guides' }).click();
+    await nav.getByRole('link', { name: 'Library' }).click();
     await page.getByRole('navigation', { name: 'Tools' }).getByRole('link', { name: /Timers/ }).click();
     await expect(page.getByRole('list', { name: 'Running timers' })).toContainText('Next dose in 4 hours');
 

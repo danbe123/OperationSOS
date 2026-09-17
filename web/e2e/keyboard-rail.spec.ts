@@ -14,7 +14,7 @@ test('the keyboard costs the content column its height, never the rail', async (
   expect(Math.round(after.height)).toBe(Math.round(before.height));
   expect(Math.round(after.height)).toBeGreaterThanOrEqual(470);
   // …and every destination in it, including the footer, is still reachable.
-  for (const name of ['Now', 'Guides', 'Medical', 'Map', 'Find', 'AI', 'System']) {
+  for (const name of ['Now', 'Library', 'Medical', 'Map', 'Find', 'AI', 'System']) {
     await expect(nav.getByRole('link', { name, exact: true })).toBeVisible();
   }
   await expect(nav.getByRole('button', { name: /^Change the theme/ })).toBeVisible();
@@ -48,7 +48,7 @@ test('a landscape phone gets the bottom bar, so no destination is off the bottom
   const box = (await nav.boundingBox())!;
   expect(box.width).toBeGreaterThan(300);                 // a bar along the bottom, not a 96 px rail
   expect(box.y + box.height).toBeLessThanOrEqual(391);
-  for (const name of ['Now', 'Guides', 'Medical', 'Map', 'Find']) {
+  for (const name of ['Now', 'Library', 'Medical', 'Map', 'Find']) {
     const dest = (await nav.getByRole('link', { name, exact: true }).boundingBox())!;
     expect(dest.y + dest.height, name).toBeLessThanOrEqual(391);
   }

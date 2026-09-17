@@ -11,16 +11,16 @@ export function Book() {
   const { id = '' } = useParams();
   const { theme } = useTheme();
   const { data, error, loading } = useQuery(() => api.book(id), [id]);
-  if (loading) return <Screen title="Book" search={false} backTo="/books"><Body><p className="muted">Opening…</p></Body></Screen>;
+  if (loading) return <Screen title="Book" search={false} backTo="/library/books"><Body><p className="muted">Opening…</p></Body></Screen>;
   if (error || !data) {
-    return <Screen title="Book" search={false} backTo="/books"><Body><p className="warning">Could not open this book: {error ?? 'not found'}</p></Body></Screen>;
+    return <Screen title="Book" search={false} backTo="/library/books"><Body><p className="warning">Could not open this book: {error ?? 'not found'}</p></Body></Screen>;
   }
   if (!data.available) {
-    return <Screen title={data.title} search={false} backTo="/books"><Body><p className="warning">Project Gutenberg is not on this box yet.</p></Body></Screen>;
+    return <Screen title={data.title} search={false} backTo="/library/books"><Body><p className="warning">Project Gutenberg is not on this box yet.</p></Body></Screen>;
   }
   if (!data.epub_url) return <Navigate to={data.html_url ?? '/books'} replace />;
   return (
-    <Screen title={data.title} search={false} fill backTo="/books">
+    <Screen title={data.title} search={false} fill backTo="/library/books">
       <EpubReader
         url={data.epub_url}
         theme={theme}

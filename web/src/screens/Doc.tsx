@@ -210,7 +210,7 @@ function DocumentMissing({ item }: { item: LibraryItem }) {
         </p>
         <p className="muted">What to do next:</p>
         <p className="row">
-          <Link className="btn" to="/library"><Icon name="book" size={18} /><span>Open the library entry</span></Link>
+          <Link className="btn" to="/library/collections"><Icon name="book" size={18} /><span>Open the library entry</span></Link>
           <Link className="btn" to={`/search?q=${encodeURIComponent(documentTitle(item.title))}`}><Icon name="search" size={18} /><span>Search the box for this</span></Link>
         </p>
       </section>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
+import { Icon } from '../icons';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
 import type { BookSummary } from '../api/types';
@@ -25,6 +26,7 @@ export function Books() {
   const [more, setMore] = useState<BookSummary[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const shelves = useQuery(() => api.bookShelves(), []);
+  const reading = useQuery(() => api.reading(), []);
   const { data, error, loading } = useQuery(
     () => api.books({ q: q || undefined, shelf: shelf ?? undefined, limit: PAGE, offset: 0 }),
     [q, shelf],
@@ -48,14 +50,35 @@ export function Books() {
 
   if (data && !data.available) {
     return (
-      <Screen title="Books">
+      <Screen title="Books" backTo="/library">
         <Body><p className="warning">Project Gutenberg is not on this box yet. It arrives with the core content; until then the Library lists what is here.</p></Body>
       </Screen>
     );
   }
   return (
-    <Screen title="Books">
+    <Screen title="Books" backTo="/library">
       <Body>
+        {reading.data && reading.data.length > 0 && (
+          <section aria-label="My books">
+            <h2>My books</h2>
+            <ul className="list items" aria-label="My books">
+              {reading.data.map((r) => (
+                <li key={r.key} className="item-card">
+                  <div className="row">
+                    {r.cover_url && <img src={r.cover_url} alt="" width={40} height={60} loading="lazy" />}
+                    {r.url ? <Link to={r.url}><strong>{r.title}</strong></Link> : <strong>{r.title}</strong>}
+                    {r.author && <span className="muted">{r.author}</span>}
+                    <span className="muted">{Math.round(r.percent)}% read</span>
+                    <button type="button" className="btn btn-small" aria-label={`Forget ${r.title}`}
+                            onClick={() => void api.deleteReading(r.key).then(() => reading.refetch())}>
+                      <Icon name="close" size={16} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <input type="search" aria-label="Search the books" placeholder="Title or author" value={typed} onChange={(e) => setTyped(e.target.value)} />
         {shelves.data && shelves.data.length > 0 && (
           <div className="chips" role="group" aria-label="Shelves">

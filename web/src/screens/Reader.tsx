@@ -44,7 +44,7 @@ export function Reader() {
   if (/\.pdf$/i.test(path)) {
     let title = path.split('/').pop() ?? 'PDF';
     try { title = decodeURIComponent(title); } catch { /* Keep malformed names readable. */ }
-    return <Screen title={title} search={false} fill actions={<Link className="btn btn-small" to={`/library#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>}>
+    return <Screen title={title} search={false} fill actions={<Link className="btn btn-small" to={`/library/collections#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>}>
       <PdfFrame url={kiwixContentUrl(id, path) + location.search} theme={theme} hash={location.hash} />
     </Screen>;
   }
@@ -185,7 +185,7 @@ function ArticleReader() {
           {/* A verb and a word, not a reading: "Text size 100%" told a reader a number, not what
               pressing it would do. The percentage is in the accessible name. */}
           <button type="button" className="btn btn-small" onClick={cycleSize} aria-label={`Text size, ${textSize} per cent now`}><Icon name="text-size" size={18} /><span>Text size</span></button>
-          <Link className="btn btn-small" to={`/library#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>
+          <Link className="btn btn-small" to={`/library/collections#item-${id}`}><Icon name="library" size={18} /><span>Open in library</span></Link>
           {!kiosk && <button type="button" className="btn btn-small" onClick={print}><Icon name="print" size={18} /><span>Print</span></button>}
         </>
       }

@@ -1,12 +1,13 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { useRouteError, type RouteObject } from 'react-router';
+import { Navigate, useRouteError, type RouteObject } from 'react-router';
 import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Now } from './screens/Now';
-import { Guides } from './screens/Guides';
 import { Kit } from './screens/Kit';
 import { Kits } from './screens/Kits';
 import { Library } from './screens/Library';
+import { Collections } from './screens/Collections';
+import { Guides } from './screens/Guides';
 import { Medical } from './screens/Medical';
 import { Module } from './screens/Module';
 import { Page } from './screens/Page';
@@ -101,12 +102,15 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Now /> },
       { path: 'now', element: <Now /> },
-      { path: 'guides', element: <Guides /> },
+      { path: 'guides', element: <Navigate to="/library/guides" replace /> },   // the guides are a shelf of the Library now
       { path: 'kit', element: <Kits /> },
       { path: 'kit/:slug', element: <Kit /> },
       { path: 'search', element: <Find /> },
       { path: 'find', element: <Find /> },
       { path: 'library', element: <Library /> },
+      { path: 'library/guides', element: <Guides /> },
+      { path: 'library/collections', element: <Collections /> },
+      { path: 'library/books', element: <Later title="Books"><Books /></Later> },
       { path: 'map', element: <Later title="Map"><MapScreen /></Later> },
       { path: 'medical', element: <Medical /> },
       { path: 'medical/card/:slug', element: <Card /> },
@@ -122,7 +126,7 @@ export const routes: RouteObject[] = [
       { path: 'medical/dose', element: <Dose /> },
       { path: 'doc/:id', element: <Later title="Document"><Doc /></Later> },
       { path: 'read/:id/*', element: <Later title="Reading"><Reader /></Later> },
-      { path: 'books', element: <Later title="Books"><Books /></Later> },
+      { path: 'books', element: <Navigate to="/library/books" replace /> },
       { path: 'book/gutenberg/:id', element: <Later title="Book"><Book /></Later> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },

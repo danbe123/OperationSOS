@@ -157,7 +157,7 @@ def reader_url(row: sqlite3.Row) -> str | None:
     if not row["available"]:
         return None
     if row["kind"] == "zim" and row["id"] in BOOK_ZIMS:
-        return "/books"  # the catalogue screen, not the ZIM's own front page
+        return "/library/books"  # the catalogue screen, not the ZIM's own front page
     if row["kind"] == "zim":
         home = (row["reader_home"] or "").lstrip("/")
         return f"/read/{row['id']}/{home}"

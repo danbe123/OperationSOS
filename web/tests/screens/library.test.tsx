@@ -1,42 +1,58 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { library } from '../fixtures/api';
+import { library, pages } from '../fixtures/api';
+import { TOOL_TILES } from '../../src/screens/Tools';
 
-describe('Library', () => {
+describe('Library hub', () => {
   beforeEach(() => {
-    vi.spyOn(api, 'reading').mockResolvedValue([]);
-  });
-
-  it('shows My books first, newest first, and forgets a book on request', async () => {
+    vi.spyOn(api, 'pages').mockResolvedValue(pages);
     vi.spyOn(api, 'library').mockResolvedValue(library);
-    const reading = vi.spyOn(api, 'reading')
-      .mockResolvedValueOnce([
-        { key: 'gutenberg:2701', title: 'Moby-Dick', author: 'Herman Melville', cover_url: null, url: '/book/gutenberg/2701', cfi: 'x', percent: 40.4, updated_at: '2026-09-17T10:00:00Z' },
-        { key: 'doc:where-there-is-no-doctor', title: 'Where There Is No Doctor', author: null, cover_url: null, url: '/doc/where-there-is-no-doctor', cfi: 'y', percent: 10, updated_at: '2026-09-17T09:00:00Z' },
-      ])
-      .mockResolvedValueOnce([]);
-    const del = vi.spyOn(api, 'deleteReading').mockResolvedValue({ ok: true });
-    const user = userEvent.setup();
-    renderRoute('/library');
-    const shelf = await screen.findByRole('region', { name: 'My books' });
-    const items = within(shelf).getAllByRole('listitem');
-    expect(items[0]).toHaveTextContent('Moby-Dick');
-    expect(items[0]).toHaveTextContent('40% read');
-    expect(within(items[0]).getByRole('link', { name: /Moby-Dick/ })).toHaveAttribute('href', '/book/gutenberg/2701');
-    expect(within(items[1]).getByRole('link', { name: /Where There Is No Doctor/ })).toHaveAttribute('href', '/doc/where-there-is-no-doctor');
-    await user.click(within(items[0]).getByRole('button', { name: 'Forget Moby-Dick' }));
-    expect(del).toHaveBeenCalledWith('gutenberg:2701');
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'My books' })).not.toBeInTheDocument());
-    expect(reading).toHaveBeenCalledTimes(2);
   });
 
+  it('is three shelves as tiles, each saying what is on it', async () => {
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 60366, available: true });
+    renderRoute('/library');
+    const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
+    const links = within(shelves).getAllByRole('link');
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library/guides', '/library/books', '/library/collections']);
+    expect(await within(shelves).findByText(`${pages.length} pages and ${TOOL_TILES.length} tools, written for this box`)).toBeInTheDocument();
+    expect(await within(shelves).findByText('60,366 books to read, Project Gutenberg')).toBeInTheDocument();
+    expect(await within(shelves).findByText('8 items, 7 on this box')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument();
+  });
+
+  it('greys the Books shelf when the collection is not on the box', async () => {
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 0, available: false });
+    renderRoute('/library');
+    const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
+    expect(await within(shelves).findByText('Project Gutenberg is not on this box yet')).toBeInTheDocument();
+    expect(within(shelves).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/library/guides', '/library/collections']);
+  });
+
+  it('sends the old Guides address to its shelf', async () => {
+    const { router } = renderRoute('/guides');
+    expect(await screen.findByRole('searchbox', { name: 'Filter these guides' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/library/guides');
+  });
+
+  it('sends the old Books address to its shelf', async () => {
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 0, available: false });
+    vi.spyOn(api, 'reading').mockResolvedValue([]);
+    vi.spyOn(api, 'bookShelves').mockResolvedValue([]);
+    const { router } = renderRoute('/books');
+    await screen.findByText(/Project Gutenberg is not on this box yet/);
+    expect(router.state.location.pathname).toBe('/library/books');
+  });
+});
+
+describe('Collections', () => {
   it('lists categories with counts, item cards, and filters by category chip', async () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     const user = userEvent.setup();
-    renderRoute('/library');
+    renderRoute('/library/collections');
     expect(await screen.findByText('8 items, 7 available on this box.')).toBeInTheDocument();
     const chips = screen.getByRole('group', { name: 'Categories' });
     expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Medical (3)', 'UK official (1)', 'Practical (1)', 'Reference (1)', 'Maps (1)', 'Books (1)']);
@@ -52,7 +68,7 @@ describe('Library', () => {
   it('scrolls to the item named in the hash', async () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
-    renderRoute('/library#item-nrr-2025');
+    renderRoute('/library/collections#item-nrr-2025');
     await screen.findByText('National Risk Register 2025');
     expect(scroll).toHaveBeenCalled();
     expect((scroll.mock.instances[0] as unknown as Element).id).toBe('item-nrr-2025');
@@ -60,7 +76,7 @@ describe('Library', () => {
 
   it('shows an error state', async () => {
     vi.spyOn(api, 'library').mockRejectedValue(new Error('db locked'));
-    renderRoute('/library');
+    renderRoute('/library/collections');
     expect(await screen.findByText('Library unavailable: db locked')).toBeInTheDocument();
   });
 });
