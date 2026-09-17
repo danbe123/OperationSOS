@@ -29,8 +29,8 @@ describe('Book', () => {
     vi.spyOn(api, 'book').mockResolvedValue(pride);
     renderRoute('/book/gutenberg/1342');
     await screen.findByRole('button', { name: 'Next' });
-    expect(mocks.ePub).toHaveBeenCalledWith(pride.epub_url);
-    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/4!/4/2/2)');
+    await waitFor(() => expect(mocks.ePub).toHaveBeenCalledWith(pride.epub_url));
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/4!/4/2/2)'));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Pride and Prejudice');
     expect(screen.getByText('Jane Austen')).toBeInTheDocument();
   });
