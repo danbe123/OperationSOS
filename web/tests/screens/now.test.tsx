@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
-import { api } from '../../src/api/client';
+import { api, ApiError } from '../../src/api/client';
 import { condition, playbooks, powerOffView, view } from '../fixtures/api';
 
 describe('Now', () => {
@@ -36,6 +36,21 @@ describe('Now', () => {
     await waitFor(() => expect(within(after).getByRole('button', { name: /Mains power: off/ })).toHaveAttribute('aria-pressed', 'true'));
     await user.click(within(after).getByRole('button', { name: /Mains power: off/ }));
     expect(set).toHaveBeenLastCalledWith('power', expect.objectContaining({ state: 'working' }));
+  });
+
+  it('re-reads and goes ahead when the box says the row moved on, instead of an alert', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    vi.spyOn(api, 'situationView').mockResolvedValue(view);
+    const set = vi.spyOn(api, 'setCondition')
+      .mockRejectedValueOnce(new ApiError(409, 'That condition changed while you were reading it'))
+      .mockResolvedValueOnce(condition('shops', 'off'));
+    const user = userEvent.setup();
+    renderRoute('/');
+    const row = await screen.findByRole('navigation', { name: 'Services' });
+    await user.click(within(row).getByRole('button', { name: /Shops and cash/ }));
+    await waitFor(() => expect(set).toHaveBeenCalledTimes(2));
+    expect(set).toHaveBeenLastCalledWith('shops', expect.objectContaining({ state: 'off', expected_updated_at: view.conditions.shops.updated_at }));
+    expect(screen.queryByText(/Could not change/)).not.toBeInTheDocument();
   });
 
   it('is the front door: the question and the situations, with no app bar of its own', async () => {

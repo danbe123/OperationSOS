@@ -3,8 +3,9 @@ import { Link } from 'react-router';
 import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
-import { CONDITION_IDS, type ConditionId, type ConditionState } from '../api/types';
+import { CONDITION_IDS, type ConditionId } from '../api/types';
 import { CONDITION_INFO, STATE_SYMBOL, STATE_TONE, stateWord } from '../situation/conditions';
+import { flipCondition } from '../situation/flip';
 import { useQuery } from '../api/useQuery';
 import { tileLine } from '../api/words';
 import { Icon } from '../icons';
@@ -29,11 +30,9 @@ function Services() {
   const [busy, setBusy] = useState<ConditionId | null>(null);
   if (!view) return null;
   const flip = async (id: ConditionId) => {
-    const current = view.conditions[id];
-    const next: ConditionState = current.state === 'working' ? 'off' : 'working';
     setBusy(id);
     try {
-      await api.setCondition(id, { state: next, since: new Date().toISOString(), expected_updated_at: current.updated_at });
+      await flipCondition(id, view.conditions[id]);
       await refresh();
     } catch (e) {
       notify(`Could not change ${CONDITION_INFO[id].title}: ${errorMessage(e)}`);

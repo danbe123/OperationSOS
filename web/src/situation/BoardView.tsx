@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
-import type { Condition, ConditionId, ConditionState, Task } from '../api/types';
+import type { Condition, ConditionId, Task } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
@@ -9,6 +9,7 @@ import { describeElapsed, phaseFor } from '../tools/situation';
 import '../screens/board.css';
 import { withTask } from './apply';
 import { boardSunset, nextTasks } from './board';
+import { flipCondition } from './flip';
 import { ago, clockTime, CONDITION_IDS, CONDITION_INFO, HOME_CONDITION_IDS, sinceDuration, STATE_SYMBOL, STATE_TONE, stateWord } from './conditions';
 import { bulletinWords, eventTitle } from '../api/words';
 import { nowTitle } from './nowTitle';
@@ -73,10 +74,9 @@ export function BoardView({ interactive = false, action }: { interactive?: boole
   /* The same request the front door's service buttons send, in the same shape: the board is another
      way into the one switch, not a second one. */
   const flip = async (c: Condition) => {
-    const next: ConditionState = c.state === 'working' ? 'off' : 'working';
     setBusyCondition(c.id);
     try {
-      await api.setCondition(c.id, { state: next, since: new Date().toISOString(), expected_updated_at: c.updated_at });
+      await flipCondition(c.id, c);
       await refresh();
     } catch (e) {
       notify(`Could not change ${CONDITION_INFO[c.id].title}: ${errorMessage(e)}`);
