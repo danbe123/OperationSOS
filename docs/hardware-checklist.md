@@ -32,6 +32,8 @@ Manual checks on the box (spec section 14). Close a row with the date, the commi
 | 24 | Read aloud plays through the speaker: a briefing spoken from the kiosk at arm's length in a quiet room | | | |
 | 25 | A drill runs end to end: start from the sheet, work the board, tick the tasks, end the drill and read the summary event | | | |
 | 26 | A situation export scans between two phones: QR sequence on one, scanned and imported on the other, summary names what changed | | | |
+| 27 | Open a Gutenberg book on the touchscreen, page forward, reopen it from a phone and land on the same page | | | |
+| 28 | Search "Robinson Crusoe": the Books group appears below the guides and opens in the reader | | | |
 
 ## What the hardware has to provide
 

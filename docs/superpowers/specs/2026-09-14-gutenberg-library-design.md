@@ -4,6 +4,39 @@
 with "finish this idea"; the decisions in section 0 were taken without a final answer and are the first things
 to check.
 
+## Amendments (2026-09-17)
+
+Written while implementing (`docs/superpowers/plans/2026-09-17-gutenberg-books.md`). Where these differ from the
+sections below, these win.
+
+- **What the ZIM really contains.** The 2025-11 `gutenberg_en_all` build comes from gutenberg2zim 3.0.1 (released
+  2025-11-24), checked against the scraper's tagged source. That version still writes the older layout: the catalogue
+  is JavaScript, `full_by_popularity.js` and `full_by_title.js`, each `var json_data = [[title, author, "hep", id,
+  shelf], ...]` where `"hep"` flags html/epub/pdf and `shelf` is a Library of Congress class code; book entries are
+  `<slug>.<id>.html` / `.epub` / `.pdf` with `slug = title.strip().replace("/", "-")[:230]`; covers are
+  `covers/<id>_cover_image.jpg`, present only for some books and not flagged in the catalogue. The `books.json` layout
+  section 2 describes exists only on the scraper's unreleased main branch. No layout carries subjects, subtitles,
+  author years or download counts in the list file.
+- **The importer reads the file, not kiwix-serve.** `index_books` opens the ZIM with python-libzim (a new
+  dependency with wheels for the PC and the Pi). `install.sh` runs `sos index` before it enables kiwix-serve, and
+  `sync.index()` is synchronous with no Kiwix client, so an HTTP importer would have indexed nothing at install time.
+  The memory constraint is met by the catalogue being a few MB of JSON, not by streaming.
+- **Data model.** `books(zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path)`; no `subjects`
+  column, no `author_years`. `popularity` is the book's position from the end of `full_by_popularity.js`. EPUB and
+  cover presence are checked per book against the archive at index time, so the API never links to an entry that
+  is not there. `fts_books` indexes title and author (bm25 weights 5 and 3) and is rebuilt after every import
+  (external-content FTS5 does not follow deletes).
+- **Browsing.** Subject chips become shelf chips: `GET /api/books/shelves` returns the LCC codes with the scraper's
+  own names (39 codes). `?subject=` became `?shelf=`; `?author=` is an exact match.
+- **Percentage read** is the spine-and-page approximation (`readingPercent` in `web/src/reader/position.ts`), not
+  epub.js `locations`, which would read the whole book on every open.
+- **Search order.** The Books group sits below the guidance groups because the frontend orders groups by
+  `results.ts` `ORDER`; the flat score (`0.6 / (5 + rank)`) is what the AI answerer sees. Core items in category
+  `books` classify as `books`; the Kiwix fan-out skips `BOOK_ZIMS` regardless of the ZIM's full-text flag.
+- **Not built.** The "scanned" badge for Survivor Library (its description already says scans). Author years.
+- **Section 1** said the PC could not hold the ZIM; it now has a 1 TB disk and the file is downloading to
+  `/home/dan/sos-content/zim/gutenberg_en_all.zim`.
+
 ## 0. Decisions taken on the owner's behalf
 
 | Decision | Chosen | Why | If wrong |
