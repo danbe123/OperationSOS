@@ -95,6 +95,23 @@ export function classifyHref(href: string, base: string = window.location.href):
   return { kind: 'external', href };
 }
 
+/** Turn every link the box cannot follow into plain text, keeping its wording. An archived page carries
+ * hundreds of links to the internet (citations, infoboxes, "official site"); on a box with no internet a
+ * tappable link that only ever produces a notice reads as broken. Returns how many were unlinked. */
+export function unlinkExternal(doc: Document, base: string): number {
+  let count = 0;
+  for (const anchor of Array.from(doc.querySelectorAll('a[href]'))) {
+    const c = classifyHref(anchor.getAttribute('href') ?? '', base);
+    if (c.kind !== 'external') continue;
+    const span = doc.createElement('span');
+    span.className = 'sos-unlinked';
+    while (anchor.firstChild) span.appendChild(anchor.firstChild);
+    anchor.replaceWith(span);
+    count++;
+  }
+  return count;
+}
+
 /** Returns a function that follows an href the app way. It returns true when it handled the link (caller should preventDefault). */
 export function useAppLink(): (href: string, base?: string) => boolean {
   const navigate = useNavigate();

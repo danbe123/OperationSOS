@@ -109,12 +109,26 @@ describe('Reader', () => {
     expect(replaceMock).toHaveBeenLastCalledWith(frame().contentWindow, `/kiwix/content/${WIKI}/A/Ice`);
   });
 
-  it('shows the in-app notice for external links and the external catcher', async () => {
+  it('turns links to the internet and the external catcher into plain text on load', async () => {
+    renderRoute(MAIN);
+    const doc = await loadArticle('Main Page', ARTICLE);
+    expect(doc.getElementById('out')).toBeNull();
+    expect(doc.getElementById('catch')).toBeNull();
+    expect(doc.body.textContent).toContain('Out');
+    expect(doc.body.textContent).toContain('Catch');
+    expect(Array.from(doc.querySelectorAll('a')).map((a) => a.id)).toEqual(['in', 'rel', 'frag']);
+  });
+
+  it('shows the in-app notice for an external link a page script adds after load', async () => {
     const { router } = renderRoute(MAIN);
     const doc = await loadArticle('Main Page', ARTICLE);
-    await act(async () => { fireEvent.click(doc.getElementById('out')!); });
+    const late = doc.createElement('a');
+    late.id = 'late';
+    late.href = 'https://example.org/late';
+    late.textContent = 'Late';
+    doc.body.appendChild(late);
+    await act(async () => { fireEvent.click(late); });
     expect(screen.getByText(new RegExp(NOT_IN_LIBRARY.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument();
-    await act(async () => { fireEvent.click(doc.getElementById('catch')!); });
     expect(router.state.location.pathname).toBe(MAIN);
     expect(replaceMock).not.toHaveBeenCalled();
   });

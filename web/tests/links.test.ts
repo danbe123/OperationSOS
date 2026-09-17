@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveLink, classifyHref, parseKiwixContentPath, readerRoute, kiwixContentUrl, sameOriginFrameUrl } from '../src/links';
+import { resolveLink, classifyHref, parseKiwixContentPath, readerRoute, kiwixContentUrl, sameOriginFrameUrl, unlinkExternal } from '../src/links';
 
 const BASE = 'http://10.42.0.1/s/grid-collapse';
 
@@ -71,5 +71,23 @@ describe('protected frame locations', () => {
   it('returns the complete URL for an app frame', () => {
     const href = new URL('/pdfjs/web/viewer.html?file=manual.pdf#page=12', window.location.origin).href;
     expect(sameOriginFrameUrl({ location: { href } } as Window)?.href).toBe(href);
+  });
+});
+
+describe('unlinkExternal', () => {
+  it('turns links to the internet into plain text and leaves the rest alone', () => {
+    const doc = document.implementation.createHTMLDocument('Burn');
+    doc.body.innerHTML = [
+      '<p><a href="Hypothermia">Hypothermia</a>, <a href="https://www.who.int/burns">WHO burns sheet</a>,',
+      '<a href="#cite_note-1">[1]</a>, <a href="/kiwix/catch/external?source=https%3A%2F%2Fexample.org">catcher</a>,',
+      '<a href="mailto:x@example.org">mail</a>, <a href="/kiwix/content/other_zim/Page">other book</a></p>',
+    ].join(' ');
+    const base = 'http://localhost/kiwix/content/wikipedia_en_medicine_maxi/Burn';
+    expect(unlinkExternal(doc, base)).toBe(2);
+    const hrefs = Array.from(doc.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['Hypothermia', '#cite_note-1', 'mailto:x@example.org', '/kiwix/content/other_zim/Page']);
+    const plain = Array.from(doc.querySelectorAll('span.sos-unlinked')).map((s) => s.textContent);
+    expect(plain).toEqual(['WHO burns sheet', 'catcher']);
+    expect(doc.body.textContent).toContain('WHO burns sheet, [1], catcher');
   });
 });

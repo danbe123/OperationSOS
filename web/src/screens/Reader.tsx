@@ -5,7 +5,7 @@ import { notify } from '../components/Notice';
 import { Icon } from '../icons';
 import { useKiosk } from '../kiosk/KioskProvider';
 import { attachKeyboardTo } from '../kiosk/editable';
-import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl } from '../links';
+import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl, unlinkExternal } from '../links';
 import { injectStyle, isDim, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss, viewerTokens } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
 import { PdfFrame } from './Doc';
@@ -153,6 +153,9 @@ function ArticleReader() {
     if (!doc || !win) return;
     pending.current = null;
     applyStyles();
+    // Links to the internet become plain text: nothing on this box can follow them. The click handler
+    // below still catches any a page's own scripts add later.
+    unlinkExternal(doc, frameBase(win, targetRef.current));
     doc.addEventListener('click', onFrameClick, true);
     win.open = () => null; // target=_blank and window.open never leave the app
     setTitle(doc.title || decodeURIComponent(targetRef.current.split('/').pop() ?? '') || 'Reader');
