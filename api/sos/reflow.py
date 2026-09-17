@@ -152,6 +152,8 @@ def _title_case(line: str) -> bool:
         return False
     return sum(1 for w in words if w[0].isupper()) / len(words) >= 0.7
 SHORT_LINE = 0.55       # a line under this share of the page's typical width ends its paragraph
+ITEM_END = 0.8          # a list item whose last line is under this share, followed by a capitalised line, has ended
+_DANGLING = {"and", "or", "of", "the", "a", "an", "to", "in", "for", "with", "by", "on", "at", "from", "as", "its", "their"}
 MAX_HEADING = 90
 
 
@@ -214,6 +216,7 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
         width = _typical_width(lines)
         stripped = [re.sub(r"\s+", " ", raw.strip()) for raw in lines]
         at_page_top = True
+        last_len = 0   # the previous line's width on this page, for the end of a bulleted item
         for i, line in enumerate(stripped):
             if not line:
                 if at_page_top and open_kind and not open_text.rstrip().endswith(_TERMINAL):
@@ -227,6 +230,7 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
                 close()
                 heading_open = blank_after_caption = False
                 continue
+            prev_len, last_len = last_len, len(line)
             if _CAPTION.match(line) and len(line) < MAX_HEADING:
                 captions.append(Block("caption", line))
                 blank_after_caption = False
@@ -259,10 +263,18 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
                 heading_open = True
                 continue
             heading_open = False
-            if _BULLET.match(line):
+            dash_in_sentence = (line[:1] in "-–—" and open_kind == "p" and not open_text.rstrip().endswith(_TERMINAL))
+            if _BULLET.match(line) and not dash_in_sentence:
                 close()
                 open_kind, open_text = "li", _BULLET.sub("", line, count=1)
                 continue
+            if (open_kind == "li" and line[:1].isupper() and width and prev_len < ITEM_END * width
+                    and open_text.split()[-1].lower() not in _DANGLING):
+                # "• Conflict and instability" then "The NRR assesses ...": a wrapped item goes on in lowercase,
+                # so a capital after a short item line is the prose after the list. ("British / Nationals" wraps
+                # at a full line, which keeps its item; "Cleaning of Cooking, Serving, and" / "Eating Utensils"
+                # hangs on a conjunction, which keeps its item too.)
+                close()
             if line[:1].islower() and open_kind is None and blocks and blocks[-1].kind in ("p", "li", "caption") and not captions:
                 # A paragraph never starts with a lowercase letter: whatever closed the one before (a short
                 # line, the blank a column or a page left, a caption) was not the end of its sentence.

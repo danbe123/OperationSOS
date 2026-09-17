@@ -149,6 +149,22 @@ def test_run_in_subheads_and_unlabelled_captions():
     assert blocks_from_pages(address)[0].text == "Mercy Corps International 3030 SW 1st Avenue Portland, Oregon 97201 United States of America"
 
 
+def test_a_dash_mid_sentence_is_not_a_bullet_and_a_short_item_ends_at_a_capital():
+    page = ["The risks that meet the threshold for inclusion", "in the NRR would have a substantial impact on",
+            "the UK's safety, security and/or critical systems", "at a national level. The NRR includes",
+            "information about 89 risks, within 9 risk themes", "– although several risks could be categorised",
+            "under more than one theme. These are:", "• Terrorism", "• Reception and integration of British",
+            "Nationals arriving from overseas", "• Cleaning of Cooking, Serving, and", "Eating Utensils", "• Societal",
+            "• Conflict and instability", "The NRR assesses the likelihood and impact",
+            "for each risk, following a rigorous and", "well-tested methodology (see Chapter 2).",
+            "Risks can manifest in different ways, with", "different levels of severity. To ensure the UK"]
+    blocks = blocks_from_pages([page])
+    assert "within 9 risk themes – although several risks could be categorised under more than one theme. These are:" in blocks[0].text
+    assert [b.text for b in blocks if b.kind == "li"] == ["Terrorism", "Reception and integration of British Nationals arriving from overseas",
+            "Cleaning of Cooking, Serving, and Eating Utensils", "Societal", "Conflict and instability"]
+    assert blocks[-1].text.startswith("The NRR assesses the likelihood and impact for each risk, following a rigorous and well-tested")
+
+
 def test_a_sentence_crosses_the_gap_a_running_head_left():
     pages = [["ground dimensions are governed by the number of"], ["", "", "widths of cloth used, allowing for seams."]]
     assert blocks_from_pages(pages) == [Block("p", "ground dimensions are governed by the number of widths of cloth used, allowing for seams.")]
