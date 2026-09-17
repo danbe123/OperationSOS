@@ -57,31 +57,23 @@
 .card-source p::before { content: 'Source: '; }
 
 /* --- the list on Medical: grouped, the first minute first, each row saying when it applies ---- */
-.card-groups { display: flex; flex-direction: column; gap: 4px; }
-.card-group h2 { margin: 12px 0 6px; }
-.quick-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+/* The medical shelf: one field, then the quick cards as small tiles in their groups. */
+.medical { gap: 10px; }
+.medical-find { max-width: 520px; }
+.card-groups { display: flex; flex-direction: column; gap: 2px; }
+.card-group h2 { margin: 10px 0 6px; font-size: var(--t-body); color: var(--ink-muted); }
+.quick-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+/* A tile: the icon and the name, nothing else — what the card is for is on the card, and the name is
+   the way in. The first minute's tiles carry the danger colour on their edge. */
 .quick-card {
-  display: flex; align-items: center; gap: 12px;
-  min-height: 112px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  min-height: var(--touch); padding: 10px 12px;
   border-radius: var(--radius); background: var(--panel); color: var(--ink); text-decoration: none;
 }
+@media (hover: hover) { .quick-card:hover { background: var(--raised); } }
 .quick-card > svg { flex: 0 0 auto; }
 .quick-card-urgent { box-shadow: inset 3px 0 0 var(--danger); }
-.quick-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.quick-card-title { font-size: var(--t-lead); font-weight: 700; line-height: 1.2; }
-/* Every card the same height: the title on one line, the summary on two, and a card whose summary runs
-   longer says "… Read more" instead of pushing its row taller than its neighbours. The card page carries
-   the whole thing, which is what the tile opens. */
-/* Cut at a whole word, never mid-word with the browser's own ellipsis: the summary box is exactly two
-   lines tall and hides the rest; the Read more line under it is the only sign there is more. */
-.quick-card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.quick-card-sub { font-size: var(--t-meta); color: var(--ink-muted); line-height: 1.3; max-height: 2.6em; overflow: hidden; }
-/* The third line is always there, so a card that needs the label and one that does not stand the
-   same height; the label is simply invisible when the summary fits. */
-.quick-card-more { font-size: var(--t-meta); color: var(--ink-muted); font-weight: 600; }
-.quick-card-more-off { visibility: hidden; }
-.quick-card-go { margin-left: auto; flex: 0 0 auto; color: var(--ink-muted); }
-.card-filter { margin: 0 0 4px; }
+.quick-card-title { font-weight: 700; line-height: 1.2; min-width: 0; }
 
 /* On paper there is no frame to scroll: the whole sheet prints, at once. */
 @media print {

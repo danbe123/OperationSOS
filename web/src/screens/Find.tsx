@@ -8,6 +8,7 @@ import { chipsFor, dedupe, groupResults } from '../api/results';
 import { Icon } from '../icons';
 import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
+import { ShelfTiles } from '../components/ShelfTiles';
 import { Screen, Body } from '../shell/Screen';
 import './find.css';
 
@@ -82,8 +83,9 @@ export function Find() {
             </nav>
             <p className="muted find-hint">
               Wikipedia, the NHS, the manuals, the maps and the guides. A place name or a postcode opens the map.
-              {' '}<Link to="/library">Or browse the Library.</Link>
             </p>
+            {/* The Library's four shelves, in the room under the field: an empty Find is a way in as well. */}
+            <ShelfTiles label="Shelves" />
           </>
         )}
         {searching && (

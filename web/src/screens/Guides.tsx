@@ -60,23 +60,19 @@ export function GuidesSection() {
   return (
     <>
         <div className="guides-filter">
-          <label className="field">
-            <span>Filter these guides</span>
-            <input type="search" aria-label="Filter these guides" value={term} placeholder="flood, water, radio, cold" onChange={(e) => setTerm(e.target.value)} />
-          </label>
+          <input type="search" aria-label="Filter these guides" value={term} placeholder="Filter: flood, water, radio, cold" onChange={(e) => setTerm(e.target.value)} />
           <div className="chips" role="group" aria-label="Kinds of guide">
             <button type="button" className={only === null ? 'chip active' : 'chip'} aria-pressed={only === null} onClick={() => setOnly(null)}>Everything</button>
             {groups.filter((g) => g.entries.length > 0).map((g) => (
               <button key={g.id} type="button" className={only === g.id ? 'chip active' : 'chip'} aria-pressed={only === g.id} onClick={() => setOnly(only === g.id ? null : g.id)}>
-                {g.title} ({g.entries.length})
+                {g.title} <span className="guides-chip-count">{g.entries.length}</span>
               </button>
             ))}
           </div>
         </div>
         {active && (
-          <p className="panel panel-warn">
-            <Icon name="alert" size={18} /> <strong>{active.title}</strong> is running.{' '}
-            <Link to={`/s/${active.slug}`}>Open its guide</Link>.
+          <p className="guides-running">
+            <Icon name="alert" size={18} /><span><strong>{active.title}</strong> is running. <Link to={`/s/${active.slug}`}>Open its guide</Link>.</span>
           </p>
         )}
         {pagesQ.loading && <p className="muted">Loading the guides…</p>}
@@ -84,16 +80,18 @@ export function GuidesSection() {
         {term && <p className="muted" role="status">{found === 1 ? '1 guide matches' : `${found} guides match`} “{term}”.</p>}
         {term && found === 0 && <p>Nothing matches. Try a shorter word, or <Link to={`/search?q=${encodeURIComponent(term)}`}>search the whole box</Link>.</p>}
         {shown.map((g) => (
-          <section key={g.id} aria-label={g.title}>
-            <h2>{g.title}</h2>
-            {/* The line under a heading says what is on the screen, not what would be on it with no
+          <section key={g.id} aria-label={g.title} className="guides-group">
+            {/* The line beside a heading says what is on the screen, not what would be on it with no
                 filter: a section that shows two tiles never claims twenty. */}
-            <p className="muted">
-              {term
-                ? `${g.entries.length} ${countable(g.entries.length, g.unit)} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
-                : `${g.total} ${countable(g.total, g.unit)}. ${g.note}`}
-            </p>
-            <nav className="tiles tiles-wide" aria-label={g.title}>
+            <div className="guides-group-head">
+              <h2>{g.title}</h2>
+              <p className="muted">
+                {term
+                  ? `${g.entries.length} ${countable(g.entries.length, g.unit)} ${g.entries.length === 1 ? 'matches' : 'match'} “${term}”.`
+                  : `${g.total} ${countable(g.total, g.unit)}. ${g.note}`}
+              </p>
+            </div>
+            <nav className="tiles" aria-label={g.title}>
               {g.entries.map((e) => <Tile key={e.to} to={e.to} icon={e.icon} title={e.title} subtitle={e.sub} />)}
             </nav>
           </section>

@@ -19,7 +19,7 @@ describe('nhsAtoZ', () => {
 });
 
 describe('Medical', () => {
-  it('lists quick cards, NHS A to Z tiles and the medical library', async () => {
+  it('lists quick cards as tiles, the NHS A to Z tiles, and one tile into the medical sources', async () => {
     vi.spyOn(api, 'cards').mockResolvedValue([...cards].reverse());
     vi.spyOn(api, 'library').mockResolvedValue(library);
     renderRoute('/library/medical');
@@ -29,8 +29,12 @@ describe('Medical', () => {
     const nhs = await screen.findByRole('navigation', { name: 'NHS A to Z' });
     expect(within(nhs).getByRole('link', { name: /Conditions A to Z/ })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/conditions/');
     expect(within(nhs).getByRole('link', { name: /Medicines A to Z/ })).toHaveAttribute('href', '/read/nhs_uk/www.nhs.uk/medicines/');
-    const lib = screen.getByRole('list', { name: 'Medical library' });
-    expect(within(lib).getAllByRole('listitem')).toHaveLength(3);
+    // the medical sources are one tile into their shelf, not every source as a card of its own
+    expect(within(nhs).getByRole('link', { name: /Medical sources/ })).toHaveAttribute('href', '/library/sources/medical');
+    expect(within(nhs).getByRole('link', { name: /Medical sources/ })).toHaveTextContent('3 sources');
+    expect(screen.queryByRole('list', { name: 'Medical library' })).toBeNull();
+    // no search field in the head: the field here finds a card
+    expect(screen.queryByRole('combobox', { name: 'Search' })).toBeNull();
   });
 
   it('greys the NHS tiles with the drive label when unavailable', async () => {
@@ -38,7 +42,7 @@ describe('Medical', () => {
     vi.spyOn(api, 'library').mockResolvedValue({ categories: [{ id: 'medical', title: 'Medical', items: [{ ...nhsItem, tier: 'extended', available: false, url: null, drive_label: 'On external drive (not connected)' }] }] });
     renderRoute('/medical');
     const nhs = await screen.findByRole('navigation', { name: 'NHS A to Z' });
-    expect(within(nhs).queryAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/dose']);   // the dose tool never depends on the drive
+    expect(within(nhs).queryAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/dose', '/library/sources/medical']);   // the dose tool never depends on the drive
     expect(within(nhs).getAllByText('On external drive (not connected)')).toHaveLength(2);
   });
 });
@@ -52,7 +56,9 @@ describe('Medical card groups', () => {
     expect(within(nav).getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['The first minute', 'More cards']);
     const first = within(nav).getByRole('region', { name: 'The first minute' });
     expect(within(first).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/medical/card/cpr-adult', '/medical/card/severe-bleeding', '/medical/card/choking']);
-    expect(within(first).getByText('Collapsed, unresponsive and not breathing normally.')).toBeInTheDocument();
+    // a tile is the icon and the name; what the card is for is its tooltip, and still what the field finds
+    expect(within(first).queryByText('Collapsed, unresponsive and not breathing normally.')).toBeNull();
+    expect(within(first).getByRole('link', { name: /CPR \(adult\)/ })).toHaveAttribute('title', 'Collapsed, unresponsive and not breathing normally.');
     expect(within(first).getByRole('link', { name: /CPR \(adult\)/ })).toHaveClass('quick-card-urgent');
     expect(within(nav).getByRole('link', { name: /Something new/ })).not.toHaveClass('quick-card-urgent');
     const { fireEvent } = await import('@testing-library/react');

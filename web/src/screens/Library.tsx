@@ -1,14 +1,13 @@
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
-import { Strip } from '../components/Strip';
-import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
+import { ShelfTiles } from '../components/ShelfTiles';
+import { Strip } from '../components/Strip';
 import { KIND_ICON, KIND_WORD } from '../reader/recent';
 import type { RecentEntry } from '../api/types';
 import { BookCard } from './Books';
-import { TOOL_TILES } from './Tools';
 import './books.css';
 
 /** The Library is the box's whole bookshelf, as four shelves a household can tell apart at a glance:
@@ -17,30 +16,11 @@ import './books.css';
  * on the kiosk without scrolling, and under them is one strip: the last things anyone on the box
  * opened, whatever shelf they came from ("we need aggregated last viewed across all library items only"). */
 export function Library() {
-  const cardsQ = useQuery(() => api.cards(), []);
-  const pagesQ = useQuery(() => api.pages(), []);
-  const booksQ = useQuery(() => api.books({ limit: 1 }), []);
-  const libQ = useQuery(() => api.library(), []);
   const recent = useQuery(() => api.recent(12), [], { refetchOnFocus: true });
-  const pageCount = pagesQ.data?.length ?? 0;
-  const items = libQ.data?.categories.flatMap((c) => c.items) ?? [];
-  const medicalLine = cardsQ.data ? `999, ${cardsQ.data.length} quick cards, the NHS A to Z, children's doses` : '999, the quick cards, the NHS A to Z';
-  const guidesLine = pagesQ.data ? `${pageCount} pages and ${TOOL_TILES.length} tools, written for this box` : 'The manual this box wrote itself';
-  const booksLine = booksQ.data
-    ? (booksQ.data.available ? `${booksQ.data.total.toLocaleString('en-GB')} books to read, Project Gutenberg` : 'Project Gutenberg is not on this box yet')
-    : 'Novels, histories, classics to read';
-  const sourcesLine = libQ.data
-    ? `Wikipedia, the NHS, manuals, maps: ${items.length} sources, ${items.filter((i) => i.available).length} on this box`
-    : 'Wikipedia, the NHS, manuals, maps';
   return (
     <Screen title="Library" back={false}>
       <Body>
-        <nav className="tiles tiles-wide" aria-label="Shelves">
-          <Tile to="/library/medical" icon="medical" title="Medical" subtitle={medicalLine} big />
-          <Tile to="/library/guides" icon="book" title="Guides" subtitle={guidesLine} big />
-          <Tile to="/library/books" icon="library" title="Books" subtitle={booksLine} big disabled={booksQ.data ? !booksQ.data.available : false} />
-          <Tile to="/library/sources" icon="globe" title="Sources" subtitle={sourcesLine} big />
-        </nav>
+        <ShelfTiles />
         {recent.data && recent.data.length > 0 && <LastViewed entries={recent.data} />}
       </Body>
     </Screen>

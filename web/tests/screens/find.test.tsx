@@ -31,13 +31,16 @@ describe('Find', () => {
     expect(screen.queryByRole('navigation', { name: 'Quick finds' })).toBeNull();
   });
 
-  it('before a search: the field, one-tap quick finds, one line of what it searches, and a way to the Library', async () => {
+  it('before a search: the field, one-tap quick finds, one line of what it searches, and the Library\'s shelves', async () => {
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 60366, available: true });
     renderRoute('/find');
     const quick = await screen.findByRole('navigation', { name: 'Quick finds' });
     expect(within(quick).getAllByRole('link').map((a) => a.textContent)).toEqual(QUICK_FINDS);
     expect(within(quick).getByRole('link', { name: 'Power cut' })).toHaveAttribute('href', '/search?q=Power%20cut');
     expect(screen.getByText(/A place name or a postcode opens the map/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Or browse the Library.' })).toHaveAttribute('href', '/library');
+    // the Library's four shelves, in the room under the field
+    const shelves = screen.getByRole('navigation', { name: 'Shelves' });
+    expect(within(shelves).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/library/medical', '/library/guides', '/library/books', '/library/sources']);
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
   });
 
