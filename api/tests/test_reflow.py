@@ -236,6 +236,18 @@ def test_write_epub_is_a_valid_package_the_indexer_reads(tmp_path):
     assert pages and "forked stake can be placed" in " ".join(pages)
 
 
+def test_control_characters_never_reach_the_xhtml(tmp_path):
+    import xml.etree.ElementTree as ET
+    text = BOOK.replace("forked stake", "forked\x08 stake").replace("THE TENT", "THE\x0c TENT")
+    out = tmp_path / "ctl.epub"
+    convert(Path("x.pdf"), out, "Title\x07 with a bell", text=lambda p: text)
+    with zipfile.ZipFile(out) as zf:
+        for name in zf.namelist():
+            if name.endswith((".xhtml", ".opf")):
+                ET.fromstring(zf.read(name))      # parses, or the reader would show an error page
+        assert b"\x08" not in zf.read("OEBPS/ch001.xhtml") and b"forked stake" in zf.read("OEBPS/ch001.xhtml")
+
+
 def test_convert_writes_a_report_or_refuses_damaged_text(tmp_path):
     epub = tmp_path / "out.epub"
     report = convert(Path("x.pdf"), epub, "Camping", text=lambda p: BOOK)

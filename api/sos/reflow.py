@@ -28,8 +28,14 @@ def run_pdftotext(pdf: Path) -> str:
     return subprocess.run(["pdftotext", "-enc", "UTF-8", str(pdf), "-"], capture_output=True, text=True, check=True).stdout
 
 
+# XML allows tab, newline and carriage return and nothing else below a space; OCR text carries backspaces
+# and the odd C0 control (the NRR 2025 had a \x08 that broke a chapter in the reader).
+_XML_INVALID = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ufffe\uffff]")
+
+
 def split_pages(text: str) -> list[str]:
-    pages = text.split("\f")
+    # split on the form feed first: it is the page break, and it is one of the characters stripped after
+    pages = [_XML_INVALID.sub("", page) for page in text.split("\f")]
     if pages and not pages[-1].strip():
         pages.pop()
     return pages
@@ -379,6 +385,10 @@ def chapters(blocks: list[Block]) -> list[tuple[str, list[Block]]]:
     return merged
 
 
+def _xml_text(s: str) -> str:
+    return escape(_XML_INVALID.sub("", s))
+
+
 def _chapter_xhtml(title: str, blks: list[Block]) -> str:
     body: list[str] = []
     in_list = False
@@ -387,19 +397,19 @@ def _chapter_xhtml(title: str, blks: list[Block]) -> str:
             if not in_list:
                 body.append("<ul>")
                 in_list = True
-            body.append(f"<li>{escape(b.text)}</li>")
+            body.append(f"<li>{_xml_text(b.text)}</li>")
             continue
         if in_list:
             body.append("</ul>")
             in_list = False
         if b.kind == "caption":
-            body.append(f'<p class="caption">{escape(b.text)}</p>')
+            body.append(f'<p class="caption">{_xml_text(b.text)}</p>')
             continue
-        body.append(f"<{b.kind}>{escape(b.text)}</{b.kind}>")
+        body.append(f"<{b.kind}>{_xml_text(b.text)}</{b.kind}>")
     if in_list:
         body.append("</ul>")
     return ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
-            f'<head><title>{escape(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head>'
+            f'<head><title>{_xml_text(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head>'
             f"<body><section epub:type=\"chapter\">{''.join(body)}</section></body></html>")
 
 
@@ -416,16 +426,16 @@ def write_epub(path: Path, title: str, blocks: list[Block], author: str | None =
         name = f"ch{n:03d}.xhtml"
         manifest.append(f'<item id="ch{n}" href="{name}" media-type="application/xhtml+xml"/>')
         spine.append(f'<itemref idref="ch{n}"/>')
-        toc.append(f'<li><a href="{name}">{escape(chapter_title)}</a></li>')
+        toc.append(f'<li><a href="{name}">{_xml_text(chapter_title)}</a></li>')
         files.append((f"OEBPS/{name}", _chapter_xhtml(chapter_title, blks)))
     opf = ('<?xml version="1.0" encoding="utf-8"?>\n<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">'
            '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'
-           f"<dc:identifier id=\"uid\">{book_id}</dc:identifier><dc:title>{escape(title)}</dc:title><dc:language>{language}</dc:language>"
-           + (f"<dc:creator>{escape(author)}</dc:creator>" if author else "")
+           f"<dc:identifier id=\"uid\">{book_id}</dc:identifier><dc:title>{_xml_text(title)}</dc:title><dc:language>{language}</dc:language>"
+           + (f"<dc:creator>{_xml_text(author)}</dc:creator>" if author else "")
            + '<meta property="dcterms:modified">2026-01-01T00:00:00Z</meta></metadata>'
            f"<manifest>{''.join(manifest)}</manifest><spine>{''.join(spine)}</spine></package>")
     nav = ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
-           f"<head><title>{escape(title)}</title></head><body><nav epub:type=\"toc\"><h1>Contents</h1><ol>{''.join(toc)}</ol></nav></body></html>")
+           f"<head><title>{_xml_text(title)}</title></head><body><nav epub:type=\"toc\"><h1>Contents</h1><ol>{''.join(toc)}</ol></nav></body></html>")
     container = ('<?xml version="1.0" encoding="utf-8"?>\n<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
                  '<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
     path.parent.mkdir(parents=True, exist_ok=True)
