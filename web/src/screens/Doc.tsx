@@ -229,6 +229,11 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
     body: { background: tokens.ground, color: tokens.ink },
     a: { color: link },
     'h1, h2, h3, h4': { color: tokens.ink },
+    // Project Gutenberg puts a "(Larger)" link under every illustration, to a bigger copy of the same
+    // picture. In a paginated reader it cannot open anything, and it lands on a page of its own after
+    // the picture: a page that says "(Larger)" and nothing else.
+    'a[title="linked image"]': { display: 'none' },
+    figure: { 'break-inside': 'avoid' },
     ...(dark ? { img: { filter: 'brightness(.6)' } } : {}),
   };
 }

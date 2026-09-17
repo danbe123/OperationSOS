@@ -1,0 +1,46 @@
+/* Books: the Gutenberg shelf of the Library. Covers lead — a book is known by its cover before its
+   title — in a grid that fills the width, and the same card stands in a horizontal strip for the books
+   a household is in the middle of. A book without a cover (the box's own reflowed guides, a few
+   thousand Gutenberg scans) gets a drawn spine with its title on it, the same size, so the grid never
+   has a hole. */
+.books-search { max-width: 560px; }
+.books-search input[type="search"] { font-size: var(--t-lead); }
+
+.books-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.books-head h2 { margin: 0; }
+.books-head .btn { margin-left: auto; }
+
+:root { --book-w: 132px; }
+/* The kiosk is 480 px high: a 132 px cover with two lines under it is 260 px, most of the screen.
+   Smaller covers there keep a whole row of the strip, and a row of the grid, in view at once. */
+@media (max-height: 620px) { :root { --book-w: 104px; } .book-strip .book-card-author { display: none; } }
+
+.book-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px 12px; grid-template-columns: repeat(auto-fill, minmax(var(--book-w), 1fr)); }
+.book-strip { list-style: none; margin: 0 calc(-1 * var(--gutter)); padding: 4px var(--gutter) 8px; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.book-strip .book-card { flex: 0 0 var(--book-w); scroll-snap-align: start; }
+
+.book-card { position: relative; min-width: 0; }
+.book-card-link { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; border-radius: var(--radius); }
+.book-cover {
+  display: block; position: relative; aspect-ratio: 2 / 3; overflow: hidden;
+  border-radius: var(--radius); background: var(--raised);
+}
+.book-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.book-spine {
+  display: flex; align-items: center; justify-content: center; height: 100%; padding: 12px 10px 12px 14px;
+  text-align: center; overflow: hidden;
+  font: 600 var(--t-meta)/1.25 var(--font-heading); color: var(--ink);
+  background: color-mix(in srgb, var(--signal) 14%, var(--raised));
+  border-left: 6px solid var(--signal);
+}
+.book-spine span { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; hyphens: auto; }
+@media (max-height: 620px) { .book-spine { font-size: 14px; padding: 8px 6px 8px 10px; } }
+@media (hover: hover) { .book-card-link:hover .book-cover { outline: 2px solid var(--signal); outline-offset: -2px; } }
+.book-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: color-mix(in srgb, var(--ink) 30%, transparent); }
+.book-progress > span { display: block; height: 100%; background: var(--signal); }
+.book-card-title { font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.book-card-author, .book-card-meta { color: var(--ink-muted); font-size: var(--t-meta); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Forget sits on the cover's corner: the one control a card has besides opening. */
+.book-forget { position: absolute; top: 6px; right: 6px; min-width: 40px; min-height: 40px; padding: 0; background: color-mix(in srgb, var(--panel) 85%, transparent); }
+
+.books-count { margin: 0; }
