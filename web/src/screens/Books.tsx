@@ -172,9 +172,9 @@ export function Books() {
           {searchBox}
           <div className="books-head">
             {data && <p className="books-count muted">{count(total, 'book', 'books')}{q ? ` for “${q}”` : ''}{shelf && q ? ` on ${shelfName}` : ''}</p>}
-            <div className="chips" role="group" aria-label="Order">
-              <Link className="chip" aria-current={sort === 'popular' ? 'page' : undefined} to={withParam('sort', null)}>Most read</Link>
-              <Link className="chip" aria-current={sort === 'title' ? 'page' : undefined} to={withParam('sort', 'title')}>A to Z</Link>
+            <div className="row" role="group" aria-label="Order">
+              <Link className={sort === 'popular' ? 'btn btn-small active' : 'btn btn-small'} aria-current={sort === 'popular' ? 'page' : undefined} to={withParam('sort', null)}>Most read</Link>
+              <Link className={sort === 'title' ? 'btn btn-small active' : 'btn btn-small'} aria-current={sort === 'title' ? 'page' : undefined} to={withParam('sort', 'title')}>A to Z</Link>
             </div>
           </div>
           {status}

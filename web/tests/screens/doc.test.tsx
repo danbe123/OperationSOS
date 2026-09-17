@@ -172,6 +172,28 @@ describe('Doc', () => {
     expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
   });
 
+  it('places the book again once the frame\'s face has arrived, so the place is the one you left', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(api, 'getReading').mockResolvedValue({
+      key: 'doc:where-there-is-no-doctor', title: epubItem.title, author: null, cover_url: null, url: null,
+      cfi: 'epubcfi(/6/8!/4/2)', percent: 30, updated_at: '2026-09-17T10:00:00Z',
+    });
+    let fontsIn: () => void = () => undefined;
+    const ready = new Promise<void>((resolve) => { fontsIn = resolve; });
+    (mocks.book.renderTo as unknown as { mockImplementationOnce: (f: (host: HTMLElement) => typeof mocks.rendition) => void }).mockImplementationOnce((host) => {
+      const frame = document.createElement('iframe');
+      host.appendChild(frame);
+      Object.defineProperty(frame.contentDocument, 'fonts', { value: { ready }, configurable: true });
+      return mocks.rendition;
+    });
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledTimes(1));
+    await act(async () => { fontsIn(); await ready; });
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledTimes(2));
+    expect(mocks.rendition.display).toHaveBeenLastCalledWith('epubcfi(/6/8!/4/2)');
+  });
+
   it('starts at the beginning when the saved place no longer resolves', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     vi.spyOn(api, 'getReading').mockResolvedValue({

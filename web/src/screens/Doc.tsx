@@ -334,9 +334,21 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     const watcher = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { try { rendition.resize(host.clientWidth, host.clientHeight); } catch { /* not rendered yet */ } }) : null;
     watcher?.observe(host);
     const start = hereRef.current || memoryRef.current?.startCfi || undefined;
+    let live = true;
     // A remembered place that no longer resolves (the file was rebuilt) is not an error: open at the start.
     const opening = start ? rendition.display(start).catch(() => rendition.display()) : rendition.display();
-    opening.catch((e: unknown) => setError(errorMessage(e)));
+    opening
+      .then(async () => {
+        // The book is laid out before its face has arrived, in the fallback serif, which is wider; the
+        // place is scrolled to in that layout, and when the face lands the text reflows some six per
+        // cent shorter, so what is on the screen is that much further on than where you left — and
+        // every reopening drifted by the same share. Once the frame's fonts are in, place the book again.
+        const fonts = host.querySelector('iframe')?.contentDocument?.fonts;
+        if (!start || !fonts) return;
+        await fonts.ready;
+        if (live) await rendition.display(start).catch(() => undefined);
+      })
+      .catch((e: unknown) => setError(errorMessage(e)));
     let timer: ReturnType<typeof setTimeout> | undefined;
     let pending: Location | null = null;
     const save = () => {
@@ -359,6 +371,7 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     };
     rendition.on('relocated', onRelocated);
     return () => {
+      live = false;
       clearTimeout(timer);
       save(); // a page turned in the last two seconds before Back is still the place to come back to
       rendition.off('relocated', onRelocated);
