@@ -570,7 +570,10 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
         </div>
       )}
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
-      <div ref={hostRef} className="epub-host" />
+      {/* The column grows with the type, so a line is the same sixty-odd characters at every text size:
+          capped in the app's own units it stayed 608 px while the type went up by half, and the owner's
+          lines fell to forty characters on an iPad Pro with a third of the screen empty either side. */}
+      <div ref={hostRef} className="epub-host" style={{ maxWidth: `${(38 * size) / 100}em` }} />
     </div>
   );
 }

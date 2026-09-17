@@ -362,8 +362,11 @@ describe('Doc', () => {
     await user.click(screen.getByRole('button', { name: 'Previous' }));
     expect(mocks.rendition.next).toHaveBeenCalledTimes(1);
     expect(mocks.rendition.prev).toHaveBeenCalledTimes(1);
+    const host = document.querySelector('.epub-host') as HTMLElement;
+    expect(host.style.maxWidth).toBe('38em');
     await user.click(screen.getByRole('button', { name: /Text size/ }));
     expect(mocks.rendition.themes.fontSize).toHaveBeenLastCalledWith('125%');
+    expect(host.style.maxWidth).toBe('47.5em');   // the column grows with the type: the same characters a line
   });
 
   it('wears the app\'s chrome, not the viewer\'s: page x of n, Previous, Next, Find and the size', async () => {

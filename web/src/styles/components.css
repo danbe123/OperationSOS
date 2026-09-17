@@ -281,7 +281,8 @@ a.chip { text-decoration: none; }
 :root[data-theme="mono"] .frame-wrap iframe { background: #000; }
 .epub { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 /* A book's column, not the screen's width: 38em of the app's 16 px is 608 px, which at the reader's
-   18 px serif is some 65 characters a line. At 46em it was 84, past what an eye tracks back from. */
+   18 px serif is some 65 characters a line. At 46em it was 84, past what an eye tracks back from. The
+   reader scales this cap with its Text size (an inline style), so the measure holds at every size. */
 .epub-host { flex: 1; min-height: 0; background: var(--panel); width: 100%; max-width: 38em; margin: 0 auto; }
 :root[data-reading="on"] .epub-host { background: var(--ground); }
 /* Scrolling, epub.js loads the chapters before the place in above it and moves the scroll down by
