@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, act, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
@@ -9,9 +9,15 @@ import { READER_STYLE_ID } from '../../src/theme/readerTheme';
 import { pdfItem, epubItem, extItem, wikiItem } from '../fixtures/api';
 
 const mocks = vi.hoisted(() => {
-  const rendition = { display: vi.fn(async () => undefined), next: vi.fn(), prev: vi.fn(), themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() } };
-  const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn() };
-  return { rendition, book, ePub: vi.fn(() => book) };
+  const handlers: Record<string, (loc: unknown) => void> = {};
+  const rendition = {
+    display: vi.fn(async () => undefined), next: vi.fn(), prev: vi.fn(),
+    on: vi.fn((event: string, cb: (loc: unknown) => void) => { handlers[event] = cb; }),
+    off: vi.fn((event: string) => { delete handlers[event]; }),
+    themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() },
+  };
+  const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 } };
+  return { rendition, book, handlers, ePub: vi.fn(() => book) };
 });
 vi.mock('epubjs', () => ({ default: mocks.ePub }));
 vi.mock('../../src/links', async (importOriginal) => {
@@ -28,6 +34,50 @@ describe('pdfViewerUrl', () => {
 });
 
 describe('Doc', () => {
+  beforeEach(() => {
+    // No saved place unless a test says otherwise: the reader opens at the start.
+    vi.spyOn(api, 'getReading').mockResolvedValue(null);
+  });
+
+  it('opens a Library EPUB where it was left and saves the position once per pause', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(api, 'getReading').mockResolvedValue({
+      key: 'doc:where-there-is-no-doctor', title: epubItem.title, author: null, cover_url: null, url: '/doc/where-there-is-no-doctor',
+      cfi: 'epubcfi(/6/8!/4/2)', percent: 30, updated_at: '2026-09-17T10:00:00Z',
+    });
+    const put = vi.spyOn(api, 'putReading').mockResolvedValue({ ok: true });
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/8!/4/2)');
+    // Real timers until the reader is up (findByRole polls with them); fake ones only for the debounce.
+    vi.useFakeTimers();
+    try {
+      const loc = (index: number, page: number) => ({ start: { index, cfi: `epubcfi(/6/${index})`, displayed: { page, total: 10 } }, end: {}, atStart: false, atEnd: false });
+      mocks.handlers.relocated(loc(1, 1));
+      mocks.handlers.relocated(loc(1, 6));
+      expect(put).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(put).toHaveBeenCalledTimes(1);
+      expect(put).toHaveBeenCalledWith('doc:where-there-is-no-doctor', { title: epubItem.title, author: null, cover_url: null, cfi: 'epubcfi(/6/1)', percent: 37.5 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('starts at the beginning when the saved place no longer resolves', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(api, 'getReading').mockResolvedValue({
+      key: 'doc:where-there-is-no-doctor', title: epubItem.title, author: null, cover_url: null, url: null,
+      cfi: 'epubcfi(/6/999)', percent: 30, updated_at: '2026-09-17T10:00:00Z',
+    });
+    mocks.rendition.display.mockRejectedValueOnce(new Error('No Section Found'));
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledTimes(2));
+    expect(mocks.rendition.display.mock.calls[1]).toEqual([]);   // the second display() asks for the start
+    expect(screen.queryByText(/Could not open/)).not.toBeInTheDocument();
+  });
+
   it('opens a PDF in the bundled viewer at the requested page and themes the viewer on load', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(pdfItem);
     renderRoute('/doc/nrr-2025#page=12');

@@ -1,6 +1,6 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
-  ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
+  ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, BookDetail, BookShelf, BooksResponse, ReadingEntry, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
 } from './types';
 
@@ -114,6 +114,22 @@ export type SettingsPatch = { default_theme?: Status['default_theme']; thermal_a
 export const api = {
   status: (signal?: AbortSignal) => request<Status>('GET', '/status', undefined, signal),
   library: () => request<LibraryResponse>('GET', '/library'),
+  books: (params: { q?: string; author?: string; shelf?: string; sort?: 'popular' | 'title'; limit?: number; offset?: number } = {}) =>
+    request<BooksResponse>('GET', `/books${qs(params)}`),
+  bookShelves: () => request<BookShelf[]>('GET', '/books/shelves'),
+  book: (id: string | number) => request<BookDetail>('GET', `/books/gutenberg/${enc(String(id))}`),
+  reading: () => request<ReadingEntry[]>('GET', '/reading'),
+  getReading: async (key: string): Promise<ReadingEntry | null> => {
+    try {
+      return await request<ReadingEntry>('GET', `/reading/${enc(key)}`);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) return null;
+      throw e;
+    }
+  },
+  putReading: (key: string, body: { title: string; author: string | null; cover_url: string | null; cfi: string; percent: number }) =>
+    request<{ ok: true }>('PUT', `/reading/${enc(key)}`, body),
+  deleteReading: (key: string) => request<{ ok: true }>('DELETE', `/reading/${enc(key)}`),
   libraryItem: (id: string) => request<LibraryItem>('GET', `/library/${enc(id)}`),
   search: (q: string, opts: { sources?: string[]; limit?: number; signal?: AbortSignal } = {}) =>
     request<SearchResponse>('GET', `/search${qs({ q, sources: opts.sources?.join(','), limit: opts.limit })}`, undefined, opts.signal),

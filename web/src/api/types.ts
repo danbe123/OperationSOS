@@ -30,6 +30,17 @@ export type LibraryItem = {
   description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
 };
 export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
+export type BookSummary = {
+  id: number; title: string; author: string | null; shelf: string | null; shelf_name: string | null; popularity: number;
+  cover_url: string | null; epub_url: string | null; html_url: string | null;
+};
+export type BookDetail = BookSummary & { available: boolean; position: { cfi: string; percent: number } | null };
+export type BooksResponse = { items: BookSummary[]; total: number; available: boolean };
+export type BookShelf = { code: string; name: string; count: number };
+export type ReadingEntry = {
+  key: string; title: string; author: string | null; cover_url: string | null; url: string | null;
+  cfi: string; percent: number; updated_at: string;
+};
 export type SearchResult = {
   source: string; badge: string; title: string; snippet: string; url: string; score: number;
   kind: 'article' | 'playbook' | 'module' | 'card' | 'page' | 'doc' | 'place' | 'item' | 'book';
