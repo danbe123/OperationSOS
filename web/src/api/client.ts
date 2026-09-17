@@ -206,6 +206,7 @@ export const api = {
   settings: (patch: SettingsPatch) => request<Status>('POST', '/system/settings', patch),
   rescan: () => request<{ items: number; available: number }>('POST', '/system/rescan', {}),
   update: (tiers: ('core' | 'extended')[]) => request<{ started: true }>('POST', '/system/update', { tiers }),
+  fetchItems: (ids: string[]) => request<{ started: true }>('POST', '/system/update', { only: ids }),
   updateProgress: () => request<UpdateProgress>('GET', '/system/update/progress'),
   pin: (pin: string) => request<{ token: string; expires_in: number }>('POST', '/system/pin', { pin }),
   changePin: (pin: string) => request<{ ok: true }>('POST', '/system/pin/change', { pin }),

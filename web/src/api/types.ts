@@ -28,6 +28,12 @@ export type LibraryItem = {
    * box — never a link to a file that might not be there. */
   pdf_fallback_url?: string | null;
   description: string | null; drive_label: string;   // "Core" | "External drive" | "On external drive (not connected)"
+  /** Where the item comes from, and how an absent one gets here: the box can `download` it, it lives on
+   * the external `drive`, it is `build`t on a PC with `sos <build_tool>` and copied over, or it is the
+   * owner's `own` files. Null when it is here. */
+  source_type?: 'kiwix' | 'url' | 'build' | null;
+  build_tool?: string | null;
+  fetch?: 'download' | 'drive' | 'build' | 'own' | null;
 };
 export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
 export type BookSummary = {
@@ -94,7 +100,7 @@ export type AiEvent =
   | { event: 'done'; data: { answer: string; grounded: boolean; citations: { n: number; title: string; url: string; source: string }[] } }
   | { event: 'error'; data: { code: 'busy' | 'timeout' | 'unavailable' | 'internal'; message: string; retry_after?: number } };
 export type AiAskRequest = { question: string; history: { role: 'user' | 'assistant'; content: string }[] };
-export type UpdateProgress = { running: boolean; lines: string[]; done: boolean; ok: boolean | null };
+export type UpdateProgress = { running: boolean; lines: string[]; done: boolean; ok: boolean | null; only?: string[] };
 
 /* The situation engine (spec 2026-09-06). The View is one snapshot of the household's situation. */
 export const CONDITION_IDS = ['power', 'water', 'mobile', 'landline', 'internet', 'gas', 'heating', 'roads', 'shops', 'sewage'] as const;

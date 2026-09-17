@@ -1,9 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router';
 import { api } from '../api/client';
 import type { LibraryItem } from '../api/types';
 import { useQuery } from '../api/useQuery';
 import { LibraryItemCard } from '../components/LibraryItemCard';
+import { notify } from '../components/Notice';
+import { usePinGate } from '../components/PinModal';
+import { errorMessage } from '../api/useQuery';
 import { Tile } from '../components/Tile';
 import { Screen, Body } from '../shell/Screen';
 
@@ -55,9 +58,39 @@ export function Sources() {
 /** One kind of source: its cards, and a scroll to the one named in the hash. */
 export function SourceCategory() {
   const { category = '' } = useParams();
-  const { data, error, loading } = useQuery(() => api.library(), []);
+  const { data, error, loading, refetch } = useQuery(() => api.library(), []);
   const location = useLocation();
   const group = data?.categories.find((c) => c.id === category);
+  const { run, dialog } = usePinGate();
+  // The ids a fetch is running for: their cards say so until the box reports the update finished.
+  const [fetching, setFetching] = useState<string[]>([]);
+  useEffect(() => {
+    if (fetching.length === 0) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const p = await api.updateProgress();
+        if (cancelled) return;
+        if (p.done || !p.running) {
+          setFetching([]);
+          notify(p.ok ? 'Fetched. The library has been rescanned.' : `The fetch did not finish: ${p.lines.at(-1) ?? 'see the System screen'}`);
+          void refetch();
+        }
+      } catch {
+        // a missed poll changes nothing; the next one asks again
+      }
+    };
+    const id = window.setInterval(() => void poll(), 3000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [fetching, refetch]);
+  const fetchItem = async (id: string) => {
+    try {
+      const r = await run(() => api.fetchItems([id]));
+      if (r) setFetching((f) => [...f, id]);
+    } catch (e) {
+      notify(`Could not start the fetch: ${errorMessage(e)}`);
+    }
+  };
 
   useEffect(() => {
     if (!group || !location.hash) return;
@@ -73,11 +106,12 @@ export function SourceCategory() {
         {group && (
           <>
             <p className="muted">{categoryLine(group.items).split(':')[0]}.</p>
-            <ul className="list items" aria-label={group.title}>
-              {group.items.map((item) => <LibraryItemCard key={item.id} item={item} />)}
+            <ul className="item-grid" aria-label={group.title}>
+              {group.items.map((item) => <LibraryItemCard key={item.id} item={item} onFetch={fetchItem} fetching={fetching.includes(item.id)} />)}
             </ul>
           </>
         )}
+        {dialog}
       </Body>
     </Screen>
   );

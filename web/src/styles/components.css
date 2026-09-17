@@ -293,3 +293,25 @@ a.chip { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
+
+/* --- a source's card ------------------------------------------------------------------------- */
+
+/* The cards of a kind of source, two across where there is room: what it is, one line of what it
+   holds, how big and how old, and one action. An absent one says what brings it. */
+.item-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.item-card {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+  padding: 12px 14px; border-radius: var(--radius); background: var(--panel);
+}
+.item-card.unavailable { background: color-mix(in srgb, var(--panel) 55%, var(--ground)); }
+.item-card.unavailable .item-card-title, .item-card.unavailable .item-card-desc { color: var(--ink-muted); }
+.item-card-head { display: flex; align-items: flex-start; gap: 8px; }
+.item-card-head .icon { flex: 0 0 auto; margin-top: 2px; }
+.item-card-title { font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.item-card-desc { margin: 0; font-size: var(--t-meta); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.item-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+.item-card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--t-meta); min-width: 0; }
+.item-card-absent { margin: 0; font-size: var(--t-meta); }
+/* The list form is still used where cards sit under a heading in one column (the medical library on
+   Medical): the same card, full width. */
+.list.items { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }

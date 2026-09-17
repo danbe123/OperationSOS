@@ -370,39 +370,43 @@ class ThermalWatchdog:
             await asyncio.sleep(self.interval)
 
 
-def default_sync_command(tier: str) -> list[str]:
-    return [sys.executable, "-m", "sos.cli", "sync", "--tier", tier]
+def default_sync_command(tier: str, only: list[str] | None = None) -> list[str]:
+    cmd = [sys.executable, "-m", "sos.cli", "sync", "--tier", tier]
+    return cmd + ["--only", ",".join(only)] if only else cmd
 
 
 class UpdateRunner:
     """Runs `sos sync` per tier in a background thread and keeps the last 500 output lines."""
 
-    def __init__(self, command_factory: Callable[[str], list[str]] = default_sync_command) -> None:
+    def __init__(self, command_factory: Callable[..., list[str]] = default_sync_command) -> None:
         self.factory = command_factory
         self.lines: deque[str] = deque(maxlen=500)
         self.running = False
         self.done = False
         self.ok: bool | None = None
+        self.only: list[str] = []
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
 
-    def start(self, tiers: list[str]) -> bool:
+    def start(self, tiers: list[str], only: list[str] | None = None) -> bool:
+        """A whole tier, or with `only` just those items (the Library's "Get it")."""
         with self._lock:
             if self.running:
                 return False
             self.running, self.done, self.ok = True, False, None
+            self.only = list(only or [])
             self.lines.clear()
-            self._thread = threading.Thread(target=self._run, args=(list(tiers),), daemon=True)
+            self._thread = threading.Thread(target=self._run, args=(list(tiers), self.only), daemon=True)
             self._thread.start()
             return True
 
-    def _run(self, tiers: list[str]) -> None:
+    def _run(self, tiers: list[str], only: list[str]) -> None:
         ok = True
         try:
             for tier in tiers:
-                self.lines.append(f"== sync {tier}")
+                self.lines.append(f"== sync {tier}" + (f" ({', '.join(only)})" if only else ""))
                 try:
-                    with subprocess.Popen(self.factory(tier), stdout=subprocess.PIPE,
+                    with subprocess.Popen(self.factory(tier, only) if only else self.factory(tier), stdout=subprocess.PIPE,
                                           stderr=subprocess.STDOUT, text=True) as proc:
                         for line in proc.stdout:
                             self.lines.append(line.rstrip("\n"))
@@ -421,7 +425,7 @@ class UpdateRunner:
                 self.ok, self.done, self.running = ok, True, False
 
     def progress(self) -> dict:
-        return {"running": self.running, "lines": list(self.lines), "done": self.done, "ok": self.ok}
+        return {"running": self.running, "lines": list(self.lines), "done": self.done, "ok": self.ok, "only": list(self.only)}
 
     def wait(self, timeout: float | None = None) -> None:
         if self._thread is not None:

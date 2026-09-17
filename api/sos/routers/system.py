@@ -40,7 +40,9 @@ class PeopleBody(BaseModel):
 
 
 class UpdateBody(BaseModel):
-    tiers: list[Literal["core", "extended"]] = Field(min_length=1)
+    """Whole tiers, or `only` these item ids (their tiers are looked up); at least one of the two."""
+    tiers: list[Literal["core", "extended"]] = Field(default_factory=list)
+    only: list[str] = Field(default_factory=list)
 
 
 class PinBody(BaseModel):
@@ -102,12 +104,24 @@ def rescan(request: Request, conn=Depends(get_db)):
 
 
 @router.post("/system/update", dependencies=[Depends(require_pin)])
-def update(body: UpdateBody, request: Request):
+def update(body: UpdateBody, request: Request, conn=Depends(get_db)):
     settings = request.app.state.settings
-    tiers = [t for t in dict.fromkeys(body.tiers) if t == "core" or library.ext_mounted(settings)]
+    only = list(dict.fromkeys(body.only))
+    if only:
+        marks = ",".join("?" for _ in only)
+        rows = {r["id"]: r["tier"] for r in conn.execute(f"SELECT id, tier FROM library_items WHERE id IN ({marks})", only)}
+        missing = [i for i in only if i not in rows]
+        if missing:
+            raise HTTPException(status_code=404, detail=f"Not in the library: {', '.join(missing)}")
+        wanted = list(dict.fromkeys(rows[i] for i in only))
+    elif body.tiers:
+        wanted = list(dict.fromkeys(body.tiers))
+    else:
+        raise HTTPException(status_code=422, detail="Say which tiers or which items to fetch")
+    tiers = [t for t in wanted if t == "core" or library.ext_mounted(settings)]
     if not tiers:
         raise HTTPException(status_code=400, detail="External drive is not connected")
-    if not request.app.state.updater.start(tiers):
+    if not request.app.state.updater.start(tiers, only or None):
         raise HTTPException(status_code=409, detail="Update already running")
     return {"started": True}
 

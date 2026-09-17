@@ -87,6 +87,28 @@ def test_reader_urls(conn, env):
     assert library.reader_url(row) == "/read/wikipedia_en_100_mini_2026-01/A/Main_Page"
 
 
+def test_fetch_state_says_how_an_absent_item_is_got(conn, env):
+    rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
+    assert rows["wikipedia_en_100_mini_2026-01"]["source_type"] in ("kiwix", "url")
+    library.refresh_items(conn, env)
+    rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
+    assert library.fetch_state(rows["wikipedia_en_100_mini_2026-01"], ext_ok=False) == "download"   # core kiwix, not fetched
+    ext = next(r for r in rows.values() if r["tier"] == "extended" and r["kind"] == "zim")
+    assert library.fetch_state(ext, ext_ok=False) == "drive"
+    assert library.fetch_state(ext, ext_ok=True) == "download"
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, source_type, source_tool) VALUES "
+                 "('nhs_uk', 'NHS', 'zim', 'core', 'medical', 'zim/nhs_uk.zim', 5, 'build', 'build-nhs')")
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, source_type) VALUES "
+                 "('owner-books', 'Own', 'dir', 'extended', 'books', 'books', 5, 'build')")
+    rows = {r["id"]: r for r in conn.execute("SELECT * FROM library_items")}
+    assert library.fetch_state(rows["nhs_uk"], ext_ok=True) == "build"
+    assert library.item_dict(rows["nhs_uk"], ext_ok=True)["build_tool"] == "build-nhs"
+    assert library.fetch_state(rows["owner-books"], ext_ok=True) == "own"
+    conn.execute("UPDATE library_items SET available=1 WHERE id='wikipedia_en_100_mini_2026-01'")
+    row = conn.execute("SELECT * FROM library_items WHERE id='wikipedia_en_100_mini_2026-01'").fetchone()
+    assert library.fetch_state(row, ext_ok=False) is None
+
+
 def test_file_url_follows_the_kind_not_a_half_converted_dest(conn, env):
     conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, pdf_dest, priority, available) VALUES "
                  "('half', 'Half converted', 'pdf', 'core', 'uk-official', 'docs/half.epub', 'docs/half.pdf', 5, 1)")
@@ -128,7 +150,8 @@ def test_library_response_groups_by_category_in_order(conn, env):
     ref = next(c for c in resp["categories"] if c["id"] == "reference")
     item = ref["items"][0]
     assert set(item) == {"id", "title", "kind", "tier", "category", "scenarios", "size_bytes", "as_at", "licence",
-                         "available", "url", "file_url", "pdf_fallback_url", "description", "drive_label"}
+                         "available", "url", "file_url", "pdf_fallback_url", "description", "drive_label",
+                         "source_type", "build_tool", "fetch"}
     assert item["available"] is True and item["url"].startswith("/read/")
 
 

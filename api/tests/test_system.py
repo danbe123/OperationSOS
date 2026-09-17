@@ -156,7 +156,7 @@ def test_thermal_watchdog(conn, env, recorder, monkeypatch):
 
 def test_update_runner_streams_lines():
     runner = system.UpdateRunner(lambda tier: [sys.executable, "-c", f"print('syncing {tier}'); print('done')"])
-    assert runner.progress() == {"running": False, "lines": [], "done": False, "ok": None}
+    assert runner.progress() == {"running": False, "lines": [], "done": False, "ok": None, "only": []}
     assert runner.start(["core", "extended"]) is True
     runner.wait(10)
     p = runner.progress()

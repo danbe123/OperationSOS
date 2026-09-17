@@ -297,7 +297,7 @@ def test_system_settings_hotspot_eth_and_update(client, app):
     r = client.post("/api/system/eth-mode", json={"mode": "direct"})
     assert r.json()["eth_mode"] == "direct"
     assert client.post("/api/system/eth-mode", json={"mode": "bridge"}).status_code == 422
-    app.state.updater = system.UpdateRunner(lambda tier: [sys.executable, "-c", f"print('sync {tier} ok')"])
+    app.state.updater = system.UpdateRunner(lambda tier, only=None: [sys.executable, "-c", f"print('sync {tier} ok')"])
     assert client.post("/api/system/update", json={"tiers": ["core", "extended"]}).json() == {"started": True}
     app.state.updater.wait(10)
     p = client.get("/api/system/update/progress").json()
@@ -307,6 +307,15 @@ def test_system_settings_hotspot_eth_and_update(client, app):
     assert client.post("/api/system/update", json={"tiers": ["core"]}).status_code == 409
     app.state.updater.wait(5)
     assert client.post("/api/system/update", json={"tiers": ["nope"]}).status_code == 422
+    assert client.post("/api/system/update", json={}).status_code == 422
+    # one item by name: its tier is looked up, and `--only` reaches sos sync
+    app.state.updater = system.UpdateRunner(lambda tier, only=None: [sys.executable, "-c", f"print('sync {tier} only {','.join(only or [])}')"])
+    assert client.post("/api/system/update", json={"only": ["wikipedia_en_100_mini_2026-01"]}).json() == {"started": True}
+    app.state.updater.wait(10)
+    p = client.get("/api/system/update/progress").json()
+    assert p["only"] == ["wikipedia_en_100_mini_2026-01"]
+    assert p["lines"] == ["== sync core (wikipedia_en_100_mini_2026-01)", "sync core only wikipedia_en_100_mini_2026-01"]
+    assert client.post("/api/system/update", json={"only": ["nope"]}).status_code == 404
 
 
 def test_validation_errors_are_strings(client):

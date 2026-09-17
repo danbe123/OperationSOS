@@ -31,16 +31,17 @@ def upsert_items(conn: sqlite3.Connection, items: list[Item]) -> None:
     for it in items:
         conn.execute(
             """INSERT INTO library_items(id, title, kind, tier, category, scenarios_json, dest, pdf_dest, size_bytes, as_at, licence,
-                 priority, reader_home, description, search_weight, suggest, overlay_json)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 priority, reader_home, description, search_weight, suggest, overlay_json, source_type, source_tool)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(id) DO UPDATE SET title=excluded.title, kind=excluded.kind, tier=excluded.tier,
                  category=excluded.category, scenarios_json=excluded.scenarios_json, dest=excluded.dest, pdf_dest=excluded.pdf_dest,
                  size_bytes=excluded.size_bytes, as_at=excluded.as_at, licence=excluded.licence, priority=excluded.priority,
                  reader_home=excluded.reader_home, description=excluded.description, search_weight=excluded.search_weight,
-                 suggest=excluded.suggest, overlay_json=excluded.overlay_json""",
+                 suggest=excluded.suggest, overlay_json=excluded.overlay_json, source_type=excluded.source_type,
+                 source_tool=excluded.source_tool""",
             (it.id, it.title, it.kind, it.tier, it.category, json.dumps(it.scenarios), it.dest, it.pdf_dest, it.size_bytes, it.as_at,
              it.licence, it.priority, it.reader_home, it.description, it.search_weight, int(it.suggest),
-             json.dumps(it.overlay.model_dump()) if it.overlay else None),
+             json.dumps(it.overlay.model_dump()) if it.overlay else None, it.source.type, it.source.tool),
         )
     if ids:
         placeholders = ",".join("?" for _ in ids)
@@ -190,8 +191,28 @@ def pdf_fallback_url(row: sqlite3.Row) -> str | None:
     return f"/docs/{'extended' if row['tier'] == 'extended' else 'core'}/{name}" if name else None
 
 
+def fetch_state(row: sqlite3.Row, ext_ok: bool) -> str | None:
+    """How an item that is not on the box gets here, for the card to say and offer:
+    `download` (the box can fetch it itself), `drive` (it lives on the external drive, not plugged in),
+    `build` (made on a PC with a `sos build-…` tool and copied over), `own` (the owner's own files).
+    None when it is here already."""
+    if row["available"]:
+        return None
+    if row["kind"] == "dir":
+        return "own"
+    if row["source_type"] == "build":
+        return "build"
+    if row["tier"] == "extended" and not ext_ok:
+        return "drive"
+    if row["source_type"] in ("kiwix", "url"):
+        return "download"
+    return None
+
+
 def item_dict(row: sqlite3.Row, ext_ok: bool) -> dict:
     return {
+        "source_type": row["source_type"], "build_tool": row["source_tool"] if row["source_type"] == "build" else None,
+        "fetch": fetch_state(row, ext_ok),
         "id": row["id"], "title": row["title"], "kind": row["kind"], "tier": row["tier"], "category": row["category"],
         "scenarios": json.loads(row["scenarios_json"] or "[]"), "size_bytes": row["size_bytes"] or 0,
         "as_at": row["resolved_as_at"] or row["as_at"], "licence": row["licence"], "available": bool(row["available"]),
