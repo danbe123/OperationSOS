@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { chunkText, CHUNK_CHARS, visibleText } from '../../src/tools/speech';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { chunkText, CHUNK_CHARS, resetSpeech, speakFrom, visibleText } from '../../src/tools/speech';
+import { api } from '../../src/api/client';
 
 describe('chunkText', () => {
   it('keeps short text in one chunk and collapses whitespace', () => {
@@ -44,5 +45,62 @@ describe('visibleText', () => {
       <p>Send someone (<a href="/p/no-phones">getting help without phones</a>). Read <a href="/m/water">the water guide</a> first.</p>
       <div class="card-source"><p><a href="/doc/austere">Survival and Austere Medicine</a></p></div>`;
     expect(visibleText(el)).toBe('Keep going for thirty minutes. Send someone. Read the water guide first.');
+  });
+});
+
+describe('speakFrom', () => {
+  afterEach(() => { resetSpeech(); vi.restoreAllMocks(); });
+
+  it('asks the box for the next piece while this one plays, and turns to each piece as it is read', async () => {
+    const plays: string[] = [];
+    let endPlay: () => void = () => undefined;
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function play(this: HTMLMediaElement) {
+      plays.push(this.src);
+      new Promise<void>((r) => { endPlay = r; }).then(() => this.dispatchEvent(new Event('ended')));
+      return Promise.resolve();
+    });
+    let n = 0;
+    globalThis.URL.createObjectURL = () => `blob:${n++}`;
+    globalThis.URL.revokeObjectURL = () => {};
+    const speak = vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    const turned: string[] = [];
+    async function* pieces() {
+      yield { text: 'One.', before: () => turned.push('one') };
+      yield { text: 'Two.', before: () => turned.push('two') };
+      yield { text: 'Three.', before: () => turned.push('three') };
+    }
+    const done = speakFrom('book', pieces());
+    // the first piece is playing; the second has already been asked for
+    await vi.waitFor(() => expect(plays).toEqual(['blob:0']));
+    expect(speak.mock.calls.map((c) => c[0])).toEqual(['One.', 'Two.']);
+    expect(turned).toEqual(['one']);
+    endPlay();
+    await vi.waitFor(() => expect(plays).toEqual(['blob:0', 'blob:1']));
+    expect(speak.mock.calls.map((c) => c[0])).toEqual(['One.', 'Two.', 'Three.']);
+    expect(turned).toEqual(['one', 'two']);
+    endPlay();
+    await vi.waitFor(() => expect(plays).toHaveLength(3));
+    endPlay();
+    await done;
+    expect(turned).toEqual(['one', 'two', 'three']);
+  });
+
+  it('cuts a piece longer than the voice can take, in order, before the next piece', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function play(this: HTMLMediaElement) {
+      setTimeout(() => this.dispatchEvent(new Event('ended')), 0);
+      return Promise.resolve();
+    });
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    const speak = vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    const long = `${'word '.repeat(150).trim()}. ${'more '.repeat(150).trim()}.`;
+    async function* pieces() { yield { text: long }; yield { text: 'After.' }; }
+    await speakFrom('book', pieces());
+    const said = speak.mock.calls.map((c) => c[0]);
+    expect(said.length).toBe(5);   // two sentences of 749 characters, each cut in two, then the piece after
+    expect(said[0].startsWith('word')).toBe(true);
+    expect(said[1].startsWith('word')).toBe(true);
+    expect(said[2].startsWith('more')).toBe(true);
+    expect(said[4]).toBe('After.');
   });
 });

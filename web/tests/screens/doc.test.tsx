@@ -230,6 +230,35 @@ describe('Doc', () => {
     delete (mocks.rendition as unknown as { manager?: unknown }).manager;
   });
 
+  it('reads the book aloud from where the screen is, turning the page with the voice', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function play(this: HTMLMediaElement) {
+      setTimeout(() => this.dispatchEvent(new Event('ended')), 0);
+      return Promise.resolve();
+    });
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    const speak = vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    const doc = document.implementation.createHTMLDocument('ch');
+    doc.body.innerHTML = '<h2>Fever</h2><p>A fever is not an illness in itself.</p><p>Drink plenty of water.</p>';
+    const chapter = { index: 2, load: async () => doc.documentElement, unload: vi.fn(), cfiFromElement: (el: Element) => `epubcfi(/6/6!/4/${el.tagName === 'H2' ? 2 : 4})` };
+    (mocks.book as unknown as { spine: unknown; load: unknown }).spine = { length: 4, get: (i: number) => (i === 2 ? chapter : null) };
+    (mocks.book as unknown as { load: unknown }).load = vi.fn();
+    (mocks.rendition as unknown as { location: unknown }).location = { start: { index: 2, cfi: 'epubcfi(/6/6!/4/2)' } };
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    mocks.rendition.display.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Read aloud' }));
+    await waitFor(() => expect(speak).toHaveBeenCalled());
+    expect(speak.mock.calls[0][0]).toBe('Fever A fever is not an illness in itself. Drink plenty of water.');
+    // the page went to the piece as it was read (scrolling, with no rendered view to measure, by CFI)
+    await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/6!/4/2)'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Read aloud' })).toBeInTheDocument());   // the book ended
+    (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
+    delete (mocks.rendition as unknown as { location?: unknown }).location;
+  });
+
   it('starts at the beginning when the saved place no longer resolves', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     vi.spyOn(api, 'getReading').mockResolvedValue({

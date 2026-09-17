@@ -111,20 +111,55 @@ async function play(blob: Blob): Promise<void> {
   }
 }
 
+/** One piece of a reading: its words, and what to do as the voice reaches it (turn the page to it). */
+export type Piece = { text: string; before?: () => void };
+
+async function* eachOf(pieces: Piece[]): AsyncGenerator<Piece> {
+  for (const p of pieces) yield p;
+}
+
 /** Read `text` aloud under the id of the button that asked, chunk by chunk. Stops whatever was reading. */
 export async function speak(id: string, text: string): Promise<void> {
-  stopSpeaking();
   const chunks = chunkText(text);
   if (chunks.length === 0) return;
+  await speakFrom(id, eachOf(chunks.map((text) => ({ text }))));
+}
+
+/** Read a sequence of pieces — a page's chunks, or a book from where you are — under the id of the button
+ * that asked. The box is asked for the next piece while this one plays, so the voice does not pause
+ * for the synthesiser between paragraphs; a piece longer than the voice's chunk is cut like any text. */
+export async function speakFrom(id: string, source: AsyncIterable<Piece>): Promise<void> {
+  stopSpeaking();
   speaking = id;
   stopped = false;
   emit();
+  const iterator = source[Symbol.asyncIterator]();
+  const nextFetch = async (): Promise<{ piece: Piece; blob: Blob } | null> => {
+    const { value, done } = await iterator.next();
+    if (done || !value) return null;
+    const [first, ...rest] = chunkText(value.text);
+    if (!first) return nextFetch();
+    const blob = await api.speak(first);
+    // a piece the voice has to cut: the remainder is queued back in front of the source, in order
+    if (rest.length) pending.unshift(...rest.map((text) => ({ text })));
+    return { piece: value, blob };
+  };
+  const pending: Piece[] = [];
+  const pull = async (): Promise<{ piece: Piece; blob: Blob } | null> => {
+    const queued = pending.shift();
+    if (queued) return { piece: queued, blob: await api.speak(queued.text) };
+    return nextFetch();
+  };
   try {
-    for (const chunk of chunks) {
+    let ahead = pull();
+    for (;;) {
+      const current = await ahead;
+      if (!current || stopped) break;
+      ahead = pull();   // the next piece is on its way while this one plays
+      ahead.catch(() => undefined);
+      current.piece.before?.();
+      await play(current.blob);
       if (stopped) break;
-      const blob = await api.speak(chunk);
-      if (stopped) break;
-      await play(blob);
     }
   } catch (e) {
     // 503: no voice installed. 404: a box built before it had one. Either way, stop offering it.
@@ -136,6 +171,7 @@ export async function speak(id: string, text: string): Promise<void> {
       notify(`Could not read that aloud: ${errorMessage(e)}`);
     }
   } finally {
+    void iterator.return?.();
     speaking = null;
     stopped = false;
     emit();

@@ -13,6 +13,8 @@ import { injectStyle, pdfViewerCss, READER_STYLE_ID, viewerTokens } from '../the
 import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
 import { fontFaceRules, fontsIn } from '../reader/fonts';
+import { bookPieces } from '../reader/aloud';
+import { speakFrom, stopSpeaking, useSpeech } from '../tools/speech';
 import { EPUB_SIZES, FLOW_KEY, IMMERSED_KEY, SIZE_KEY, storedFlow, storedImmersed, storedSize, tapZone, write, type Flow } from '../reader/prefs';
 
 export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): string {
@@ -254,6 +256,8 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
   };
 }
 
+const READING_ID = 'book';
+
 /* The rendered views epub.js keeps while a book scrolls, as much of them as placing a CFI needs. */
 type ScrolledView = { section?: { index?: number }; contents?: unknown; element: HTMLElement; locationOf: (cfi: string) => { top: number; left: number } };
 
@@ -288,6 +292,8 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   const [flow, setFlow] = useState<Flow>(storedFlow);
   const [immersed, setImmersed] = useState(storedImmersed);
   const [error, setError] = useState<string | null>(null);
+  const bookRef = useRef<ReturnType<typeof ePub> | null>(null);
+  const { speaking, available: voice } = useSpeech();
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const memoryRef = useRef(memory);
@@ -324,6 +330,7 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     if (!hostRef.current) return;
     const host = hostRef.current;
     const book = ePub(url);
+    bookRef.current = book;
     // One page at a time: the two-page spread epub.js draws past 800 px read as the columns the reflow
     // had just undone, and the measure is capped by the host so a laptop is not a 1300 px line. Scrolled,
     // the chapters run on continuously, as a web page does.
@@ -435,10 +442,45 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       host.removeEventListener('wheel', onHand);
       host.removeEventListener('touchstart', onHand);
       watcher?.disconnect();
+      if (speakingRef.current === READING_ID) stopSpeaking();   // the voice does not outlive the book on the screen
       book.destroy();
+      bookRef.current = null;
       renditionRef.current = null;
     };
   }, [url, flow]);
+  const speakingRef = useRef(speaking);
+  speakingRef.current = speaking;
+
+  /** Read the book aloud from where the screen is, and keep the screen with the voice. */
+  const readAloud = () => {
+    const rendition = renditionRef.current;
+    const book = bookRef.current;
+    const host = hostRef.current;
+    if (!rendition || !book || !host) return;
+    const here = (rendition as unknown as { location?: { start?: { index?: number; cfi?: string } } }).location?.start;
+    const start = { index: here?.index ?? 0, cfi: here?.cfi ?? hereRef.current };
+    const locate = (doc: Document, cfi: string): Node | null => {
+      try {
+        return new EpubCFI(cfi).toRange(doc)?.startContainer ?? null;
+      } catch {
+        return null;
+      }
+    };
+    const follow = (cfi: string) => {
+      if (flowRef.current === 'scrolled') {
+        const container = host.querySelector<HTMLElement>('.epub-container');
+        const at = scrolledOffsetOf(rendition, cfi);
+        // the page keeps up with the voice: each piece's first paragraph comes to the top as it is read
+        if (container && at !== null) { container.scrollTo({ top: at, behavior: 'smooth' }); return; }
+      }
+      void rendition.display(cfi).catch(() => undefined);
+    };
+    const pieces = bookPieces(book.spine as unknown as Parameters<typeof bookPieces>[0], book.load.bind(book), start, locate);
+    const followed = (async function* () {
+      for await (const piece of pieces) yield { text: piece.text, before: () => follow(piece.cfi) };
+    })();
+    void speakFrom(READING_ID, followed);
+  };
 
   // One palette, rebuilt from the live tokens whenever the theme or the dim mode moves.
   useEffect(() => {
@@ -468,6 +510,9 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
                 title={flow === 'scrolled' ? 'Turn pages instead of scrolling' : 'Scroll through the book instead of turning pages'}>
           <Icon name={flow === 'scrolled' ? 'down' : 'book'} size={18} /><span>{flow === 'scrolled' ? 'Scrolling' : 'Pages'}</span>
         </button>
+        {voice && (speaking === READING_ID
+          ? <button type="button" className="btn btn-small btn-danger" onClick={() => stopSpeaking()}><Icon name="close" size={18} /><span>Stop reading</span></button>
+          : <button type="button" className="btn btn-small" disabled={speaking !== null} onClick={readAloud} title="Read the book aloud from here"><Icon name="speaker" size={18} /><span>Read aloud</span></button>)}
         <button type="button" className="btn btn-small" onClick={() => { setImmersed(true); notify('Tap the middle of the page to bring the controls back.'); }}
                 title="Put the controls away. Tap the middle of the page to bring them back.">
           <Icon name="expand" size={18} /><span>Just the book</span>
