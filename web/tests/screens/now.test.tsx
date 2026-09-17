@@ -19,9 +19,10 @@ describe('Now', () => {
       'Mains power: on', 'Water supply: on', 'Mobile network: on', 'Landline and 999: on', 'Internet: on',
       'Gas: on', 'Heating: on', 'Roads and transport: open', 'Shops and cash: open', 'Sewage and drains: on',
     ]);
-    expect(buttons.map((b) => b.getAttribute('data-name'))).toContain('Roads open');
     expect(buttons[7]).toHaveAttribute('title', 'Roads and transport is open. Tap if it has gone closed.');
-    expect(buttons.every((b) => b.querySelector('svg') && b.textContent === '✓')).toBe(true);
+    // An icon, the name in small type, and the mark for the state.
+    expect(buttons.map((b) => b.textContent)).toEqual(['Power✓', 'Water✓', 'Mobile✓', 'Landline✓', 'Internet✓', 'Gas✓', 'Heating✓', 'Roads✓', 'Shops✓', 'Sewage✓']);
+    expect(buttons.every((b) => b.querySelector('svg'))).toBe(true);
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
     // The tiles come first: the row sits under them.
     const tiles = await screen.findByRole('navigation', { name: 'Scenarios' });
@@ -122,8 +123,7 @@ describe('Now', () => {
     const row = screen.getByRole('navigation', { name: 'Services' });
     const power = within(row).getByRole('button', { name: /Mains power: off/ });
     expect(power).toHaveAttribute('aria-pressed', 'true');
-    expect(power).toHaveTextContent('✕');   // icons only: the mark says off, the name on hover and in the label
-    expect(power).toHaveAttribute('data-name', 'Power off');
+    expect(power).toHaveTextContent('Power✕');   // the mark says off; the word is in the label
     // One line under the row is the whole of what the front door says about it.
     expect(screen.getByText(/2 services off\./)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'What to do now' })).toHaveAttribute('href', '/situation');

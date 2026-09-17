@@ -54,11 +54,12 @@ function Services() {
           return (
             <button
               key={id} type="button" className={`btn service-btn service-${STATE_TONE[c.state]}`}
-              aria-pressed={off} aria-label={`${info.title}: ${word}`} data-name={`${info.short} ${word}`}
+              aria-pressed={off} aria-label={`${info.title}: ${word}`}
               title={off ? `${info.title} is ${word}. Tap when it is ${back} again.` : `${info.title} is ${word}. Tap if it has gone ${id === 'roads' || id === 'shops' ? 'closed' : 'off'}.`}
               disabled={busy === id} onClick={() => void flip(id)}
             >
               <Icon name={info.icon} size={24} />
+              <span className="service-name">{info.short}</span>
               <span className="service-mark" aria-hidden="true">{STATE_SYMBOL[c.state]}</span>
             </button>
           );
