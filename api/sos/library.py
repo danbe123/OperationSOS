@@ -10,6 +10,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from sos.books import BOOK_ZIMS
 from sos.config import Settings
 from sos.manifest import Item
 
@@ -155,6 +156,8 @@ def drive_label(row: sqlite3.Row, ext_ok: bool) -> str:
 def reader_url(row: sqlite3.Row) -> str | None:
     if not row["available"]:
         return None
+    if row["kind"] == "zim" and row["id"] in BOOK_ZIMS:
+        return "/books"  # the catalogue screen, not the ZIM's own front page
     if row["kind"] == "zim":
         home = (row["reader_home"] or "").lstrip("/")
         return f"/read/{row['id']}/{home}"

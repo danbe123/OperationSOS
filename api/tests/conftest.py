@@ -23,6 +23,57 @@ def repo_root() -> Path:
     return REPO
 
 
+BOOKS_CATALOGUE = [
+    # [title, author, "hep" flags, id, shelf] -- gutenberg2zim 3.0.1's full_by_popularity.js order (most popular first)
+    ["Pride and Prejudice", "Jane Austen", "110", 1342, "PR"],
+    ["Moby-Dick; Or, The Whale", "Herman Melville", "111", 2701, "PS"],
+    ["The Prince", "Niccolo Machiavelli", "110", 1232, "J"],
+    ["Aesop's Fables / A New Translation", "Aesop", "100", 11339, "PA"],
+    ["Common Sense", "Thomas Paine", "110", 147, "E"],
+    ["A Room with a View", "E. M. Forster", "110", 2641, ""],
+]
+
+
+@pytest.fixture(scope="session")
+def books_zim(tmp_path_factory) -> Path:
+    """A ZIM in gutenberg2zim 3.0.1's layout: the catalogue as JavaScript, `<slug>.<id>.epub` entries, jpg covers.
+    Aesop has no EPUB (flags 100); Common Sense claims one but the entry is missing; The Prince has no cover."""
+    from libzim.writer import Creator, Hint, Item, StringProvider
+
+    class _Item(Item):
+        def __init__(self, path: str, content: str, mimetype: str):
+            self._path, self._content, self._mimetype = path, content, mimetype
+
+        def get_path(self):
+            return self._path
+
+        def get_title(self):
+            return self._path
+
+        def get_mimetype(self):
+            return self._mimetype
+
+        def get_contentprovider(self):
+            return StringProvider(self._content)
+
+        def get_hints(self):
+            return {Hint.FRONT_ARTICLE: False}
+
+    path = tmp_path_factory.mktemp("zim") / "gutenberg_en_all.zim"
+    with Creator(str(path)).config_indexing(False, "eng") as creator:
+        creator.set_mainpath("Home")
+        creator.add_item(_Item("Home", "<html><body>Gutenberg</body></html>", "text/html"))
+        creator.add_item(_Item("full_by_popularity.js", "var json_data = " + json.dumps(BOOKS_CATALOGUE) + ";", "text/javascript"))
+        for title, _author, flags, book_id, _shelf in BOOKS_CATALOGUE:
+            slug = title.strip().replace("/", "-")[:230]
+            creator.add_item(_Item(f"{slug}.{book_id}.html", f"<html><body>{title}</body></html>", "text/html"))
+            if flags[1] == "1" and book_id != 147:
+                creator.add_item(_Item(f"{slug}.{book_id}.epub", "PK-not-really-an-epub", "application/epub+zip"))
+            if book_id != 1232:
+                creator.add_item(_Item(f"covers/{book_id}_cover_image.jpg", "JPEG", "image/jpeg"))
+    return path
+
+
 @pytest.fixture
 def env(tmp_path, monkeypatch):
     """Settings bound to a throwaway tree. The extended root is NOT created,

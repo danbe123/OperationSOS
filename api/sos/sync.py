@@ -15,7 +15,7 @@ from typing import Callable
 
 import httpx
 
-from sos import db, docs as docs_mod, library, places as places_mod
+from sos import books as books_mod, db, docs as docs_mod, library, places as places_mod
 from sos.config import Settings
 from sos.content import KIND_BY_DIR, parse_document
 from sos.manifest import Item, load_manifests
@@ -327,9 +327,11 @@ def index(settings: Settings, out: Callable = print, runner=None) -> dict:
         n_titles = index_titles(conn)
         n_docs = docs_mod.index_docs(conn, runner)
         imported = places_mod.import_places(conn, places_mod.places_path(settings))
+        n_books = books_mod.index_books(conn)
         places_txt = "unchanged" if imported is None else f"{imported} rows"
-        out(f"index: {n_content} content rows, {n_titles} title rows, {n_docs} document pages, places {places_txt}")
+        out(f"index: {n_content} content rows, {n_titles} title rows, {n_docs} document pages, places {places_txt}, "
+            f"{n_books} books")
     finally:
         conn.close()
     notify_api(settings)
-    return {"content": n_content, "titles": n_titles, "docs": n_docs, "places": imported, **scan}
+    return {"content": n_content, "titles": n_titles, "docs": n_docs, "places": imported, "books": n_books, **scan}

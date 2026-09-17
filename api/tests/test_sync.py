@@ -295,6 +295,11 @@ def test_strip_markdown():
     assert text == "Right now Call 105 now. See bleeding. Fill bottles a b"
 
 
+def test_index_reports_books(env):
+    """index() counts the Gutenberg books when the ZIM is on the box; without it the count is 0 and nothing fails."""
+    assert sync.index(env, out=lambda *_: None)["books"] == 0
+
+
 def test_index_content_rows(env):
     conn = db.connect(env.db_path)
     db.init_schema(conn)
