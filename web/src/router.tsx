@@ -33,6 +33,8 @@ import { Shell } from './shell/Shell';
 const MapScreen = lazy(() => import('./screens/Map').then((m) => ({ default: m.MapScreen })));
 const Doc = lazy(() => import('./screens/Doc').then((m) => ({ default: m.Doc })));
 const Reader = lazy(() => import('./screens/Reader').then((m) => ({ default: m.Reader })));
+const Book = lazy(() => import('./screens/Book').then((m) => ({ default: m.Book })));
+const Books = lazy(() => import('./screens/Books').then((m) => ({ default: m.Books })));
 const Ai = lazy(() => import('./screens/Ai').then((m) => ({ default: m.Ai })));
 /* The other two that carry weight: the pins and the sun times both read grid references, and
  * `proj4` is 108 kB of the front door for two screens nobody opens in the first minute. */
@@ -120,6 +122,8 @@ export const routes: RouteObject[] = [
       { path: 'medical/dose', element: <Dose /> },
       { path: 'doc/:id', element: <Later title="Document"><Doc /></Later> },
       { path: 'read/:id/*', element: <Later title="Reading"><Reader /></Later> },
+      { path: 'books', element: <Later title="Books"><Books /></Later> },
+      { path: 'book/gutenberg/:id', element: <Later title="Book"><Book /></Later> },
       { path: 's/:slug', element: <Scenario /> },
       { path: 'm/:slug', element: <Module /> },
       { path: 'situation', element: <Situation /> },
