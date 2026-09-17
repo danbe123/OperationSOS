@@ -298,7 +298,7 @@ describe('Doc', () => {
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
     (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
     delete (mocks.rendition as unknown as { location?: unknown }).location;
-  });
+  }, 10_000);   // the place is saved two seconds after the last piece: near the default limit under a loaded run
 
   it('pauses and resumes a reading, and the Voice row picks a voice and a speed', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);

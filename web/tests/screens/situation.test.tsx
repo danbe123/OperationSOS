@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { playbook } from '../fixtures/api';
+import { playbook, powerOffView } from '../fixtures/api';
 
 describe('Situation clock', () => {
   it('starts the clock from the playbook and marks the current phase tab', async () => {
@@ -34,6 +34,7 @@ describe('Situation clock', () => {
     vi.spyOn(api, 'situation').mockResolvedValue({ slug: 'storms-flooding', title: 'Severe storms and flooding', started_at: new Date().toISOString(), elapsed_s: 10, phase: 'right-now' });
     const start = vi.spyOn(api, 'startSituation').mockResolvedValue({ slug: 'grid-collapse', title: 'National grid collapse', started_at: new Date().toISOString(), elapsed_s: 0, phase: 'right-now' });
     const end = vi.spyOn(api, 'endSituation').mockResolvedValue({ slug: null });
+    const view = vi.spyOn(api, 'situationView').mockResolvedValue(powerOffView);
     renderRoute('/s/grid-collapse');
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /Start the clock/ }));
@@ -46,5 +47,7 @@ describe('Situation clock', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(end).toHaveBeenCalled();
     expect(await screen.findByRole('button', { name: /Start the clock/ })).toBeInTheDocument();
+    // the band on every screen reads the situation again, so it does not show a situation that has ended
+    await waitFor(() => expect(view.mock.calls.length).toBeGreaterThanOrEqual(3));
   });
 });

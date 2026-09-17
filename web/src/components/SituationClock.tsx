@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useState } from 'react';
 import { api } from '../api/client';
 import { useStatus } from '../api/status';
+import { useSituation } from '../situation/SituationProvider';
 import type { Situation } from '../api/types';
 import { errorMessage } from '../api/useQuery';
 import { Icon } from '../icons';
@@ -21,6 +22,9 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
   const [confirm, setConfirm] = useState<'start' | 'end' | null>(null);
   const [open, setOpen] = useState(false);
   const { refresh } = useStatus();          // Home reads the situation from /status
+  // The band at the top of every screen reads the situation from its own provider: ended here, it
+  // stayed there until the page was reloaded ("the bar stays at the top when cancelled").
+  const { refresh: refreshView } = useSituation();
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
     const id = window.setInterval(tick, 30_000);
@@ -34,6 +38,7 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
       onChange(await api.startSituation(slug));
       setConfirm(null);
       void refresh();
+      void refreshView();
     } catch (e) {
       notify(`Could not start the clock: ${errorMessage(e)}`);
     }
@@ -44,6 +49,7 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
       setConfirm(null);
       setOpen(false);
       void refresh();
+      void refreshView();
     } catch (e) {
       notify(`Could not end the situation: ${errorMessage(e)}`);
     }

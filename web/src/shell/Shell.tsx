@@ -60,10 +60,8 @@ export function useScrollCue(main: RefObject<HTMLElement | null>): boolean {
 function MainNav({ pathname, wide }: { pathname: string; wide: boolean }) {
   return (
     <nav className="mainnav no-print" aria-label="Sections">
-      {/* The wordmark goes where "Now" already goes, at 83x34: a decorative duplicate of the tab
-          below it, and the first thing every keyboard user met. It stays on the screen and leaves
-          the tab order. */}
-      <Link className="rail-brand" to="/" tabIndex={-1} aria-hidden="true">SOS</Link>
+      {/* No wordmark: it went where Now already goes, and the owner had it removed ("remove SOS off
+          the left nav"). The five destinations start at the top of the rail. */}
       <div className="mainnav-list">
         {DESTINATIONS.map((d) => (
           <Link key={d.label} className="rail-dest" to={d.to} aria-current={d.match(pathname) ? 'page' : undefined}>

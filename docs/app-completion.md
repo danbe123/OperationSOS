@@ -176,7 +176,7 @@ The owner: "there is a lot in library that is not installed, or not available; w
 
 ## 2026-09-17: Show controls in reading mode, and Confirm
 
-The owner: "when in just the book rather than tapping can we make a nicer permanent button thats clear it will return you". With the chrome away a button now sits in the page's top corner the whole time, "Show controls", and brings it back; the tap on the middle of the page still works, and the toast on the way in points at the button rather than the tap. And: "when cancelling an event just do confirm and cancel button not confirm end" — the clock's rows read "End this situation? Confirm · Cancel" and, starting over another, "Confirm · Cancel". Web 659 passed.
+The owner: "when in just the book rather than tapping can we make a nicer permanent button thats clear it will return you". With the chrome away a button now sits in the page's top corner the whole time, "Show controls", and brings it back; the tap on the middle of the page still works, and the toast on the way in points at the button rather than the tap. And: "when cancelling an event just do confirm and cancel button not confirm end" — the clock's rows read "End this situation? Confirm · Cancel" and, starting over another, "Confirm · Cancel". And "the bar stays at the top when cancelled until page is refreshed": the clock refreshed the status the front door reads but not the provider the band on every screen reads, so an ended situation stayed in the band until a reload; it refreshes both now. "remove SOS off the left nav": the wordmark at the top of the rail is gone; the five destinations start at the top. Web 659 passed.
 
 ## 2026-09-17: the shelves under Find, and the Medical and Guides shelves redesigned
 
