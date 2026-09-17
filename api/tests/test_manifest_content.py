@@ -25,6 +25,8 @@ SCENARIOS = [
 ]
 
 CORE_REQUIRED = {
+    # books: the two collections the ereader is for (core since the 1 TB standard, 2026-09-17)
+    "gutenberg_en_all", "survivorlibrary.com_en_all",
     # education: the science library the rebuild guides lean on (moved from extended 2026-09-07 so a box
     # with no extended drive still carries chemistry, physics, biology, medicine and maths)
     "openstax-biology-2e", "openstax-concepts-of-biology", "openstax-anatomy-physiology-2e", "openstax-microbiology",
@@ -102,7 +104,7 @@ def test_core_ids_are_all_expected():
 def test_core_tier_and_categories():
     for it in items("core.json"):
         assert it["tier"] == "core", it["id"]
-        assert it["category"] in {"uk-official", "medical", "survival", "reference", "practical", "ai", "education"}, it["id"]
+        assert it["category"] in {"uk-official", "medical", "survival", "reference", "practical", "ai", "education", "books"}, it["id"]
         assert set(it["scenarios"]) <= set(SCENARIOS), it["id"]
 
 
@@ -196,7 +198,14 @@ def test_read_aloud_items():
 
 def test_core_size_near_target():
     total = sum(it["size_bytes"] for it in items("core.json"))
-    assert 150e9 < total < 230e9, total
+    assert 600e9 < total < 850e9, total
+
+
+def test_core_has_the_book_collections():
+    core = by_id("core.json")
+    for book_zim in ("gutenberg_en_all", "survivorlibrary.com_en_all"):
+        assert core[book_zim]["category"] == "books", book_zim
+        assert core[book_zim]["dest"] == f"zim/{book_zim}.zim", book_zim
 
 
 OVERLAY_IDS = [
@@ -205,7 +214,7 @@ OVERLAY_IDS = [
 ]
 REGIONS = ["england", "wales", "scotland", "ni", "roi", "iom", "ci"]
 EXTENDED_REQUIRED = {
-    "gutenberg_en_all", "khanacademy_en_all", "survivorlibrary.com_en_all",
+    "khanacademy_en_all",
     "wikipedia_cy_all_maxi", "s2underground_en_all",
     "media-films", "media-music", "media-audiobooks", "owner-books",
 }

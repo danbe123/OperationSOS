@@ -7,7 +7,7 @@ Review findings applied: `docs/research/2026-09-03-spec-review-findings.md`
 
 ## 1. What this is
 
-Operation SOS is an offline, UK-focused "end of the world" knowledge box. It runs on a Raspberry Pi 5 (8GB) with a touchscreen and a 500GB NVMe, plus an optional external USB drive. It broadcasts its own WiFi hotspot so phones and laptops can use it with no internet, no grid and no mobile network, and it shows the same interface on its own screen so it works when every phone is dead.
+Operation SOS is an offline, UK-focused "end of the world" knowledge box. It runs on a Raspberry Pi 5 (8GB) with a touchscreen and a 1TB NVMe, plus an optional external USB drive. It broadcasts its own WiFi hotspot so phones and laptops can use it with no internet, no grid and no mobile network, and it shows the same interface on its own screen so it works when every phone is dead.
 
 It is inspired by Project NOMAD (an x86 Docker knowledge server with a US-only catalogue) but shares no code with it. Operation SOS is Pi-native, hotspot-first, screen-first, and organised around UK scenarios rather than a library shelf.
 
@@ -70,11 +70,11 @@ Written once, included by playbooks: `water`, `food`, `shelter-heat`, `medical`,
 ### Reference hardware
 
 - Raspberry Pi 5, 8GB.
-- Full-length (2280) NVMe carrier: Pimoroni NVMe Base (flat, stacks under the Pi; suits a printed case). 500GB NVMe, boot and core drive. PCIe stays at Gen 2 (the carrier's rating); `install.sh --pcie-gen3` opts into Gen 3 for owners who have tested their drive. Boot order is set once with `raspi-config` (Advanced, Boot Order, NVMe/USB).
+- Full-length (2280) NVMe carrier: Pimoroni NVMe Base (flat, stacks under the Pi; suits a printed case). 1TB NVMe, boot and core drive (the core tier is about 680 GB with the two book collections). PCIe stays at Gen 2 (the carrier's rating); `install.sh --pcie-gen3` opts into Gen 3 for owners who have tested their drive. Boot order is set once with `raspi-config` (Advanced, Boot Order, NVMe/USB).
 - Official Active Cooler or equivalent fan. The printed case must have an intake and exhaust path; throttling in a sealed enclosure is the known unknown.
 - Official 27W USB-C PSU.
 - Screen: Raspberry Pi Touch Display 2 (7", DSI, natively 720x1280 portrait, about 210 DPI) inset in the printed case, rotated to landscape by the kiosk session (section 5). The connector is DSI-1 or DSI-2 depending on which Pi 5 port the ribbon uses; the panel is auto-detected on a Pi 5. Any HDMI touchscreen also works.
-- External drive: self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, 2TB minimum for the full extended list.
+- External drive: self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, 2TB or more for the full extended list (Khan Academy, media, your own files).
 - Optional: 20,000mAh USB-C PD power bank (12 to 15 hours headless, roughly 8 to 10 with the screen lit; idle dimming recovers most of the difference), 250Wh LiFePO4 station (about two days).
 
 ### Storage layout

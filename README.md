@@ -19,11 +19,11 @@ The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs
 | Part | Reference choice |
 |---|---|
 | Computer | Raspberry Pi 5, 8 GB |
-| Storage | 500 GB NVMe (2280) on a Pimoroni NVMe Base; boot and core drive; PCIe Gen 2 (`install.sh --pcie-gen3` opts in) |
+| Storage | 1 TB NVMe (2280) on a Pimoroni NVMe Base; boot and core drive, including the two book collections; PCIe Gen 2 (`install.sh --pcie-gen3` opts in) |
 | Screen | Raspberry Pi Touch Display 2 (7", DSI), rotated to landscape by the kiosk session; any HDMI touchscreen also works |
 | Cooling | Official Active Cooler; the printed case needs an intake and an exhaust path |
 | Power | Official 27 W USB-C PSU; optional 20,000 mAh USB-C PD power bank (roughly 8 to 15 hours) |
-| External drive | Optional self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, 2 TB or more for the extended library |
+| External drive | Optional self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, for Khan Academy, media and your own files |
 
 Storage layout on the box: `/srv/sos/core/{zim,maps,docs,models}` (NVMe), `/srv/sos/extended/{zim,docs,media,video,books}` (USB), `/srv/sos/state` (database, `library.xml`, playbooks, manifest, config), `/srv/sos/web` (built frontend), `/srv/sos/api` (the `sos` package and its venv).
 
