@@ -1,5 +1,12 @@
 # Books read like a Kindle, not a scanned PDF: design
 
+**Amended 2026-09-17:** Calibre is gone from the pipeline. `sos build-books` runs the box's own reflow (`api/sos/reflow.py`):
+`pdftotext` in reading order, page furniture dropped by repetition, lines joined into paragraphs, headings and lists
+kept, an EPUB 3 written directly. Two gates leave a book as `kind: "pdf"` with a URL source: an OCR layer over 3 per
+cent garbled words, or a median paragraph under 25 characters after reflow (tables, lists, columns). 58 of the 72
+candidates reflow; the 14 that do not are listed in `docs/app-completion.md` under that date. Section 4 below describes
+the Calibre run it replaced.
+
 Date: 2026-09-14. Status: approved in conversation (the owner wants a "proper ereader view of the books
 not pdfs converted like a kindle display").
 
