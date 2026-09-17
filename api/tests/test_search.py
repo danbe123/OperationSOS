@@ -215,3 +215,42 @@ def test_badge_title_drops_the_catalogue_tail_and_results_are_deduplicated():
             {"source": "docs", "url": "/doc/x#page=2", "score": 0.2}]
     out = search.dedupe(rows)
     assert [(r["url"], r["score"]) for r in out] == [("/p/solar#b", 0.3), ("/p/water#a", 0.1), ("/doc/x#page=1", 0.2), ("/doc/x#page=2", 0.2)]
+
+
+def _seed_books(conn):
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, fts) VALUES "
+                 "('gutenberg_en_all', 'Project Gutenberg', 'zim', 'core', 'books', 'zim/gutenberg_en_all.zim', 100, 1, 1)")
+    conn.executemany("INSERT INTO books (zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path) VALUES "
+                     "('gutenberg_en_all', ?, ?, ?, ?, ?, ?, ?, NULL)", [
+        (1232, "The Prince", "Niccolo Machiavelli", "J", 4, "The Prince.1232.epub", "The Prince.1232.html"),
+        (2701, "Water Babies", "Charles Kingsley", "PR", 3, "Water Babies.2701.epub", "Water Babies.2701.html"),
+    ])
+    conn.execute("INSERT INTO fts_books(fts_books) VALUES('rebuild')")
+    conn.commit()
+
+
+@respx.mock(base_url=BASE)
+def test_books_group_sits_in_the_results_with_its_own_badge_and_url(respx_mock, conn, env):
+    _seed_books(conn)
+    route = respx_mock.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search.xml").read_text()))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    hits = [r for r in resp["results"] if r["source"] == "books"]
+    assert hits and hits[0]["title"] == "Water Babies" and hits[0]["url"] == "/book/gutenberg/2701"
+    assert hits[0]["badge"] == "Books" and hits[0]["kind"] == "book" and hits[0]["snippet"] == "Charles Kingsley · English literature"
+    assert hits[0]["score"] == pytest.approx(search.score(search.BOOK_WEIGHT, 1))
+    assert {"source": "books", "badge": "Books", "count": 1} in resp["groups"]
+    # the Gutenberg ZIM is flagged fts=1 above, but the box never fans a Kiwix search out to it
+    assert route.call_count == 2
+    assert all("gutenberg_en_all" not in str(call.request.url) for call in route.calls)
+
+
+def test_classify_puts_core_book_zims_in_their_own_class():
+    assert search.classify({"tier": "core", "category": "books", "id": "survivorlibrary.com_en_all"}) == "books"
+
+
+@respx.mock(base_url=BASE, assert_all_called=False)
+def test_suggest_offers_catalogue_titles(respx_mock, conn, env):
+    _seed_books(conn)
+    respx_mock.get("/suggest").mock(return_value=httpx.Response(200, text="[]"))
+    out = _run(search.suggest(conn, env, KiwixClient(BASE), "prin"))
+    assert {"value": "The Prince", "label": "The Prince — Niccolo Machiavelli", "url": "/book/gutenberg/1232", "source": "Book"} in out

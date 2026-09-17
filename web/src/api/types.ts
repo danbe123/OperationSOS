@@ -32,7 +32,7 @@ export type LibraryItem = {
 export type LibraryResponse = { categories: { id: string; title: string; items: LibraryItem[] }[] };
 export type SearchResult = {
   source: string; badge: string; title: string; snippet: string; url: string; score: number;
-  kind: 'article' | 'playbook' | 'module' | 'card' | 'page' | 'doc' | 'place' | 'item';
+  kind: 'article' | 'playbook' | 'module' | 'card' | 'page' | 'doc' | 'place' | 'item' | 'book';
   lat?: number; lon?: number; page?: number;
 };
 export type SearchResponse = { q: string; query: string; results: SearchResult[]; groups: { source: string; badge: string; count: number }[]; took_ms: number; partial: boolean };

@@ -12,7 +12,7 @@ import { sourceWord } from './words';
 /** The sources the box wrote itself, in the order a frightened household wants them. */
 const OWN = ['playbooks'];
 /** Everything else, best first; anything unknown follows in the order the engine ranked it. */
-const ORDER = ['places', 'docs', 'nhs', 'medical', 'library', 'practical', 'survival', 'reference', 'uk-official', 'extended'];
+const ORDER = ['places', 'docs', 'nhs', 'medical', 'library', 'practical', 'survival', 'reference', 'books', 'uk-official', 'extended'];
 
 export const OWN_GROUP = 'From this box';
 

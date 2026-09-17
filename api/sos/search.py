@@ -12,6 +12,7 @@ from urllib.parse import quote
 import httpx
 
 from sos import places as places_mod
+from sos.books import BOOK_ZIMS, SHELF_NAMES
 from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
@@ -25,16 +26,17 @@ CACHE_MAX = 500
 PLAYBOOK_WEIGHT = 1.6
 MEDICAL_BOOST = 1.5
 PLACE_WEIGHT = 2.0
+BOOK_WEIGHT = 0.6   # a novel matching "fire" must never read like the survival guide; see results.ts ORDER too
 SUGGEST_MAX = 10
 WARM_QUERIES = ("water", "bleeding", "power cut")
 
 CLASS_TITLES = {
     "uk-official": "UK official", "nhs": "NHS", "medical": "Medical", "reference": "Reference", "practical": "Practical",
     "survival": "Survival", "extended": "Extended library", "playbooks": "Playbooks", "docs": "Documents",
-    "library": "Library", "places": "Places",
+    "library": "Library", "places": "Places", "books": "Books",
 }
 KIND_BADGES = {"playbook": "Playbook", "module": "Module", "card": "Quick card", "page": "Page", "doc": "Document",
-               "item": "Library", "place": "Place"}
+               "item": "Library", "place": "Place", "book": "Book"}
 SOURCE_BY_KIND = {"playbook": "playbooks", "module": "playbooks", "card": "playbooks", "page": "playbooks",
                   "doc": "docs", "item": "library"}
 
@@ -91,7 +93,7 @@ def classify(row) -> str:
         return "uk-official"
     if cat == "medical":
         return "nhs" if str(row["id"]).startswith("nhs") else "medical"
-    if cat in ("reference", "practical", "survival"):
+    if cat in ("reference", "practical", "survival", "books"):
         return cat
     return "reference"
 
@@ -162,6 +164,8 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     weights: dict[str, float] = {}
     titles: dict[str, str] = {}
     for row in conn.execute("SELECT * FROM library_items WHERE kind='zim' AND available=1 AND fts=1 ORDER BY priority, id"):
+        if row["id"] in BOOK_ZIMS:
+            continue  # the catalogue query below is the Gutenberg search; its ZIM has no article text worth a round trip
         cls = classify(row)
         books.setdefault((cls, languages.get(row["id"], "eng")), []).append(row["id"])
         weights[row["id"]] = float(row["search_weight"] or 1.0)
@@ -200,6 +204,18 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         if row["page"]:
             entry["page"] = int(row["page"])
         results.append(entry)
+
+    book_rows = conn.execute(
+        "SELECT b.id, b.title, b.author, b.shelf FROM books b JOIN fts_books f ON f.rowid = b.rowid "
+        "WHERE fts_books MATCH ? ORDER BY bm25(fts_books, 5.0, 3.0), b.popularity DESC LIMIT 10",
+        (query_mod.fts_match(reduced.terms, fts_mode),)).fetchall()
+    for rank, row in enumerate(book_rows, 1):
+        shelf = SHELF_NAMES.get(row["shelf"] or "")
+        results.append({
+            "source": "books", "badge": "Books", "title": row["title"],
+            "snippet": " · ".join(filter(None, [row["author"], shelf])),
+            "url": f"/book/gutenberg/{row['id']}", "score": score(BOOK_WEIGHT, rank), "kind": "book", "_cat": "books",
+        })
 
     for cand in query_mod.place_candidates(q):
         hit = places_mod.exact_place(conn, cand) if len(cand) >= 2 else None
@@ -262,6 +278,11 @@ async def suggest(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         ).fetchall()
         for r in rows:
             out.append({"value": r["title"], "label": r["title"], "url": r["url"], "source": KIND_BADGES.get(r["kind"], "Document")})
+        for r in conn.execute(
+            "SELECT b.id, b.title, b.author FROM books b JOIN fts_books f ON f.rowid = b.rowid "
+            "WHERE fts_books MATCH ? ORDER BY bm25(fts_books, 5.0, 3.0), b.popularity DESC LIMIT 3", (match,)).fetchall():
+            label = f"{r['title']} — {r['author']}" if r["author"] else r["title"]
+            out.append({"value": r["title"], "label": label, "url": f"/book/gutenberg/{r['id']}", "source": "Book"})
     books = conn.execute("SELECT id, title FROM library_items WHERE kind='zim' AND available=1 AND suggest=1 ORDER BY priority, id").fetchall()
 
     async def one(book):
