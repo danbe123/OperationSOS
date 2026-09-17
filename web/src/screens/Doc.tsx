@@ -584,8 +584,8 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
             <Icon name="settings" size={18} /><span>Voice</span>
           </button>
         )}
-        <button type="button" className="btn btn-small" onClick={() => { setImmersed(true); notify('Tap the middle of the page to bring the controls back.'); }}
-                title="Put the controls away. Tap the middle of the page to bring them back.">
+        <button type="button" className="btn btn-small" onClick={() => { setImmersed(true); notify('The button in the corner brings the controls back.'); }}
+                title="Put the controls away. The button in the corner, or a tap on the middle of the page, brings them back.">
           <Icon name="expand" size={18} /><span>Just the book</span>
         </button>
       </div>
@@ -609,6 +609,13 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
         </div>
       )}
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
+      {/* Always there while the chrome is away: a tap on the middle of the page works too, but nobody
+          should have to know that ("can we make a nicer permanent button thats clear it will return you"). */}
+      {immersed && (
+        <button type="button" className="btn btn-small epub-return no-print" onClick={() => setImmersed(false)} title="Bring the controls back">
+          <Icon name="contract" size={18} /><span>Show controls</span>
+        </button>
+      )}
       {opening && beforeStory && (
         <button type="button" className="btn epub-skip no-print" onClick={() => { hereRef.current = opening.cfi; void renditionRef.current?.display(opening.cfi).catch(() => undefined); }}>
           <Icon name="down" size={18} /><span>Skip to chapter one</span>

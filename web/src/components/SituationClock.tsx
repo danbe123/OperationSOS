@@ -64,7 +64,7 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
           <div className="clock-panel">
             {startedText && <span className="muted">Started {startedText}</span>}
             {confirm === 'end' ? (
-              <span className="row"><button type="button" className="btn btn-small btn-danger" onClick={() => void end()}>Confirm end</button><button type="button" className="btn btn-small" onClick={() => setConfirm(null)}>Cancel</button></span>
+              <span className="row"><span>End this situation?</span><button type="button" className="btn btn-small btn-danger" onClick={() => void end()}>Confirm</button><button type="button" className="btn btn-small" onClick={() => setConfirm(null)}>Cancel</button></span>
             ) : (
               <button type="button" className="btn btn-small" onClick={() => setConfirm('end')}>End situation</button>
             )}
@@ -78,7 +78,7 @@ export function SituationClock({ slug, situation, onChange }: { slug: string; si
       {confirm === 'start' ? (
         <span className="row">
           {other && <span className="muted">This replaces the situation that is running ({other.title ?? other.slug}).</span>}
-          <button type="button" className="btn btn-small btn-primary" onClick={() => void start()}>Confirm start</button>
+          <button type="button" className="btn btn-small btn-primary" onClick={() => void start()}>Confirm</button>
           <button type="button" className="btn btn-small" onClick={() => setConfirm(null)}>Cancel</button>
         </span>
       ) : (

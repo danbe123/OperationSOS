@@ -110,6 +110,12 @@ describe('Doc', () => {
     await user.click(screen.getByRole('button', { name: 'Just the book' }));
     expect(document.documentElement.dataset.reading).toBe('on');
     expect(localStorage.getItem('sos.reader.immersed')).toBe('on');
+    // one control stays on the screen, and says what it does
+    await user.click(screen.getByRole('button', { name: 'Show controls' }));
+    expect(document.documentElement.dataset.reading).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'Show controls' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Just the book' }));
+    expect(document.documentElement.dataset.reading).toBe('on');
     // The page has the whole screen; a tap on its left turns back, on its right turns on, and in the
     // middle brings the controls back. The frame is 900 px wide here.
     const host = document.querySelector('.epub-host') as HTMLElement;

@@ -39,11 +39,11 @@ describe('Situation clock', () => {
     await user.click(await screen.findByRole('button', { name: /Start the clock/ }));
     expect(start).not.toHaveBeenCalled();
     expect(screen.getByText(/replaces the situation that is running \(Severe storms and flooding\)/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Confirm start' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(start).toHaveBeenCalledWith('grid-collapse');
     await user.click(await screen.findByRole('button', { name: /just started/ }));
     await user.click(screen.getByRole('button', { name: 'End situation' }));
-    await user.click(screen.getByRole('button', { name: 'Confirm end' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
     expect(end).toHaveBeenCalled();
     expect(await screen.findByRole('button', { name: /Start the clock/ })).toBeInTheDocument();
   });

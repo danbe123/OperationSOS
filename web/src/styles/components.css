@@ -288,6 +288,8 @@ a.chip { text-decoration: none; }
 /* Floats over the foot of the page while the reader is in a book's front matter — the licence, the
    title page, the contents — and goes when the story has been reached. */
 .epub-skip { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 3; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); background: var(--panel); border: 1px solid var(--line-strong); }
+/* In reading mode: the one control on the screen, in the top corner, out of the text's way. */
+.epub-return { position: absolute; top: 10px; right: 12px; z-index: 3; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); background: var(--panel); border: 1px solid var(--line-strong); }
 /* A book's column, not the screen's width: 38em of the app's 16 px is 608 px, which at the reader's
    18 px serif is some 65 characters a line. At 46em it was 84, past what an eye tracks back from. The
    reader scales this cap with its Text size (an inline style), so the measure holds at every size. */
