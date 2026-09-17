@@ -49,6 +49,9 @@ export function MapScreen() {
   }, [overlayOverride, config, query.overlays]);
   const [terrain, setTerrain] = useState<Terrain>({ contours: true, hillshade: true });
   const [panel, setPanel] = useState<Panel>('none');
+  // The layers wait behind one tool until asked for ("move the filters layer on the map into a button that
+  // expands"): the row of chips took a row of the map on the kiosk. The tool says how many are on.
+  const [layersOpen, setLayersOpen] = useState(false);
   const [view, setView] = useState({ lat: query.lat ?? DEFAULT_VIEW.lat, lon: query.lon ?? DEFAULT_VIEW.lon, zoom: query.z ?? DEFAULT_VIEW.zoom });
   const [tapped, setTapped] = useState<LngLat | null>(null);
   // The place the last tap landed on, and the card that says what it is.
@@ -282,6 +285,9 @@ export function MapScreen() {
           strip fades and offers a chevron at its right edge rather than clipping "Ho" mid-word. */}
       <div className={toolsScroll ? 'map-toolbar map-toolbar-scrolls no-print' : 'map-toolbar no-print'}>
       <div className="map-tools" role="toolbar" aria-label="Map tools" ref={toolbarRef}>
+        <button type="button" className={layersOpen ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={layersOpen} aria-expanded={layersOpen} aria-controls="map-layers" onClick={() => setLayersOpen((v) => !v)}>
+          <Icon name="layers" size={18} /><span>Layers{overlaysOn ? ` ${overlaysOn.length + (terrain.contours ? 1 : 0) + (terrain.hillshade ? 1 : 0)}` : ''}</span>
+        </button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>
         <button type="button" className={panel === 'pins' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'pins'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" size={18} /><span>Pins</span></button>
         <button type="button" className={panel === 'home' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'home'} onClick={() => setPanel(panel === 'home' ? 'none' : 'home')}><Icon name="home" size={18} /><span>Home</span></button>
@@ -300,9 +306,9 @@ export function MapScreen() {
           mid-word is not a tool a household can find Print behind. */}
       {toolsScroll && <button type="button" className="btn btn-small map-tools-more" onClick={scrollTools}><span>More tools</span><Icon name="forward" size={18} /></button>}
       </div>
-      {/* The layers are the map: they sit under the tools where a household can see what is on,
-          not behind a button and a panel that covered the ground they were drawn on. */}
-      {config && overlaysOn && (
+      {/* The chips open under the tools and push the map down rather than covering it; the Layers tool
+          carries the count, so what is on is still said with the row shut. */}
+      {layersOpen && config && overlaysOn && (
         <LayerChips
           config={config} overlaysOn={overlaysOn}
           onToggle={(id, on) => setOverlayOverride(on ? [...overlaysOn, id] : overlaysOn.filter((x) => x !== id))}

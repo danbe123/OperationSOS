@@ -54,7 +54,7 @@ describe('Map screen', () => {
   it('creates the map from config, adds terrain and default overlays, and writes the view to the URL', async () => {
     mockApis();
     const { router } = renderRoute('/map');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {});
     const map = lastMap();
     expect(map.style.name).toBe('/maps/styles/osm-field.json');
@@ -71,7 +71,12 @@ describe('Map screen', () => {
     mockApis();
     const user = userEvent.setup();
     const { router } = renderRoute('/map');
-    const chips = await screen.findByRole('group', { name: 'Map layers' });
+    // the layers wait behind one tool, which says how many are on: a footpath layer and two terrain layers
+    const layers = await screen.findByRole('button', { name: /^Layers/ });
+    expect(layers).toHaveTextContent('Layers 3');
+    expect(screen.queryByRole('group', { name: 'Map layers' })).toBeNull();
+    await user.click(layers);
+    const chips = screen.getByRole('group', { name: 'Map layers' });
     const names = within(chips).getAllByRole('button').map((b) => b.textContent);
     expect(names).toEqual(['Health', 'Footpaths', 'Access land', 'Flood zones', 'Contour labels', 'Contours', 'Hillshade']);
     const health = within(chips).getByRole('button', { name: 'Health' });
@@ -91,7 +96,9 @@ describe('Map screen', () => {
     await user.click(within(chips).getByRole('button', { name: 'Hillshade' }));
     expect(lastMap().visibility('sos-hillshade')).toBe('none');
     expect(lastMap().visibility('sos-contours')).toBe('visible');
-    expect(screen.queryByRole('button', { name: /Layers/ })).toBeNull();
+    expect(layers).toHaveTextContent('Layers 4');   // health and access land on, hillshade off
+    await user.click(layers);
+    expect(screen.queryByRole('group', { name: 'Map layers' })).toBeNull();
     expect(screen.queryByRole('radio')).toBeNull();
   });
 
@@ -99,7 +106,7 @@ describe('Map screen', () => {
     mockApis();
     localStorage.setItem('sos.mapBase', 'os');
     renderRoute('/map');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {});
     expect(lastMap().style.name).toBe('/maps/styles/osm-field.json');
   });
@@ -107,7 +114,7 @@ describe('Map screen', () => {
   it('reads lat/lon/z/label from the query, shows the label and the centre grid reference', async () => {
     mockApis();
     renderRoute('/map?lat=50.9379&lon=-1.4708&z=14&label=OS+HQ');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {}); // let api.mapConfig() resolve and the map mount, as the first test also does
     const map = lastMap();
     expect(map.center).toEqual({ lng: -1.4708, lat: 50.9379 });
@@ -235,7 +242,7 @@ describe('Map screen', () => {
     vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
     const user = userEvent.setup();
     renderRoute('/map?overlay=health');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {}); // let the style load so the overlay's own layers are there to query
     const map = lastMap();
     map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
@@ -276,7 +283,7 @@ describe('Map screen', () => {
     mockApis();
     vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
     renderRoute('/map?overlay=health');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {});
     const map = lastMap();
     map.renderedFeatures = [{ id: 1, source: 'sos-overlay-health', layer: { id: 'sos-overlay-health-point' }, properties: { name: 'Southampton General Hospital', amenity: 'hospital' } }];
@@ -300,7 +307,7 @@ describe('Map screen', () => {
     vi.spyOn(api, 'mapPlaces').mockResolvedValue(mapPlaces);
     const user = userEvent.setup();
     renderRoute('/map?lat=50.9379&lon=-1.4708&z=14&overlay=health');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {});
     const map = lastMap();
     map.renderedFeatures = [{ layer: { id: 'sos-overlay-health-point' }, source: 'sos-overlay-health', properties: { name: 'Southampton General Hospital', amenity: 'hospital', emergency: 'yes', beds: '1200' } }];
@@ -376,7 +383,7 @@ describe('Map screen', () => {
     expect(screen.getByRole('button', { name: /Print/ })).toBeInTheDocument();
     a.unmount();
     renderRoute('/map', { kiosk: true });
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     expect(screen.queryByRole('button', { name: /Print/ })).toBeNull();
   });
 });

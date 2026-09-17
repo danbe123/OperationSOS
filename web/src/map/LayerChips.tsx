@@ -41,7 +41,7 @@ export function LayerChips({ config, overlaysOn, onToggle, terrain, onTerrain }:
   const notes = chipNotes(config.overlays, overlaysOn);
   return (
     <>
-      <div className="map-chips no-print" role="group" aria-label="Map layers">
+      <div className="map-chips no-print" role="group" aria-label="Map layers" id="map-layers">
         {config.overlays.map((o) => {
           const note = coverageNote(o);
           const title = o.available ? note : ['Not installed on this box', note].filter(Boolean).join('. ');
