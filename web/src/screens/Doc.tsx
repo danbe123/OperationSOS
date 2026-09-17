@@ -289,7 +289,7 @@ export function scrolledOffsetOf(rendition: Rendition, cfi: string): number | nu
 export function EpubReader({ url, theme, leading, memory, onPosition }: { url: string; theme: Theme; leading?: ReactNode; memory?: EpubMemory; onPosition?: (cfi: string) => void }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<Rendition | null>(null);
-  const [size, setSize] = useState(storedSize);
+  const [size, setSize] = useState(() => storedSize());
   const [flow, setFlow] = useState<Flow>(storedFlow);
   const [immersed, setImmersed] = useState(storedImmersed);
   const [error, setError] = useState<string | null>(null);

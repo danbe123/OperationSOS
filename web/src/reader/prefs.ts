@@ -32,9 +32,18 @@ export function storedFlow(): Flow {
   return read(FLOW_KEY) === 'paginated' ? 'paginated' : 'scrolled';
 }
 
-export function storedSize(): number {
+/** The text size a screen deserves when nobody has chosen one: the kiosk and the iPad mini (under
+ * 1100 px across) read at the base size, an iPad Pro or a laptop (1300 px and over) at half as big
+ * again, and whatever lies between at a quarter more. A choice made on a device wins on that device. */
+export function defaultSizeFor(width: number): number {
+  if (width >= 1300) return EPUB_SIZES[2];
+  if (width >= 1100) return EPUB_SIZES[1];
+  return EPUB_SIZES[0];
+}
+
+export function storedSize(width: number = typeof window === 'undefined' ? 0 : window.innerWidth): number {
   const n = Number(read(SIZE_KEY));
-  return EPUB_SIZES.includes(n) ? n : EPUB_SIZES[0];
+  return EPUB_SIZES.includes(n) ? n : defaultSizeFor(width);
 }
 
 export function storedImmersed(): boolean {
