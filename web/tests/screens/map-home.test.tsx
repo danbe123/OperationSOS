@@ -77,7 +77,7 @@ describe('Map: home', () => {
   it('draws the home as its own marker', async () => {
     mockApis({ home });
     renderRoute('/map');
-    await screen.findByRole('group', { name: 'Map layers' });
+    await screen.findByRole('button', { name: /^Layers/ });
     await act(async () => {});
     const map = lastMap();
     expect(map.getLayer('sos-home-point')).toBeDefined();

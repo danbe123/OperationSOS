@@ -11,10 +11,9 @@ import { sourceWord } from './words';
 
 /** The sources the box wrote itself, in the order a frightened household wants them. */
 const OWN = ['playbooks'];
-/** Everything else, best first; anything unknown follows in the order the engine ranked it. */
-const ORDER = ['places', 'docs', 'nhs', 'medical', 'library', 'practical', 'survival', 'reference', 'books', 'uk-official', 'extended'];
 
 export const OWN_GROUP = 'From this box';
+export const LIBRARY_GROUP = 'From the library';
 
 /** The library's cataloguing, off the front of a title: a ZIM book's badge is its full library
  * title, build stamp and all. */
@@ -115,32 +114,53 @@ export function highlightParts(snippet: string): SnippetPart[] {
 
 export type ResultGroup = { key: string; title: string; results: SearchResult[] };
 
-/** The results in groups, the box's own guides, cards, modules and pages first. Inside a group the
- * engine's order stands; between groups, what this box was built to answer comes before a mirror of
- * somebody else's website. */
+/** Two groups: the box's own guides, cards, modules and pages first, then everything else in the
+ * engine's own order. It used to be a group per source, each with a heading, in a fixed order of
+ * sources — which put a source's weakest hit above a stronger source's best, and read as a directory
+ * rather than an answer. The engine ranks across sources now (title relevance, boilerplate put down,
+ * meaning fused in), so the rest is one list, and the word before each title says where it is from. */
 export function groupResults(results: SearchResult[]): ResultGroup[] {
-  const groups = new Map<string, ResultGroup>();
-  for (const r of results) {
-    const own = OWN.includes(r.source);
-    const key = own ? 'own' : r.source;
-    const group = groups.get(key) ?? { key, title: own ? OWN_GROUP : cleanBadge(r.badge), results: [] };
-    group.results.push(r);
-    groups.set(key, group);
-  }
-  const rank = (key: string) => (key === 'own' ? -1 : ORDER.indexOf(key) === -1 ? ORDER.length : ORDER.indexOf(key));
-  return [...groups.values()].sort((a, b) => rank(a.key) - rank(b.key));
+  const own: SearchResult[] = [];
+  const rest: SearchResult[] = [];
+  for (const r of results) (OWN.includes(r.source) ? own : rest).push(r);
+  const groups: ResultGroup[] = [];
+  if (own.length) groups.push({ key: 'own', title: OWN_GROUP, results: own });
+  if (rest.length) groups.push({ key: 'library', title: LIBRARY_GROUP, results: rest });
+  return groups;
 }
 
 /** The sources a filter chip can turn on, with the counts of the very results underneath them: the
  * chips used to sum to 61 above a line reading "40 results", because the engine counts before it
- * truncates and the screen counted after. */
-export function chipsFor(groups: ResultGroup[]): { key: string; title: string; sources: string[]; count: number }[] {
-  return groups.map((g) => ({
-    key: g.key,
-    title: chipLabel(g.title),
-    sources: g.key === 'own' ? OWN : [g.key],
-    count: g.results.length,
-  }));
+ * truncates and the screen counted after. The box's own sources are one chip; the rest, one each, in
+ * the order the engine first ranks them. */
+export function chipsFor(results: SearchResult[]): { key: string; title: string; sources: string[]; count: number }[] {
+  const chips = new Map<string, { key: string; title: string; sources: string[]; count: number }>();
+  for (const r of results) {
+    const own = OWN.includes(r.source);
+    const key = own ? 'own' : r.source;
+    const chip = chips.get(key) ?? { key, title: own ? OWN_GROUP : chipLabel(cleanBadge(r.badge)), sources: own ? OWN : [r.source], count: 0 };
+    chip.count += 1;
+    chips.set(key, chip);
+  }
+  return [...chips.values()];
+}
+
+/** The query's words marked in a title, as parts to render: "Water disinfection" for "water" shows
+ * where the title answers the question. Stems are matched loosely (the first four letters, or the
+ * whole of a shorter word) so "bleeding" marks "Bleed" and "tins" marks "Tinned". */
+export function markTitle(title: string, query: string): SnippetPart[] {
+  const terms = (query ?? '').toLowerCase().split(/\s+/).map((t) => t.replace(/[^\p{L}\p{N}]/gu, '')).filter((t) => t.length >= 2);
+  if (!terms.length || !title) return [{ text: title ?? '', match: false }];
+  const parts: SnippetPart[] = [];
+  const re = /[\p{L}\p{N}]+|[^\p{L}\p{N}]+/gu;
+  for (const m of title.match(re) ?? []) {
+    const word = m.toLowerCase();
+    const hit = /[\p{L}\p{N}]/u.test(m) && terms.some((t) => (t.length >= 4 ? word.startsWith(t.slice(0, 4)) && (word.startsWith(t) || t.startsWith(word.slice(0, 4))) : word === t));
+    const last = parts[parts.length - 1];
+    if (last && last.match === hit) last.text += m;
+    else parts.push({ text: m, match: hit });
+  }
+  return parts;
 }
 
 /** A chip is a word, not a catalogue entry. "Wicipedia (Welsh Wikipedia, with images) (8)" and

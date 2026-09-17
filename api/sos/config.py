@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     kiwix_url: str = "http://127.0.0.1:8090/kiwix"
     llama_url: str = "http://127.0.0.1:8081"
     model: str = "gemma-4-E2B-it-Q4_K_M.gguf"
+    # Semantic search (sos/embeddings.py): the embedding server and the model it serves; the vectors
+    # `sos build-embeddings` writes live under core/embeddings.
+    embed_url: str = "http://127.0.0.1:8091"
+    embed_model: str = "bge-small-en-v1.5-q8_0.gguf"
     dev: bool = False
     port: int = 8000
 
@@ -62,6 +66,14 @@ class Settings(BaseSettings):
     @property
     def piper_voice_path(self) -> Path:
         return self.core / "models" / "piper" / f"{self.piper_voice}.onnx"
+
+    @property
+    def embed_model_path(self) -> Path:
+        return self.core / "models" / "embed" / self.embed_model
+
+    @property
+    def embeddings_dir(self) -> Path:
+        return self.core / "embeddings"
 
     @property
     def library_xml(self) -> Path:

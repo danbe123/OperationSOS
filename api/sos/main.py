@@ -48,6 +48,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         _bootstrap(settings)
         app.state.settings = settings
         app.state.kiwix = KiwixClient(settings.kiwix_url)
+        from sos.embeddings import Semantic
+        app.state.semantic = Semantic(settings)
         from sos.ai import LlamaClient
         from sos.ai_runtime import AiRuntime, restore_on_startup, shutdown as ai_shutdown
         app.state.conn = db.connect(settings.db_path)

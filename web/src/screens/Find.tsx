@@ -38,9 +38,9 @@ export function Find() {
   // Keep the unfiltered chips so they stay visible, and stay countable, while a filter is on.
   const [unfiltered, setUnfiltered] = useState<{ q: string; chips: ReturnType<typeof chipsFor> } | null>(null);
   useEffect(() => {
-    if (data && sources.length === 0) setUnfiltered({ q: data.q, chips: chipsFor(groupResults(dedupe(data.results))) });
+    if (data && sources.length === 0) setUnfiltered({ q: data.q, chips: chipsFor(dedupe(data.results)) });
   }, [data, sources.length]);
-  const chips = unfiltered?.q === q ? unfiltered.chips : chipsFor(grouped);
+  const chips = unfiltered?.q === q ? unfiltered.chips : chipsFor(shown);
   // Four chips is one row on the kiosk and two on a phone; the rest are behind one control. Eight
   // chips over four rows put the first result 553 px down a 480 px screen, before the on-screen
   // keyboard was even open.
@@ -127,7 +127,7 @@ export function Find() {
         {grouped.map((g) => (
           <section key={g.key} className="results-group" aria-label={g.title}>
             <h2>{g.title}</h2>
-            <ResultList results={g.results} label={g.title} />
+            <ResultList results={g.results} label={g.title} query={data?.query || q} />
           </section>
         ))}
         {searching && data && !loading && (ai === 'ready' || ai === 'busy') && (

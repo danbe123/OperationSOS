@@ -51,6 +51,8 @@ export type SearchResult = {
   source: string; badge: string; title: string; snippet: string; url: string; score: number;
   kind: 'article' | 'playbook' | 'module' | 'card' | 'page' | 'doc' | 'place' | 'item' | 'book';
   lat?: number; lon?: number; page?: number;
+  /** 'meaning' when the engine found the row by what the query means rather than by its words. */
+  via?: 'meaning';
 };
 export type SearchResponse = { q: string; query: string; results: SearchResult[]; groups: { source: string; badge: string; count: number }[]; took_ms: number; partial: boolean };
 export type Suggestion = { value: string; label: string; url: string | null; source: string };

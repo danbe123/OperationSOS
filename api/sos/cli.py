@@ -160,6 +160,11 @@ def cmd_build_books(settings: Settings, args) -> int:
     return buildbooks.main(settings, only=only)
 
 
+def cmd_build_embeddings(settings: Settings, args) -> int:
+    from sos import embeddings
+    return embeddings.build_cli(settings)
+
+
 def cmd_eval(settings: Settings, args) -> int:
     from sos import evalrun
 
@@ -201,6 +206,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build-books", help="PC only: convert PDF library items to EPUB with Calibre")
     p.add_argument("--only", help="comma-separated item ids")
     p.set_defaults(func=cmd_build_books)
+    p = sub.add_parser("build-embeddings", help="PC only: embed the box's own library for semantic search (needs llama-server and the bge-small model)")
+    p.set_defaults(func=cmd_build_embeddings)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")
     p.add_argument("--skip-crawl", action="store_true")

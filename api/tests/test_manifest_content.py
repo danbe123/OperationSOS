@@ -73,7 +73,7 @@ CORE_REQUIRED = {
     "pets.stackexchange.com_en_all",
     # ai
     "gemma-4-E2B-it-Q4_K_M", "Qwen3.5-2B-Q4_K_M", "gemma-3-1b-it-Q4_K_M", "piper", "piper-voice-en_GB", "piper-voice-en_GB-alan", "piper-voice-en_GB-cori", "piper-voice-en_GB-jenny_dioco",
-    "piper-voice-en_GB-northern_english_male", "piper-voice-en_GB-cori-high",
+    "piper-voice-en_GB-northern_english_male", "piper-voice-en_GB-cori-high", "bge-small-en-v1.5", "embeddings-docs",
 }
 
 

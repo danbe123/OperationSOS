@@ -1,6 +1,6 @@
 import type { SearchResult } from '../api/types';
 import { useAppLink } from '../links';
-import { cleanBadge, cleanSnippet, cleanTitle, highlightParts } from '../api/results';
+import { cleanBadge, cleanSnippet, cleanTitle, highlightParts, markTitle } from '../api/results';
 
 /** The engine marks what it matched with `<b>`; the screen renders that as bold text, never as HTML
  * it was handed. Before this the tags were printed as words: "&lt;b&gt;Adders&lt;/b&gt; The
@@ -19,7 +19,7 @@ export function Snippet({ text }: { text: string }) {
  * source is a word before the title, quieter and set apart, never glued to it: "NHS Medicines A to Z
  * Kiwix build December 2025 How and when to take memantine - NHS" read as one sentence, and a pill
  * above the title on its own line made every row three lines before the snippet. */
-export function ResultList({ results, label = 'Results' }: { results: SearchResult[]; label?: string }) {
+export function ResultList({ results, label = 'Results', query = '' }: { results: SearchResult[]; label?: string; query?: string }) {
   const follow = useAppLink();
   if (results.length === 0) return null;
   return (
@@ -29,7 +29,10 @@ export function ResultList({ results, label = 'Results' }: { results: SearchResu
           <a className="result-row" href={r.url} onClick={(e) => { if (follow(r.url)) e.preventDefault(); }}>
             <span className="result-line">
               <span className="result-source">{cleanBadge(r.badge)}</span>
-              <span className="result-title">{cleanTitle(r.title)}</span>
+              {r.via === 'meaning' && <span className="result-via" title="Found by what the question means, not by its words">related</span>}
+              <span className="result-title">
+                {markTitle(cleanTitle(r.title), query).map((part, i) => (part.match ? <mark key={i}>{part.text}</mark> : <span key={i}>{part.text}</span>))}
+              </span>
             </span>
             {r.snippet && <Snippet text={r.snippet} />}
           </a>

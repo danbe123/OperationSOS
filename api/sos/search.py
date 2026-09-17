@@ -1,5 +1,15 @@
 """Unified search (spec section 8): Kiwix classes in parallel with timeouts, FTS5 docs, exact place hits,
-`score = w / (5 + rank)`, medical intent boost, exact-title jump, a bounded results cache and suggest."""
+`score = w / (5 + rank)`, medical intent boost, exact-title jump, a bounded results cache and suggest.
+
+Precision (2026-09-18, the owner's review: "these need to display much more elegantly and be much more
+precise"): a class's rank was the only relevance the score knew, so the first hit from every class tied
+whatever it was — "Side effects of warfarin" beside the Severe bleeding card for "bleeding", "Dental drill"
+fourth for "power cut", the Wikipedia article titled exactly "Power cut" eighth. Every result is now
+rescored by how much of the query is in its title and its snippet (an exact title leads its source; a hit
+with the words in neither is a boilerplate match and is put down), the same article from two
+encyclopaedias is one row, no source floods the page, the box's own library is asked with the household's
+synonyms beside its words, and — when the box carries the vectors — the passages nearest the query in
+meaning are fused in (`sos/embeddings.py`)."""
 from __future__ import annotations
 
 import asyncio
@@ -29,6 +39,17 @@ PLACE_WEIGHT = 2.0
 BOOK_WEIGHT = 0.6   # a novel matching "fire" must never read like the survival guide; see results.ts ORDER too
 BOOKS_KEPT = 5      # catalogue hits the result cap may not squeeze out: their group is meant to be seen, low as it scores
 SUGGEST_MAX = 10
+# Precision: what a title and a snippet are worth, and what a hit with the words in neither is worth.
+TITLE_WEIGHT = 1.2
+SNIPPET_WEIGHT = 0.5
+EXACT_TITLE = 2.2
+BOILERPLATE = 0.45
+PER_SOURCE = 3      # a source's fourth result and beyond give way a little to the rest
+SOURCE_DECAY = 0.85
+# Semantic: how many nearest passages are asked for, how near counts, and what one is worth beside a keyword hit.
+SEMANTIC_K = 20
+SEMANTIC_MIN = 0.5
+SEMANTIC_WEIGHT = 1.0
 WARM_QUERIES = ("water", "bleeding", "power cut")
 
 CLASS_TITLES = {
@@ -56,6 +77,104 @@ except ImportError:
 
 def score(weight: float, rank: int) -> float:
     return weight / (K + rank)
+
+
+_WORD = re.compile(r"[^\W_]+", re.UNICODE)
+_TAGS = re.compile(r"<[^>]+>")
+_NHS_TAIL = re.compile(r"\s*[-–—]\s*NHS\s*$", re.IGNORECASE)
+
+
+def stem(word: str) -> str:
+    """Enough of a stem to match "bleeding" to "bleed", "tins" to "tin", "purification" to "purify"-ish: the
+    suffixes English hangs on a word, taken off the end. Not Porter; the index has Porter, this is for
+    the titles and snippets the index does not see."""
+    w = word.lower()
+    for suffix in ("ation", "ations", "ings", "ing", "edly", "ies", "ied", "ed", "es", "s"):
+        if w.endswith(suffix) and len(w) - len(suffix) >= 3:
+            w = w[: -len(suffix)]
+            if suffix == "ies" or suffix == "ied":
+                w += "y"
+            break
+    return w
+
+
+def words_of(text: str) -> set[str]:
+    return {stem(w) for w in _WORD.findall(_TAGS.sub(" ", text or ""))}
+
+
+def term_share(terms: list[str], text: str) -> float:
+    """The share of the query's terms found in a text, stems matched; a term of four letters or more also
+    counts when it begins a word there ("radio" in "radios", "flood" in "floodwater")."""
+    if not terms:
+        return 0.0
+    have = words_of(text)
+    hit = 0
+    for t in terms:
+        st = stem(t)
+        if st in have or (len(st) >= 4 and any(w.startswith(st) for w in have)):
+            hit += 1
+    return hit / len(terms)
+
+
+def norm_title(title: str) -> str:
+    return " ".join(_NHS_TAIL.sub("", title or "").lower().split())
+
+
+def relevance(terms: list[str], title: str, snippet: str, q: str) -> float:
+    """What a result's own words say about the query, as a multiplier on its class score: the whole query in
+    the title counts most, in the snippet less; the title being the query leads its source; a hit with the
+    query in neither the title nor the snippet is a boilerplate match (a crawled site's footer, a page that
+    mentions the word once in a list) and is put down rather than out."""
+    in_title = term_share(terms, title)
+    in_snippet = term_share(terms, snippet)
+    factor = 1.0 + TITLE_WEIGHT * in_title + SNIPPET_WEIGHT * in_snippet
+    if norm_title(title) == " ".join((q or "").lower().split()) or (terms and norm_title(title) == " ".join(terms)):
+        factor *= EXACT_TITLE
+    elif in_title == 0 and in_snippet == 0 and "<b>" not in (snippet or ""):
+        factor *= BOILERPLATE
+    return factor
+
+
+def dedupe_titles(results: list[dict]) -> list[dict]:
+    """One row per article title within a source: "Bleeding" from WikEM and "Bleeding" from MDWiki, both
+    medical, are the same answer twice on the screen, and "Potassium iodide" likewise. The best-scoring
+    stays. Two sources with an article of the same name (Wikipedia's and WikEM's "Water purification")
+    are two answers; the box's own rows, documents, books and places keep theirs: a document's pages
+    share one title."""
+    seen: set[tuple[str, str]] = set()
+    out: list[dict] = []
+    for r in sorted(results, key=lambda r: -r["score"]):
+        if r.get("kind") == "article":
+            key = (r["source"], norm_title(r["title"]))
+            if key in seen:
+                continue
+            seen.add(key)
+        out.append(r)
+    return out
+
+
+def diversify(results: list[dict]) -> list[dict]:
+    """No source floods the page: a source's fourth result and each after it is worth a little less than it
+    scored, so five NHS medicines' side-effect pages do not fill the first screen for "bleeding"."""
+    counts: dict[str, int] = {}
+    out = []
+    for r in sorted(results, key=lambda r: -r["score"]):
+        n = counts.get(r["source"], 0)
+        counts[r["source"]] = n + 1
+        if n >= PER_SOURCE:
+            r = {**r, "score": r["score"] * (SOURCE_DECAY ** (n - PER_SOURCE + 1))}
+        out.append(r)
+    out.sort(key=lambda r: -r["score"])
+    return out
+
+
+def snippet_from_body(body: str, limit: int = 220) -> str:
+    """A passage found by its meaning has no keyword to mark: its opening words are its snippet."""
+    text = " ".join(re.sub(r"\[\[[^\]]*\]\]|\{\{[^}]*\}\}", " ", body or "").split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return cut + "…"
 
 
 _PARENTHETICAL = re.compile(r"\s*\([^)]*\)\s*$")
@@ -143,7 +262,8 @@ def _empty(q: str) -> dict:
 
 
 async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
-                 sources: list[str] | None = None, limit: int = 40, *, fts_mode: str = "and", use_cache: bool = True) -> dict:
+                 sources: list[str] | None = None, limit: int = 40, *, fts_mode: str = "and", use_cache: bool = True,
+                 semantic=None) -> dict:
     t0 = time.perf_counter()
     reduced = query_mod.reduce_query(q or "")
     if not reduced.terms:
@@ -189,7 +309,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     rows = conn.execute(
         "SELECT title, doc_id, kind, category, page, url, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
         "FROM fts_docs WHERE fts_docs MATCH ? ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT 20",
-        (query_mod.fts_match(reduced.terms, fts_mode),),
+        (query_mod.fts_match_expanded(reduced.terms, fts_mode),),
     ).fetchall()
     for rank, row in enumerate(rows, 1):
         kind = row["kind"]
@@ -237,17 +357,48 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             if r["_cat"] == "medical" or r["kind"] == "card":
                 r["score"] *= MEDICAL_BOOST
 
-    qnorm = " ".join((q or "").lower().split())
-    by_source: dict[str, list[dict]] = {}
+    # The passages nearest the query in meaning, from the box's own library: a row already found by its
+    # words is lifted, one the words missed is added with its opening as its snippet.
+    if semantic is not None:
+        try:
+            near = await semantic.query(q, SEMANTIC_K)
+        except Exception:  # the semantic layer is a convenience: its failures never fail the search
+            near = []
+        near = [(url, cos) for url, cos in near if cos >= SEMANTIC_MIN]
+        if near:
+            by_url = {r["url"]: r for r in results}
+            found = {}
+            for row in conn.execute(
+                    f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
+                    f"WHERE url IN ({','.join('?' * len(near))})", [u for u, _ in near]).fetchall():
+                found[row["url"]] = row
+            for rank, (url, cos) in enumerate(near, 1):
+                row = found.get(url)
+                if row is None:
+                    continue
+                kind = row["kind"]
+                src = SOURCE_BY_KIND.get(kind, "docs")
+                w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
+                bonus = SEMANTIC_WEIGHT * score(w, rank)
+                if url in by_url:
+                    by_url[url]["score"] += bonus
+                    continue
+                entry = {"source": src, "badge": KIND_BADGES.get(kind, "Document"), "title": row["title"],
+                         "snippet": snippet_from_body(row["body"]), "url": url, "score": bonus, "kind": kind,
+                         "_cat": row["category"], "via": "meaning"}
+                if row["page"]:
+                    entry["page"] = int(row["page"])
+                results.append(entry)
+                by_url[url] = entry
+
+    # A place is an exact match by construction and a catalogue hit is ranked on its title and author
+    # already: the rescoring is for articles and the box's own passages.
     for r in results:
-        by_source.setdefault(r["source"], []).append(r)
-    for rs in by_source.values():
-        top = max(x["score"] for x in rs)
-        for r in rs:
-            if r["title"].strip().lower() == qnorm:
-                r["score"] = top + 0.001
+        if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
+            r["score"] *= relevance(reduced.terms, r["title"], r["snippet"], q)
     results = dedupe(results)
-    results.sort(key=lambda r: -r["score"])
+    results = dedupe_titles(results)
+    results = diversify(results)
 
     counts: dict[str, int] = {}
     for r in results:

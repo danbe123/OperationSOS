@@ -70,7 +70,24 @@ kiwix-serve --library "$LIB" --monitorLibrary --address all --port "$KIWIX_PORT"
 PIDS+=("$!")
 echo "run-dev: kiwix-serve  http://127.0.0.1:$KIWIX_PORT/kiwix"
 
-SOS_DEV=1 SOS_CORE=$CONTENT SOS_EXT=$EXT SOS_STATE=$STATE SOS_WEB=$WEB_ROOT \
+# The embedding server for semantic search, when the model is here (sos/embeddings.py; the box runs the
+# same command as install/systemd/sos-embed.service). Without it search is the keyword search alone.
+EMBED_PORT=${SOS_EMBED_PORT:-8091}
+EMBED_MODEL=$CONTENT/models/embed/bge-small-en-v1.5-q8_0.gguf
+if [ -f "$EMBED_MODEL" ] && command -v llama-server >/dev/null 2>&1; then
+  if curl -fsS --max-time 1 "http://127.0.0.1:$EMBED_PORT/health" >/dev/null 2>&1; then
+    echo "run-dev: embed        http://127.0.0.1:$EMBED_PORT (already running)"
+  else
+    llama-server -m "$EMBED_MODEL" --embedding --pooling cls -c 512 -ub 512 -b 512 --host 127.0.0.1 --port "$EMBED_PORT" -t 2 --no-webui \
+      > "$LOGS/embed.log" 2>&1 &
+    PIDS+=("$!")
+    echo "run-dev: embed        http://127.0.0.1:$EMBED_PORT (bge-small, semantic search)"
+  fi
+else
+  echo "run-dev: no embedding model at $EMBED_MODEL (or no llama-server): search is keyword only"
+fi
+
+SOS_DEV=1 SOS_CORE=$CONTENT SOS_EXT=$EXT SOS_STATE=$STATE SOS_WEB=$WEB_ROOT SOS_EMBED_URL="http://127.0.0.1:$EMBED_PORT" \
   SOS_MANIFEST_DIR=$MANIFEST_DIR SOS_PLAYBOOKS_DIR=$PLAYBOOKS_DIR \
   SOS_KIWIX_URL="http://127.0.0.1:$KIWIX_PORT/kiwix" SOS_PORT=$API_PORT SOS_MAPS_SRC="${SOS_MAPS_SRC:-$CONTENT/maps-src}" \
   "$UVICORN" sos.main:app --host 127.0.0.1 --port "$API_PORT" --proxy-headers --forwarded-allow-ips 127.0.0.1 \

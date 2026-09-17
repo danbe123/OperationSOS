@@ -149,11 +149,19 @@ def test_partial_responses_are_not_cached(respx_mock, conn, env):
 
 
 @respx.mock(base_url=BASE)
-def test_medical_intent_boosts_nhs_and_medical(respx_mock, conn, env):
+def test_medical_intent_boosts_nhs_and_medical(respx_mock, conn, env, monkeypatch):
     respx_mock.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search_multi.xml").read_text()))
-    resp = _run(search.search(conn, env, KiwixClient(BASE), "medicine dose"))
-    nhs = [r for r in resp["results"] if r["source"] == "nhs"]
-    assert nhs and nhs[0]["score"] == pytest.approx(search.score(1.4, 1) * 1.5)
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "medicine dose", use_cache=False))
+    nhs = {r["url"]: r["score"] for r in resp["results"] if r["source"] == "nhs"}
+    assert nhs
+    # the same question with no medical word in it: every NHS row scores exactly a boost lower
+    monkeypatch.setattr(search, "MEDICAL_TERMS", frozenset())
+    plain = _run(search.search(conn, env, KiwixClient(BASE), "medicine dose", use_cache=False))
+    unboosted = {r["url"]: r["score"] for r in plain["results"] if r["source"] == "nhs"}
+    assert unboosted
+    for url, s in unboosted.items():
+        if url in nhs:
+            assert nhs[url] == pytest.approx(s * search.MEDICAL_BOOST)
 
 
 def test_place_hit_only_on_exact_match(conn, env):
@@ -200,9 +208,10 @@ def test_medical_intent_boosts_quick_cards_as_well_as_medical_sources(conn, env)
         m.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search_multi.xml").read_text()))
         resp = _run(search.search(conn, env, KiwixClient(BASE), "bleeding", use_cache=False))
     card = next(r for r in resp["results"] if r["kind"] == "card")
-    # the box's own card carries the playbook weight and, for a medical question, the medical boost: it outranks
-    # any rank-1 medical or NHS article (1.4 x 1.5 at rank 1)
-    assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5)
+    # the box's own card carries the playbook weight and, for a medical question, the medical boost, and its
+    # title carries the query: it outranks any rank-1 medical or NHS article (1.4 x 1.5 at rank 1)
+    assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5 * search.relevance(["bleeding"], card["title"], card["snippet"], "bleeding"))
+    assert card["score"] > search.score(1.4, 1) * 1.5
     assert resp["results"][0]["kind"] == "card"
 
 

@@ -23,8 +23,17 @@ describe('Search screen', () => {
     expect(items).toHaveLength(7);
     // "Playbook" is the box's word; a household reads "Guide" — a word before the title, not a pill above it.
     expect(within(items[0]).getByText('Guide')).toHaveClass('result-source');
-    expect(within(screen.getByRole('region', { name: 'UK official' })).getByRole('link')).toHaveTextContent('National Risk Register 2025, page 12');
-    const wiki = within(screen.getByRole('region', { name: /^Wikipedia/ })).getByRole('link');
+    // the query's word is marked in a title
+    expect(within(items[0]).getByRole('link').querySelector('.result-title mark')).toHaveTextContent('Water');
+    // everything that is not the box's own is one list in the engine's order, the source a word before each title
+    const library = screen.getByRole('region', { name: 'From the library' });
+    expect(within(library).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+      '/read/wikipedia_en_100_mini_2026-01/A/Water', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', '/read/nhs_uk/www.nhs.uk/conditions/anticoagulants/side-effects/',
+      '/map?lat=50.88&lon=-1.03&z=13&label=Waterlooville', '/doc/nrr-2025#page=12',
+    ]);
+    expect(within(library).getByRole('link', { name: /National Risk Register 2025, page 12/ })).toHaveTextContent('UK official');
+    expect(screen.queryByRole('region', { name: 'UK official' })).toBeNull();
+    const wiki = within(library).getAllByRole('link')[0];
     await act(async () => { wiki.click(); });
     expect(router.state.location.pathname).toBe('/read/wikipedia_en_100_mini_2026-01/A/Water');
   });
@@ -36,9 +45,9 @@ describe('Search screen', () => {
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
     // The chips count the very rows underneath them, the box's own group leads, and past one row
     // of them the rest wait behind one control rather than pushing the first result off the screen.
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Place 1', 'UK official 1', 'NHS 2', 'More (1)']);
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Wikipedia 1', 'NHS 2', 'Place 1', 'More (1)']);
     await user.click(within(chips).getByRole('button', { name: 'More (1)' }));
-    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Place 1', 'UK official 1', 'NHS 2', 'Wikipedia 1', 'Fewer']);
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Wikipedia 1', 'NHS 2', 'Place 1', 'UK official 1', 'Fewer']);
     await user.click(within(chips).getByRole('button', { name: 'NHS 2' }));
     expect(router.state.location.search).toBe('?q=water&sources=nhs');
     expect(spy).toHaveBeenLastCalledWith('water', { sources: ['nhs'] });

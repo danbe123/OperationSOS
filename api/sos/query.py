@@ -19,6 +19,63 @@ without won would wouldn yeah yes yet you your yours yourself yourselves
 """.split())
 
 _TOKEN_RE = re.compile(r"[^\W_]+", re.UNICODE)
+
+# The household's word beside the box's, for the keyword index of the box's own library: "tinned" finds
+# the Food module's "tins" and "canned"; "loo" finds sanitation. Keyed by the word as typed (and its stem),
+# small on purpose — a synonym that is not about an emergency pulls in what it should not.
+SYNONYMS: dict[str, tuple[str, ...]] = {
+    "power": ("electricity", "mains", "blackout", "outage"), "blackout": ("power", "outage"), "outage": ("power", "blackout"),
+    "electricity": ("power", "mains"), "tinned": ("canned", "tins", "tin"), "canned": ("tinned", "tins", "tin"), "tins": ("tinned", "canned"),
+    "warm": ("heat", "heating", "cold"), "warmth": ("heat", "heating", "warm"), "heating": ("heat", "warm"), "cold": ("warm", "hypothermia"),
+    "loo": ("toilet", "sanitation"), "toilet": ("sanitation", "loo", "sewage"), "sewage": ("toilet", "sanitation", "drains"),
+    "kid": ("child", "children"), "kids": ("child", "children"), "child": ("children", "baby", "infant"), "children": ("child", "baby"),
+    "baby": ("infant", "newborn", "child"), "infant": ("baby", "child"),
+    "medicine": ("medication", "medicines", "tablets", "drug"), "medicines": ("medicine", "medication", "tablets"),
+    "medication": ("medicine", "medicines", "tablets"), "tablets": ("tablet", "pills", "medicine"), "pills": ("tablets", "medicine"),
+    "sick": ("ill", "illness", "unwell", "vomiting"), "ill": ("sick", "illness", "unwell"), "unwell": ("ill", "sick"),
+    "bleed": ("bleeding", "blood"), "bleeding": ("bleed", "blood", "haemorrhage"), "blood": ("bleeding",),
+    "burn": ("burns", "scald"), "burns": ("burn", "scald"), "scald": ("burn", "burns"),
+    "broken": ("fracture", "break"), "fracture": ("broken", "break"), "wound": ("cut", "laceration", "bleeding"), "cut": ("wound", "laceration"),
+    "wee": ("urine",), "poo": ("stool", "faeces", "diarrhoea"), "diarrhoea": ("diarrhea", "stool"), "diarrhea": ("diarrhoea",),
+    "petrol": ("fuel", "diesel"), "diesel": ("fuel", "petrol"), "fuel": ("petrol", "diesel"),
+    "torch": ("light", "lamp"), "torches": ("torch", "light"), "lamp": ("light", "torch"),
+    "mobile": ("phone", "signal", "network"), "phone": ("mobile", "landline", "telephone"), "signal": ("mobile", "network", "reception"),
+    "radio": ("pmr446", "walkie"), "walkie": ("pmr446", "radio"), "talkie": ("pmr446", "radio"),
+    "purify": ("disinfect", "boil", "filter", "purification"), "purification": ("disinfect", "disinfection", "boil", "filter"),
+    "disinfect": ("purify", "boil", "disinfection"), "disinfection": ("disinfect", "purify", "boil"), "boil": ("boiling", "disinfect", "purify"),
+    "flood": ("flooding", "floods"), "flooding": ("flood", "floods"), "storm": ("storms", "gale", "wind"), "storms": ("storm", "gale"),
+    "snow": ("ice", "cold", "blizzard"), "evacuate": ("evacuation", "leave"), "evacuation": ("evacuate", "leave"),
+    "nuclear": ("fallout", "radiation"), "fallout": ("nuclear", "radiation"), "radiation": ("nuclear", "fallout", "radioactive"),
+    "iodine": ("iodide", "potassium"), "iodide": ("iodine",), "generator": ("generators", "monoxide"),
+    "fridge": ("freezer", "refrigerator"), "freezer": ("fridge", "frozen"), "food": ("eat", "meals", "rations"), "eat": ("food", "meals"),
+    "cash": ("money", "notes"), "money": ("cash",), "pet": ("pets", "dog", "cat"), "pets": ("pet", "dog", "cat"), "dog": ("pet", "pets"),
+    "cat": ("pet", "pets"), "cpr": ("resuscitation", "chest", "compressions"), "resuscitation": ("cpr",),
+    "choke": ("choking",), "choking": ("choke",), "unconscious": ("collapsed", "unresponsive"), "collapsed": ("unconscious", "unresponsive"),
+    "fever": ("temperature",), "temperature": ("fever",), "stroke": ("fast",), "asthma": ("inhaler", "wheeze"),
+    "dehydrated": ("dehydration", "rehydration"), "dehydration": ("rehydration", "dehydrated"), "rehydration": ("dehydration", "ors"),
+    "hypothermia": ("cold", "warm"), "frostbite": ("cold", "frost"), "heatstroke": ("heat", "heatwave"), "heatwave": ("heat", "heatstroke"),
+}
+
+
+def expand_terms(terms: list[str]) -> list[list[str]]:
+    """Each term with its synonyms beside it, the term first: the groups an FTS query ORs within and ANDs across."""
+    out: list[list[str]] = []
+    for t in terms:
+        alts = [t] + [a for a in SYNONYMS.get(t.lower(), ()) if a != t]
+        out.append(alts)
+    return out
+
+
+def fts_match_expanded(terms: list[str], mode: str = "and") -> str:
+    """`("tinned" OR "canned" OR "tins") "food"`: the keyword query for the box's own library, widened by
+    the synonyms. A term without synonyms is itself."""
+    if mode not in ("and", "or"):
+        raise ValueError("mode must be 'and' or 'or'")
+    groups = []
+    for alts in expand_terms(terms):
+        quoted = ['"' + a.replace('"', '""') + '"' for a in alts]
+        groups.append(quoted[0] if len(quoted) == 1 else "(" + " OR ".join(quoted) + ")")
+    return (" OR " if mode == "or" else " AND ").join(groups)
 POSTCODE_RE = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$", re.IGNORECASE)
 DISTRICT_RE = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?$", re.IGNORECASE)
 

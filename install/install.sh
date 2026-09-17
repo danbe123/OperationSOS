@@ -248,7 +248,7 @@ step_web() {
 step_units() {
   local unit changed=0
   if [ "$DRY_RUN" = 1 ]; then would units "write the systemd units and daemon-reload"; fi
-  for unit in caddy.service kiwix-serve.service sos-api.service sos-llama.service sos-kiosk.service; do
+  for unit in caddy.service kiwix-serve.service sos-api.service sos-llama.service sos-embed.service sos-kiosk.service; do
     if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
   done
   if [ "$DRY_RUN" = 1 ]; then return; fi
@@ -392,7 +392,7 @@ step_answers() {
 }
 
 step_enable() {
-  local u changed=0 units="caddy.service kiwix-serve.service sos-api.service avahi-daemon.service"
+  local u changed=0 units="caddy.service kiwix-serve.service sos-api.service sos-embed.service avahi-daemon.service"
   if [ "$DEV" = 0 ]; then units="$units sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service"; fi
   if [ "$WITH_JELLYFIN" = 1 ]; then units="$units jellyfin.service"; fi
   if [ "$DRY_RUN" = 1 ]; then would enable "systemctl enable $units and start caddy, kiwix-serve, sos-api and avahi-daemon"; return; fi
