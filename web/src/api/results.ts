@@ -23,7 +23,12 @@ export function cleanBadge(badge: string): string {
     .replace(/\s*\((?:[^()]*\b(?:build|version)\b[^()]*)\)\s*/gi, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
-  return sourceWord(text);
+  // A catalogue title of the "Name: what it is" shape is its name on a row: "WikiMed: Wikipedia medical
+  // encyclopedia" said forty characters before every title it was the source of; and a trailing
+  // parenthesis is cataloguing too ("Wikipedia (English, with images)").
+  const bare = text.replace(/\s*\([^()]*\)\s*$/, '').trim() || text;
+  const named = /^([^:]{2,28}):\s+\S/.exec(bare);
+  return sourceWord(named ? named[1].trim() : bare);
 }
 
 /** A result's own title, without the publisher's furniture: the NHS repeats itself at the end of
@@ -142,12 +147,33 @@ export function chipsFor(results: SearchResult[]): { key: string; title: string;
     chip.count += 1;
     chips.set(key, chip);
   }
-  return [...chips.values()];
+  // the box's own chip leads whatever the engine ranked first: it is the group at the top of the screen
+  return [...chips.values()].sort((a, b) => (a.key === 'own' ? -1 : b.key === 'own' ? 1 : 0));
+}
+
+/** Enough of a stem to match "bleeding" to "bleed" and "tins" to "tinned": the engine's own rule
+ * (`search.stem`), so a title is marked where the engine counted it. */
+function stemLite(word: string): string {
+  let w = word.toLowerCase();
+  for (const suffix of ['ation', 'ations', 'ings', 'ing', 'edly', 'ies', 'ied', 'ed', 'es', 's']) {
+    if (w.endsWith(suffix) && w.length - suffix.length >= 3) {
+      w = w.slice(0, -suffix.length) + (suffix === 'ies' || suffix === 'ied' ? 'y' : '');
+      break;
+    }
+  }
+  return w;
+}
+
+function sameWord(term: string, word: string): boolean {
+  const a = stemLite(term);
+  const b = stemLite(word);
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length >= 3 && long.startsWith(short) && long.length - short.length <= 3;
 }
 
 /** The query's words marked in a title, as parts to render: "Water disinfection" for "water" shows
- * where the title answers the question. Stems are matched loosely (the first four letters, or the
- * whole of a shorter word) so "bleeding" marks "Bleed" and "tins" marks "Tinned". */
+ * where the title answers the question; "bleeding" marks "Bleed", "tins" marks "Tinned". */
 export function markTitle(title: string, query: string): SnippetPart[] {
   const terms = (query ?? '').toLowerCase().split(/\s+/).map((t) => t.replace(/[^\p{L}\p{N}]/gu, '')).filter((t) => t.length >= 2);
   if (!terms.length || !title) return [{ text: title ?? '', match: false }];
@@ -155,12 +181,24 @@ export function markTitle(title: string, query: string): SnippetPart[] {
   const re = /[\p{L}\p{N}]+|[^\p{L}\p{N}]+/gu;
   for (const m of title.match(re) ?? []) {
     const word = m.toLowerCase();
-    const hit = /[\p{L}\p{N}]/u.test(m) && terms.some((t) => (t.length >= 4 ? word.startsWith(t.slice(0, 4)) && (word.startsWith(t) || t.startsWith(word.slice(0, 4))) : word === t));
+    const hit = /[\p{L}\p{N}]/u.test(m) && terms.some((t) => sameWord(t, word));
     const last = parts[parts.length - 1];
     if (last && last.match === hit) last.text += m;
     else parts.push({ text: m, match: hit });
   }
-  return parts;
+  // two marked words with only a space between them are one mark: "power cut", not "power" and "cut"
+  const joined: SnippetPart[] = [];
+  for (const part of parts) {
+    const back = joined[joined.length - 2];
+    const gap = joined[joined.length - 1];
+    if (part.match && back?.match && gap && !gap.match && /^\s+$/.test(gap.text)) {
+      back.text += gap.text + part.text;
+      joined.pop();
+    } else {
+      joined.push({ ...part });
+    }
+  }
+  return joined;
 }
 
 /** A chip is a word, not a catalogue entry. "Wicipedia (Welsh Wikipedia, with images) (8)" and
