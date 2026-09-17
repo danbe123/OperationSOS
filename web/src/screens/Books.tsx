@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
@@ -29,7 +29,10 @@ export function Books() {
     () => api.books({ q: q || undefined, shelf: shelf ?? undefined, limit: PAGE, offset: 0 }),
     [q, shelf],
   );
-  useEffect(() => { setMore([]); }, [q, shelf]);
+  const queryKey = `${q}\u0000${shelf ?? ''}`;
+  const queryKeyRef = useRef(queryKey);
+  queryKeyRef.current = queryKey;
+  useEffect(() => { setMore([]); }, [queryKey]);
 
   const items = [...(data?.items ?? []), ...more];
   const total = data?.total ?? 0;
@@ -37,7 +40,7 @@ export function Books() {
     setLoadingMore(true);
     try {
       const page = await api.books({ q: q || undefined, shelf: shelf ?? undefined, limit: PAGE, offset: items.length });
-      setMore((m) => [...m, ...page.items]);
+      if (queryKeyRef.current === queryKey) setMore((m) => [...m, ...page.items]); // a page for a query you have since left is dropped
     } finally {
       setLoadingMore(false);
     }

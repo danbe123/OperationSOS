@@ -36,7 +36,7 @@ BOOKS_CATALOGUE = [
 
 @pytest.fixture(scope="session")
 def books_zim(tmp_path_factory) -> Path:
-    """A ZIM in gutenberg2zim 3.0.1's layout: the catalogue as JavaScript, `<slug>.<id>.epub` entries, jpg covers.
+    """A ZIM in gutenberg2zim 3.0.1's layout: the catalogue as JavaScript, `<slug>.<id>` HTML and `<slug>.<id>.epub` entries, jpg covers.
     Aesop has no EPUB (flags 100); Common Sense claims one but the entry is missing; The Prince has no cover."""
     from libzim.writer import Creator, Hint, Item, StringProvider
 
@@ -66,7 +66,8 @@ def books_zim(tmp_path_factory) -> Path:
         creator.add_item(_Item("full_by_popularity.js", "var json_data = " + json.dumps(BOOKS_CATALOGUE) + ";", "text/javascript"))
         for title, _author, flags, book_id, _shelf in BOOKS_CATALOGUE:
             slug = title.strip().replace("/", "-")[:230]
-            creator.add_item(_Item(f"{slug}.{book_id}.html", f"<html><body>{title}</body></html>", "text/html"))
+            if flags[0] == "1":
+                creator.add_item(_Item(f"{slug}.{book_id}", f"<html><body>{title}</body></html>", "text/html"))
             if flags[1] == "1" and book_id != 147:
                 creator.add_item(_Item(f"{slug}.{book_id}.epub", "PK-not-really-an-epub", "application/epub+zip"))
             if book_id != 1232:

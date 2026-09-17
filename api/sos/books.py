@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,13 +17,16 @@ from collections.abc import Callable
 from typing import Protocol
 from urllib.parse import quote
 
+from sos.db import get_setting, set_setting
+
 log = logging.getLogger(__name__)
 
 BOOK_ZIMS = ("gutenberg_en_all",)
 
 # gutenberg2zim 3.0.1 (the scraper behind the 2025-11 build) writes the catalogue as JavaScript: one array per book,
 # [title, author name, "hep" (html/epub/pdf as 0 or 1), Gutenberg id, Library of Congress shelf code], most
-# downloaded first. Book entries are named <slug>.<id>.<format>; covers are covers/<id>_cover_image.jpg.
+# downloaded first. The HTML article is <slug>.<id> (no extension), the EPUB and PDF are <slug>.<id>.<format>;
+# covers are covers/<id>_cover_image.jpg.
 CATALOGUE_ENTRY = "full_by_popularity.js"
 COVER_ENTRIES = ("covers/{id}_cover_image.jpg", "covers/{id}_cover_image.webp")
 SLUG_MAX = 230
@@ -114,38 +118,54 @@ def parse_catalogue(raw: bytes) -> list[CatalogueEntry]:
     return out
 
 
+def _file_stamp(path: Path) -> str | None:
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return f"{st.st_size}:{st.st_mtime_ns}"
+
+
 def index_books(conn: sqlite3.Connection, open_zim: Callable[[Path], ZimReader] = open_zim) -> int:
     """Rewrite books/fts_books for every BOOK_ZIMS item that is on the box. Returns the number of books indexed.
     A ZIM that is absent, unreadable or has no usable catalogue is a warning that leaves the tables as they were;
-    `sos index` carries on either way."""
+    `sos index` carries on either way. A ZIM whose size and mtime have not changed since the last import is
+    skipped: walking the archive for 70,000 EPUBs and covers takes a minute on the Pi."""
     total = 0
     for zim in BOOK_ZIMS:
         row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (zim,)).fetchone()
         if row is None or not row["available"] or not row["local_path"]:
             continue
+        path = Path(row["local_path"])
+        stamp = _file_stamp(path)
+        have = conn.execute("SELECT count(*) AS n FROM books WHERE zim=?", (zim,)).fetchone()["n"]
+        if stamp and have and get_setting(conn, f"books_stamp:{zim}") == stamp:
+            log.info("index: %d books from %s (unchanged)", have, zim)
+            total += have
+            continue
         try:
-            reader = open_zim(Path(row["local_path"]))
+            reader = open_zim(path)
             raw = reader.read(CATALOGUE_ENTRY)
             if raw is None:
                 log.warning("index_books: %s: no %s entry in the ZIM (a different scraper layout?)", zim, CATALOGUE_ENTRY)
                 continue
             entries = parse_catalogue(raw)
-        except (OSError, RuntimeError, ValueError, UnicodeDecodeError) as exc:
+            count = len(entries)
+            rows: list[tuple] = []
+            missing_epubs = 0
+            for position, entry in enumerate(entries):
+                slug = entry_slug(entry.title)
+                html_path = f"{slug}.{entry.id}" if entry.has_html and reader.has(f"{slug}.{entry.id}") else None
+                epub_path = f"{slug}.{entry.id}.epub" if entry.has_epub else None
+                if epub_path and not reader.has(epub_path):
+                    missing_epubs += 1
+                    epub_path = None
+                cover_path = next((c.format(id=entry.id) for c in COVER_ENTRIES if reader.has(c.format(id=entry.id))), None)
+                rows.append((zim, entry.id, entry.title, entry.author or None, entry.shelf or None, count - position,
+                             epub_path, html_path, cover_path))
+        except (OSError, RuntimeError, ValueError, TypeError, ImportError, UnicodeDecodeError) as exc:
             log.warning("index_books: %s: could not read the catalogue: %s", zim, exc)
             continue
-        count = len(entries)
-        rows: list[tuple] = []
-        missing_epubs = 0
-        for position, entry in enumerate(entries):
-            slug = entry_slug(entry.title)
-            html_path = f"{slug}.{entry.id}.html" if entry.has_html else None
-            epub_path = f"{slug}.{entry.id}.epub" if entry.has_epub else None
-            if epub_path and not reader.has(epub_path):
-                missing_epubs += 1
-                epub_path = None
-            cover_path = next((c.format(id=entry.id) for c in COVER_ENTRIES if reader.has(c.format(id=entry.id))), None)
-            rows.append((zim, entry.id, entry.title, entry.author or None, entry.shelf or None, count - position,
-                         epub_path, html_path, cover_path))
         with conn:
             conn.execute("DELETE FROM books WHERE zim=?", (zim,))
             conn.executemany(
@@ -153,6 +173,8 @@ def index_books(conn: sqlite3.Connection, open_zim: Callable[[Path], ZimReader] 
                 "VALUES (?,?,?,?,?,?,?,?,?)", rows)
             # External-content FTS5 does not follow deletes on its content table: rebuild the index from `books`.
             conn.execute("INSERT INTO fts_books(fts_books) VALUES('rebuild')")
+        if stamp:
+            set_setting(conn, f"books_stamp:{zim}", stamp)
         log.info("index: %d books from %s (%d flagged EPUBs missing)", len(rows), zim, missing_epubs)
         total += len(rows)
     return total
@@ -205,7 +227,9 @@ def list_books(conn: sqlite3.Connection, zim: str, *, q: str = "", author: str =
         params.append(shelf)
     where = " AND ".join(clauses)
     if terms:
-        sql_from = f"FROM books b JOIN fts_books f ON f.rowid = b.rowid WHERE fts_books MATCH ? AND {where}"
+        # CROSS JOIN pins the plan to the FTS index first; left to itself SQLite starts from books_shelf and runs
+        # the MATCH once per row, which is seconds per keystroke on a 70,000-row catalogue.
+        sql_from = f"FROM fts_books f CROSS JOIN books b ON b.rowid = f.rowid WHERE fts_books MATCH ? AND {where}"
         params = [query_mod.fts_match(terms, "and"), *params]
         order = "bm25(fts_books, 5.0, 3.0), b.popularity DESC"
     else:

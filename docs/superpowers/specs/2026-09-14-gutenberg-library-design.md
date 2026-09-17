@@ -13,7 +13,7 @@ sections below, these win.
   2025-11-24), checked against the scraper's tagged source. That version still writes the older layout: the catalogue
   is JavaScript, `full_by_popularity.js` and `full_by_title.js`, each `var json_data = [[title, author, "hep", id,
   shelf], ...]` where `"hep"` flags html/epub/pdf and `shelf` is a Library of Congress class code; book entries are
-  `<slug>.<id>.html` / `.epub` / `.pdf` with `slug = title.strip().replace("/", "-")[:230]`; covers are
+  the HTML article `<slug>.<id>` (no extension) plus `<slug>.<id>.epub` / `.pdf` with `slug = title.strip().replace("/", "-")[:230]`; covers are
   `covers/<id>_cover_image.jpg`, present only for some books and not flagged in the catalogue. The `books.json` layout
   section 2 describes exists only on the scraper's unreleased main branch. No layout carries subjects, subtitles,
   author years or download counts in the list file.

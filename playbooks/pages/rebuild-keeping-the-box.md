@@ -9,7 +9,7 @@ category: rebuild
 
 ## What this box is, in hardware
 
-A Raspberry Pi 5 with 8 GB of memory, a 500 GB NVMe solid-state drive on a carrier board under the Pi, a 7-inch DSI touchscreen, and its own WiFi — the reference build recorded in the box's own hardware table in its README, which is the authority for these figures. It needs no internet, no mobile network and no grid: only a USB-C supply and somewhere dry ([About Operation SOS](page:about-sos)). Everything below is about keeping that small machine running for as long as it can be run, and getting the knowledge off it before it stops.
+A Raspberry Pi 5 with 8 GB of memory, a 1 TB NVMe solid-state drive on a carrier board under the Pi, a 7-inch DSI touchscreen, and its own WiFi — the reference build recorded in the box's own hardware table in its README, which is the authority for these figures. It needs no internet, no mobile network and no grid: only a USB-C supply and somewhere dry ([About Operation SOS](page:about-sos)). Everything below is about keeping that small machine running for as long as it can be run, and getting the knowledge off it before it stops.
 
 Treat it as a library, not a gadget. It is the only thing in the village that holds the NHS pages, Wikipedia, the manuals and the maps, and the day it fails is the day that knowledge is whatever somebody wrote down.
 
@@ -43,7 +43,7 @@ The reason for the tin is electromagnetic pulse, and it needs stating honestly. 
 
 ## Copying the library
 
-The library is about 200 GB in the core tier and several hundred more in the extended one, so the core copy fits a 500 GB drive and the whole thing wants 2 TB — the figures in the box's own manifest and its README hardware table. Copy it with `rsync`, which skips files whose size and date already match and keeps part-copied files so a broken run resumes, and check the copy afterwards rather than assuming it ([rsync](kiwix:wikipedia_en_all_maxi/Rsync)):
+The library is about 680 GB in the core tier (most of it the two book collections) and several hundred more in the extended one, so the core copy wants a 1 TB drive and the whole thing 2 TB — the figures in the box's own manifest and its README hardware table. Copy it with `rsync`, which skips files whose size and date already match and keeps part-copied files so a broken run resumes, and check the copy afterwards rather than assuming it ([rsync](kiwix:wikipedia_en_all_maxi/Rsync)):
 
 ```
 rsync -avP --partial-dir=.rsync-partial /srv/sos/ /mnt/spare/sos/

@@ -186,6 +186,13 @@ def record_resolved(conn: sqlite3.Connection, item_id: str, resolved: Resolved) 
     conn.commit()
 
 
+def enough_space(part: Path, size: int) -> bool:
+    """Room for the rest of a download: a half-fetched .part already occupies its share. A core tier of nearly
+    700 GB on a 500 GB drive would otherwise fill the disk the state database lives on."""
+    done = part.stat().st_size if part.exists() else 0
+    return shutil.disk_usage(part.parent).free >= max(0, size - done)
+
+
 def sync(settings: Settings, tier: str, only: list[str] | None = None, dry_run: bool = False, out: Callable = print,
          client: httpx.Client | None = None, run: Callable = subprocess.run, use_aria2: bool | None = None) -> int:
     items = [i for i in load_manifests(settings.manifests) if i.tier == tier]
@@ -229,8 +236,13 @@ def sync(settings: Settings, tier: str, only: list[str] | None = None, dry_run: 
             if dry_run:
                 out(f"GET  {item.id}: {resolved.url} ({size_txt}) -> {target}")
                 continue
-            out(f"GET  {item.id}: {resolved.url} ({size_txt})")
             part = target.with_name(target.name + ".part")
+            if resolved.size and not enough_space(part, resolved.size):
+                free_gb = shutil.disk_usage(target.parent).free / 1e9
+                out(f"FAIL {item.id}: needs {size_txt} but {target.parent} has {free_gb:.2f} GB free")
+                failures += 1
+                continue
+            out(f"GET  {item.id}: {resolved.url} ({size_txt})")
             try:
                 download(resolved.url, part, resolved.sha256, resolved.mirrors, use_aria2, run, client)
             except (SyncError, httpx.HTTPError, OSError) as exc:

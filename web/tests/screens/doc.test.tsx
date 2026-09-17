@@ -64,6 +64,23 @@ describe('Doc', () => {
     }
   });
 
+  it('saves the last page turn when the reader closes before the pause, and reopens there after the layout toggle', async () => {
+    const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
+    const put = vi.spyOn(api, 'putReading').mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await screen.findByRole('button', { name: 'Next' });
+    mocks.rendition.display.mockClear();
+    mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
+    await user.click(screen.getByRole('button', { name: /Original PDF layout/ }));   // unmounts the EPUB reader at once
+    expect(put).toHaveBeenCalledTimes(1);
+    expect(put).toHaveBeenCalledWith('doc:where-there-is-no-doctor', expect.objectContaining({ cfi: 'epubcfi(/6/12)', percent: 50 }));
+    await user.click(screen.getByRole('button', { name: /Reflowed text/ }));
+    await screen.findByRole('button', { name: 'Next' });
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
+  });
+
   it('starts at the beginning when the saved place no longer resolves', async () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     vi.spyOn(api, 'getReading').mockResolvedValue({

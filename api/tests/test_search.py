@@ -244,6 +244,26 @@ def test_books_group_sits_in_the_results_with_its_own_badge_and_url(respx_mock, 
     assert all("gutenberg_en_all" not in str(call.request.url) for call in route.calls)
 
 
+@respx.mock(base_url=BASE, assert_all_called=False)
+def test_books_vanish_from_search_and_suggest_when_the_zim_is_gone(respx_mock, conn, env):
+    _seed_books(conn)
+    conn.execute("UPDATE library_items SET available=0 WHERE id='gutenberg_en_all'")
+    conn.commit()
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text=(FX / "kiwix" / "search.xml").read_text()))
+    respx_mock.get("/suggest").mock(return_value=httpx.Response(200, text="[]"))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert not [r for r in resp["results"] if r["source"] == "books"]
+    assert not [s for s in _run(search.suggest(conn, env, KiwixClient(BASE), "prin")) if s["source"] == "Book"]
+
+
+@respx.mock(base_url=BASE, assert_all_called=False)
+def test_suggest_finds_a_book_by_its_author(respx_mock, conn, env):
+    _seed_books(conn)
+    respx_mock.get("/suggest").mock(return_value=httpx.Response(200, text="[]"))
+    out = _run(search.suggest(conn, env, KiwixClient(BASE), "kings"))
+    assert any(s["url"] == "/book/gutenberg/2701" for s in out)
+
+
 def test_classify_puts_core_book_zims_in_their_own_class():
     assert search.classify({"tier": "core", "category": "books", "id": "survivorlibrary.com_en_all"}) == "books"
 

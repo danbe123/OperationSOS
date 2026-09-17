@@ -46,7 +46,7 @@ TEMPERATURE = 0.2
 REFUSAL_TEXT = "The library doesn't cover this."
 MEDICAL_DISCLAIMER = ("If someone is seriously ill or injured, call 999. "
                       "This is general information from the library, not a diagnosis.")
-NON_PASSAGE_KINDS = {"place", "item"}
+NON_PASSAGE_KINDS = {"place", "item", "book"}  # a catalogue hit has no passage to quote
 READ_URL = re.compile(r"^/read/([^/]+)/(.+)$")
 
 

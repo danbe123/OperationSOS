@@ -262,6 +262,33 @@ def test_sync_downloads_verifies_renames_records_and_indexes(respx_mock, env, tm
 
 
 @respx.mock
+def test_sync_refuses_a_download_that_will_not_fit(respx_mock, env, tmp_path, monkeypatch):
+    monkeypatch.setattr(env, "manifest_dir", _manifest(tmp_path, ITEMS))
+    zim_bytes = (FX / "library" / "sos-test-noindex.zim").read_bytes()
+    respx_mock.get(sync.OPDS_URL).mock(return_value=httpx.Response(200, text=(FX / "opds" / "catalog.xml").read_text()))
+    respx_mock.get(WATER_ZIM_URL + ".meta4").mock(return_value=httpx.Response(200, text=_meta4_for(NOINDEX_SHA, len(zim_bytes))))
+    zim_route = respx_mock.get(WATER_ZIM_URL).mock(return_value=httpx.Response(200, content=zim_bytes))
+    respx_mock.get("https://files.test/sos-test.pdf").mock(return_value=httpx.Response(200, content=(FX / "docs" / "sos-test.pdf").read_bytes()))
+    respx_mock.post("http://127.0.0.1:8000/api/system/rescan").mock(return_value=httpx.Response(200, json={}))
+    usage = shutil.disk_usage(env.core)
+    monkeypatch.setattr(sync.shutil, "disk_usage", lambda p: usage._replace(free=len(zim_bytes) - 1))
+    lines = []
+    with httpx.Client() as client:
+        rc = sync.sync(env, "core", out=lines.append, client=client, use_aria2=False)
+    assert rc != 0 and zim_route.call_count == 0
+    assert any(line.startswith("FAIL zimgit-water_en_2024-08: needs") and "GB free" in line for line in lines)
+    assert not (env.core / "zim" / "zimgit-water_en_2024-08.zim.part").exists()
+
+
+def test_enough_space_counts_the_part_already_fetched(tmp_path, monkeypatch):
+    part = tmp_path / "x.zim.part"
+    part.write_bytes(b"x" * 600)
+    usage = shutil.disk_usage(tmp_path)
+    monkeypatch.setattr(sync.shutil, "disk_usage", lambda p: usage._replace(free=500))
+    assert sync.enough_space(part, 1000) is True
+    assert sync.enough_space(part, 1200) is False
+
+
 def test_sync_checksum_mismatch_fails_item(respx_mock, env, tmp_path, monkeypatch):
     monkeypatch.setattr(env, "manifest_dir", _manifest(tmp_path, [ITEMS[1]]))
     respx_mock.get("https://files.test/sos-test.pdf").mock(return_value=httpx.Response(200, content=b"tampered"))

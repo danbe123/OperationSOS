@@ -1,6 +1,7 @@
 """index_books against a ZIM in the real scraper's layout (built by the books_zim fixture), the catalogue parser,
 and the /api/books and /api/reading endpoints."""
 import logging
+import os
 from pathlib import Path
 
 import pytest
@@ -49,11 +50,11 @@ def test_index_books_populates_books_and_fts(tmp_path, books_zim):
     rows = {r["id"]: r for r in conn.execute("SELECT * FROM books WHERE zim='gutenberg_en_all'")}
     assert rows[1342]["title"] == "Pride and Prejudice" and rows[1342]["author"] == "Jane Austen" and rows[1342]["shelf"] == "PR"
     assert rows[1342]["epub_path"] == "Pride and Prejudice.1342.epub"
-    assert rows[1342]["html_path"] == "Pride and Prejudice.1342.html"
+    assert rows[1342]["html_path"] == "Pride and Prejudice.1342"          # the scraper stores the article without .html
     assert rows[1342]["cover_path"] == "covers/1342_cover_image.jpg"
     assert rows[1342]["popularity"] == 6 and rows[2641]["popularity"] == 1   # position in full_by_popularity.js
     assert rows[11339]["epub_path"] is None                                  # flags say html only
-    assert rows[11339]["html_path"] == "Aesop's Fables - A New Translation.11339.html"
+    assert rows[11339]["html_path"] == "Aesop's Fables - A New Translation.11339"
     assert rows[147]["epub_path"] is None                                    # flagged, but the entry is not in the ZIM
     assert rows[1232]["cover_path"] is None                                  # no cover entry
     assert rows[2641]["shelf"] is None and rows[2641]["author"] == "E. M. Forster"
@@ -73,6 +74,7 @@ def test_index_books_warns_and_keeps_the_tables_on_a_bad_catalogue(tmp_path, boo
     conn = _conn(tmp_path)
     _add_item(conn, books_zim)
     index_books(conn)
+    os.utime(books_zim, (3, 3))                           # "replaced" by a file whose catalogue is garbage
 
     class Broken:
         def read(self, path):
@@ -111,10 +113,46 @@ def test_index_books_survives_an_unreadable_file(tmp_path, caplog):
     assert "gutenberg_en_all" in caplog.text
 
 
+def test_index_books_skips_an_unchanged_zim_and_rereads_a_replaced_one(tmp_path, books_zim):
+    conn = _conn(tmp_path)
+    _add_item(conn, books_zim)
+    assert index_books(conn) == 6
+    opened = []
+
+    def spy(path):
+        opened.append(path)
+        return books.open_zim(path)
+
+    assert index_books(conn, open_zim=spy) == 6
+    assert opened == []                                   # same size and mtime: nothing re-read
+    os.utime(books_zim, (1, 1))                           # a rebuilt file with the same name
+    assert index_books(conn, open_zim=spy) == 6
+    assert opened == [books_zim]
+
+
+def test_index_books_survives_a_bad_row_and_a_reader_that_breaks_mid_walk(tmp_path, caplog):
+    conn = _conn(tmp_path)
+    _add_item(conn, Path("/nonexistent.zim"))
+
+    class Odd:
+        def read(self, path): return b'var json_data = [["T", "A", "110", null, "PR"]];'
+        def has(self, path): return False
+
+    class Breaks:
+        def read(self, path): return b'var json_data = [["T", "A", "110", 1, "PR"]];'
+        def has(self, path): raise RuntimeError("bad dirent")
+
+    with caplog.at_level(logging.WARNING):
+        assert index_books(conn, open_zim=lambda p: Odd()) == 0
+        assert index_books(conn, open_zim=lambda p: Breaks()) == 0
+    assert caplog.text.count("gutenberg_en_all") == 2
+
+
 def test_index_books_rerun_replaces_rows_and_leaves_no_stale_fts(tmp_path, books_zim):
     conn = _conn(tmp_path)
     _add_item(conn, books_zim)
     index_books(conn)
+    os.utime(books_zim, (2, 2))                           # the file was replaced, so it is read again
 
     class OneBook:
         def read(self, path):
@@ -154,7 +192,7 @@ def test_books_lists_by_popularity_and_pages(populated):
     assert [b["title"] for b in body["items"]][:2] == ["Pride and Prejudice", "Moby-Dick; Or, The Whale"]
     first = body["items"][0]
     assert first["epub_url"] == "/kiwix/content/gutenberg_en_all/Pride%20and%20Prejudice.1342.epub"
-    assert first["html_url"] == "/read/gutenberg_en_all/Pride%20and%20Prejudice.1342.html"
+    assert first["html_url"] == "/read/gutenberg_en_all/Pride%20and%20Prejudice.1342"
     assert first["cover_url"] == "/kiwix/content/gutenberg_en_all/covers/1342_cover_image.jpg"
     assert first["shelf"] == "PR" and first["shelf_name"] == "English literature"
     page = populated.get("/api/books", params={"limit": 2, "offset": 2}).json()
@@ -193,7 +231,7 @@ def test_one_book_with_and_without_an_epub(populated):
     assert body["title"] == "Pride and Prejudice" and body["available"] is True and body["position"] is None
     aesop = populated.get("/api/books/gutenberg/11339").json()
     assert aesop["epub_url"] is None
-    assert aesop["html_url"] == "/read/gutenberg_en_all/Aesop%27s%20Fables%20-%20A%20New%20Translation.11339.html"
+    assert aesop["html_url"] == "/read/gutenberg_en_all/Aesop%27s%20Fables%20-%20A%20New%20Translation.11339"
     assert populated.get("/api/books/gutenberg/999").status_code == 404
 
 

@@ -12,7 +12,7 @@ from urllib.parse import quote
 import httpx
 
 from sos import places as places_mod
-from sos.books import BOOK_ZIMS, SHELF_NAMES
+from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim
 from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
@@ -205,10 +205,11 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             entry["page"] = int(row["page"])
         results.append(entry)
 
+    # The catalogue rows outlive the ZIM (index_books leaves them when the file is gone), so the gate is the item.
     book_rows = conn.execute(
-        "SELECT b.id, b.title, b.author, b.shelf FROM books b JOIN fts_books f ON f.rowid = b.rowid "
+        "SELECT b.id, b.title, b.author, b.shelf FROM fts_books f CROSS JOIN books b ON b.rowid = f.rowid "
         "WHERE fts_books MATCH ? ORDER BY bm25(fts_books, 5.0, 3.0), b.popularity DESC LIMIT 10",
-        (query_mod.fts_match(reduced.terms, fts_mode),)).fetchall()
+        (query_mod.fts_match(reduced.terms, fts_mode),)).fetchall() if available_zim(conn) else []
     for rank, row in enumerate(book_rows, 1):
         shelf = SHELF_NAMES.get(row["shelf"] or "")
         results.append({
@@ -278,9 +279,13 @@ async def suggest(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         ).fetchall()
         for r in rows:
             out.append({"value": r["title"], "label": r["title"], "url": r["url"], "source": KIND_BADGES.get(r["kind"], "Document")})
-        for r in conn.execute(
-            "SELECT b.id, b.title, b.author FROM books b JOIN fts_books f ON f.rowid = b.rowid "
-            "WHERE fts_books MATCH ? ORDER BY bm25(fts_books, 5.0, 3.0), b.popularity DESC LIMIT 3", (match,)).fetchall():
+        # No `title :` column filter here: an author's name is as good a way in as a title.
+        book_match = " ".join(f'"{t}"*' for t in tokens)
+        book_rows = conn.execute(
+            "SELECT b.id, b.title, b.author FROM fts_books f CROSS JOIN books b ON b.rowid = f.rowid "
+            "WHERE fts_books MATCH ? ORDER BY bm25(fts_books, 5.0, 3.0), b.popularity DESC LIMIT 3",
+            (book_match,)).fetchall() if available_zim(conn) else []
+        for r in book_rows:
             label = f"{r['title']} — {r['author']}" if r["author"] else r["title"]
             out.append({"value": r["title"], "label": label, "url": f"/book/gutenberg/{r['id']}", "source": "Book"})
     books = conn.execute("SELECT id, title FROM library_items WHERE kind='zim' AND available=1 AND suggest=1 ORDER BY priority, id").fetchall()

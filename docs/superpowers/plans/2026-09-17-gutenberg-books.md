@@ -15,7 +15,7 @@
 The 2025-11 `gutenberg_en_all` ZIM was built by gutenberg2zim **3.0.1** (released 2025-11-24). That version writes the layout below; the `books.json` layout the spec's section 2 describes exists only on the scraper's unreleased main branch. Every entry-name rule lives in one place, the top of `api/sos/books.py`, so a later build costs one table edit.
 
 - Catalogue: `full_by_popularity.js` (every book, most downloaded first) and `full_by_title.js`, each `var json_data = [[title, author name, "hep", id, shelf], ...];` where `"hep"` is three `0`/`1` characters for html, epub, pdf, `id` is the numeric Gutenberg id and `shelf` is a Library of Congress class code (`"PR"`, `"Q"`, ... or `""`). No subjects, no subtitle, no author years, no download counts.
-- Book entries: `<slug>.<id>.html`, `<slug>.<id>.epub`, `<slug>.<id>.pdf` where `slug = title.strip().replace("/", "-")[:230]`.
+- Book entries: the HTML article `<slug>.<id>` (no extension), then `<slug>.<id>.epub` and `<slug>.<id>.pdf`, where `slug = title.strip().replace("/", "-")[:230]`.
 - Covers: `covers/<id>_cover_image.jpg` (present only for books that have one; the catalogue does not say which).
 - Authors: `authors_lang_en.js` (`[name, gut_id]` pairs) — not needed.
 - Front page `Home`; a title index per book that Kiwix suggest searches.

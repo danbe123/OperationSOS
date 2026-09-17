@@ -235,7 +235,7 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
 
 /** The paginated EPUB reader. With `memory` it opens where the box last saw you and, as you turn pages,
  * tells the box where you are (one write per pause, never one per page). */
-export function EpubReader({ url, theme, leading, memory }: { url: string; theme: Theme; leading?: ReactNode; memory?: EpubMemory }) {
+export function EpubReader({ url, theme, leading, memory, onPosition }: { url: string; theme: Theme; leading?: ReactNode; memory?: EpubMemory; onPosition?: (cfi: string) => void }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<Rendition | null>(null);
   const [size, setSize] = useState(100);
@@ -244,6 +244,8 @@ export function EpubReader({ url, theme, leading, memory }: { url: string; theme
   themeRef.current = theme;
   const memoryRef = useRef(memory);
   memoryRef.current = memory;
+  const onPositionRef = useRef(onPosition);
+  onPositionRef.current = onPosition;
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -255,20 +257,28 @@ export function EpubReader({ url, theme, leading, memory }: { url: string; theme
     const opening = start ? rendition.display(start).catch(() => rendition.display()) : rendition.display();
     opening.catch((e: unknown) => setError(errorMessage(e)));
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const onRelocated = (loc: Location) => {
+    let pending: Location | null = null;
+    const save = () => {
       const m = memoryRef.current;
-      if (!m) return;
+      const loc = pending;
+      pending = null;
+      if (!m || !loc) return;
+      void api.putReading(m.key, {
+        title: m.title, author: m.author, cover_url: m.coverUrl,
+        cfi: loc.start.cfi, percent: readingPercent(loc, (book.spine as { length?: number }).length),
+      }).catch(() => undefined); // the page turned either way; a missed save costs nothing but the bookmark
+    };
+    const onRelocated = (loc: Location) => {
+      onPositionRef.current?.(loc.start.cfi);
+      if (!memoryRef.current) return;
+      pending = loc;
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        void api.putReading(m.key, {
-          title: m.title, author: m.author, cover_url: m.coverUrl,
-          cfi: loc.start.cfi, percent: readingPercent(loc, (book.spine as { length?: number }).length),
-        }).catch(() => undefined); // the page turned either way; a missed save costs nothing but the bookmark
-      }, SAVE_DELAY_MS);
+      timer = setTimeout(save, SAVE_DELAY_MS);
     };
     rendition.on('relocated', onRelocated);
     return () => {
       clearTimeout(timer);
+      save(); // a page turned in the last two seconds before Back is still the place to come back to
       rendition.off('relocated', onRelocated);
       book.destroy();
       renditionRef.current = null;
@@ -341,8 +351,14 @@ export function Doc() {
     [item?.id, item?.kind],
   );
   const memoryReady = Boolean(item) && item!.kind === 'epub' && memoryQ.data?.id === item!.id;
+  // Where the reader last was in this visit: the original/reflowed toggle remounts the reader, and it
+  // must come back to the page you were on, not to the place the box remembered when the screen opened.
+  const lastCfi = useRef<{ id: string; cfi: string } | null>(null);
   const memory: EpubMemory | undefined = memoryReady
-    ? { key: `doc:${item!.id}`, title: item!.title, author: null, coverUrl: null, startCfi: memoryQ.data?.entry?.cfi ?? null }
+    ? {
+      key: `doc:${item!.id}`, title: item!.title, author: null, coverUrl: null,
+      startCfi: (lastCfi.current?.id === item!.id ? lastCfi.current.cfi : null) ?? memoryQ.data?.entry?.cfi ?? null,
+    }
     : undefined;
   const isDocument = item?.kind === 'pdf' || item?.kind === 'epub';
   const gone = Boolean(item) && isDocument && (missing || !item!.available || !file);
@@ -361,7 +377,7 @@ export function Doc() {
       {error && <p className="screen-body warning">Could not load this document: {error}</p>}
       {item && gone && <DocumentMissing item={item} />}
       {item && !gone && file && item.kind === 'pdf' && <PdfFrame url={file} theme={theme} hash={location.hash} onMissing={() => setMissing(true)} />}
-      {item && !gone && file && item.kind === 'epub' && !showOriginal && memoryReady && <EpubReader url={file} theme={theme} leading={originalToggle} memory={memory} />}
+      {item && !gone && file && item.kind === 'epub' && !showOriginal && memoryReady && <EpubReader url={file} theme={theme} leading={originalToggle} memory={memory} onPosition={(cfi) => { lastCfi.current = { id: item.id, cfi }; }} />}
       {item && !gone && hasOriginal && showOriginal && <PdfFrame url={item!.pdf_fallback_url!} theme={theme} hash={location.hash} leading={originalToggle} />}
       {item && !isDocument && <p className="screen-body warning">{documentTitle(item.title)} is not a PDF or EPUB.</p>}
     </Screen>
