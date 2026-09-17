@@ -508,6 +508,13 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     const name = `sos-${theme}-${root.dataset.dim === 'on' ? 'dim' : 'lit'}`;
     rendition.themes.register(name, { ...epubTheme(tokens, link, theme !== 'field') } as Parameters<typeof rendition.themes.register>[1]);
     rendition.themes.select(name);
+    // epub.js adds the chosen theme's stylesheet to each rendered chapter and leaves the last one's
+    // there: back from Mono to Field, Field's sheet was the older of the two and Mono's still won.
+    for (const contents of rendition.getContents() as unknown as { document?: Document }[]) {
+      for (const sheet of Array.from(contents.document?.querySelectorAll('style[id^="epubjs-inserted-css-sos-"]') ?? [])) {
+        if (sheet.id !== `epubjs-inserted-css-${name}` && sheet.id !== 'epubjs-inserted-css-sos-reader-fonts') sheet.remove();
+      }
+    }
     rendition.themes.fontSize(`${size}%`);
   }, [theme, size, flow]);
 

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 
 /** Two themes and no more: Field, paper and ink, and Mono, white on pure black with no hue in it.
  * Field is the box default, so an unstamped document (and the bare `:root` in tokens.css) is light. */
@@ -31,11 +31,15 @@ export function ThemeProvider({ fallback, mode = null, dim = false, children }: 
   const [chosen, setChosen] = useState<Theme | null>(null);
   const theme: Theme = chosen ?? mode ?? stored ?? fallback ?? 'field';
 
-  useEffect(() => {
+  // Stamped in layout effects, which run before any screen's ordinary effects: the book reader, the
+  // PDF viewer and the article reader read the palette off the root when the theme changes, and a
+  // child's effect runs before its parent's, so with a plain effect here they read the palette the
+  // theme had just left ("if i change theme on a book the page doesnt change with the theme").
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (dim) document.documentElement.dataset.dim = 'on';
     else delete document.documentElement.dataset.dim;
   }, [dim]);

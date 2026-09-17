@@ -26,7 +26,7 @@ export function textSizeCss(percent: number): string {
 export type ViewerTokens = { ground: string; panel: string; ink: string; line: string; link: string };
 
 const VIEWER_FALLBACK: Record<Theme, ViewerTokens> = {
-  field: { ground: '#f3efe4', panel: '#ffffff', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' },
+  field: { ground: '#ffffff', panel: '#f3efe4', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' },
   mono: { ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' },
 };
 

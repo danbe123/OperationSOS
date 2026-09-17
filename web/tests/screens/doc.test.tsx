@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
     off: vi.fn((event: string) => { delete handlers[event]; }),
     themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() },
     hooks: { content: { register: vi.fn() } },
+    getContents: () => [],
   };
   const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 } };
   return { rendition, book, handlers, ePub: vi.fn(() => book) };
@@ -69,6 +70,21 @@ describe('Doc', () => {
     const addStylesheetRules = vi.fn();
     hook({ addStylesheetRules });
     expect(addStylesheetRules).toHaveBeenCalledWith(expect.objectContaining({ '@font-face': expect.arrayContaining([expect.objectContaining({ 'font-style': 'italic' })]) }), 'sos-reader-fonts');
+  });
+
+  it('follows a change of theme with the palette the new theme has, not the one it left', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    await waitFor(() => expect(mocks.rendition.themes.select).toHaveBeenLastCalledWith('sos-field-lit'));
+    // jsdom has no stylesheets, so the palette read off the root is the fallback for the theme stamped
+    // there: the test is that the stamp is already the new theme when the reader reads it.
+    await user.click(screen.getAllByRole('button', { name: /Change the theme/ })[0]);
+    await waitFor(() => expect(mocks.rendition.themes.select).toHaveBeenLastCalledWith('sos-mono-lit'));
+    const rules = mocks.rendition.themes.register.mock.calls.at(-1)![1] as Record<string, Record<string, string>>;
+    expect(rules.body.background).toBe('#000000');
+    expect(rules.body.color).toBe('#f2f2f2');
   });
 
   it('puts the chrome away for the book and brings it back with a tap on the middle of the page', async () => {

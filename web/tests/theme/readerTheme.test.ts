@@ -56,7 +56,7 @@ describe('viewerTokens', () => {
     document.body.appendChild(root);
     expect(viewerTokens(root, 'mono').ground).toBe('#123456');
     expect(viewerTokens(null, 'mono')).toEqual({ ground: '#000000', panel: '#0a0a0a', ink: '#f2f2f2', line: '#2a2a2a', link: '#ffffff' });
-    expect(viewerTokens(null, 'field')).toEqual({ ground: '#f3efe4', panel: '#ffffff', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' });
+    expect(viewerTokens(null, 'field')).toEqual({ ground: '#ffffff', panel: '#f3efe4', ink: '#1b1b1b', line: '#c3b9a2', link: '#1a3f8a' });
     root.remove();
   });
 });

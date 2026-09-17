@@ -55,12 +55,15 @@
 
 /* Field (the default): paper and ink, serif headings, dark ochre warnings. It is also the print
    palette, and it is what the bare `:root` carries, so a document nobody has stamped a theme on yet
-   is the light one rather than a dark one flashing past on the first paint. */
+   is the light one rather than a dark one flashing past on the first paint. The ground is white and
+   the panels — the rail, the band, the screen head, the reader's bar, every card — are cream; it was
+   the other way about until the owner, reading a book: "the colours should be flipped, cream side bar
+   and similar element that are currently white and the current cream goes white". */
 :root,
 :root[data-theme="field"] {
   color-scheme: light;
-  --ground: #f3efe4;
-  --panel: #ffffff;
+  --ground: #ffffff;
+  --panel: #f3efe4;
   --sunken: #ebe5d6;
   --raised: #e7e1d2;
   --ink: #1b1b1b;
@@ -114,8 +117,8 @@
    timer (`kiosk/IdleOverlay.tsx`), which already drop it. */
 :root[data-dim="on"],
 :root[data-theme="field"][data-dim="on"] {
-  --ground: #d5cfc0;
-  --panel: #e6e0d0;
+  --ground: #e6e0d0;
+  --panel: #d5cfc0;
   --sunken: #cbc5b6;
   --raised: #c9c2b2;
   --ink: #1b1b1b;
