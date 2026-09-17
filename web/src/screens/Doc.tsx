@@ -250,7 +250,9 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   useEffect(() => {
     if (!hostRef.current) return;
     const book = ePub(url);
-    const rendition = book.renderTo(hostRef.current, { width: '100%', height: '100%', flow: 'paginated' });
+    // One page at a time: the two-page spread epub.js draws past 800 px read as the columns the reflow
+    // had just undone, and the measure is capped by the host so a laptop is not a 1300 px line.
+    const rendition = book.renderTo(hostRef.current, { width: '100%', height: '100%', flow: 'paginated', spread: 'none' });
     renditionRef.current = rendition;
     const start = memoryRef.current?.startCfi || undefined;
     // A remembered place that no longer resolves (the file was rebuilt) is not an error: open at the start.

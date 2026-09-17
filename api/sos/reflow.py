@@ -65,15 +65,21 @@ def strip_furniture(pages: list[str]) -> list[list[str]]:
     threshold = max(3, int(FURNITURE_SHARE * len(split)))
     furniture = {k for k, n in counts.items() if n >= threshold and len(k) < 80}
     out: list[list[str]] = []
-    previous_top: list[str] = []
+    recent_tops: list[list[str]] = []
     for lines in split:
-        kept = [ln for ln in lines if not _is_page_number(ln) and _furniture_key(ln) not in furniture]
+        kept = [ln for ln in lines if not _is_page_number(ln) and not _is_noise(ln) and _furniture_key(ln) not in furniture]
+        if _is_contents_page(kept):
+            out.append([])      # the EPUB carries its own table of contents
+            recent_tops.append([])
+            continue
         # A chapter title printed at the top of each of its pages recurs on too few pages to count
-        # book-wide, but it is the same line at the top of the page before: keep its first appearance
-        # (where the chapter starts) and drop the repeats.
+        # book-wide, but it is the same line at the top of a page just before (the one before, or two
+        # back where left and right pages alternate the book's title with the chapter's): keep its first
+        # appearance and drop the repeats.
         body = [ln for ln in kept if ln.strip()]
         top = [_furniture_key(ln) for ln in body[:EDGE_LINES]]
-        repeats = {k for k in top if k in previous_top}
+        seen_before = {k for tops in recent_tops[-4:] for k in tops}
+        repeats = {k for k in top if k in seen_before}
         if repeats:
             seen_top = 0
             trimmed: list[str] = []
@@ -84,9 +90,33 @@ def strip_furniture(pages: list[str]) -> list[list[str]]:
                         continue
                 trimmed.append(ln)
             kept = trimmed
-        previous_top = top
+        recent_tops.append(top)
         out.append(kept)
     return out
+
+
+_DASHES = re.compile(r"^[\-–—_.·•*=~]{1,4}$")
+_LEADER = re.compile(r"(\.\s?){4,}|\s\d{1,4}$")
+
+
+def _is_noise(line: str) -> bool:
+    """A line that is only a dash or a dot, or a few letters of OCR grit ("aa . ut"), is not text."""
+    s = line.strip()
+    if not s:
+        return False
+    if _DASHES.match(s):
+        return True
+    tokens = s.split()
+    return len(tokens) <= 4 and len(s) <= 12 and not any(len(t) >= 3 and t.isalpha() for t in tokens)
+
+
+def _is_contents_page(lines: list[str]) -> bool:
+    """A table of contents: most lines end in a page number or run to one across dot leaders."""
+    body = [ln.strip() for ln in lines if ln.strip()]
+    if len(body) < 6:
+        return False
+    refs = sum(1 for ln in body if _LEADER.search(ln))
+    return refs / len(body) >= 0.5
 
 
 # --- lines into blocks ------------------------------------------------------------------------------
@@ -94,7 +124,7 @@ def strip_furniture(pages: list[str]) -> list[list[str]]:
 
 @dataclass(frozen=True)
 class Block:
-    kind: str   # "h1" | "h2" | "p" | "li"
+    kind: str   # "h1" | "h2" | "p" | "li" | "caption"
     text: str
 
 
@@ -105,6 +135,7 @@ _NUMBERED = re.compile(r"^\d{1,3}(\.\d{1,3})*\.?\s+[A-Z]")
 _BULLET = re.compile(r"^([•·▪■●○\-–—*]|\(?([a-z]|[ivx]{1,3}|\d{1,3})[.)])\s+")
 _SYMBOL_BULLET = re.compile(r"^([•·▪■●○\-–—*]|\(?[a-z][.)])\s+")
 _NUMBERED_ITEM = re.compile(r"^\(?\d{1,3}[.)]\s+")
+_CAPTION = re.compile(r"^(fig(ure)?|plate|table|photo)\.?\s*\S{1,5}\s*[.:—–-]", re.I)   # "Fig. 82—", and OCR's "Fig. r.—"
 SHORT_LINE = 0.55       # a line under this share of the page's typical width ends its paragraph
 MAX_HEADING = 90
 
@@ -152,24 +183,42 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
     blocks: list[Block] = []
     open_kind: str | None = None
     open_text = ""
+    heading_open = False   # the last block is a heading with no blank line after it yet
+    closed_short = False   # the last block was closed by the short-line rule
+    captions: list[Block] = []   # a figure's caption waits until the paragraph it interrupted has closed
+    blank_after_caption = False
 
     def close() -> None:
         nonlocal open_kind, open_text
         if open_kind and open_text.strip():
             blocks.append(Block(open_kind, re.sub(r"\s+", " ", open_text).strip()))
         open_kind, open_text = None, ""
-
-    heading_open = False   # the last block is a heading with no blank line after it yet
-    closed_short = False   # the last block was closed by the short-line rule
+        blocks.extend(captions)
+        captions.clear()
 
     for lines in pages:
         width = _typical_width(lines)
         stripped = [re.sub(r"\s+", " ", raw.strip()) for raw in lines]
+        at_page_top = True
         for i, line in enumerate(stripped):
             if not line:
+                if at_page_top and open_kind and not open_text.rstrip().endswith(_TERMINAL):
+                    continue   # the gap a dropped running head left; the sentence from the last page goes on
+                if captions and not blank_after_caption:
+                    blank_after_caption = True   # the blank around a caption is the caption's, not the paragraph's
+                    continue
+                following = next((x for x in stripped[i + 1:] if x), "")
+                if open_kind and (open_text.rstrip().endswith("-") or _CAPTION.match(following)):
+                    continue   # a word broken at the margin, or a figure about to interrupt: the paragraph goes on
                 close()
-                heading_open = closed_short = False
+                heading_open = closed_short = blank_after_caption = False
                 continue
+            if _CAPTION.match(line) and len(line) < MAX_HEADING:
+                captions.append(Block("caption", line))
+                blank_after_caption = False
+                continue
+            blank_after_caption = False
+            at_page_top = False
             heading = looks_like_heading(line)
             if heading == "h2" and _NUMBERED_ITEM.match(line):
                 # "2. Choosing a site" above prose is a heading; "2. Turn off the gas" among "1." and "3." is a step.
@@ -210,6 +259,8 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
         # A paragraph runs across the page break only when the page ended mid-sentence.
         if open_kind and open_text.rstrip().endswith(_TERMINAL):
             close()
+        if not open_kind:
+            close()   # flush captions a page left behind
     close()
     return blocks
 
@@ -262,7 +313,7 @@ def text_quality(pages: list[list[str]]) -> Quality:
 # --- the EPUB ------------------------------------------------------------------------------------
 
 CHAPTER_WORDS = 4000     # split a long run of text at the next h2 once it passes this
-MIN_CHAPTER_WORDS = 120  # a heading with almost nothing under it joins the next chapter
+MIN_CHAPTER_WORDS = 300  # a chapter with less than this under its heading joins the next
 
 STYLE = """body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.45; margin: 0 4%; }
 h1 { font-size: 1.5em; margin: 1.2em 0 0.6em; line-height: 1.2; }
@@ -270,6 +321,7 @@ h2 { font-size: 1.2em; margin: 1em 0 0.5em; line-height: 1.25; }
 p { margin: 0 0 0.7em; text-align: left; }
 ul { margin: 0 0 0.7em 1.2em; padding: 0; }
 li { margin: 0 0 0.3em; }
+p.caption { font-size: 0.9em; font-style: italic; color: #555; margin: 0.2em 0 1em; }
 """
 
 
@@ -281,12 +333,14 @@ def chapters(blocks: list[Block]) -> list[tuple[str, list[Block]]]:
     current: list[Block] = []
     words = 0
     for b in blocks:
-        cut = b.kind == "h1" or (b.kind == "h2" and words > CHAPTER_WORDS)
+        # A capitalised subhead every few paragraphs (Kephart has 1,200) is not a chapter: only a line that
+        # says Chapter or Part always cuts; any other heading cuts once the chapter has run long enough.
+        cut = (b.kind == "h1" and bool(_HEADING_WORD.match(b.text))) or (b.kind in ("h1", "h2") and words > CHAPTER_WORDS)
         if cut and current:
             out.append((title, current))
             current, words = [], 0
-        if cut:
-            title = b.text
+        if cut or (not current and b.kind in ("h1", "h2")):
+            title = b.text          # a chapter that opens with a heading is named by it
         current.append(b)
         words += len(b.text.split())
     if current:
@@ -314,6 +368,9 @@ def _chapter_xhtml(title: str, blks: list[Block]) -> str:
         if in_list:
             body.append("</ul>")
             in_list = False
+        if b.kind == "caption":
+            body.append(f'<p class="caption">{escape(b.text)}</p>')
+            continue
         body.append(f"<{b.kind}>{escape(b.text)}</{b.kind}>")
     if in_list:
         body.append("</ul>")

@@ -90,6 +90,48 @@ def test_a_short_item_carries_on_when_the_next_line_starts_lowercase():
     assert blocks[-1] == Block("p", "Others can be treated later, when the ship is safe and the sea is calm.")
 
 
+def test_contents_pages_dashes_and_grit_are_dropped():
+    contents = "\n".join(["CONTENTS", "Chapter 1 The Village Health Worker . . . . . . 1", "Chapter 2 Sicknesses That Are Often Confused 17",
+                          "Chapter 3 How to Examine a Sick Person 23", "Chapter 4 How to Take Care of a Sick Person 39",
+                          "Chapter 5 Healing Without Medicines 45", "Chapter 6 Right and Wrong Use of Modern Medicines 49", "-", "-"])
+    body = "\n".join(["THE VILLAGE HEALTH WORKER", "", "Health care is not only everyone's right, but everyone's",
+                      "responsibility.", "-", "aa . ut", "Informed self-care should be the main goal of any health program."])
+    pages = strip_furniture(split_pages(contents + "\f" + body))
+    assert pages[0] == []
+    flat = [ln for ln in pages[1] if ln.strip()]
+    assert "-" not in flat and "aa . ut" not in flat
+    assert flat[0] == "THE VILLAGE HEALTH WORKER"
+
+
+def test_alternating_running_heads_are_furniture_after_their_first_page():
+    words = "axe bread canvas dew ember flint gaiter hemp ice juniper knot lantern moss net oak pine".split()
+    pages = []
+    chapters_ = ["TENTS FOR FIXED CAMPS", "BEDDING", "FIRE MAKING", "COOKING"]
+    for n, w in enumerate(words):
+        head = "CAMPING AND WOODCRAFT" if n % 2 == 0 else chapters_[n // 4]   # book title left, chapter title right
+        pages.append(f"{100 + n}\n\n{head}\n\nA page about {w}, with its own prose about the {w} and nothing repeated.")
+    stripped = strip_furniture(split_pages("\f".join(pages)))
+    flat = [ln for p in stripped for ln in p if ln.strip()]
+    assert [flat.count(c) for c in chapters_] == [1, 1, 1, 1]   # each chapter title once, where it starts
+    assert flat.count("CAMPING AND WOODCRAFT") <= 1
+
+
+def test_a_figure_caption_does_not_cut_the_paragraph_it_sits_in():
+    page = ["It is also a good thing to keep cold air from coming up under the overhang of your blan-", "",
+            "Fig. 82— U. S. A. Regulation Bed Roll", "", "kets. The army regulation bed roll (Fig. 82) is one type.", ""]
+    blocks = blocks_from_pages([page])
+    assert blocks[0] == Block("p", "It is also a good thing to keep cold air from coming up under the overhang of your blankets. The army regulation bed roll (Fig. 82) is one type.")
+    assert blocks[1] == Block("caption", "Fig. 82— U. S. A. Regulation Bed Roll")
+    ocr = [["governed by the number of", "", "Fig. r.—- Wall Tent, with Fly", "", "widths of cloth used and the number of inches."]]
+    assert [b.kind for b in blocks_from_pages(ocr)] == ["p", "caption"]
+    assert blocks_from_pages(ocr)[0].text == "governed by the number of widths of cloth used and the number of inches."
+
+
+def test_a_sentence_crosses_the_gap_a_running_head_left():
+    pages = [["ground dimensions are governed by the number of"], ["", "", "widths of cloth used, allowing for seams."]]
+    assert blocks_from_pages(pages) == [Block("p", "ground dimensions are governed by the number of widths of cloth used, allowing for seams.")]
+
+
 def test_convert_refuses_a_book_that_reflows_into_fragments(tmp_path):
     table = "\n".join(f"{i}. {i * 3} GHz." for i in range(400))
     with pytest.raises(ValueError, match="fragments"):
@@ -148,10 +190,11 @@ def test_chapters_cut_at_headings_and_fold_stubs():
     blocks = [Block("h1", "Preface"), Block("p", "short"), Block("h1", "One"), Block("p", "x " * 300),
               Block("h2", "One point one"), Block("p", "y " * 4200), Block("h2", "One point two"), Block("p", "z")]
     parts = chapters(blocks)
-    assert [t for t, _ in parts] == ["Preface", "One point two"] or [t for t, _ in parts][0] == "Preface"
-    # the preface (one word) folds into the next chapter; the long chapter is cut at the h2 that follows 4000 words
-    assert parts[0][0] == "Preface" and any(b.kind == "h1" and b.text == "One" for b in parts[0][1])
-    assert parts[-1][0] == "One point two"
+    # a capitalised subhead does not cut a chapter until it has run 4,000 words; a stub folds into what follows
+    assert [t for t, _ in parts] == ["Preface", "One point two"]
+    assert any(b.kind == "h1" and b.text == "One" for b in parts[0][1])
+    long_book = [Block("h1", "CHAPTER I"), Block("p", "x " * 500), Block("h1", "TENTS"), Block("p", "y " * 500), Block("h1", "Chapter II"), Block("p", "z " * 500)]
+    assert [t for t, _ in chapters(long_book)] == ["CHAPTER I", "Chapter II"]
 
 
 def test_write_epub_is_a_valid_package_the_indexer_reads(tmp_path):
