@@ -13,6 +13,7 @@ import { injectStyle, pdfViewerCss, READER_STYLE_ID, viewerTokens } from '../the
 import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
 import { fontFaceRules, fontsIn } from '../reader/fonts';
+import { useRecordView } from '../reader/recent';
 import { bookPieces } from '../reader/aloud';
 import { pauseSpeaking, resumeSpeaking, speakFrom, stopSpeaking, useSpeech } from '../tools/speech';
 import { setVoicePrefs, SPEEDS, voicePrefs } from '../tools/voice';
@@ -633,6 +634,7 @@ export function Doc() {
     : undefined;
   const isDocument = item?.kind === 'pdf' || item?.kind === 'epub';
   const gone = Boolean(item) && isDocument && (missing || !item!.available || !file);
+  useRecordView(item && isDocument && !gone ? { key: `doc:${item.id}`, kind: 'doc', title: documentTitle(item.title), url: `/doc/${item.id}` } : null);
   const hasOriginal = item?.kind === 'epub' && Boolean(item.pdf_fallback_url);
   // The original/reflowed toggle is one button, owned here, and rendered as the leading button of
   // whichever `.doc-tools` bar is on screen — EpubReader's or PdfFrame's — never a row of its own.

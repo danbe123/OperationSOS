@@ -87,6 +87,15 @@ describe('Doc', () => {
     expect(rules.body.color).toBe('#f2f2f2');
   });
 
+  it('tells the box the document was opened, for the Library\'s Last viewed', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    const touch = vi.spyOn(api, 'touchRecent').mockResolvedValue({ ok: true });
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    await waitFor(() => expect(touch).toHaveBeenCalledWith('doc:where-there-is-no-doctor', { kind: 'doc', title: 'Where There Is No Doctor', url: '/doc/where-there-is-no-doctor', cover_url: null }));
+    expect(touch).toHaveBeenCalledTimes(1);
+  });
+
   it('puts the chrome away for the book and brings it back with a tap on the middle of the page', async () => {
     localStorage.setItem('sos.reader.flow', 'paginated');   // the taps on either side are page turns
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);

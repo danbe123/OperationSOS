@@ -42,6 +42,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS fts_books USING fts5(title, author, content='
   tokenize='porter unicode61 remove_diacritics 2');
 CREATE TABLE IF NOT EXISTS reading (key TEXT PRIMARY KEY, title TEXT NOT NULL, author TEXT, cover_url TEXT, cfi TEXT NOT NULL,
   percent REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS recent (key TEXT PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, cover_url TEXT,
+  viewed_at TEXT NOT NULL);
 """
 
 

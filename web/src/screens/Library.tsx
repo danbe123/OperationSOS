@@ -4,22 +4,23 @@ import { useQuery } from '../api/useQuery';
 import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
-import { BookGrid, ContinueReading } from './Books';
+import { KIND_ICON, KIND_WORD } from '../reader/recent';
+import type { RecentEntry } from '../api/types';
+import { BookCard } from './Books';
 import { TOOL_TILES } from './Tools';
 import './books.css';
 
 /** The Library is the box's whole bookshelf, as four shelves a household can tell apart at a glance:
  * the medical shelf first (999, the quick cards, the NHS), then the guides the box wrote itself, the
  * books it carries to read, and the sources it searches. Each shelf is its own page; the tiles sit
- * on the kiosk without scrolling, and under them ("the library has space under the tiles we should
- * be using") are the books the household is in the middle of and the most-read of the collection. */
+ * on the kiosk without scrolling, and under them is one strip: the last things anyone on the box
+ * opened, whatever shelf they came from ("we need aggregated last viewed across all library items only"). */
 export function Library() {
   const cardsQ = useQuery(() => api.cards(), []);
   const pagesQ = useQuery(() => api.pages(), []);
-  const booksQ = useQuery(() => api.books({ limit: 12 }), []);
+  const booksQ = useQuery(() => api.books({ limit: 1 }), []);
   const libQ = useQuery(() => api.library(), []);
-  const reading = useQuery(() => api.reading(), []);
-  const forget = (key: string) => void api.deleteReading(key).then(() => reading.refetch());
+  const recent = useQuery(() => api.recent(12), [], { refetchOnFocus: true });
   const pageCount = pagesQ.data?.length ?? 0;
   const items = libQ.data?.categories.flatMap((c) => c.items) ?? [];
   const medicalLine = cardsQ.data ? `999, ${cardsQ.data.length} quick cards, the NHS A to Z, children's doses` : '999, the quick cards, the NHS A to Z';
@@ -39,17 +40,34 @@ export function Library() {
           <Tile to="/library/books" icon="library" title="Books" subtitle={booksLine} big disabled={booksQ.data ? !booksQ.data.available : false} />
           <Tile to="/library/sources" icon="globe" title="Sources" subtitle={sourcesLine} big />
         </nav>
-        {reading.data && reading.data.length > 0 && <ContinueReading entries={reading.data} onForget={forget} />}
-        {booksQ.data?.available && booksQ.data.items.length > 0 && (
-          <section aria-label="Most read">
-            <div className="books-head">
-              <h2>Most read</h2>
-              <Link className="btn btn-quiet btn-small" to="/library/books?all=1">All {booksQ.data.total.toLocaleString('en-GB')} books <Icon name="forward" size={18} /></Link>
-            </div>
-            <BookGrid items={booksQ.data.items} label="Most read" />
-          </section>
-        )}
+        {recent.data && recent.data.length > 0 && <LastViewed entries={recent.data} />}
       </Body>
     </Screen>
+  );
+}
+
+/** A thing opened lately, as a card in the strip: a book by its cover; anything else by the icon of
+ * what it is, its title, and the word for it. */
+function RecentCard({ entry }: { entry: RecentEntry }) {
+  if (entry.kind === 'book') return <BookCard to={entry.url} title={entry.title} cover={entry.cover_url} meta={KIND_WORD.book} />;
+  return (
+    <li className="book-card">
+      <Link to={entry.url} className="book-card-link">
+        <span className="book-cover recent-cover"><Icon name={KIND_ICON[entry.kind]} size={34} /></span>
+        <span className="book-card-title">{entry.title}</span>
+        <span className="book-card-meta">{KIND_WORD[entry.kind]}</span>
+      </Link>
+    </li>
+  );
+}
+
+function LastViewed({ entries }: { entries: RecentEntry[] }) {
+  return (
+    <section aria-label="Last viewed">
+      <div className="books-head"><h2>Last viewed</h2></div>
+      <ul className="book-strip" aria-label="Last viewed">
+        {entries.map((e) => <RecentCard key={e.key} entry={e} />)}
+      </ul>
+    </section>
   );
 }

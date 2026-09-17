@@ -8,6 +8,7 @@ import { attachKeyboardTo } from '../kiosk/editable';
 import { classifyHref, kiwixContentUrl, NOT_IN_LIBRARY, parseKiwixContentPath, readerRoute, replaceFrameLocation, sameOriginFrameUrl, unlinkExternal } from '../links';
 import { DECLUTTER_CSS, DECLUTTER_STYLE_ID, injectStyle, isDim, READER_STYLE_ID, readerCss, TEXT_SIZE_STYLE_ID, textSizeCss, viewerTokens } from '../theme/readerTheme';
 import { useTheme } from '../theme/ThemeProvider';
+import { useRecordView } from '../reader/recent';
 import { PdfFrame } from './Doc';
 import { api } from '../api/client';
 
@@ -83,6 +84,9 @@ function ArticleReader() {
   const targetRef = useRef(target);
   targetRef.current = target;
   const [title, setTitle] = useState('Reader');
+  // Once the article has said its name: the key is the article's own path, so each article is one entry.
+  // Kiwix's own "Page not found" is a page with a title too, and it is not something anyone opened.
+  useRecordView(title !== 'Reader' && path && !/not found/i.test(title) ? { key: `article:${id}/${path}`, kind: 'article', title, url: location.pathname } : null);
   const [textSize, setTextSize] = useState<number>(readStoredSize);
   const themeRef = useRef(theme);
   themeRef.current = theme;

@@ -47,7 +47,7 @@ function Cover({ title, url, percent }: { title: string; url: string | null; per
 }
 
 /** One book as a card: its cover, its title and its author, the whole of it a link into the reader. */
-function BookCard({ to, title, author, cover, percent, meta, action }: {
+export function BookCard({ to, title, author, cover, percent, meta, action }: {
   to: string; title: string; author?: string | null; cover: string | null; percent?: number; meta?: string; action?: ReactNode;
 }) {
   return (

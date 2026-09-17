@@ -6,6 +6,7 @@ import { Emergency999 } from '../situation/Emergency999';
 import { Html } from '../components/Html';
 import { ReadAloudBlock } from '../situation/ReadAloud';
 import { PrintButton } from '../components/PrintButton';
+import { useRecordView } from '../reader/recent';
 import './page.css';
 
 /** The printed primer is not one document but a bundle of one-page sheets, one under each `## `
@@ -17,6 +18,7 @@ export function Page() {
   const { slug = '' } = useParams();
   const { data, error, loading } = useQuery(() => api.page(slug), [slug]);
   const sheets = slug === SHEETS_SLUG && data?.category === 'rebuild';
+  useRecordView(data ? { key: `page:${slug}`, kind: 'page', title: data.title, url: `/p/${slug}` } : null);
   return (
     <Screen
       title={data?.title ?? 'Page'} search={false}

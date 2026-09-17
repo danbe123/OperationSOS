@@ -270,3 +270,27 @@ def test_one_book_shows_its_saved_position(populated):
     populated.put("/api/reading/gutenberg:1342", json={"title": "Pride and Prejudice", "author": "Jane Austen",
                                                         "cover_url": None, "cfi": "epubcfi(/6/4!/4/2/2)", "percent": 12.5})
     assert populated.get("/api/books/gutenberg/1342").json()["position"] == {"cfi": "epubcfi(/6/4!/4/2/2)", "percent": 12.5}
+
+
+def test_recent_is_one_list_across_the_library_newest_first_and_capped(client):
+    client.put("/api/recent/gutenberg:1342", json={"kind": "book", "title": "Pride and Prejudice", "url": "/book/gutenberg/1342", "cover_url": "/c1.jpg"})
+    client.put("/api/recent/card:cpr-adult", json={"kind": "card", "title": "CPR, adult", "url": "/medical/card/cpr-adult"})
+    client.put("/api/recent/article:wikipedia_en_all/A/Water", json={"kind": "article", "title": "Water", "url": "/read/wikipedia_en_all/A/Water"})
+    rows = client.get("/api/recent").json()
+    assert [r["key"] for r in rows] == ["article:wikipedia_en_all/A/Water", "card:cpr-adult", "gutenberg:1342"]
+    assert rows[2]["cover_url"] == "/c1.jpg" and rows[1]["cover_url"] is None and rows[0]["kind"] == "article"
+    client.put("/api/recent/gutenberg:1342", json={"kind": "book", "title": "Pride and Prejudice", "url": "/book/gutenberg/1342", "cover_url": "/c1.jpg"})
+    assert client.get("/api/recent").json()[0]["key"] == "gutenberg:1342"   # opened again: to the front
+    assert [r["key"] for r in client.get("/api/recent?limit=2").json()] == ["gutenberg:1342", "article:wikipedia_en_all/A/Water"]
+    assert client.delete("/api/recent/card:cpr-adult").status_code == 200
+    assert len(client.get("/api/recent").json()) == 2
+    # a kind the Library does not have, an empty title, or an address off the box are refused
+    assert client.put("/api/recent/x", json={"kind": "video", "title": "x", "url": "/x"}).status_code == 422
+    assert client.put("/api/recent/x", json={"kind": "page", "title": "", "url": "/x"}).status_code == 422
+    assert client.put("/api/recent/x", json={"kind": "page", "title": "x", "url": "https://example.com/"}).status_code == 422
+    # only the last sixty are kept
+    for i in range(70):
+        client.put(f"/api/recent/page:p{i}", json={"kind": "page", "title": f"Page {i}", "url": f"/p/p{i}"})
+    assert len(client.get("/api/recent?limit=60").json()) == 60
+    assert client.get("/api/recent?limit=60").json()[0]["key"] == "page:p69"
+

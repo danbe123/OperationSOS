@@ -153,6 +153,9 @@ export type SensorReading = { value: number; unit: string; at: string };
 /** Whatever the box can sense, by sensor id (`internet`, `mains`, `temp_in`, `co_ppm`, `broadcast`, ...). */
 export type Sensors = Record<string, SensorReading | null>;
 export type Recording = { file: string; station: string; at: string; url: string };
+export type RecentKind = 'book' | 'doc' | 'article' | 'page' | 'module' | 'guide' | 'card';
+/** One thing the household opened, whatever shelf it came from: the Library's "Last viewed". */
+export type RecentEntry = { key: string; kind: RecentKind; title: string; url: string; cover_url: string | null; viewed_at: string };
 export type Voice = { id: string; name: string; quality: string; language: string };
 export type VoicesResponse = { voices: Voice[]; default: string; available: boolean };
 export type Bulletin = { station: string; frequency: string; at: string; note?: string };

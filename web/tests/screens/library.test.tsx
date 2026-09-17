@@ -10,21 +10,27 @@ describe('Library hub', () => {
     vi.spyOn(api, 'pages').mockResolvedValue(pages);
     vi.spyOn(api, 'library').mockResolvedValue(library);
     vi.spyOn(api, 'cards').mockResolvedValue(cards);
-    vi.spyOn(api, 'reading').mockResolvedValue([]);
+    vi.spyOn(api, 'recent').mockResolvedValue([]);
   });
 
   it('is four shelves as tiles, the medical shelf first, each saying what is on it', async () => {
-    const book = { id: 1342, title: 'Pride and Prejudice', author: 'Jane Austen', shelf: 'PR', shelf_name: 'English literature', popularity: 1, cover_url: null, epub_url: '/e', html_url: '/h' };
-    vi.spyOn(api, 'books').mockResolvedValue({ items: [book], total: 60366, available: true });
-    vi.spyOn(api, 'reading').mockResolvedValue([{ key: 'gutenberg:2701', title: 'Moby-Dick', author: 'Herman Melville', cover_url: null, url: '/book/gutenberg/2701', cfi: 'x', percent: 40, updated_at: '2026-09-17T10:00:00Z' }]);
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 60366, available: true });
+    vi.spyOn(api, 'recent').mockResolvedValue([
+      { key: 'gutenberg:2701', kind: 'book', title: 'Moby-Dick', url: '/book/gutenberg/2701', cover_url: '/c.jpg', viewed_at: '2026-09-17T10:00:00Z' },
+      { key: 'card:cpr-adult', kind: 'card', title: 'CPR, adult', url: '/medical/card/cpr-adult', cover_url: null, viewed_at: '2026-09-17T09:00:00Z' },
+      { key: 'article:wikipedia_en_all/A/Water', kind: 'article', title: 'Water', url: '/read/wikipedia_en_all/A/Water', cover_url: null, viewed_at: '2026-09-17T08:00:00Z' },
+    ]);
     renderRoute('/library');
     const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
-    // under the tiles: the books the household is in the middle of, and the most-read of the collection
-    const strip = await screen.findByRole('list', { name: 'Continue reading' });
-    expect(within(strip).getByRole('link', { name: /Moby-Dick/ })).toHaveAttribute('href', '/book/gutenberg/2701');
-    const most = await screen.findByRole('list', { name: 'Most read' });
-    expect(within(most).getByRole('link', { name: /Pride and Prejudice/ })).toHaveAttribute('href', '/book/gutenberg/1342');
-    expect(screen.getByRole('link', { name: /All 60,366 books/ })).toHaveAttribute('href', '/library/books?all=1');
+    // under the tiles, one strip: the last things anyone opened, whatever shelf they came from
+    const strip = await screen.findByRole('list', { name: 'Last viewed' });
+    const cards = within(strip).getAllByRole('listitem');
+    expect(cards.map((c) => within(c).getByRole('link').getAttribute('href'))).toEqual(['/book/gutenberg/2701', '/medical/card/cpr-adult', '/read/wikipedia_en_all/A/Water']);
+    expect(cards[0].querySelector('img')).toHaveAttribute('src', '/c.jpg');   // a book by its cover
+    expect(cards[1]).toHaveTextContent('CPR, adult');
+    expect(cards[1]).toHaveTextContent('Quick card');                          // anything else by what it is
+    expect(cards[2]).toHaveTextContent('Article');
+    expect(screen.queryByRole('list', { name: 'Most read' })).toBeNull();
     const links = within(shelves).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library/medical', '/library/guides', '/library/books', '/library/sources']);
     expect(await within(shelves).findByText(`999, ${cards.length} quick cards, the NHS A to Z, children's doses`)).toBeInTheDocument();

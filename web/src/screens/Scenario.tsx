@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import { api } from '../api/client';
 import type { Playbook, Section as SectionData, Situation } from '../api/types';
 import { useQuery } from '../api/useQuery';
+import { useRecordView } from '../reader/recent';
 import { Checklist } from '../components/Checklist';
 import { Html } from '../components/Html';
 import { PrintButton } from '../components/PrintButton';
@@ -85,6 +86,7 @@ export function Scenario() {
   const { slug = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { data, error, loading, setData } = useQuery(() => api.playbook(slug), [slug], { intervalMs: 15_000, refetchOnFocus: true });
+  useRecordView(data ? { key: `guide:${slug}`, kind: 'guide', title: data.title, url: `/s/${slug}` } : null);
   // Print is not only the Print button: a PDF export, a browser's own print command and a kiosk's
   // "save as PDF" all arrive as the print medium with no `beforeprint` we can hear. Whenever the
   // medium is paper, every phase is rendered and every module is open — a printed guide with one

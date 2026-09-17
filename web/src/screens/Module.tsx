@@ -6,10 +6,12 @@ import { Emergency999 } from '../situation/Emergency999';
 import { Html } from '../components/Html';
 import { ReadAloudBlock } from '../situation/ReadAloud';
 import { PrintButton } from '../components/PrintButton';
+import { useRecordView } from '../reader/recent';
 
 export function Module() {
   const { slug = '' } = useParams();
   const { data, error, loading } = useQuery(() => api.module(slug), [slug]);
+  useRecordView(data ? { key: `module:${slug}`, kind: 'module', title: data.title, url: `/m/${slug}` } : null);
   return (
     <Screen title={data?.title ?? 'Module'} search={false} actions={<PrintButton />}>
       <Body>

@@ -1,7 +1,7 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
   ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, BookDetail, BookShelf, BooksResponse, ReadingEntry, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
-  Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress, VoicesResponse,
+  Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress, VoicesResponse, RecentEntry, RecentKind,
 } from './types';
 
 export class ApiError extends Error {
@@ -130,6 +130,12 @@ export const api = {
   putReading: (key: string, body: { title: string; author: string | null; cover_url: string | null; cfi: string; percent: number }) =>
     request<{ ok: true }>('PUT', `/reading/${enc(key)}`, body),
   deleteReading: (key: string) => request<{ ok: true }>('DELETE', `/reading/${enc(key)}`),
+  /** The last things opened across the whole Library. A key may carry a path (an article's), so it is
+   * sent as it is, not encoded into one segment. */
+  recent: (limit = 12) => request<RecentEntry[]>('GET', `/recent?limit=${limit}`),
+  touchRecent: (key: string, body: { kind: RecentKind; title: string; url: string; cover_url?: string | null }) =>
+    request<{ ok: true }>('PUT', `/recent/${key.split('/').map(enc).join('/')}`, body),
+  forgetRecent: (key: string) => request<{ ok: true }>('DELETE', `/recent/${key.split('/').map(enc).join('/')}`),
   libraryItem: (id: string) => request<LibraryItem>('GET', `/library/${enc(id)}`),
   search: (q: string, opts: { sources?: string[]; limit?: number; signal?: AbortSignal } = {}) =>
     request<SearchResponse>('GET', `/search${qs({ q, sources: opts.sources?.join(','), limit: opts.limit })}`, undefined, opts.signal),

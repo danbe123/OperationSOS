@@ -4,6 +4,7 @@ import { useQuery } from '../api/useQuery';
 import { Screen, Body } from '../shell/Screen';
 import { useTheme } from '../theme/ThemeProvider';
 import { EpubReader } from './Doc';
+import { useRecordView } from '../reader/recent';
 
 /** One Gutenberg book, read in the app's own EPUB reader straight out of the ZIM. A book the scraper
  * shipped without an EPUB (a few hundred, mostly scans and music) goes to the Kiwix page instead. */
@@ -14,6 +15,7 @@ export function Book() {
   // link, with nothing behind it, goes to the front of the Books instead.
   const backTo = useLocation().key === 'default' ? '/library/books' : undefined;
   const { data, error, loading } = useQuery(() => api.book(id), [id]);
+  useRecordView(data?.available ? { key: `gutenberg:${data.id}`, kind: 'book', title: data.title, url: `/book/gutenberg/${data.id}`, coverUrl: data.cover_url } : null);
   if (loading) return <Screen title="Book" search={false} backTo={backTo}><Body><p className="muted">Opening…</p></Body></Screen>;
   if (error || !data) {
     return <Screen title="Book" search={false} backTo={backTo}><Body><p className="warning">Could not open this book: {error ?? 'not found'}</p></Body></Screen>;

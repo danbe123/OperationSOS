@@ -35,6 +35,7 @@
 }
 .book-spine span { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; hyphens: auto; }
 @media (max-height: 620px) { .book-spine { font-size: 14px; padding: 8px 6px 8px 10px; } }
+.recent-cover { display: flex; align-items: center; justify-content: center; color: var(--signal); background: color-mix(in srgb, var(--signal) 10%, var(--raised)); }
 @media (hover: hover) { .book-card-link:hover .book-cover { outline: 2px solid var(--signal); outline-offset: -2px; } }
 .book-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: color-mix(in srgb, var(--ink) 30%, transparent); }
 .book-progress > span { display: block; height: 100%; background: var(--signal); }

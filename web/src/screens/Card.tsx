@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useParams } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
+import { useRecordView } from '../reader/recent';
 import { Html } from '../components/Html';
 import { Screen } from '../shell/Screen';
 import { useScrollCue } from '../shell/Shell';
@@ -74,6 +75,7 @@ export function splitCard(html: string): CardParts {
 export function Card() {
   const { slug = '' } = useParams();
   const { data, error, loading } = useQuery(() => api.card(slug), [slug]);
+  useRecordView(data ? { key: `card:${slug}`, kind: 'card', title: data.title, url: `/medical/card/${slug}` } : null);
   const frame = useRef<HTMLDivElement>(null);
   const more = useScrollCue(frame);
   const parts = useMemo(() => splitCard(data?.html ?? ''), [data]);

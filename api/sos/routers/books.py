@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from sos import books
@@ -79,5 +81,45 @@ def put_reading(key: str, body: ReadingBody, conn=Depends(get_db)):
 @router.delete("/reading/{key}")
 def delete_reading(key: str, conn=Depends(get_db)):
     conn.execute("DELETE FROM reading WHERE key=?", (key,))
+    conn.commit()
+    return {"ok": True}
+
+
+# --- last viewed: one list across the whole Library --------------------------------------------
+# What the household opened last, whatever it was — a book, a guide, an article, a page, a card — for
+# the Library's front. Shared by everyone on the box, as the ticks and the reading places are. The
+# list is kept to the last sixty; the front shows a dozen.
+RECENT_KEEP = 60
+RECENT_KINDS = ("book", "doc", "article", "page", "module", "guide", "card")
+
+
+class RecentBody(BaseModel):
+    kind: Literal["book", "doc", "article", "page", "module", "guide", "card"]
+    title: str = Field(min_length=1)
+    url: str = Field(min_length=1, pattern=r"^/")
+    cover_url: str | None = None
+
+
+@router.get("/recent")
+def list_recent(limit: int = 12, conn=Depends(get_db)):
+    limit = max(1, min(RECENT_KEEP, limit))
+    return [dict(r) for r in conn.execute("SELECT * FROM recent ORDER BY viewed_at DESC, rowid DESC LIMIT ?", (limit,)).fetchall()]
+
+
+@router.put("/recent/{key:path}")   # an article's key carries its path, slashes and all
+def put_recent(key: str, body: RecentBody, conn=Depends(get_db)):
+    conn.execute(
+        "INSERT INTO recent (key, kind, title, url, cover_url, viewed_at) VALUES (?,?,?,?,?,?) "
+        "ON CONFLICT(key) DO UPDATE SET kind=excluded.kind, title=excluded.title, url=excluded.url, cover_url=excluded.cover_url, "
+        "viewed_at=excluded.viewed_at",
+        (key, body.kind, body.title, body.url, body.cover_url, datetime.now(timezone.utc).isoformat()))
+    conn.execute("DELETE FROM recent WHERE key NOT IN (SELECT key FROM recent ORDER BY viewed_at DESC, rowid DESC LIMIT ?)", (RECENT_KEEP,))
+    conn.commit()
+    return {"ok": True}
+
+
+@router.delete("/recent/{key:path}")
+def delete_recent(key: str, conn=Depends(get_db)):
+    conn.execute("DELETE FROM recent WHERE key=?", (key,))
     conn.commit()
     return {"ok": True}
