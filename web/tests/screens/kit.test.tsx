@@ -5,13 +5,16 @@ import { api } from '../../src/api/client';
 import { kitWater } from '../fixtures/api';
 
 describe('Kit', () => {
-  it('shows three tiers with basic open, the quantities and the ticks', async () => {
+  it('shows the three tiers as one switch with the first unpacked tier open, the quantities and the ticks', async () => {
     vi.spyOn(api, 'kit').mockResolvedValue(kitWater);
     renderRoute('/kit/water');
     expect(await screen.findByRole('heading', { level: 1, name: 'Water' })).toBeInTheDocument();
-    const basic = screen.getByRole('group', { name: /Three days/ });
-    expect(basic).toHaveAttribute('open');
-    expect(screen.getByRole('group', { name: /Two weeks/ })).not.toHaveAttribute('open');
+    const tabs = screen.getByRole('tablist', { name: 'Tiers' });
+    expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['Three days1 of 2', 'Two weeks0 of 1', 'No help coming0 of 1']);
+    expect(within(tabs).getByRole('tab', { name: /Three days/ })).toHaveAttribute('aria-selected', 'true');
+    const basic = screen.getByRole('tabpanel', { name: /Three days/ });
+    expect(screen.queryByRole('tabpanel', { name: /Two weeks/ })).toBeNull();   // hidden until picked; on the page for the printer
+    expect(screen.getByText('1 of 4 packed.')).toBeInTheDocument();
     expect(within(basic).getByText('18 L for 2 people over 3 days')).toBeInTheDocument();
     expect(within(basic).getByRole('link', { name: 'Water module: Drinking water in sealed containers' })).toHaveAttribute('href', '/m/water');
     expect(within(basic).getByRole('checkbox', { name: /Drinking water/ })).toBeChecked();
@@ -35,8 +38,8 @@ describe('Kit', () => {
     renderRoute('/kit/water');
     await screen.findByRole('heading', { level: 1, name: 'Water' });
     const quantities = screen.getByText(/Quantities are for/);
-    const basic = screen.getByRole('group', { name: /Three days/ });
-    const full = screen.getByRole('group', { name: /No help coming/ });
+    const basic = screen.getByRole('tabpanel', { name: /Three days/ });
+    const full = document.getElementById('tier-full')!;   // on the page for the printer, hidden until picked
     const why = screen.getByRole('heading', { level: 2, name: 'Why these things' });
     // The sentence about who the quantities are for stays above the first tier; the intro moves below the last.
     expect(quantities.compareDocumentPosition(basic) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -53,8 +56,10 @@ describe('Kit', () => {
     const ticked = { ...kitWater, tiers: kitWater.tiers.map((t) => t.id !== 'serious' ? t : { ...t, done: 1, items: t.items.map((i) => ({ ...i, checked: true, updated_at: '2026-09-06T11:00:00+00:00' })) }) };
     const set = vi.spyOn(api, 'setKitItem').mockResolvedValue(ticked);
     renderRoute('/kit/water');
-    const serious = await screen.findByRole('group', { name: /Two weeks/ });
-    await act(async () => { within(serious).getByText('Two weeks').click(); });
+    const tabs = await screen.findByRole('tablist', { name: 'Tiers' });
+    await act(async () => { within(tabs).getByRole('tab', { name: /Two weeks/ }).click(); });
+    const serious = screen.getByRole('tabpanel', { name: /Two weeks/ });
+    expect(screen.queryByRole('tabpanel', { name: /Three days/ })).toBeNull();
     const box = within(serious).getByRole('checkbox', { name: /Water purification tablets/ });
     await act(async () => { box.click(); });
     expect(set).toHaveBeenCalledWith('water', 'tablets', { checked: true });

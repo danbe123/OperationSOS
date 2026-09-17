@@ -6,11 +6,12 @@ import { errorMessage, useQuery } from '../api/useQuery';
 import { Icon } from '../icons';
 import { notify } from '../components/Notice';
 import { PrintButton } from '../components/PrintButton';
-import { Tile } from '../components/Tile';
 import { Screen, Body } from '../shell/Screen';
 import './kit.css';
 
-const TIER_LABEL: Record<KitTierId, string> = { basic: 'Basic', serious: 'Serious', full: 'Full' };
+/** The three tiers, as a household says them: not "basic, serious, full" but how long each one covers. */
+export const TIER_IDS: KitTierId[] = ['basic', 'serious', 'full'];
+export const TIER_TITLE: Record<KitTierId, string> = { basic: 'Three days', serious: 'Two weeks', full: 'No help coming' };
 /** The range the box will hold: one person at least, and twenty is more than any household. */
 const MIN_PEOPLE = 1;
 const MAX_PEOPLE = 20;
@@ -21,9 +22,17 @@ const MAX_PEOPLE = 20;
 type TabId = 'kits' | 'have';
 const TABS: { id: TabId; title: string }[] = [{ id: 'kits', title: 'Kits' }, { id: 'have', title: 'What you have' }];
 
-/** "Basic 1/2 · Serious 0/1 · Full 0/1": the one line a tile has for progress. */
-export function tierLine(tiers: KitSummary['tiers']): string {
-  return (['basic', 'serious', 'full'] as KitTierId[]).map((t) => `${TIER_LABEL[t]} ${tiers[t].done}/${tiers[t].total}`).join(' · ');
+/** The one line a tile has for where a kit stands: the tier being worked on, and how far. "Three days:
+ * 3 of 8" while the first tier is open; "Three days ✓ · Two weeks: 2 of 9" once it is packed; "Everything
+ * packed" at the end. A tier with nothing in it (a kit with no full tier) is passed over. */
+export function kitStatus(tiers: KitSummary['tiers']): string {
+  const open = TIER_IDS.filter((t) => tiers[t].total > 0);
+  if (open.length === 0) return 'Nothing to pack';
+  const at = open.findIndex((t) => tiers[t].done < tiers[t].total);
+  if (at === -1) return 'Everything packed';
+  const tier = open[at];
+  const line = `${TIER_TITLE[tier]}: ${tiers[tier].done} of ${tiers[tier].total}`;
+  return at > 0 ? `${TIER_TITLE[open[at - 1]]} ✓ · ${line}` : line;
 }
 
 /** "For 2 people", the one number every quantity on these screens is scaled by. */
@@ -96,17 +105,56 @@ function PeopleStepper({ people, onSaved }: { people: number; onSaved: () => Pro
   };
   return (
     <div className="row kit-people" role="group" aria-label="How many people">
-      <button type="button" className="btn" disabled={busy || people <= MIN_PEOPLE} onClick={() => void step(people - 1)}>Fewer</button>
+      <button type="button" className="btn" disabled={busy || people <= MIN_PEOPLE} onClick={() => void step(people - 1)} aria-label="Fewer"><Icon name="minus" size={20} /></button>
       <strong>{peopleLine(people)}</strong>
-      <button type="button" className="btn" disabled={busy || people >= MAX_PEOPLE} onClick={() => void step(people + 1)}>More</button>
+      <button type="button" className="btn" disabled={busy || people >= MAX_PEOPLE} onClick={() => void step(people + 1)} aria-label="More"><Icon name="plus" size={20} /></button>
     </div>
   );
 }
 
-function KitTiles({ kits, label }: { kits: KitSummary[]; label: string }) {
+/** Where the whole house stands, one bar a tier: every kit's ticks added up. A household sees at a
+ * glance that the three days are nearly done and the two weeks barely begun, before any kit is opened. */
+function Readiness({ kits, people, onSaved }: { kits: KitSummary[]; people: number; onSaved: () => Promise<void> }) {
+  const sums = TIER_IDS.map((t) => ({
+    id: t, title: TIER_TITLE[t],
+    done: kits.reduce((n, k) => n + k.tiers[t].done, 0), total: kits.reduce((n, k) => n + k.tiers[t].total, 0),
+  }));
   return (
-    <nav className="tiles tiles-wide" aria-label={label}>
-      {kits.map((k) => <Tile key={k.slug} to={`/kit/${k.slug}`} icon={k.icon} title={k.title} subtitle={k.summary} note={tierLine(k.tiers)} />)}
+    <section className="kit-readiness panel" aria-label="How ready you are">
+      <PeopleStepper people={people} onSaved={onSaved} />
+      <ul className="kit-meters" aria-label="Packed so far">
+        {sums.map((s) => (
+          <li key={s.id}>
+            <span className="kit-meter-head"><span>{s.title}</span><span className="muted">{s.done} of {s.total}</span></span>
+            <progress className="progress-line" value={s.done} max={Math.max(1, s.total)} aria-label={`${s.title}: ${s.done} of ${s.total} packed`} />
+          </li>
+        ))}
+      </ul>
+      <p className="muted kit-readiness-note">What to have before anything happens: three days, two weeks, and no help coming. Ticks are shared by everyone on the box.</p>
+    </section>
+  );
+}
+
+/** A kit as a tile: its icon and name, one line of what it is, a bar a tier, and where it stands. */
+function KitTile({ kit }: { kit: KitSummary }) {
+  return (
+    <Link className="tile kit-tile" to={`/kit/${kit.slug}`}>
+      <span className="kit-tile-head"><Icon name={kit.icon} size={28} /><span className="tile-title">{kit.title}</span></span>
+      <span className="tile-sub kit-tile-sub">{kit.summary}</span>
+      <span className="kit-bar" aria-hidden="true">
+        {TIER_IDS.map((t) => (
+          <span key={t} className="kit-bar-tier"><span className="kit-bar-fill" style={{ width: `${kit.tiers[t].total ? (100 * kit.tiers[t].done) / kit.tiers[t].total : 0}%` }} /></span>
+        ))}
+      </span>
+      <span className="kit-tile-status">{kitStatus(kit.tiers)}</span>
+    </Link>
+  );
+}
+
+function KitGrid({ kits, label }: { kits: KitSummary[]; label: string }) {
+  return (
+    <nav className="kit-grid" aria-label={label}>
+      {kits.map((k) => <KitTile key={k.slug} kit={k} />)}
     </nav>
   );
 }
@@ -159,7 +207,9 @@ function HaveTab() {
   );
 }
 
-/** Kit: what to have in the house, in three tiers, ticked by everyone on the box. */
+/** Kit: what to have in the house, in three tiers, ticked by everyone on the box. The front is where
+ * the house stands — one bar a tier, and how many people it is for — over the kits as tiles that each
+ * say where they stand. */
 export function Kits() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -189,15 +239,11 @@ export function Kits() {
           ))}
         </div>
         {tab === 'have' ? <HaveTab /> : (
-          <section id="panel-kits" role="tabpanel" aria-labelledby="tab-kits">
-            <p className="muted">
-              What to have before anything happens, in three tiers: three days, two weeks, and no help coming.
-              Ticks are shared by everyone on the box.
-            </p>
-            {q.data && <PeopleStepper people={people} onSaved={q.refetch} />}
+          <section id="panel-kits" role="tabpanel" aria-labelledby="tab-kits" className="kit-front">
+            {q.data && <Readiness kits={kits} people={people} onSaved={q.refetch} />}
             {q.loading && <p className="muted">Loading the kits…</p>}
             {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
-            {kits.length > 0 && <KitTiles kits={kits} label="Kits" />}
+            {kits.length > 0 && <KitGrid kits={kits} label="Kits" />}
           </section>
         )}
         <PackingList sheets={sheets} />

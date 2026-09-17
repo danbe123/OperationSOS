@@ -10,12 +10,21 @@ describe('Library hub', () => {
     vi.spyOn(api, 'pages').mockResolvedValue(pages);
     vi.spyOn(api, 'library').mockResolvedValue(library);
     vi.spyOn(api, 'cards').mockResolvedValue(cards);
+    vi.spyOn(api, 'reading').mockResolvedValue([]);
   });
 
   it('is four shelves as tiles, the medical shelf first, each saying what is on it', async () => {
-    vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 60366, available: true });
+    const book = { id: 1342, title: 'Pride and Prejudice', author: 'Jane Austen', shelf: 'PR', shelf_name: 'English literature', popularity: 1, cover_url: null, epub_url: '/e', html_url: '/h' };
+    vi.spyOn(api, 'books').mockResolvedValue({ items: [book], total: 60366, available: true });
+    vi.spyOn(api, 'reading').mockResolvedValue([{ key: 'gutenberg:2701', title: 'Moby-Dick', author: 'Herman Melville', cover_url: null, url: '/book/gutenberg/2701', cfi: 'x', percent: 40, updated_at: '2026-09-17T10:00:00Z' }]);
     renderRoute('/library');
     const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
+    // under the tiles: the books the household is in the middle of, and the most-read of the collection
+    const strip = await screen.findByRole('list', { name: 'Continue reading' });
+    expect(within(strip).getByRole('link', { name: /Moby-Dick/ })).toHaveAttribute('href', '/book/gutenberg/2701');
+    const most = await screen.findByRole('list', { name: 'Most read' });
+    expect(within(most).getByRole('link', { name: /Pride and Prejudice/ })).toHaveAttribute('href', '/book/gutenberg/1342');
+    expect(screen.getByRole('link', { name: /All 60,366 books/ })).toHaveAttribute('href', '/library/books?all=1');
     const links = within(shelves).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library/medical', '/library/guides', '/library/books', '/library/sources']);
     expect(await within(shelves).findByText(`999, ${cards.length} quick cards, the NHS A to Z, children's doses`)).toBeInTheDocument();

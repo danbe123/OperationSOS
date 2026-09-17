@@ -63,7 +63,7 @@ function BookCard({ to, title, author, cover, percent, meta, action }: {
   );
 }
 
-function BookGrid({ items, label }: { items: BookSummary[]; label: string }) {
+export function BookGrid({ items, label }: { items: BookSummary[]; label: string }) {
   return (
     <ul className="book-grid" aria-label={label}>
       {items.map((b) => <BookCard key={b.id} to={`/book/gutenberg/${b.id}`} title={b.title} author={b.author} cover={b.cover_url} />)}
@@ -72,7 +72,7 @@ function BookGrid({ items, label }: { items: BookSummary[]; label: string }) {
 }
 
 /** The books a household is in the middle of, most recent first, each opening where it was left. */
-function ContinueReading({ entries, onForget }: { entries: ReadingEntry[]; onForget: (key: string) => void }) {
+export function ContinueReading({ entries, onForget }: { entries: ReadingEntry[]; onForget: (key: string) => void }) {
   return (
     <section aria-label="Continue reading">
       <div className="books-head"><h2>Continue reading</h2></div>

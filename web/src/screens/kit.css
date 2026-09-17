@@ -1,19 +1,80 @@
-/* Kit screens: the overview tiles reuse .tiles; the kit page adds tier panels and the item row's quantity line. */
-.kit-tier { margin-top: 12px; }
-.kit-tier > summary { cursor: pointer; min-height: var(--touch); display: flex; align-items: center; gap: 12px; font-weight: 600; }
-.kit-tier > summary .muted { font-weight: 400; }
-.kit-qty { display: block; color: var(--ink-muted); }
+/* Kit screens. The front: where the house stands (one bar a tier, and how many people it is for) over
+   the kits as tiles, each with a bar a tier and a line saying where it stands. A kit: the three tiers
+   as one switch, the open tier's things as rows a finger lands on anywhere. */
+
+/* --- the front ------------------------------------------------------------------------------ */
+.kit-front { display: flex; flex-direction: column; gap: 16px; }
+.kit-readiness { display: grid; gap: 12px 24px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+/* The stepper and the three meters share a row only where there is room for the meters' words: on the
+   kiosk they ran into each other ("13 of 9Two weeks"), so there the meters take a row of their own. */
+@media (min-width: 1000px) { .kit-readiness { grid-template-columns: auto minmax(0, 1fr); } .kit-readiness-note { grid-column: 1 / -1; } }
 /* The one question the box asks, so it wears the shape of an answer: two big taps with the count
    between them, never a number field somebody has to select and retype. */
-.kit-people { align-items: center; gap: 12px; margin: 0 0 12px; }
-.kit-people strong { font-size: var(--t-lead); }
-.kit-why { color: var(--ink-muted); }
-/* On paper every tier is packed, not only the ones somebody opened on the screen: a `details` that is
-   shut renders nothing at all, so the list itself is forced open for the printer. */
+.kit-people { align-items: center; gap: 12px; flex-wrap: nowrap; }
+.kit-people strong { font-size: var(--t-lead); white-space: nowrap; }
+.kit-meters { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kit-meters li { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kit-meter-head { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-meta); font-weight: 600; }
+.kit-meter-head .muted { white-space: nowrap; }
+.kit-readiness-note { margin: 0; font-size: var(--t-meta); }
+@media (max-width: 699px) { .kit-meters { grid-template-columns: minmax(0, 1fr); } }
+
+.kit-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.kit-tile { gap: 8px; min-height: 0; }
+.kit-tile-head { display: flex; align-items: center; gap: 10px; }
+.kit-tile-sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+/* Three bars in a row, one a tier, each filled by how much of that tier is ticked: the shape of a
+   kit's progress is read before the words are. */
+.kit-bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; width: 100%; margin-top: auto; }
+.kit-bar-tier { display: block; height: 6px; border-radius: var(--radius-pill); background: var(--sunken); overflow: hidden; }
+.kit-bar-fill { display: block; height: 100%; background: var(--signal); }
+.kit-tile-status { font-size: var(--t-meta); color: var(--ink); }
+
+/* --- a kit ---------------------------------------------------------------------------------- */
+.kit-page-line { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.kit-page-line > span:first-child { color: var(--ink); font-weight: 600; }
+.kit-tier-switch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.kit-tier-tab {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  min-height: var(--touch); padding: 8px 12px 10px;
+  border: 1px solid transparent; border-radius: var(--radius);
+  background: var(--panel); color: var(--ink-muted); font: 600 var(--t-meta)/1.2 var(--font-body);
+  cursor: pointer; text-align: left;
+}
+.kit-tier-tab.active { border-color: var(--signal); color: var(--ink); background: var(--panel); }
+@media (hover: hover) { .kit-tier-tab:not(.active):hover { background: var(--raised); } }
+.kit-tier-tab-title { font-size: var(--t-body); }
+.kit-tier-tab .progress-line { margin-top: 2px; }
+.kit-tier-panel { display: flex; flex-direction: column; gap: 8px; }
+/* `display: flex` outranks the browser's own rule for the `hidden` attribute, and every tier showed
+   at once under a switch that said one was open. */
+.kit-tier-panel[hidden] { display: none; }
+.kit-tier-why { margin: 0; color: var(--ink-muted); }
+.kit-tier-why strong { color: var(--ink); }
+.kit-items > li { padding: 6px 0; }
+.kit-item { display: flex; flex-direction: column; gap: 2px; }
+.kit-item-tick { display: flex; align-items: flex-start; gap: 12px; min-height: var(--touch); padding: 6px 0; cursor: pointer; }
+.kit-item-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.kit-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+/* The quantity sits at the end of the name's line, in its own pill, so a list is scanned down one
+   edge for what and down the other for how much. */
+.kit-qty { flex: 0 0 auto; padding: 2px 10px; border-radius: var(--radius-pill); background: var(--sunken); color: var(--ink); font-size: var(--t-meta); font-weight: 600; white-space: nowrap; }
+.kit-why { color: var(--ink-muted); font-size: var(--t-meta); line-height: 1.35; }
+.kit-item-foot { margin-left: 38px; gap: 10px; }
+.kit-item-foot .btn { padding: 2px 8px; }
+/* Only the title is struck through. The "who and when" line is what tells a reader the tick landed,
+   so striking it too would be striking out the answer. */
+.kit-item-done .task-title { text-decoration: line-through; color: var(--ink-muted); }
+.kit-item-done .kit-qty { opacity: 0.7; }
+@media (max-width: 699px) { .kit-item-foot { margin-left: 0; } .kit-tier-switch { grid-template-columns: minmax(0, 1fr); } }
+.kit-intro { margin-top: 8px; }
+
+/* On paper every tier is packed, not only the one open on the screen: the switch is gone and the
+   hidden panels are shown. */
 @media print {
-  .kit-tier { break-inside: avoid; }
-  .kit-tier > summary { list-style: none; }
-  .kit-tier > ul { display: block !important; }
+  .kit-tier-panel[hidden] { display: flex !important; }
+  .kit-tier-panel { break-inside: avoid; }
+  .kit-item-foot .btn { display: none; }
   /* The overview's packing list: one sheet a kit. */
   .kit-sheets section + section { break-before: page; }
 }

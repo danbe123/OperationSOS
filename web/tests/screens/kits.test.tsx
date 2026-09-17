@@ -3,11 +3,16 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { kitsHave, kitsResponse, kitWater } from '../fixtures/api';
-import { tierLine } from '../../src/screens/Kits';
+import { kitStatus } from '../../src/screens/Kits';
 
-describe('tierLine', () => {
-  it('reads basic, serious and full as done over total', () => {
-    expect(tierLine(kitsResponse.kits[0].tiers)).toBe('Basic 1/2 · Serious 0/1 · Full 0/1');
+describe('kitStatus', () => {
+  it('says which tier is being worked on and how far, in the words a household uses', () => {
+    expect(kitStatus(kitsResponse.kits[0].tiers)).toBe('Three days: 1 of 2');
+    expect(kitStatus({ basic: { done: 2, total: 2 }, serious: { done: 1, total: 3 }, full: { done: 0, total: 1 } })).toBe('Three days ✓ · Two weeks: 1 of 3');
+    expect(kitStatus({ basic: { done: 2, total: 2 }, serious: { done: 3, total: 3 }, full: { done: 0, total: 1 } })).toBe('Two weeks ✓ · No help coming: 0 of 1');
+    expect(kitStatus({ basic: { done: 2, total: 2 }, serious: { done: 3, total: 3 }, full: { done: 1, total: 1 } })).toBe('Everything packed');
+    // a kit with no serious or full tier is judged on what it has
+    expect(kitStatus({ basic: { done: 1, total: 1 }, serious: { done: 0, total: 0 }, full: { done: 0, total: 0 } })).toBe('Everything packed');
   });
 });
 
@@ -18,7 +23,12 @@ describe('Kits', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Kit' })).toBeInTheDocument();
     const grid = screen.getByRole('navigation', { name: 'Kits' });
     expect(within(grid).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/kit/water', '/kit/baby-child']);
-    expect(within(grid).getByText('Basic 1/2 · Serious 0/1 · Full 0/1')).toBeInTheDocument();
+    expect(within(grid).getByText('Three days: 1 of 2')).toBeInTheDocument();
+    // where the whole house stands, one bar a tier, over the tiles
+    const ready = screen.getByRole('region', { name: 'How ready you are' });
+    expect(within(ready).getByRole('progressbar', { name: 'Three days: 1 of 3 packed' })).toBeInTheDocument();
+    expect(within(ready).getByRole('progressbar', { name: 'Two weeks: 0 of 1 packed' })).toBeInTheDocument();
+    expect(within(ready).getByRole('progressbar', { name: 'No help coming: 0 of 1 packed' })).toBeInTheDocument();
     // Without a register there is nothing to test a kit against, so no kit is put in a "not needed" pile.
     expect(screen.queryByRole('navigation', { name: 'Not needed for this household' })).toBeNull();
     expect(screen.queryByText(/register/i)).toBeNull();
