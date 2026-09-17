@@ -1,11 +1,38 @@
-import { describe, it, expect, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { library } from '../fixtures/api';
 
 describe('Library', () => {
+  beforeEach(() => {
+    vi.spyOn(api, 'reading').mockResolvedValue([]);
+  });
+
+  it('shows My books first, newest first, and forgets a book on request', async () => {
+    vi.spyOn(api, 'library').mockResolvedValue(library);
+    const reading = vi.spyOn(api, 'reading')
+      .mockResolvedValueOnce([
+        { key: 'gutenberg:2701', title: 'Moby-Dick', author: 'Herman Melville', cover_url: null, url: '/book/gutenberg/2701', cfi: 'x', percent: 40.4, updated_at: '2026-09-17T10:00:00Z' },
+        { key: 'doc:where-there-is-no-doctor', title: 'Where There Is No Doctor', author: null, cover_url: null, url: '/doc/where-there-is-no-doctor', cfi: 'y', percent: 10, updated_at: '2026-09-17T09:00:00Z' },
+      ])
+      .mockResolvedValueOnce([]);
+    const del = vi.spyOn(api, 'deleteReading').mockResolvedValue({ ok: true });
+    const user = userEvent.setup();
+    renderRoute('/library');
+    const shelf = await screen.findByRole('region', { name: 'My books' });
+    const items = within(shelf).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Moby-Dick');
+    expect(items[0]).toHaveTextContent('40% read');
+    expect(within(items[0]).getByRole('link', { name: /Moby-Dick/ })).toHaveAttribute('href', '/book/gutenberg/2701');
+    expect(within(items[1]).getByRole('link', { name: /Where There Is No Doctor/ })).toHaveAttribute('href', '/doc/where-there-is-no-doctor');
+    await user.click(within(items[0]).getByRole('button', { name: 'Forget Moby-Dick' }));
+    expect(del).toHaveBeenCalledWith('gutenberg:2701');
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'My books' })).not.toBeInTheDocument());
+    expect(reading).toHaveBeenCalledTimes(2);
+  });
+
   it('lists categories with counts, item cards, and filters by category chip', async () => {
     vi.spyOn(api, 'library').mockResolvedValue(library);
     const user = userEvent.setup();
