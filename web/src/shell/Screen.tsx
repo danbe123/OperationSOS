@@ -11,7 +11,7 @@ import { useWide } from './useWide';
  * from, and the search field that is on every screen. Navigation lives in the shell, so no screen
  * draws an app bar of its own. */
 export function Screen({
-  title, actions, children, className, back = true, search = true, fill = false, backTo,
+  title, actions, children, className, back = true, search = true, fill = false, backTo, head = true,
 }: {
   title: string;
   actions?: ReactNode;
@@ -23,6 +23,10 @@ export function Screen({
   /** Where Back goes instead of the history stack. A screen reached by a deep link (a pin dropped
       on the map, say) has no useful "back" in history — it returns to its parent screen instead. */
   backTo?: string;
+  /** Without a head: the title still names the tab and the printed sheet, but the screen draws its
+      own first row (Kit's tabs, stepper and Print share one line; a "Kit" heading over them was a row
+      spent on a word the rail already says). */
+  head?: boolean;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,7 +53,7 @@ export function Screen({
       <div className="print-only print-head" aria-hidden="true">
         <strong>Operation SOS</strong> · {title} · printed {printedOn()}
       </div>
-      <header className={back ? 'screen-head' : 'screen-head screen-head-noback'}>
+      {head && <header className={back ? 'screen-head' : 'screen-head screen-head-noback'}>
         {back && (
           <button type="button" className="btn btn-quiet btn-small screen-head-back no-print" onClick={goBack}>
             <Icon name="back" size={20} /><span>Back</span>
@@ -74,7 +78,7 @@ export function Screen({
               <Icon name="search" size={18} /><span>Find</span>
             </Link>
           ))}
-      </header>
+      </header>}
       {children}
     </div>
   );

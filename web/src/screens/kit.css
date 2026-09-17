@@ -3,26 +3,20 @@
    as one switch, the open tier's things as rows a finger lands on anywhere. */
 
 /* --- the front ------------------------------------------------------------------------------ */
+/* One row instead of a head and a panel: the tabs, then how many people and Print at the right. */
+.kit-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 6px; }
+.kit-top .tabs { border-bottom: 0; }
+.kit-top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
 .kit-front { display: flex; flex-direction: column; gap: 16px; }
-.kit-readiness { display: grid; gap: 12px 24px; grid-template-columns: minmax(0, 1fr); align-items: center; }
-/* The stepper and the three meters share a row only where there is room for the meters' words: on the
-   kiosk they ran into each other ("13 of 9Two weeks"), so there the meters take a row of their own. */
-@media (min-width: 1000px) { .kit-readiness { grid-template-columns: auto minmax(0, 1fr); } .kit-readiness-note { grid-column: 1 / -1; } }
 /* The one question the box asks, so it wears the shape of an answer: two big taps with the count
    between them, never a number field somebody has to select and retype. */
-.kit-people { align-items: center; gap: 12px; flex-wrap: nowrap; }
-.kit-people strong { font-size: var(--t-lead); white-space: nowrap; }
-.kit-meters { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.kit-meters li { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.kit-meter-head { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-meta); font-weight: 600; }
-.kit-meter-head .muted { white-space: nowrap; }
-.kit-readiness-note { margin: 0; font-size: var(--t-meta); }
-@media (max-width: 699px) { .kit-meters { grid-template-columns: minmax(0, 1fr); } }
+.kit-people { align-items: center; gap: 8px; flex-wrap: nowrap; }
+.kit-people strong { font-size: var(--t-body); white-space: nowrap; }
+.kit-people .btn { min-width: var(--touch); padding: 4px 8px; }
 
-.kit-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.kit-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .kit-tile { gap: 8px; min-height: 0; }
 .kit-tile-head { display: flex; align-items: center; gap: 10px; }
-.kit-tile-sub { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
 /* Three bars in a row, one a tier, each filled by how much of that tier is ticked: the shape of a
    kit's progress is read before the words are. */
 .kit-bar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; width: 100%; margin-top: auto; }

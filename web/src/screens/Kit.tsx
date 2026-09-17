@@ -126,7 +126,7 @@ export function Kit() {
                 on the kit list: the number is said here and changed there. */}
             <p className="muted kit-page-line">
               <span>{packed} of {total} packed.</span>{' '}
-              <span>Quantities are for <Link to="/kit">{kit.people} {kit.people === 1 ? 'person' : 'people'}</Link>. Ticks are shared by everyone on the box.</span>
+              <span>Quantities are for <Link to="/kit">{kit.people} {kit.people === 1 ? 'person' : 'people'}</Link>.</span>
             </p>
             <TierSwitch tiers={kit.tiers} current={current} onPick={setPicked} />
             {kit.tiers.map((tier) => <TierPanel key={tier.id} slug={slug} tier={tier} open={tier.id === current} onKit={q.setData} />)}

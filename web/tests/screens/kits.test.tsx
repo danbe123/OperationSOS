@@ -17,22 +17,19 @@ describe('kitStatus', () => {
 });
 
 describe('Kits', () => {
-  it('lists every kit as a tile, with nothing set aside as not needed', async () => {
+  it('lists every kit as a tile under one row, with no heading and nothing set aside as not needed', async () => {
     vi.spyOn(api, 'kits').mockResolvedValue(kitsResponse);
     renderRoute('/kit');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Kit' })).toBeInTheDocument();
-    const grid = screen.getByRole('navigation', { name: 'Kits' });
+    const grid = await screen.findByRole('navigation', { name: 'Kits' });
     expect(within(grid).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/kit/water', '/kit/baby-child']);
     expect(within(grid).getByText('Three days: 1 of 2')).toBeInTheDocument();
-    // where the whole house stands, one bar a tier, over the tiles
-    const ready = screen.getByRole('region', { name: 'How ready you are' });
-    expect(within(ready).getByRole('progressbar', { name: 'Three days: 1 of 3 packed' })).toBeInTheDocument();
-    expect(within(ready).getByRole('progressbar', { name: 'Two weeks: 0 of 1 packed' })).toBeInTheDocument();
-    expect(within(ready).getByRole('progressbar', { name: 'No help coming: 0 of 1 packed' })).toBeInTheDocument();
+    // No "Kit" heading: the rail says it, and the row it took is a row of kits on the kiosk. The tab
+    // and the printed sheet still carry the name.
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
+    await waitFor(() => expect(document.title).toBe('Kit · SOS'));
     // Without a register there is nothing to test a kit against, so no kit is put in a "not needed" pile.
     expect(screen.queryByRole('navigation', { name: 'Not needed for this household' })).toBeNull();
     expect(screen.queryByText(/register/i)).toBeNull();
-    expect(screen.getByText(/Ticks are shared/)).toBeInTheDocument();
   });
 
   it('is the one thing the box asks: how many people, on a stepper that saves and re-scales', async () => {

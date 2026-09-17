@@ -7,6 +7,8 @@ import { Icon } from '../icons';
 import { notify } from '../components/Notice';
 import { PrintButton } from '../components/PrintButton';
 import { Screen, Body } from '../shell/Screen';
+import { useWide } from '../shell/useWide';
+import { ThemeButton } from '../theme/ThemeButton';
 import './kit.css';
 
 /** The three tiers, as a household says them: not "basic, serious, full" but how long each one covers. */
@@ -112,35 +114,12 @@ function PeopleStepper({ people, onSaved }: { people: number; onSaved: () => Pro
   );
 }
 
-/** Where the whole house stands, one bar a tier: every kit's ticks added up. A household sees at a
- * glance that the three days are nearly done and the two weeks barely begun, before any kit is opened. */
-function Readiness({ kits, people, onSaved }: { kits: KitSummary[]; people: number; onSaved: () => Promise<void> }) {
-  const sums = TIER_IDS.map((t) => ({
-    id: t, title: TIER_TITLE[t],
-    done: kits.reduce((n, k) => n + k.tiers[t].done, 0), total: kits.reduce((n, k) => n + k.tiers[t].total, 0),
-  }));
-  return (
-    <section className="kit-readiness panel" aria-label="How ready you are">
-      <PeopleStepper people={people} onSaved={onSaved} />
-      <ul className="kit-meters" aria-label="Packed so far">
-        {sums.map((s) => (
-          <li key={s.id}>
-            <span className="kit-meter-head"><span>{s.title}</span><span className="muted">{s.done} of {s.total}</span></span>
-            <progress className="progress-line" value={s.done} max={Math.max(1, s.total)} aria-label={`${s.title}: ${s.done} of ${s.total} packed`} />
-          </li>
-        ))}
-      </ul>
-      <p className="muted kit-readiness-note">What to have before anything happens: three days, two weeks, and no help coming. Ticks are shared by everyone on the box.</p>
-    </section>
-  );
-}
-
-/** A kit as a tile: its icon and name, one line of what it is, a bar a tier, and where it stands. */
+/** A kit as a tile: its icon and name, a bar a tier, and where it stands. What the kit is for is on
+ * the kit itself; a sentence on every tile made fifteen of them a wall. */
 function KitTile({ kit }: { kit: KitSummary }) {
   return (
     <Link className="tile kit-tile" to={`/kit/${kit.slug}`}>
       <span className="kit-tile-head"><Icon name={kit.icon} size={28} /><span className="tile-title">{kit.title}</span></span>
-      <span className="tile-sub kit-tile-sub">{kit.summary}</span>
       <span className="kit-bar" aria-hidden="true">
         {TIER_IDS.map((t) => (
           <span key={t} className="kit-bar-tier"><span className="kit-bar-fill" style={{ width: `${kit.tiers[t].total ? (100 * kit.tiers[t].done) / kit.tiers[t].total : 0}%` }} /></span>
@@ -207,12 +186,13 @@ function HaveTab() {
   );
 }
 
-/** Kit: what to have in the house, in three tiers, ticked by everyone on the box. The front is where
- * the house stands — one bar a tier, and how many people it is for — over the kits as tiles that each
- * say where they stand. */
+/** Kit: what to have in the house, in three tiers, ticked by everyone on the box. One row — the two
+ * tabs, how many people, Print — and then the kits as tiles that each say where they stand. No
+ * heading: the rail already says Kit, and the row it took was the first row of kits on the kiosk. */
 export function Kits() {
   const location = useLocation();
   const navigate = useNavigate();
+  const wide = useWide();
   const tab: TabId = location.hash === '#have' ? 'have' : 'kits';
   const q = useQuery(() => api.kits(), [], { refetchOnFocus: true });
   const kits = q.data?.kits ?? [];
@@ -221,26 +201,29 @@ export function Kits() {
   // Nothing to print until the list of kits is on the screen: the button used to sit there through
   // the whole load and do nothing at all when a household tapped it.
   return (
-    <Screen
-      title="Kit" back={false} search={false}
-      actions={tab === 'have'
-        ? <PrintButton label="Print" />
-        : <PrintButton label="Print every kit" disabled={!q.data || busy} onPrint={() => void printAll()} />}
-    >
+    <Screen title="Kit" back={false} search={false} head={false}>
       <Body>
-        <div className="tabs no-print" role="tablist" aria-label="Kit">
-          {TABS.map((t) => (
-            <button
-              key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={t.id === tab} aria-controls={`panel-${t.id}`}
-              className={t.id === tab ? 'btn active' : 'btn'} onClick={() => navigate(t.id === 'have' ? '/kit#have' : '/kit', { replace: true })}
-            >
-              {t.title}
-            </button>
-          ))}
+        <div className="kit-top no-print">
+          <div className="tabs" role="tablist" aria-label="Kit">
+            {TABS.map((t) => (
+              <button
+                key={t.id} type="button" role="tab" id={`tab-${t.id}`} aria-selected={t.id === tab} aria-controls={`panel-${t.id}`}
+                className={t.id === tab ? 'btn active' : 'btn'} onClick={() => navigate(t.id === 'have' ? '/kit#have' : '/kit', { replace: true })}
+              >
+                {t.title}
+              </button>
+            ))}
+          </div>
+          <div className="kit-top-right">
+            {tab === 'kits' && q.data && <PeopleStepper people={people} onSaved={q.refetch} />}
+            {tab === 'have'
+              ? <PrintButton label="Print" />
+              : <PrintButton label="Print every kit" disabled={!q.data || busy} onPrint={() => void printAll()} />}
+            {!wide && <ThemeButton />}
+          </div>
         </div>
         {tab === 'have' ? <HaveTab /> : (
           <section id="panel-kits" role="tabpanel" aria-labelledby="tab-kits" className="kit-front">
-            {q.data && <Readiness kits={kits} people={people} onSaved={q.refetch} />}
             {q.loading && <p className="muted">Loading the kits…</p>}
             {q.error && <p className="warning">Kits unavailable: {q.error}</p>}
             {kits.length > 0 && <KitGrid kits={kits} label="Kits" />}
