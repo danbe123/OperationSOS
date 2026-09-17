@@ -34,6 +34,14 @@ CREATE TABLE IF NOT EXISTS neighbours (id INTEGER PRIMARY KEY AUTOINCREMENT, nam
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS search_cache (q TEXT PRIMARY KEY, results_json TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS places_meta (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS books (zim TEXT NOT NULL, id INTEGER NOT NULL, title TEXT NOT NULL, author TEXT, shelf TEXT,
+  popularity INTEGER NOT NULL DEFAULT 0, epub_path TEXT, html_path TEXT, cover_path TEXT, PRIMARY KEY (zim, id));
+CREATE INDEX IF NOT EXISTS books_popularity ON books(zim, popularity DESC);
+CREATE INDEX IF NOT EXISTS books_shelf ON books(zim, shelf);
+CREATE VIRTUAL TABLE IF NOT EXISTS fts_books USING fts5(title, author, content='books', content_rowid='rowid',
+  tokenize='porter unicode61 remove_diacritics 2');
+CREATE TABLE IF NOT EXISTS reading (key TEXT PRIMARY KEY, title TEXT NOT NULL, author TEXT, cover_url TEXT, cfi TEXT NOT NULL,
+  percent REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
 """
 
 
