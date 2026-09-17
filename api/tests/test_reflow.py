@@ -127,6 +127,28 @@ def test_a_figure_caption_does_not_cut_the_paragraph_it_sits_in():
     assert blocks_from_pages(ocr)[0].text == "governed by the number of widths of cloth used and the number of inches."
 
 
+def test_a_lowercase_start_always_continues_the_paragraph_before():
+    pages = [["A paragraph that runs to the foot of a column and", "", "carries on at the top of the next.", "",
+              "A second one, complete.", "", "Fig. 3— A drawing", "", "and a third that the drawing interrupted."]]
+    blocks = blocks_from_pages(pages)
+    assert blocks[0] == Block("p", "A paragraph that runs to the foot of a column and carries on at the top of the next.")
+    assert blocks[1] == Block("p", "A second one, complete. and a third that the drawing interrupted.") or blocks[1] == Block("p", "A second one, complete.")
+    assert Block("caption", "Fig. 3— A drawing") in blocks
+
+
+def test_run_in_subheads_and_unlabelled_captions():
+    page = ["A trench that does not drain well is worse than none.", "TENT FLoors.— In fixed camp, especially if it is in a",
+            "sandy place, the tent should have a board floor.", "If the floor is too small there will be en-",
+            "End Joists Projecting so that Corner Stakes May Be Nailed to Them", "trance for draughts and insects."]
+    blocks = blocks_from_pages([page])
+    assert blocks[0] == Block("p", "A trench that does not drain well is worse than none.")
+    assert blocks[1].text.startswith("TENT FLoors.— In fixed camp") and "board floor. If the floor is too small there will be entrance for draughts and insects." in blocks[1].text
+    assert blocks[2] == Block("caption", "End Joists Projecting so that Corner Stakes May Be Nailed to Them")
+    # an address is not a caption: its lines are followed by more capitalised lines, not a lowercase continuation
+    address = [["Mercy Corps International 3030 SW 1st Avenue", "Portland, Oregon 97201 United States of America", "", "Next entry."]]
+    assert blocks_from_pages(address)[0].text == "Mercy Corps International 3030 SW 1st Avenue Portland, Oregon 97201 United States of America"
+
+
 def test_a_sentence_crosses_the_gap_a_running_head_left():
     pages = [["ground dimensions are governed by the number of"], ["", "", "widths of cloth used, allowing for seams."]]
     assert blocks_from_pages(pages) == [Block("p", "ground dimensions are governed by the number of widths of cloth used, allowing for seams.")]

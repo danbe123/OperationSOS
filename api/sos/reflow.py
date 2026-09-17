@@ -136,6 +136,15 @@ _BULLET = re.compile(r"^([•·▪■●○\-–—*]|\(?([a-z]|[ivx]{1,3}|\d{1,
 _SYMBOL_BULLET = re.compile(r"^([•·▪■●○\-–—*]|\(?[a-z][.)])\s+")
 _NUMBERED_ITEM = re.compile(r"^\(?\d{1,3}[.)]\s+")
 _CAPTION = re.compile(r"^(fig(ure)?|plate|table|photo)\.?\s*\S{1,5}\s*[.:—–-]", re.I)   # "Fig. 82—", and OCR's "Fig. r.—"
+# A run-in subhead in small capitals, as a 1917 book sets them: "TENT FLOORS.— In fixed camp ..." (OCR: "FLoors").
+_RUN_IN = re.compile(r"^[A-Z][A-Za-z]{2,}(?: [A-Za-z]{2,}){0,5}\.\s?[—–-]\s")
+
+
+def _title_case(line: str) -> bool:
+    words = [w for w in line.split() if any(c.isalpha() for c in w)]
+    if len(words) < 4 or len(line) > MAX_HEADING or line.rstrip().endswith(_TERMINAL):
+        return False
+    return sum(1 for w in words if w[0].isupper()) / len(words) >= 0.7
 SHORT_LINE = 0.55       # a line under this share of the page's typical width ends its paragraph
 MAX_HEADING = 90
 
@@ -184,7 +193,6 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
     open_kind: str | None = None
     open_text = ""
     heading_open = False   # the last block is a heading with no blank line after it yet
-    closed_short = False   # the last block was closed by the short-line rule
     captions: list[Block] = []   # a figure's caption waits until the paragraph it interrupted has closed
     blank_after_caption = False
 
@@ -211,12 +219,22 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
                 if open_kind and (open_text.rstrip().endswith("-") or _CAPTION.match(following)):
                     continue   # a word broken at the margin, or a figure about to interrupt: the paragraph goes on
                 close()
-                heading_open = closed_short = blank_after_caption = False
+                heading_open = blank_after_caption = False
                 continue
             if _CAPTION.match(line) and len(line) < MAX_HEADING:
                 captions.append(Block("caption", line))
                 blank_after_caption = False
                 continue
+            if open_kind == "p" and _title_case(line):
+                # "End Joists Projecting so that Corner Stakes May Be Nailed to Them" in the middle of a sentence
+                # is a drawing's caption when the sentence goes on underneath it.
+                following = next((x for x in stripped[i + 1:] if x), "")
+                if following[:1].islower() or open_text.rstrip().endswith("-"):
+                    captions.append(Block("caption", line))
+                    blank_after_caption = False
+                    continue
+            if open_kind == "p" and _RUN_IN.match(line) and open_text.rstrip().endswith(_TERMINAL):
+                close()   # a run-in subhead opens its own paragraph
             blank_after_caption = False
             at_page_top = False
             heading = looks_like_heading(line)
@@ -232,21 +250,28 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
             if heading and (open_kind is None or open_text.rstrip().endswith(_TERMINAL)):
                 close()
                 blocks.append(Block(heading, line))
-                heading_open, closed_short = True, False
+                heading_open = True
                 continue
             heading_open = False
             if _BULLET.match(line):
                 close()
-                closed_short = False
                 open_kind, open_text = "li", _BULLET.sub("", line, count=1)
                 continue
-            continues_item = open_kind is None and blocks and blocks[-1].kind == "li" and not blocks[-1].text.endswith(".")
-            if line[:1].islower() and (closed_short and blocks and blocks[-1].kind in ("p", "li") or continues_item):
-                # "ensure your own safety;" was closed (as a short line, or by a blank the columns left), but
-                # "if necessary, ..." carries it on: a paragraph does not start with a lowercase letter.
-                last = blocks.pop()
-                open_kind, open_text = last.kind, last.text
-            closed_short = False
+            if line[:1].islower() and open_kind is None and blocks and blocks[-1].kind in ("p", "li", "caption") and not captions:
+                # A paragraph never starts with a lowercase letter: whatever closed the one before (a short
+                # line, the blank a column or a page left, a caption) was not the end of its sentence.
+                last = blocks[-1]
+                if last.kind == "caption":
+                    # the caption floated out of a sentence: continue the paragraph before it and keep the caption after
+                    if len(blocks) >= 2 and blocks[-2].kind in ("p", "li"):
+                        captions.append(blocks.pop())
+                        last = blocks.pop()
+                    else:
+                        last = None
+                else:
+                    blocks.pop()
+                if last is not None:
+                    open_kind, open_text = last.kind, last.text
             if open_kind in ("p", "li"):
                 open_text = _join(open_text, line)
             else:
@@ -255,7 +280,6 @@ def blocks_from_pages(pages: list[list[str]]) -> list[Block]:
             # A short line ending in punctuation is a paragraph's last line.
             if width and len(line) < SHORT_LINE * width and line.endswith(_TERMINAL):
                 close()
-                closed_short = True
         # A paragraph runs across the page break only when the page ended mid-sentence.
         if open_kind and open_text.rstrip().endswith(_TERMINAL):
             close()
