@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { chunkText, CHUNK_CHARS, resetSpeech, speakFrom, visibleText } from '../../src/tools/speech';
+import { chunkText, CHUNK_CHARS, pauseSpeaking, resetSpeech, resumeSpeaking, speakFrom, visibleText } from '../../src/tools/speech';
 import { api } from '../../src/api/client';
 
 describe('chunkText', () => {
@@ -102,5 +102,39 @@ describe('speakFrom', () => {
     expect(said[1].startsWith('word')).toBe(true);
     expect(said[2].startsWith('more')).toBe(true);
     expect(said[4]).toBe('After.');
+  });
+
+  it('plays every piece through one player, and pauses and resumes it', async () => {
+    const players = new Set<HTMLMediaElement>();
+    let playCalls = 0;
+    let endPlay: () => void = () => undefined;
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function play(this: HTMLMediaElement) {
+      players.add(this);
+      playCalls += 1;
+      new Promise<void>((r) => { endPlay = r; }).then(() => this.dispatchEvent(new Event('ended')));
+      return Promise.resolve();
+    });
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    localStorage.setItem('sos.voice.id', 'en_GB-alan-medium');
+    localStorage.setItem('sos.voice.speed', '1.2');
+    const speak = vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    async function* pieces() { yield { text: 'One.' }; yield { text: 'Two.' }; }
+    const done = speakFrom('book', pieces());
+    await vi.waitFor(() => expect(players.size).toBe(1));
+    // the voice you chose, at the speed you chose, on every request
+    expect(speak).toHaveBeenCalledWith('One.', { voice: 'en_GB-alan-medium', speed: 1.2 });
+    pauseSpeaking();
+    expect(pause).toHaveBeenCalled();
+    resumeSpeaking();
+    await vi.waitFor(() => expect(playCalls).toBe(2));   // resumed: the same element played again
+    endPlay();                                            // the first piece ends
+    await vi.waitFor(() => expect(playCalls).toBe(3));   // the second piece, fetched meanwhile, plays
+    expect(speak).toHaveBeenCalledTimes(2);
+    endPlay();
+    await done;
+    expect(players.size).toBe(1);   // the same element carried both pieces
+    localStorage.clear();
   });
 });

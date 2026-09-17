@@ -14,7 +14,8 @@ import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
 import { fontFaceRules, fontsIn } from '../reader/fonts';
 import { bookPieces } from '../reader/aloud';
-import { speakFrom, stopSpeaking, useSpeech } from '../tools/speech';
+import { pauseSpeaking, resumeSpeaking, speakFrom, stopSpeaking, useSpeech } from '../tools/speech';
+import { setVoicePrefs, SPEEDS, voicePrefs } from '../tools/voice';
 import { EPUB_SIZES, FLOW_KEY, IMMERSED_KEY, SIZE_KEY, storedFlow, storedImmersed, storedSize, tapZone, write, type Flow } from '../reader/prefs';
 
 export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): string {
@@ -293,7 +294,11 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   const [immersed, setImmersed] = useState(storedImmersed);
   const [error, setError] = useState<string | null>(null);
   const bookRef = useRef<ReturnType<typeof ePub> | null>(null);
-  const { speaking, available: voice } = useSpeech();
+  const { speaking, available: voice, paused } = useSpeech();
+  const [voiceRow, setVoiceRow] = useState(false);
+  const [prefs, setPrefs] = useState(voicePrefs);
+  const voicesQ = useQuery(() => (voice && voiceRow ? api.voices() : Promise.resolve(null)), [voice, voiceRow]);
+  const detachedRef = useRef(false);   // you scrolled while the voice read: the page stops following it
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const memoryRef = useRef(memory);
@@ -304,6 +309,8 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   flowRef.current = flow;
   // Where the reader is right now, so a change of flow reopens the same book at the same place.
   const hereRef = useRef<string | null>(null);
+  // Where the voice has got to: each piece read is the place to come back to, whether or not the page followed.
+  const noteRef = useRef<(cfi: string) => void>(() => undefined);
 
   useEffect(() => { write(SIZE_KEY, String(size)); }, [size]);
   useEffect(() => { write(FLOW_KEY, flow); }, [flow]);
@@ -367,7 +374,7 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     const start = hereRef.current || memoryRef.current?.startCfi || undefined;
     let live = true;
     let moved = false;   // you have taken hold of the page: the placing above stops deferring to the remembered spot
-    const onHand = () => { moved = true; };
+    const onHand = () => { moved = true; detachedRef.current = true; };
     for (const ev of ['wheel', 'touchstart', 'mousedown', 'keydown'] as const) rendition.on(ev, onHand);
     host.addEventListener('wheel', onHand, { passive: true });
     host.addEventListener('touchstart', onHand, { passive: true });
@@ -430,6 +437,11 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       clearTimeout(timer);
       timer = setTimeout(save, SAVE_DELAY_MS);
     };
+    noteRef.current = (cfi: string) => {
+      let index = 0;
+      try { index = Math.max(0, new EpubCFI(cfi).spinePos); } catch { /* a CFI the voice made is always well formed */ }
+      onRelocated({ start: { cfi, index, displayed: { page: 1, total: 1 } }, end: { cfi, index }, atStart: false, atEnd: false } as unknown as Location);
+    };
     rendition.on('relocated', onRelocated);
     return () => {
       live = false;
@@ -451,8 +463,10 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   const speakingRef = useRef(speaking);
   speakingRef.current = speaking;
 
-  /** Read the book aloud from where the screen is, and keep the screen with the voice. */
+  /** Read the book aloud from where the screen is — or from chapter one, from the front matter — and keep
+   * the screen with the voice until you scroll it yourself. */
   const readAloud = () => {
+    detachedRef.current = false;
     const rendition = renditionRef.current;
     const book = bookRef.current;
     const host = hostRef.current;
@@ -467,6 +481,8 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       }
     };
     const follow = (cfi: string) => {
+      noteRef.current(cfi);   // the place to come back to, even when the page is not following
+      if (detachedRef.current) return;
       if (flowRef.current === 'scrolled') {
         const container = host.querySelector<HTMLElement>('.epub-container');
         const at = scrolledOffsetOf(rendition, cfi);
@@ -495,14 +511,19 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     rendition.themes.fontSize(`${size}%`);
   }, [theme, size, flow]);
 
+  const choose = (next: Partial<typeof prefs>) => {
+    setVoicePrefs(next);
+    setPrefs(voicePrefs());
+  };
+  const reading = speaking === READING_ID;
   return (
     <div className="epub">
       <div className="doc-tools no-print">
         {leading}
-        {/* Arrows alone: the words made the bar two rows on the kiosk, and the same turns are a tap on
-            either side of the page or an arrow key. */}
-        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.prev()} aria-label="Previous" title="Previous page"><Icon name="back" size={20} /></button>
-        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.next()} aria-label="Next" title="Next page"><Icon name="forward" size={20} /></button>
+        {/* Arrows alone, and only where there are pages to turn: the words made the bar two rows on the
+            kiosk, and the same turns are a tap on either side of the page or an arrow key. */}
+        {flow !== 'scrolled' && <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.prev()} aria-label="Previous" title="Previous page"><Icon name="back" size={20} /></button>}
+        {flow !== 'scrolled' && <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.next()} aria-label="Next" title="Next page"><Icon name="forward" size={20} /></button>}
         <button type="button" className="btn btn-small" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])} aria-label={`Text size, ${size} per cent now`}>
           <Icon name="text-size" size={18} /><span>Text size</span>
         </button>
@@ -510,14 +531,44 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
                 title={flow === 'scrolled' ? 'Turn pages instead of scrolling' : 'Scroll through the book instead of turning pages'}>
           <Icon name={flow === 'scrolled' ? 'down' : 'book'} size={18} /><span>{flow === 'scrolled' ? 'Scrolling' : 'Pages'}</span>
         </button>
-        {voice && (speaking === READING_ID
-          ? <button type="button" className="btn btn-small btn-danger" onClick={() => stopSpeaking()}><Icon name="close" size={18} /><span>Stop reading</span></button>
-          : <button type="button" className="btn btn-small" disabled={speaking !== null} onClick={readAloud} title="Read the book aloud from here"><Icon name="speaker" size={18} /><span>Read aloud</span></button>)}
+        {voice && !reading && (
+          <button type="button" className="btn btn-small" disabled={speaking !== null} onClick={readAloud} title="Read the book aloud from here; from the front, from chapter one">
+            <Icon name="speaker" size={18} /><span>Read aloud</span>
+          </button>
+        )}
+        {voice && reading && (paused
+          ? <button type="button" className="btn btn-small btn-primary" onClick={() => { detachedRef.current = false; resumeSpeaking(); }}><Icon name="speaker" size={18} /><span>Resume</span></button>
+          : <button type="button" className="btn btn-small" onClick={() => pauseSpeaking()}><Icon name="clock" size={18} /><span>Pause</span></button>)}
+        {voice && reading && <button type="button" className="btn btn-small btn-danger" onClick={() => stopSpeaking()}><Icon name="close" size={18} /><span>Stop</span></button>}
+        {voice && (
+          <button type="button" className="btn btn-small" aria-expanded={voiceRow} onClick={() => setVoiceRow((v) => !v)} title="Which voice reads, and how fast">
+            <Icon name="settings" size={18} /><span>Voice</span>
+          </button>
+        )}
         <button type="button" className="btn btn-small" onClick={() => { setImmersed(true); notify('Tap the middle of the page to bring the controls back.'); }}
                 title="Put the controls away. Tap the middle of the page to bring them back.">
           <Icon name="expand" size={18} /><span>Just the book</span>
         </button>
       </div>
+      {voice && voiceRow && (
+        <div className="doc-tools voice-row no-print" role="group" aria-label="Voice">
+          <label className="voice-pick">
+            <span>Voice</span>
+            <select aria-label="Which voice" value={prefs.voice} onChange={(e) => choose({ voice: e.target.value })}>
+              <option value="">{voicesQ.data ? `${voicesQ.data.voices.find((v) => v.id === voicesQ.data!.default)?.name ?? 'The box’s own'} (default)` : 'The box’s own'}</option>
+              {(voicesQ.data?.voices ?? []).filter((v) => v.id !== voicesQ.data?.default).map((v) => (
+                <option key={v.id} value={v.id}>{v.name}{v.quality === 'high' ? ', high quality' : ''}</option>
+              ))}
+            </select>
+          </label>
+          <div className="row" role="group" aria-label="Speed">
+            {SPEEDS.map((s) => (
+              <button key={s.value} type="button" className={prefs.speed === s.value ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={prefs.speed === s.value} onClick={() => choose({ speed: s.value })}>{s.label}</button>
+            ))}
+          </div>
+          <Link className="btn btn-small btn-quiet" to="/library/sources/ai"><Icon name="plus" size={18} /><span>More voices</span></Link>
+        </div>
+      )}
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
       <div ref={hostRef} className="epub-host" />
     </div>

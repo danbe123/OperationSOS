@@ -31,7 +31,7 @@ describe('Read aloud', () => {
     const user = userEvent.setup();
     renderRoute('/p/pmr446');
     await user.click(await screen.findByRole('button', { name: 'Read aloud' }));
-    expect(speak).toHaveBeenCalledWith('PMR446 Channel 3 is the calling channel.');
+    expect(speak).toHaveBeenCalledWith('PMR446 Channel 3 is the calling channel.', expect.anything());
     const stop = await screen.findByRole('button', { name: 'Stop reading' });
     await user.click(stop);
     await act(async () => { release(new Blob(['x'])); });

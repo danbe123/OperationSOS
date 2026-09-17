@@ -338,3 +338,33 @@ def test_index_content_rows(env):
     assert {r["kind"] for r in rows} == {"playbook", "module", "card", "page"}
     hit = conn.execute("SELECT url FROM fts_docs WHERE fts_docs MATCH '\"bleach\"'").fetchone()
     assert hit["url"].startswith("/m/water")
+
+
+@respx.mock
+def test_sync_fetches_a_voice_with_the_json_beside_it(respx_mock, env, tmp_path, monkeypatch):
+    """A Piper voice is a model and the .json that says how to run it: the catalogue names the model and the
+    box fetches the json from the same place. Without the json the voice cannot speak, so its absence fails the item."""
+    model = b"onnx" * 100
+    voice = {"id": "piper-voice-en_GB-alan", "title": "Alan", "kind": "model", "tier": "core", "category": "ai",
+             "source": {"type": "url", "url": "https://files.test/en_GB-alan-medium.onnx", "sha256": hashlib.sha256(model).hexdigest()},
+             "dest": "models/piper/en_GB-alan-medium.onnx", "priority": 9}
+    monkeypatch.setattr(env, "manifest_dir", _manifest(tmp_path, [voice]))
+    respx_mock.get(sync.OPDS_URL).mock(return_value=httpx.Response(200, text=(FX / "opds" / "catalog.xml").read_text()))
+    respx_mock.get("https://files.test/en_GB-alan-medium.onnx").mock(return_value=httpx.Response(200, content=model))
+    side = respx_mock.get("https://files.test/en_GB-alan-medium.onnx.json").mock(return_value=httpx.Response(200, content=b'{"dataset": "alan"}'))
+    respx_mock.post("http://127.0.0.1:8000/api/system/rescan").mock(return_value=httpx.Response(200, json={}))
+    lines = []
+    with httpx.Client() as client:
+        rc = sync.sync(env, "core", out=lines.append, client=client, use_aria2=False)
+    assert rc == 0, lines
+    assert (env.core / "models" / "piper" / "en_GB-alan-medium.onnx").read_bytes() == model
+    assert (env.core / "models" / "piper" / "en_GB-alan-medium.onnx.json").read_text() == '{"dataset": "alan"}'
+    assert side.called
+    # the json missing at the source: the model is kept, the item is reported failed rather than half installed
+    (env.core / "models" / "piper" / "en_GB-alan-medium.onnx").unlink()
+    (env.core / "models" / "piper" / "en_GB-alan-medium.onnx.json").unlink()
+    side.mock(return_value=httpx.Response(404))
+    lines.clear()
+    with httpx.Client() as client:
+        rc = sync.sync(env, "core", out=lines.append, client=client, use_aria2=False)
+    assert rc == 1 and any(line.startswith("FAIL piper-voice-en_GB-alan") for line in lines)

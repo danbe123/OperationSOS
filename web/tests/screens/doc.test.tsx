@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, act, fireEvent, waitFor } from '@testing-library/react';
+import { screen, act, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
@@ -42,7 +42,7 @@ describe('pdfViewerUrl', () => {
  * test run the button can be found a tick before the effect runs, and a test that fires `relocated`
  * in that tick finds no handler. */
 async function readerUp() {
-  await screen.findByRole('button', { name: 'Next' });
+  await screen.findByRole('button', { name: /Text size/ });
   await waitFor(() => expect(typeof mocks.handlers.relocated).toBe('function'));
 }
 
@@ -239,6 +239,7 @@ describe('Doc', () => {
     globalThis.URL.createObjectURL = () => 'blob:x';
     globalThis.URL.revokeObjectURL = () => {};
     const speak = vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    const put = vi.spyOn(api, 'putReading').mockResolvedValue({ ok: true });
     const doc = document.implementation.createHTMLDocument('ch');
     doc.body.innerHTML = '<h2>Fever</h2><p>A fever is not an illness in itself.</p><p>Drink plenty of water.</p>';
     const chapter = { index: 2, load: async () => doc.documentElement, unload: vi.fn(), cfiFromElement: (el: Element) => `epubcfi(/6/6!/4/${el.tagName === 'H2' ? 2 : 4})` };
@@ -251,12 +252,55 @@ describe('Doc', () => {
     mocks.rendition.display.mockClear();
     await user.click(screen.getByRole('button', { name: 'Read aloud' }));
     await waitFor(() => expect(speak).toHaveBeenCalled());
-    expect(speak.mock.calls[0][0]).toBe('Fever A fever is not an illness in itself. Drink plenty of water.');
+    expect(speak.mock.calls.map((c) => c[0])).toEqual(['Fever', 'A fever is not an illness in itself. Drink plenty of water.']);
     // the page went to the piece as it was read (scrolling, with no rendered view to measure, by CFI)
     await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/6!/4/2)'));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Read aloud' })).toBeInTheDocument());   // the book ended
+    // where the voice got to is the place the box remembers, so the book reopens there
+    await waitFor(() => expect(put).toHaveBeenCalledWith('doc:where-there-is-no-doctor', expect.objectContaining({ cfi: 'epubcfi(/6/6!/4/4)' })), { timeout: 4000 });
+    // scrolling, there are no pages to turn: no Previous or Next in the bar
+    expect(screen.queryByRole('button', { name: 'Previous' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
     (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
     delete (mocks.rendition as unknown as { location?: unknown }).location;
+  });
+
+  it('pauses and resumes a reading, and the Voice row picks a voice and a speed', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(api, 'voices').mockResolvedValue({ default: 'en_GB-alba-medium', available: true, voices: [
+      { id: 'en_GB-alba-medium', name: 'Alba', quality: 'medium', language: 'en_GB' },
+      { id: 'en_GB-cori-high', name: 'Cori', quality: 'high', language: 'en_GB' },
+    ] });
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => Promise.resolve());   // a piece that never ends
+    const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
+    globalThis.URL.createObjectURL = () => 'blob:x';
+    globalThis.URL.revokeObjectURL = () => {};
+    vi.spyOn(api, 'speak').mockImplementation(async (text: string) => new Blob([text]));
+    const doc = document.implementation.createHTMLDocument('ch');
+    doc.body.innerHTML = '<p>A long chapter.</p>';
+    const chapter = { index: 0, load: async () => doc.documentElement, unload: vi.fn(), cfiFromElement: () => 'epubcfi(/6/2!/4/2)' };
+    (mocks.book as unknown as { spine: unknown; load: unknown }).spine = { length: 4, get: (i: number) => (i === 0 ? chapter : null) };
+    (mocks.book as unknown as { load: unknown }).load = vi.fn();
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    await user.click(screen.getByRole('button', { name: 'Read aloud' }));
+    await user.click(await screen.findByRole('button', { name: 'Pause' }));
+    expect(pause).toHaveBeenCalled();
+    await user.click(await screen.findByRole('button', { name: 'Resume' }));
+    expect(await screen.findByRole('button', { name: 'Pause' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(await screen.findByRole('button', { name: 'Read aloud' })).toBeInTheDocument();
+    // the Voice row
+    await user.click(screen.getByRole('button', { name: 'Voice' }));
+    const pick = await screen.findByRole('combobox', { name: 'Which voice' });
+    expect(within(pick).getAllByRole('option').map((o) => o.textContent)).toEqual(['Alba (default)', 'Cori, high quality']);
+    await user.selectOptions(pick, 'en_GB-cori-high');
+    expect(localStorage.getItem('sos.voice.id')).toBe('en_GB-cori-high');
+    await user.click(within(screen.getByRole('group', { name: 'Speed' })).getByRole('button', { name: 'Faster' }));
+    expect(localStorage.getItem('sos.voice.speed')).toBe('1.2');
+    expect(screen.getByRole('link', { name: /More voices/ })).toHaveAttribute('href', '/library/sources/ai');
+    (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
   });
 
   it('starts at the beginning when the saved place no longer resolves', async () => {
@@ -303,6 +347,7 @@ describe('Doc', () => {
   });
 
   it('opens an EPUB with epubjs, with next/previous and text size controls', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // this is about the page-turn controls
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
@@ -380,6 +425,7 @@ describe('Doc', () => {
   });
 
   it('offers the original PDF layout for a converted book, and switches between the two viewers', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // this is about the page-turn controls
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     const user = userEvent.setup();
@@ -397,6 +443,7 @@ describe('Doc', () => {
   });
 
   it('opens a #page= citation into a converted book at that page of the original PDF', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // this is about the page-turn controls
     // The 805 `doc:<id>#page=N` citations in the playbooks were authored against the original PDF's
     // own page numbers; the reflowed EPUB has no such page, so the citation lands on the PDF.
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
@@ -429,6 +476,7 @@ describe('Doc', () => {
   });
 
   it('puts the epub toolbar and the original-layout toggle in one compact bar, never stacked in a screen-body row', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // this is about the page-turn controls
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     renderRoute('/doc/where-there-is-no-doctor');
@@ -453,6 +501,7 @@ describe('Doc', () => {
   });
 
   it('moves the Reflowed text toggle into PdfFrame\'s own toolbar for the original PDF layout', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');   // this is about the page-turn controls
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     renderRoute('/doc/where-there-is-no-doctor#page=9');

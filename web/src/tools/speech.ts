@@ -5,6 +5,7 @@ import { useSyncExternalStore } from 'react';
 import { api, ApiError } from '../api/client';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
+import { voicePrefs } from './voice';
 
 export const CHUNK_CHARS = 600;
 const AVAILABLE_KEY = 'sos.speech';
@@ -75,14 +76,23 @@ export function visibleText(root: Element): string {
 let speaking: string | null = null;
 let available = true;
 let stopped = false;
-let current: HTMLAudioElement | null = null;
+let paused = false;
+let resume: (() => void) | null = null;   // wakes the reading when it was paused between two pieces
+/* One player for the whole app, made on the tap that starts a reading and reused for every piece after:
+   Safari on the iPad plays only what a touch started, and a new element per piece stopped after the first. */
+let player: HTMLAudioElement | null = null;
 let listeners: (() => void)[] = [];
-export type SpeechState = { speaking: string | null; available: boolean };
-let snapshot: SpeechState = { speaking, available };
+export type SpeechState = { speaking: string | null; available: boolean; paused: boolean };
+let snapshot: SpeechState = { speaking, available, paused };
 
 function emit(): void {
-  snapshot = { speaking, available };
+  snapshot = { speaking, available, paused };
   listeners.forEach((l) => l());
+}
+
+function thePlayer(): HTMLAudioElement {
+  if (!player) player = new Audio();
+  return player;
 }
 
 try {
@@ -90,25 +100,33 @@ try {
 } catch {
   // storage is optional
 }
-snapshot = { speaking, available };
+snapshot = { speaking, available, paused };
 
 async function play(blob: Blob): Promise<void> {
   const url = URL.createObjectURL(blob);
+  const el = thePlayer();
   try {
-    const el = new Audio(url);
-    current = el;
     await new Promise<void>((resolve) => {
       el.onended = () => resolve();
       el.onerror = () => resolve();
-      // The kiosk browser only lets audio start from a gesture; this always runs from the button's click.
+      el.src = url;
+      // The kiosk browser only lets audio start from a gesture; the first piece always runs from the
+      // button's click and the same element carries the rest.
       const started = el.play() as unknown as Promise<void> | undefined;
       if (started && typeof started.catch === 'function') started.catch(() => resolve());
       else if (!started) resolve(); // no media support (a test environment): the fetch still happened
     });
   } finally {
-    current = null;
+    el.onended = null;
+    el.onerror = null;
     URL.revokeObjectURL?.(url);
   }
+}
+
+/** Waits out a pause that fell between two pieces. */
+function untilResumed(): Promise<void> {
+  if (!paused) return Promise.resolve();
+  return new Promise<void>((r) => { resume = r; });
 }
 
 /** One piece of a reading: its words, and what to do as the voice reaches it (turn the page to it). */
@@ -139,7 +157,7 @@ export async function speakFrom(id: string, source: AsyncIterable<Piece>): Promi
     if (done || !value) return null;
     const [first, ...rest] = chunkText(value.text);
     if (!first) return nextFetch();
-    const blob = await api.speak(first);
+    const blob = await api.speak(first, voicePrefs());
     // a piece the voice has to cut: the remainder is queued back in front of the source, in order
     if (rest.length) pending.unshift(...rest.map((text) => ({ text })));
     return { piece: value, blob };
@@ -147,7 +165,7 @@ export async function speakFrom(id: string, source: AsyncIterable<Piece>): Promi
   const pending: Piece[] = [];
   const pull = async (): Promise<{ piece: Piece; blob: Blob } | null> => {
     const queued = pending.shift();
-    if (queued) return { piece: queued, blob: await api.speak(queued.text) };
+    if (queued) return { piece: queued, blob: await api.speak(queued.text, voicePrefs()) };
     return nextFetch();
   };
   try {
@@ -157,6 +175,8 @@ export async function speakFrom(id: string, source: AsyncIterable<Piece>): Promi
       if (!current || stopped) break;
       ahead = pull();   // the next piece is on its way while this one plays
       ahead.catch(() => undefined);
+      await untilResumed();
+      if (stopped) break;
       current.piece.before?.();
       await play(current.blob);
       if (stopped) break;
@@ -180,18 +200,39 @@ export async function speakFrom(id: string, source: AsyncIterable<Piece>): Promi
 
 export function stopSpeaking(): void {
   stopped = true;
-  current?.pause();
-  current = null;
+  paused = false;
+  player?.pause();
+  resume?.();
+  resume = null;
   if (speaking !== null) {
     speaking = null;
     emit();
   }
 }
 
+/** Hold the reading where it is: mid-piece the player pauses; between pieces the next waits. */
+export function pauseSpeaking(): void {
+  if (speaking === null || paused) return;
+  paused = true;
+  player?.pause();
+  emit();
+}
+
+export function resumeSpeaking(): void {
+  if (speaking === null || !paused) return;
+  paused = false;
+  const wake = resume;
+  resume = null;
+  if (wake) wake();
+  else void player?.play()?.catch?.(() => undefined);
+  emit();
+}
+
 /** Tests start from silence and a box that still has its voice. */
 export function resetSpeech(): void {
   stopSpeaking();
   available = true;
+  player = null;
   emit();
 }
 

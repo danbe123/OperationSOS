@@ -1,7 +1,7 @@
 import type {
   AiAskRequest, AiEvent, AiState, Card, ChecklistItem, Condition, ConditionId, ConditionPatch, Conditions, DrillRequest,
   ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, BookDetail, BookShelf, BooksResponse, ReadingEntry, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
-  Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress,
+  Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress, VoicesResponse,
 } from './types';
 
 export class ApiError extends Error {
@@ -185,9 +185,14 @@ export const api = {
   nearby: (lat: number, lon: number, signal?: AbortSignal) => request<NearbyResponse>('GET', `/nearby${qs({ lat, lon })}`, undefined, signal),
   sensors: (signal?: AbortSignal) => request<Sensors>('GET', '/sensors', undefined, signal),
   recordings: () => request<Recording[]>('GET', '/recordings'),
-  /** One chunk of speech as a WAV. 503 means Piper is not installed on this box: hide the button. */
-  async speak(text: string, signal?: AbortSignal): Promise<Blob> {
-    const res = await fetch('/api/speak', { method: 'POST', headers: headers(true, 'audio/wav'), body: JSON.stringify({ text }), signal });
+  voices: () => request<VoicesResponse>('GET', '/voices'),
+  /** One chunk of speech as a WAV, in a voice at a speed (the box's own when not given). 503 means Piper is
+   * not installed on this box: hide the button. */
+  async speak(text: string, opts: { voice?: string; speed?: number } = {}, signal?: AbortSignal): Promise<Blob> {
+    const body: Record<string, unknown> = { text };
+    if (opts.voice) body.voice = opts.voice;
+    if (opts.speed && opts.speed !== 1) body.speed = opts.speed;
+    const res = await fetch('/api/speak', { method: 'POST', headers: headers(true, 'audio/wav'), body: JSON.stringify(body), signal });
     if (!res.ok) throw new ApiError(res.status, await readDetail(res));
     return await res.blob();
   },

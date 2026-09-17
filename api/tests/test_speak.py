@@ -97,3 +97,51 @@ def test_speak_endpoint_returns_a_wav(installed, client, monkeypatch):
 
 def test_the_sensors_endpoint_reports_whether_piper_is_there(installed, client):
     assert client.get("/api/sensors").json()["drivers"]["piper"] is True
+
+
+def test_the_voice_and_the_speed_reach_piper(installed):
+    other = installed.piper_voice_path.with_name("en_GB-alan-medium.onnx")
+    other.write_bytes(b"onnx")
+    piper = FakePiper()
+    speak.synthesise(installed, "Fill the bath.", runner=piper, voice="en_GB-alan-medium", speed=1.2)
+    args = piper.calls[0]["args"]
+    assert args[args.index("--model") + 1] == str(other)
+    assert args[args.index("--length_scale") + 1] == "0.833"          # a fifth quicker: Piper's scale is the inverse
+    assert args[args.index("--sentence_silence") + 1] == "0.30"
+    # the speed is kept within what still sounds like speech
+    speak.synthesise(installed, "Fill the bath.", runner=piper, speed=9)
+    assert piper.calls[1]["args"][piper.calls[1]["args"].index("--length_scale") + 1] == f"{1 / speak.SPEED_MAX:.3f}"
+
+
+def test_a_voice_that_is_not_on_the_box_is_a_lookup_error(installed):
+    with pytest.raises(LookupError):
+        speak.synthesise(installed, "Fill the bath.", runner=FakePiper(), voice="en_GB-cori-medium")
+    with pytest.raises(LookupError):
+        speak.synthesise(installed, "Fill the bath.", runner=FakePiper(), voice="../../etc/passwd")
+
+
+def test_voices_lists_what_is_installed_default_first_without_multi_speaker_models(installed):
+    folder = installed.piper_voice_path.parent
+    (folder / "en_GB-alan-medium.onnx").write_bytes(b"onnx")
+    (folder / "en_GB-alan-medium.onnx.json").write_text('{"dataset": "alan", "audio": {"quality": "medium"}, "language": {"code": "en_GB"}, "num_speakers": 1}')
+    (folder / "en_GB-aru-medium.onnx").write_bytes(b"onnx")
+    (folder / "en_GB-aru-medium.onnx.json").write_text('{"dataset": "aru", "audio": {"quality": "medium"}, "num_speakers": 12}')
+    (folder / "en_GB-cori-high.onnx").write_bytes(b"onnx")
+    (folder / "en_GB-cori-high.onnx.json").write_text('{"dataset": "cori", "audio": {"quality": "high"}, "num_speakers": 1}')
+    got = speak.voices(installed)
+    assert [v["id"] for v in got] == [installed.piper_voice, "en_GB-alan-medium", "en_GB-cori-high"]
+    assert got[1] == {"id": "en_GB-alan-medium", "name": "Alan", "quality": "medium", "language": "en_GB"}
+    assert got[2]["quality"] == "high"
+
+
+def test_voices_endpoint_and_a_spoken_voice(installed, client, monkeypatch):
+    (installed.piper_voice_path.parent / "en_GB-alan-medium.onnx").write_bytes(b"onnx")
+    body = client.get("/api/voices").json()
+    assert body["default"] == installed.piper_voice and body["available"] is True
+    assert [v["id"] for v in body["voices"]] == [installed.piper_voice, "en_GB-alan-medium"]
+    piper = FakePiper()
+    monkeypatch.setattr(speak, "run_piper", piper)
+    res = client.post("/api/speak", json={"text": "Fill the bath.", "voice": "en_GB-alan-medium", "speed": 0.8})
+    assert res.status_code == 200 and res.headers["content-type"] == "audio/wav"
+    assert piper.calls[0]["args"][piper.calls[0]["args"].index("--length_scale") + 1] == "1.250"
+    assert client.post("/api/speak", json={"text": "Fill the bath.", "voice": "en_GB-nobody"}).status_code == 404

@@ -28,7 +28,7 @@ describe('Book', () => {
   it('opens the EPUB from the ZIM at the remembered place, with the author beside the controls', async () => {
     vi.spyOn(api, 'book').mockResolvedValue(pride);
     renderRoute('/book/gutenberg/1342');
-    await screen.findByRole('button', { name: 'Next' });
+    await screen.findByRole('button', { name: /Text size/ });
     await waitFor(() => expect(mocks.ePub).toHaveBeenCalledWith(pride.epub_url));
     await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/4!/4/2/2)'));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Pride and Prejudice');

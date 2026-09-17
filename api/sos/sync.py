@@ -250,6 +250,16 @@ def sync(settings: Settings, tier: str, only: list[str] | None = None, dry_run: 
                 failures += 1
                 continue
             os.replace(part, target)
+            if target.suffix == ".onnx" and resolved.url.endswith(".onnx"):
+                # A Piper voice is two files: the model and the .json beside it that says how to run it.
+                # The catalogue names the model; the json comes from the same place, small and unsigned.
+                side = target.with_name(target.name + ".json")
+                try:
+                    download(resolved.url + ".json", side, None, [m + ".json" for m in resolved.mirrors], use_aria2, run, client)
+                except (SyncError, httpx.HTTPError, OSError) as exc:
+                    out(f"FAIL {item.id}: the voice's .json: {exc}")
+                    failures += 1
+                    continue
             assert conn is not None
             record_resolved(conn, item.id, resolved)
             out(f"DONE {item.id}: {target}")
