@@ -74,7 +74,7 @@ describe('Doc', () => {
     mocks.rendition.display.mockClear();
     mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
     await user.click(screen.getByRole('button', { name: /Original PDF layout/ }));   // unmounts the EPUB reader at once
-    expect(put).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
     expect(put).toHaveBeenCalledWith('doc:where-there-is-no-doctor', expect.objectContaining({ cfi: 'epubcfi(/6/12)', percent: 50 }));
     await user.click(screen.getByRole('button', { name: /Reflowed text/ }));
     await screen.findByRole('button', { name: 'Next' });

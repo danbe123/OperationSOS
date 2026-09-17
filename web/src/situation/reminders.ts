@@ -28,14 +28,24 @@ export function writeSeen(storage: Storage, keys: string[]): void {
   }
 }
 
-/** The forecast items whose time has come and which nobody has been told about yet. */
-export function dueNow(view: SituationView | null, seen: string[], now: number = Date.now()): Forecast[] {
+/** The forecast items whose time has come and which nobody has been told about yet. With `pending`,
+ * only items the screen once saw still counting down qualify: a consequence that is due the moment it
+ * appears ("cash only" the instant the shops are tapped off) is a line on the sheet, not an alarm. */
+export function dueNow(view: SituationView | null, seen: string[], now: number = Date.now(), pending?: ReadonlySet<string>): Forecast[] {
   if (!view) return [];
   return view.forecast.filter((f) => {
     const due = Date.parse(f.due_at);
     if (Number.isNaN(due) || due > now) return false;
+    // Pending is by item, not by key: a countdown the screen watched still counts when its time moved.
+    if (pending && !pending.has(f.id)) return false;
     return !seen.includes(reminderKey(f));
   });
+}
+
+/** The ids of the countdowns still running in this view: the ones a later view may announce. */
+export function pendingIds(view: SituationView | null, now: number = Date.now()): string[] {
+  if (!view) return [];
+  return view.forecast.filter((f) => Date.parse(f.due_at) > now).map((f) => f.id);
 }
 
 /** What the toast says: the item, and why it matters. */

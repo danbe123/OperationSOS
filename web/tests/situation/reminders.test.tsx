@@ -64,6 +64,21 @@ describe('the app while a countdown runs out', () => {
     expect(alarm).toHaveBeenCalledTimes(1);
   });
 
+  it('does not alarm for a consequence that is due the moment it appears', async () => {
+    vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
+    const alarm = vi.spyOn(audio, 'alarm').mockImplementation(() => {});
+    const situationView = vi.spyOn(api, 'situationView').mockResolvedValue(makeView({ forecast: [] }));
+    renderRoute('/');
+    await screen.findByRole('navigation', { name: 'Scenarios' });
+    // Shops tapped off: "cash only" arrives already due, as the sheet's line about it, not a countdown that ran out.
+    const cashOnly = { id: 'cash-only', title: 'Cash only, and the machines are down', due_at: VIEW_NOW, severity: 'info' as const, why: 'Card payments and cash machines fail together.', link: null, passed: true };
+    situationView.mockResolvedValue(makeView({ forecast: [cashOnly] }));
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
+    expect(toasts()).toBe('');
+    expect(alarm).not.toHaveBeenCalled();
+  });
+
   it('says nothing while nothing is due', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     const alarm = vi.spyOn(audio, 'alarm').mockImplementation(() => {});
