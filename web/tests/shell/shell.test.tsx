@@ -6,12 +6,12 @@ import { condition, makeView, page, playbooks, powerOffView, view, VIEW_NOW } fr
 import { activeDestination, DESTINATIONS } from '../../src/shell/destinations';
 
 describe('the shell', () => {
-  it('carries the same six destinations, in the same order, on every screen', async () => {
+  it('carries the same five destinations, in the same order, on every screen', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     renderRoute('/');
     const nav = screen.getByRole('navigation', { name: 'Sections' });
     const list = nav.querySelector('.mainnav-list') as HTMLElement;
-    expect(within(list).getAllByRole('link').map((a) => a.textContent)).toEqual(['Now', 'Library', 'Kit', 'Medical', 'Map', 'Find']);
+    expect(within(list).getAllByRole('link').map((a) => a.textContent)).toEqual(['Now', 'Library', 'Kit', 'Map', 'Find']);
     expect(within(nav).getByRole('link', { name: 'Now' })).toHaveAttribute('aria-current', 'page');
     expect(within(nav).getByRole('link', { name: 'Library' })).toHaveAttribute('href', '/library');
     expect(within(nav).getByRole('link', { name: 'Kit' })).toHaveAttribute('href', '/kit');
@@ -24,7 +24,8 @@ describe('the shell', () => {
     expect(activeDestination('/guides')?.label).toBe('Library');
     expect(activeDestination('/book/gutenberg/1342')?.label).toBe('Library');
     expect(activeDestination('/read/x/y')?.label).toBe('Library');
-    expect(activeDestination('/medical/card/cpr-adult')?.label).toBe('Medical');
+    expect(activeDestination('/medical/card/cpr-adult')?.label).toBe('Library');   // the medical shelf is the Library's
+    expect(activeDestination('/library/medical')?.label).toBe('Library');
     expect(activeDestination('/tasks')?.label).toBe('Now');
     expect(activeDestination('/notes')?.label).toBe('Now');
     // The household hub is gone: /plan belongs to nothing and lands on the Not found screen.
@@ -33,7 +34,7 @@ describe('the shell', () => {
     expect(activeDestination('/search')?.label).toBe('Find');
     expect(activeDestination('/kit/water')?.label).toBe('Kit');
     expect(activeDestination('/system')).toBeNull();
-    expect(DESTINATIONS).toHaveLength(6);
+    expect(DESTINATIONS).toHaveLength(5);
   });
 
   it.each(['/plan', '/plan/notes', '/plan/stock'])('lands the old household address %s on Not found', async (path) => {

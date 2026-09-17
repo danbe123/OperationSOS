@@ -2,21 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
-import { library, pages } from '../fixtures/api';
+import { cards, library, pages } from '../fixtures/api';
 import { TOOL_TILES } from '../../src/screens/Tools';
 
 describe('Library hub', () => {
   beforeEach(() => {
     vi.spyOn(api, 'pages').mockResolvedValue(pages);
     vi.spyOn(api, 'library').mockResolvedValue(library);
+    vi.spyOn(api, 'cards').mockResolvedValue(cards);
   });
 
-  it('is three shelves as tiles, each saying what is on it', async () => {
+  it('is four shelves as tiles, the medical shelf first, each saying what is on it', async () => {
     vi.spyOn(api, 'books').mockResolvedValue({ items: [], total: 60366, available: true });
     renderRoute('/library');
     const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
     const links = within(shelves).getAllByRole('link');
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library/guides', '/library/books', '/library/sources']);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/library/medical', '/library/guides', '/library/books', '/library/sources']);
+    expect(await within(shelves).findByText(`999, ${cards.length} quick cards, the NHS A to Z, children's doses`)).toBeInTheDocument();
     expect(await within(shelves).findByText(`${pages.length} pages and ${TOOL_TILES.length} tools, written for this box`)).toBeInTheDocument();
     expect(await within(shelves).findByText('60,366 books to read, Project Gutenberg')).toBeInTheDocument();
     expect(await within(shelves).findByText('Wikipedia, the NHS, manuals, maps: 8 sources, 7 on this box')).toBeInTheDocument();
@@ -28,13 +30,21 @@ describe('Library hub', () => {
     renderRoute('/library');
     const shelves = await screen.findByRole('navigation', { name: 'Shelves' });
     expect(await within(shelves).findByText('Project Gutenberg is not on this box yet')).toBeInTheDocument();
-    expect(within(shelves).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/library/guides', '/library/sources']);
+    expect(within(shelves).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/library/medical', '/library/guides', '/library/sources']);
   });
 
   it('sends the old Guides address to its shelf', async () => {
     const { router } = renderRoute('/guides');
     expect(await screen.findByRole('searchbox', { name: 'Filter these guides' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/library/guides');
+  });
+
+  it('sends the old Medical address to its shelf, which has Back to the Library and the same cards', async () => {
+    const { router } = renderRoute('/medical');
+    expect(await screen.findByRole('navigation', { name: 'Quick cards' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/library/medical');
+    expect(screen.getByRole('button', { name: /Back/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /CPR/ })).toHaveAttribute('href', expect.stringMatching(/^\/medical\/card\//));
   });
 
   it('sends the old Books address to its shelf', async () => {

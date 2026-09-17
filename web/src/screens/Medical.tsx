@@ -90,7 +90,7 @@ export function Medical() {
   const medicalItems = useMemo(() => libQ.data?.categories.find((c) => c.id === 'medical')?.items ?? [], [libQ.data]);
   const nhs = nhsAtoZ(medicalItems);
   return (
-    <Screen title="Medical" back={false}>
+    <Screen title="Medical" backTo="/library">
       <Body>
         <Emergency999 />
 
@@ -104,7 +104,7 @@ export function Medical() {
             <span>Find a card</span>
             <input type="search" aria-label="Find a card" value={term} placeholder="bleeding, burn, choking" onChange={(e) => setTerm(e.target.value)} />
           </label>
-          {term && groups.length === 0 && <p>Nothing matches. Try a shorter word, or the <Link to="/medical#nhs">NHS A to Z</Link>.</p>}
+          {term && groups.length === 0 && <p>Nothing matches. Try a shorter word, or the <Link to="/library/medical#nhs">NHS A to Z</Link>.</p>}
           <nav aria-label="Quick cards" className="card-groups">
             {groups.map((g) => (
               <section key={g.id} className="card-group" aria-label={g.title}>

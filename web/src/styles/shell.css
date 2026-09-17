@@ -12,7 +12,7 @@
 }
 /* The rail needs height as well as width: at 844x390 (a phone on its side) nine rows of rail do not
    fit 390 px, and System, AI and the theme button were off the bottom of the screen with nothing to
-   say they existed. Under 440 px tall the shell draws the bottom bar instead, which shows all six
+   say they existed. Under 440 px tall the shell draws the bottom bar instead, which shows all five
    destinations at any width. `useWide` carries the same query. */
 @media (min-width: 700px) and (min-height: 440px) {
   .app {
@@ -60,7 +60,7 @@
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
-.mainnav-list { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); flex: 1; }
+.mainnav-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); flex: 1; }
 .rail-brand, .rail-foot { display: none; }
 .rail-dest {
   display: flex;
@@ -93,7 +93,7 @@
     overflow: hidden;
     overscroll-behavior: contain;
   }
-  /* The six destinations give way before the footer does: System, AI and the theme button are
+  /* The five destinations give way before the footer does: System, AI and the theme button are
      always on the screen, and the list above them scrolls if a short screen ever asks it to. */
   .mainnav-list { display: flex; flex-direction: column; gap: 1px; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
   .rail-brand {
@@ -107,10 +107,10 @@
   }
   :root[data-theme="field"] .rail-brand { font: 700 20px/1 var(--font-heading); letter-spacing: 0; }
   .rail-foot { display: flex; flex-direction: column; gap: 1px; flex: 0 0 auto; margin-top: auto; padding-top: 4px; border-top: 1px solid var(--line); }
-  /* Eight rows and a theme button have to fit 480 px without the rail scrolling: six destinations,
-     AI and System. At 48 px a row that was true of seven, and Find fell off the bottom of a 853x480
-     kiosk; 44 px is still the 44x44 target the guidelines ask for, and eight of them fit with room
-     to spare. `--touch` is retuned for the rail alone so the theme button comes with them. */
+  /* Seven rows and a theme button have to fit 480 px without the rail scrolling: five destinations
+     (six, when Medical had a row), AI and System. At 48 px a row that was true of seven, and Find fell
+     off the bottom of a 853x480 kiosk; 44 px is still the 44x44 target the guidelines ask for, and
+     eight of them fit with room to spare. `--touch` is retuned for the rail alone so the theme button comes with them. */
   .rail-dest {
     min-height: var(--touch);
     padding: 2px;

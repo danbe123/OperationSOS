@@ -22,7 +22,7 @@ describe('Medical', () => {
   it('lists quick cards, NHS A to Z tiles and the medical library', async () => {
     vi.spyOn(api, 'cards').mockResolvedValue([...cards].reverse());
     vi.spyOn(api, 'library').mockResolvedValue(library);
-    renderRoute('/medical');
+    renderRoute('/library/medical');
     const grid = await screen.findByRole('navigation', { name: 'Quick cards' });
     const links = within(grid).getAllByRole('link');
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/medical/card/cpr-adult', '/medical/card/severe-bleeding', '/medical/card/choking']);

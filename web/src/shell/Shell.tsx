@@ -52,7 +52,7 @@ export function useScrollCue(main: RefObject<HTMLElement | null>): boolean {
   return more;
 }
 
-/** One navigation element, drawn as a 96 px rail on the kiosk and a bottom bar on phones. The six
+/** One navigation element, drawn as a 96 px rail on the kiosk and a bottom bar on phones. The five
  * destinations are always in the same order; the app name and the box's own screens ride along on
  * the rail, where there is room for them. It is drawn first and read last: the shell puts it after
  * the content in the DOM (the grid puts it back on the left) so a keyboard reaches the first job

@@ -113,8 +113,9 @@ export const routes: RouteObject[] = [
       { path: 'library/sources/:category', element: <SourceCategory /> },
       { path: 'library/collections', element: <Navigate to="/library/sources" replace /> },
       { path: 'library/books', element: <Later title="Books"><Books /></Later> },
+      { path: 'library/medical', element: <Medical /> },
       { path: 'map', element: <Later title="Map"><MapScreen /></Later> },
-      { path: 'medical', element: <Medical /> },
+      { path: 'medical', element: <Navigate to="/library/medical" replace /> },   // the medical shelf of the Library now
       { path: 'medical/card/:slug', element: <Card /> },
       { path: 'radio', element: <Radio /> },
       { path: 'p/:slug', element: <Page /> },
