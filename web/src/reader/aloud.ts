@@ -172,6 +172,20 @@ export async function firstChapter(spine: SpineLike, request: unknown): Promise<
   return fallback ?? first;
 }
 
+/** The CFI of the block where the story starts, or null when the book has no front matter to skip
+ * (the story starts at the very top) or nothing found. The reader's "Skip to chapter one" is this. */
+export async function firstChapterCfi(spine: SpineLike, request: unknown): Promise<{ index: number; cfi: string } | null> {
+  const opening = await firstChapter(spine, request);
+  if (!opening || (opening.index === 0 && opening.block === 0)) return null;
+  const section = spine.get(opening.index);
+  if (!section) return null;
+  const { blocks } = await chapterBlocks(section, request);
+  const el = blocks[opening.block];
+  const cfi = el ? section.cfiFromElement(el) : null;
+  section.unload?.();
+  return cfi ? { index: opening.index, cfi } : null;
+}
+
 /** Every piece of the book from `start` on. From the front matter — anything before chapter one — the
  * reading starts at chapter one instead. Each chapter's file is read as the voice reaches it and let go
  * of afterwards; the generator stops when the caller does. */

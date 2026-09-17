@@ -14,7 +14,7 @@ import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
 import { fontFaceRules, fontsIn } from '../reader/fonts';
 import { useRecordView } from '../reader/recent';
-import { bookPieces } from '../reader/aloud';
+import { bookPieces, firstChapterCfi } from '../reader/aloud';
 import { pauseSpeaking, resumeSpeaking, speakFrom, stopSpeaking, useSpeech } from '../tools/speech';
 import { setVoicePrefs, SPEEDS, voicePrefs } from '../tools/voice';
 import { EPUB_SIZES, FLOW_KEY, IMMERSED_KEY, SIZE_KEY, storedFlow, storedImmersed, storedSize, tapZone, write, type Flow } from '../reader/prefs';
@@ -300,6 +300,12 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   const [prefs, setPrefs] = useState(voicePrefs);
   const voicesQ = useQuery(() => (voice && voiceRow ? api.voices() : Promise.resolve(null)), [voice, voiceRow]);
   const detachedRef = useRef(false);   // you scrolled while the voice read: the page stops following it
+  // Where the story starts, once the book has said, and whether the reader is still before it: a
+  // Gutenberg book opens on its licence, its title page and its contents, and the skip goes past them.
+  const [opening, setOpening] = useState<{ index: number; cfi: string } | null>(null);
+  const [beforeStory, setBeforeStory] = useState(false);
+  const openingRef = useRef(opening);
+  openingRef.current = opening;
   const themeRef = useRef(theme);
   themeRef.current = theme;
   const memoryRef = useRef(memory);
@@ -374,6 +380,20 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     watcher?.observe(host);
     const start = hereRef.current || memoryRef.current?.startCfi || undefined;
     let live = true;
+    // Where the story starts is read from the book's files once it is open; the button follows the
+    // place the reader is at from then on (a relocation after this settles it for the first page too).
+    const spineOf = book.spine as unknown as { get?: (i: number) => unknown };
+    if (typeof spineOf.get === 'function') {
+      (book.ready ?? Promise.resolve()).then(() => firstChapterCfi(book.spine as unknown as Parameters<typeof firstChapterCfi>[0], book.load.bind(book)))
+        .then((found) => {
+          if (!live) return;
+          setOpening(found);
+          openingRef.current = found;
+          const loc = (rendition as unknown as { location?: Location }).location;
+          if (loc) setBeforeStory(isBefore(loc));
+        })
+        .catch(() => undefined);
+    }
     let moved = false;   // you have taken hold of the page: the placing above stops deferring to the remembered spot
     const onHand = () => { moved = true; detachedRef.current = true; };
     for (const ev of ['wheel', 'touchstart', 'mousedown', 'keydown'] as const) rendition.on(ev, onHand);
@@ -430,8 +450,19 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
         cfi: loc.start.cfi, percent: readingPercent(loc, (book.spine as { length?: number }).length),
       }).catch(() => undefined); // the page turned either way; a missed save costs nothing but the bookmark
     };
+    const isBefore = (loc: Location): boolean => {
+      const start = openingRef.current;
+      if (!start) return false;
+      if ((loc.start.index ?? 0) !== start.index) return (loc.start.index ?? 0) < start.index;
+      try {
+        return new EpubCFI().compare(loc.start.cfi, start.cfi) < 0;
+      } catch {
+        return false;
+      }
+    };
     const onRelocated = (loc: Location) => {
       hereRef.current = loc.start.cfi;
+      setBeforeStory(isBefore(loc));
       onPositionRef.current?.(loc.start.cfi);
       if (!memoryRef.current) return;
       pending = loc;
@@ -578,6 +609,11 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
         </div>
       )}
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
+      {opening && beforeStory && (
+        <button type="button" className="btn epub-skip no-print" onClick={() => { hereRef.current = opening.cfi; void renditionRef.current?.display(opening.cfi).catch(() => undefined); }}>
+          <Icon name="down" size={18} /><span>Skip to chapter one</span>
+        </button>
+      )}
       {/* The column grows with the type, so a line is the same sixty-odd characters at every text size:
           capped in the app's own units it stayed 608 px while the type went up by half, and the owner's
           lines fell to forty characters on an iPad Pro with a third of the screen empty either side. */}

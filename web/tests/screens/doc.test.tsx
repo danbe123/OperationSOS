@@ -18,13 +18,17 @@ const mocks = vi.hoisted(() => {
     hooks: { content: { register: vi.fn() } },
     getContents: () => [],
   };
-  const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 } };
+  const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 }, ready: Promise.resolve() };
   return { rendition, book, handlers, ePub: vi.fn(() => book) };
 });
 vi.mock('epubjs', () => ({
   default: mocks.ePub,
   // enough of a CFI to say which spine item it is in: "epubcfi(/6/8!/4/2)" is the fourth
-  EpubCFI: class { spinePos: number; constructor(cfi: string) { const m = /^epubcfi\(\/6\/(\d+)/.exec(cfi); this.spinePos = m ? Number(m[1]) / 2 - 1 : -1; } },
+  EpubCFI: class {
+    spinePos: number;
+    constructor(cfi = '') { const m = /^epubcfi\(\/6\/(\d+)/.exec(cfi); this.spinePos = m ? Number(m[1]) / 2 - 1 : -1; }
+    compare(a: string, b: string) { return a < b ? -1 : a > b ? 1 : 0; }
+  },
 }));
 vi.mock('../../src/links', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../../src/links')>();
@@ -325,6 +329,30 @@ describe('Doc', () => {
     await user.click(within(screen.getByRole('group', { name: 'Speed' })).getByRole('button', { name: 'Faster' }));
     expect(localStorage.getItem('sos.voice.speed')).toBe('1.2');
     expect(screen.getByRole('link', { name: /More voices/ })).toHaveAttribute('href', '/library/sources/ai');
+    (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
+  });
+
+  it('offers a skip to chapter one while the reader is in the front matter, and takes it away past it', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    const licence = document.implementation.createHTMLDocument('l');
+    licence.body.innerHTML = '<section class="pgheader"><p>The Project Gutenberg eBook.</p></section>';
+    const one = document.implementation.createHTMLDocument('c');
+    one.body.innerHTML = '<h2>CHAPTER I</h2><p>I was born in the year 1632.</p>';
+    const sect = (index: number, d: Document, cfi: string) => ({ index, load: async () => d.documentElement, unload: vi.fn(), cfiFromElement: () => cfi });
+    (mocks.book as unknown as { spine: unknown; load: unknown }).spine = { length: 4, get: (i: number) => (i === 0 ? sect(0, licence, 'epubcfi(/6/2!/4/2)') : i === 1 ? sect(1, one, 'epubcfi(/6/4!/4/2)') : null) };
+    (mocks.book as unknown as { load: unknown }).load = vi.fn();
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    // on the licence: the skip is there
+    act(() => { mocks.handlers.relocated({ start: { index: 0, cfi: 'epubcfi(/6/2!/4/2)', displayed: { page: 1, total: 2 } }, end: {}, atStart: true, atEnd: false }); });
+    const skip = await screen.findByRole('button', { name: 'Skip to chapter one' });
+    mocks.rendition.display.mockClear();
+    await user.click(skip);
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/4!/4/2)');
+    // in the story: gone
+    act(() => { mocks.handlers.relocated({ start: { index: 1, cfi: 'epubcfi(/6/4!/4/4)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false }); });
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Skip to chapter one' })).toBeNull());
     (mocks.book as unknown as { spine: unknown }).spine = { length: 4 };
   });
 
