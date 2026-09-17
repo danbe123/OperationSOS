@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     on: vi.fn((event: string, cb: (loc: unknown) => void) => { handlers[event] = cb; }),
     off: vi.fn((event: string) => { delete handlers[event]; }),
     themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() },
+    hooks: { content: { register: vi.fn() } },
   };
   const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 } };
   return { rendition, book, handlers, ePub: vi.fn(() => book) };
@@ -33,10 +34,97 @@ describe('pdfViewerUrl', () => {
   });
 });
 
+/** The reader is up once its bar is drawn *and* its mount effect has wired the rendition: under a loaded
+ * test run the button can be found a tick before the effect runs, and a test that fires `relocated`
+ * in that tick finds no handler. */
+async function readerUp() {
+  await screen.findByRole('button', { name: 'Next' });
+  await waitFor(() => expect(typeof mocks.handlers.relocated).toBe('function'));
+}
+
 describe('Doc', () => {
   beforeEach(() => {
     // No saved place unless a test says otherwise: the reader opens at the start.
     vi.spyOn(api, 'getReading').mockResolvedValue(null);
+    localStorage.clear();
+    delete document.documentElement.dataset.reading;
+  });
+
+  it('reads every book in the box\'s own type: one serif at 18 px, ragged right, no page to itself for a chapter head', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    const rules = mocks.rendition.themes.register.mock.calls.at(-1)![1] as Record<string, Record<string, string>>;
+    expect(rules.html['font-size']).toBe('18px');
+    expect(rules.body['font-family']).toMatch(/Source Serif 4/);
+    expect(rules.body['text-align']).toBe('left');
+    expect(rules.body.hyphens).toBe('auto');
+    expect(rules['h1, h2, h3']['page-break-before']).toBe('auto');
+    // the face is loaded into the frame, which has none of the app's stylesheets
+    const hook = mocks.rendition.hooks.content.register.mock.calls[0][0] as (c: { addStylesheet: (s: string) => Promise<void> }) => void;
+    const addStylesheet = vi.fn(async () => undefined);
+    hook({ addStylesheet });
+    expect(addStylesheet).toHaveBeenCalledWith(expect.stringMatching(/\/fonts\/reader\.css$/));
+  });
+
+  it('puts the chrome away for the book and brings it back with a tap on the middle of the page', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    expect(document.documentElement.dataset.reading).toBeUndefined();
+    await user.click(screen.getByRole('button', { name: 'Just the book' }));
+    expect(document.documentElement.dataset.reading).toBe('on');
+    expect(localStorage.getItem('sos.reader.immersed')).toBe('on');
+    // The page has the whole screen; a tap on its left turns back, on its right turns on, and in the
+    // middle brings the controls back. The frame is 900 px wide here.
+    const host = document.querySelector('.epub-host') as HTMLElement;
+    Object.defineProperty(host, 'clientWidth', { value: 900, configurable: true });
+    const tap = (x: number) => act(() => { mocks.handlers.click({ clientX: x, target: host } as unknown as MouseEvent); });
+    tap(800);
+    expect(mocks.rendition.next).toHaveBeenCalledTimes(1);
+    tap(100);
+    expect(mocks.rendition.prev).toHaveBeenCalledTimes(1);
+    tap(450);
+    expect(document.documentElement.dataset.reading).toBeUndefined();
+    expect(localStorage.getItem('sos.reader.immersed')).toBe('off');
+    // and the keys turn pages wherever the focus is
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(mocks.rendition.next).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens with the chrome away when that is how you last read, and Escape brings it back', async () => {
+    localStorage.setItem('sos.reader.immersed', 'on');
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    expect(document.documentElement.dataset.reading).toBe('on');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(document.documentElement.dataset.reading).toBeUndefined();
+  });
+
+  it('scrolls instead of turning pages on request, reopening at the same place, and remembers the choice and the size', async () => {
+    localStorage.setItem('sos.reader.size', '125');
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    const user = userEvent.setup();
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    expect(mocks.rendition.themes.fontSize).toHaveBeenLastCalledWith('125%');   // the size you chose last time
+    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'paginated', spread: 'none' }));
+    mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
+    mocks.rendition.display.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Pages' }));
+    expect(mocks.book.destroy).toHaveBeenCalled();
+    expect(mocks.book.renderTo).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ flow: 'scrolled', manager: 'continuous' }));
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
+    expect(screen.getByRole('button', { name: 'Scrolling' })).toHaveAttribute('aria-pressed', 'true');
+    expect(localStorage.getItem('sos.reader.flow')).toBe('scrolled');
+    // scrolling, a tap on the right of the page is not a page turn: there are none
+    const host = document.querySelector('.epub-host') as HTMLElement;
+    Object.defineProperty(host, 'clientWidth', { value: 900, configurable: true });
+    act(() => { mocks.handlers.click({ clientX: 800, target: host } as unknown as MouseEvent); });
+    expect(mocks.rendition.next).not.toHaveBeenCalled();
+    expect(document.documentElement.dataset.reading).toBe('on');
   });
 
   it('opens a Library EPUB where it was left and saves the position once per pause', async () => {
@@ -47,7 +135,7 @@ describe('Doc', () => {
     });
     const put = vi.spyOn(api, 'putReading').mockResolvedValue({ ok: true });
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/8!/4/2)');
     // Real timers until the reader is up (findByRole polls with them); fake ones only for the debounce.
     vi.useFakeTimers();
@@ -70,14 +158,14 @@ describe('Doc', () => {
     const put = vi.spyOn(api, 'putReading').mockResolvedValue({ ok: true });
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     mocks.rendition.display.mockClear();
     mocks.handlers.relocated({ start: { index: 2, cfi: 'epubcfi(/6/12)', displayed: { page: 1, total: 4 } }, end: {}, atStart: false, atEnd: false });
-    await user.click(screen.getByRole('button', { name: /Original PDF layout/ }));   // unmounts the EPUB reader at once
+    await user.click(screen.getByRole('button', { name: /Original PDF/ }));   // unmounts the EPUB reader at once
     await waitFor(() => expect(put).toHaveBeenCalledTimes(1));
     expect(put).toHaveBeenCalledWith('doc:where-there-is-no-doctor', expect.objectContaining({ cfi: 'epubcfi(/6/12)', percent: 50 }));
     await user.click(screen.getByRole('button', { name: /Reflowed text/ }));
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/12)');
   });
 
@@ -89,7 +177,7 @@ describe('Doc', () => {
     });
     mocks.rendition.display.mockRejectedValueOnce(new Error('No Section Found'));
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledTimes(2));
     expect(mocks.rendition.display.mock.calls[1]).toEqual([]);   // the second display() asks for the start
     expect(screen.queryByText(/Could not open/)).not.toBeInTheDocument();
@@ -128,7 +216,7 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     expect(mocks.ePub).toHaveBeenCalledWith('/docs/core/where-there-is-no-doctor.epub');
     expect(mocks.book.renderTo).toHaveBeenCalled();
     // The palette is the app's own tokens, rebuilt per theme and per dim state, not one of three
@@ -206,10 +294,10 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     const user = userEvent.setup();
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     expect(screen.queryByTitle('Document')).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Original PDF layout' }));
+    await user.click(screen.getByRole('button', { name: 'Original PDF' }));
     const frame = (await screen.findByTitle('Document')) as HTMLIFrameElement;
     expect(frame).toHaveAttribute('src', expect.stringContaining('file=%2Fdocs%2Fcore%2Fwhere-there-is-no-doctor.pdf'));
 
@@ -237,7 +325,7 @@ describe('Doc', () => {
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
+    await readerUp();
     expect(screen.queryByTitle('Document')).toBeNull();
   });
 
@@ -245,8 +333,8 @@ describe('Doc', () => {
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     // even under a #page= citation: with no original beside it there is nothing to fall back to
     renderRoute('/doc/where-there-is-no-doctor#page=9');
-    await screen.findByRole('button', { name: 'Next' });
-    expect(screen.queryByRole('button', { name: /Original PDF layout/ })).toBeNull();
+    await readerUp();
+    expect(screen.queryByRole('button', { name: /Original PDF/ })).toBeNull();
     expect(screen.queryByTitle('Document')).toBeNull();
   });
 
@@ -254,8 +342,8 @@ describe('Doc', () => {
     const converted = { ...epubItem, pdf_fallback_url: '/docs/core/where-there-is-no-doctor.pdf' };
     vi.spyOn(api, 'libraryItem').mockResolvedValue(converted);
     renderRoute('/doc/where-there-is-no-doctor');
-    await screen.findByRole('button', { name: 'Next' });
-    const toggle = screen.getByRole('button', { name: 'Original PDF layout' });
+    await readerUp();
+    const toggle = screen.getByRole('button', { name: 'Original PDF' });
     const previous = screen.getByRole('button', { name: 'Previous' });
     const next = screen.getByRole('button', { name: 'Next' });
     const textSize = screen.getByRole('button', { name: /Text size/ });

@@ -41,6 +41,13 @@
   background: linear-gradient(to bottom, rgba(0, 0, 0, 0), var(--ground));
 }
 .content { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+/* Reading mode: while a book is open with the chrome put away, the rail, the band, the screen head and
+   the reader's own bar are gone and the page has the whole screen — 290 px of a 480 px kiosk became
+   the book's, the other 190 were furniture. The drill banner stays: a drill is not to be read past. A
+   tap on the middle of the page brings everything back (`screens/Doc.tsx`). */
+:root[data-reading="on"] .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "drill" "main"; }
+:root[data-reading="on"] .mainnav, :root[data-reading="on"] .band, :root[data-reading="on"] .screen-head, :root[data-reading="on"] .doc-tools { display: none; }
+:root[data-reading="on"] .app-main[data-more="yes"]::after { display: none; }
 .screen { display: flex; flex-direction: column; min-height: 100%; }
 .screen-fill { height: 100%; }
 

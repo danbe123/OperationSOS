@@ -7,10 +7,12 @@ import type { LibraryItem, ReadingEntry } from '../api/types';
 import { errorMessage, useQuery } from '../api/useQuery';
 import { Screen, Body } from '../shell/Screen';
 import { Icon } from '../icons';
+import { notify } from '../components/Notice';
 import { replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, pdfViewerCss, READER_STYLE_ID, viewerTokens } from '../theme/readerTheme';
 import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
+import { EPUB_SIZES, FLOW_KEY, IMMERSED_KEY, SIZE_KEY, storedFlow, storedImmersed, storedSize, tapZone, write, type Flow } from '../reader/prefs';
 
 export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): string {
   return `/pdfjs/web/viewer.html?file=${encodeURIComponent(fileUrl)}&theme=${theme}${hash}`;
@@ -218,17 +220,30 @@ function DocumentMissing({ item }: { item: LibraryItem }) {
   );
 }
 
-const EPUB_SIZES = [100, 125, 150];
-
 /** The EPUB's palette is the app's own tokens, read off the root exactly as the PDF viewer's is, so
  * a book follows the theme *and* the dim palette. It used to carry three hard-coded palettes of its
  * own — `#0a0f0a`, `#39ff7a`, `#1a3f8a`, `#ff7070` — none of which are in `tokens.css` and none of
  * which dimmed at three in the morning. */
 export function epubTheme(tokens: { ground: string; panel: string; ink: string; line: string }, link: string, dark: boolean) {
   return {
-    body: { background: tokens.ground, color: tokens.ink },
+    // The book's own typography is set aside for the box's: every book reads in one serif at 18 px
+    // with the same leading, ragged right, hyphenated, whatever its file asked for (Gutenberg's files
+    // ask for Times at 16 px with no space between paragraphs; some justify, which at this measure
+    // opens rivers). The Text size button scales the body from this base.
+    html: { 'font-size': '18px' },
+    body: {
+      background: tokens.ground, color: tokens.ink,
+      'font-family': "'Source Serif 4', Georgia, 'Times New Roman', serif", 'line-height': '1.55',
+      'text-align': 'left', hyphens: 'auto', '-webkit-hyphens': 'auto',
+    },
+    'p, li, blockquote, dd': { 'text-align': 'left', 'line-height': '1.55' },
+    p: { margin: '0 0 0.75em', 'text-indent': '0' },
     a: { color: link },
-    'h1, h2, h3, h4': { color: tokens.ink },
+    'h1, h2, h3, h4': { color: tokens.ink, 'font-family': "'Source Serif 4', Georgia, serif", 'line-height': '1.25', 'text-align': 'left' },
+    // A chapter heading does not take a page of its own: with thirteen lines to a kiosk page, a
+    // page holding one line is a page turned for nothing.
+    'h1, h2, h3': { 'break-before': 'auto', 'page-break-before': 'auto', margin: '1.4em 0 0.6em' },
+    'img, svg': { 'max-width': '100%', height: 'auto' },
     // Project Gutenberg puts a "(Larger)" link under every illustration, to a bigger copy of the same
     // picture. In a paginated reader it cannot open anything, and it lands on a page of its own after
     // the picture: a page that says "(Larger)" and nothing else.
@@ -238,12 +253,16 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
   };
 }
 
-/** The paginated EPUB reader. With `memory` it opens where the box last saw you and, as you turn pages,
- * tells the box where you are (one write per pause, never one per page). */
+/** The EPUB reader. With `memory` it opens where the box last saw you and, as you turn pages, tells
+ * the box where you are (one write per pause, never one per page). It turns pages or scrolls, as you
+ * last chose; a tap on the left or right of a page turns it, a tap on the middle puts the chrome away
+ * and brings it back; the text size is remembered from book to book. */
 export function EpubReader({ url, theme, leading, memory, onPosition }: { url: string; theme: Theme; leading?: ReactNode; memory?: EpubMemory; onPosition?: (cfi: string) => void }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<Rendition | null>(null);
-  const [size, setSize] = useState(100);
+  const [size, setSize] = useState(storedSize);
+  const [flow, setFlow] = useState<Flow>(storedFlow);
+  const [immersed, setImmersed] = useState(storedImmersed);
   const [error, setError] = useState<string | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
@@ -251,15 +270,70 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
   memoryRef.current = memory;
   const onPositionRef = useRef(onPosition);
   onPositionRef.current = onPosition;
+  const flowRef = useRef(flow);
+  flowRef.current = flow;
+  // Where the reader is right now, so a change of flow reopens the same book at the same place.
+  const hereRef = useRef<string | null>(null);
+
+  useEffect(() => { write(SIZE_KEY, String(size)); }, [size]);
+  useEffect(() => { write(FLOW_KEY, flow); }, [flow]);
+  useEffect(() => {
+    write(IMMERSED_KEY, immersed ? 'on' : 'off');
+    const root = document.documentElement;
+    if (immersed) root.dataset.reading = 'on'; else delete root.dataset.reading;
+    return () => { delete root.dataset.reading; };
+  }, [immersed]);
+  // The keys work wherever the focus is: in the frame, epub.js relays them; outside it, the window does.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') void renditionRef.current?.next();
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') void renditionRef.current?.prev();
+      else if (e.key === 'Escape') setImmersed(false);
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     if (!hostRef.current) return;
+    const host = hostRef.current;
     const book = ePub(url);
     // One page at a time: the two-page spread epub.js draws past 800 px read as the columns the reflow
-    // had just undone, and the measure is capped by the host so a laptop is not a 1300 px line.
-    const rendition = book.renderTo(hostRef.current, { width: '100%', height: '100%', flow: 'paginated', spread: 'none' });
+    // had just undone, and the measure is capped by the host so a laptop is not a 1300 px line. Scrolled,
+    // the chapters run on continuously, as a web page does.
+    const rendition = flowRef.current === 'scrolled'
+      ? book.renderTo(host, { width: '100%', height: '100%', flow: 'scrolled', manager: 'continuous', spread: 'none' })
+      : book.renderTo(host, { width: '100%', height: '100%', flow: 'paginated', spread: 'none' });
     renditionRef.current = rendition;
-    const start = memoryRef.current?.startCfi || undefined;
+    // The book face lives in the app, and the frame has none of the app's stylesheets.
+    rendition.hooks.content.register((contents: { addStylesheet: (src: string) => Promise<void> }) => contents.addStylesheet(`${window.location.origin}/fonts/reader.css`));
+    const onTap = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest?.('a')) return;   // a link in the book is the book's
+      // The frame is the whole book's width, columns side by side; the container scrolls it. The tap's
+      // place on the screen is its place in the frame less that scroll.
+      const container = host.querySelector<HTMLElement>('.epub-container');
+      const width = container?.clientWidth || host.clientWidth;
+      const zone = flowRef.current === 'scrolled' ? 'middle' : tapZone(e.clientX - (container?.scrollLeft ?? 0), width);
+      if (zone === 'next') void rendition.next();
+      else if (zone === 'previous') void rendition.prev();
+      else setImmersed((v) => !v);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') void rendition.next();
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') void rendition.prev();
+      else if (e.key === 'Escape') setImmersed(false);
+    };
+    rendition.on('click', onTap);
+    rendition.on('keydown', onKey);
+    // epub.js lays the book out for the host's size once and listens to the window, not the host:
+    // when the chrome goes away the host doubles in height and the page would stay the size it was,
+    // with the taps below it landing on nothing.
+    const watcher = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { try { rendition.resize(host.clientWidth, host.clientHeight); } catch { /* not rendered yet */ } }) : null;
+    watcher?.observe(host);
+    const start = hereRef.current || memoryRef.current?.startCfi || undefined;
     // A remembered place that no longer resolves (the file was rebuilt) is not an error: open at the start.
     const opening = start ? rendition.display(start).catch(() => rendition.display()) : rendition.display();
     opening.catch((e: unknown) => setError(errorMessage(e)));
@@ -276,6 +350,7 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       }).catch(() => undefined); // the page turned either way; a missed save costs nothing but the bookmark
     };
     const onRelocated = (loc: Location) => {
+      hereRef.current = loc.start.cfi;
       onPositionRef.current?.(loc.start.cfi);
       if (!memoryRef.current) return;
       pending = loc;
@@ -287,10 +362,13 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       clearTimeout(timer);
       save(); // a page turned in the last two seconds before Back is still the place to come back to
       rendition.off('relocated', onRelocated);
+      rendition.off('click', onTap);
+      rendition.off('keydown', onKey);
+      watcher?.disconnect();
       book.destroy();
       renditionRef.current = null;
     };
-  }, [url]);
+  }, [url, flow]);
 
   // One palette, rebuilt from the live tokens whenever the theme or the dim mode moves.
   useEffect(() => {
@@ -303,16 +381,26 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     rendition.themes.register(name, { ...epubTheme(tokens, link, theme !== 'field') } as Parameters<typeof rendition.themes.register>[1]);
     rendition.themes.select(name);
     rendition.themes.fontSize(`${size}%`);
-  }, [theme, size]);
+  }, [theme, size, flow]);
 
   return (
     <div className="epub">
       <div className="doc-tools no-print">
         {leading}
-        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.prev()}><Icon name="back" size={18} /><span>Previous</span></button>
-        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.next()}><span>Next</span><Icon name="forward" size={18} /></button>
+        {/* Arrows alone: the words made the bar two rows on the kiosk, and the same turns are a tap on
+            either side of the page or an arrow key. */}
+        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.prev()} aria-label="Previous" title="Previous page"><Icon name="back" size={20} /></button>
+        <button type="button" className="btn btn-small" onClick={() => void renditionRef.current?.next()} aria-label="Next" title="Next page"><Icon name="forward" size={20} /></button>
         <button type="button" className="btn btn-small" onClick={() => setSize((s) => EPUB_SIZES[(EPUB_SIZES.indexOf(s) + 1) % EPUB_SIZES.length])} aria-label={`Text size, ${size} per cent now`}>
           <Icon name="text-size" size={18} /><span>Text size</span>
+        </button>
+        <button type="button" className="btn btn-small" aria-pressed={flow === 'scrolled'} onClick={() => setFlow((f) => (f === 'scrolled' ? 'paginated' : 'scrolled'))}
+                title={flow === 'scrolled' ? 'Turn pages instead of scrolling' : 'Scroll through the book instead of turning pages'}>
+          <Icon name={flow === 'scrolled' ? 'down' : 'book'} size={18} /><span>{flow === 'scrolled' ? 'Scrolling' : 'Pages'}</span>
+        </button>
+        <button type="button" className="btn btn-small" onClick={() => { setImmersed(true); notify('Tap the middle of the page to bring the controls back.'); }}
+                title="Put the controls away. Tap the middle of the page to bring them back.">
+          <Icon name="expand" size={18} /><span>Just the book</span>
         </button>
       </div>
       {error && <p className="screen-body warning">Could not open this book: {error}</p>}
@@ -375,7 +463,7 @@ export function Doc() {
   const originalToggle = hasOriginal ? (
     <button type="button" className="btn btn-small" onClick={() => setShowOriginal((v) => !v)}>
       <Icon name={showOriginal ? 'book' : 'pdf'} size={18} />
-      <span>{showOriginal ? 'Reflowed text' : 'Original PDF layout'}</span>
+      <span>{showOriginal ? 'Reflowed text' : 'Original PDF'}</span>
     </button>
   ) : undefined;
   return (

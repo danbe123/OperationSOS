@@ -74,6 +74,7 @@ const P = {
   speaker: <><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5" /><path d="M19 6.5a7 7 0 0 1 0 11" /></>,
   drop: <path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z" />,
   'text-size': <path d="M3 7h10M8 7v12M14 12h7M17.5 12v7" />,
+  expand: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,
   refresh: <><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" /><path d="M20.5 4v5h-5" /></>,
   boot: <><path d="M6 3h5v8h4l5 4v5H6z" /><path d="M11 11v4M6 17h14" /></>,
   compass: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" /></>,

@@ -5,7 +5,7 @@ import { api } from '../../src/api/client';
 import type { BookDetail } from '../../src/api/types';
 
 const mocks = vi.hoisted(() => {
-  const rendition = { display: vi.fn(async () => undefined), next: vi.fn(), prev: vi.fn(), on: vi.fn(), off: vi.fn(), themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() } };
+  const rendition = { display: vi.fn(async () => undefined), next: vi.fn(), prev: vi.fn(), on: vi.fn(), off: vi.fn(), themes: { register: vi.fn(), select: vi.fn(), fontSize: vi.fn() }, hooks: { content: { register: vi.fn() } } };
   const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 3 } };
   return { rendition, book, ePub: vi.fn(() => book) };
 });

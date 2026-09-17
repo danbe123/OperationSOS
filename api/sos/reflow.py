@@ -420,7 +420,7 @@ def _chapter_xhtml(title: str, blks: list[Block]) -> str:
         body.append(f"<{b.kind}>{_xml_text(b.text)}</{b.kind}>")
     if in_list:
         body.append("</ul>")
-    return ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">'
+    return ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">'
             f'<head><title>{_xml_text(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head>'
             f"<body><section epub:type=\"chapter\">{''.join(body)}</section></body></html>")
 
