@@ -20,7 +20,11 @@ const mocks = vi.hoisted(() => {
   const book = { renderTo: vi.fn(() => rendition), destroy: vi.fn(), spine: { length: 4 } };
   return { rendition, book, handlers, ePub: vi.fn(() => book) };
 });
-vi.mock('epubjs', () => ({ default: mocks.ePub }));
+vi.mock('epubjs', () => ({
+  default: mocks.ePub,
+  // enough of a CFI to say which spine item it is in: "epubcfi(/6/8!/4/2)" is the fourth
+  EpubCFI: class { spinePos: number; constructor(cfi: string) { const m = /^epubcfi\(\/6\/(\d+)/.exec(cfi); this.spinePos = m ? Number(m[1]) / 2 - 1 : -1; } },
+}));
 vi.mock('../../src/links', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../../src/links')>();
   return { ...mod, replaceFrameLocation: vi.fn() };
@@ -60,11 +64,11 @@ describe('Doc', () => {
     expect(rules.body['text-align']).toBe('left');
     expect(rules.body.hyphens).toBe('auto');
     expect(rules['h1, h2, h3']['page-break-before']).toBe('auto');
-    // the face is loaded into the frame, which has none of the app's stylesheets
-    const hook = mocks.rendition.hooks.content.register.mock.calls[0][0] as (c: { addStylesheet: (s: string) => Promise<void> }) => void;
-    const addStylesheet = vi.fn(async () => undefined);
-    hook({ addStylesheet });
-    expect(addStylesheet).toHaveBeenCalledWith(expect.stringMatching(/\/fonts\/reader\.css$/));
+    // the face is declared inside the frame, which has none of the app's stylesheets
+    const hook = mocks.rendition.hooks.content.register.mock.calls[0][0] as (c: { addStylesheetRules: (r: object, k: string) => void }) => void;
+    const addStylesheetRules = vi.fn();
+    hook({ addStylesheetRules });
+    expect(addStylesheetRules).toHaveBeenCalledWith(expect.objectContaining({ '@font-face': expect.arrayContaining([expect.objectContaining({ 'font-style': 'italic' })]) }), 'sos-reader-fonts');
   });
 
   it('puts the chrome away for the book and brings it back with a tap on the middle of the page', async () => {
@@ -173,6 +177,7 @@ describe('Doc', () => {
   });
 
   it('places the book again once the frame\'s face has arrived, so the place is the one you left', async () => {
+    localStorage.setItem('sos.reader.flow', 'paginated');
     vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
     vi.spyOn(api, 'getReading').mockResolvedValue({
       key: 'doc:where-there-is-no-doctor', title: epubItem.title, author: null, cover_url: null, url: null,
@@ -183,7 +188,7 @@ describe('Doc', () => {
     (mocks.book.renderTo as unknown as { mockImplementationOnce: (f: (host: HTMLElement) => typeof mocks.rendition) => void }).mockImplementationOnce((host) => {
       const frame = document.createElement('iframe');
       host.appendChild(frame);
-      Object.defineProperty(frame.contentDocument, 'fonts', { value: { ready }, configurable: true });
+      Object.defineProperty(frame.contentDocument, 'fonts', { value: { ready, load: async () => [] }, configurable: true });
       return mocks.rendition;
     });
     renderRoute('/doc/where-there-is-no-doctor');
@@ -192,6 +197,37 @@ describe('Doc', () => {
     await act(async () => { fontsIn(); await ready; });
     await waitFor(() => expect(mocks.rendition.display).toHaveBeenCalledTimes(2));
     expect(mocks.rendition.display).toHaveBeenLastCalledWith('epubcfi(/6/8!/4/2)');
+  });
+
+  it('scrolling, puts the place right by hand once the faces are in and the chapters above have settled', async () => {
+    vi.spyOn(api, 'libraryItem').mockResolvedValue(epubItem);
+    vi.spyOn(api, 'getReading').mockResolvedValue({
+      key: 'doc:where-there-is-no-doctor', title: epubItem.title, author: null, cover_url: null, url: null,
+      cfi: 'epubcfi(/6/8!/4/2)', percent: 30, updated_at: '2026-09-17T10:00:00Z',
+    });
+    // The remembered text is in the fourth section, which sits 1000 px down the container once the
+    // chapters before it have loaded in above, and 120 px into that section.
+    const view = { section: { index: 3 }, contents: {}, element: { offsetTop: 1000 }, locationOf: vi.fn(() => ({ top: 120, left: 0 })) };
+    (mocks.rendition as unknown as { manager: unknown }).manager = { views: { all: () => [view] } };
+    let container: HTMLElement | null = null;
+    (mocks.book.renderTo as unknown as { mockImplementationOnce: (f: (host: HTMLElement) => typeof mocks.rendition) => void }).mockImplementationOnce((host) => {
+      container = document.createElement('div');
+      container.className = 'epub-container';
+      let scrolled = 0;   // jsdom has no layout: its scrollTop setter is a no-op, so the container remembers by hand
+      Object.defineProperty(container, 'scrollTop', { get: () => scrolled, set: (v: number) => { scrolled = v; }, configurable: true });
+      const frame = document.createElement('iframe');
+      container.appendChild(frame);
+      host.appendChild(container);
+      Object.defineProperty(frame.contentDocument, 'fonts', { value: { ready: Promise.resolve(), load: async () => [] }, configurable: true });
+      return mocks.rendition;
+    });
+    renderRoute('/doc/where-there-is-no-doctor');
+    await readerUp();
+    expect(mocks.rendition.display).toHaveBeenCalledWith('epubcfi(/6/8!/4/2)');
+    await waitFor(() => expect(container!.scrollTop).toBe(1120));
+    expect(view.locationOf).toHaveBeenCalledWith('epubcfi(/6/8!/4/2)');
+    expect(mocks.rendition.display).toHaveBeenCalledTimes(1);   // not displayed again: that reloads the chapters above and drifts once more
+    delete (mocks.rendition as unknown as { manager?: unknown }).manager;
   });
 
   it('starts at the beginning when the saved place no longer resolves', async () => {

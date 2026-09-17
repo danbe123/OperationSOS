@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
-import ePub, { type Rendition } from 'epubjs';
+import ePub, { EpubCFI, type Rendition } from 'epubjs';
 import type { Location } from 'epubjs/types/rendition';
 import { api } from '../api/client';
 import type { LibraryItem, ReadingEntry } from '../api/types';
@@ -12,6 +12,7 @@ import { replaceFrameLocation, sameOriginFrameUrl } from '../links';
 import { injectStyle, pdfViewerCss, READER_STYLE_ID, viewerTokens } from '../theme/readerTheme';
 import { useTheme, type Theme } from '../theme/ThemeProvider';
 import { readingPercent, SAVE_DELAY_MS, type EpubMemory } from '../reader/position';
+import { fontFaceRules, fontsIn } from '../reader/fonts';
 import { EPUB_SIZES, FLOW_KEY, IMMERSED_KEY, SIZE_KEY, storedFlow, storedImmersed, storedSize, tapZone, write, type Flow } from '../reader/prefs';
 
 export function pdfViewerUrl(fileUrl: string, theme: Theme, hash: string): string {
@@ -253,6 +254,29 @@ export function epubTheme(tokens: { ground: string; panel: string; ink: string; 
   };
 }
 
+/* The rendered views epub.js keeps while a book scrolls, as much of them as placing a CFI needs. */
+type ScrolledView = { section?: { index?: number }; contents?: unknown; element: HTMLElement; locationOf: (cfi: string) => { top: number; left: number } };
+
+/** Where a CFI sits in the scrolling container right now, in pixels from its top, or null while the
+ * section holding it is not rendered. */
+export function scrolledOffsetOf(rendition: Rendition, cfi: string): number | null {
+  const manager = (rendition as unknown as { manager?: { views?: { all(): ScrolledView[] } } }).manager;
+  const views = manager?.views?.all?.() ?? [];
+  let spine: number;
+  try {
+    spine = new EpubCFI(cfi).spinePos;
+  } catch {
+    return null;
+  }
+  const view = views.find((v) => v.section?.index === spine && v.contents);
+  if (!view) return null;
+  try {
+    return Math.max(0, Math.round(view.element.offsetTop + view.locationOf(cfi).top));
+  } catch {
+    return null;
+  }
+}
+
 /** The EPUB reader. With `memory` it opens where the box last saw you and, as you turn pages, tells
  * the box where you are (one write per pause, never one per page). It turns pages or scrolls, as you
  * last chose; a tap on the left or right of a page turns it, a tap on the middle puts the chrome away
@@ -308,7 +332,7 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       : book.renderTo(host, { width: '100%', height: '100%', flow: 'paginated', spread: 'none' });
     renditionRef.current = rendition;
     // The book face lives in the app, and the frame has none of the app's stylesheets.
-    rendition.hooks.content.register((contents: { addStylesheet: (src: string) => Promise<void> }) => contents.addStylesheet(`${window.location.origin}/fonts/reader.css`));
+    rendition.hooks.content.register((contents: { addStylesheetRules: (rules: object, key: string) => void }) => contents.addStylesheetRules(fontFaceRules(window.location.origin), 'sos-reader-fonts'));
     const onTap = (e: MouseEvent) => {
       const target = e.target as Element | null;
       if (target?.closest?.('a')) return;   // a link in the book is the book's
@@ -335,6 +359,11 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
     watcher?.observe(host);
     const start = hereRef.current || memoryRef.current?.startCfi || undefined;
     let live = true;
+    let moved = false;   // you have taken hold of the page: the placing above stops deferring to the remembered spot
+    const onHand = () => { moved = true; };
+    for (const ev of ['wheel', 'touchstart', 'mousedown', 'keydown'] as const) rendition.on(ev, onHand);
+    host.addEventListener('wheel', onHand, { passive: true });
+    host.addEventListener('touchstart', onHand, { passive: true });
     // A remembered place that no longer resolves (the file was rebuilt) is not an error: open at the start.
     const opening = start ? rendition.display(start).catch(() => rendition.display()) : rendition.display();
     opening
@@ -342,11 +371,36 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
         // The book is laid out before its face has arrived, in the fallback serif, which is wider; the
         // place is scrolled to in that layout, and when the face lands the text reflows some six per
         // cent shorter, so what is on the screen is that much further on than where you left — and
-        // every reopening drifted by the same share. Once the frame's fonts are in, place the book again.
-        const fonts = host.querySelector('iframe')?.contentDocument?.fonts;
-        if (!start || !fonts) return;
-        await fonts.ready;
-        if (live) await rendition.display(start).catch(() => undefined);
+        // every reopening drifted by the same share. So: wait for the faces, then place the book again.
+        if (!start) return;
+        await fontsIn(host.querySelector('iframe')?.contentDocument);
+        if (!live) return;
+        if (flowRef.current !== 'scrolled') { await rendition.display(start).catch(() => undefined); return; }
+        // Scrolling, the chapters before the place are loaded in above it as it settles, each in its
+        // own frame with its own copy of the face to fetch, and epub.js's own correction for what they
+        // add is off by whatever they grow by afterwards: a place near a chapter's start came back a
+        // chapter early. The place is put right by hand instead: where the remembered text is now,
+        // measured, is where the scroll goes, again whenever the layout moves, until it has been still
+        // for a moment with every frame's faces in — and never once you have begun to scroll yourself.
+        const deadline = Date.now() + 6000;
+        let quietSince = Date.now();
+        let seen = '';
+        while (live && !moved && Date.now() < deadline) {
+          await new Promise((r) => setTimeout(r, 120));
+          const container = host.querySelector<HTMLElement>('.epub-container');
+          if (!live || moved || !container) continue;
+          const frames = Array.from(host.querySelectorAll('iframe'));
+          const busy = frames.some((f) => f.contentDocument?.fonts?.status === 'loading');
+          const at = scrolledOffsetOf(rendition, start);
+          const sig = `${container.scrollHeight}|${frames.length}|${at}|${busy}`;
+          if (at !== null && Math.abs(container.scrollTop - at) > 2) {
+            container.scrollTop = at;
+            quietSince = Date.now();
+            continue;
+          }
+          if (sig !== seen || busy) { seen = sig; quietSince = Date.now(); continue; }
+          if (Date.now() - quietSince > 700) break;
+        }
       })
       .catch((e: unknown) => setError(errorMessage(e)));
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -377,6 +431,9 @@ export function EpubReader({ url, theme, leading, memory, onPosition }: { url: s
       rendition.off('relocated', onRelocated);
       rendition.off('click', onTap);
       rendition.off('keydown', onKey);
+      for (const ev of ['wheel', 'touchstart', 'mousedown', 'keydown'] as const) rendition.off(ev, onHand);
+      host.removeEventListener('wheel', onHand);
+      host.removeEventListener('touchstart', onHand);
       watcher?.disconnect();
       book.destroy();
       renditionRef.current = null;

@@ -280,6 +280,11 @@ a.chip { text-decoration: none; }
    18 px serif is some 65 characters a line. At 46em it was 84, past what an eye tracks back from. */
 .epub-host { flex: 1; min-height: 0; background: var(--panel); width: 100%; max-width: 38em; margin: 0 auto; }
 :root[data-reading="on"] .epub-host { background: var(--ground); }
+/* Scrolling, epub.js loads the chapters before the place in above it and moves the scroll down by
+   what they add. The browser's own scroll anchoring moves it too, for the same insertion, and the two
+   corrections fought: a place near a chapter's start came back a chapter early three times in four.
+   epub.js does its own arithmetic; the browser's is switched off for this one container. */
+.epub-host .epub-container { overflow-anchor: none; }
 .epub-hint { margin: 0; padding: 0 var(--gutter); font-size: var(--t-meta); }
 
 /* --- the assistant -------------------------------------------------------------------------- */
