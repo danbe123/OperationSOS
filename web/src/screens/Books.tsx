@@ -4,6 +4,7 @@ import { Icon } from '../icons';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
 import type { BookShelf, BookSummary, ReadingEntry } from '../api/types';
+import { Strip } from '../components/Strip';
 import { Tile } from '../components/Tile';
 import { Screen, Body } from '../shell/Screen';
 import './books.css';
@@ -76,7 +77,7 @@ export function ContinueReading({ entries, onForget }: { entries: ReadingEntry[]
   return (
     <section aria-label="Continue reading">
       <div className="books-head"><h2>Continue reading</h2></div>
-      <ul className="book-strip" aria-label="Continue reading">
+      <Strip label="Continue reading">
         {entries.map((r) => (
           <BookCard key={r.key} to={r.url ?? '/library/books'} title={r.title} author={r.author} cover={r.cover_url}
                     percent={r.percent} meta={`${Math.round(r.percent)}% read`}
@@ -86,7 +87,7 @@ export function ContinueReading({ entries, onForget }: { entries: ReadingEntry[]
                       </button>
                     )} />
         ))}
-      </ul>
+      </Strip>
     </section>
   );
 }

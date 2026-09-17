@@ -24,9 +24,11 @@ describe('Now', () => {
     expect(buttons.map((b) => b.textContent)).toEqual(['Power✓', 'Water✓', 'Mobile✓', 'Landline✓', 'Internet✓', 'Gas✓', 'Heating✓', 'Roads✓', 'Shops✓', 'Sewage✓']);
     expect(buttons.every((b) => b.querySelector('svg'))).toBe(true);
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false');
-    // The tiles come first: the row sits under them.
+    // The row is in the head, where the search field was: before the tiles, and no search on this screen.
     const tiles = await screen.findByRole('navigation', { name: 'Scenarios' });
-    expect(tiles.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(row.compareDocumentPosition(tiles) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(row.closest('.screen-head')).not.toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Search' })).toBeNull();
     viewQ.mockResolvedValue(powerOffView);
     await user.click(buttons[0]);
     expect(set).toHaveBeenCalledWith('power', expect.objectContaining({ state: 'off', since: expect.any(String) }));

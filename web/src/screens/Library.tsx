@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { api } from '../api/client';
 import { useQuery } from '../api/useQuery';
+import { Strip } from '../components/Strip';
 import { Tile } from '../components/Tile';
 import { Icon } from '../icons';
 import { Screen, Body } from '../shell/Screen';
@@ -65,9 +66,9 @@ function LastViewed({ entries }: { entries: RecentEntry[] }) {
   return (
     <section aria-label="Last viewed">
       <div className="books-head"><h2>Last viewed</h2></div>
-      <ul className="book-strip" aria-label="Last viewed">
+      <Strip label="Last viewed">
         {entries.map((e) => <RecentCard key={e.key} entry={e} />)}
-      </ul>
+      </Strip>
     </section>
   );
 }

@@ -5,7 +5,10 @@
 /* The services under the tiles: an icon with its name in small type beneath, pressed and filled dark
    when the service is off, amber when it is patchy. The state is never colour alone: the box's own
    mark (✓ ▲ ✕) sits in the button's corner, and the name with its state is the accessible name. */
-.service-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.service-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; justify-content: flex-end; }
+/* In the head the row takes the room the search field had, beside the question; where the question
+   and ten buttons cannot share the line, the row wraps to a second one on the right. */
+.screen-head .screen-head-actions:has(.service-row) { flex: 1 1 auto; justify-content: flex-end; }
 /* Ten across a 757 px kiosk column: the button's own padding is what the row cannot afford. */
 .service-row .btn.service-btn { position: relative; flex-direction: column; gap: 3px; min-width: var(--touch); min-height: var(--touch); padding: 6px 5px 5px; line-height: 1; }
 .service-name { font-size: 11px; font-weight: 600; letter-spacing: 0.01em; }

@@ -21,11 +21,12 @@ import './now.css';
  * about a power cut, a flood, a pandemic") was two taps away on Guides. The tiles are the question's
  * answers, so they are the front door; the kit ticks are on /kit, the drill on /situation, and how
  * a phone joins the box on /system. */
-/** Under the situations, the services: power, water, gas, mobile and the rest, one button each.
+/** In the screen's head, where the search field was ("on now page, remove the search move the on off
+ * icons where the search was"): the services, power, water, gas, mobile and the rest, one button each.
  * Tapping one tells the box that service is off (or working again), which is what the situation
  * engine runs on: the tasks, the forecasts and the briefing all follow from these. The full row of
  * detail (since when, a note, patchy rather than off) stays on /situation. */
-function Services() {
+function ServiceRow() {
   const { view, refresh } = useSituation();
   const [busy, setBusy] = useState<ConditionId | null>(null);
   if (!view) return null;
@@ -40,10 +41,8 @@ function Services() {
       setBusy(null);
     }
   };
-  const broken = CONDITION_IDS.map((id) => view.conditions[id]).filter((c) => c && c.state !== 'working');
   return (
-    <>
-      <nav className="service-row" aria-label="Services">
+    <nav className="service-row" aria-label="Services">
         {CONDITION_IDS.map((id) => {
           const c = view.conditions[id];
           const off = c.state !== 'working';
@@ -63,17 +62,22 @@ function Services() {
             </button>
           );
         })}
-      </nav>
-      {/* Tapping a service says that service is off, and nothing else: the front door does not
-          change shape under the finger that tapped it. What the box makes of it — the jobs, the
-          forecast, the guesses — is one line and one tap away, on the sheet that holds it. */}
-      {isEventful(view) && (
-        <p className="now-what-to-do">
-          {broken.length > 0 && `${broken.length} ${broken.length === 1 ? 'service' : 'services'} off. `}
-          <Link to="/situation">What to do now</Link>
-        </p>
-      )}
-    </>
+    </nav>
+  );
+}
+
+/** Tapping a service says that service is off, and nothing else: the front door does not change
+ * shape under the finger that tapped it. What the box makes of it — the jobs, the forecast, the
+ * guesses — is one line and one tap away, on the sheet that holds it. */
+function WhatToDo() {
+  const { view } = useSituation();
+  if (!view || !isEventful(view)) return null;
+  const broken = CONDITION_IDS.map((id) => view.conditions[id]).filter((c) => c && c.state !== 'working');
+  return (
+    <p className="now-what-to-do">
+      {broken.length > 0 && `${broken.length} ${broken.length === 1 ? 'service' : 'services'} off. `}
+      <Link to="/situation">What to do now</Link>
+    </p>
   );
 }
 
@@ -99,7 +103,7 @@ function Situations() {
           ))}
         </nav>
       )}
-      <Services />
+      <WhatToDo />
     </>
   );
 }
@@ -111,7 +115,7 @@ function Situations() {
 export function Now() {
   const { view, error, loading, refresh } = useSituation();
   return (
-    <Screen title="What's the situation?" back={false}>
+    <Screen title="What's the situation?" back={false} search={false} actions={<ServiceRow />}>
       <Body>
         {/* With both networks down this is the most important new fact on the front door, and the
             box used to say nothing about it here at all. One component, one sentence. */}

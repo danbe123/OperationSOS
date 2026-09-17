@@ -16,8 +16,23 @@
 @media (max-height: 620px) { :root { --book-w: 104px; } .book-strip .book-card-author { display: none; } }
 
 .book-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px 12px; grid-template-columns: repeat(auto-fill, minmax(var(--book-w), 1fr)); }
-.book-strip { list-style: none; margin: 0 calc(-1 * var(--gutter)); padding: 4px var(--gutter) 8px; display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
-.book-strip .book-card { flex: 0 0 var(--book-w); scroll-snap-align: start; }
+.strip { position: relative; margin: 0 calc(-1 * var(--gutter)); }
+.book-strip { list-style: none; margin: 0; padding: 4px var(--gutter) 10px; display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.book-strip .book-card { flex: 0 0 var(--book-w); }
+/* The bar is the app's, slim and in its tone, not the browser's grey trough under the covers. */
+.book-strip { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.book-strip::-webkit-scrollbar { height: 6px; }
+.book-strip::-webkit-scrollbar-track { background: transparent; margin: 0 var(--gutter); }
+.book-strip::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: var(--radius-pill); }
+/* The row fades in its own gutters, both ends, always: a fade that came and went with the scroll was
+   drawn again on every scroll event, and a fast swipe stuttered on it. At rest the fade covers only the
+   gutter beside the first and last cover; mid-row it is the cue that the row goes on. */
+.book-strip { mask-image: linear-gradient(to right, transparent, black var(--gutter), black calc(100% - var(--gutter)), transparent); }
+/* Arrows for a mouse, over the covers' middle at each end; a finger swipes and never sees them. */
+.strip-arrow { display: none; position: absolute; top: calc(var(--book-w) * 0.75); transform: translateY(-50%); z-index: 2; min-width: var(--touch); padding: 0; border-radius: var(--radius-pill); background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+.strip-arrow-left { left: 4px; }
+.strip-arrow-right { right: 4px; }
+@media (hover: hover) { .strip-arrow { display: inline-flex; } }
 
 .book-card { position: relative; min-width: 0; }
 .book-card-link { display: flex; flex-direction: column; gap: 6px; color: inherit; text-decoration: none; border-radius: var(--radius); }
