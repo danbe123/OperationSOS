@@ -29,6 +29,13 @@ const P = {
   search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" /></>,
   home: <><path d="M3 11l9-8 9 8" /><path d="M5 10v10h5v-6h4v6h5V10" /></>,
   toilet: <><path d="M7 3h10v7H7z" /><path d="M5 10h14a7 7 0 0 1-7 7 7 7 0 0 1-7-7z" /><path d="M9 17l-1 4M15 17l1 4" /></>,
+  /* The services on Now, one each: a tap, signal bars, a radiator, a road and a shop front say what
+     a drop, an arc, a thermometer, a lorry and a stack of coins only hinted at. */
+  tap: <><path d="M5 9h9a4 4 0 0 1 4 4v2" /><path d="M8 9V6h3V4M6 4h7" /><path d="M5 9v4h4V9" /><path d="M18 18c0 1.2-1 2-1 2s-1-.8-1-2 1-2.5 1-2.5 1 1.3 1 2.5z" /></>,
+  signal: <path d="M4 20v-3M9 20v-7M14 20v-11M19 20V5" />,
+  radiator: <><rect x="3" y="6" width="18" height="12" rx="2" /><path d="M7.5 6v12M12 6v12M16.5 6v12" /><path d="M6 18v3M18 18v3" /></>,
+  road: <><path d="M8 21L10 3h4l2 18z" /><path d="M12 6v3M12 12v3M12 18v3" /><path d="M3 21h18" /></>,
+  shop: <><path d="M4 9l1.5-5h13L20 9" /><path d="M3 9h18v2a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1-3-2.4V9z" /><path d="M5 13v8h14v-8" /><path d="M10 21v-5h4v5" /></>,
   people: <><circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20a6 6 0 0 1 12 0" /><path d="M14 20a4.5 4.5 0 0 1 7 0" /></>,
   exit: <><path d="M13 4H5v16h8" /><path d="M11 12h10" /><path d="M17 8l4 4-4 4" /></>,
   car: <><path d="M4 15l2-6h12l2 6" /><path d="M3 15h18v4H3z" /><circle cx="7" cy="19" r="1.5" /><circle cx="17" cy="19" r="1.5" /></>,

@@ -10,15 +10,15 @@ export const HOME_CONDITION_IDS: ConditionId[] = ['power', 'water', 'mobile', 'l
 
 export const CONDITION_INFO: Record<ConditionId, { title: string; short: string; icon: string }> = {
   power: { title: 'Mains power', short: 'Power', icon: 'bolt' },
-  water: { title: 'Water supply', short: 'Water', icon: 'drop' },
-  mobile: { title: 'Mobile network', short: 'Mobile', icon: 'wifi' },
+  water: { title: 'Water supply', short: 'Water', icon: 'tap' },
+  mobile: { title: 'Mobile network', short: 'Mobile', icon: 'signal' },
   landline: { title: 'Landline and 999', short: 'Landline', icon: 'phone' },
   internet: { title: 'Internet', short: 'Internet', icon: 'globe' },
   gas: { title: 'Gas', short: 'Gas', icon: 'fire' },
-  heating: { title: 'Heating', short: 'Heating', icon: 'thermometer' },
-  roads: { title: 'Roads and transport', short: 'Roads', icon: 'truck' },
-  shops: { title: 'Shops and cash', short: 'Shops', icon: 'coins' },
-  sewage: { title: 'Sewage and drains', short: 'Sewage', icon: 'wave' },
+  heating: { title: 'Heating', short: 'Heating', icon: 'radiator' },
+  roads: { title: 'Roads and transport', short: 'Roads', icon: 'road' },
+  shops: { title: 'Shops and cash', short: 'Shops', icon: 'shop' },
+  sewage: { title: 'Sewage and drains', short: 'Sewage', icon: 'toilet' },
 };
 
 export const STATE_LABEL: Record<ConditionState, string> = { working: 'working', degraded: 'patchy', off: 'off' };
