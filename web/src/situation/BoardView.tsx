@@ -9,7 +9,7 @@ import { describeElapsed, phaseFor } from '../tools/situation';
 import '../screens/board.css';
 import { withTask } from './apply';
 import { boardSunset, nextTasks } from './board';
-import { ago, clockTime, CONDITION_IDS, CONDITION_INFO, HOME_CONDITION_IDS, sinceDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
+import { ago, clockTime, CONDITION_IDS, CONDITION_INFO, HOME_CONDITION_IDS, sinceDuration, STATE_SYMBOL, STATE_TONE, stateWord } from './conditions';
 import { bulletinWords, eventTitle } from '../api/words';
 import { nowTitle } from './nowTitle';
 import { useSituation } from './SituationProvider';
@@ -137,7 +137,7 @@ export function BoardView({ interactive = false, action }: { interactive?: boole
             const face = (
               <>
                 <span className="board-cond-name"><Icon name={info.icon} size={26} /> {info.short}</span>
-                <span className="cond-state"><span aria-hidden="true">{STATE_SYMBOL[c.state]}</span> {STATE_LABEL[c.state]}</span>
+                <span className="cond-state"><span aria-hidden="true">{STATE_SYMBOL[c.state]}</span> {stateWord(id, c.state)}</span>
                 <span className="cond-for">{sinceDuration(c, now)}</span>
               </>
             );
@@ -145,8 +145,8 @@ export function BoardView({ interactive = false, action }: { interactive?: boole
             return (
               <button
                 key={id} type="button" className={`board-cond cond-${tone}`}
-                aria-pressed={off} aria-label={`${info.title}: ${off ? STATE_LABEL[c.state] : 'working'}`}
-                title={off ? `${info.title} is ${STATE_LABEL[c.state]}. Tap when it is working again.` : `${info.title} is working. Tap if it has gone off.`}
+                aria-pressed={off} aria-label={`${info.title}: ${stateWord(id, c.state)}`}
+                title={off ? `${info.title} is ${stateWord(id, c.state)}. Tap when it is ${stateWord(id, 'working')} again.` : `${info.title} is ${stateWord(id, 'working')}. Tap if it has gone ${stateWord(id, 'off')}.`}
                 disabled={busyCondition === id} onClick={() => void flip(c)}
               >
                 {face}

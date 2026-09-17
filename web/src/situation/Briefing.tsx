@@ -5,7 +5,7 @@ import type { Forecast } from '../api/types';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { Icon } from '../icons';
-import { clockTime, CONDITION_INFO, countdown, secondsUntil, SEVERITY_SYMBOL, SEVERITY_TONE, STATE_LABEL } from './conditions';
+import { clockTime, CONDITION_INFO, countdown, secondsUntil, SEVERITY_SYMBOL, SEVERITY_TONE, stateWord } from './conditions';
 import { briefingHref, contentHref } from './links';
 import { bulletinWords } from '../api/words';
 import { useSituation } from './SituationProvider';
@@ -175,7 +175,7 @@ export function Briefing({ blockRef }: { blockRef?: RefObject<HTMLDivElement | n
                     a verb between the name and the state disagreed with the subject on every other
                     row. The dash does the same job and agrees with everything. */}
                 <p className="briefing-title">
-                  {CONDITION_INFO[i.condition].title} — probably {STATE_LABEL[i.state]}
+                  {CONDITION_INFO[i.condition].title} — probably {stateWord(i.condition, i.state)}
                   {/* Where the guess came from is a note about the box, not a caution about the
                       world: it wears the plain badge and no symbol. */}
                   {i.detected && <> <span className="badge">detected by the box</span></>}

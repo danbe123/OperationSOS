@@ -13,7 +13,7 @@ import { Briefing } from '../situation/Briefing';
 import { ConditionRow } from '../situation/ConditionRow';
 import { EventLog } from './plan/EventLog';
 import { SensorsPanel } from '../situation/SensorsPanel';
-import { CONDITION_INFO, describeDuration, HOME_CONDITION_IDS, STATE_LABEL, STATE_SYMBOL } from '../situation/conditions';
+import { CONDITION_INFO, describeDuration, HOME_CONDITION_IDS, STATE_SYMBOL, stateWord } from '../situation/conditions';
 import { ukWhen } from '../tools/dates';
 import { withCondition } from '../situation/apply';
 import { nowTitle } from '../situation/nowTitle';
@@ -139,7 +139,7 @@ export function Situation() {
             {conditions.map((c) => (
               <tr key={c.id}>
                 <td>{CONDITION_INFO[c.id].title}</td>
-                <td>{STATE_SYMBOL[c.state]} {STATE_LABEL[c.state]}</td>
+                <td>{STATE_SYMBOL[c.state]} {stateWord(c.id, c.state)}</td>
                 <td>{c.state === 'working' ? '—' : `${ukWhen(c.since)} (${describeDuration(c.for_s)})`}</td>
                 <td>{c.note || '—'}</td>
               </tr>

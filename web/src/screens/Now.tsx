@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
 import { CONDITION_IDS, type ConditionId, type ConditionState } from '../api/types';
-import { CONDITION_INFO, STATE_LABEL } from '../situation/conditions';
+import { CONDITION_INFO, STATE_SYMBOL, STATE_TONE, stateWord } from '../situation/conditions';
 import { useQuery } from '../api/useQuery';
 import { tileLine } from '../api/words';
 import { Icon } from '../icons';
@@ -49,16 +49,17 @@ function Services() {
           const c = view.conditions[id];
           const off = c.state !== 'working';
           const info = CONDITION_INFO[id];
+          const word = stateWord(id, c.state);
+          const back = id === 'roads' || id === 'shops' ? 'open' : 'working';
           return (
             <button
-              key={id} type="button" className={off ? 'btn service-btn service-off' : 'btn service-btn'}
-              aria-pressed={off} aria-label={`${info.title}: ${off ? STATE_LABEL[c.state] : 'working'}`}
-              title={off ? `${info.title} is ${STATE_LABEL[c.state]}. Tap when it is working again.` : `${info.title} is working. Tap if it has gone off.`}
+              key={id} type="button" className={`btn service-btn service-${STATE_TONE[c.state]}`}
+              aria-pressed={off} aria-label={`${info.title}: ${word}`} data-name={`${info.short} ${word}`}
+              title={off ? `${info.title} is ${word}. Tap when it is ${back} again.` : `${info.title} is ${word}. Tap if it has gone ${id === 'roads' || id === 'shops' ? 'closed' : 'off'}.`}
               disabled={busy === id} onClick={() => void flip(id)}
             >
-              <Icon name={info.icon} size={22} />
-              <span>{info.short}</span>
-              <small>{off ? STATE_LABEL[c.state] : 'on'}</small>
+              <Icon name={info.icon} size={24} />
+              <span className="service-mark" aria-hidden="true">{STATE_SYMBOL[c.state]}</span>
             </button>
           );
         })}

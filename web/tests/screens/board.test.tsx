@@ -81,7 +81,7 @@ describe('/board', () => {
     // Off is the pressed state, on the board as on the front door.
     expect(within(conditions).getByRole('button', { name: 'Mains power: off' })).toHaveAttribute('aria-pressed', 'true');
 
-    const water = within(conditions).getByRole('button', { name: 'Water supply: working' });
+    const water = within(conditions).getByRole('button', { name: 'Water supply: on' });
     expect(water).toHaveAttribute('aria-pressed', 'false');
     const reads = vi.mocked(api.situationView).mock.calls.length;
     await user.click(water);

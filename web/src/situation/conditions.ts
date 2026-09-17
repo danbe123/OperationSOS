@@ -23,6 +23,15 @@ export const CONDITION_INFO: Record<ConditionId, { title: string; short: string;
 
 export const STATE_LABEL: Record<ConditionState, string> = { working: 'working', degraded: 'patchy', off: 'off' };
 
+/** The word for a service's state as a household says it: the power is on or off, the roads and the
+ * shops are open or closed. `STATE_LABEL` stays for prose that wants "working". */
+export function stateWord(id: ConditionId, state: ConditionState): string {
+  if (state === 'degraded') return 'patchy';
+  const opens = id === 'roads' || id === 'shops';
+  if (state === 'working') return opens ? 'open' : 'on';
+  return opens ? 'closed' : 'off';
+}
+
 /* ── The box's symbols. One meaning each, everywhere, and never the only signal: a colour always has
    a symbol beside it and a symbol always has a word.
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Icon } from '../icons';
 import type { Condition } from '../api/types';
-import { chipDuration, CONDITION_INFO, elapsedFrom, shortDuration, STATE_LABEL, STATE_SYMBOL, STATE_TONE } from './conditions';
+import { chipDuration, CONDITION_INFO, elapsedFrom, shortDuration, STATE_SYMBOL, STATE_TONE, stateWord } from './conditions';
 
 /** One service, as a chip: green working, amber patchy, red off, always with its symbol, its word
  * and how long it has been that way. The duration is the number that decides whether the freezer is
@@ -15,12 +15,13 @@ export function ConditionChip({ condition, compact = false }: { condition: Condi
   const elapsed = elapsedFrom(condition);
   const full = chipDuration(condition.state, elapsed);
   const duration = compact ? shortDuration(condition.state, elapsed) : full;
-  const label = `${info.title}: ${STATE_LABEL[condition.state]}${full ? ` ${full}` : ''}`;
+  const word = stateWord(condition.id, condition.state);
+  const label = `${info.title}: ${word}${full ? ` ${full}` : ''}`;
   return (
     <Link className={`cond-chip cond-${tone}${compact ? ' cond-chip-compact' : ''}`} to={`/situation#${condition.id}`} aria-label={label}>
       <Icon name={info.icon} size={compact ? 18 : 22} className="cond-icon" />
       <span className="cond-name">{info.short}</span>
-      <span className="cond-state"><span aria-hidden="true">{STATE_SYMBOL[condition.state]}</span> {STATE_LABEL[condition.state]}</span>
+      <span className="cond-state"><span aria-hidden="true">{STATE_SYMBOL[condition.state]}</span> {word}</span>
       {duration && <span className="cond-for">{duration}</span>}
     </Link>
   );
