@@ -16,7 +16,10 @@
 .card-scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 /* The fade is the cue that the sheet goes on. Short, so the last visible line is still a readable line. */
 .card-scroll-more { mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent); }
-.card-sheet { max-width: 40em; padding-bottom: 8px; }
+/* The sheet fills the screen up to about 1000 px: at the lead steps' size that is some 55 characters a
+   line, so a step written to the 70-character rule usually sits on one line, and on a laptop the card no
+   longer leaves half the screen bare. */
+.card-sheet { max-width: 62em; padding-bottom: 8px; }
 
 .card-when { margin: 2px 0 12px; font-size: var(--t-body); line-height: 1.4; }
 .card-when p { margin: 0; }
