@@ -73,7 +73,7 @@ describe('Map screen', () => {
     const { router } = renderRoute('/map');
     // the layers wait behind one tool, which says how many are on: a footpath layer and two terrain layers
     const layers = await screen.findByRole('button', { name: /^Layers/ });
-    expect(layers).toHaveTextContent('Layers 3');
+    await waitFor(() => expect(layers).toHaveTextContent('Layers 3'));   // the count arrives with the config
     expect(screen.queryByRole('group', { name: 'Map layers' })).toBeNull();
     await user.click(layers);
     const chips = screen.getByRole('group', { name: 'Map layers' });
