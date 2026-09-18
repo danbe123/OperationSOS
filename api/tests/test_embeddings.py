@@ -521,7 +521,17 @@ def _insert_wikipedia_zim_row(conn, tmp_path) -> None:
     conn.commit()
 
 
-def test_build_wikipedia_rerank_leaves_a_soft_redirect_stub_as_a_zero_vector_not_a_missing_key(tmp_path):
+def test_wikipedia_store_treats_a_stubs_zero_vector_as_no_vector_at_all(tmp_path):
+    """build_wikipedia_rerank itself leaves a soft-redirect stub as the zero vector its fixed-size
+    vectors array was already zero-initialised to (never embedded, exactly like build_household skips a
+    near-empty book) -- that part of the build is correct and unchanged. But every REAL embedded vector
+    in this store is L2-normalised to unit norm, so a genuine cosine similarity against a real article
+    lands somewhere in [-1, 1], and a real, dissimilar article can and does score below 0.0 -- the zero
+    vector is not that range's floor, it is its orthogonal midpoint. Handing a stub's zero row back as a
+    real vector would therefore rank it as an artificially middling match for every query, rather than
+    correctly signalling "no real vector here", the same as a genuinely absent key. WikipediaStore.
+    vector_for() must translate the build's zero row into None for exactly this reason -- the key stays
+    present and countable (that contract does not change), it just has no vector."""
     from sos.embeddings import WikipediaStore, build_wikipedia_rerank
 
     conn = db.connect(tmp_path / "sos.db")
@@ -538,10 +548,42 @@ def test_build_wikipedia_rerank_leaves_a_soft_redirect_stub_as_a_zero_vector_not
     assert result["skipped_no_text"] == 1
     store = WikipediaStore.load(tmp_path)
     assert store is not None and len(store) == result["count"]
-    stub_vec = store.vector_for("Soft_Redirect_Stub")
-    assert stub_vec is not None and np.allclose(stub_vec, 0.0)      # found, but never embedded: harmless
+    assert "Soft_Redirect_Stub" in store.keys           # still present and countable, just no real vector
+    assert store.vector_for("Soft_Redirect_Stub") is None   # no vector, not a middling zero-vector match
     real_vec = store.vector_for("Article_050")
     assert real_vec is not None and not np.allclose(real_vec, 0.0)
+
+
+def test_build_wikipedia_rerank_limit_genuinely_caps_the_keys_embedded(tmp_path):
+    """`limit` exists for a fast, real, small-scale throughput measurement against the full ZIM
+    (`sos build-embeddings-wikipedia --limit N`) without doing the full multi-hour build. The only other
+    test exercising it goes through build_wikipedia_cli against an empty database (no wikipedia_en_all_maxi
+    row at all), so it short-circuits at the "not on the box" no-op before the real truncation
+    (`all_keys = all_keys[:limit]`) is ever reached. This test calls build_wikipedia_rerank directly,
+    against the same populated FakeWikipediaZim/WIKI_ARTICLES fixture the stub test above uses (101 real
+    candidate keys, well more than N), and proves the cap is genuinely honoured -- not merely threaded
+    through unused -- by checking the resulting store really only has N keys, all of them the first N in
+    sorted order."""
+    from sos.embeddings import WikipediaStore, _wikipedia_article_keys, build_wikipedia_rerank
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+
+    all_keys = sorted(_wikipedia_article_keys(reader))
+    N = 10
+    assert len(all_keys) > N   # genuinely more real candidate keys than the cap, or this proves nothing
+
+    def fake_embed(texts):
+        return np.stack([unit(1, i) for i in range(len(texts))])
+
+    result = build_wikipedia_rerank(conn, embeddings_settings(tmp_path), fake_embed,
+                                    open_zim=lambda p: reader, out=lambda s: None, limit=N)
+    assert result["count"] == N
+    store = WikipediaStore.load(tmp_path)
+    assert store is not None and len(store) == N
+    assert store.keys == all_keys[:N]   # the first N in sorted order, not an arbitrary N-sized subset
 
 
 def _tracking_embed(calls_log: list, fail_at: int | None = None):
@@ -615,8 +657,8 @@ def test_build_wikipedia_rerank_resumes_after_a_simulated_interruption(tmp_path,
     # into the finished store untouched -- resume copied it forward rather than the second run recreating
     # it from scratch, which a fresh, differently-seeded embed would have made numerically different.
     assert np.allclose(store.vector_for(all_keys[0]), unit(1, 0), atol=0.01)
-    assert store.vector_for("Soft_Redirect_Stub") is not None
-    assert np.allclose(store.vector_for("Soft_Redirect_Stub"), 0.0)
+    assert "Soft_Redirect_Stub" in store.keys           # still present and countable, just no real vector
+    assert store.vector_for("Soft_Redirect_Stub") is None
 
 
 ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"

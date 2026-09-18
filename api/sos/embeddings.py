@@ -272,7 +272,15 @@ class WikipediaStore:
         i = bisect.bisect_left(self.keys, key)
         if i == len(self.keys) or self.keys[i] != key:
             return None
-        return np.asarray(self._mmap[i], dtype=np.float32)
+        vec = np.asarray(self._mmap[i], dtype=np.float32)
+        # A soft-redirect stub (build_wikipedia_rerank's own SHORTEST_CHARS check) was never embedded, so
+        # its row is still the build's zero-initialised placeholder, not a real, L2-normalised vector -- a
+        # genuine embedding always has at least one nonzero component. Handing that zero row back as-is
+        # would let a caller compare it for cosine similarity, where 0.0 is the *midpoint* of a real
+        # unit-vector dot product's [-1, 1] range, not its floor -- an artificially middling match for
+        # every query, rather than the "no real signal here" that a missing key already gets. Returning
+        # None here instead lets a caller treat a stub exactly like an absent key, which is what it is.
+        return vec if vec.any() else None
 
 
 def _write_meta(folder: Path, collection: str, meta: dict) -> None:
