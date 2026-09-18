@@ -23,7 +23,7 @@ from urllib.parse import quote
 import httpx
 
 from sos import places as places_mod
-from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim
+from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim, content_url
 from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
@@ -61,6 +61,19 @@ SEMANTIC_FLOOR = {          # (found by the words too, a converted document's pa
 SEMANTIC_MIN = min(SEMANTIC_FLOOR.values())
 SEMANTIC_CEIL = 0.82
 SEMANTIC_WEIGHT = 0.5
+# The household collection's own ZIM id for Survivor Library (Gutenberg reuses BOOK_ZIMS's own id): its
+# real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
+# through the generic Kiwix content route rather than a bespoke reader.
+SURVIVOR_ZIM = "survivorlibrary.com_en_all"
+
+
+def semantic_bonus(cos: float, w: float) -> float:
+    """What one meaning hit is worth: its distance above the floor, capped at the ceiling, times the
+    source's own weight -- the one place this formula is written, shared by the box's own library and
+    the household collection alike."""
+    return SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
+
+
 # A question rarely has every one of its words in the passage that answers it ("generator indoors": the
 # Mains electricity page says "never indoors" of a generator two sentences apart): when the AND finds fewer
 # than this, the OR is asked too, its rows after the AND's and ranked by how many of the words they carry.
@@ -450,15 +463,20 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                 r["score"] *= MEDICAL_BOOST
 
     # The passages nearest the query in meaning, from the box's own library: a row already found by its
-    # words is lifted, one the words missed is added with its opening as its snippet.
+    # words is lifted, one the words missed is added with its opening as its snippet. The household
+    # collection (Gutenberg, Survivor Library -- one vector per book) is asked the same way immediately
+    # after, under this same guard: a household hit joins the "books" group, the same source the
+    # catalogue's own keyword hits use, so a book found by both words and meaning is lifted once rather
+    # than shown twice under two badges, and every household hit is eligible for the BOOKS_KEPT rescue.
     if semantic is not None:
+        by_url = {r["url"]: r for r in results}
+
         try:
             near = await semantic.query(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
         near = [(url, cos) for url, cos in near if cos >= SEMANTIC_MIN]
         if near:
-            by_url = {r["url"]: r for r in results}
             found = {}
             for row in conn.execute(
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
@@ -473,7 +491,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                     continue
                 src = SOURCE_BY_KIND.get(kind, "docs")
                 w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
-                bonus = SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
+                bonus = semantic_bonus(cos, w)
                 if url in by_url:
                     by_url[url]["score"] += bonus
                     continue
@@ -484,6 +502,37 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                     entry["page"] = int(row["page"])
                 results.append(entry)
                 by_url[url] = entry
+
+        try:
+            household_near = await semantic.query_household(q, SEMANTIC_K)
+        except Exception:  # the semantic layer is a convenience: its failures never fail the search
+            household_near = []
+        household_near = [(key, cos) for key, cos in household_near if cos >= SEMANTIC_MIN]
+        for key, cos in household_near:
+            zim, _, book_id = key.partition(":")
+            if zim == "gutenberg_en_all":
+                url = f"/book/gutenberg/{book_id}"
+            else:
+                url = content_url(SURVIVOR_ZIM, f"www.survivorlibrary.com/library/{book_id}.pdf")
+            # a household book is never a "doc page" in the existing sense: its neighbourhood is not the
+            # dense, noisy one a converted document's page has, so False is right for that flag here too.
+            if cos < SEMANTIC_FLOOR[(url in by_url, False)]:
+                continue
+            bonus = semantic_bonus(cos, BOOK_WEIGHT)
+            if url in by_url:
+                by_url[url]["score"] += bonus
+                continue
+            book_row = conn.execute("SELECT title, author FROM books WHERE zim=? AND id=?", (zim, book_id)).fetchone()
+            if book_row is not None:
+                title, author = book_row["title"], book_row["author"] or ""
+            else:
+                # Survivor Library has no catalogue row at all (Task 6's known gap); a Gutenberg id whose
+                # own row went missing is covered the same way: the slug is all there is to show.
+                title, author = re.sub(r"[-_]+", " ", book_id).strip().title(), ""
+            entry = {"source": "books", "badge": "Books", "title": title, "snippet": author, "url": url,
+                     "score": bonus, "kind": "book", "_cat": "books", "via": "meaning"}
+            results.append(entry)
+            by_url[url] = entry
 
     # A place is an exact match by construction and a catalogue hit is ranked on its title and author
     # already: the rescoring is for articles and the box's own passages.

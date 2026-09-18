@@ -498,8 +498,10 @@ class Semantic:
         self.client = EmbedClient(settings.embed_url)
         self._index: Optional[Index] = None
         self._stamp: Optional[float] = None
+        self._household_index: Optional[ApproxIndex] = None
+        self._household_stamp: Optional[float] = None
         self._checked = 0.0
-        self.generation = 0        # goes up each time the index is (re)loaded or found gone: search's cache keys on it
+        self.generation = 0        # goes up each time either index is (re)loaded or found gone: search's cache keys on it
 
     def index(self) -> Optional[Index]:
         path = Path(self.settings.embeddings_dir) / "docs.f16.bin"
@@ -522,12 +524,50 @@ class Semantic:
                 log.info("embeddings: %d passages loaded", len(self._index))
         return self._index
 
+    def household_index(self) -> Optional[ApproxIndex]:
+        """The household collection's approximate index (Gutenberg and Survivor Library, one vector per
+        book), read and refreshed exactly as `index()` does for the box's own passages -- a second,
+        parallel cache rather than a variant of the first, because the two collections' files change on
+        their own schedules (a fresh `sos build-embeddings` writes both, but only one need be present)."""
+        path = Path(self.settings.embeddings_dir) / "household.hnsw"
+        now = time.monotonic()
+        if self._household_index is not None and now - self._checked < 30:
+            return self._household_index
+        self._checked = now
+        try:
+            stamp = path.stat().st_mtime
+        except OSError:
+            if self._household_index is not None:
+                self.generation += 1
+            self._household_index, self._household_stamp = None, None
+            return None
+        if stamp != self._household_stamp:
+            self._household_index = ApproxIndex.load(self.settings.embeddings_dir, "household")
+            self._household_stamp = stamp
+            self.generation += 1
+            if self._household_index is not None:
+                log.info("embeddings: %d household books loaded", len(self._household_index))
+        return self._household_index
+
     def available(self) -> bool:
         return self.index() is not None
 
     async def query(self, q: str, k: int = 20) -> list[tuple[str, float]]:
         """The nearest passages to a query: (url, cosine), best first; empty when semantic search is off."""
         index = self.index()
+        if index is None or not q.strip():
+            return []
+        try:
+            vec = await self.client.embed([QUERY_PREFIX + q.strip()], timeout=self.QUERY_TIMEOUT_S)
+        except EmbedError:
+            return []
+        return index.search(vec[0], k)
+
+    async def query_household(self, q: str, k: int = 20) -> list[tuple[str, float]]:
+        """The nearest household books to a query: (key, cosine) where key is "<zim id>:<book id>", best
+        first; empty when the household collection or the embedding server is off. Identical in shape to
+        `query`, against the household index instead of the docs one."""
+        index = self.household_index()
         if index is None or not q.strip():
             return []
         try:

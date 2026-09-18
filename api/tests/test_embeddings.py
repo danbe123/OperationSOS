@@ -139,11 +139,15 @@ def test_semantic_query_prefixes_the_query_and_answers_nothing_when_the_server_o
 
 
 class FakeSemantic:
-    def __init__(self, hits):
+    def __init__(self, hits, household_hits=None):
         self.hits = hits
+        self.household_hits = household_hits or []
 
     async def query(self, q, k=20):
         return self.hits
+
+    async def query_household(self, q, k=20):
+        return self.household_hits
 
 
 def test_search_fuses_the_nearest_passages_lifting_a_keyword_hit_and_adding_one_the_words_missed(env):
@@ -167,6 +171,37 @@ def test_search_fuses_the_nearest_passages_lifting_a_keyword_hit_and_adding_one_
     assert storage.get("via") is None
     assert food["via"] == "meaning" and food["snippet"].startswith("Keeps for years")
     assert resp["results"][0]["url"] in ("/m/food", "/p/food-storage")
+
+
+def test_search_fuses_household_books_lifting_a_matched_gutenberg_book_and_surfacing_a_slug_titled_survivor_library_pdf(env):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    # a Gutenberg book the words already found (fts_books), so its household hit must lift the same row
+    conn.execute("INSERT INTO library_items (id, available) VALUES ('gutenberg_en_all', 1)")
+    conn.execute("INSERT INTO books (zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path) "
+                 "VALUES ('gutenberg_en_all', 2701, 'Whaling Voyage', 'Herman Melville', 'PS', 3, NULL, NULL, NULL)")
+    conn.execute("INSERT INTO fts_books(fts_books) VALUES('rebuild')")
+    conn.commit()
+    sem = FakeSemantic([], household_hits=[
+        ("gutenberg_en_all:2701", 0.75),                    # the same book the words already found: lifted, not duplicated
+        ("survivorlibrary.com_en_all:canning-meat", 0.70),  # meaning alone; no catalogue row exists for Survivor Library at all
+    ])
+    resp = _search(conn, env, "whaling voyage", sem, use_cache=False)
+    books = [r for r in resp["results"] if r["source"] == "books"]
+    assert len(books) == 2   # the Gutenberg hit joined its keyword row rather than adding a second one
+
+    gutenberg = next(r for r in books if r["url"] == "/book/gutenberg/2701")
+    assert gutenberg["title"] == "Whaling Voyage" and gutenberg.get("via") is None   # the keyword row survives, just boosted
+    expected_gutenberg_score = search.score(search.BOOK_WEIGHT, 1) + search.semantic_bonus(0.75, search.BOOK_WEIGHT)
+    assert gutenberg["score"] == pytest.approx(expected_gutenberg_score)
+
+    survivor = next(r for r in books if r["url"] != "/book/gutenberg/2701")
+    assert survivor["title"] == "Canning Meat" and survivor["snippet"] == ""        # slug-derived, no author to show
+    assert survivor["url"] == "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/canning-meat.pdf"
+    assert survivor["via"] == "meaning"
+    # the bonus genuinely carries BOOK_WEIGHT: dropping it would let this outscore the box's own survival guidance
+    assert survivor["score"] == pytest.approx(search.semantic_bonus(0.70, search.BOOK_WEIGHT))
+    assert search.semantic_bonus(0.70, search.BOOK_WEIGHT) != pytest.approx(search.semantic_bonus(0.70, 1.0))
 
 
 def test_search_is_unhurt_by_a_semantic_layer_that_raises(env):
