@@ -16,6 +16,7 @@ from sos.kiwix import KiwixClient
 
 BASE = "http://kiwix.test/kiwix"
 FIXTURES = Path(__file__).parent / "fixtures"
+REPO = Path(__file__).resolve().parents[2]   # api/tests -> api -> OperationSOS: the real repo manifest lives here
 HAS_PDFTOTEXT = shutil.which("pdftotext") is not None
 
 
@@ -206,6 +207,86 @@ def test_search_fuses_household_books_lifting_a_matched_gutenberg_book_and_surfa
     assert search.semantic_bonus(0.70, search.BOOK_WEIGHT) != pytest.approx(search.semantic_bonus(0.70, 1.0))
 
 
+class RerankSemantic:
+    """Just enough of Semantic for the Wikipedia rerank pass (Task 9): no docs or household collections at
+    all (a real Semantic reports empty for both when no index has been built), and a scripted
+    rerank_wikipedia that records every call it receives so a test can check the real keys it was asked
+    to score, not merely that a score came back."""
+
+    def __init__(self, wikipedia_scores: dict[str, float]):
+        self.wikipedia_scores = wikipedia_scores
+        self.rerank_calls: list[tuple[str, list[str]]] = []
+
+    async def query(self, q, k=20):
+        return []
+
+    async def query_household(self, q, k=20):
+        return []
+
+    async def rerank_wikipedia(self, q, keys):
+        self.rerank_calls.append((q, list(keys)))
+        return {k: v for k, v in self.wikipedia_scores.items() if k in keys}
+
+
+def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env):
+    """The one behaviour this whole task exists to guarantee. WikipediaStore has no `.search()` at all
+    (Task 8) -- only `vector_for(key)` -- so there is structurally no way for the rerank pass to introduce
+    a Wikipedia row the keyword search itself did not already find; this proves search.py's fusion code
+    genuinely respects that rather than accidentally reintroducing a "find by meaning" path for Wikipedia."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, fts) VALUES "
+                 "('wikipedia_en_all_maxi', 'Wikipedia', 'zim', 'core', 'reference', 'zim/w.zim', 50, 1, 1)")
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, fts) VALUES "
+                 "('nhs_uk', 'NHS', 'zim', 'core', 'medical', 'zim/n.zim', 10, 1, 1)")
+    conn.commit()
+
+    # Wikipedia's real ZIM path is namespaced ("A/Some_Article"): the keyword hit's url must carry that
+    # internal slash through to /read/wikipedia_en_all_maxi/A/Some_Article intact, exactly as a real Kiwix
+    # search result would (kiwix.py's _split_content_link partitions on only the FIRST slash after the book).
+    def kiwix_reply(request):
+        books = request.url.params.get_list("books.name")
+        if "wikipedia_en_all_maxi" in books:
+            xml = ("<rss><channel><item><title>Some Article</title>"
+                   "<link>/kiwix/content/wikipedia_en_all_maxi/A/Some_Article</link>"
+                   "<description>An encyclopaedia article.</description></item></channel></rss>")
+        else:
+            xml = ("<rss><channel><item><title>Bleeding</title>"
+                   "<link>/kiwix/content/nhs_uk/conditions/bleeding</link>"
+                   "<description>NHS guidance on bleeding.</description></item></channel></rss>")
+        return httpx.Response(200, text=xml)
+
+    def run(sem):
+        with respx.mock(base_url=BASE, assert_all_called=False) as m:
+            m.get("/search").mock(side_effect=kiwix_reply)
+            return asyncio.run(search.search(conn, env, KiwixClient(BASE), "wikipedia article",
+                                             use_cache=False, semantic=sem))
+
+    baseline = run(RerankSemantic({}))   # no vector for the real key: never rescored, but still present
+    wiki_before = [r for r in baseline["results"] if r["url"].startswith("/read/wikipedia_en_all_maxi/")]
+    assert [r["url"] for r in wiki_before] == ["/read/wikipedia_en_all_maxi/A/Some_Article"]
+    baseline_score = wiki_before[0]["score"]
+    other_before = [r["url"] for r in baseline["results"] if not r["url"].startswith("/read/wikipedia_en_all_maxi/")]
+    assert other_before == ["/read/nhs_uk/conditions/bleeding"]
+
+    cos = 0.9   # chosen so the multiplier (0.7 + 0.6 * cos = 1.24) is genuinely not 1.0 -- a real change
+    sem = RerankSemantic({"A/Some_Article": cos})
+    resp = run(sem)
+
+    # (a) the rescored hit's score genuinely changed by the expected multiplier, computed explicitly here
+    wiki_after = [r for r in resp["results"] if r["url"].startswith("/read/wikipedia_en_all_maxi/")]
+    assert len(wiki_after) == 1
+    expected_score = baseline_score * (search.WIKIPEDIA_RERANK_BASE + search.WIKIPEDIA_RERANK_SPAN * cos)
+    assert wiki_after[0]["score"] == pytest.approx(expected_score)
+    assert wiki_after[0]["score"] != pytest.approx(baseline_score)                 # it really did change
+    assert sem.rerank_calls == [("wikipedia article", ["A/Some_Article"])]          # the real key, slash intact
+
+    # (b) THE WHOLE POINT: no new row was added by meaning alone
+    assert len(wiki_after) == len(wiki_before)
+    other_after = [r["url"] for r in resp["results"] if not r["url"].startswith("/read/wikipedia_en_all_maxi/")]
+    assert other_after == other_before   # the NHS hit, found by keyword alone, is untouched by this rerank
+
+
 def test_search_is_unhurt_by_a_semantic_layer_that_raises(env):
     conn = db.connect(env.db_path)
     db.init_schema(conn)
@@ -248,6 +329,11 @@ def _build_cli_fixture(env, monkeypatch):
     conn.close()
     env.embed_model_path.parent.mkdir(parents=True, exist_ok=True)
     env.embed_model_path.write_bytes(b"")
+    # build_cli's own build_household() call now runs the Task 9 exclusion check (excluded_zims), which
+    # needs a manifest directory with real StackExchange entries to compute a real answer; the `env`
+    # fixture's own SOS_MANIFEST_DIR (tests/fixtures/manifest) is a deliberately minimal fixture for other
+    # tests' purposes and carries none at all, so it is pointed at the real repository manifest here instead.
+    env.manifest_dir = REPO / "manifest"
 
     calls = {"get": 0}
 
@@ -313,6 +399,68 @@ def test_build_wikipedia_cli_starts_the_server_and_passes_resume_and_limit_throu
     assert rc == 0
     assert len(seen_cmds) == 1 and not seen_cmds[0][0].endswith("llama-server-cuda")
     assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5}]
+
+
+# --- excluded_zims: the ZIM ids meaning search must never touch (Task 9) -------------------------------------
+
+
+class _RealManifestSettings:
+    """A bare stand-in carrying only what excluded_zims reads: the real repository manifest directory,
+    never the fixtures one (env's SOS_MANIFEST_DIR points at tests/fixtures/manifest, which deliberately
+    carries no StackExchange entries at all) -- this must be checked against the real manifest, per the
+    task's own global constraint, not a hand-written short list."""
+    manifests = REPO / "manifest"
+
+
+def test_excluded_zims_contains_every_real_stackexchange_id_and_the_two_named_exclusions():
+    from sos.embeddings import excluded_zims
+
+    result = excluded_zims(_RealManifestSettings())
+    assert "wiktionary_en_all_nopic" in result
+    assert "wikipedia_cy_all_maxi" in result
+    assert "ham.stackexchange.com_en_all" in result
+    assert "homebrew.stackexchange.com_en_all" in result
+    assert len([z for z in result if z.endswith(".stackexchange.com_en_all")]) >= 20  # the real current count
+
+
+def test_household_zims_never_overlap_excluded_zims():
+    from sos.embeddings import HOUSEHOLD_ZIMS, excluded_zims
+
+    assert not (set(HOUSEHOLD_ZIMS) & excluded_zims(_RealManifestSettings()))
+
+
+def test_excluded_zims_raises_loudly_rather_than_silently_under_excluding_on_a_wrong_manifest_dir(tmp_path):
+    """Ruling 9's own point: load_manifests() glob()s a directory that may not exist and returns [] without
+    raising -- a manifest directory that is simply wrong must not be allowed to look like "no StackExchange
+    ZIMs today", since a caller could never tell the two apart otherwise. excluded_zims() must fail loudly
+    instead of quietly handing back a dangerously small set."""
+    from sos.embeddings import excluded_zims
+
+    class EmptySettings:
+        manifests = tmp_path / "does-not-exist"
+
+    with pytest.raises(RuntimeError, match="zero"):
+        excluded_zims(EmptySettings())
+
+
+def test_excluded_zims_is_cached_and_does_not_re_read_the_manifest_directory_on_every_call(monkeypatch):
+    """The lazy function must still only load_manifests() once per real settings.manifests path -- the
+    whole reason it is cached rather than simply called fresh every time, since load_manifests() re-reads
+    and re-parses every manifest JSON file from disk."""
+    from sos import manifest as manifest_mod
+    from sos.embeddings import excluded_zims
+
+    calls = {"n": 0}
+    real_load = manifest_mod.load_manifests
+
+    def counting_load(dir):
+        calls["n"] += 1
+        return real_load(dir)
+
+    monkeypatch.setattr(manifest_mod, "load_manifests", counting_load)
+    excluded_zims(_RealManifestSettings())
+    excluded_zims(_RealManifestSettings())
+    assert calls["n"] <= 1  # already cached from an earlier test's call, or exactly one call from this test
 
 
 # --- build_household: one vector per book across Gutenberg and Survivor Library -----------------------------
@@ -392,10 +540,14 @@ def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path)
 
 
 def embeddings_settings(tmp_path):
-    """A bare stand-in for Settings carrying only what build_household reads: embeddings_dir and embed_model."""
+    """A bare stand-in for Settings carrying what build_household and build_wikipedia_rerank read:
+    embeddings_dir, embed_model, and manifests (build_household's excluded_zims retrofit check reads it) --
+    manifests points at the real repository manifest directory, so excluded_zims() finds real StackExchange
+    ids exactly as it would in production, rather than raising for want of any."""
     class FakeSettings:
         embeddings_dir = tmp_path
         embed_model = "bge-small-en-v1.5-q8_0.gguf"
+        manifests = REPO / "manifest"
     return FakeSettings()
 
 

@@ -358,6 +358,40 @@ def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], ou
 HOUSEHOLD_ZIMS = ("gutenberg_en_all", "survivorlibrary.com_en_all")
 HOUSEHOLD_TEXT_CHARS = PASSAGE_CHARS      # the same real safe window Task 1 measured -- one model, one window
 
+# Cached by str(settings.manifests) rather than @lru_cache on settings itself: this codebase's Settings
+# (pydantic_settings.BaseSettings) is not hashable (confirmed: hash(get_settings()) raises TypeError), so
+# an lru_cache keyed on the settings object itself is not available here. The manifest directory string is
+# the only part of settings this function reads, so keying on it gives the same "compute once per real
+# manifest location" behaviour the lru_cache sketch wanted, without needing settings to be hashable.
+_excluded_zims_cache: dict[str, frozenset[str]] = {}
+
+
+def excluded_zims(settings: Settings) -> frozenset[str]:
+    """Every ZIM id meaning search must never touch: Wiktionary, the Welsh Wikipedia, and every real
+    *.stackexchange.com_en_all id in the manifest, computed rather than hand-listed so this set can never
+    silently drift as StackExchange sites are added or removed. Lazy, not a module-level constant: computed
+    once per real settings.manifests path and cached, rather than frozen at import time -- a module-level
+    constant would have latched onto whatever the very first import's environment happened to produce
+    (possibly an empty or wrong manifest directory, since load_manifests() glob()s a directory that may not
+    exist yet and silently returns [] rather than raising), and every later caller would keep using that
+    frozen, possibly-wrong answer forever. Raises rather than silently under-excluding if the real manifest
+    yields zero StackExchange ids, which is far more likely to mean "wrong directory" than "genuinely none
+    left"."""
+    key = str(settings.manifests)
+    cached = _excluded_zims_cache.get(key)
+    if cached is not None:
+        return cached
+    from sos.manifest import load_manifests
+    ids = {i.id for i in load_manifests(settings.manifests) if i.id.endswith(".stackexchange.com_en_all")}
+    if not ids:
+        raise RuntimeError(f"excluded_zims: found zero *.stackexchange.com_en_all ids under {settings.manifests} "
+                            f"-- this almost certainly means the manifest directory is wrong, not that every "
+                            f"StackExchange site was genuinely removed; refusing to silently under-exclude")
+    result = frozenset({"wiktionary_en_all_nopic", "wikipedia_cy_all_maxi"}) | frozenset(ids)
+    _excluded_zims_cache[key] = result
+    return result
+
+
 # Gutenberg's real book article (confirmed against the live ZIM, Task 5): `<title slug>.<id>`, no extension --
 # the epub (`<slug>.<id>.epub`), the covers (`covers/<id>_cover_image.jpg`/`.webp`) and the odd per-book
 # auxiliary file (`30282_glossary.html`) all end in something other than a bare number, so this one pattern
@@ -445,6 +479,7 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
     t0 = time.perf_counter()
     total_seen = total_skipped = 0
     for zim_id in HOUSEHOLD_ZIMS:
+        assert zim_id not in excluded_zims(settings), f"{zim_id} is excluded from meaning search"
         row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (zim_id,)).fetchone()
         if row is None or not row["available"] or not row["local_path"]:
             out(f"household: {zim_id} is not on the box; skipped")
@@ -723,8 +758,14 @@ class Semantic:
         self._stamp: Optional[float] = None
         self._household_index: Optional[ApproxIndex] = None
         self._household_stamp: Optional[float] = None
+        self._wikipedia_store: Optional[WikipediaStore] = None
+        self._wikipedia_stamp: Optional[float] = None
         self._checked = 0.0
         self._household_checked = 0.0
+        self._wikipedia_checked = 0.0   # its own throttle clock -- Task 7's own fix round established that
+        # sharing one shared timer between two collections starves whichever one's stat() check runs second
+        # (see test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index); a third
+        # collection must not repeat that mistake by sharing _checked or _household_checked either.
         self.generation = 0        # goes up each time either index is (re)loaded or found gone: search's cache keys on it
 
     def index(self) -> Optional[Index]:
@@ -773,6 +814,31 @@ class Semantic:
                 log.info("embeddings: %d household books loaded", len(self._household_index))
         return self._household_index
 
+    def wikipedia_store(self) -> Optional["WikipediaStore"]:
+        """The Wikipedia rerank-only store (Task 8), read and refreshed exactly as `index()` and
+        `household_index()` do for their own collections -- a third, parallel cache with its own stamp and
+        its own throttle clock (`_wikipedia_checked`), never sharing `_checked` or `_household_checked`
+        (see the note on `_wikipedia_checked` in `__init__`)."""
+        path = Path(self.settings.embeddings_dir) / "wikipedia.f16.bin"
+        now = time.monotonic()
+        if self._wikipedia_store is not None and now - self._wikipedia_checked < 30:
+            return self._wikipedia_store
+        self._wikipedia_checked = now
+        try:
+            stamp = path.stat().st_mtime
+        except OSError:
+            if self._wikipedia_store is not None:
+                self.generation += 1
+            self._wikipedia_store, self._wikipedia_stamp = None, None
+            return None
+        if stamp != self._wikipedia_stamp:
+            self._wikipedia_store = WikipediaStore.load(self.settings.embeddings_dir)
+            self._wikipedia_stamp = stamp
+            self.generation += 1
+            if self._wikipedia_store is not None:
+                log.info("embeddings: %d wikipedia rerank vectors loaded", len(self._wikipedia_store))
+        return self._wikipedia_store
+
     def available(self) -> bool:
         return self.index() is not None
 
@@ -799,3 +865,23 @@ class Semantic:
         except EmbedError:
             return []
         return index.search(vec[0], k)
+
+    async def rerank_wikipedia(self, q: str, keys: list[str]) -> dict[str, float]:
+        """Cosine similarity for a handful of already-known Wikipedia article keys against one query
+        embedding -- never a nearest-neighbour search, just a few real dot products against the store's own
+        rows, so search.py needs no numpy import and no direct coupling to this module's internals. Keys
+        with no vector in the store (an absent key, or a soft-redirect stub WikipediaStore.vector_for
+        already turns into None) are simply left out of the result rather than scored as zero."""
+        store = self.wikipedia_store()
+        if store is None or not q.strip():
+            return {}
+        try:
+            qvec = (await self.client.embed([QUERY_PREFIX + q.strip()], timeout=self.QUERY_TIMEOUT_S))[0]
+        except EmbedError:
+            return {}
+        out: dict[str, float] = {}
+        for key in keys:
+            vec = store.vector_for(key)
+            if vec is not None:
+                out[key] = float(np.dot(qvec, vec) / (np.linalg.norm(qvec) * np.linalg.norm(vec) + 1e-9))
+        return out

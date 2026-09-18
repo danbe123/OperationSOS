@@ -65,6 +65,16 @@ SEMANTIC_WEIGHT = 0.5
 # real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
 # through the generic Kiwix content route rather than a bespoke reader.
 SURVIVOR_ZIM = "survivorlibrary.com_en_all"
+# Wikipedia's own ZIM id (also sos.embeddings.WIKIPEDIA_ZIM): named again here, not imported, so search.py
+# gains no new module-level coupling to sos.embeddings (Task 9, Ruling 9) -- the rerank pass below needs
+# only this id string to find Wikipedia's own keyword hits by their url; everything else it needs (the
+# store, the query embedding) arrives through the `semantic` parameter search() already receives.
+WIKIPEDIA_ZIM = "wikipedia_en_all_maxi"
+# Wikipedia's own keyword hits are rescored, never zeroed and never doubled: a real semantic match (cosine
+# near 1.0) lifts a hit to 1.3x, a weak or negative one settles it to 0.7x -- tune against real queries in
+# Task 10's acceptance step, not by theory.
+WIKIPEDIA_RERANK_BASE = 0.7
+WIKIPEDIA_RERANK_SPAN = 0.6
 
 
 def semantic_bonus(cos: float, w: float) -> float:
@@ -388,6 +398,29 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                 "url": f"/read/{hit.book}/{hit.path}", "score": score(weights.get(hit.book, 1.0), rank), "kind": "article",
                 "_cat": "medical" if cls in ("nhs", "medical") else cls,
             })
+
+    # Wikipedia's own keyword hits, rescored by meaning -- never a new row, only a nudge to a row the words
+    # already found (Task 9). Wikipedia's `source`/`_cat` are both the literal string "reference" (classify()
+    # never returns the ZIM id for it: wikipedia_en_all_maxi's manifest category is "reference", and
+    # classify()'s "reference"/"practical"/"survival"/"books" branch returns the category unchanged), so the
+    # only place the ZIM id survives is the url itself -- the filter below matches on that, not on source/_cat.
+    if semantic is not None:
+        wiki_prefix = f"/read/{WIKIPEDIA_ZIM}/"
+        wiki_hits = [r for r in results if r["url"].startswith(wiki_prefix)]
+        if wiki_hits:
+            # everything after the fixed "/read/<zim id>/" prefix, keeping any internal slashes intact: a
+            # real Wikipedia article path is namespaced (e.g. "A/Some_Article"), and WikipediaStore's own
+            # keys (_wikipedia_article_keys, sos/embeddings.py) are reader.paths() values verbatim, slashes
+            # and all -- an rsplit("/", 1) here would throw away everything before the last slash instead.
+            keys = [r["url"].split("/", 3)[3] for r in wiki_hits]
+            try:
+                wiki_scores = await semantic.rerank_wikipedia(q, keys)
+            except Exception:  # the semantic layer is a convenience: its failures never fail the search
+                wiki_scores = {}
+            for r, key in zip(wiki_hits, keys):
+                cos = wiki_scores.get(key)
+                if cos is not None:
+                    r["score"] *= WIKIPEDIA_RERANK_BASE + WIKIPEDIA_RERANK_SPAN * max(0.0, cos)
 
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
     fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
