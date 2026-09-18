@@ -162,7 +162,7 @@ def cmd_build_books(settings: Settings, args) -> int:
 
 def cmd_build_embeddings(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_cli(settings)
+    return embeddings.build_cli(settings, cuda=args.cuda)
 
 
 def cmd_eval(settings: Settings, args) -> int:
@@ -207,6 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--only", help="comma-separated item ids")
     p.set_defaults(func=cmd_build_books)
     p = sub.add_parser("build-embeddings", help="PC only: embed the box's own library for semantic search (needs llama-server and the bge-small model)")
+    p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
     p.set_defaults(func=cmd_build_embeddings)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")

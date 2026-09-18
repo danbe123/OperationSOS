@@ -32,6 +32,10 @@ log = logging.getLogger(__name__)
 
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 DIMS = 384
+# The PC-only, GPU-accelerated second build (install/build-llama-cuda.sh) for bulk embedding of the
+# household book collection and Wikipedia: too large to embed on CPU in any reasonable time. A name
+# distinct from the plain `llama-server` already on PATH, so neither shadows the other.
+CUDA_LLAMA_SERVER = Path.home() / ".local" / "bin" / "llama-server-cuda"
 PASSAGE_CHARS = 2584      # bge-small errors past 510 content tokens on this build (512-token context minus
                           # two special tokens) rather than truncating silently: measured by posting real
                           # prose of increasing length to a live llama-server and watching success flip to a
@@ -224,12 +228,19 @@ def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], ou
     return meta
 
 
-def server_command(settings: Settings) -> list[str]:
+def server_command(settings: Settings, cuda: bool = False) -> list[str]:
     """The embedding server's command line: the same for `sos build-embeddings` on the PC, the dev stack and
-    install/systemd/sos-embed.service on the box."""
+    install/systemd/sos-embed.service on the box. `cuda=True` is the PC-only bulk-build variant (the
+    household book collection and Wikipedia): the second, CUDA-built binary from install/build-llama-cuda.sh,
+    with every layer offloaded to the GPU. The box's own callers never pass it, so their command line is
+    identical to today's."""
     host, port = _host_port(settings.embed_url)
-    return ["llama-server", "-m", str(settings.embed_model_path), "--embedding", "--pooling", "cls", "-c", "512", "-ub", "512",
-            "-b", "512", "--host", host, "--port", str(port), "-t", "2", "--no-webui"]
+    binary = str(CUDA_LLAMA_SERVER) if cuda else "llama-server"
+    cmd = [binary, "-m", str(settings.embed_model_path), "--embedding", "--pooling", "cls", "-c", "512", "-ub", "512",
+           "-b", "512", "--host", host, "--port", str(port), "-t", "2", "--no-webui"]
+    if cuda:
+        cmd += ["-ngl", "99"]
+    return cmd
 
 
 def _host_port(url: str) -> tuple[str, str]:
@@ -238,8 +249,11 @@ def _host_port(url: str) -> tuple[str, str]:
     return host or "127.0.0.1", port or "8091"
 
 
-def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen) -> int:
-    """PC only: start the embedding server if none is up, embed the library, stop what was started."""
+def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen, cuda: bool = False) -> int:
+    """PC only: start the embedding server if none is up, embed the library, stop what was started.
+    `cuda=True` (`sos build-embeddings --cuda`) starts the CUDA-built llama-server-cuda instead of the
+    plain CPU binary -- for the large bulk builds (household books, Wikipedia) that need GPU offload to be
+    tractable."""
     from sos.db import connect
     if not settings.embed_model_path.is_file():
         out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
@@ -249,8 +263,8 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
         if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
             raise httpx.HTTPError("not ready")
     except httpx.HTTPError:
-        binary = shutil.which("llama-server") or "/usr/local/bin/llama-server"
-        cmd = [binary] + server_command(settings)[1:]
+        binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
+        cmd = [binary] + server_command(settings, cuda=cuda)[1:]
         out(f"starting {' '.join(cmd)}")
         started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(60):

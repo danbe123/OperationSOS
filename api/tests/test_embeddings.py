@@ -156,6 +156,72 @@ def test_server_command_is_the_embedding_server_on_its_own_port(env):
     assert cmd[cmd.index("-m") + 1] == str(env.embed_model_path)
 
 
+def test_server_command_cuda_variant_adds_gpu_layers_and_the_cuda_binary(env):
+    cpu_cmd = embeddings.server_command(env)
+    assert "-ngl" not in cpu_cmd  # today's exact behaviour, unchanged
+    gpu_cmd = embeddings.server_command(env, cuda=True)
+    assert "-ngl" in gpu_cmd and gpu_cmd[gpu_cmd.index("-ngl") + 1] == "99"
+    assert gpu_cmd[0].endswith("llama-server-cuda")
+    assert gpu_cmd[0] == str(embeddings.CUDA_LLAMA_SERVER)
+
+
+def _build_cli_fixture(env, monkeypatch):
+    """A model file, an initialised (empty) db, and a `httpx.get` fake that reports the server not-ready
+    once (so build_cli starts one) then ready -- so build_cli's own polling loop exits on its first check,
+    with `time.sleep` stubbed out so the test does not actually wait."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.close()
+    env.embed_model_path.parent.mkdir(parents=True, exist_ok=True)
+    env.embed_model_path.write_bytes(b"")
+
+    calls = {"get": 0}
+
+    def fake_get(url, timeout=1.0):
+        calls["get"] += 1
+        if calls["get"] == 1:
+            raise httpx.HTTPError("not ready")
+        return httpx.Response(200)
+
+    monkeypatch.setattr(embeddings.httpx, "get", fake_get)
+    monkeypatch.setattr(embeddings.time, "sleep", lambda s: None)
+
+    class FakeProcess:
+        def terminate(self):
+            pass
+
+    seen_cmds: list[list[str]] = []
+
+    def fake_run(cmd, **kw):
+        seen_cmds.append(cmd)
+        return FakeProcess()
+
+    return seen_cmds, fake_run
+
+
+def test_build_cli_starts_the_plain_binary_when_cuda_is_not_asked_for(env, monkeypatch):
+    import shutil
+
+    seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
+    rc = embeddings.build_cli(env, out=lambda s: None, run=fake_run)
+    assert rc == 0
+    assert len(seen_cmds) == 1
+    expected_binary = shutil.which("llama-server") or "/usr/local/bin/llama-server"
+    assert seen_cmds[0][0] == expected_binary
+    assert not seen_cmds[0][0].endswith("llama-server-cuda")
+    assert "-ngl" not in seen_cmds[0]
+
+
+def test_build_cli_starts_the_cuda_binary_when_cuda_is_true(env, monkeypatch):
+    seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
+    rc = embeddings.build_cli(env, out=lambda s: None, run=fake_run, cuda=True)
+    assert rc == 0
+    assert len(seen_cmds) == 1
+    assert seen_cmds[0][0].endswith("llama-server-cuda")
+    assert seen_cmds[0][0] == str(embeddings.CUDA_LLAMA_SERVER)
+    assert "-ngl" in seen_cmds[0] and seen_cmds[0][seen_cmds[0].index("-ngl") + 1] == "99"
+
+
 ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
 
 
