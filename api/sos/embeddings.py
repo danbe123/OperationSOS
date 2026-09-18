@@ -167,6 +167,62 @@ class Index:
         return [(self.keys[i], float(scores[i])) for i in top]
 
 
+class ApproxIndex:
+    """One vector per book/article across the household collection (Gutenberg, Survivor Library):
+    tens of thousands of vectors, an approximate (not exact) nearest-neighbour search via hnswlib,
+    because the collection is expected to keep growing and a brute-force scan is the wrong shape for
+    that even though it would still be fast today at this size. cosine similarity, matching Index's
+    contract exactly, so search.py's fusion code does not need to know which kind of index it has."""
+
+    def __init__(self, hnsw, keys: list[str]):
+        self._hnsw = hnsw
+        self.keys = keys
+
+    def __len__(self) -> int:
+        return len(self.keys)
+
+    @classmethod
+    def build(cls, vectors: np.ndarray, keys: list[str], ef_construction: int = 200, m: int = 16) -> "ApproxIndex":
+        import hnswlib
+        vectors = np.asarray(vectors, dtype=np.float32)
+        hnsw = hnswlib.Index(space="cosine", dim=DIMS)
+        hnsw.init_index(max_elements=len(keys), ef_construction=ef_construction, M=m)
+        hnsw.add_items(vectors, np.arange(len(keys)))
+        hnsw.set_ef(max(50, ef_construction // 2))
+        return cls(hnsw, keys)
+
+    def save(self, folder: Path, collection: str) -> None:
+        folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        hnsw_part = folder / f"{collection}.hnsw.part"
+        self._hnsw.save_index(str(hnsw_part))
+        ids_part = folder / f"{collection}.ids.part"
+        ids_part.write_text("\n".join(self.keys) + "\n", encoding="utf-8")
+        os.replace(hnsw_part, folder / f"{collection}.hnsw")
+        os.replace(ids_part, folder / f"{collection}.ids")
+
+    @classmethod
+    def load(cls, folder: Path, collection: str) -> Optional["ApproxIndex"]:
+        import hnswlib
+        folder = Path(folder)
+        hnsw_path, ids_path = folder / f"{collection}.hnsw", folder / f"{collection}.ids"
+        if not (hnsw_path.is_file() and ids_path.is_file()):
+            return None
+        keys = [line for line in ids_path.read_text(encoding="utf-8").split("\n") if line]
+        hnsw = hnswlib.Index(space="cosine", dim=DIMS)
+        hnsw.load_index(str(hnsw_path), max_elements=len(keys))
+        hnsw.set_ef(max(50, len(keys) // 2) if len(keys) < 100 else 100)
+        return cls(hnsw, keys)
+
+    def search(self, query: np.ndarray, k: int = 20) -> list[tuple[str, float]]:
+        if len(self.keys) == 0:
+            return []
+        k = max(1, min(k, len(self.keys)))
+        labels, distances = self._hnsw.knn_query(np.asarray(query, dtype=np.float32).reshape(1, -1), k=k)
+        # hnswlib's "cosine" space returns a distance (1 - cosine); this class's contract is a similarity.
+        return [(self.keys[i], float(1.0 - d)) for i, d in zip(labels[0], distances[0])]
+
+
 def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
     """The three files for one named collection, written beside their finals and moved into place
     together, so a build that dies halfway leaves the old index whole."""

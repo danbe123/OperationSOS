@@ -59,6 +59,29 @@ def test_index_load_and_write_are_scoped_by_collection_name(tmp_path):
     assert embeddings.Index.load(tmp_path, "docs") is None  # a different collection name, nothing written for it
 
 
+def test_approx_index_round_trips_and_finds_the_nearest_neighbour(tmp_path):
+    from sos.embeddings import ApproxIndex
+    import numpy as np
+    rng = np.random.default_rng(0)
+    vectors = rng.normal(size=(50, 384)).astype(np.float32)
+    vectors /= np.linalg.norm(vectors, axis=1, keepdims=True)
+    keys = [f"book:{i}" for i in range(50)]
+    idx = ApproxIndex.build(vectors, keys)
+    assert len(idx) == 50
+    hits = idx.search(vectors[7], k=1)
+    assert hits[0][0] == "book:7" and hits[0][1] > 0.99  # a vector is its own nearest neighbour
+    idx.save(tmp_path, "household")
+    assert (tmp_path / "household.hnsw").exists() and (tmp_path / "household.ids").exists()
+    reloaded = ApproxIndex.load(tmp_path, "household")
+    assert reloaded is not None and len(reloaded) == 50
+    assert reloaded.search(vectors[7], k=1)[0][0] == "book:7"
+
+
+def test_approx_index_load_returns_none_when_absent(tmp_path):
+    from sos.embeddings import ApproxIndex
+    assert ApproxIndex.load(tmp_path, "household") is None
+
+
 def test_vectors_from_reads_both_reply_shapes_and_normalises():
     flat = embeddings._vectors_from([{"index": 0, "embedding": [3.0] + [0.0] * (embeddings.DIMS - 1)}])
     nested = embeddings._vectors_from({"data": [{"embedding": [[0.0, 4.0] + [0.0] * (embeddings.DIMS - 2)]}]})
