@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Callable, Optional
@@ -223,6 +224,17 @@ class ApproxIndex:
         return [(self.keys[i], float(1.0 - d)) for i, d in zip(labels[0], distances[0])]
 
 
+def _write_meta(folder: Path, collection: str, meta: dict) -> None:
+    """One collection's meta.json, staged beside its final name and renamed into place -- the same
+    atomic pattern write_index uses for the vectors and keys, shared here so it is written exactly
+    once, however the vectors themselves were built (the exact Index or the approximate one)."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    part = folder / f"{collection}.meta.json.part"
+    part.write_bytes(json.dumps(meta, indent=1).encode("utf-8"))
+    os.replace(part, folder / f"{collection}.meta.json")
+
+
 def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
     """The three files for one named collection, written beside their finals and moved into place
     together, so a build that dies halfway leaves the old index whole."""
@@ -230,13 +242,13 @@ def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[s
     folder.mkdir(parents=True, exist_ok=True)
     parts = []
     for name, data in ((f"{collection}.f16.bin", np.asarray(vectors, dtype=np.float16).tobytes()),
-                       (f"{collection}.ids", ("\n".join(keys) + "\n").encode("utf-8")),
-                       (f"{collection}.meta.json", json.dumps(meta, indent=1).encode("utf-8"))):
+                       (f"{collection}.ids", ("\n".join(keys) + "\n").encode("utf-8"))):
         part = folder / (name + ".part")
         part.write_bytes(data)
         parts.append((part, folder / name))
     for part, final in parts:
         os.replace(part, final)
+    _write_meta(folder, collection, meta)
 
 
 def embed_batch(embed: Callable[[list[str]], np.ndarray], texts: list[str]) -> np.ndarray:
@@ -279,6 +291,132 @@ def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], ou
             "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     write_index(settings.embeddings_dir, "docs", vectors, keys, meta)
     out(f"wrote {len(keys)} vectors to {settings.embeddings_dir}")
+    return meta
+
+
+# --- the household collection: one vector per book across Gutenberg and Survivor Library --------------------
+
+HOUSEHOLD_ZIMS = ("gutenberg_en_all", "survivorlibrary.com_en_all")
+HOUSEHOLD_TEXT_CHARS = PASSAGE_CHARS      # the same real safe window Task 1 measured -- one model, one window
+
+# Gutenberg's real book article (confirmed against the live ZIM, Task 5): `<title slug>.<id>`, no extension --
+# the epub (`<slug>.<id>.epub`), the covers (`covers/<id>_cover_image.jpg`/`.webp`) and the odd per-book
+# auxiliary file (`30282_glossary.html`) all end in something other than a bare number, so this one pattern
+# picks out exactly the real articles without reading the catalogue a second time.
+_GUTENBERG_ARTICLE = re.compile(r"^([^/]+)\.(\d+)$")
+# Survivor Library is a zimit crawl of the live WordPress site, not a book-scraper ZIM: it has no catalogue
+# entry and no per-book HTML article at all. Its ~11,800 real books are plain PDF entries at this one path
+# shape (Task 5's real finding); everything else in the crawl (theme assets, blog pages, category pages) is not.
+_SURVIVOR_BOOK = re.compile(r"^www\.survivorlibrary\.com/library/(.+)\.pdf$", re.I)
+
+
+def _gutenberg_text(html_bytes: bytes) -> str:
+    from sos.kiwix import extract_text
+
+    return " ".join(extract_text(html_bytes.decode("utf-8", errors="replace")))
+
+
+def _pdf_text(pdf_bytes: bytes) -> str:
+    """A Survivor Library entry's raw PDF bytes to plain text, via the box's own pdftotext wrapper
+    (api/sos/reflow.py's run_pdftotext) -- reader.read() hands back bytes, not a file on disk, so they
+    are staged to a temporary file first and removed once pdftotext has read it. About a fifth of this
+    collection is a pure page-image scan with no text layer at all (Task 5's real finding, confirmed
+    with pypdf against 25 sampled entries): that is not an error, just nothing to embed, so a pdftotext
+    failure on a corrupt or malformed PDF is swallowed the same way -- both come back as an empty string,
+    which build_household's own SHORTEST_CHARS check then skips like any other too-short book."""
+    from sos.reflow import run_pdftotext
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        tmp.write(pdf_bytes)
+        tmp.flush()
+        try:
+            return run_pdftotext(Path(tmp.name))
+        except (OSError, subprocess.CalledProcessError) as exc:
+            log.warning("household: pdftotext could not read a Survivor Library entry: %s", exc)
+            return ""
+
+
+def _household_entries(reader, zim_id: str) -> list[tuple[str, str, str]]:
+    """(key, title, plain text) for every real book this ZIM's reader holds, found by walking its
+    entries with `reader.paths()` and matching each collection's own real, confirmed entry-naming
+    convention (Task 5's diagnostic) -- there is no catalogue to read for Survivor Library the way
+    Gutenberg has `full_by_popularity.js`, so both collections are found the same way, by their paths,
+    rather than Gutenberg alone getting a shortcut the other collection cannot have.
+
+    The two collections' entries are different shapes and need different extraction: Gutenberg's article
+    is genuine HTML (kiwix.extract_text), Survivor Library's book is a PDF (pdftotext via a temp file).
+    Each entry is fully extracted here, not just named, so build_household's own loop only has to cut
+    and skip on the length of real text it already has."""
+    out: list[tuple[str, str, str]] = []
+    for path in reader.paths():
+        if zim_id == "gutenberg_en_all":
+            m = _GUTENBERG_ARTICLE.match(path)
+            if not m:
+                continue
+            slug, book_id = m.group(1), m.group(2)
+            raw = reader.read(path)
+            if not raw:
+                continue
+            out.append((f"{zim_id}:{book_id}", slug, _gutenberg_text(raw)))
+        else:
+            m = _SURVIVOR_BOOK.match(path)
+            if not m:
+                continue
+            slug = m.group(1)
+            raw = reader.read(path)
+            if not raw:
+                continue
+            title = re.sub(r"[-_]+", " ", slug).strip()
+            out.append((f"{zim_id}:{slug}", title, _pdf_text(raw)))
+    return out
+
+
+def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
+                    open_zim=None, out: Callable = print) -> dict:
+    """Embed one vector per real book across the household collections (Project Gutenberg, Survivor
+    Library) and write the "household" ApproxIndex -- a second, parallel build to `build()`'s, because
+    these collections have no SQL table the way the box's own library has `fts_docs`: they are read
+    straight from their ZIMs on disk. A ZIM the box does not have (not downloaded, or simply not on
+    this machine) is a no-op for that collection, exactly as `index_books` already treats a missing
+    Gutenberg ZIM -- the household build carries on with whatever collections it can reach."""
+    from sos.books import open_zim as real_open_zim
+    open_zim = open_zim or real_open_zim
+    keys: list[str] = []
+    chunks: list[np.ndarray] = []
+    t0 = time.perf_counter()
+    total_seen = total_skipped = 0
+    for zim_id in HOUSEHOLD_ZIMS:
+        row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (zim_id,)).fetchone()
+        if row is None or not row["available"] or not row["local_path"]:
+            out(f"household: {zim_id} is not on the box; skipped")
+            continue
+        reader = open_zim(Path(row["local_path"]))
+        entries = _household_entries(reader, zim_id)
+        before = len(keys)
+        for start in range(0, len(entries), BATCH):
+            batch = entries[start:start + BATCH]
+            texts, batch_keys = [], []
+            for key, title, text in batch:
+                total_seen += 1
+                plain = text[:HOUSEHOLD_TEXT_CHARS]
+                if len(plain) < SHORTEST_CHARS:
+                    total_skipped += 1
+                    continue
+                texts.append(f"{title}. {plain}")
+                batch_keys.append(key)
+            if not texts:
+                continue
+            chunks.append(embed_batch(embed, texts))
+            keys.extend(batch_keys)
+        out(f"household: {zim_id} done, {len(keys) - before} books ({len(keys)} so far)")
+    vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
+    if keys:
+        idx = ApproxIndex.build(vectors, keys)
+        idx.save(settings.embeddings_dir, "household")
+    meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "seen": total_seen,
+            "skipped_no_text": total_skipped, "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    _write_meta(settings.embeddings_dir, "household", meta)
+    out(f"household: wrote {len(keys)} vectors ({time.perf_counter() - t0:.0f}s, {total_skipped} skipped for no usable text)")
     return meta
 
 
@@ -335,7 +473,9 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
             return 1
     conn = connect(settings.db_path)
     try:
-        build(conn, settings, lambda texts: embed_sync(settings.embed_url, texts), out)
+        embed_fn = lambda texts: embed_sync(settings.embed_url, texts)  # noqa: E731 -- one call site, both collections
+        build(conn, settings, embed_fn, out)
+        build_household(conn, settings, embed_fn, out=out)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1

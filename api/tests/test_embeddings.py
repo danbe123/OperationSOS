@@ -1,6 +1,8 @@
 """Semantic search: the passage text, the index, the build, the query prefix, and the fusion into search."""
 import asyncio
 import json
+import shutil
+from pathlib import Path
 
 import httpx
 import numpy as np
@@ -11,6 +13,8 @@ from sos import db, embeddings, search
 from sos.kiwix import KiwixClient
 
 BASE = "http://kiwix.test/kiwix"
+FIXTURES = Path(__file__).parent / "fixtures"
+HAS_PDFTOTEXT = shutil.which("pdftotext") is not None
 
 
 def unit(*values):
@@ -253,6 +257,116 @@ def test_build_cli_starts_the_cuda_binary_when_cuda_is_true(env, monkeypatch):
     assert seen_cmds[0][0].endswith("llama-server-cuda")
     assert seen_cmds[0][0] == str(embeddings.CUDA_LLAMA_SERVER)
     assert "-ngl" in seen_cmds[0] and seen_cmds[0][seen_cmds[0].index("-ngl") + 1] == "99"
+
+
+# --- build_household: one vector per book across Gutenberg and Survivor Library -----------------------------
+
+_REAL_PDF_BYTES = (FIXTURES / "docs" / "sos-test.pdf").read_bytes()   # a tiny, real, on-disk PDF -- no network
+
+
+class FakeHouseholdZim:
+    """A tiny fake ZIM reader: real book entries plus, for Survivor Library, one whose PDF has no
+    usable text at all -- Task 5's real finding that about a fifth of that collection is a pure
+    page-image scan with no text layer, which pdftotext cannot read either."""
+
+    def __init__(self, books: dict[str, bytes]):
+        self._books = books
+
+    def read(self, path: str) -> bytes | None:
+        return self._books.get(path)
+
+    def has(self, path: str) -> bool:
+        return path in self._books
+
+    def paths(self):
+        return iter(self._books)
+
+
+GUTENBERG_BOOKS = {
+    "Pride and Prejudice.1": b"<html><body><h1>Pride and Prejudice</h1><p>It is a truth universally "
+        b"acknowledged, that a single man in possession of a good fortune, must be in want of a wife. "
+        b"However little known the feelings or views of such a man may be on his first entering a "
+        b"neighbourhood, this truth is so well fixed in the minds of the surrounding families.</p></body></html>",
+    "Moby-Dick.2": b"<html><body><h1>Moby-Dick</h1><p>Call me Ishmael. Some years ago, having little or "
+        b"no money in my purse, and nothing particular to interest me on shore, I thought I would sail "
+        b"about a little and see the watery part of the world. It is a way I have of driving off the "
+        b"spleen and regulating the circulation.</p></body></html>",
+    "covers/1_cover_image.jpg": b"JPEG",              # not a bare "<slug>.<id>": never mistaken for a book
+    "full_by_popularity.js": b"var json_data = [];",  # Gutenberg's catalogue entry: not a book either
+}
+SURVIVOR_BOOKS = {
+    # a real PDF with real, if short, extractable text -- pdftotext genuinely runs against it in this test
+    "www.survivorlibrary.com/library/blacksmithing.pdf": _REAL_PDF_BYTES,
+    # a pure page-image scan (or here, simply a malformed PDF): pdftotext fails and it is skipped, not a crash
+    "www.survivorlibrary.com/library/scanned-plate-12.pdf": b"%PDF-1.4\nnot a real pdf body",
+    "_zim_static/theme/style.css": b"body{}",          # the zimit crawl's own noise: never under /library/
+}
+
+
+def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path):
+    from sos.embeddings import ApproxIndex, build_household
+
+    def fake_open_zim(path):
+        return FakeHouseholdZim(GUTENBERG_BOOKS if "gutenberg" in str(path) else SURVIVOR_BOOKS)
+
+    def fake_embed(texts):
+        return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)   # deterministic, distinct per row
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
+                 "VALUES ('gutenberg_en_all', 'Project Gutenberg', 'zim', 'core', 'books', 'zim/g.zim', 100, 1, ?)",
+                 (str(tmp_path / "gutenberg_en_all.zim"),))
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
+                 "VALUES ('survivorlibrary.com_en_all', 'Survivor Library', 'zim', 'core', 'books', 'zim/s.zim', 100, 1, ?)",
+                 (str(tmp_path / "survivorlibrary.com_en_all.zim"),))
+    conn.commit()
+
+    lines = []
+    result = build_household(conn, embeddings_settings(tmp_path), fake_embed, open_zim=fake_open_zim, out=lines.append)
+
+    assert result["count"] == 3   # two Gutenberg books + one real Survivor Library book; the scan skipped
+    assert result["seen"] == 4 and result["skipped_no_text"] == 1   # both /library/ PDFs seen; the corrupt one skipped
+    idx = ApproxIndex.load(tmp_path, "household")
+    assert idx is not None and len(idx) == 3
+    assert set(idx.keys) == {"gutenberg_en_all:1", "gutenberg_en_all:2", "survivorlibrary.com_en_all:blacksmithing"}
+    assert not any("scanned-plate" in k for k in idx.keys)
+    assert any("household: gutenberg_en_all done, 2 books" in line for line in lines)
+    assert any("household: survivorlibrary.com_en_all done, 1 books" in line for line in lines)
+
+
+def embeddings_settings(tmp_path):
+    """A bare stand-in for Settings carrying only what build_household reads: embeddings_dir and embed_model."""
+    class FakeSettings:
+        embeddings_dir = tmp_path
+        embed_model = "bge-small-en-v1.5-q8_0.gguf"
+    return FakeSettings()
+
+
+def test_build_household_is_a_noop_for_a_zim_not_on_the_box(tmp_path):
+    from sos.embeddings import build_household
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    conn.commit()   # neither gutenberg_en_all nor survivorlibrary.com_en_all is in library_items at all
+
+    lines = []
+    result = build_household(conn, embeddings_settings(tmp_path), lambda texts: np.zeros((len(texts), embeddings.DIMS)),
+                             open_zim=lambda p: (_ for _ in ()).throw(AssertionError("never opened")), out=lines.append)
+    assert result["count"] == 0
+    assert embeddings.ApproxIndex.load(tmp_path, "household") is None
+    assert sum("is not on the box; skipped" in line for line in lines) == 2
+
+
+@pytest.mark.skipif(not HAS_PDFTOTEXT, reason="pdftotext not installed")
+def test_pdf_text_reads_a_real_pdf_and_returns_empty_on_a_corrupt_one():
+    """The Survivor Library PDF-extraction path in isolation, against a tiny real PDF on disk (not the
+    206 GiB Survivor Library ZIM): confirms the tempfile-plus-run_pdftotext plumbing genuinely works,
+    separately from the fuller fixture-ZIM test above (which also exercises it, end to end)."""
+    text = embeddings._pdf_text(_REAL_PDF_BYTES)
+    assert "Boil water for one minute" in text and "Severe bleeding" in text
+    assert embeddings._pdf_text(b"%PDF-1.4\nnot a real pdf body") == ""
+    assert embeddings._pdf_text(b"") == ""
 
 
 ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
