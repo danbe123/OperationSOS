@@ -32,8 +32,14 @@ log = logging.getLogger(__name__)
 
 QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 DIMS = 384
-PASSAGE_CHARS = 1400      # bge-small reads 512 tokens; a document page averages 2,100 characters, and a
-                          # passage heavy with numbers tokenises long, so the cut is well inside the window
+PASSAGE_CHARS = 2584      # bge-small errors past 510 content tokens on this build (512-token context minus
+                          # two special tokens) rather than truncating silently: measured by posting real
+                          # prose of increasing length to a live llama-server and watching success flip to a
+                          # 500 "too large to process" between 2584 and 2585 characters (see docs/superpowers/
+                          # plans/2026-09-18-semantic-search-expansion.md Task 1) -- the real window, not a
+                          # token:char estimate. A passage heavy with numbers tokenises much denser (measured
+                          # as low as ~700 chars for the same 510-token ceiling on real doc content) and still
+                          # relies on embed_batch's reactive shortening below.
 SHORTEST_CHARS = 200
 BATCH = 32
 VECTORS = "docs.f16.bin"

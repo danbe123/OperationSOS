@@ -20,6 +20,13 @@ def unit(*values):
     return v / np.linalg.norm(v)
 
 
+def test_passage_chars_matches_the_real_measured_window():
+    """Not a behavioural test of the model itself (that needs the real server, done once in Task 1's own
+    Step 2) -- a tripwire so a future edit to this constant is a deliberate decision, not a typo."""
+    from sos.embeddings import PASSAGE_CHARS
+    assert PASSAGE_CHARS == 2584
+
+
 def test_passage_text_is_the_title_then_the_words_without_template_tokens_cut_to_the_window():
     text = embeddings.passage_text("Food", "{{#if phones}}Ring first.{{/if}}  Tins keep for years; [[call 999]] never for food.")
     assert text == "Food. Ring first. Tins keep for years; never for food."
