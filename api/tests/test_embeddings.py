@@ -36,17 +36,27 @@ def test_passage_text_is_the_title_then_the_words_without_template_tokens_cut_to
 def test_index_finds_the_nearest_passages_by_cosine_and_survives_a_round_trip(tmp_path):
     keys = ["/p/one", "/p/two", "/p/three"]
     vectors = np.stack([unit(1, 0), unit(0, 1), unit(1, 1)])
-    embeddings.write_index(tmp_path, vectors, keys, {"model": "test", "count": 3})
-    index = embeddings.Index.load(tmp_path)
+    embeddings.write_index(tmp_path, "docs", vectors, keys, {"model": "test", "count": 3})
+    index = embeddings.Index.load(tmp_path, "docs")
     assert index is not None and len(index) == 3 and index.meta["model"] == "test"
     hits = index.search(unit(1, 0.1), k=2)
     assert [h[0] for h in hits] == ["/p/one", "/p/three"]
     assert hits[0][1] > hits[1][1] > 0.5
     # nothing to load: no index, not an error
-    assert embeddings.Index.load(tmp_path / "nowhere") is None
+    assert embeddings.Index.load(tmp_path / "nowhere", "docs") is None
     # a vectors file that does not match its keys is refused rather than misread
-    (tmp_path / embeddings.KEYS).write_text("/p/one\n")
-    assert embeddings.Index.load(tmp_path) is None
+    (tmp_path / "docs.ids").write_text("/p/one\n")
+    assert embeddings.Index.load(tmp_path, "docs") is None
+
+
+def test_index_load_and_write_are_scoped_by_collection_name(tmp_path):
+    vectors = np.random.rand(2, embeddings.DIMS).astype(np.float32)
+    embeddings.write_index(tmp_path, "household", vectors, ["book:1", "book:2"], {"count": 2})
+    assert (tmp_path / "household.f16.bin").exists() and (tmp_path / "household.ids").exists()
+    assert not (tmp_path / "docs.f16.bin").exists()
+    idx = embeddings.Index.load(tmp_path, "household")
+    assert idx is not None and len(idx) == 2
+    assert embeddings.Index.load(tmp_path, "docs") is None  # a different collection name, nothing written for it
 
 
 def test_vectors_from_reads_both_reply_shapes_and_normalises():
@@ -77,7 +87,7 @@ def test_build_embeds_every_passage_but_the_catalogue_entries_and_never_prefixes
     assert seen == ["Water. Boil it for a minute.", "NRR. Risks."]   # the catalogue entry is not a passage
     assert all(not t.startswith(embeddings.QUERY_PREFIX) for t in seen)
     assert meta["count"] == 2 and meta["prefix"] == embeddings.QUERY_PREFIX
-    index = embeddings.Index.load(env.embeddings_dir)
+    index = embeddings.Index.load(env.embeddings_dir, "docs")
     assert index is not None and index.keys == ["/m/water", "/doc/nrr#page=1"]
     assert any(line.startswith("wrote 2 vectors") for line in lines)
 
@@ -86,7 +96,7 @@ def test_build_embeds_every_passage_but_the_catalogue_entries_and_never_prefixes
 def test_semantic_query_prefixes_the_query_and_answers_nothing_when_the_server_or_index_is_away(env, respx_mock):
     sem = embeddings.Semantic(env)
     assert asyncio.run(sem.query("tinned food")) == []          # no index yet
-    embeddings.write_index(env.embeddings_dir, np.stack([unit(1, 0), unit(0, 1)]), ["/m/food", "/m/water"], {})
+    embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0), unit(0, 1)]), ["/m/food", "/m/water"], {})
     sent = {}
 
     def reply(request):
@@ -282,7 +292,7 @@ def test_search_drops_its_cache_when_the_semantic_index_changes(env):
 def test_semantic_generation_counts_each_load_of_the_index(env):
     sem = embeddings.Semantic(env)
     assert sem.generation == 0 and sem.index() is None
-    embeddings.write_index(env.embeddings_dir, np.stack([unit(1, 0)]), ["/m/food"], {})
+    embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
     assert sem.index() is not None and sem.generation == 1
     sem._checked = 0.0
     assert sem.index() is not None and sem.generation == 1                                       # unchanged: no new generation

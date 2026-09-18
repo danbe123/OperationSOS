@@ -46,9 +46,6 @@ PASSAGE_CHARS = 2584      # bge-small errors past 510 content tokens on this bui
                           # relies on embed_batch's reactive shortening below.
 SHORTEST_CHARS = 200
 BATCH = 32
-VECTORS = "docs.f16.bin"
-KEYS = "docs.ids"
-META = "docs.meta.json"
 _TOKENS = re.compile(r"\[\[[^\]]*\]\]|\{\{[^}]*\}\}")   # the template directives the guides carry
 _SPACE = re.compile(r"\s+")
 
@@ -141,9 +138,9 @@ class Index:
         return len(self.keys)
 
     @classmethod
-    def load(cls, folder: Path) -> Optional["Index"]:
+    def load(cls, folder: Path, collection: str) -> Optional["Index"]:
         folder = Path(folder)
-        vec_path, key_path, meta_path = folder / VECTORS, folder / KEYS, folder / META
+        vec_path, key_path, meta_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids", folder / f"{collection}.meta.json"
         if not (vec_path.is_file() and key_path.is_file()):
             return None
         keys = [line for line in key_path.read_text(encoding="utf-8").split("\n") if line]
@@ -170,14 +167,15 @@ class Index:
         return [(self.keys[i], float(scores[i])) for i in top]
 
 
-def write_index(folder: Path, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
-    """The three files, written beside their finals and moved into place together, so a build that dies
-    halfway leaves the old index whole."""
+def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
+    """The three files for one named collection, written beside their finals and moved into place
+    together, so a build that dies halfway leaves the old index whole."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     parts = []
-    for name, data in ((VECTORS, np.asarray(vectors, dtype=np.float16).tobytes()), (KEYS, ("\n".join(keys) + "\n").encode("utf-8")),
-                       (META, json.dumps(meta, indent=1).encode("utf-8"))):
+    for name, data in ((f"{collection}.f16.bin", np.asarray(vectors, dtype=np.float16).tobytes()),
+                       (f"{collection}.ids", ("\n".join(keys) + "\n").encode("utf-8")),
+                       (f"{collection}.meta.json", json.dumps(meta, indent=1).encode("utf-8"))):
         part = folder / (name + ".part")
         part.write_bytes(data)
         parts.append((part, folder / name))
@@ -223,7 +221,7 @@ def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], ou
     vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
     meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "prefix": QUERY_PREFIX,
             "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    write_index(settings.embeddings_dir, vectors, keys, meta)
+    write_index(settings.embeddings_dir, "docs", vectors, keys, meta)
     out(f"wrote {len(keys)} vectors to {settings.embeddings_dir}")
     return meta
 
@@ -308,7 +306,7 @@ class Semantic:
         self.generation = 0        # goes up each time the index is (re)loaded or found gone: search's cache keys on it
 
     def index(self) -> Optional[Index]:
-        path = Path(self.settings.embeddings_dir) / VECTORS
+        path = Path(self.settings.embeddings_dir) / "docs.f16.bin"
         now = time.monotonic()
         if self._index is not None and now - self._checked < 30:
             return self._index
@@ -321,7 +319,7 @@ class Semantic:
             self._index, self._stamp = None, None
             return None
         if stamp != self._stamp:
-            self._index = Index.load(self.settings.embeddings_dir)
+            self._index = Index.load(self.settings.embeddings_dir, "docs")
             self._stamp = stamp
             self.generation += 1
             if self._index is not None:
