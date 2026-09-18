@@ -329,11 +329,6 @@ def _build_cli_fixture(env, monkeypatch):
     conn.close()
     env.embed_model_path.parent.mkdir(parents=True, exist_ok=True)
     env.embed_model_path.write_bytes(b"")
-    # build_cli's own build_household() call now runs the Task 9 exclusion check (excluded_zims), which
-    # needs a manifest directory with real StackExchange entries to compute a real answer; the `env`
-    # fixture's own SOS_MANIFEST_DIR (tests/fixtures/manifest) is a deliberately minimal fixture for other
-    # tests' purposes and carries none at all, so it is pointed at the real repository manifest here instead.
-    env.manifest_dir = REPO / "manifest"
 
     calls = {"get": 0}
 
@@ -363,6 +358,10 @@ def test_build_cli_starts_the_plain_binary_when_cuda_is_not_asked_for(env, monke
     import shutil
 
     seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
+    # build_cli's own build_household() call runs the Task 9 exclusion check (excluded_zims); this test is
+    # about the server command line, not the exclusion list, so the check is stubbed out entirely rather
+    # than coupling this test to the real repository manifest's StackExchange entries.
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
     rc = embeddings.build_cli(env, out=lambda s: None, run=fake_run)
     assert rc == 0
     assert len(seen_cmds) == 1
@@ -374,6 +373,8 @@ def test_build_cli_starts_the_plain_binary_when_cuda_is_not_asked_for(env, monke
 
 def test_build_cli_starts_the_cuda_binary_when_cuda_is_true(env, monkeypatch):
     seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
+    # as above: this test is about the CUDA command line, not the exclusion list.
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
     rc = embeddings.build_cli(env, out=lambda s: None, run=fake_run, cuda=True)
     assert rc == 0
     assert len(seen_cmds) == 1
@@ -507,8 +508,12 @@ SURVIVOR_BOOKS = {
 }
 
 
-def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path):
+def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path, monkeypatch):
     from sos.embeddings import ApproxIndex, build_household
+
+    # this test is about the extraction/skip logic, not the exclusion list, so build_household's Task 9
+    # excluded_zims(settings) assertion is stubbed out rather than coupling it to the real manifest.
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
 
     def fake_open_zim(path):
         return FakeHouseholdZim(GUTENBERG_BOOKS if "gutenberg" in str(path) else SURVIVOR_BOOKS)
@@ -540,19 +545,24 @@ def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path)
 
 
 def embeddings_settings(tmp_path):
-    """A bare stand-in for Settings carrying what build_household and build_wikipedia_rerank read:
-    embeddings_dir, embed_model, and manifests (build_household's excluded_zims retrofit check reads it) --
-    manifests points at the real repository manifest directory, so excluded_zims() finds real StackExchange
-    ids exactly as it would in production, rather than raising for want of any."""
+    """A bare stand-in for Settings carrying only what build_household and build_wikipedia_rerank read:
+    embeddings_dir and embed_model. Deliberately has no `manifests` attribute: build_household's
+    excluded_zims(settings) assertion is stubbed out by whichever caller needs it (via
+    monkeypatch.setattr(embeddings, "excluded_zims", ...)) rather than this stand-in carrying a real
+    manifest path, so tests that do not care about the exclusion list stay uncoupled from its content."""
     class FakeSettings:
         embeddings_dir = tmp_path
         embed_model = "bge-small-en-v1.5-q8_0.gguf"
-        manifests = REPO / "manifest"
     return FakeSettings()
 
 
-def test_build_household_is_a_noop_for_a_zim_not_on_the_box(tmp_path):
+def test_build_household_is_a_noop_for_a_zim_not_on_the_box(tmp_path, monkeypatch):
     from sos.embeddings import build_household
+
+    # build_household's excluded_zims(settings) assertion runs at the top of its loop for every zim_id,
+    # before the "not on the box" no-op check below is ever reached; this test is about the no-op path,
+    # not the exclusion list, so the check is stubbed out rather than coupling it to the real manifest.
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
 
     conn = db.connect(tmp_path / "sos.db")
     db.init_schema(conn)
