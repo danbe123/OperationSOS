@@ -54,15 +54,44 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "fever": ("temperature",), "temperature": ("fever",), "stroke": ("fast",), "asthma": ("inhaler", "wheeze"),
     "dehydrated": ("dehydration", "rehydration"), "dehydration": ("rehydration", "dehydrated"), "rehydration": ("dehydration", "ors"),
     "hypothermia": ("cold", "warm"), "frostbite": ("cold", "frost"), "heatstroke": ("heat", "heatwave"), "heatwave": ("heat", "heatstroke"),
+    # "the water stops", "the heating's stopped": the box says "off", "fails", "failure"
+    "stops": ("stopped", "off", "fails", "failure"), "stopped": ("stops", "off", "fails", "failure"), "stop": ("stops", "off"),
+    "broke": ("broken", "fails", "failure"), "gone": ("off", "fails", "failure"),
+}
+
+
+# Two words that are one idea: "power cut" is a phrase, not electricity AND a wound. Keyed by the adjacent
+# terms as typed; the phrase itself first, then what else it is called.
+PHRASES: dict[tuple[str, str], tuple[str, ...]] = {
+    ("power", "cut"): ("power cut", "power cuts", "blackout", "outage", "power failure"),
+    ("power", "cuts"): ("power cuts", "power cut", "blackout", "outage", "power failure"),
+    ("power", "failure"): ("power failure", "power cut", "blackout", "outage"),
+    ("carbon", "monoxide"): ("carbon monoxide",),
+    ("heart", "attack"): ("heart attack", "cardiac arrest"),
+    ("cardiac", "arrest"): ("cardiac arrest", "heart attack"),
+    ("first", "aid"): ("first aid",),
+    ("food", "poisoning"): ("food poisoning",),
+    ("gas", "leak"): ("gas leak",),
+    ("chest", "pain"): ("chest pain", "heart attack"),
+    ("phone", "signal"): ("phone signal", "mobile signal", "reception", "network"),
+    ("mobile", "signal"): ("mobile signal", "phone signal", "reception", "network"),
 }
 
 
 def expand_terms(terms: list[str]) -> list[list[str]]:
-    """Each term with its synonyms beside it, the term first: the groups an FTS query ORs within and ANDs across."""
+    """Each term with its synonyms beside it, the term first, and two adjacent terms that are one idea as
+    one group of phrases: the groups an FTS query ORs within and ANDs across."""
     out: list[list[str]] = []
-    for t in terms:
-        alts = [t] + [a for a in SYNONYMS.get(t.lower(), ()) if a != t]
-        out.append(alts)
+    i = 0
+    while i < len(terms):
+        pair = (terms[i].lower(), terms[i + 1].lower()) if i + 1 < len(terms) else None
+        if pair in PHRASES:
+            out.append(list(PHRASES[pair]))
+            i += 2
+            continue
+        t = terms[i]
+        out.append([t] + [a for a in SYNONYMS.get(t.lower(), ()) if a != t])
+        i += 1
     return out
 
 

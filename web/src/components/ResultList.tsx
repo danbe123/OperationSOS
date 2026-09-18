@@ -1,12 +1,12 @@
 import type { SearchResult } from '../api/types';
 import { useAppLink } from '../links';
-import { cleanBadge, cleanSnippet, cleanTitle, highlightParts, markTitle } from '../api/results';
+import { cleanBadge, cleanSnippet, cleanTitle, highlightParts, markTitle, sectionOf } from '../api/results';
 
 /** The engine marks what it matched with `<b>`; the screen renders that as bold text, never as HTML
  * it was handed. Before this the tags were printed as words: "&lt;b&gt;Adders&lt;/b&gt; The
  * &lt;b&gt;adder&lt;/b&gt; is the only venomous snake…", on every snippet of every query. */
-export function Snippet({ text }: { text: string }) {
-  const clean = cleanSnippet(text);
+export function Snippet({ text, section = '' }: { text: string; section?: string }) {
+  const clean = cleanSnippet(text, section);
   if (!clean) return null;
   return (
     <span className="result-snippet">
@@ -24,20 +24,25 @@ export function ResultList({ results, label = 'Results', query = '' }: { results
   if (results.length === 0) return null;
   return (
     <ul className="list results" aria-label={label}>
-      {results.map((r, i) => (
-        <li key={`${r.url}#${i}`}>
-          <a className="result-row" href={r.url} onClick={(e) => { if (follow(r.url)) e.preventDefault(); }}>
-            <span className="result-line">
-              <span className="result-source">{cleanBadge(r.badge)}</span>
-              {r.via === 'meaning' && <span className="result-via" title="Found by what the question means, not by its words">related</span>}
-              <span className="result-title">
-                {markTitle(cleanTitle(r.title), query).map((part, i) => (part.match ? <mark key={i}>{part.text}</mark> : <span key={i}>{part.text}</span>))}
+      {results.map((r, i) => {
+        // one of the box's own passages says which section of its page it is: "Water · What to do"
+        const section = r.source === 'playbooks' ? sectionOf(r.url) : '';
+        return (
+          <li key={`${r.url}#${i}`}>
+            <a className="result-row" href={r.url} onClick={(e) => { if (follow(r.url)) e.preventDefault(); }}>
+              <span className="result-line">
+                <span className="result-source">{cleanBadge(r.badge)}</span>
+                {r.via === 'meaning' && <span className="result-via" title="Found by what the question means, not by its words">related</span>}
+                <span className="result-title">
+                  {markTitle(cleanTitle(r.title), query).map((part, i) => (part.match ? <mark key={i}>{part.text}</mark> : <span key={i}>{part.text}</span>))}
+                </span>
+                {section && <span className="result-section">{section}</span>}
               </span>
-            </span>
-            {r.snippet && <Snippet text={r.snippet} />}
-          </a>
-        </li>
-      ))}
+              {r.snippet && <Snippet text={r.snippet} section={section} />}
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 }

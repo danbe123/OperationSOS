@@ -67,3 +67,12 @@ def test_is_district(s, expected):
 ])
 def test_place_candidates(q, expected):
     assert query.place_candidates(q) == expected
+
+
+def test_expand_terms_takes_two_words_that_are_one_idea_as_a_phrase_group():
+    from sos.query import expand_terms, fts_match_expanded
+    groups = expand_terms(["safe", "power", "cut"])
+    assert groups[0] == ["safe"] and groups[1][0] == "power cut" and "blackout" in groups[1] and len(groups) == 2
+    assert "wound" not in groups[1]                                     # "cut" on its own would have been one
+    assert fts_match_expanded(["power", "cut"]) == '("power cut" OR "power cuts" OR "blackout" OR "outage" OR "power failure")'
+    assert expand_terms(["cut", "finger"])[0][:2] == ["cut", "wound"]   # not adjacent to power: a wound

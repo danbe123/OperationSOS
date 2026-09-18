@@ -167,6 +167,9 @@ a.chip { text-decoration: none; }
 .result-source { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; white-space: nowrap; }
 .result-source::after { content: '·'; margin-left: 8px; }
 .result-title { font-weight: 700; }
+/* The section of the box's own page a row is, after the title in the source's tone: "Water · What to do". */
+.result-section { color: var(--ink-muted); font-size: var(--t-meta); font-weight: 600; white-space: nowrap; }
+.result-section::before { content: '·'; margin-right: 8px; }
 /* The query's words in a title: a rule under them, not a highlighter pen across them. */
 .result-title mark { background: transparent; color: inherit; text-decoration: underline; text-decoration-color: var(--signal); text-decoration-thickness: 2px; text-underline-offset: 3px; }
 /* A row found by what the question means rather than by its words says so, quietly. */

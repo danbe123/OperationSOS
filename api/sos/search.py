@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import functools
 import re
 import sqlite3
 import time
@@ -46,10 +47,35 @@ EXACT_TITLE = 2.2
 BOILERPLATE = 0.45
 PER_SOURCE = 3      # a source's fourth result and beyond give way a little to the rest
 SOURCE_DECAY = 0.85
-# Semantic: how many nearest passages are asked for, how near counts, and what one is worth beside a keyword hit.
+# Semantic: how many nearest passages are asked for, how near counts, and what one is worth beside a keyword
+# hit. bge-small's cosines run close together — a passage that answers sits at 0.68 to 0.82, the nearest
+# stranger at 0.62 to 0.72 — so a hit is worth its distance above the floor, up to the ceiling, times the
+# source's weight. Meaning as a lift to a row the words found is cheap evidence and takes a low floor;
+# meaning as the only evidence takes a higher one, and higher still for a page of one of 21,000 converted
+# document pages, whose neighbourhood is dense with strangers (a building regulation for "generator
+# indoors" at 0.71; the box's own "Mains electricity" answers at 0.68).
 SEMANTIC_K = 20
-SEMANTIC_MIN = 0.5
-SEMANTIC_WEIGHT = 1.0
+SEMANTIC_FLOOR = {          # (found by the words too, a converted document's page) -> the cosine asked for
+    (True, False): 0.60, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74,
+}
+SEMANTIC_MIN = min(SEMANTIC_FLOOR.values())
+SEMANTIC_CEIL = 0.82
+SEMANTIC_WEIGHT = 0.5
+# A question rarely has every one of its words in the passage that answers it ("generator indoors": the
+# Mains electricity page says "never indoors" of a generator two sentences apart): when the AND finds fewer
+# than this, the OR is asked too, its rows after the AND's and ranked by how many of the words they carry.
+FTS_OR_BELOW = 5
+# How many rows the keyword index hands over to be re-ranked, for the box's own 750 passages and for the
+# 21,000 converted document pages separately: one bm25 limit of twenty across both let "water" AND ("stops"
+# OR "off" OR "fails") fill up before the Water module's long "What to do" was reached — 173 of the box's
+# own passages carry those words, and bm25 put the module's sections at 47, 92 and 96. The box's own
+# library is small enough to re-rank nearly whole (150 rows: 10 ms to fetch, 20 ms to score on the PC).
+FTS_ROWS_OWN = 150
+FTS_ROWS_DOC = 30
+# A page's "Go deeper" (its links) and a card's "Source" are lists of other titles: a row from one is worth
+# less, so a page found there is represented by the section that says something (see dedupe).
+FURNITURE_SECTIONS = {"go-deeper", "source"}
+FURNITURE_FACTOR = 0.5
 WARM_QUERIES = ("water", "bleeding", "power cut")
 
 CLASS_TITLES = {
@@ -84,6 +110,7 @@ _TAGS = re.compile(r"<[^>]+>")
 _NHS_TAIL = re.compile(r"\s*[-–—]\s*NHS\s*$", re.IGNORECASE)
 
 
+@functools.lru_cache(maxsize=65536)
 def stem(word: str) -> str:
     """Enough of a stem to match "bleeding" to "bleed", "tins" to "tin", "purification" to "purify"-ish: the
     suffixes English hangs on a word, taken off the end. Not Porter; the index has Porter, this is for
@@ -102,31 +129,48 @@ def words_of(text: str) -> set[str]:
     return {stem(w) for w in _WORD.findall(_TAGS.sub(" ", text or ""))}
 
 
+SYNONYM_CREDIT = 0.5   # a synonym found ("fridge" for "freezer") is worth half the word itself
+
+
+def _has(tokens: list[str], have: set[str], term: str) -> bool:
+    """Stems matched; a term of four letters or more also counts when it begins a word there ("radio" in
+    "radios", "flood" in "floodwater"); a phrase counts where its words stand together, in order."""
+    if " " in term:
+        want = [stem(w) for w in term.split()]
+        return any(tokens[i:i + len(want)] == want for i in range(len(tokens) - len(want) + 1))
+    st = stem(term)
+    return st in have or (len(st) >= 4 and any(w.startswith(st) for w in have))
+
+
 def term_share(terms: list[str], text: str) -> float:
-    """The share of the query's terms found in a text, stems matched; a term of four letters or more also
-    counts when it begins a word there ("radio" in "radios", "flood" in "floodwater")."""
-    if not terms:
+    """The share of the query's ideas found in a text: a term (or a phrase, "power cut") counts in full, a
+    synonym of it for half."""
+    groups = query_mod.expand_terms(terms)
+    if not groups:
         return 0.0
-    have = words_of(text)
-    hit = 0
-    for t in terms:
-        st = stem(t)
-        if st in have or (len(st) >= 4 and any(w.startswith(st) for w in have)):
+    tokens = [stem(w) for w in _WORD.findall(_TAGS.sub(" ", text or ""))]
+    have = set(tokens)
+    hit = 0.0
+    for alts in groups:
+        if _has(tokens, have, alts[0]):
             hit += 1
-    return hit / len(terms)
+        elif any(_has(tokens, have, a) for a in alts[1:]):
+            hit += SYNONYM_CREDIT
+    return hit / len(groups)
 
 
 def norm_title(title: str) -> str:
     return " ".join(_NHS_TAIL.sub("", title or "").lower().split())
 
 
-def relevance(terms: list[str], title: str, snippet: str, q: str) -> float:
+def relevance(terms: list[str], title: str, snippet: str, q: str, in_body: float = 0.0) -> float:
     """What a result's own words say about the query, as a multiplier on its class score: the whole query in
     the title counts most, in the snippet less; the title being the query leads its source; a hit with the
     query in neither the title nor the snippet is a boilerplate match (a crawled site's footer, a page that
-    mentions the word once in a list) and is put down rather than out."""
+    mentions the word once in a list) and is put down rather than out. For the box's own passages the share
+    of the words carried by the whole passage is known and stands in for the engine's fourteen-word snippet."""
     in_title = term_share(terms, title)
-    in_snippet = term_share(terms, snippet)
+    in_snippet = max(term_share(terms, snippet), in_body)
     factor = 1.0 + TITLE_WEIGHT * in_title + SNIPPET_WEIGHT * in_snippet
     if norm_title(title) == " ".join((q or "").lower().split()) or (terms and norm_title(title) == " ".join(terms)):
         factor *= EXACT_TITLE
@@ -168,9 +212,28 @@ def diversify(results: list[dict]) -> list[dict]:
     return out
 
 
-def snippet_from_body(body: str, limit: int = 220) -> str:
+def section_of(url: str) -> str:
+    """The section a passage is, from its anchor: '/m/water#what-to-do' is 'What to do'."""
+    frag = url.split("#", 1)[1] if "#" in (url or "") else ""
+    if not frag or frag.startswith("page="):
+        return ""
+    words = frag.replace("-", " ").strip()
+    words = " ".join("UK" if w == "uk" else w for w in words.split())
+    return words[:1].upper() + words[1:]
+
+
+def strip_heading(body: str, url: str) -> str:
+    """The passage's words without the section heading they open with: the heading is the anchor's."""
+    heading = section_of(url)
+    text = (body or "").lstrip()
+    if heading and text[:len(heading)].lower() == heading.lower():
+        text = text[len(heading):].lstrip(" -–:.\n")
+    return text
+
+
+def snippet_from_body(body: str, limit: int = 220, url: str = "") -> str:
     """A passage found by its meaning has no keyword to mark: its opening words are its snippet."""
-    text = " ".join(re.sub(r"\[\[[^\]]*\]\]|\{\{[^}]*\}\}", " ", body or "").split())
+    text = " ".join(re.sub(r"\[\[[^\]]*\]\]|\{\{[^}]*\}\}", " ", strip_heading(body, url)).split())
     if len(text) <= limit:
         return text
     cut = text[:limit].rsplit(" ", 1)[0]
@@ -257,6 +320,9 @@ async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern:
         return cls, None, False
 
 
+_cache_generation: dict[str, object] = {}
+
+
 def _empty(q: str) -> dict:
     return {"q": q, "query": "", "results": [], "groups": [], "took_ms": 0, "partial": False}
 
@@ -271,6 +337,11 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     limit = max(1, min(int(limit or 40), 100))
     key = SearchCache.key(q, sources, limit)
     use_cache = use_cache and fts_mode == "and"
+    # A new semantic index changes every answer: the cache of the old ones goes with it.
+    generation = getattr(semantic, "generation", None) if semantic is not None else None
+    if generation is not None and _cache_generation.get("seen") != generation:
+        SearchCache.invalidate(conn)
+        _cache_generation["seen"] = generation
     cached = SearchCache.get(conn, key) if use_cache else None
     if cached is not None:
         cached["q"] = q  # the cache key is normalised; echo back what the caller actually asked for
@@ -306,12 +377,31 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             })
 
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
-    rows = conn.execute(
-        "SELECT title, doc_id, kind, category, page, url, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
-        "FROM fts_docs WHERE fts_docs MATCH ? ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT 20",
-        (query_mod.fts_match_expanded(reduced.terms, fts_mode),),
-    ).fetchall()
-    for rank, row in enumerate(rows, 1):
+    fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
+               "FROM fts_docs WHERE fts_docs MATCH ? AND kind {op} 'doc' ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT {n}")
+
+    def fts_rows(docs: bool) -> tuple[list, dict]:
+        """The keyword rows of one half of the index — the box's own passages, or the document pages — with
+        the share of the query each carries. bm25 favours a short passage that repeats one word over a long
+        one that carries them all: the rows rank by the share of the query's ideas the passage carries plus
+        the share its title carries (the page that is about the query — "Water" for "the water stops",
+        "Water disinfection" for "boil water" — above one that mentions it), bm25 deciding among equals."""
+        n = FTS_ROWS_DOC if docs else FTS_ROWS_OWN
+        sql = fts_sql.format(op="=" if docs else "!=", n=n)
+        rows = conn.execute(sql, (query_mod.fts_match_expanded(reduced.terms, fts_mode),)).fetchall()
+        if fts_mode == "and" and len(reduced.terms) >= 2 and len(rows) < FTS_OR_BELOW:
+            have = {r["url"] for r in rows}
+            rows = list(rows) + [r for r in conn.execute(sql, (query_mod.fts_match_expanded(reduced.terms, "or"),)).fetchall()
+                                 if r["url"] not in have][: n - len(rows)]
+        carried = {row["url"]: term_share(reduced.terms, f"{row['title']} {row['body']}") for row in rows}
+        titled = {row["url"]: term_share(reduced.terms, row["title"]) for row in rows}
+        return sorted(rows, key=lambda row: -(carried[row["url"]] + titled[row["url"]])), carried
+
+    ranked: list[tuple[int, sqlite3.Row, float]] = []
+    for docs in (False, True):
+        rows, carried = fts_rows(docs)
+        ranked.extend((rank, row, carried[row["url"]]) for rank, row in enumerate(rows, 1))
+    for rank, row, carry in ranked:
         kind = row["kind"]
         src = SOURCE_BY_KIND.get(kind, "docs")
         if src == "playbooks":
@@ -321,7 +411,9 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         else:
             w = 1.0
         entry = {"source": src, "badge": KIND_BADGES.get(kind, "Document"), "title": row["title"], "snippet": row["snip"] or "",
-                 "url": row["url"], "score": score(w, rank), "kind": kind, "_cat": row["category"]}
+                 "url": row["url"], "score": score(w, rank), "kind": kind, "_cat": row["category"], "_carried": carry}
+        if src == "playbooks" and row["url"].split("#", 1)[-1] in FURNITURE_SECTIONS:
+            entry["score"] *= FURNITURE_FACTOR
         if row["page"]:
             entry["page"] = int(row["page"])
         results.append(entry)
@@ -372,19 +464,21 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
                     f"WHERE url IN ({','.join('?' * len(near))})", [u for u, _ in near]).fetchall():
                 found[row["url"]] = row
-            for rank, (url, cos) in enumerate(near, 1):
+            for url, cos in near:
                 row = found.get(url)
                 if row is None:
                     continue
                 kind = row["kind"]
+                if cos < SEMANTIC_FLOOR[(url in by_url, kind == "doc")]:
+                    continue
                 src = SOURCE_BY_KIND.get(kind, "docs")
                 w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
-                bonus = SEMANTIC_WEIGHT * score(w, rank)
+                bonus = SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
                 if url in by_url:
                     by_url[url]["score"] += bonus
                     continue
                 entry = {"source": src, "badge": KIND_BADGES.get(kind, "Document"), "title": row["title"],
-                         "snippet": snippet_from_body(row["body"]), "url": url, "score": bonus, "kind": kind,
+                         "snippet": snippet_from_body(row["body"], url=url), "url": url, "score": bonus, "kind": kind,
                          "_cat": row["category"], "via": "meaning"}
                 if row["page"]:
                     entry["page"] = int(row["page"])
@@ -395,7 +489,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     # already: the rescoring is for articles and the box's own passages.
     for r in results:
         if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
-            r["score"] *= relevance(reduced.terms, r["title"], r["snippet"], q)
+            r["score"] *= relevance(reduced.terms, r["title"], r["snippet"], q, r.get("_carried", 0.0))
     results = dedupe(results)
     results = dedupe_titles(results)
     results = diversify(results)
@@ -415,6 +509,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     results = kept
     for r in results:
         r.pop("_cat", None)
+        r.pop("_carried", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
     if not partial and use_cache:

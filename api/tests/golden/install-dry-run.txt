@@ -13,6 +13,7 @@ step units: would write the systemd units and daemon-reload
   write /etc/systemd/system/kiwix-serve.service (from install/systemd/kiwix-serve.service, mode 644, root:root)
   write /etc/systemd/system/sos-api.service (from install/systemd/sos-api.service, mode 644, root:root)
   write /etc/systemd/system/sos-llama.service (from install/systemd/sos-llama.service, mode 644, root:root)
+  write /etc/systemd/system/sos-embed.service (from install/systemd/sos-embed.service, mode 644, root:root)
   write /etc/systemd/system/sos-kiosk.service (from install/systemd/sos-kiosk.service, mode 644, root:root)
 step caddy: would write the Caddyfile
   write /etc/caddy/Caddyfile (from install/caddy/Caddyfile, mode 644, root:root)
@@ -33,5 +34,5 @@ step kiosk: would install the kiosk wrapper, write /srv/sos/state/config/kiosk.e
 step boot: would write /boot/firmware/sos.txt from install/boot/config.txt.d/sos.txt and add 'include sos.txt' to /boot/firmware/config.txt
 step content: would copy playbooks/ and manifest/ -> /srv/sos/state/ and run 'sos index' as sos
 step answers: would prompt for the admin PIN and SSID (or read install/answers.env), then 'sos pin set' and nmcli
-step enable: would systemctl enable caddy.service kiwix-serve.service sos-api.service avahi-daemon.service sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service and start caddy, kiwix-serve, sos-api and avahi-daemon
+step enable: would systemctl enable caddy.service kiwix-serve.service sos-api.service sos-embed.service avahi-daemon.service sos-kiosk.service srv-sos-extended.mount sos-extended-rescan.service and start caddy, kiwix-serve, sos-api and avahi-daemon
 dry run complete: nothing was written

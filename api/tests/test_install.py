@@ -26,7 +26,7 @@ DEV = REPO / "dev"
 SCRIPTS = [INSTALL / "install.sh", DEV / "run-dev.sh", DEV / "smoke.sh", DEV / "smoke-selftest.sh",
            INSTALL / "kiosk" / "sos-kiosk-app"]
 UNIT_NAMES = ["caddy.service", "kiwix-serve.service", "sos-api.service", "sos-llama.service", "sos-kiosk.service",
-              "srv-sos-extended.mount", "sos-extended-rescan.service"]
+              "srv-sos-extended.mount", "sos-extended-rescan.service", "sos-embed.service"]
 UNITS = [INSTALL / "systemd" / name for name in UNIT_NAMES]
 PROBES = ["/generate_204", "/gen_204", "/hotspot-detect.html", "/library/test/success.html", "/connecttest.txt",
           "/ncsi.txt", "/canonical.html", "/success.txt"]

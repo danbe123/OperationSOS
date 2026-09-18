@@ -112,9 +112,9 @@ def test_search_fuses_the_nearest_passages_lifting_a_keyword_hit_and_adding_one_
     conn.commit()
     with respx.mock(base_url=BASE, assert_all_called=False) as m:
         m.get("/search").mock(return_value=httpx.Response(200, text="<rss><channel></channel></rss>"))
-        # "canned" is not a word in the Food module (nor a synonym of one); the meaning is
+        # neither "canned" nor "goods" is a word in the Food module (nor a synonym of one); the meaning is
         sem = FakeSemantic([("/m/food", 0.82), ("/p/food-storage", 0.7), ("/m/water", 0.2)])
-        resp = asyncio.run(search.search(conn, env, KiwixClient(BASE), "canned food", use_cache=False, semantic=sem))
+        resp = asyncio.run(search.search(conn, env, KiwixClient(BASE), "canned goods", use_cache=False, semantic=sem))
     urls = [r["url"] for r in resp["results"]]
     assert "/m/food" in urls and "/p/food-storage" in urls and "/m/water" not in urls   # under the floor: not near enough
     food = next(r for r in resp["results"] if r["url"] == "/m/food")
@@ -147,3 +147,89 @@ def test_server_command_is_the_embedding_server_on_its_own_port(env):
     assert cmd[0] == "llama-server" and "--embedding" in cmd and "--pooling" in cmd
     assert cmd[cmd.index("--port") + 1] == env.embed_url.rsplit(":", 1)[1]
     assert cmd[cmd.index("-m") + 1] == str(env.embed_model_path)
+
+
+ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
+
+
+def _search(conn, env, q, sem, **kw):
+    with respx.mock(base_url=BASE, assert_all_called=False) as m:
+        m.get("/search").mock(return_value=httpx.Response(200, text="<rss><channel></channel></rss>"))
+        return asyncio.run(search.search(conn, env, KiwixClient(BASE), q, semantic=sem, **kw))
+
+
+def test_a_document_page_found_by_meaning_alone_needs_a_nearer_match_than_the_box_s_own_page(env):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.executemany(ROW_SQL, [
+        ("Approved Document L", "Renewable systems and their controls.", "adl#p69", "doc", "uk-official", "", 69, "/doc/ad-l1#page=69"),
+        ("Mains electricity", "A generator or battery system, and where to put it.", "page:mains", "page", "playbooks", "", None, "/p/mains#generators"),
+    ])
+    conn.commit()
+    # the building regulation is the nearest stranger at 0.71: not near enough for a document's page on its own
+    sem = FakeSemantic([("/doc/ad-l1#page=69", 0.71), ("/p/mains#generators", 0.68)])
+    urls = [r["url"] for r in _search(conn, env, "running a genset in the house", sem, use_cache=False)["results"]]
+    assert urls == ["/p/mains#generators"]
+    # nearer, it is an answer
+    sem = FakeSemantic([("/doc/ad-l1#page=69", 0.76)])
+    urls = [r["url"] for r in _search(conn, env, "running a genset in the house", sem, use_cache=False)["results"]]
+    assert urls == ["/doc/ad-l1#page=69"]
+
+
+def test_search_asks_the_or_when_the_and_finds_too_little_and_ranks_its_rows_after(env):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.executemany(ROW_SQL, [
+        ("Carbon monoxide", "Never run a generator indoors.", "card:co", "card", "playbooks", "", None, "/medical/card/co#steps"),
+        ("Mains electricity", "A generator or battery system. Petrol is kept outside.", "page:mains", "page", "playbooks", "", None, "/p/mains#generators"),
+        ("Water", "Boil it.", "module:water", "module", "playbooks", "", None, "/m/water"),
+    ])
+    conn.commit()
+    urls = [r["url"] for r in _search(conn, env, "generator indoors", None, use_cache=False)["results"]]
+    assert urls == ["/medical/card/co#steps", "/p/mains#generators"]   # both words first, then one of them; Water never
+
+
+def test_search_drops_its_cache_when_the_semantic_index_changes(env):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.executemany(ROW_SQL, [
+        ("Food", "Keeps for years.", "module:food", "module", "playbooks", "", None, "/m/food"),
+        ("Water", "Boil it.", "module:water", "module", "playbooks", "", None, "/m/water"),
+    ])
+    conn.commit()
+    sem = FakeSemantic([("/m/food", 0.8)])
+    sem.generation = 1
+    assert [r["url"] for r in _search(conn, env, "larder", sem)["results"]] == ["/m/food"]
+    sem.hits = [("/m/water", 0.8)]
+    assert [r["url"] for r in _search(conn, env, "larder", sem)["results"]] == ["/m/food"]      # served from the cache
+    sem.generation = 2                                                                            # a new index: forgotten
+    assert [r["url"] for r in _search(conn, env, "larder", sem)["results"]] == ["/m/water"]
+
+
+def test_semantic_generation_counts_each_load_of_the_index(env):
+    sem = embeddings.Semantic(env)
+    assert sem.generation == 0 and sem.index() is None
+    embeddings.write_index(env.embeddings_dir, np.stack([unit(1, 0)]), ["/m/food"], {})
+    assert sem.index() is not None and sem.generation == 1
+    sem._checked = 0.0
+    assert sem.index() is not None and sem.generation == 1                                       # unchanged: no new generation
+
+
+def test_passage_text_drops_the_section_heading_and_build_skips_the_link_lists(env):
+    assert embeddings.passage_text("Water", "What to do 1. Fill every container.", "/m/water#what-to-do") == "Water. 1. Fill every container."
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.executemany(ROW_SQL, [
+        ("Water", "What to do 1. Fill it.", "module:water", "module", "playbooks", "", None, "/m/water#what-to-do"),
+        ("Water", "Go deeper - Water outdoors - Food", "module:water", "module", "playbooks", "", None, "/m/water#go-deeper"),
+        ("Shock", "Source - NHS - Resuscitation Council", "card:shock", "card", "playbooks", "", None, "/medical/card/shock#source"),
+    ])
+    conn.commit()
+    seen: list[str] = []
+
+    def fake_embed(texts):
+        seen.extend(texts)
+        return np.stack([unit(1, i) for i in range(len(texts))])
+
+    meta = embeddings.build(conn, env, fake_embed, out=lambda s: None)
+    assert seen == ["Water. 1. Fill it."] and meta["count"] == 1

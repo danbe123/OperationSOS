@@ -209,8 +209,9 @@ def test_medical_intent_boosts_quick_cards_as_well_as_medical_sources(conn, env)
         resp = _run(search.search(conn, env, KiwixClient(BASE), "bleeding", use_cache=False))
     card = next(r for r in resp["results"] if r["kind"] == "card")
     # the box's own card carries the playbook weight and, for a medical question, the medical boost, and its
-    # title carries the query: it outranks any rank-1 medical or NHS article (1.4 x 1.5 at rank 1)
-    assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5 * search.relevance(["bleeding"], card["title"], card["snippet"], "bleeding"))
+    # title carries the query (so the whole passage carries it, in_body 1.0): it outranks any rank-1 medical
+    # or NHS article (1.4 x 1.5 at rank 1)
+    assert card["score"] == pytest.approx(search.score(1.6, 1) * 1.5 * search.relevance(["bleeding"], card["title"], card["snippet"], "bleeding", 1.0))
     assert card["score"] > search.score(1.4, 1) * 1.5
     assert resp["results"][0]["kind"] == "card"
 
@@ -293,3 +294,63 @@ def test_suggest_offers_catalogue_titles(respx_mock, conn, env):
     respx_mock.get("/suggest").mock(return_value=httpx.Response(200, text="[]"))
     out = _run(search.suggest(conn, env, KiwixClient(BASE), "prin"))
     assert {"value": "The Prince", "label": "The Prince — Niccolo Machiavelli", "url": "/book/gutenberg/1232", "source": "Book"} in out
+
+
+def test_term_share_counts_a_phrase_in_full_and_a_synonym_for_half():
+    terms = ["food", "freezer", "power", "cut"]                         # three ideas: food, freezer, power cut
+    assert search.term_share(terms, "In a power cut keep the freezer shut and the food inside") == pytest.approx(1.0)
+    assert search.term_share(terms, "In a blackout keep the fridge shut and the meals inside") == pytest.approx(0.5)
+    assert search.term_share(terms, "Never cut a live power line; a wound bleeds") == pytest.approx(0.0)
+    assert search.term_share(terms, "Power cuts: what to do") == pytest.approx(1 / 3)
+    assert search.term_share([], "anything") == 0.0
+
+
+def test_section_of_and_strip_heading_take_the_anchor_as_the_passage_s_heading():
+    assert search.section_of("/m/water#what-to-do") == "What to do"
+    assert search.section_of("/m/power#uk-specifics") == "UK specifics"
+    assert search.section_of("/doc/nrr#page=3") == "" and search.section_of("/p/plan") == ""
+    assert search.strip_heading("What to do 1. Fill every container.", "/m/water#what-to-do") == "1. Fill every container."
+    assert search.strip_heading("Key facts - Heat one room.", "/m/shelter-heat#key-facts") == "Heat one room."
+    assert search.strip_heading("Fill every container.", "/m/water#what-to-do") == "Fill every container."   # not opened with it: untouched
+    assert search.snippet_from_body("Warnings Warning: shock can develop slowly.", url="/medical/card/shock#warnings") == "Warning: shock can develop slowly."
+
+
+def test_a_page_s_go_deeper_links_give_way_to_the_section_that_says_something(conn, env):
+    conn.executemany("INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)", [
+        ("Solar panels in a power cut", "Go deeper - Power module - Mains electricity", "page:solar", "page", "playbooks", "", None, "/p/solar#go-deeper"),
+        ("Solar panels in a power cut", "In a power cut a grid-tied inverter shuts down.", "page:solar", "page", "playbooks", "", None, "/p/solar#keeping-some-power"),
+    ])
+    conn.commit()
+    with respx.mock(base_url=BASE) as m:
+        m.get("/search").mock(return_value=httpx.Response(200, text="<rss><channel></channel></rss>"))
+        resp = _run(search.search(conn, env, KiwixClient(BASE), "power cut", use_cache=False))
+    solar = next(r for r in resp["results"] if r["title"].startswith("Solar"))
+    assert solar["url"] == "/p/solar#keeping-some-power"
+
+
+def test_the_page_about_the_query_ranks_above_one_that_mentions_it(conn, env):
+    conn.executemany("INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)", [
+        ("Food storage", "Pasta must be boiled in water. Boil water. Boil water.", "page:food-storage", "page", "playbooks", "", None, "/p/food-storage#cooking"),
+        ("Water disinfection", "Boil: a rolling boil for one minute kills what is in the water, whatever the altitude.", "page:water-disinfection", "page", "playbooks", "", None, "/p/water-disinfection#boil"),
+    ])
+    conn.commit()
+    with respx.mock(base_url=BASE) as m:
+        m.get("/search").mock(return_value=httpx.Response(200, text="<rss><channel></channel></rss>"))
+        resp = _run(search.search(conn, env, KiwixClient(BASE), "boil water", use_cache=False))
+    pages = [r["url"] for r in resp["results"] if r["kind"] == "page"]
+    assert pages[0] == "/p/water-disinfection#boil"     # both carry both words; the title of one is about it
+
+
+def test_the_household_s_word_for_a_failure_finds_the_module_and_its_title_puts_it_first(conn, env):
+    conn.executemany("INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)", [
+        ("National grid collapse", "Water: when booster pumps stop the taps run dry; when it fails, sewage backs up.", "scenario:grid", "playbook", "playbooks", "", None, "/s/grid-collapse#first-72-hours"),
+        ("Water", "1. Fill every clean container while the mains still runs. With the mains off it is too late to fill.", "module:water", "module", "playbooks", "", None, "/m/water#what-to-do"),
+    ])
+    conn.commit()
+    with respx.mock(base_url=BASE) as m:
+        m.get("/search").mock(return_value=httpx.Response(200, text="<rss><channel></channel></rss>"))
+        resp = _run(search.search(conn, env, KiwixClient(BASE), "what to do if the water stops", use_cache=False))
+    own = [r["url"] for r in resp["results"] if r["source"] == "playbooks"]
+    # "stops" finds "off" (a synonym, half a word) and the module's title is the subject: it leads the
+    # playbook that carries the word itself
+    assert own[:2] == ["/m/water#what-to-do", "/s/grid-collapse#first-72-hours"]

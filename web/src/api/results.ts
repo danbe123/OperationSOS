@@ -87,12 +87,31 @@ function decode(text: string): string {
   return text.replace(/&(?:amp|lt|gt|quot|#39|nbsp);/g, (m) => ENTITIES[m] ?? m);
 }
 
+/** The section one of the box's own passages is, from its anchor: '/m/water#what-to-do' is
+ * "What to do". A converted document's `#page=` is a page, not a section; an article has neither. */
+export function sectionOf(url: string): string {
+  const hash = (url ?? '').indexOf('#');
+  if (hash === -1) return '';
+  const frag = url.slice(hash + 1);
+  if (!frag || frag.startsWith('page=')) return '';
+  const words = frag.replace(/-/g, ' ').trim().split(' ').map((w) => (w === 'uk' ? 'UK' : w)).join(' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 /** A snippet worth printing, or nothing. The engine marks its matches with `<b>`; anything left
- * after the publisher's furniture and the box's own template tokens have gone is the answer. */
-export function cleanSnippet(snippet: string): string {
+ * after the publisher's furniture and the box's own template tokens have gone is the answer. The
+ * section heading a passage opens with ("Key facts - Heat one room…") is said once, beside the
+ * title, not again at the front of the snippet. */
+export function cleanSnippet(snippet: string, section = ''): string {
   let text = snippet ?? '';
   for (const rule of FURNITURE) text = text.replace(rule, ' ');
   text = text.replace(TOKENS, ' ').replace(/\s{2,}/g, ' ').replace(/\s+([,.;:])/g, '$1').trim();
+  if (section) {
+    const bare = text.replace(/^(?:<b>)?/, '');
+    if (bare.slice(0, section.length).toLowerCase() === section.toLowerCase()) {
+      text = bare.slice(section.length).replace(/^<\/b>/, '').replace(/^[\s\-–:.]+/, '');
+    }
+  }
   const words = text.replace(/<\/?b>/g, '').trim();
   // Furniture with no match in it is not a snippet: it is somebody else's navigation bar.
   if (!text.includes('<b>') && words.length < 24) return '';

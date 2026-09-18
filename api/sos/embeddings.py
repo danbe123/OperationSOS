@@ -47,10 +47,17 @@ class EmbedError(RuntimeError):
     """The embedding server is unreachable, not ready, or answered with something that is not vectors."""
 
 
-def passage_text(title: str, body: str) -> str:
-    """What one passage says to the model: its title, then its words, template tokens gone, cut to the window."""
-    text = _SPACE.sub(" ", _TOKENS.sub(" ", f"{title or ''}. {body or ''}")).strip()
+def passage_text(title: str, body: str, url: str = "") -> str:
+    """What one passage says to the model: its title, then its words, template tokens gone, cut to the
+    window. The section heading the words open with ("What to do", "Key facts") is furniture shared by every
+    module and card, and a question that begins "what to do if" must not find it: it goes."""
+    from .search import strip_heading
+    text = _SPACE.sub(" ", _TOKENS.sub(" ", f"{title or ''}. {strip_heading(body, url)}")).strip()
     return text[:PASSAGE_CHARS]
+
+
+# A page's "Go deeper" and a card's "Source" are lists of other titles: nothing to mean.
+SKIP_SECTIONS = ("go-deeper", "source")
 
 
 def _vectors_from(payload) -> np.ndarray:
@@ -190,13 +197,14 @@ def embed_batch(embed: Callable[[list[str]], np.ndarray], texts: list[str]) -> n
 
 def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], out: Callable = print) -> dict:
     """Embed every passage of the box's own library and write the index. `embed` takes a batch of texts."""
-    rows = conn.execute("SELECT url, title, body FROM fts_docs WHERE kind != 'item' ORDER BY rowid").fetchall()
+    rows = [r for r in conn.execute("SELECT url, title, body FROM fts_docs WHERE kind != 'item' ORDER BY rowid").fetchall()
+            if r["url"].split("#", 1)[-1] not in SKIP_SECTIONS]
     keys: list[str] = []
     chunks: list[np.ndarray] = []
     t0 = time.perf_counter()
     for start in range(0, len(rows), BATCH):
         batch = rows[start:start + BATCH]
-        texts = [passage_text(r["title"], r["body"]) for r in batch]
+        texts = [passage_text(r["title"], r["body"], r["url"]) for r in batch]
         chunks.append(embed_batch(embed, texts))
         keys.extend(r["url"] for r in batch)
         done = start + len(batch)
@@ -277,6 +285,7 @@ class Semantic:
         self._index: Optional[Index] = None
         self._stamp: Optional[float] = None
         self._checked = 0.0
+        self.generation = 0        # goes up each time the index is (re)loaded or found gone: search's cache keys on it
 
     def index(self) -> Optional[Index]:
         path = Path(self.settings.embeddings_dir) / VECTORS
@@ -287,11 +296,14 @@ class Semantic:
         try:
             stamp = path.stat().st_mtime
         except OSError:
+            if self._index is not None:
+                self.generation += 1
             self._index, self._stamp = None, None
             return None
         if stamp != self._stamp:
             self._index = Index.load(self.settings.embeddings_dir)
             self._stamp = stamp
+            self.generation += 1
             if self._index is not None:
                 log.info("embeddings: %d passages loaded", len(self._index))
         return self._index
