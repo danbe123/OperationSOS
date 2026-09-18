@@ -71,6 +71,22 @@ def test_eval_dispatches_to_runner(env, monkeypatch):
     assert calls[0].retrieval_only
 
 
+def test_build_embeddings_wikipedia_dispatches_cuda_and_limit(env, monkeypatch):
+    from sos import embeddings
+    calls = []
+    monkeypatch.setattr(embeddings, "build_wikipedia_cli", lambda settings, cuda=False, limit=None: calls.append((cuda, limit)) or 0)
+    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5"]) == 0
+    assert calls == [(True, 5)]
+
+
+def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit(env, monkeypatch):
+    from sos import embeddings
+    calls = []
+    monkeypatch.setattr(embeddings, "build_wikipedia_cli", lambda settings, cuda=False, limit=None: calls.append((cuda, limit)) or 0)
+    assert cli.main(["build-embeddings-wikipedia"]) == 0
+    assert calls == [(False, None)]
+
+
 def test_build_maps_exits_2_with_micromamba_hint_when_tools_missing(env, capsys, monkeypatch):
     from sos import buildmaps
 

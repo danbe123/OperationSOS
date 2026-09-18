@@ -224,6 +224,57 @@ class ApproxIndex:
         return [(self.keys[i], float(1.0 - d)) for i, d in zip(labels[0], distances[0])]
 
 
+class WikipediaStore:
+    """8,425,865 real Wikipedia article vectors -- the ZIM's own real, non-redirect entries (16,643,476,
+    reader.paths()) minus the 8,217,611 of them that are images, thumbnails and SVGs under `_assets_/`,
+    never articles. Measured against the real wikipedia_en_all_maxi.zim on disk (Task 8, docs/app-
+    completion.md, dated 2026-09-18) -- not this plan's earlier "~7 million" guess, which turned out to
+    be roughly 20 per cent low, and close only because a real ~17-18 per cent of these entries are "soft
+    redirect" stubs (title said twice in under a hundred characters; the same spot check) that a real
+    build leaves as zero vectors rather than embedding for real. A THIRD kind of vector store, unlike
+    Index (exact search) and ApproxIndex (approximate search): there is no `.search()` here at all, only
+    `vector_for(key)`, because an 8GB Pi running kiwix-serve, the kiosk, sos-api and the chat model
+    together cannot afford 6+GB of Wikipedia vectors in RAM, and 8.4 million rows is the wrong shape for
+    a nearest-neighbour index anyway when the only real use (Task 9) is reranking hits Wikipedia's own
+    keyword search already found -- never finding a row by meaning alone.
+
+    Keys are sorted once at build time so a lookup is a binary search over an in-memory list of strings:
+    roughly 8.4 million short strings, each perhaps 90-110 bytes all in (a Wikipedia title, mostly
+    20-30 ASCII bytes, plus CPython's own ~50-80 bytes of per-string object overhead) -- on the order of
+    750 MB to 900 MB. That figure is an estimate from the real key count, not a measurement: Task 10's
+    real acceptance run on an actual 8GB Pi should measure it for real. Real but affordable regardless,
+    unlike materialising every vector too; only the one row actually asked for is paged in from disk."""
+
+    def __init__(self, mmap: np.memmap, keys: list[str]):
+        self._mmap = mmap
+        self.keys = keys  # sorted
+
+    def __len__(self) -> int:
+        return len(self.keys)
+
+    @classmethod
+    def load(cls, folder: Path, collection: str = "wikipedia") -> Optional["WikipediaStore"]:
+        folder = Path(folder)
+        vec_path, key_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids"
+        if not (vec_path.is_file() and key_path.is_file()):
+            return None
+        # A real, if temporary, memory-doubling moment worth flagging for Task 10's Pi measurement: for the
+        # instant between these two expressions, both the raw ~200+ MB string and the list split from it
+        # are alive at once, before the raw string's last reference (the .split() call itself) is dropped.
+        keys = [line for line in key_path.read_text(encoding="utf-8").split("\n") if line]
+        if not keys:
+            return None
+        mmap = np.memmap(vec_path, dtype=np.float16, mode="r", shape=(len(keys), DIMS))
+        return cls(mmap, keys)
+
+    def vector_for(self, key: str) -> Optional[np.ndarray]:
+        import bisect
+        i = bisect.bisect_left(self.keys, key)
+        if i == len(self.keys) or self.keys[i] != key:
+            return None
+        return np.asarray(self._mmap[i], dtype=np.float32)
+
+
 def _write_meta(folder: Path, collection: str, meta: dict) -> None:
     """One collection's meta.json, staged beside its final name and renamed into place -- the same
     atomic pattern write_index uses for the vectors and keys, shared here so it is written exactly
@@ -418,6 +469,170 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
     _write_meta(settings.embeddings_dir, "household", meta)
     out(f"household: wrote {len(keys)} vectors ({time.perf_counter() - t0:.0f}s, {total_skipped} skipped for no usable text)")
     return meta
+
+
+# --- Wikipedia: rerank-only vectors for the box's existing keyword search hits, never a nearest-neighbour
+# index of its own (Task 8, semantic-search-expansion plan) -------------------------------------------------
+
+CHECKPOINT_BATCHES = 200  # write a resume checkpoint every this-many batches -- frequent enough that an
+                          # interrupted multi-hour build loses minutes, not hours, of already-done work
+WIKIPEDIA_ZIM = "wikipedia_en_all_maxi"
+# The modern mwoffliner "maxi" ZIM layout (confirmed against the real 2026-02-15 ZIM on disk, Task 8's own
+# investigation, docs/app-completion.md) keeps every image, thumbnail and SVG under this one prefix --
+# 8,217,611 of the ZIM's 16,643,476 real, non-redirect entries. There is no separate CSS or JS entry at
+# all in this ZIM (unlike an old-style zimit crawl): Wikipedia even has real articles literally titled
+# ".com" or "Favicon", which a naive filename-extension filter would wrongly throw away.
+_WIKIPEDIA_ASSET_PREFIX = "_assets_/"
+
+
+def _wikipedia_article_keys(reader):
+    """Every real Wikipedia article path. reader.paths() (api/sos/books.py) already walks the archive
+    skipping structural redirects (Task 6); the one further, cheap, path-only filter this ZIM's real
+    layout needs is dropping its image/media entries, all under _WIKIPEDIA_ASSET_PREFIX. Everything left
+    is genuine article-shaped content (an article, a list, a portal subpage) -- a real minority of it is
+    itself a "soft redirect" stub (a real, non-structural-redirect entry whose body is just its own title
+    said twice in under a hundred characters of markup: Task 8's spot check of 40 random real entries
+    found 7, all well under SHORTEST_CHARS once extracted, against a smallest genuine article's 244
+    characters). build_wikipedia_rerank's own SHORTEST_CHARS check catches those during the real build --
+    the same mechanism build_household already relies on for near-empty extracted text -- so this
+    function does not try to open every entry and check for a second time here."""
+    for path in reader.paths():
+        if not path.startswith(_WIKIPEDIA_ASSET_PREFIX):
+            yield path
+
+
+def _wikipedia_article_text(reader, key: str) -> str:
+    """One article's title and plain text, cut to the model's real safe window -- the same shape build()
+    and build_household() already give their own passages. A key this function cannot read back (should
+    not happen for a path reader.paths() itself just yielded) or a "soft redirect" stub comes back short;
+    build_wikipedia_rerank's own SHORTEST_CHARS check treats both the same way: skipped, not a crash."""
+    from sos.kiwix import extract_text
+    title = key.replace("_", " ")
+    raw = reader.read(key)
+    if not raw:
+        return title
+    body = " ".join(extract_text(raw.decode("utf-8", errors="replace")))
+    return f"{title}. {body}"[:HOUSEHOLD_TEXT_CHARS]
+
+
+def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
+                           open_zim=None, out: Callable = print, resume: bool = True,
+                           limit: Optional[int] = None) -> dict:
+    """One vector per real English Wikipedia article, for rerank-only lookup (WikipediaStore), never for
+    nearest-neighbour retrieval (Task 9 does that reranking; this function only builds the store). A
+    multi-hour build on the real ZIM (8.4 million real article keys, Task 8's own measurement): resumable,
+    a checkpoint file records the sorted key list and how many batches have vectors so far, so a restart
+    (`resume=True`, the default) skips straight past whatever this process -- or an earlier, interrupted
+    one -- already finished, rather than re-embedding it. `limit`, when given, caps the sorted key list to
+    its first N entries: a fast, real, small-scale throughput measurement (`sos build-embeddings-wikipedia
+    --limit N`) without doing the full build.
+
+    Wikipedia is never in EXCLUDED_ZIMS (Task 9's own general-purpose exclusion check, not written yet):
+    this function is scoped to the one WIKIPEDIA_ZIM id below already, which makes it trivially compliant
+    on its own -- but a future editor who adds a second ZIM to this function must add the real
+    EXCLUDED_ZIMS check at that point, not assume this single-ZIM guard still covers it."""
+    from sos.books import open_zim as real_open_zim
+    open_zim = open_zim or real_open_zim
+    row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (WIKIPEDIA_ZIM,)).fetchone()
+    if row is None or not row["available"] or not row["local_path"]:
+        out("wikipedia: not on the box; skipped")
+        return {"count": 0}
+    reader = open_zim(Path(row["local_path"]))
+    checkpoint_path = Path(settings.embeddings_dir) / "wikipedia.checkpoint.json"
+    part_path = Path(settings.embeddings_dir) / "wikipedia.f16.bin.part"
+    part_path.parent.mkdir(parents=True, exist_ok=True)
+    all_keys = sorted(_wikipedia_article_keys(reader))  # every real article path, sorted once, up front
+    if limit is not None:
+        all_keys = all_keys[:limit]
+    done = 0
+    vectors = np.zeros((len(all_keys), DIMS), dtype=np.float16)
+    if resume and checkpoint_path.is_file():
+        state = json.loads(checkpoint_path.read_text())
+        if state.get("keys") == all_keys:  # the ZIM (and any --limit) has not changed under us mid-build
+            done = state["done"]
+            if part_path.is_file():
+                existing = np.memmap(part_path, dtype=np.float16, mode="r", shape=(len(all_keys), DIMS))
+                vectors[:done] = existing[:done]
+            out(f"wikipedia: resuming from {done} of {len(all_keys)}")
+    t0 = time.perf_counter()
+    total_seen = total_skipped = 0
+    for start in range(done, len(all_keys), BATCH):
+        batch_keys = all_keys[start:start + BATCH]
+        texts = [_wikipedia_article_text(reader, k) for k in batch_keys]
+        total_seen += len(batch_keys)
+        # a soft-redirect stub (or anything else with next to nothing to say) is left as the zero vector
+        # vectors' own np.zeros() already gave it -- never embedded, exactly as build_household skips a
+        # near-empty book, but the key stays in the store: a real article, findable, just with nothing to
+        # rerank by (a harmless, never-boosted 0.0 similarity), rather than vanishing from the key list
+        # this build's own resumability depends on staying a fixed, known size.
+        keep = [i for i, t in enumerate(texts) if len(t) >= SHORTEST_CHARS]
+        total_skipped += len(batch_keys) - len(keep)
+        if keep:
+            vecs = embed_batch(embed, [texts[i] for i in keep])
+            for j, i in enumerate(keep):
+                vectors[start + i] = vecs[j].astype(np.float16)
+        if (start // BATCH) % CHECKPOINT_BATCHES == 0 or start + BATCH >= len(all_keys):
+            vectors.tofile(part_path)
+            checkpoint_path.write_text(json.dumps({"keys": all_keys, "done": start + len(batch_keys)}))
+            elapsed = time.perf_counter() - t0
+            rate = (start + len(batch_keys) - done) / max(elapsed, 0.001)
+            remaining_s = (len(all_keys) - start - len(batch_keys)) / max(rate, 0.001)
+            out(f"wikipedia: {start + len(batch_keys)} of {len(all_keys)} "
+                f"({elapsed:.0f}s elapsed, ~{remaining_s / 3600:.1f}h remaining at this rate)")
+    os.replace(part_path, Path(settings.embeddings_dir) / "wikipedia.f16.bin")
+    (Path(settings.embeddings_dir) / "wikipedia.ids").write_text("\n".join(all_keys) + "\n")
+    checkpoint_path.unlink(missing_ok=True)
+    meta = {"model": settings.embed_model, "dims": DIMS, "count": len(all_keys), "seen": total_seen,
+            "skipped_no_text": total_skipped, "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    (Path(settings.embeddings_dir) / "wikipedia.meta.json").write_text(json.dumps(meta, indent=1))
+    out(f"wikipedia: wrote {len(all_keys)} keys ({time.perf_counter() - t0:.0f}s, {total_skipped} left as zero vectors for no usable text)")
+    return meta
+
+
+def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
+                        cuda: bool = False, resume: bool = True, limit: Optional[int] = None) -> int:
+    """PC only: start the embedding server if none is up, embed Wikipedia for rerank-only lookup, stop
+    what was started -- structurally build_cli's own pattern, kept a separate function (and a separate
+    `sos build-embeddings-wikipedia` subcommand, not a flag on `build-embeddings`) because this specific
+    build genuinely takes hours against the real ZIM and must never be triggered by a routine
+    `sos build-embeddings` run."""
+    from sos.db import connect
+    if not settings.embed_model_path.is_file():
+        out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
+        return 1
+    started = None
+    try:
+        if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
+            raise httpx.HTTPError("not ready")
+    except httpx.HTTPError:
+        binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
+        cmd = [binary] + server_command(settings, cuda=cuda)[1:]
+        out(f"starting {' '.join(cmd)}")
+        started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for _ in range(60):
+            time.sleep(0.5)
+            try:
+                if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code == 200:
+                    break
+            except httpx.HTTPError:
+                pass
+        else:
+            out("FAIL the embedding server did not come up")
+            if started:
+                started.terminate()
+            return 1
+    conn = connect(settings.db_path)
+    try:
+        embed_fn = lambda texts: embed_sync(settings.embed_url, texts)  # noqa: E731 -- one call site
+        build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit)
+    except EmbedError as exc:
+        out(f"FAIL {exc}")
+        return 1
+    finally:
+        conn.close()
+        if started:
+            started.terminate()
+    return 0
 
 
 def server_command(settings: Settings, cuda: bool = False) -> list[str]:

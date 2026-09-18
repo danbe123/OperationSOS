@@ -296,6 +296,25 @@ def test_build_cli_starts_the_cuda_binary_when_cuda_is_true(env, monkeypatch):
     assert "-ngl" in seen_cmds[0] and seen_cmds[0][seen_cmds[0].index("-ngl") + 1] == "99"
 
 
+def test_build_wikipedia_cli_starts_the_server_and_passes_resume_and_limit_through(env, monkeypatch):
+    """build_wikipedia_cli mirrors build_cli's own start/stop pattern exactly, but calls
+    build_wikipedia_rerank (a no-op here: no wikipedia_en_all_maxi row in library_items) rather than
+    build()/build_household(), and threads --limit through to it."""
+    seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
+    seen_calls = []
+    real = embeddings.build_wikipedia_rerank
+
+    def spy(conn, settings, embed, **kw):
+        seen_calls.append(kw)
+        return real(conn, settings, embed, **kw)
+
+    monkeypatch.setattr(embeddings, "build_wikipedia_rerank", spy)
+    rc = embeddings.build_wikipedia_cli(env, out=lambda s: None, run=fake_run, limit=5)
+    assert rc == 0
+    assert len(seen_cmds) == 1 and not seen_cmds[0][0].endswith("llama-server-cuda")
+    assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5}]
+
+
 # --- build_household: one vector per book across Gutenberg and Survivor Library -----------------------------
 
 _REAL_PDF_BYTES = (FIXTURES / "docs" / "sos-test.pdf").read_bytes()   # a tiny, real, on-disk PDF -- no network
@@ -404,6 +423,200 @@ def test_pdf_text_reads_a_real_pdf_and_returns_empty_on_a_corrupt_one():
     assert "Boil water for one minute" in text and "Severe bleeding" in text
     assert embeddings._pdf_text(b"%PDF-1.4\nnot a real pdf body") == ""
     assert embeddings._pdf_text(b"") == ""
+
+
+# --- WikipediaStore and build_wikipedia_rerank: a third, memory-mapped, rerank-only vector store --------------
+
+
+def test_wikipedia_store_memory_maps_and_looks_up_by_key(tmp_path):
+    from sos.embeddings import WikipediaStore
+    vectors = np.random.default_rng(1).normal(size=(5, 384)).astype(np.float16)
+    keys = sorted(["Aardvark", "Berlin", "Canoe", "Drought", "Ember"])
+    (tmp_path / "wikipedia.ids").write_text("\n".join(keys) + "\n")
+    vectors.tofile(tmp_path / "wikipedia.f16.bin")
+    store = WikipediaStore.load(tmp_path)
+    assert store is not None and len(store) == 5
+    v = store.vector_for("Canoe")
+    assert v is not None and v.shape == (384,)
+    assert np.allclose(v, vectors[keys.index("Canoe")], atol=0.01)
+    assert store.vector_for("Not There") is None
+    assert isinstance(store._mmap, np.memmap)  # a real requirement of this task, not incidental
+
+
+def test_wikipedia_store_load_returns_none_when_absent(tmp_path):
+    from sos.embeddings import WikipediaStore
+    assert WikipediaStore.load(tmp_path) is None
+
+
+class FakeWikipediaZim:
+    """A tiny fake ZIM reader for Wikipedia's own build: a hundred real article entries, one asset entry
+    (never a real article, dropped by path alone -- `_assets_/` is the real prefix Task 8's own
+    investigation against the live ZIM found holds every image, thumbnail and SVG) and one "soft
+    redirect" stub (a real, non-structural-redirect entry whose body is just its title said twice, in
+    under a hundred characters -- the real shape Task 8's spot check against the live ZIM found in 7 of
+    40 sampled real entries). The same fixture pattern FakeHouseholdZim already establishes above for the
+    household collection's own build."""
+
+    def __init__(self, entries: dict[str, bytes]):
+        self._entries = dict(entries)
+
+    def read(self, path: str) -> bytes | None:
+        return self._entries.get(path)
+
+    def has(self, path: str) -> bool:
+        return path in self._entries
+
+    def paths(self):
+        return iter(self._entries)
+
+
+def _wiki_article_html(i: int) -> bytes:
+    body = (f"This is the real body text of Wikipedia article number {i}, with enough distinct words in "
+            f"it that every article's own real vector should differ from every other one once it is "
+            f"embedded for real. Article {i} says so twice: article {i}, article {i}, article {i}.")
+    return f"<html><body><h1>Article {i}</h1><p>{body}</p></body></html>".encode()
+
+
+WIKI_ARTICLES = {f"Article_{i:03d}": _wiki_article_html(i) for i in range(100)}
+WIKI_ARTICLES["_assets_/thumb/a1b2c3/Some_Picture.jpg"] = b"\xff\xd8\xff\xe0not a real article"
+WIKI_ARTICLES["Soft_Redirect_Stub"] = b"<html><body><p>Soft Redirect Stub Soft Redirect Stub</p></body></html>"
+
+
+def test_wikipedia_article_keys_drops_asset_entries_but_keeps_everything_else():
+    from sos.embeddings import _wikipedia_article_keys
+    keys = set(_wikipedia_article_keys(FakeWikipediaZim(WIKI_ARTICLES)))
+    assert "_assets_/thumb/a1b2c3/Some_Picture.jpg" not in keys      # the one non-article entry, dropped
+    assert "Article_000" in keys and "Soft_Redirect_Stub" in keys   # a stub is still a real article path
+    assert len(keys) == len(WIKI_ARTICLES) - 1
+
+
+def test_wikipedia_article_text_is_short_for_a_soft_redirect_stub_and_long_for_a_real_article():
+    from sos.embeddings import SHORTEST_CHARS, _wikipedia_article_text
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+    stub_text = _wikipedia_article_text(reader, "Soft_Redirect_Stub")
+    real_text = _wikipedia_article_text(reader, "Article_000")
+    assert len(stub_text) < SHORTEST_CHARS      # the exact mechanism build_wikipedia_rerank skips it by
+    assert len(real_text) >= SHORTEST_CHARS
+    assert real_text.startswith("Article 000.")
+
+
+def test_build_wikipedia_rerank_is_a_noop_for_a_zim_not_on_the_box(tmp_path):
+    from sos.embeddings import build_wikipedia_rerank
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    conn.commit()   # wikipedia_en_all_maxi is not in library_items at all
+
+    lines = []
+    result = build_wikipedia_rerank(
+        conn, embeddings_settings(tmp_path), lambda texts: (_ for _ in ()).throw(AssertionError("never embedded")),
+        open_zim=lambda p: (_ for _ in ()).throw(AssertionError("never opened")), out=lines.append)
+    assert result == {"count": 0}
+    assert any("not on the box; skipped" in line for line in lines)
+
+
+def _insert_wikipedia_zim_row(conn, tmp_path) -> None:
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
+                 "VALUES ('wikipedia_en_all_maxi', 'Wikipedia', 'zim', 'core', 'reference', 'zim/w.zim', 50, 1, ?)",
+                 (str(tmp_path / "wikipedia_en_all_maxi.zim"),))
+    conn.commit()
+
+
+def test_build_wikipedia_rerank_leaves_a_soft_redirect_stub_as_a_zero_vector_not_a_missing_key(tmp_path):
+    from sos.embeddings import WikipediaStore, build_wikipedia_rerank
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+
+    def fake_embed(texts):
+        return np.stack([unit(1, i) for i in range(len(texts))])
+
+    result = build_wikipedia_rerank(conn, embeddings_settings(tmp_path), fake_embed,
+                                    open_zim=lambda p: reader, out=lambda s: None)
+    assert result["count"] == len(WIKI_ARTICLES) - 1    # every real, non-asset key, the stub included
+    assert result["skipped_no_text"] == 1
+    store = WikipediaStore.load(tmp_path)
+    assert store is not None and len(store) == result["count"]
+    stub_vec = store.vector_for("Soft_Redirect_Stub")
+    assert stub_vec is not None and np.allclose(stub_vec, 0.0)      # found, but never embedded: harmless
+    real_vec = store.vector_for("Article_050")
+    assert real_vec is not None and not np.allclose(real_vec, 0.0)
+
+
+def _tracking_embed(calls_log: list, fail_at: int | None = None):
+    """Wraps a deterministic fake embed call so a test can inspect exactly which texts each call received
+    (Ruling 12: proving resumption genuinely skipped finished work, not just that a count came back). The
+    text is logged *before* the simulated failure, so a caller can still see what an interrupted call was
+    given -- exactly the batch resumption must return to, not re-embed from the start."""
+    def embed(texts):
+        calls_log.append(list(texts))
+        if fail_at is not None and len(calls_log) == fail_at:
+            raise RuntimeError("simulated interruption")
+        return np.stack([unit(1, i) for i in range(len(texts))])
+    return embed
+
+
+def test_build_wikipedia_rerank_resumes_after_a_simulated_interruption(tmp_path, monkeypatch):
+    """The one behaviour this whole task exists to deliver: a restart after an interruption must pick up
+    exactly where it left off, never re-embedding a batch that already finished. Proved here by literally
+    comparing which texts each run's embed calls received, not merely that a final count came back (a
+    build that silently restarted from zero would produce the same final count and the same absent
+    checkpoint file, so neither on its own tells resumed-correctly apart from restarted-from-scratch)."""
+    from sos.embeddings import BATCH, WikipediaStore, _wikipedia_article_keys, build_wikipedia_rerank
+
+    monkeypatch.setattr(embeddings, "CHECKPOINT_BATCHES", 1)   # a checkpoint every batch: fast, still real
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+    all_keys = sorted(_wikipedia_article_keys(reader))
+    assert len(all_keys) == 101 and len(all_keys) > 3 * BATCH   # spans at least 3 BATCH-sized groups
+
+    checkpoint_path = tmp_path / "wikipedia.checkpoint.json"
+    part_path = tmp_path / "wikipedia.f16.bin.part"
+    final_path = tmp_path / "wikipedia.f16.bin"
+
+    calls_1: list = []
+    # two full batches (64 keys) succeed and are checkpointed; the third call -- the interrupted batch --
+    # is logged (so the test can see exactly what it was given) and then raises, same as a real crash.
+    try:
+        build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed(calls_1, fail_at=3),
+                               open_zim=lambda p: reader, out=lambda s: None, resume=False)
+        assert False, "the simulated interruption should have propagated"
+    except RuntimeError as exc:
+        assert "simulated interruption" in str(exc)
+
+    assert len(calls_1) == 3                       # batch 1, batch 2, then the interrupted batch 3
+    assert checkpoint_path.is_file()
+    state = json.loads(checkpoint_path.read_text())
+    assert state["done"] == 2 * BATCH               # only the two genuinely finished batches were saved
+    assert part_path.is_file()
+    assert not final_path.is_file()                 # the build never reached its atomic handoff
+
+    calls_2: list = []
+    result = build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed(calls_2, fail_at=None),
+                                    open_zim=lambda p: reader, out=lambda s: None, resume=True)
+
+    # the proof: the second run's very first embed call is given the interrupted batch's own texts again
+    # (calls_1's third, un-returned call) -- not batch 1's texts, which would mean a silent restart.
+    assert calls_2[0] == calls_1[2]
+    assert calls_2[0] != calls_1[0]
+
+    assert result["count"] == len(all_keys) == 101
+    assert result["skipped_no_text"] == 1
+    assert not checkpoint_path.exists()             # cleaned up on real completion
+    assert final_path.is_file() and not part_path.exists()
+
+    store = WikipediaStore.load(tmp_path)
+    assert store is not None and len(store) == 101
+    # the first key's vector was embedded in the *first* run (batch 1, never touched again) and survived
+    # into the finished store untouched -- resume copied it forward rather than the second run recreating
+    # it from scratch, which a fresh, differently-seeded embed would have made numerically different.
+    assert np.allclose(store.vector_for(all_keys[0]), unit(1, 0), atol=0.01)
+    assert store.vector_for("Soft_Redirect_Stub") is not None
+    assert np.allclose(store.vector_for("Soft_Redirect_Stub"), 0.0)
 
 
 ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
