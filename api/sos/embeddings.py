@@ -501,6 +501,7 @@ class Semantic:
         self._household_index: Optional[ApproxIndex] = None
         self._household_stamp: Optional[float] = None
         self._checked = 0.0
+        self._household_checked = 0.0
         self.generation = 0        # goes up each time either index is (re)loaded or found gone: search's cache keys on it
 
     def index(self) -> Optional[Index]:
@@ -531,9 +532,9 @@ class Semantic:
         their own schedules (a fresh `sos build-embeddings` writes both, but only one need be present)."""
         path = Path(self.settings.embeddings_dir) / "household.hnsw"
         now = time.monotonic()
-        if self._household_index is not None and now - self._checked < 30:
+        if self._household_index is not None and now - self._household_checked < 30:
             return self._household_index
-        self._checked = now
+        self._household_checked = now
         try:
             stamp = path.stat().st_mtime
         except OSError:

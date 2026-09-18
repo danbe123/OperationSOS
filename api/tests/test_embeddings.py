@@ -1,7 +1,9 @@
 """Semantic search: the passage text, the index, the build, the query prefix, and the fusion into search."""
 import asyncio
 import json
+import os
 import shutil
+import time
 from pathlib import Path
 
 import httpx
@@ -468,6 +470,40 @@ def test_semantic_generation_counts_each_load_of_the_index(env):
     assert sem.index() is not None and sem.generation == 1
     sem._checked = 0.0
     assert sem.index() is not None and sem.generation == 1                                       # unchanged: no new generation
+
+
+def test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index(env, monkeypatch):
+    """search.py always calls query() (-> index()) before query_household() (-> household_index()) on
+    every request. index() unconditionally resets its own throttle timestamp whenever it runs its real
+    stat() check. If household_index() checked against that same timestamp, then once both collections
+    have loaded, the docs check running microseconds ahead of the household one would always look "fresh"
+    to the household guard, and household_index() would never run its own stat() check again -- a later
+    `sos build-embeddings` rewriting household.hnsw would be silently ignored forever. household_index()
+    must throttle against its own clock instead."""
+    from sos.embeddings import ApproxIndex
+
+    clock = {"t": 1_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
+
+    sem = embeddings.Semantic(env)
+    embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    ApproxIndex.build(np.stack([unit(1, 0)]), ["book:1"]).save(env.embeddings_dir, "household")
+    assert sem.index() is not None and sem.household_index() is not None
+    assert sem.generation == 2
+
+    clock["t"] += 31                                              # both 30s throttles have now elapsed
+
+    # a later `sos build-embeddings` run rewrites household.hnsw with new content and a fresh mtime
+    hnsw_path = env.embeddings_dir / "household.hnsw"
+    stamp = hnsw_path.stat().st_mtime
+    ApproxIndex.build(np.stack([unit(1, 0), unit(0, 1)]), ["book:1", "book:2"]).save(env.embeddings_dir, "household")
+    os.utime(hnsw_path, (stamp + 5, stamp + 5))
+
+    sem.index()                                                   # the docs check search.py always runs first
+    clock["t"] += 0.001                                           # microseconds later, as in a real request
+    reloaded = sem.household_index()
+    assert reloaded is not None and len(reloaded) == 2            # the rebuilt index, not the stale 1-book one
+    assert sem.generation == 3                                    # so search.py's results cache invalidates too
 
 
 def test_passage_text_drops_the_section_heading_and_build_skips_the_link_lists(env):
