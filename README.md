@@ -2,7 +2,6 @@
 
 Operation SOS is an offline, UK-focused knowledge box. It runs on a Raspberry Pi 5 with a 7" touchscreen and an NVMe drive, broadcasts its own WiFi hotspot so phones and laptops can use it with no internet, no grid and no mobile network, and shows the same interface on its own screen so it still works when every phone is dead.
 
-The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs/superpowers/specs/2026-09-03-operation-sos-design.md); this file is the practical guide.
 
 ## What it is
 
