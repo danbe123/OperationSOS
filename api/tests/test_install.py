@@ -108,6 +108,16 @@ def test_dry_run_flags_and_arch():
     assert "kiwix-tools_linux-x86_64-3.8.2.tar.gz" in x86 and "caddy_2.11.4_linux_amd64.tar.gz" in x86
 
 
+def test_apt_installs_everything_pip_needs_to_compile_a_wheel_less_dependency():
+    """hnswlib (api/pyproject.toml, the household index) publishes no wheels: pip compiles it from its
+    C++ sources during step_venv's `pip install -e`, which needs a compiler, cmake AND Python.h. Without
+    python3-dev a clean Raspberry Pi install fails at the venv step with "Python.h: No such file or
+    directory" -- measured on a real box -- so the apt step, not the person installing, has to supply it."""
+    apt_line = next(line for line in dry_run().splitlines() if line.startswith("step apt:"))
+    for package in ("build-essential", "cmake", "python3-dev"):
+        assert f" {package}" in apt_line, f"{package} is missing from APT_PACKAGES"
+
+
 def test_dry_run_installs_every_unit_file():
     """Every unit under install/systemd/ (UNIT_NAMES) must actually be copied into $UNIT_DIR by some step
     before step_enable ever runs, in a real (non---dev) install -- a unit file that only exists in the repo

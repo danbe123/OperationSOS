@@ -23,7 +23,10 @@ BUILD_DIR=$PREFIX/build
 BOOT_DIR=/boot/firmware
 UNIT_DIR=/etc/systemd/system
 NM_DIR=/etc/NetworkManager
-APT_PACKAGES="network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv aria2 cmake build-essential poppler-utils"
+# python3-dev is the one addition to the spec's list: hnswlib (the household semantic index) ships no
+# wheels, so step_venv's `pip install -e $PREFIX/api` compiles it here and needs Python.h as well as
+# cmake and build-essential.
+APT_PACKAGES="network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv python3-dev aria2 cmake build-essential poppler-utils"
 # Not in the spec's list but needed by this script: git (llama.cpp clone), curl (downloads), rsync (copies).
 APT_EXTRA="git curl rsync"
 CMAKE_CONFIGURE=(cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF)
