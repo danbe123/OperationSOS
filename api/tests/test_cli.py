@@ -75,24 +75,34 @@ def _spy_wikipedia_cli(monkeypatch) -> list:
     from sos import embeddings
     calls = []
     monkeypatch.setattr(embeddings, "build_wikipedia_cli",
-                        lambda settings, cuda=False, limit=None, workers=1: calls.append((cuda, limit, workers)) or 0)
+                        lambda settings, cuda=False, limit=None, workers=1, servers=1:
+                        calls.append((cuda, limit, workers, servers)) or 0)
     return calls
 
 
-def test_build_embeddings_wikipedia_dispatches_cuda_limit_and_workers(env, monkeypatch):
+def test_build_embeddings_wikipedia_dispatches_cuda_limit_workers_and_servers(env, monkeypatch):
     calls = _spy_wikipedia_cli(monkeypatch)
-    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5", "--workers", "3"]) == 0
-    assert calls == [(True, 5, 3)]
+    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5", "--workers", "3",
+                     "--servers", "2"]) == 0
+    assert calls == [(True, 5, 3, 2)]
 
 
 def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit_and_leaves_cores_for_the_gpu_server(env, monkeypatch):
     """The default worker count leaves four cores to Windows and the embedding server itself, and never
-    goes above six however many cores the machine has."""
+    goes above six however many cores the machine has; one embedding server is the default."""
     import os
 
     calls = _spy_wikipedia_cli(monkeypatch)
     assert cli.main(["build-embeddings-wikipedia"]) == 0
-    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)))]
+    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)), 1)]
+
+
+@pytest.mark.parametrize("command", ["build-embeddings", "build-embeddings-wikipedia"])
+@pytest.mark.parametrize("servers", ["0", "-1"])
+def test_both_embedding_commands_reject_a_nonpositive_server_count(command, servers):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args([command, "--servers", servers])
+    assert exc.value.code == 2
 
 
 @pytest.mark.parametrize("cores, expected", [(1, 1), (2, 1), (5, 1), (8, 4), (12, 6), (64, 6)])
@@ -166,4 +176,6 @@ def test_build_embeddings_selects_only_household(env, monkeypatch):
     calls = []
     monkeypatch.setattr(embeddings, 'build_cli', lambda settings, **kwargs: calls.append(kwargs) or 0)
     assert cli.main(['build-embeddings', '--cuda', '--collection', 'household']) == 0
-    assert calls == [{'cuda': True, 'collection': 'household'}]
+    assert calls == [{'cuda': True, 'collection': 'household', 'servers': 1}]
+    assert cli.main(['build-embeddings', '--servers', '3']) == 0
+    assert calls[1] == {'cuda': False, 'collection': 'all', 'servers': 3}

@@ -24,6 +24,12 @@ def _positive_int(value: str) -> int:
     return result
 
 
+# One llama-server answers a batch on one thread, and that thread -- not the GPU -- is what a bulk build
+# waits on, so several of them side by side, each given a slice of every batch, is the way to use the card.
+SERVERS_HELP = ("embedding servers to run side by side on consecutive ports from the configured one, each "
+                "taking a slice of every batch (default 1)")
+
+
 def _api(settings: Settings) -> str:
     return f"http://127.0.0.1:{settings.port}/api"
 
@@ -170,7 +176,7 @@ def cmd_build_books(settings: Settings, args) -> int:
 
 def cmd_build_embeddings(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection)
+    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection, servers=args.servers)
 
 
 def default_workers() -> int:
@@ -182,7 +188,8 @@ def default_workers() -> int:
 
 def cmd_build_embeddings_wikipedia(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit, workers=args.workers)
+    return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit, workers=args.workers,
+                                          servers=args.servers)
 
 
 def cmd_eval(settings: Settings, args) -> int:
@@ -230,12 +237,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--collection", choices=("all", "docs", "household"), default="all",
                    help="rebuild only one collection, or both (default)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
+    p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
     p.set_defaults(func=cmd_build_embeddings)
     p = sub.add_parser("build-embeddings-wikipedia", help="PC only: embed English Wikipedia for rerank-only lookup (multi-hour; needs its own explicit run)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
     p.add_argument("--limit", type=_positive_int, default=None, help="cap the number of articles embedded, for a real throughput measurement")
     p.add_argument("--workers", type=_positive_int, default=default_workers(),
                    help="processes reading and cleaning article text while the main process embeds (default: cores minus four, capped at six)")
+    p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
     p.set_defaults(func=cmd_build_embeddings_wikipedia)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")

@@ -26,7 +26,7 @@ import tempfile
 import time
 import uuid
 from collections import Counter, deque
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
 from itertools import islice
@@ -507,8 +507,9 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
                     open_zim=None, out: Callable = print) -> dict:
     """Embed one vector per real book across the household collections (Project Gutenberg, Survivor
     Library) and write the "household" ApproxIndex -- a second, parallel build to `build()`'s, because
-    these collections have no SQL table the way the box's own library has `fts_docs`: they are read
-    straight from their ZIMs on disk. A ZIM the box does not have (not downloaded, or simply not on
+    none of this text is in `fts_docs`: a Gutenberg book is a row of the `books` table `sos index` fills,
+    read from its ZIM at that row's `html_path`, and a Survivor Library book is a PDF entry found in its
+    own ZIM by its path (see `_household_entries`). A ZIM the box does not have (not downloaded, or not on
     this machine) is a no-op for that collection, exactly as `index_books` already treats a missing
     Gutenberg ZIM -- the household build carries on with whatever collections it can reach."""
     from sos.books import open_zim as real_open_zim
@@ -858,55 +859,31 @@ def _interrupt(signum, frame) -> None:
 
 def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
                         cuda: bool = False, resume: bool = True, limit: Optional[int] = None,
-                        workers: int = 1) -> int:
-    """PC only: start the embedding server if none is up, embed Wikipedia for rerank-only lookup, stop
-    what was started -- structurally build_cli's own pattern, kept a separate function (and a separate
-    `sos build-embeddings-wikipedia` subcommand, not a flag on `build-embeddings`) because this specific
-    build genuinely takes hours against the real ZIM and must never be triggered by a routine
+                        workers: int = 1, servers: int = 1) -> int:
+    """PC only: start the embedding servers if they are not up, embed Wikipedia for rerank-only lookup,
+    stop what was started -- structurally build_cli's own pattern, kept a separate function (and a
+    separate `sos build-embeddings-wikipedia` subcommand, not a flag on `build-embeddings`) because this
+    specific build genuinely takes hours against the real ZIM and must never be triggered by a routine
     `sos build-embeddings` run."""
     from sos.db import connect
     if not settings.embed_model_path.is_file():
         out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
         return 1
     previous_sigterm = signal.signal(signal.SIGTERM, _interrupt)
+    conn = None
     try:
-        started = None
-        try:
-            if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
-                raise httpx.HTTPError("not ready")
-        except httpx.HTTPError:
-            binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
-            cmd = [binary] + server_command(settings, cuda=cuda)[1:]
-            out(f"starting {' '.join(cmd)}")
-            started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            for _ in range(60):
-                time.sleep(0.5)
-                try:
-                    if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code == 200:
-                        break
-                except httpx.HTTPError:
-                    pass
-            else:
-                out("FAIL the embedding server did not come up")
-                if started:
-                    started.terminate()
-                return 1
-        conn = connect(settings.db_path)
-        client = httpx.Client()
-        try:
-            embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site
-            build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit, workers=workers)
-        except EmbedError as exc:
-            out(f"FAIL {exc}")
-            return 1
-        finally:
-            client.close()
-            conn.close()
-            if started:
-                started.terminate()
-        return 0
+        with embedding_servers(settings, out=out, run=run, cuda=cuda, servers=servers) as embed_fn:
+            conn = connect(settings.db_path)
+            build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit,
+                                   workers=workers)
+    except EmbedError as exc:
+        out(f"FAIL {exc}")
+        return 1
     finally:
+        if conn is not None:
+            conn.close()
         signal.signal(signal.SIGTERM, previous_sigterm)
+    return 0
 
 
 def server_command(settings: Settings, cuda: bool = False) -> list[str]:
@@ -930,9 +907,101 @@ def _host_port(url: str) -> tuple[str, str]:
     return host or "127.0.0.1", port or "8091"
 
 
+def _server_urls(settings: Settings, servers: int) -> list[str]:
+    """`servers` consecutive ports from the one settings.embed_url names, same scheme and host."""
+    scheme = settings.embed_url.partition("://")[0] or "http"
+    host, port = _host_port(settings.embed_url)
+    return [f"{scheme}://{host}:{int(port) + i}" for i in range(servers)]
+
+
+def _server_healthy(url: str) -> bool:
+    try:
+        return httpx.get(f"{url}/health", timeout=1.0).status_code == 200
+    except httpx.HTTPError:
+        return False
+
+
+def _even_slices(count: int, parts: int) -> Iterator[tuple[int, int]]:
+    """`count` items in `parts` contiguous, as-equal-as-possible pieces, in order."""
+    size, extra = divmod(count, parts)
+    start = 0
+    for i in range(parts):
+        end = start + size + (1 if i < extra else 0)
+        yield start, end
+        start = end
+
+
+def _embed_across(urls: list[str], client: httpx.Client, pool, texts: list[str]) -> np.ndarray:
+    """One batch across several servers at once, back together in the order it was given in. Every slice
+    is waited for even after one has failed, so no request outlives the client it was made with; the
+    first EmbedError is then raised exactly as a single server's would be, which is what embed_batch's
+    shorten-and-retry recovery reads."""
+    parts = [texts[start:end] for start, end in _even_slices(len(texts), len(urls))]
+    futures = [(pool.submit(embed_sync, url, part, client=client))
+               for url, part in zip(urls, parts) if part]
+    rows, failure = [], None
+    for future in futures:
+        try:
+            rows.append(future.result())
+        except EmbedError as exc:
+            failure = failure or exc
+    if failure is not None:
+        raise failure
+    return np.concatenate(rows) if rows else np.zeros((0, DIMS), dtype=np.float32)
+
+
+@contextmanager
+def embedding_servers(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
+                      cuda: bool = False, servers: int = 1):
+    """Run `servers` embedding servers side by side and yield the `embed` callable the builds use; stop
+    whatever was started here, on every way out.
+
+    One llama-server answers a batch on a single thread -- the HTTP, the JSON, tokenising 32 passages of
+    2,500 characters, serialising 32x384 floats back -- and that thread, not the GPU, is what a bulk build
+    waits on: measured on the real Wikipedia build, the card drew 28-45 W of its 220 W while the server's
+    main thread sat at about 70 per cent of one core (bigger -c/-ub/-b were worth about a tenth). So N
+    servers on consecutive ports from settings.embed_url each take a contiguous slice of every batch, sent
+    at the same time from a small thread pool (httpx gives the GIL up while it waits on the socket).
+
+    A port that already answers /health is used as it is and never started a second time, exactly as the
+    single-server build has always done. `servers=1` takes neither the slicing nor the threads."""
+    if servers < 1:
+        raise ValueError("servers must be positive")
+    urls = _server_urls(settings, servers)
+    started: list = []
+    client = httpx.Client()
+    pool = ThreadPoolExecutor(max_workers=servers, thread_name_prefix="embed") if servers > 1 else None
+    try:
+        for url in urls:
+            if _server_healthy(url):
+                continue
+            binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
+            cmd = [binary] + server_command(settings, cuda=cuda)[1:]
+            cmd[cmd.index("--port") + 1] = _host_port(url)[1]
+            out(f"starting {' '.join(cmd)}")
+            started.append(run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        for url in urls:
+            for _ in range(60):
+                if _server_healthy(url):
+                    break
+                time.sleep(0.5)
+            else:
+                raise EmbedError(f"the embedding server on {url} did not come up")
+        if pool is None:
+            yield lambda texts: embed_sync(urls[0], texts, client=client)
+        else:
+            yield lambda texts: _embed_across(urls, client, pool, texts)
+    finally:
+        if pool is not None:
+            pool.shutdown(wait=True)
+        client.close()
+        for process in started:
+            process.terminate()
+
+
 def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen, cuda: bool = False,
-              collection: str = "all") -> int:
-    """PC only: start the embedding server if none is up, embed the library, stop what was started.
+              collection: str = "all", servers: int = 1) -> int:
+    """PC only: start the embedding servers if they are not up, embed the library, stop what was started.
     `cuda=True` (`sos build-embeddings --cuda`) starts the CUDA-built llama-server-cuda instead of the
     plain CPU binary -- for the large bulk builds (household books, Wikipedia) that need GPU offload to be
     tractable."""
@@ -940,43 +1009,20 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     if not settings.embed_model_path.is_file():
         out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
         return 1
-    started = None
+    conn = None
     try:
-        if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
-            raise httpx.HTTPError("not ready")
-    except httpx.HTTPError:
-        binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
-        cmd = [binary] + server_command(settings, cuda=cuda)[1:]
-        out(f"starting {' '.join(cmd)}")
-        started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        for _ in range(60):
-            time.sleep(0.5)
-            try:
-                if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code == 200:
-                    break
-            except httpx.HTTPError:
-                pass
-        else:
-            out("FAIL the embedding server did not come up")
-            if started:
-                started.terminate()
-            return 1
-    conn = connect(settings.db_path)
-    client = httpx.Client()
-    try:
-        embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site, both collections
-        if collection in ("all", "docs"):
-            build(conn, settings, embed_fn, out)
-        if collection in ("all", "household"):
-            build_household(conn, settings, embed_fn, out=out)
+        with embedding_servers(settings, out=out, run=run, cuda=cuda, servers=servers) as embed_fn:
+            conn = connect(settings.db_path)
+            if collection in ("all", "docs"):
+                build(conn, settings, embed_fn, out)
+            if collection in ("all", "household"):
+                build_household(conn, settings, embed_fn, out=out)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1
     finally:
-        client.close()
-        conn.close()
-        if started:
-            started.terminate()
+        if conn is not None:
+            conn.close()
     return 0
 
 

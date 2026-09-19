@@ -406,6 +406,142 @@ def test_build_wikipedia_cli_starts_the_server_and_passes_resume_limit_and_worke
     assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5, "workers": 4}]
 
 
+# --- --servers N: several embedding servers side by side ------------------------------------------------
+#
+# One llama-server's request loop is single-threaded (HTTP, JSON, tokenising, serialising 32x384 floats)
+# and is the real ceiling on the GPU builds: measured on the production Wikipedia build, the GPU sits at
+# 28-45 W of 220 W while the server's main thread sits at ~70 per cent of one core. These tests use fake
+# servers and a fake embed_sync throughout: no port is ever listened on.
+
+
+class FakeServerProcess:
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.terminated = False
+
+    @property
+    def port(self) -> str:
+        return self.cmd[self.cmd.index("--port") + 1]
+
+    def terminate(self):
+        self.terminated = True
+
+
+def _fake_servers(env, monkeypatch, healthy=()):
+    """A model file on disk, `/health` answering 200 for the ports in `healthy` (and for every port this
+    fake `run` is asked to start, so the wait loop finishes), and a record of what was started."""
+    env.embed_model_path.parent.mkdir(parents=True, exist_ok=True)
+    env.embed_model_path.write_bytes(b"")
+    started: list[FakeServerProcess] = []
+    live = {str(p) for p in healthy}
+
+    def fake_get(url, timeout=1.0):
+        if url.rsplit(":", 1)[1].partition("/")[0] in live:
+            return httpx.Response(200)
+        raise httpx.HTTPError("not ready")
+
+    def fake_run(cmd, **kw):
+        process = FakeServerProcess(cmd)
+        live.add(process.port)
+        started.append(process)
+        return process
+
+    monkeypatch.setattr(embeddings.httpx, "get", fake_get)
+    monkeypatch.setattr(embeddings.time, "sleep", lambda s: None)
+    return started, fake_run
+
+
+def _fake_embed_sync(monkeypatch, seen=None, fails_on=None, barrier=None):
+    def fake_embed_sync(url, texts, timeout=120.0, client=None):
+        if barrier is not None:
+            barrier.wait()      # nothing comes back until every server has been asked: they really overlap
+        if seen is not None:
+            seen.append((url, list(texts)))
+        if fails_on is not None and url.endswith(fails_on):
+            raise embeddings.EmbedError("embedding server returned 500")
+        return np.stack([unit(1, int(t)) for t in texts])
+
+    monkeypatch.setattr(embeddings, "embed_sync", fake_embed_sync)
+
+
+def test_several_embedding_servers_split_each_batch_in_order_and_run_at_once(env, monkeypatch):
+    import threading
+
+    started, fake_run = _fake_servers(env, monkeypatch)
+    seen: list[tuple[str, list[str]]] = []
+    _fake_embed_sync(monkeypatch, seen=seen, barrier=threading.Barrier(3, timeout=60))
+    texts = [str(i) for i in range(8)]
+
+    with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=3) as embed:
+        vectors = embed(texts)
+
+    assert [p.port for p in started] == ["8091", "8092", "8093"]   # consecutive from settings.embed_url
+    assert sorted(seen) == [("http://127.0.0.1:8091", ["0", "1", "2"]),
+                            ("http://127.0.0.1:8092", ["3", "4", "5"]),
+                            ("http://127.0.0.1:8093", ["6", "7"])]  # contiguous slices, none left out
+    # and put back together in the order the caller gave them, not the order the servers answered in
+    assert np.allclose(vectors, np.stack([unit(1, i) for i in range(8)]))
+    assert all(p.terminated for p in started)
+
+
+def test_one_embedding_server_sends_the_whole_batch_to_the_one_url(env, monkeypatch):
+    """N=1 is what this build has always done: one server, one request, no slicing and no threads."""
+    started, fake_run = _fake_servers(env, monkeypatch)
+    seen: list[tuple[str, list[str]]] = []
+    _fake_embed_sync(monkeypatch, seen=seen)
+
+    with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=1) as embed:
+        embed(["0", "1", "2"])
+
+    assert seen == [(env.embed_url, ["0", "1", "2"])]
+    assert [p.port for p in started] == ["8091"] and started[0].terminated
+
+
+def test_a_server_already_answering_on_its_port_is_reused_rather_than_started_again(env, monkeypatch):
+    started, fake_run = _fake_servers(env, monkeypatch, healthy=(8091,))
+    _fake_embed_sync(monkeypatch)
+
+    with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=3) as embed:
+        embed(["0", "1", "2"])
+
+    assert [p.port for p in started] == ["8092", "8093"]   # the live one is used, never duplicated
+    assert all(p.terminated for p in started)              # and only what we started is stopped again
+
+
+def test_a_failing_server_raises_embed_error_and_stops_every_server_that_was_started(env, monkeypatch):
+    """embed_batch shortens an over-long passage and retries after an EmbedError, so the multi-server
+    call has to fail exactly as embed_sync does or that recovery silently stops working."""
+    started, fake_run = _fake_servers(env, monkeypatch)
+    _fake_embed_sync(monkeypatch, fails_on="8092")
+
+    with pytest.raises(embeddings.EmbedError):
+        with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=3) as embed:
+            embed(["0", "1", "2"])
+    assert len(started) == 3 and all(p.terminated for p in started)
+
+
+def test_embedding_servers_rejects_a_nonpositive_count(env, monkeypatch):
+    started, fake_run = _fake_servers(env, monkeypatch)
+    with pytest.raises(ValueError, match="servers"):
+        with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=0):
+            pass
+    assert started == []
+
+
+@pytest.mark.parametrize("build, kwargs", [("build_cli", {"collection": "docs"}),
+                                           ("build_wikipedia_cli", {})])
+def test_both_builds_run_the_servers_they_were_asked_for_and_stop_them(env, monkeypatch, build, kwargs):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.close()
+    started, fake_run = _fake_servers(env, monkeypatch)
+    _fake_embed_sync(monkeypatch)
+    rc = getattr(embeddings, build)(env, out=lambda s: None, run=fake_run, servers=3, **kwargs)
+    assert rc == 0
+    assert [p.port for p in started] == ["8091", "8092", "8093"]
+    assert all(p.terminated for p in started)
+
+
 # --- excluded_zims: the ZIM ids meaning search must never touch (Task 9) -------------------------------------
 
 
