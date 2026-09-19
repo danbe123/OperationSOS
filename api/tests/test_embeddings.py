@@ -812,6 +812,108 @@ def test_build_household_is_a_noop_for_a_zim_not_on_the_box(tmp_path, monkeypatc
     assert sum("is not on the box; skipped" in line for line in lines) == 2
 
 
+# --- publishing the household collection: never a quietly smaller index, never a meta of its own ------------
+
+
+def _household_embed(texts):
+    return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)
+
+
+def _published_household(folder) -> dict[str, bytes]:
+    """Every byte a reader of the published household collection can see, generation and all."""
+    folder = Path(folder)
+    generation = embeddings._collection_folder(folder, "household")
+    seen = {name: (generation / f"household.{name}").read_bytes() for name in ("hnsw", "ids")}
+    seen["meta.json"] = (folder / "household.meta.json").read_bytes()
+    seen["current"] = os.readlink(folder / "household.current").encode("utf-8")
+    return seen
+
+
+def test_household_meta_counts_the_books_each_zim_gave_and_rides_in_the_same_generation(tmp_path, monkeypatch):
+    """The meta has to be published with the vectors it describes, in the one generation directory the
+    `.current` symlink swings to, or a reader that resolves both between the index rename and the meta
+    rename sees a new index described by an old meta."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    conn = _household_conn(tmp_path)
+    meta = embeddings.build_household(conn, embeddings_settings(tmp_path), _household_embed,
+                                      open_zim=fake_household_open_zim, out=lambda s: None)
+    assert meta["by_zim"] == {"gutenberg_en_all": 2, "survivorlibrary.com_en_all": 1}
+    assert sum(meta["by_zim"].values()) == meta["count"] == 3
+
+    generation = embeddings._collection_folder(tmp_path, "household")
+    assert generation != tmp_path                                   # a real published generation
+    assert json.loads((generation / "household.meta.json").read_text())["by_zim"] == meta["by_zim"]
+    assert (tmp_path / "household.meta.json").resolve().parent == (tmp_path / "household.hnsw").resolve().parent
+
+
+def test_a_partial_household_rebuild_refuses_to_publish_a_smaller_index(tmp_path, monkeypatch):
+    """The real failure: with both collections published, a rebuild run while only Gutenberg was mounted
+    quietly published a Gutenberg-only index and meta, and Survivor Library was simply gone from search.
+    A ZIM that had books in the published index and none in this run means something is wrong with the
+    box, not with the library, so nothing is published at all until an operator says otherwise."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    conn = _household_conn(tmp_path)
+    settings = embeddings_settings(tmp_path)
+    embeddings.build_household(conn, settings, _household_embed, open_zim=fake_household_open_zim,
+                               out=lambda s: None)
+    before = _published_household(tmp_path)
+
+    conn.execute("UPDATE library_items SET available=0 WHERE id='survivorlibrary.com_en_all'")
+    conn.commit()
+    lines: list[str] = []
+    result = embeddings.build_household(conn, settings, _household_embed, open_zim=fake_household_open_zim,
+                                        out=lines.append)
+    said = "\n".join(lines)
+    assert "survivorlibrary.com_en_all" in said and "refus" in said
+    assert "household.*" in said and "delete" in said              # how to go ahead deliberately
+    assert _published_household(tmp_path) == before                # byte for byte, generation and all
+    assert result["count"] == 2 and result["by_zim"]["survivorlibrary.com_en_all"] == 0
+
+
+def test_a_first_household_build_with_only_one_collection_present_still_publishes(tmp_path, monkeypatch):
+    """Nothing published yet means nothing to lose: a box that has Gutenberg and not Survivor Library
+    must still get a Gutenberg index, and the refusal above must not turn into a build that never runs."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    conn = _household_conn(tmp_path)
+    conn.execute("UPDATE library_items SET available=0 WHERE id='survivorlibrary.com_en_all'")
+    conn.commit()
+    result = embeddings.build_household(conn, embeddings_settings(tmp_path), _household_embed,
+                                        open_zim=fake_household_open_zim, out=lambda s: None)
+    assert result["by_zim"] == {"gutenberg_en_all": 2, "survivorlibrary.com_en_all": 0}
+    assert embeddings.ApproxIndex.load(tmp_path, "household").keys == ["gutenberg_en_all:1", "gutenberg_en_all:2"]
+
+
+def test_a_partial_rebuild_is_refused_against_a_published_index_written_before_by_zim_existed(tmp_path, monkeypatch):
+    """The index already on the box was published by the old code and its meta has no by_zim at all. The
+    published keys are "<zim id>:<book id>", so they say which collections were in it just as well."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    conn = _household_conn(tmp_path)
+    embeddings.ApproxIndex.build(np.stack([unit(1, 0), unit(0, 1)]),
+                                 ["gutenberg_en_all:1", "survivorlibrary.com_en_all:blacksmithing"]
+                                 ).save(tmp_path, "household")
+    (tmp_path / "household.meta.json").write_text('{"count": 2}')
+    before = _published_household(tmp_path)
+    conn.execute("UPDATE library_items SET available=0 WHERE id='survivorlibrary.com_en_all'")
+    conn.commit()
+    lines: list[str] = []
+    embeddings.build_household(conn, embeddings_settings(tmp_path), _household_embed,
+                               open_zim=fake_household_open_zim, out=lines.append)
+    assert "survivorlibrary.com_en_all" in "\n".join(lines)
+    assert _published_household(tmp_path) == before
+
+
+def test_build_household_refuses_an_excluded_zim_with_a_real_check_not_an_assert(tmp_path, monkeypatch):
+    """`python -O` throws assert statements away, and this is the only live use of the exclusion
+    machinery: under an optimised interpreter the old assertion would have let a build embed a ZIM
+    search must never touch. A real raise, of something that is not AssertionError."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset({"gutenberg_en_all"}))
+    conn = _household_conn(tmp_path)
+    with pytest.raises(ValueError, match="gutenberg_en_all is excluded from meaning search"):
+        embeddings.build_household(conn, embeddings_settings(tmp_path),
+                                   lambda texts: pytest.fail("must not embed"),
+                                   open_zim=fake_household_open_zim, out=lambda s: None)
+
+
 @pytest.mark.skipif(not HAS_PDFTOTEXT, reason="pdftotext not installed")
 def test_pdf_text_reads_a_real_pdf_and_returns_empty_on_a_corrupt_one():
     """The Survivor Library PDF-extraction path in isolation, against a tiny real PDF on disk (not the

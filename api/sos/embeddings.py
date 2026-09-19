@@ -203,14 +203,21 @@ class ApproxIndex:
         hnsw.set_ef(max(50, ef_construction // 2))
         return cls(hnsw, keys)
 
-    def save(self, folder: Path, collection: str) -> None:
+    def save(self, folder: Path, collection: str, meta: Optional[dict] = None) -> None:
+        """Publish the index, its keys and (when given) the metadata describing them as one generation,
+        so no reader can ever pair this index with the meta of the one before it."""
         folder = Path(folder)
         folder.mkdir(parents=True, exist_ok=True)
         hnsw_part = folder / f"{collection}.hnsw.part"
         self._hnsw.save_index(str(hnsw_part))
         ids_part = folder / f"{collection}.ids.part"
         ids_part.write_text("\n".join(self.keys) + "\n", encoding="utf-8")
-        _publish_collection(folder, collection, [hnsw_part, ids_part])
+        parts = [hnsw_part, ids_part]
+        if meta is not None:
+            meta_part = folder / f"{collection}.meta.json.part"
+            meta_part.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+            parts.append(meta_part)
+        _publish_collection(folder, collection, parts)
 
     @classmethod
     def load(cls, folder: Path, collection: str) -> Optional["ApproxIndex"]:
@@ -318,15 +325,21 @@ def _publish_collection(folder: Path, collection: str, parts: list[Path]) -> Non
         os.replace(alias, folder / name)
 
 
-def _write_meta(folder: Path, collection: str, meta: dict) -> None:
-    """One collection's meta.json, staged beside its final name and renamed into place -- the same
-    atomic pattern write_index uses for the vectors and keys, shared here so it is written exactly
-    once, however the vectors themselves were built (the exact Index or the approximate one)."""
+def _read_meta(folder: Path, collection: str) -> dict:
+    """One collection's published meta, or {} when there is none to read. Two places are tried: the
+    current generation, and the flat name beside it -- a collection published before the meta joined
+    the generation has its index in a generation directory and its meta loose in the folder, and that
+    older layout is exactly the one whose meta a rebuild most needs to read."""
     folder = Path(folder)
-    folder.mkdir(parents=True, exist_ok=True)
-    part = folder / f"{collection}.meta.json.part"
-    part.write_bytes(json.dumps(meta, indent=1).encode("utf-8"))
-    os.replace(part, folder / f"{collection}.meta.json")
+    for path in (_collection_folder(folder, collection) / f"{collection}.meta.json",
+                 folder / f"{collection}.meta.json"):
+        try:
+            meta = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(meta, dict):
+            return meta
+    return {}
 
 
 def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
@@ -518,8 +531,11 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
     chunks: list[np.ndarray] = []
     t0 = time.perf_counter()
     total_seen = total_skipped = 0
+    by_zim = {zim_id: 0 for zim_id in HOUSEHOLD_ZIMS}
     for zim_id in HOUSEHOLD_ZIMS:
-        assert zim_id not in excluded_zims(settings), f"{zim_id} is excluded from meaning search"
+        if zim_id in excluded_zims(settings):
+            # never an assert: `python -O` strips those, and this is the only live use of the exclusion list
+            raise ValueError(f"{zim_id} is excluded from meaning search")
         row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (zim_id,)).fetchone()
         if row is None or not row["available"] or not row["local_path"]:
             out(f"household: {zim_id} is not on the box; skipped")
@@ -551,22 +567,52 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
             keys.extend(batch_keys)
             if len(keys) // BATCH % 25 == 0:
                 out(f"household: {len(keys)} embedded ({time.perf_counter() - t0:.0f}s)")
+        by_zim[zim_id] = len(keys) - before
         out(f"household: {zim_id} done, {len(keys) - before} books ({len(keys)} so far)")
     duplicates = [key for key, n in Counter(keys).items() if n > 1]
     if duplicates:
         raise ValueError(f"household: {len(duplicates)} book keys would each hold several vectors in one index "
                          f"(e.g. {', '.join(duplicates[:5])}); search would count those books twice over")
     vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
-    if keys:
-        idx = ApproxIndex.build(vectors, keys)
-        idx.save(settings.embeddings_dir, "household")
-    meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "seen": total_seen,
-            "skipped_no_text": total_skipped, "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+    meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "by_zim": by_zim,
+            "seen": total_seen, "skipped_no_text": total_skipped,
+            "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     meta["elapsed_s"] = time.perf_counter() - t0
+    vanished = _household_zims_that_vanished(settings.embeddings_dir, by_zim)
+    if vanished:
+        published = _published_household_counts(settings.embeddings_dir)
+        gone = ", ".join(f"{zim} ({published[zim]} books published, none this run)" for zim in vanished)
+        out(f"household: refusing to publish a smaller index: {gone}. "
+            f"That is a box with a drive or a download missing, not a library that shrank, so the published "
+            f"index and meta are untouched and search keeps every book it had. If the collection really is "
+            f"gone for good, delete the published household.* files in {settings.embeddings_dir} and run this "
+            f"build again.")
+        return meta
     if keys:
-        _write_meta(settings.embeddings_dir, "household", meta)
+        ApproxIndex.build(vectors, keys).save(settings.embeddings_dir, "household", meta)
     out(f"household: wrote {len(keys)} vectors ({time.perf_counter() - t0:.0f}s, {total_skipped} skipped for no usable text)")
     return meta
+
+
+def _published_household_counts(folder: Path) -> dict[str, int]:
+    """How many books each ZIM has in the household index already published, or {} when there is none."""
+    by_zim = _read_meta(folder, "household").get("by_zim")
+    if isinstance(by_zim, dict):
+        return {zim: n for zim, n in by_zim.items() if isinstance(n, int)}
+    # A meta written before by_zim existed. The keys themselves are "<zim id>:<book id>", so the
+    # published index still says which collections went into it.
+    try:
+        ids = (_collection_folder(Path(folder), "household") / "household.ids").read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    return Counter(line.split(":", 1)[0] for line in ids.split("\n") if ":" in line)
+
+
+def _household_zims_that_vanished(folder: Path, by_zim: dict[str, int]) -> list[str]:
+    """The ZIMs this run got nothing from that the published index has books from. Only ZIMs the run
+    genuinely tried are considered, so a key shape left by some older build cannot block a rebuild."""
+    published = _published_household_counts(folder)
+    return [zim for zim, count in by_zim.items() if count == 0 and published.get(zim, 0) > 0]
 
 
 # --- Wikipedia: rerank-only vectors for the box's existing keyword search hits, never a nearest-neighbour
