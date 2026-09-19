@@ -2,6 +2,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import shutil
 import time
@@ -124,10 +125,14 @@ def test_build_embeds_every_passage_but_the_catalogue_entries_and_never_prefixes
 
 
 @respx.mock
-def test_semantic_query_prefixes_the_query_and_answers_nothing_when_the_server_or_index_is_away(env, respx_mock):
+def test_semantic_query_prefixes_the_query_and_answers_nothing_when_the_server_or_index_is_away(
+        env, respx_mock, monkeypatch):
+    clock = {"t": 1_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
     sem = embeddings.Semantic(env)
     assert asyncio.run(sem.query("tinned food")) == []          # no index yet
     embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0), unit(0, 1)]), ["/m/food", "/m/water"], {})
+    clock["t"] += 31                                            # a collection that is away is throttled too
     sent = {}
 
     def reply(request):
@@ -1651,12 +1656,15 @@ def test_search_drops_its_cache_when_the_semantic_index_changes(env):
     assert [r["url"] for r in _search(conn, env, "larder", sem)["results"]] == ["/m/water"]
 
 
-def test_semantic_generation_counts_each_load_of_the_index(env):
+def test_semantic_generation_counts_each_load_of_the_index(env, monkeypatch):
+    clock = {"t": 1_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
     sem = embeddings.Semantic(env)
     assert sem.generation == 0 and sem.index() is None
     embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    clock["t"] += 31                                                 # the not-loaded state is throttled too
     assert sem.index() is not None and sem.generation == 1
-    sem._checked = 0.0
+    clock["t"] += 31
     assert sem.index() is not None and sem.generation == 1                                       # unchanged: no new generation
 
 
@@ -1853,6 +1861,205 @@ def test_household_only_cli_does_not_rebuild_docs(env, monkeypatch):
     monkeypatch.setattr(embeddings, 'build_household', lambda *a, **k: called.append(True))
     assert embeddings.build_cli(env, run=run, out=lambda s: None, collection='household') == 0
     assert called == [True]
+
+
+# --- loading a store: the throttle, the generation names, the pruning and the metadata check ---------------
+
+
+def _wikipedia_ids(folder: Path, count: int) -> None:
+    (folder / "wikipedia.ids").write_text("".join(f"Article_{i}\n" for i in range(count)), encoding="utf-8")
+
+
+def _touch(path: Path, when: float) -> None:
+    os.utime(path, (when, when))
+
+
+def test_a_store_still_being_copied_is_tried_once_a_throttle_window_not_once_a_search(env, monkeypatch):
+    """A vector file being copied onto the box grows, so its mtime moves on every request. Only a loaded
+    store used to be throttled, so every search re-read the whole key list (8.4 million of them: about
+    1.8 s and 700 MB) and bumped `generation`, which throws search's own results cache away each time."""
+    clock = {"t": 5_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
+    folder = Path(env.embeddings_dir)
+    folder.mkdir(parents=True, exist_ok=True)
+    _wikipedia_ids(folder, 100)
+    attempts = {"n": 0}
+    real_load = embeddings.WikipediaStore.load.__func__
+
+    def counting(cls, *args, **kwargs):
+        attempts["n"] += 1
+        return real_load(cls, *args, **kwargs)
+
+    monkeypatch.setattr(embeddings.WikipediaStore, "load", classmethod(counting))
+    sem = embeddings.Semantic(env)
+    for i in range(1, 6):
+        (folder / "wikipedia.f16.bin").write_bytes(b"\0" * (i * 10 * embeddings.DIMS * 2))
+        _touch(folder / "wikipedia.f16.bin", 1_000 + i)
+        assert sem.wikipedia_store() is None
+        clock["t"] += 0.2                                   # five searches inside one throttle window
+    assert attempts["n"] == 1
+    assert sem.generation == 0                              # a failed attempt is not a new generation
+
+    clock["t"] += 31
+    assert sem.wikipedia_store() is None and attempts["n"] == 2 and sem.generation == 0
+
+    (folder / "wikipedia.f16.bin").write_bytes(np.zeros((100, embeddings.DIMS), dtype=np.float16).tobytes())
+    _touch(folder / "wikipedia.f16.bin", 2_000)
+    clock["t"] += 31
+    store = sem.wikipedia_store()
+    assert store is not None and len(store) == 100 and sem.generation == 1
+
+
+def test_the_docs_and_household_caches_wait_out_their_throttle_when_nothing_is_loaded(env, monkeypatch):
+    clock = {"t": 1_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
+    sem = embeddings.Semantic(env)
+    assert sem.index() is None and sem.household_index() is None and sem.generation == 0
+    embeddings.write_index(env.embeddings_dir, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    embeddings.ApproxIndex.build(np.stack([unit(1, 0)]), ["book:1"]).save(env.embeddings_dir, "household")
+    assert sem.index() is None and sem.household_index() is None and sem.generation == 0
+    clock["t"] += 31
+    assert sem.index() is not None and sem.household_index() is not None and sem.generation == 2
+
+
+def test_the_wikipedia_key_list_is_not_opened_when_the_meta_count_already_rules_the_file_out(tmp_path, monkeypatch):
+    """The whole point of the size check: 8.4 million keys cost about 1.8 s and 700 MB to materialise,
+    so a file that is still growing must be ruled out before any of that. The meta says how many keys
+    there are, so nothing need be read at all."""
+    _wikipedia_ids(tmp_path, 1000)
+    (tmp_path / "wikipedia.meta.json").write_text(json.dumps({"count": 1000, "dims": embeddings.DIMS}))
+    (tmp_path / "wikipedia.f16.bin").write_bytes(b"\0" * (17 * embeddings.DIMS * 2))
+    real_open = Path.open
+
+    def no_opening(self, *args, **kwargs):
+        assert self.name != "wikipedia.ids", "the key list was opened although the count already rules it out"
+        return real_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", no_opening)
+    assert embeddings.WikipediaStore.load(tmp_path) is None
+
+
+def test_a_wikipedia_key_list_with_no_meta_is_counted_without_being_decoded(tmp_path, monkeypatch):
+    """No meta to ask, so the keys have to be counted -- by streaming the bytes, never by building the
+    8.4 million strings that are the very cost the check exists to avoid."""
+    _wikipedia_ids(tmp_path, 1000)
+    (tmp_path / "wikipedia.f16.bin").write_bytes(b"\0" * (17 * embeddings.DIMS * 2))
+    real_open = Path.open
+
+    def watching(self, mode="r", *args, **kwargs):
+        assert self.name != "wikipedia.ids" or "b" in mode, "the key list was decoded although the sizes cannot match"
+        return real_open(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", watching)
+    assert embeddings.WikipediaStore.load(tmp_path) is None
+
+
+def test_a_new_generation_survives_an_ordinary_copy_that_skips_dot_names(tmp_path):
+    """`cp -a core/embeddings/* dest/`, `scp -r dir/*` and a file manager all leave a dot-prefixed
+    directory behind, and what arrives is a `*.current` symlink pointing at nothing -- semantic search
+    silently degrades to the keyword search. New generations are named so an ordinary copy takes them."""
+    embeddings.write_index(tmp_path / "src", "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    generation = embeddings._collection_folder(tmp_path / "src", "docs")
+    assert generation.parent == tmp_path / "src" and not generation.name.startswith(".")
+    shutil.copytree(tmp_path / "src", tmp_path / "dest", symlinks=True,
+                    ignore=lambda where, names: [n for n in names if n.startswith(".")])
+    assert embeddings.Index.load(tmp_path / "dest", "docs").keys == ["/m/food"]
+
+
+def test_a_dot_prefixed_generation_from_an_earlier_build_still_loads(tmp_path):
+    """Whatever new builds are named, the generations already published on the box must keep loading:
+    the resolver follows the relative `*.current` symlink, never the directory's name."""
+    generation = tmp_path / ".docs-0123456789abcdef0123456789abcdef"
+    generation.mkdir()
+    (generation / "docs.f16.bin").write_bytes(unit(1, 0).astype(np.float16).tobytes())
+    (generation / "docs.ids").write_text("/m/food\n", encoding="utf-8")
+    (tmp_path / "docs.current").symlink_to(generation.name, target_is_directory=True)
+    (tmp_path / "docs.f16.bin").symlink_to("docs.current/docs.f16.bin")
+    (tmp_path / "docs.ids").symlink_to("docs.current/docs.ids")
+    assert embeddings.Index.load(tmp_path, "docs").keys == ["/m/food"]
+
+
+def test_a_dangling_current_symlink_is_said_once_rather_than_on_every_search(env, monkeypatch, caplog):
+    folder = Path(env.embeddings_dir)
+    embeddings.write_index(folder, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    shutil.rmtree(embeddings._collection_folder(folder, "docs"))     # the copy that left the generation behind
+    clock = {"t": 1_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
+    sem = embeddings.Semantic(env)
+    with caplog.at_level(logging.WARNING, logger="sos.embeddings"):
+        for _ in range(3):
+            assert sem.index() is None
+            clock["t"] += 31
+    said = [r.getMessage() for r in caplog.records if "docs.current" in r.getMessage()]
+    assert len(said) == 1 and "copy" in said[0]
+
+
+def test_publishing_keeps_the_current_and_previous_generations_and_removes_the_rest(tmp_path):
+    """A retained Wikipedia generation is 6.47 GB. Deleting the one before last is safe while a reader
+    still has it memory-mapped: on Linux the inode outlives the name it was opened by."""
+    published = []
+    for i in range(4):
+        embeddings.write_index(tmp_path, "docs", np.stack([unit(1, i + 1)]), [f"/m/{i}"], {"count": 1})
+        published.append(embeddings._collection_folder(tmp_path, "docs"))
+    assert published[3].is_dir() and published[2].is_dir()
+    assert not published[0].exists() and not published[1].exists()
+    assert embeddings.Index.load(tmp_path, "docs").keys == ["/m/3"]
+
+
+def test_pruning_knows_both_naming_schemes_and_leaves_everything_else_alone(tmp_path):
+    legacy = tmp_path / ".docs-0123456789abcdef0123456789abcdef"     # published by an earlier build
+    legacy.mkdir()
+    (legacy / "docs.f16.bin").write_bytes(unit(1, 0).astype(np.float16).tobytes())
+    (legacy / "docs.ids").write_text("/m/legacy\n", encoding="utf-8")
+    (tmp_path / "docs.current").symlink_to(legacy.name, target_is_directory=True)
+    household = tmp_path / ".household-0123456789abcdef0123456789abcdef"
+    household.mkdir()
+    notes = tmp_path / "docs-notes.txt"
+    notes.write_text("not a generation")
+
+    embeddings.write_index(tmp_path, "docs", np.stack([unit(0, 1)]), ["/m/new"], {})
+    first = embeddings._collection_folder(tmp_path, "docs")
+    assert legacy.is_dir()                                           # the immediately previous generation
+    embeddings.write_index(tmp_path, "docs", np.stack([unit(1, 1)]), ["/m/newer"], {})
+    assert not legacy.exists() and first.is_dir()                    # one older than that: gone
+    assert embeddings._collection_folder(tmp_path, "docs").is_dir()
+    assert household.is_dir() and notes.is_file()                    # another collection, and a plain file
+
+
+def test_pruning_never_removes_a_generation_any_collection_points_at(tmp_path):
+    """Belt and braces: whatever the names say, a directory a live `*.current` resolves to is in use."""
+    borrowed = tmp_path / ".docs-0123456789abcdef0123456789abcdef"
+    borrowed.mkdir()
+    (tmp_path / "household.current").symlink_to(borrowed.name, target_is_directory=True)
+    for i in range(3):
+        embeddings.write_index(tmp_path, "docs", np.stack([unit(1, i + 1)]), [f"/m/{i}"], {})
+    assert borrowed.is_dir()
+
+
+def test_a_store_built_with_other_dimensions_refuses_to_load(tmp_path, caplog):
+    embeddings.write_index(tmp_path, "docs", np.stack([unit(1, 0)]), ["/m/food"],
+                           {"model": "some-other-model", "dims": 768, "count": 1})
+    with caplog.at_level(logging.WARNING, logger="sos.embeddings"):
+        assert embeddings.Index.load(tmp_path, "docs", model="bge-small-en-v1.5-q8_0.gguf") is None
+    assert any("768" in r.getMessage() for r in caplog.records)
+
+
+def test_a_store_built_by_another_build_of_the_same_model_loads_and_says_so_once(tmp_path, caplog):
+    """The Wikipedia vectors are deliberately built by bge-small-en-v1.5-fp16-torch while the box queries
+    with the q8_0 GGUF of the same model: measured mean cosine 0.9998 and 98 per cent top-10 overlap, so
+    this is expected, worth one line in the log, and never a refusal."""
+    embeddings.write_index(tmp_path, "wikipedia", np.stack([unit(1, 0)]), ["Water_purification"],
+                           {"model": "bge-small-en-v1.5-fp16-torch", "dims": embeddings.DIMS, "count": 1})
+    with caplog.at_level(logging.INFO, logger="sos.embeddings"):
+        for _ in range(3):
+            assert embeddings.WikipediaStore.load(tmp_path, model="bge-small-en-v1.5-q8_0.gguf") is not None
+    assert len([r for r in caplog.records if "fp16-torch" in r.getMessage()]) == 1
+
+
+def test_a_store_with_no_meta_at_all_still_loads(tmp_path):
+    (tmp_path / "docs.f16.bin").write_bytes(unit(1, 0).astype(np.float16).tobytes())
+    (tmp_path / "docs.ids").write_text("/m/food\n", encoding="utf-8")
+    assert embeddings.Index.load(tmp_path, "docs", model="bge-small-en-v1.5-q8_0.gguf") is not None
 
 
 # --- the model file is what starts a server, so it is only needed when one must be started ----------------

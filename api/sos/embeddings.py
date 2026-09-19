@@ -150,22 +150,19 @@ class Index:
         return len(self.keys)
 
     @classmethod
-    def load(cls, folder: Path, collection: str) -> Optional["Index"]:
-        folder = _collection_folder(Path(folder), collection)
-        vec_path, key_path, meta_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids", folder / f"{collection}.meta.json"
-        if not (vec_path.is_file() and key_path.is_file()):
+    def load(cls, folder: Path, collection: str, model: Optional[str] = None) -> Optional["Index"]:
+        directory = _check_collection(Path(folder), collection, ("f16.bin", "ids"))
+        if directory is None:
             return None
+        meta = _read_meta(Path(folder), collection)
+        if _meta_refuses(Path(folder), collection, meta, model):
+            return None
+        vec_path, key_path = directory / f"{collection}.f16.bin", directory / f"{collection}.ids"
         keys = [line for line in key_path.read_text(encoding="utf-8").split("\n") if line]
         raw = np.fromfile(vec_path, dtype=np.float16)
         if len(keys) == 0 or raw.size != len(keys) * DIMS:
             log.warning("embeddings: %s does not match %s (%d keys, %d values)", vec_path.name, key_path.name, len(keys), raw.size)
             return None
-        meta = {}
-        if meta_path.is_file():
-            try:
-                meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            except ValueError:
-                meta = {}
         return cls(raw.reshape(len(keys), DIMS), keys, meta)
 
     def search(self, query: np.ndarray, k: int = 20) -> list[tuple[str, float]]:
@@ -220,12 +217,14 @@ class ApproxIndex:
         _publish_collection(folder, collection, parts)
 
     @classmethod
-    def load(cls, folder: Path, collection: str) -> Optional["ApproxIndex"]:
+    def load(cls, folder: Path, collection: str, model: Optional[str] = None) -> Optional["ApproxIndex"]:
         import hnswlib
-        folder = _collection_folder(Path(folder), collection)
-        hnsw_path, ids_path = folder / f"{collection}.hnsw", folder / f"{collection}.ids"
-        if not (hnsw_path.is_file() and ids_path.is_file()):
+        directory = _check_collection(Path(folder), collection, ("hnsw", "ids"))
+        if directory is None:
             return None
+        if _meta_refuses(Path(folder), collection, _read_meta(Path(folder), collection), model):
+            return None
+        hnsw_path, ids_path = directory / f"{collection}.hnsw", directory / f"{collection}.ids"
         keys = [line for line in ids_path.read_text(encoding="utf-8").split("\n") if line]
         hnsw = hnswlib.Index(space="cosine", dim=DIMS)
         hnsw.load_index(str(hnsw_path), max_elements=len(keys))
@@ -270,14 +269,27 @@ class WikipediaStore:
         return len(self.keys)
 
     @classmethod
-    def load(cls, folder: Path, collection: str = "wikipedia") -> Optional["WikipediaStore"]:
-        folder = _collection_folder(Path(folder), collection)
-        vec_path, key_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids"
-        if not (vec_path.is_file() and key_path.is_file()):
+    def load(cls, folder: Path, collection: str = "wikipedia",
+             model: Optional[str] = None) -> Optional["WikipediaStore"]:
+        """The published store, or None when it is not there, not readable or not this build's shape.
+
+        The key count is worked out cheaply first -- from the meta, or by streaming the key file for
+        newlines -- and the vector file's size has to agree with it before the 8.4 million keys are
+        materialised at all: a file still being copied grows, its mtime moves on every request, and
+        reading the whole key list to find that out again costs about 1.8 s and 700 MB each time."""
+        directory = _check_collection(Path(folder), collection, ("f16.bin", "ids"))
+        if directory is None:
+            return None
+        meta = _read_meta(Path(folder), collection)
+        if _meta_refuses(Path(folder), collection, meta, model):
+            return None
+        vec_path, key_path = directory / f"{collection}.f16.bin", directory / f"{collection}.ids"
+        expected = _key_count(key_path, meta)
+        if expected <= 0 or vec_path.stat().st_size != expected * DIMS * 2:
             return None
         with key_path.open(encoding="utf-8") as ids:
             keys = [line.rstrip("\n") for line in ids if line.rstrip("\n")]
-        if not keys or vec_path.stat().st_size != len(keys) * DIMS * 2:
+        if len(keys) != expected or vec_path.stat().st_size != len(keys) * DIMS * 2:
             return None
         mmap = np.memmap(vec_path, dtype=np.float16, mode="r", shape=(len(keys), DIMS))
         return cls(mmap, keys)
@@ -303,18 +315,58 @@ def _collection_folder(folder: Path, collection: str) -> Path:
     return current.resolve() if current.is_symlink() else folder
 
 
+# Which directory names are a published generation of one collection. New ones are `<collection>.gen-
+# <uuid>`: the dot-prefixed `.<collection>-<uuid>` that earlier builds wrote is invisible to `cp -a
+# core/embeddings/* dest/`, to `scp -r dir/*` and to a file manager, all of which then deliver a
+# `<collection>.current` symlink pointing at nothing. Both are recognised for ever: the generations
+# already on the box load by following that symlink, never by their name.
+_GENERATION_ID = re.compile(r"^[0-9a-f]{32}$")
+
+
+def _generation_dirs(folder: Path, collection: str) -> list[Path]:
+    prefixes = (f"{collection}.gen-", f".{collection}-")
+    found = []
+    try:
+        entries = list(folder.iterdir())
+    except OSError:
+        return found
+    for path in entries:
+        if path.is_symlink() or not path.is_dir():
+            continue
+        for prefix in prefixes:
+            if path.name.startswith(prefix) and _GENERATION_ID.match(path.name[len(prefix):]):
+                found.append(path)
+                break
+    return found
+
+
+def _prune_generations(folder: Path, collection: str, keep: set[Path]) -> None:
+    """Drop this collection's generations other than the current one and the one before it -- a retained
+    Wikipedia generation is 6.47 GB. A reader still holding a deleted generation's files open is unhurt:
+    on Linux the inode outlives the name. Nothing any collection's `*.current` resolves to is touched."""
+    live = {link.resolve() for link in folder.glob("*.current") if link.is_symlink()}
+    for path in _generation_dirs(folder, collection):
+        if path.resolve() in keep or path.resolve() in live:
+            continue
+        try:
+            shutil.rmtree(path)
+        except OSError as exc:      # a publication that worked must not fail over the tidying up
+            log.warning("embeddings: could not remove the old generation %s (%s)", path, exc)
+
+
 def _publish_collection(folder: Path, collection: str, parts: list[Path]) -> None:
     """Publish a complete generation with one rename, keeping readers on the old files until then.
 
     The familiar filenames are relative symlinks for copying and inspection. Loaders resolve the
-    generation once so a concurrent publication cannot pair old keys with new vectors. Previous
-    generations remain valid for readers holding a memory map; never truncate a published file.
+    generation once so a concurrent publication cannot pair old keys with new vectors. The generation
+    before this one remains valid for readers holding a memory map; older ones are pruned.
     """
-    generation = folder / f".{collection}-{uuid.uuid4().hex}"
+    current = folder / f"{collection}.current"
+    previous = current.resolve() if current.is_symlink() else None
+    generation = folder / f"{collection}.gen-{uuid.uuid4().hex}"
     generation.mkdir()
     for part in parts:
         os.replace(part, generation / part.name.removesuffix(".part"))
-    current = folder / f"{collection}.current"
     next_link = folder / f"{collection}.current.{uuid.uuid4().hex}.part"
     next_link.symlink_to(generation.name, target_is_directory=True)
     os.replace(next_link, current)
@@ -323,6 +375,93 @@ def _publish_collection(folder: Path, collection: str, parts: list[Path]) -> Non
         alias = folder / f"{name}.link.{uuid.uuid4().hex}.part"
         alias.symlink_to(f"{current.name}/{name}")
         os.replace(alias, folder / name)
+    _prune_generations(folder, collection, {generation.resolve()} | ({previous} if previous else set()))
+
+
+# What has already been said about each (folder, collection, topic), so a loader that runs on every
+# search says it once when it becomes true rather than once per request.
+_collection_states: dict[tuple[str, str, str], str] = {}
+
+
+def _say_once(folder: Path, collection: str, topic: str, state: str, message: str = "",
+              level: int = logging.WARNING) -> None:
+    key = (str(folder), collection, topic)
+    if _collection_states.get(key) == state:
+        return
+    was = _collection_states.get(key)
+    _collection_states[key] = state
+    if message:
+        log.log(level, message)
+    elif was is not None and was not in ("ok", "absent"):
+        log.info("embeddings: the %s collection's %s are in order again", collection, topic)
+
+
+def _check_collection(folder: Path, collection: str, names: tuple[str, ...]) -> Optional[Path]:
+    """Where one collection's published files really are, or None when they cannot all be read.
+
+    A collection that was never built is silence: a box may simply have no embeddings. Files that are
+    there but resolve to nothing are a copy that went wrong, and are said out loud once, because what
+    follows is a search that has quietly become the keyword search with nothing to show for it."""
+    folder = Path(folder)
+    directory = _collection_folder(folder, collection)
+    if all((directory / f"{collection}.{name}").is_file() for name in names):
+        _say_once(folder, collection, "files", "ok")
+        return directory
+    current = folder / f"{collection}.current"
+    if current.is_symlink() and not current.is_dir():
+        target = os.readlink(current)
+        _say_once(folder, collection, "files", f"dangling:{target}",
+                  f"embeddings: {current} points at '{target}', which is not there, so the {collection} "
+                  f"collection cannot be read and search is keyword-only. A copy that skips a leading-dot "
+                  f"directory (cp -a, scp -r, a file manager) leaves exactly this: copy the generation "
+                  f"directory across as well.")
+    elif [n for n in names if (folder / f"{collection}.{n}").is_symlink()]:
+        _say_once(folder, collection, "files", "unresolved",
+                  f"embeddings: {folder} names the {collection} collection's files but they do not resolve "
+                  f"to readable files, so search is keyword-only.")
+    else:
+        _say_once(folder, collection, "files", "absent")
+    return None
+
+
+def _meta_refuses(folder: Path, collection: str, meta: dict, model: Optional[str]) -> bool:
+    """Whether a store's own metadata says this build must not read it.
+
+    A `dims` that is not this build's is a store whose rows cannot be reshaped into vectors at all:
+    refused. A different model name is not. The Wikipedia store is deliberately built by
+    bge-small-en-v1.5-fp16-torch while the box queries with the q8_0 GGUF of the same model (measured:
+    mean cosine 0.9998, 98 per cent top-10 overlap), so that is worth one line in the log and nothing
+    more. A store with no metadata at all is an older one, and loads."""
+    dims = meta.get("dims")
+    if isinstance(dims, int) and dims != DIMS:
+        _say_once(folder, collection, "meta", f"dims:{dims}",
+                  f"embeddings: the {collection} collection holds {dims}-dimensional vectors and this "
+                  f"build reads {DIMS}-dimensional ones; refusing to load it")
+        return True
+    built_by = meta.get("model")
+    if model and isinstance(built_by, str) and built_by != model:
+        _say_once(folder, collection, "meta", f"model:{built_by}", level=logging.INFO,
+                  message=f"embeddings: the {collection} collection was built by {built_by} and this box "
+                          f"queries with {model}; loading it anyway")
+    else:
+        _say_once(folder, collection, "meta", "ok")
+    return False
+
+
+def _key_count(key_path: Path, meta: dict) -> int:
+    """How many keys a published key file holds, without building any of them: the meta's own count
+    when it has one, otherwise the newlines, streamed."""
+    count = meta.get("count")
+    if isinstance(count, int) and count >= 0:
+        return count
+    total = 0
+    try:
+        with key_path.open("rb") as ids:
+            while chunk := ids.read(1 << 20):
+                total += chunk.count(b"\n")
+    except OSError:
+        return 0
+    return total
 
 
 def _read_meta(folder: Path, collection: str) -> dict:
@@ -1087,100 +1226,97 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     return 0
 
 
+class _Cached:
+    """One collection's loaded store, the mtime it was loaded from, and when it was last looked for."""
+
+    __slots__ = ("store", "stamp", "checked")
+
+    def __init__(self):
+        self.store = None
+        self.stamp: Optional[float] = None
+        self.checked = 0.0
+
+
 class Semantic:
     """What the running API holds: the client for the server and the index, read from disk when first asked
     for and read again when the files change (a `sos build-embeddings` copied on later). `query` answers
     with nothing rather than an error whenever any part is missing or slow."""
 
     QUERY_TIMEOUT_S = 0.6
+    THROTTLE_S = 30
 
     def __init__(self, settings: Settings):
         self.settings = settings
         self.client = EmbedClient(settings.embed_url)
-        self._index: Optional[Index] = None
-        self._stamp: Optional[float] = None
-        self._household_index: Optional[ApproxIndex] = None
-        self._household_stamp: Optional[float] = None
-        self._wikipedia_store: Optional[WikipediaStore] = None
-        self._wikipedia_stamp: Optional[float] = None
-        self._checked = 0.0
-        self._household_checked = 0.0
-        self._wikipedia_checked = 0.0   # its own throttle clock -- Task 7's own fix round established that
-        # sharing one shared timer between two collections starves whichever one's stat() check runs second
-        # (see test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index); a third
-        # collection must not repeat that mistake by sharing _checked or _household_checked either.
-        self.generation = 0        # goes up each time either index is (re)loaded or found gone: search's cache keys on it
+        # One cache per collection, each with its own throttle clock -- Task 7's own fix round established
+        # that sharing one timer between two collections starves whichever one's stat() check runs second
+        # (see test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index).
+        self._docs = _Cached()
+        self._household = _Cached()
+        self._wikipedia = _Cached()
+        self.generation = 0        # goes up whenever a collection's loaded state changes: search's cache keys on it
+
+    def _cached(self, state: "_Cached", collection: str, names: tuple[str, ...], load: Callable,
+                loaded_message: str):
+        """One collection's store, refreshed from disk at most once every THROTTLE_S.
+
+        The throttle holds whether or not a store is loaded. A file still being copied grows, so its
+        mtime moves on every request: without the throttle on this side too, every search re-read the
+        whole key list -- 8.4 million of them for Wikipedia, about 1.8 s and 700 MB -- and bumped
+        `generation`, which throws search's own results cache away. `generation` goes up only when the
+        answer a search would get really changes: nothing to something, something to something else, or
+        something to nothing. A load that fails is not a change."""
+        now = time.monotonic()
+        if now - state.checked < self.THROTTLE_S:
+            return state.store
+        state.checked = now
+        folder = Path(self.settings.embeddings_dir)
+        try:
+            stamp = (folder / f"{collection}.{names[0]}").stat().st_mtime
+        except OSError:
+            _check_collection(folder, collection, names)   # says so, once, if the files are there but unreadable
+            stamp = None
+        if stamp is None:
+            state.stamp = None
+            if state.store is not None:
+                state.store = None
+                self.generation += 1
+            return None
+        if stamp == state.stamp and state.store is not None:
+            return state.store
+        state.stamp = stamp
+        store = load()
+        if store is None and state.store is None:
+            return None
+        state.store = store
+        self.generation += 1
+        if store is not None:
+            log.info(loaded_message, len(store))
+        return store
 
     def index(self) -> Optional[Index]:
-        path = Path(self.settings.embeddings_dir) / "docs.f16.bin"
-        now = time.monotonic()
-        if self._index is not None and now - self._checked < 30:
-            return self._index
-        self._checked = now
-        try:
-            stamp = path.stat().st_mtime
-        except OSError:
-            if self._index is not None:
-                self.generation += 1
-            self._index, self._stamp = None, None
-            return None
-        if stamp != self._stamp:
-            self._index = Index.load(self.settings.embeddings_dir, "docs")
-            self._stamp = stamp
-            self.generation += 1
-            if self._index is not None:
-                log.info("embeddings: %d passages loaded", len(self._index))
-        return self._index
+        return self._cached(self._docs, "docs", ("f16.bin", "ids"),
+                            lambda: Index.load(self.settings.embeddings_dir, "docs",
+                                               model=self.settings.embed_model),
+                            "embeddings: %d passages loaded")
 
     def household_index(self) -> Optional[ApproxIndex]:
         """The household collection's approximate index (Gutenberg and Survivor Library, one vector per
         book), read and refreshed exactly as `index()` does for the box's own passages -- a second,
         parallel cache rather than a variant of the first, because the two collections' files change on
         their own schedules (a fresh `sos build-embeddings` writes both, but only one need be present)."""
-        path = Path(self.settings.embeddings_dir) / "household.hnsw"
-        now = time.monotonic()
-        if self._household_index is not None and now - self._household_checked < 30:
-            return self._household_index
-        self._household_checked = now
-        try:
-            stamp = path.stat().st_mtime
-        except OSError:
-            if self._household_index is not None:
-                self.generation += 1
-            self._household_index, self._household_stamp = None, None
-            return None
-        if stamp != self._household_stamp:
-            self._household_index = ApproxIndex.load(self.settings.embeddings_dir, "household")
-            self._household_stamp = stamp
-            self.generation += 1
-            if self._household_index is not None:
-                log.info("embeddings: %d household books loaded", len(self._household_index))
-        return self._household_index
+        return self._cached(self._household, "household", ("hnsw", "ids"),
+                            lambda: ApproxIndex.load(self.settings.embeddings_dir, "household",
+                                                     model=self.settings.embed_model),
+                            "embeddings: %d household books loaded")
 
     def wikipedia_store(self) -> Optional["WikipediaStore"]:
         """The Wikipedia rerank-only store (Task 8), read and refreshed exactly as `index()` and
-        `household_index()` do for their own collections -- a third, parallel cache with its own stamp and
-        its own throttle clock (`_wikipedia_checked`), never sharing `_checked` or `_household_checked`
-        (see the note on `_wikipedia_checked` in `__init__`)."""
-        path = Path(self.settings.embeddings_dir) / "wikipedia.f16.bin"
-        now = time.monotonic()
-        if self._wikipedia_store is not None and now - self._wikipedia_checked < 30:
-            return self._wikipedia_store
-        self._wikipedia_checked = now
-        try:
-            stamp = path.stat().st_mtime
-        except OSError:
-            if self._wikipedia_store is not None:
-                self.generation += 1
-            self._wikipedia_store, self._wikipedia_stamp = None, None
-            return None
-        if stamp != self._wikipedia_stamp:
-            self._wikipedia_store = WikipediaStore.load(self.settings.embeddings_dir)
-            self._wikipedia_stamp = stamp
-            self.generation += 1
-            if self._wikipedia_store is not None:
-                log.info("embeddings: %d wikipedia rerank vectors loaded", len(self._wikipedia_store))
-        return self._wikipedia_store
+        `household_index()` do for their own collections -- a third, parallel cache."""
+        return self._cached(self._wikipedia, "wikipedia", ("f16.bin", "ids"),
+                            lambda: WikipediaStore.load(self.settings.embeddings_dir,
+                                                        model=self.settings.embed_model),
+                            "embeddings: %d wikipedia rerank vectors loaded")
 
     def available(self) -> bool:
         return self.index() is not None
