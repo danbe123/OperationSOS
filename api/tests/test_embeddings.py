@@ -144,6 +144,7 @@ def test_semantic_query_prefixes_the_query_and_answers_nothing_when_the_server_o
     assert hits == [("/m/food", pytest.approx(1.0))]
     assert sent["body"] == {"input": [embeddings.QUERY_PREFIX + "tinned food"]}
     respx_mock.post(f"{env.embed_url}/embeddings").mock(return_value=httpx.Response(503))
+    clock["t"] += 31                                            # past the memo of the words just embedded
     assert asyncio.run(sem.query("tinned food")) == []
 
 
@@ -1861,6 +1862,97 @@ def test_household_only_cli_does_not_rebuild_docs(env, monkeypatch):
     monkeypatch.setattr(embeddings, 'build_household', lambda *a, **k: called.append(True))
     assert embeddings.build_cli(env, run=run, out=lambda s: None, collection='household') == 0
     assert called == [True]
+
+
+# --- one embedding per search, not one per collection ------------------------------------------------------
+
+
+class CountingEmbedClient:
+    """Stands in for EmbedClient and records every real request the Semantic layer makes."""
+
+    def __init__(self, fail: bool = False, delay: float = 0.0):
+        self.calls: list[tuple[list[str], float]] = []
+        self.fail = fail
+        self.delay = delay
+
+    async def embed(self, texts, timeout=None):
+        self.calls.append((list(texts), timeout))
+        if self.delay:
+            await asyncio.sleep(self.delay)
+        if self.fail:
+            raise embeddings.EmbedError("no embedding server")
+        return np.stack([unit(1, 0)])
+
+
+def _every_collection(folder: Path) -> None:
+    embeddings.write_index(folder, "docs", np.stack([unit(1, 0)]), ["/m/food"], {})
+    embeddings.ApproxIndex.build(np.stack([unit(1, 0)]), ["gutenberg_en_all:1"]).save(folder, "household")
+    embeddings.write_index(folder, "wikipedia", np.stack([unit(1, 0)]), ["Water_purification"], {"count": 1})
+
+
+def _semantic_with(env, client) -> "embeddings.Semantic":
+    sem = embeddings.Semantic(env)
+    sem.client = client
+    return sem
+
+
+async def _one_search(sem, q: str):
+    return (await sem.query(q), await sem.query_household(q),
+            await sem.rerank_wikipedia(q, ["Water_purification"]))
+
+
+def test_one_search_embeds_the_query_once_for_all_three_collections(env):
+    """The three collections used to embed the same words three times over, each with its own 0.6 s
+    timeout: up to 1.8 s of a loaded box's search, and triple the work for the Pi's single-threaded
+    sos-embed.service (MemoryMax=600M)."""
+    _every_collection(Path(env.embeddings_dir))
+    client = CountingEmbedClient()
+    docs, books, wiki = asyncio.run(_one_search(_semantic_with(env, client), "tinned food"))
+    assert docs and books and wiki                                  # every collection really answered
+    assert len(client.calls) == 1
+    assert client.calls[0] == ([embeddings.QUERY_PREFIX + "tinned food"], embeddings.Semantic.QUERY_TIMEOUT_S)
+
+
+def test_a_down_embedding_server_costs_one_timeout_a_search_rather_than_three(env):
+    _every_collection(Path(env.embeddings_dir))
+    client = CountingEmbedClient(fail=True)
+    assert asyncio.run(_one_search(_semantic_with(env, client), "tinned food")) == ([], [], {})
+    assert len(client.calls) == 1
+
+
+def test_a_different_query_is_embedded_again_and_the_memo_expires(env, monkeypatch):
+    clock = {"t": 10_000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["t"])
+    _every_collection(Path(env.embeddings_dir))
+    client = CountingEmbedClient()
+    sem = _semantic_with(env, client)
+    assert asyncio.run(sem.query("tinned food")) and asyncio.run(sem.query("boiling water"))
+    assert len(client.calls) == 2
+    assert asyncio.run(sem.query("tinned food"))
+    assert len(client.calls) == 2                                   # still the same words, still fresh
+    clock["t"] += 31
+    assert asyncio.run(sem.query("tinned food"))
+    assert len(client.calls) == 3                                   # the memo is short on purpose
+
+
+def test_two_searches_for_the_same_words_at_once_embed_it_once(env):
+    _every_collection(Path(env.embeddings_dir))
+    client = CountingEmbedClient(delay=0.05)
+    sem = _semantic_with(env, client)
+
+    async def at_the_same_time():
+        return await asyncio.gather(sem.query("tinned food"), sem.query_household("tinned food"))
+
+    docs, books = asyncio.run(at_the_same_time())
+    assert docs and books and len(client.calls) == 1
+
+
+def test_an_empty_query_still_embeds_nothing_at_all(env):
+    _every_collection(Path(env.embeddings_dir))
+    client = CountingEmbedClient()
+    sem = _semantic_with(env, client)
+    assert asyncio.run(_one_search(sem, "   ")) == ([], [], {})
+    assert client.calls == []
 
 
 # --- loading a store: the throttle, the generation names, the pruning and the metadata check ---------------

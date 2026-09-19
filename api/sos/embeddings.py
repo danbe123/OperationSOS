@@ -13,6 +13,7 @@ bge-small was trained with an instruction on the query side only: every query is
 `QUERY_PREFIX`; the passages are not. Getting that backwards produces no error, just worse retrieval."""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
@@ -1244,10 +1245,15 @@ class Semantic:
 
     QUERY_TIMEOUT_S = 0.6
     THROTTLE_S = 30
+    QUERY_TTL_S = 30          # long enough for one search's three collections and a page of typing-ahead
+    FAILED_QUERY_TTL_S = 3    # and short enough that a server coming back is waited for, not cached out
+    QUERY_MEMO = 8
 
     def __init__(self, settings: Settings):
         self.settings = settings
         self.client = EmbedClient(settings.embed_url)
+        self._vectors: dict[str, tuple[Optional[np.ndarray], float]] = {}   # the last few queries embedded
+        self._embedding: dict[str, "asyncio.Future"] = {}                   # and the ones in flight now
         # One cache per collection, each with its own throttle clock -- Task 7's own fix round established
         # that sharing one timer between two collections starves whichever one's stat() check runs second
         # (see test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index).
@@ -1321,16 +1327,51 @@ class Semantic:
     def available(self) -> bool:
         return self.index() is not None
 
+    async def _query_vector(self, q: str) -> Optional[np.ndarray]:
+        """The query's embedding, asked of the server once however many collections want it.
+
+        One search asks all three: the docs passages, the household books and the Wikipedia rerank.
+        Embedding the same words three times over cost up to three 0.6 s timeouts on a loaded box, and
+        three times the work on the Pi, whose sos-embed.service is one thread inside MemoryMax=600M. A
+        failure is remembered too, briefly, so a server that is down or wedged costs one timeout a
+        search rather than three. None means "no vector to be had": every caller answers with nothing,
+        exactly as it did when it caught EmbedError itself."""
+        text = q.strip()
+        if not text:
+            return None
+        now = time.monotonic()
+        remembered = self._vectors.get(text)
+        if remembered is not None:
+            vector, at = remembered
+            if now - at < (self.QUERY_TTL_S if vector is not None else self.FAILED_QUERY_TTL_S):
+                return vector
+        waiting = self._embedding.get(text)
+        if waiting is not None:
+            return await waiting          # another request is already asking for these very words
+        future = asyncio.get_running_loop().create_future()
+        self._embedding[text] = future
+        vector = None
+        try:
+            try:
+                vector = (await self.client.embed([QUERY_PREFIX + text], timeout=self.QUERY_TIMEOUT_S))[0]
+            except EmbedError:
+                vector = None
+            self._vectors[text] = (vector, time.monotonic())
+            while len(self._vectors) > self.QUERY_MEMO:
+                self._vectors.pop(next(iter(self._vectors)))
+        finally:
+            self._embedding.pop(text, None)
+            if not future.done():
+                future.set_result(vector)
+        return vector
+
     async def query(self, q: str, k: int = 20) -> list[tuple[str, float]]:
         """The nearest passages to a query: (url, cosine), best first; empty when semantic search is off."""
         index = self.index()
         if index is None or not q.strip():
             return []
-        try:
-            vec = await self.client.embed([QUERY_PREFIX + q.strip()], timeout=self.QUERY_TIMEOUT_S)
-        except EmbedError:
-            return []
-        return index.search(vec[0], k)
+        vec = await self._query_vector(q)
+        return index.search(vec, k) if vec is not None else []
 
     async def query_household(self, q: str, k: int = 20) -> list[tuple[str, float]]:
         """The nearest household books to a query: (key, cosine) where key is "<zim id>:<book id>", best
@@ -1339,11 +1380,8 @@ class Semantic:
         index = self.household_index()
         if index is None or not q.strip():
             return []
-        try:
-            vec = await self.client.embed([QUERY_PREFIX + q.strip()], timeout=self.QUERY_TIMEOUT_S)
-        except EmbedError:
-            return []
-        return index.search(vec[0], k)
+        vec = await self._query_vector(q)
+        return index.search(vec, k) if vec is not None else []
 
     async def rerank_wikipedia(self, q: str, keys: list[str]) -> dict[str, float]:
         """Cosine similarity for a handful of already-known Wikipedia article keys against one query
@@ -1354,9 +1392,8 @@ class Semantic:
         store = self.wikipedia_store()
         if store is None or not q.strip():
             return {}
-        try:
-            qvec = (await self.client.embed([QUERY_PREFIX + q.strip()], timeout=self.QUERY_TIMEOUT_S))[0]
-        except EmbedError:
+        qvec = await self._query_vector(q)
+        if qvec is None:
             return {}
         out: dict[str, float] = {}
         for key in keys:
