@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -172,9 +173,16 @@ def cmd_build_embeddings(settings: Settings, args) -> int:
     return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection)
 
 
+def default_workers() -> int:
+    """Article extraction processes for the Wikipedia embedding build: four cores held back for the GPU
+    embedding server and for the machine itself, and never more than six (past which the GPU, not the
+    parsing, is the limit)."""
+    return min(6, max(1, (os.cpu_count() or 2) - 4))
+
+
 def cmd_build_embeddings_wikipedia(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit)
+    return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit, workers=args.workers)
 
 
 def cmd_eval(settings: Settings, args) -> int:
@@ -226,6 +234,8 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build-embeddings-wikipedia", help="PC only: embed English Wikipedia for rerank-only lookup (multi-hour; needs its own explicit run)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
     p.add_argument("--limit", type=_positive_int, default=None, help="cap the number of articles embedded, for a real throughput measurement")
+    p.add_argument("--workers", type=_positive_int, default=default_workers(),
+                   help="processes reading and cleaning article text while the main process embeds (default: cores minus four, capped at six)")
     p.set_defaults(func=cmd_build_embeddings_wikipedia)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")

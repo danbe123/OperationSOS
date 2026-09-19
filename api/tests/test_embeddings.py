@@ -1,5 +1,6 @@
 """Semantic search: the passage text, the index, the build, the query prefix, and the fusion into search."""
 import asyncio
+import hashlib
 import json
 import os
 import shutil
@@ -386,10 +387,10 @@ def test_build_cli_starts_the_cuda_binary_when_cuda_is_true(env, monkeypatch):
     assert "-ngl" in seen_cmds[0] and seen_cmds[0][seen_cmds[0].index("-ngl") + 1] == "99"
 
 
-def test_build_wikipedia_cli_starts_the_server_and_passes_resume_and_limit_through(env, monkeypatch):
+def test_build_wikipedia_cli_starts_the_server_and_passes_resume_limit_and_workers_through(env, monkeypatch):
     """build_wikipedia_cli mirrors build_cli's own start/stop pattern exactly, but calls
     build_wikipedia_rerank (a no-op here: no wikipedia_en_all_maxi row in library_items) rather than
-    build()/build_household(), and threads --limit through to it."""
+    build()/build_household(), and threads --limit and --workers through to it."""
     seen_cmds, fake_run = _build_cli_fixture(env, monkeypatch)
     seen_calls = []
     real = embeddings.build_wikipedia_rerank
@@ -399,10 +400,10 @@ def test_build_wikipedia_cli_starts_the_server_and_passes_resume_and_limit_throu
         return real(conn, settings, embed, **kw)
 
     monkeypatch.setattr(embeddings, "build_wikipedia_rerank", spy)
-    rc = embeddings.build_wikipedia_cli(env, out=lambda s: None, run=fake_run, limit=5)
+    rc = embeddings.build_wikipedia_cli(env, out=lambda s: None, run=fake_run, limit=5, workers=4)
     assert rc == 0
     assert len(seen_cmds) == 1 and not seen_cmds[0][0].endswith("llama-server-cuda")
-    assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5}]
+    assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5, "workers": 4}]
 
 
 # --- excluded_zims: the ZIM ids meaning search must never touch (Task 9) -------------------------------------
@@ -679,10 +680,10 @@ def test_build_wikipedia_rerank_is_a_noop_for_a_zim_not_on_the_box(tmp_path):
     assert any("not on the box; skipped" in line for line in lines)
 
 
-def _insert_wikipedia_zim_row(conn, tmp_path) -> None:
+def _insert_wikipedia_zim_row(conn, tmp_path, zim_path: Path | None = None) -> None:
     conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
                  "VALUES ('wikipedia_en_all_maxi', 'Wikipedia', 'zim', 'core', 'reference', 'zim/w.zim', 50, 1, ?)",
-                 (str(tmp_path / "wikipedia_en_all_maxi.zim"),))
+                 (str(zim_path or tmp_path / "wikipedia_en_all_maxi.zim"),))
     conn.commit()
 
 
@@ -827,7 +828,227 @@ def test_build_wikipedia_rerank_resumes_after_a_simulated_interruption(tmp_path,
     assert store.vector_for("Soft_Redirect_Stub") is None
 
 
-ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
+# --- build_wikipedia_rerank(workers=N): article extraction in a pool of worker processes ------------------
+#
+# The parallel path opens a real ZIM in each worker (a spawned process cannot be handed the parent's
+# libzim handle, nor a fixture reader object), so these tests build a tiny REAL ZIM in the maxi
+# Wikipedia layout rather than using FakeWikipediaZim.
+
+
+@pytest.fixture(scope="module")
+def wikipedia_zim(tmp_path_factory) -> Path:
+    """A real, tiny ZIM shaped like the maxi Wikipedia one: 300 article entries, an `_assets_/` image
+    entry (dropped by path alone) and one "soft redirect" stub whose extracted text is under
+    SHORTEST_CHARS. 301 real keys is ten BATCH-sized chunks: enough for a sliding window to be visible."""
+    from libzim.writer import Creator, Hint, Item, StringProvider
+
+    class _Item(Item):
+        def __init__(self, path: str, content: str, mimetype: str):
+            super().__init__()
+            self._path, self._content, self._mimetype = path, content, mimetype
+
+        def get_path(self):
+            return self._path
+
+        def get_title(self):
+            return self._path
+
+        def get_mimetype(self):
+            return self._mimetype
+
+        def get_contentprovider(self):
+            return StringProvider(self._content)
+
+        def get_hints(self):
+            return {Hint.FRONT_ARTICLE: False}
+
+    path = tmp_path_factory.mktemp("wikizim") / "wikipedia_en_all_maxi.zim"
+    with Creator(str(path)).config_indexing(False, "eng") as creator:
+        creator.set_mainpath("Article_000")
+        for i in range(300):
+            body = (f"This is the real body text of Wikipedia article number {i}, with enough distinct "
+                    f"words in it that every article's own vector differs from every other article's "
+                    f"once it has been embedded, and comfortably more characters than SHORTEST_CHARS so "
+                    f"that it is never mistaken for a stub. Article {i} says so several times over: "
+                    f"article {i}, article {i}, article {i}, article {i}.")
+            creator.add_item(_Item(f"Article_{i:03d}",
+                                   f"<html><body><h1>Article {i}</h1><p>{body}</p></body></html>", "text/html"))
+        creator.add_item(_Item("_assets_/thumb/a1b2c3/Some_Picture.jpg", "not a real article", "image/jpeg"))
+        creator.add_item(_Item("Soft_Redirect_Stub",
+                               "<html><body><p>Soft Redirect Stub Soft Redirect Stub</p></body></html>", "text/html"))
+    return path
+
+
+def _text_seeded_embed(calls_log: list | None = None, fail_at: int | None = None):
+    """A deterministic fake embed whose vector depends only on the text, never on call order or batch
+    composition -- so two runs that scheduled their extraction differently are still expected to produce
+    byte-identical vectors, and a difference means a real difference in what was embedded."""
+    def embed(texts):
+        if calls_log is not None:
+            calls_log.append(list(texts))
+            if fail_at is not None and len(calls_log) == fail_at:
+                raise RuntimeError("simulated interruption")
+        rows = []
+        for text in texts:
+            seed = int.from_bytes(hashlib.sha256(text.encode("utf-8")).digest()[:8], "big")
+            v = np.random.default_rng(seed).normal(size=embeddings.DIMS).astype(np.float32)
+            rows.append(v / np.linalg.norm(v))
+        return np.stack(rows)
+    return embed
+
+
+def _wikipedia_conn(folder: Path, zim_path: Path):
+    conn = db.connect(folder / "sos.db")
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, folder, zim_path)
+    return conn
+
+
+def _store_bytes(folder: Path) -> tuple[bytes, bytes]:
+    return (folder / "wikipedia.f16.bin").read_bytes(), (folder / "wikipedia.ids").read_bytes()
+
+
+def test_parallel_and_serial_wikipedia_builds_are_byte_identical(tmp_path, wikipedia_zim):
+    """The whole point of the worker pool is that it only changes WHERE the article text is extracted,
+    never what ends up in the store: same keys, same order, same vectors, same counts."""
+    from sos.embeddings import build_wikipedia_rerank
+
+    results, folders = [], []
+    for workers in (1, 3):
+        folder = tmp_path / f"w{workers}"
+        folder.mkdir()
+        conn = _wikipedia_conn(folder, wikipedia_zim)
+        results.append(build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(),
+                                              out=lambda s: None, workers=workers))
+        conn.close()
+        folders.append(folder)
+
+    assert results[0]["count"] == 301 and results[0]["skipped_no_text"] == 1   # the stub, left a zero row
+    for field in ("count", "seen", "skipped_no_text", "dims"):
+        assert results[0][field] == results[1][field], field
+    assert _store_bytes(folders[0]) == _store_bytes(folders[1])
+
+
+def test_wikipedia_build_resumes_across_a_change_of_worker_count(tmp_path, monkeypatch, wikipedia_zim):
+    """`workers` is a scheduling choice, never part of the checkpoint's identity: a build interrupted on
+    three workers resumes on two, from the batch it was interrupted on, and finishes byte-identical to a
+    build that was never interrupted at all."""
+    from sos.embeddings import BATCH, build_wikipedia_rerank
+
+    monkeypatch.setattr(embeddings, "CHECKPOINT_BATCHES", 1)   # a checkpoint every batch: fast, still real
+
+    folder = tmp_path / "interrupted"
+    folder.mkdir()
+    conn = _wikipedia_conn(folder, wikipedia_zim)
+
+    calls_1: list = []
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(calls_1, fail_at=3),
+                               out=lambda s: None, resume=False, workers=3)
+    assert len(calls_1) == 3
+    state = json.loads((folder / "wikipedia.checkpoint.json").read_text())
+    assert state["done"] == 2 * BATCH               # only the two genuinely finished batches were saved
+    assert not (folder / "wikipedia.f16.bin").exists()
+
+    calls_2: list = []
+    result = build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(calls_2),
+                                    out=lambda s: None, resume=True, workers=2)
+    conn.close()
+    # the proof it resumed rather than silently restarting: the second run's first embed call is given the
+    # interrupted batch's own texts, not batch 1's -- and the worker count it resumed on is irrelevant.
+    assert calls_2[0] == calls_1[2] and calls_2[0] != calls_1[0]
+    assert not (folder / "wikipedia.checkpoint.json").exists()
+
+    clean = tmp_path / "clean"
+    clean.mkdir()
+    conn2 = _wikipedia_conn(clean, wikipedia_zim)
+    uninterrupted = build_wikipedia_rerank(conn2, embeddings_settings(clean), _text_seeded_embed(),
+                                           out=lambda s: None, workers=3)
+    conn2.close()
+    assert result["count"] == uninterrupted["count"] == 301
+    assert result["skipped_no_text"] == uninterrupted["skipped_no_text"] == 1
+    assert _store_bytes(folder) == _store_bytes(clean)
+
+
+def test_parallel_extraction_keeps_a_bounded_sliding_window(tmp_path, monkeypatch, wikipedia_zim):
+    """Bounded memory is the reason this is a hand-rolled window and not Executor.map: the pool must never
+    hold the whole key list's worth of extracted text at once. Counted here by watching submissions run
+    ahead of consumption -- one progress line per consumed chunk, with CHECKPOINT_BATCHES pinned to 1."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sos.embeddings import BATCH, WORKER_WINDOW_CHUNKS, build_wikipedia_rerank
+
+    monkeypatch.setattr(embeddings, "CHECKPOINT_BATCHES", 1)
+    workers = 2
+    window = workers * WORKER_WINDOW_CHUNKS
+    seen = {"submitted": 0, "consumed": 0, "ahead": 0}
+
+    class CountingPool(ProcessPoolExecutor):
+        def submit(self, fn, /, *args, **kwargs):
+            seen["submitted"] += 1
+            seen["ahead"] = max(seen["ahead"], seen["submitted"] - seen["consumed"])
+            return super().submit(fn, *args, **kwargs)
+
+    monkeypatch.setattr(embeddings, "ProcessPoolExecutor", CountingPool)
+
+    folder = tmp_path / "windowed"
+    folder.mkdir()
+    conn = _wikipedia_conn(folder, wikipedia_zim)
+    chunks = -(-301 // BATCH)
+    assert chunks > window + 1   # more chunks than the window, or a bound on the window proves nothing
+
+    def out(line):
+        if " of " in line:
+            seen["consumed"] += 1
+
+    result = build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(),
+                                    out=out, workers=workers)
+    conn.close()
+    assert result["count"] == 301
+    assert seen["submitted"] == chunks and seen["consumed"] == chunks   # every chunk, exactly once
+    # at most a full window in flight, plus the one chunk just taken out of it and being embedded
+    assert seen["ahead"] <= window + 1
+    assert seen["ahead"] > WORKER_WINDOW_CHUNKS   # and it really does run ahead: extraction overlaps embedding
+
+
+def test_a_worker_that_cannot_open_the_zim_fails_the_build_clearly_and_leaves_no_children(tmp_path, wikipedia_zim):
+    """A worker that dies must stop the run with an error that says so, take the pool down with it, and
+    leave the last checkpoint intact so the build is still resumable. Provoked here the way it would
+    really happen: the workers cannot open the ZIM at the path the library row gives."""
+    import multiprocessing
+    from concurrent.futures.process import BrokenProcessPool
+
+    from sos.books import open_zim
+    from sos.embeddings import build_wikipedia_rerank
+
+    folder = tmp_path / "broken"
+    folder.mkdir()
+    conn = db.connect(folder / "sos.db")
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, folder)     # local_path points at a ZIM that is not there
+    reader = open_zim(wikipedia_zim)            # ... while the parent enumerates keys from the real one
+
+    with pytest.raises(RuntimeError) as exc:
+        build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(),
+                               open_zim=lambda p: reader, out=lambda s: None, workers=2)
+    conn.close()
+    assert "worker" in str(exc.value).lower()
+    assert isinstance(exc.value.__cause__, BrokenProcessPool)
+    assert multiprocessing.active_children() == []   # the pool was shut down, not orphaned
+
+
+def test_build_wikipedia_rerank_rejects_a_nonpositive_worker_count(tmp_path):
+    from sos.embeddings import build_wikipedia_rerank
+
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    conn.commit()
+    with pytest.raises(ValueError, match="workers"):
+        build_wikipedia_rerank(conn, embeddings_settings(tmp_path), lambda texts: None,
+                               out=lambda s: None, workers=0)
+
+
+ROW_SQL ="INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
 
 
 def _search(conn, env, q, sem, **kw):

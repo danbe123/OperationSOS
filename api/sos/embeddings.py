@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import multiprocessing
 import os
 import re
 import shutil
@@ -23,6 +24,10 @@ import subprocess
 import tempfile
 import time
 import uuid
+from collections import deque
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
+from contextlib import contextmanager
 from itertools import islice
 from pathlib import Path
 from typing import Callable, Iterator, Optional
@@ -590,9 +595,83 @@ def _wikipedia_article_text(reader, key: str) -> str:
     return f"{title}. {body}"[:HOUSEHOLD_TEXT_CHARS]
 
 
+WORKER_WINDOW_CHUNKS = 3  # chunks of keys kept submitted per worker: enough that no worker ever waits for
+                          # the main process to come back round, small enough that the extracted text held
+                          # in flight stays a few thousand passages rather than the whole 8.4-million key
+                          # list (which is why this is a hand-rolled window and not Executor.map).
+
+_WORKER_READER = None     # one archive handle per worker process, opened by _worker_open below
+
+
+def _worker_open(zim_path: str) -> None:
+    """Pool initialiser: give this worker process its own libzim archive over the ZIM on disk."""
+    global _WORKER_READER
+    from sos.books import open_zim
+    _WORKER_READER = open_zim(Path(zim_path))
+
+
+def _worker_texts(keys: list[str]) -> list[str]:
+    """One chunk of keys to their extracted passages -- exactly what the serial path computes in-process."""
+    return [_wikipedia_article_text(_WORKER_READER, key) for key in keys]
+
+
+@contextmanager
+def _wikipedia_text_chunks(reader, all_keys: list[str], starts, workers: int, zim_path: str):
+    """Yield (start, texts) for each BATCH-sized chunk of `starts`, strictly in key order, so the caller's
+    loop, its checkpoint cadence and its resume arithmetic are the same whether one process or six did the
+    reading. Serial (`workers <= 1`) is today's in-process extraction, unchanged.
+
+    Start method: spawn, deliberately. Forking would hand each child a copy-on-write view of a parent that
+    is holding the 8.4-million-string key list (touching those pages to refcount them would quietly
+    duplicate gigabytes) and, worse, an already-open libzim Archive -- a C++ object over an mmap with its
+    own caches, which is not safe to inherit and use in a child. A spawned worker starts from a clean
+    interpreter and opens its own handle from the path; the extra second of interpreter startup is nothing
+    against a multi-hour build. (forkserver would also avoid the inherited handle, but spawn needs no
+    preload list to stay correct.) The parent's `open_zim` override therefore reaches key enumeration
+    only: the workers always read the real file at `local_path` through sos.books.open_zim."""
+    if workers <= 1:
+        yield ((start, [_wikipedia_article_text(reader, key) for key in all_keys[start:start + BATCH]])
+               for start in starts)
+        return
+    pool = ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
+                               initializer=_worker_open, initargs=(str(zim_path),))
+
+    def chunks():
+        pending: deque = deque()
+        remaining = iter(starts)
+
+        def fill():
+            while len(pending) < workers * WORKER_WINDOW_CHUNKS:
+                start = next(remaining, None)
+                if start is None:
+                    return
+                pending.append((start, pool.submit(_worker_texts, all_keys[start:start + BATCH])))
+
+        fill()
+        while pending:
+            start, future = pending.popleft()
+            try:
+                texts = future.result()
+            except BrokenProcessPool as exc:
+                raise RuntimeError(
+                    f"wikipedia: an article-extraction worker process died at row {start}; the build has "
+                    f"stopped and can be resumed from its last checkpoint") from exc
+            except Exception as exc:
+                raise RuntimeError(
+                    f"wikipedia: an article-extraction worker failed at row {start} ({exc}); the build "
+                    f"has stopped and can be resumed from its last checkpoint") from exc
+            fill()   # refill before the caller embeds, so extraction of later chunks overlaps this one
+            yield start, texts
+
+    try:
+        yield chunks()
+    finally:
+        pool.shutdown(wait=True, cancel_futures=True)
+
+
 def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
                            open_zim=None, out: Callable = print, resume: bool = True,
-                           limit: Optional[int] = None) -> dict:
+                           limit: Optional[int] = None, workers: int = 1) -> dict:
     """One vector per real English Wikipedia article, for rerank-only lookup (WikipediaStore), never for
     nearest-neighbour retrieval (Task 9 does that reranking; this function only builds the store). A
     multi-hour build on the real ZIM (8.4 million real article keys): resumable, with a memory-mapped
@@ -602,12 +681,21 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
     its first N entries: a fast, real, small-scale throughput measurement (`sos build-embeddings-wikipedia
     --limit N`) without doing the full build.
 
+    `workers` > 1 moves the article reading and HTML-to-text extraction into that many worker processes,
+    which run ahead of the embedding the main process is doing -- the serial loop leaves eleven of twelve
+    cores idle while the GPU works and the GPU idle while one core parses. The batches are still consumed
+    strictly in key order, so the store, the counts and the checkpoint are exactly what `workers=1`
+    produces; `workers` is a scheduling choice and deliberately not part of the checkpoint identity, so a
+    build started on one worker resumes on six and the other way about.
+
     Wikipedia is not excluded from meaning-based reranking:
     this function is scoped to the one WIKIPEDIA_ZIM id below already, which makes it trivially compliant
     on its own -- but a future editor who adds a second ZIM to this function must add the real
     excluded_zims check at that point, not assume this single-ZIM guard still covers it."""
     if limit is not None and limit <= 0:
         raise ValueError("limit must be positive")
+    if workers < 1:
+        raise ValueError("workers must be positive")
     from sos.books import open_zim as real_open_zim
     open_zim = open_zim or real_open_zim
     row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (WIKIPEDIA_ZIM,)).fetchone()
@@ -662,33 +750,34 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
         out(f"wikipedia: resuming from {done} of {len(all_keys)}")
     t0 = time.perf_counter()
     total_seen = done
-    for start in range(done, len(all_keys), BATCH):
-        batch_keys = all_keys[start:start + BATCH]
-        vectors[start:start + len(batch_keys)] = 0
-        texts = [_wikipedia_article_text(reader, k) for k in batch_keys]
-        total_seen += len(batch_keys)
-        # a soft-redirect stub (or anything else with next to nothing to say) is left as the zero vector
-        # vectors' own np.zeros() already gave it -- never embedded, exactly as build_household skips a
-        # near-empty book, but the key stays in the store: a real article, findable, just with nothing to
-        # rerank by (a harmless, never-boosted 0.0 similarity), rather than vanishing from the key list
-        # this build's own resumability depends on staying a fixed, known size.
-        keep = [i for i, t in enumerate(texts) if len(t) >= SHORTEST_CHARS]
-        total_skipped += len(batch_keys) - len(keep)
-        if keep:
-            vecs = embed_batch(embed, [texts[i] for i in keep])
-            for j, i in enumerate(keep):
-                vectors[start + i] = vecs[j].astype(np.float16)
-        if (start // BATCH) % CHECKPOINT_BATCHES == 0 or start + BATCH >= len(all_keys):
-            vectors.flush()
-            checkpoint_part = checkpoint_path.with_suffix(".json.part")
-            checkpoint_part.write_text(json.dumps({"identity": identity, "done": start + len(batch_keys),
-                                                   "skipped_no_text": total_skipped}))
-            os.replace(checkpoint_part, checkpoint_path)
-            elapsed = time.perf_counter() - t0
-            rate = (start + len(batch_keys) - done) / max(elapsed, 0.001)
-            remaining_s = (len(all_keys) - start - len(batch_keys)) / max(rate, 0.001)
-            out(f"wikipedia: {start + len(batch_keys)} of {len(all_keys)} "
-                f"({elapsed:.0f}s elapsed, ~{remaining_s / 3600:.1f}h remaining at this rate)")
+    with _wikipedia_text_chunks(reader, all_keys, range(done, len(all_keys), BATCH), workers,
+                                row["local_path"]) as text_chunks:
+        for start, texts in text_chunks:
+            batch_keys = all_keys[start:start + BATCH]
+            vectors[start:start + len(batch_keys)] = 0
+            total_seen += len(batch_keys)
+            # a soft-redirect stub (or anything else with next to nothing to say) is left as the zero
+            # vector vectors' own np.zeros() already gave it -- never embedded, exactly as build_household
+            # skips a near-empty book, but the key stays in the store: a real article, findable, just with
+            # nothing to rerank by (a harmless, never-boosted 0.0 similarity), rather than vanishing from
+            # the key list this build's own resumability depends on staying a fixed, known size.
+            keep = [i for i, t in enumerate(texts) if len(t) >= SHORTEST_CHARS]
+            total_skipped += len(batch_keys) - len(keep)
+            if keep:
+                vecs = embed_batch(embed, [texts[i] for i in keep])
+                for j, i in enumerate(keep):
+                    vectors[start + i] = vecs[j].astype(np.float16)
+            if (start // BATCH) % CHECKPOINT_BATCHES == 0 or start + BATCH >= len(all_keys):
+                vectors.flush()
+                checkpoint_part = checkpoint_path.with_suffix(".json.part")
+                checkpoint_part.write_text(json.dumps({"identity": identity, "done": start + len(batch_keys),
+                                                       "skipped_no_text": total_skipped}))
+                os.replace(checkpoint_part, checkpoint_path)
+                elapsed = time.perf_counter() - t0
+                rate = (start + len(batch_keys) - done) / max(elapsed, 0.001)
+                remaining_s = (len(all_keys) - start - len(batch_keys)) / max(rate, 0.001)
+                out(f"wikipedia: {start + len(batch_keys)} of {len(all_keys)} "
+                    f"({elapsed:.0f}s elapsed, ~{remaining_s / 3600:.1f}h remaining at this rate)")
     vectors.flush()
     del vectors
     ids_part = folder / "wikipedia.ids.part"
@@ -709,7 +798,8 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
 
 
 def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
-                        cuda: bool = False, resume: bool = True, limit: Optional[int] = None) -> int:
+                        cuda: bool = False, resume: bool = True, limit: Optional[int] = None,
+                        workers: int = 1) -> int:
     """PC only: start the embedding server if none is up, embed Wikipedia for rerank-only lookup, stop
     what was started -- structurally build_cli's own pattern, kept a separate function (and a separate
     `sos build-embeddings-wikipedia` subcommand, not a flag on `build-embeddings`) because this specific
@@ -744,7 +834,7 @@ def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable
     client = httpx.Client()
     try:
         embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site
-        build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit)
+        build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit, workers=workers)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1

@@ -71,20 +71,41 @@ def test_eval_dispatches_to_runner(env, monkeypatch):
     assert calls[0].retrieval_only
 
 
-def test_build_embeddings_wikipedia_dispatches_cuda_and_limit(env, monkeypatch):
+def _spy_wikipedia_cli(monkeypatch) -> list:
     from sos import embeddings
     calls = []
-    monkeypatch.setattr(embeddings, "build_wikipedia_cli", lambda settings, cuda=False, limit=None: calls.append((cuda, limit)) or 0)
-    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5"]) == 0
-    assert calls == [(True, 5)]
+    monkeypatch.setattr(embeddings, "build_wikipedia_cli",
+                        lambda settings, cuda=False, limit=None, workers=1: calls.append((cuda, limit, workers)) or 0)
+    return calls
 
 
-def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit(env, monkeypatch):
-    from sos import embeddings
-    calls = []
-    monkeypatch.setattr(embeddings, "build_wikipedia_cli", lambda settings, cuda=False, limit=None: calls.append((cuda, limit)) or 0)
+def test_build_embeddings_wikipedia_dispatches_cuda_limit_and_workers(env, monkeypatch):
+    calls = _spy_wikipedia_cli(monkeypatch)
+    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5", "--workers", "3"]) == 0
+    assert calls == [(True, 5, 3)]
+
+
+def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit_and_leaves_cores_for_the_gpu_server(env, monkeypatch):
+    """The default worker count leaves four cores to Windows and the embedding server itself, and never
+    goes above six however many cores the machine has."""
+    import os
+
+    calls = _spy_wikipedia_cli(monkeypatch)
     assert cli.main(["build-embeddings-wikipedia"]) == 0
-    assert calls == [(False, None)]
+    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)))]
+
+
+@pytest.mark.parametrize("cores, expected", [(1, 1), (2, 1), (5, 1), (8, 4), (12, 6), (64, 6)])
+def test_default_workers_scales_with_the_machine_but_is_capped(monkeypatch, cores, expected):
+    monkeypatch.setattr(cli.os, "cpu_count", lambda: cores)
+    assert cli.default_workers() == expected
+
+
+@pytest.mark.parametrize("workers", ["0", "-1"])
+def test_wikipedia_cli_rejects_a_nonpositive_worker_count(workers):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args(["build-embeddings-wikipedia", "--workers", workers])
+    assert exc.value.code == 2
 
 
 def test_build_maps_exits_2_with_micromamba_hint_when_tools_missing(env, capsys, monkeypatch):
