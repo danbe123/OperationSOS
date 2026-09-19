@@ -13,6 +13,7 @@ bge-small was trained with an instruction on the query side only: every query is
 `QUERY_PREFIX`; the passages are not. Getting that backwards produces no error, just worse retrieval."""
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -21,8 +22,10 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
+from itertools import islice
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Iterator, Optional
 
 import httpx
 import numpy as np
@@ -115,10 +118,12 @@ class EmbedClient:
         await self._client.aclose()
 
 
-def embed_sync(url: str, texts: list[str], timeout: float = 120.0) -> np.ndarray:
+def embed_sync(url: str, texts: list[str], timeout: float = 120.0,
+               client: Optional[httpx.Client] = None) -> np.ndarray:
     """The build's blocking call: one batch of passages to vectors."""
     try:
-        r = httpx.post(f"{url.rstrip('/')}/embeddings", json={"input": texts}, timeout=timeout)
+        r = (client.post if client is not None else httpx.post)(
+            f"{url.rstrip('/')}/embeddings", json={"input": texts}, timeout=timeout)
     except httpx.HTTPError as exc:
         raise EmbedError(f"embedding server unreachable: {exc}") from exc
     if r.status_code != 200:
@@ -140,7 +145,7 @@ class Index:
 
     @classmethod
     def load(cls, folder: Path, collection: str) -> Optional["Index"]:
-        folder = Path(folder)
+        folder = _collection_folder(Path(folder), collection)
         vec_path, key_path, meta_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids", folder / f"{collection}.meta.json"
         if not (vec_path.is_file() and key_path.is_file()):
             return None
@@ -199,13 +204,12 @@ class ApproxIndex:
         self._hnsw.save_index(str(hnsw_part))
         ids_part = folder / f"{collection}.ids.part"
         ids_part.write_text("\n".join(self.keys) + "\n", encoding="utf-8")
-        os.replace(hnsw_part, folder / f"{collection}.hnsw")
-        os.replace(ids_part, folder / f"{collection}.ids")
+        _publish_collection(folder, collection, [hnsw_part, ids_part])
 
     @classmethod
     def load(cls, folder: Path, collection: str) -> Optional["ApproxIndex"]:
         import hnswlib
-        folder = Path(folder)
+        folder = _collection_folder(Path(folder), collection)
         hnsw_path, ids_path = folder / f"{collection}.hnsw", folder / f"{collection}.ids"
         if not (hnsw_path.is_file() and ids_path.is_file()):
             return None
@@ -254,15 +258,13 @@ class WikipediaStore:
 
     @classmethod
     def load(cls, folder: Path, collection: str = "wikipedia") -> Optional["WikipediaStore"]:
-        folder = Path(folder)
+        folder = _collection_folder(Path(folder), collection)
         vec_path, key_path = folder / f"{collection}.f16.bin", folder / f"{collection}.ids"
         if not (vec_path.is_file() and key_path.is_file()):
             return None
-        # A real, if temporary, memory-doubling moment worth flagging for Task 10's Pi measurement: for the
-        # instant between these two expressions, both the raw ~200+ MB string and the list split from it
-        # are alive at once, before the raw string's last reference (the .split() call itself) is dropped.
-        keys = [line for line in key_path.read_text(encoding="utf-8").split("\n") if line]
-        if not keys:
+        with key_path.open(encoding="utf-8") as ids:
+            keys = [line.rstrip("\n") for line in ids if line.rstrip("\n")]
+        if not keys or vec_path.stat().st_size != len(keys) * DIMS * 2:
             return None
         mmap = np.memmap(vec_path, dtype=np.float16, mode="r", shape=(len(keys), DIMS))
         return cls(mmap, keys)
@@ -283,6 +285,33 @@ class WikipediaStore:
         return vec if vec.any() else None
 
 
+def _collection_folder(folder: Path, collection: str) -> Path:
+    current = folder / f"{collection}.current"
+    return current.resolve() if current.is_symlink() else folder
+
+
+def _publish_collection(folder: Path, collection: str, parts: list[Path]) -> None:
+    """Publish a complete generation with one rename, keeping readers on the old files until then.
+
+    The familiar filenames are relative symlinks for copying and inspection. Loaders resolve the
+    generation once so a concurrent publication cannot pair old keys with new vectors. Previous
+    generations remain valid for readers holding a memory map; never truncate a published file.
+    """
+    generation = folder / f".{collection}-{uuid.uuid4().hex}"
+    generation.mkdir()
+    for part in parts:
+        os.replace(part, generation / part.name.removesuffix(".part"))
+    current = folder / f"{collection}.current"
+    next_link = folder / f"{collection}.current.{uuid.uuid4().hex}.part"
+    next_link.symlink_to(generation.name, target_is_directory=True)
+    os.replace(next_link, current)
+    for part in parts:
+        name = part.name.removesuffix(".part")
+        alias = folder / f"{name}.link.{uuid.uuid4().hex}.part"
+        alias.symlink_to(f"{current.name}/{name}")
+        os.replace(alias, folder / name)
+
+
 def _write_meta(folder: Path, collection: str, meta: dict) -> None:
     """One collection's meta.json, staged beside its final name and renamed into place -- the same
     atomic pattern write_index uses for the vectors and keys, shared here so it is written exactly
@@ -295,8 +324,7 @@ def _write_meta(folder: Path, collection: str, meta: dict) -> None:
 
 
 def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[str], meta: dict) -> None:
-    """The three files for one named collection, written beside their finals and moved into place
-    together, so a build that dies halfway leaves the old index whole."""
+    """Stage and publish one complete generation of vectors, keys and metadata."""
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     parts = []
@@ -305,9 +333,9 @@ def write_index(folder: Path, collection: str, vectors: np.ndarray, keys: list[s
         part = folder / (name + ".part")
         part.write_bytes(data)
         parts.append((part, folder / name))
-    for part, final in parts:
-        os.replace(part, final)
-    _write_meta(folder, collection, meta)
+    meta_part = folder / f"{collection}.meta.json.part"
+    meta_part.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+    _publish_collection(folder, collection, [part for part, _ in parts] + [meta_part])
 
 
 def embed_batch(embed: Callable[[list[str]], np.ndarray], texts: list[str]) -> np.ndarray:
@@ -406,7 +434,7 @@ _SURVIVOR_BOOK = re.compile(r"^www\.survivorlibrary\.com/library/(.+)\.pdf$", re
 def _gutenberg_text(html_bytes: bytes) -> str:
     from sos.kiwix import extract_text
 
-    return " ".join(extract_text(html_bytes.decode("utf-8", errors="replace")))
+    return " ".join(extract_text(html_bytes.decode("utf-8", errors="replace"), max_chars=HOUSEHOLD_TEXT_CHARS))
 
 
 def _pdf_text(pdf_bytes: bytes) -> str:
@@ -429,7 +457,7 @@ def _pdf_text(pdf_bytes: bytes) -> str:
             return ""
 
 
-def _household_entries(reader, zim_id: str) -> list[tuple[str, str, str]]:
+def _household_entries(reader, zim_id: str) -> Iterator[tuple[str, str, str]]:
     """(key, title, plain text) for every real book this ZIM's reader holds, found by walking its
     entries with `reader.paths()` and matching each collection's own real, confirmed entry-naming
     convention (Task 5's diagnostic) -- there is no catalogue to read for Survivor Library the way
@@ -438,9 +466,7 @@ def _household_entries(reader, zim_id: str) -> list[tuple[str, str, str]]:
 
     The two collections' entries are different shapes and need different extraction: Gutenberg's article
     is genuine HTML (kiwix.extract_text), Survivor Library's book is a PDF (pdftotext via a temp file).
-    Each entry is fully extracted here, not just named, so build_household's own loop only has to cut
-    and skip on the length of real text it already has."""
-    out: list[tuple[str, str, str]] = []
+    Extract lazily: at most one batch of full texts is retained, rather than the entire archive."""
     for path in reader.paths():
         if zim_id == "gutenberg_en_all":
             m = _GUTENBERG_ARTICLE.match(path)
@@ -450,7 +476,7 @@ def _household_entries(reader, zim_id: str) -> list[tuple[str, str, str]]:
             raw = reader.read(path)
             if not raw:
                 continue
-            out.append((f"{zim_id}:{book_id}", slug, _gutenberg_text(raw)))
+            yield f"{zim_id}:{book_id}", slug, _gutenberg_text(raw)
         else:
             m = _SURVIVOR_BOOK.match(path)
             if not m:
@@ -460,8 +486,7 @@ def _household_entries(reader, zim_id: str) -> list[tuple[str, str, str]]:
             if not raw:
                 continue
             title = re.sub(r"[-_]+", " ", slug).strip()
-            out.append((f"{zim_id}:{slug}", title, _pdf_text(raw)))
-    return out
+            yield f"{zim_id}:{slug}", title, _pdf_text(raw)
 
 
 def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
@@ -484,11 +509,14 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
         if row is None or not row["available"] or not row["local_path"]:
             out(f"household: {zim_id} is not on the box; skipped")
             continue
-        reader = open_zim(Path(row["local_path"]))
-        entries = _household_entries(reader, zim_id)
+        try:
+            reader = open_zim(Path(row["local_path"]))
+        except (OSError, RuntimeError, ValueError) as exc:
+            out(f"household: {zim_id} unreadable; skipped ({exc})")
+            continue
+        entries = iter(_household_entries(reader, zim_id))
         before = len(keys)
-        for start in range(0, len(entries), BATCH):
-            batch = entries[start:start + BATCH]
+        while batch := list(islice(entries, BATCH)):
             texts, batch_keys = [], []
             for key, title, text in batch:
                 total_seen += 1
@@ -496,12 +524,14 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
                 if len(plain) < SHORTEST_CHARS:
                     total_skipped += 1
                     continue
-                texts.append(f"{title}. {plain}")
+                texts.append(f"{title}. {plain}"[:HOUSEHOLD_TEXT_CHARS])
                 batch_keys.append(key)
             if not texts:
                 continue
             chunks.append(embed_batch(embed, texts))
             keys.extend(batch_keys)
+            if len(keys) // BATCH % 25 == 0:
+                out(f"household: {len(keys)} embedded ({time.perf_counter() - t0:.0f}s)")
         out(f"household: {zim_id} done, {len(keys) - before} books ({len(keys)} so far)")
     vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
     if keys:
@@ -509,7 +539,9 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
         idx.save(settings.embeddings_dir, "household")
     meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "seen": total_seen,
             "skipped_no_text": total_skipped, "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    _write_meta(settings.embeddings_dir, "household", meta)
+    meta["elapsed_s"] = time.perf_counter() - t0
+    if keys:
+        _write_meta(settings.embeddings_dir, "household", meta)
     out(f"household: wrote {len(keys)} vectors ({time.perf_counter() - t0:.0f}s, {total_skipped} skipped for no usable text)")
     return meta
 
@@ -554,7 +586,7 @@ def _wikipedia_article_text(reader, key: str) -> str:
     raw = reader.read(key)
     if not raw:
         return title
-    body = " ".join(extract_text(raw.decode("utf-8", errors="replace")))
+    body = " ".join(extract_text(raw.decode("utf-8", errors="replace"), max_chars=HOUSEHOLD_TEXT_CHARS))
     return f"{title}. {body}"[:HOUSEHOLD_TEXT_CHARS]
 
 
@@ -563,44 +595,76 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
                            limit: Optional[int] = None) -> dict:
     """One vector per real English Wikipedia article, for rerank-only lookup (WikipediaStore), never for
     nearest-neighbour retrieval (Task 9 does that reranking; this function only builds the store). A
-    multi-hour build on the real ZIM (8.4 million real article keys, Task 8's own measurement): resumable,
-    a checkpoint file records the sorted key list and how many batches have vectors so far, so a restart
+    multi-hour build on the real ZIM (8.4 million real article keys): resumable, with a memory-mapped
+    staging file and an atomic checkpoint identifying its source, key digest and completed rows. A restart
     (`resume=True`, the default) skips straight past whatever this process -- or an earlier, interrupted
     one -- already finished, rather than re-embedding it. `limit`, when given, caps the sorted key list to
     its first N entries: a fast, real, small-scale throughput measurement (`sos build-embeddings-wikipedia
     --limit N`) without doing the full build.
 
-    Wikipedia is never in EXCLUDED_ZIMS (Task 9's own general-purpose exclusion check, not written yet):
+    Wikipedia is not excluded from meaning-based reranking:
     this function is scoped to the one WIKIPEDIA_ZIM id below already, which makes it trivially compliant
     on its own -- but a future editor who adds a second ZIM to this function must add the real
-    EXCLUDED_ZIMS check at that point, not assume this single-ZIM guard still covers it."""
+    excluded_zims check at that point, not assume this single-ZIM guard still covers it."""
+    if limit is not None and limit <= 0:
+        raise ValueError("limit must be positive")
     from sos.books import open_zim as real_open_zim
     open_zim = open_zim or real_open_zim
     row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (WIKIPEDIA_ZIM,)).fetchone()
     if row is None or not row["available"] or not row["local_path"]:
         out("wikipedia: not on the box; skipped")
         return {"count": 0}
-    reader = open_zim(Path(row["local_path"]))
-    checkpoint_path = Path(settings.embeddings_dir) / "wikipedia.checkpoint.json"
-    part_path = Path(settings.embeddings_dir) / "wikipedia.f16.bin.part"
-    part_path.parent.mkdir(parents=True, exist_ok=True)
-    all_keys = sorted(_wikipedia_article_keys(reader))  # every real article path, sorted once, up front
+    try:
+        reader = open_zim(Path(row["local_path"]))
+    except (OSError, RuntimeError, ValueError) as exc:
+        out(f"wikipedia: unreadable; skipped ({exc})")
+        return {"count": 0}
+    folder = Path(settings.embeddings_dir)
+    # A measurement must never replace the live store or a full build's checkpoint.
+    if limit is not None:
+        folder = folder / "wikipedia-sample"
+    folder.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = folder / "wikipedia.checkpoint.json"
+    part_path = folder / "wikipedia.f16.bin.part"
+    out("wikipedia: enumerating article keys")
+    all_keys = sorted(_wikipedia_article_keys(reader))
     if limit is not None:
         all_keys = all_keys[:limit]
-    done = 0
-    vectors = np.zeros((len(all_keys), DIMS), dtype=np.float16)
-    if resume and checkpoint_path.is_file():
-        state = json.loads(checkpoint_path.read_text())
-        if state.get("keys") == all_keys:  # the ZIM (and any --limit) has not changed under us mid-build
-            done = state["done"]
-            if part_path.is_file():
-                existing = np.memmap(part_path, dtype=np.float16, mode="r", shape=(len(all_keys), DIMS))
-                vectors[:done] = existing[:done]
-            out(f"wikipedia: resuming from {done} of {len(all_keys)}")
+    if not all_keys:
+        out("wikipedia: no articles; skipped")
+        return {"count": 0}
+    # Checkpoint identity covers the source revision, model and ordered row mapping.
+    digest = hashlib.sha256()
+    for key in all_keys:
+        digest.update((key + "\n").encode("utf-8"))
+    try:
+        stat = Path(row["local_path"]).stat()
+        source = [str(row["local_path"]), stat.st_size, stat.st_mtime_ns]
+    except OSError:  # fixture readers do not need an actual ZIM on disk
+        source = [str(row["local_path"])]
+    identity = {"keys_sha256": digest.hexdigest(), "source": source,
+                "model": settings.embed_model, "passage_chars": HOUSEHOLD_TEXT_CHARS,
+                "count": len(all_keys), "dims": DIMS}
+    done = total_skipped = 0
+    size = len(all_keys) * DIMS * np.dtype(np.float16).itemsize
+    if resume and checkpoint_path.is_file() and part_path.is_file():
+        try:
+            state = json.loads(checkpoint_path.read_text())
+            if (state.get("identity") == identity and part_path.stat().st_size == size
+                    and 0 <= state["done"] <= len(all_keys)):
+                done = state["done"]
+                total_skipped = state["skipped_no_text"]
+        except (OSError, ValueError, KeyError, TypeError):
+            pass  # an incomplete checkpoint restarts safely
+    vectors = np.memmap(part_path, dtype=np.float16, mode="r+" if done else "w+",
+                        shape=(len(all_keys), DIMS))
+    if done:
+        out(f"wikipedia: resuming from {done} of {len(all_keys)}")
     t0 = time.perf_counter()
-    total_seen = total_skipped = 0
+    total_seen = done
     for start in range(done, len(all_keys), BATCH):
         batch_keys = all_keys[start:start + BATCH]
+        vectors[start:start + len(batch_keys)] = 0
         texts = [_wikipedia_article_text(reader, k) for k in batch_keys]
         total_seen += len(batch_keys)
         # a soft-redirect stub (or anything else with next to nothing to say) is left as the zero vector
@@ -615,19 +679,31 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
             for j, i in enumerate(keep):
                 vectors[start + i] = vecs[j].astype(np.float16)
         if (start // BATCH) % CHECKPOINT_BATCHES == 0 or start + BATCH >= len(all_keys):
-            vectors.tofile(part_path)
-            checkpoint_path.write_text(json.dumps({"keys": all_keys, "done": start + len(batch_keys)}))
+            vectors.flush()
+            checkpoint_part = checkpoint_path.with_suffix(".json.part")
+            checkpoint_part.write_text(json.dumps({"identity": identity, "done": start + len(batch_keys),
+                                                   "skipped_no_text": total_skipped}))
+            os.replace(checkpoint_part, checkpoint_path)
             elapsed = time.perf_counter() - t0
             rate = (start + len(batch_keys) - done) / max(elapsed, 0.001)
             remaining_s = (len(all_keys) - start - len(batch_keys)) / max(rate, 0.001)
             out(f"wikipedia: {start + len(batch_keys)} of {len(all_keys)} "
                 f"({elapsed:.0f}s elapsed, ~{remaining_s / 3600:.1f}h remaining at this rate)")
-    os.replace(part_path, Path(settings.embeddings_dir) / "wikipedia.f16.bin")
-    (Path(settings.embeddings_dir) / "wikipedia.ids").write_text("\n".join(all_keys) + "\n")
-    checkpoint_path.unlink(missing_ok=True)
+    vectors.flush()
+    del vectors
+    ids_part = folder / "wikipedia.ids.part"
+    with ids_part.open("w", encoding="utf-8") as ids:
+        for key in all_keys:
+            ids.write(key + "\n")
+
     meta = {"model": settings.embed_model, "dims": DIMS, "count": len(all_keys), "seen": total_seen,
             "skipped_no_text": total_skipped, "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    (Path(settings.embeddings_dir) / "wikipedia.meta.json").write_text(json.dumps(meta, indent=1))
+    meta["elapsed_s"] = time.perf_counter() - t0
+    meta["processed_this_run"] = len(all_keys) - done
+    meta_part = folder / "wikipedia.meta.json.part"
+    meta_part.write_text(json.dumps(meta, indent=1), encoding="utf-8")
+    _publish_collection(folder, "wikipedia", [part_path, ids_part, meta_part])
+    checkpoint_path.unlink(missing_ok=True)
     out(f"wikipedia: wrote {len(all_keys)} keys ({time.perf_counter() - t0:.0f}s, {total_skipped} left as zero vectors for no usable text)")
     return meta
 
@@ -665,13 +741,15 @@ def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable
                 started.terminate()
             return 1
     conn = connect(settings.db_path)
+    client = httpx.Client()
     try:
-        embed_fn = lambda texts: embed_sync(settings.embed_url, texts)  # noqa: E731 -- one call site
+        embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site
         build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1
     finally:
+        client.close()
         conn.close()
         if started:
             started.terminate()
@@ -699,7 +777,8 @@ def _host_port(url: str) -> tuple[str, str]:
     return host or "127.0.0.1", port or "8091"
 
 
-def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen, cuda: bool = False) -> int:
+def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen, cuda: bool = False,
+              collection: str = "all") -> int:
     """PC only: start the embedding server if none is up, embed the library, stop what was started.
     `cuda=True` (`sos build-embeddings --cuda`) starts the CUDA-built llama-server-cuda instead of the
     plain CPU binary -- for the large bulk builds (household books, Wikipedia) that need GPU offload to be
@@ -730,14 +809,18 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
                 started.terminate()
             return 1
     conn = connect(settings.db_path)
+    client = httpx.Client()
     try:
-        embed_fn = lambda texts: embed_sync(settings.embed_url, texts)  # noqa: E731 -- one call site, both collections
-        build(conn, settings, embed_fn, out)
-        build_household(conn, settings, embed_fn, out=out)
+        embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site, both collections
+        if collection in ("all", "docs"):
+            build(conn, settings, embed_fn, out)
+        if collection in ("all", "household"):
+            build_household(conn, settings, embed_fn, out=out)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1
     finally:
+        client.close()
         conn.close()
         if started:
             started.terminate()

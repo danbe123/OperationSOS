@@ -184,6 +184,7 @@ def test_search_fuses_household_books_lifting_a_matched_gutenberg_book_and_surfa
     conn.execute("INSERT INTO books (zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path) "
                  "VALUES ('gutenberg_en_all', 2701, 'Whaling Voyage', 'Herman Melville', 'PS', 3, NULL, NULL, NULL)")
     conn.execute("INSERT INTO fts_books(fts_books) VALUES('rebuild')")
+    conn.execute("INSERT INTO library_items (id, available) VALUES ('survivorlibrary.com_en_all', 1)")
     conn.commit()
     sem = FakeSemantic([], household_hits=[
         ("gutenberg_en_all:2701", 0.75),                    # the same book the words already found: lifted, not duplicated
@@ -228,7 +229,9 @@ class RerankSemantic:
         return {k: v for k, v in self.wikipedia_scores.items() if k in keys}
 
 
-def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env):
+@pytest.mark.parametrize("encoded,decoded", [("A/Some_Article", "A/Some_Article"),
+                                               ("A/Caf%C3%A9%25", "A/Café%")])
+def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env, encoded, decoded):
     """The one behaviour this whole task exists to guarantee. WikipediaStore has no `.search()` at all
     (Task 8) -- only `vector_for(key)` -- so there is structurally no way for the rerank pass to introduce
     a Wikipedia row the keyword search itself did not already find; this proves search.py's fusion code
@@ -248,7 +251,7 @@ def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env):
         books = request.url.params.get_list("books.name")
         if "wikipedia_en_all_maxi" in books:
             xml = ("<rss><channel><item><title>Some Article</title>"
-                   "<link>/kiwix/content/wikipedia_en_all_maxi/A/Some_Article</link>"
+                   f"<link>/kiwix/content/wikipedia_en_all_maxi/{encoded}</link>"
                    "<description>An encyclopaedia article.</description></item></channel></rss>")
         else:
             xml = ("<rss><channel><item><title>Bleeding</title>"
@@ -264,13 +267,13 @@ def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env):
 
     baseline = run(RerankSemantic({}))   # no vector for the real key: never rescored, but still present
     wiki_before = [r for r in baseline["results"] if r["url"].startswith("/read/wikipedia_en_all_maxi/")]
-    assert [r["url"] for r in wiki_before] == ["/read/wikipedia_en_all_maxi/A/Some_Article"]
+    assert [r["url"] for r in wiki_before] == [f"/read/wikipedia_en_all_maxi/{encoded}"]
     baseline_score = wiki_before[0]["score"]
     other_before = [r["url"] for r in baseline["results"] if not r["url"].startswith("/read/wikipedia_en_all_maxi/")]
     assert other_before == ["/read/nhs_uk/conditions/bleeding"]
 
     cos = 0.9   # chosen so the multiplier (0.7 + 0.6 * cos = 1.24) is genuinely not 1.0 -- a real change
-    sem = RerankSemantic({"A/Some_Article": cos})
+    sem = RerankSemantic({decoded: cos})
     resp = run(sem)
 
     # (a) the rescored hit's score genuinely changed by the expected multiplier, computed explicitly here
@@ -279,7 +282,7 @@ def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env):
     expected_score = baseline_score * (search.WIKIPEDIA_RERANK_BASE + search.WIKIPEDIA_RERANK_SPAN * cos)
     assert wiki_after[0]["score"] == pytest.approx(expected_score)
     assert wiki_after[0]["score"] != pytest.approx(baseline_score)                 # it really did change
-    assert sem.rerank_calls == [("wikipedia article", ["A/Some_Article"])]          # the real key, slash intact
+    assert sem.rerank_calls == [("wikipedia article", [decoded])]          # the real key, slash intact
 
     # (b) THE WHOLE POINT: no new row was added by meaning alone
     assert len(wiki_after) == len(wiki_before)
@@ -743,7 +746,8 @@ def test_build_wikipedia_rerank_limit_genuinely_caps_the_keys_embedded(tmp_path)
     result = build_wikipedia_rerank(conn, embeddings_settings(tmp_path), fake_embed,
                                     open_zim=lambda p: reader, out=lambda s: None, limit=N)
     assert result["count"] == N
-    store = WikipediaStore.load(tmp_path)
+    assert WikipediaStore.load(tmp_path) is None
+    store = WikipediaStore.load(tmp_path / "wikipedia-sample")
     assert store is not None and len(store) == N
     assert store.keys == all_keys[:N]   # the first N in sorted order, not an arbitrary N-sized subset
 
@@ -941,3 +945,142 @@ def test_passage_text_drops_the_section_heading_and_build_skips_the_link_lists(e
 
     meta = embeddings.build(conn, env, fake_embed, out=lambda s: None)
     assert seen == ["Water. 1. Fill it."] and meta["count"] == 1
+
+
+def test_household_entries_extract_lazily():
+    class Reader(FakeHouseholdZim):
+        def read(self, path):
+            if path == 'second.2':
+                raise AssertionError('read ahead of the consumer')
+            return b'<p>' + b'Useful words. ' * 30 + b'</p>'
+    entries = embeddings._household_entries(Reader({'first.1': b'', 'second.2': b''}), 'gutenberg_en_all')
+    assert next(entries)[0] == 'gutenberg_en_all:1'
+
+
+@pytest.mark.parametrize('damage', ['missing', 'truncated', 'corrupt_checkpoint'])
+def test_wikipedia_bad_checkpoint_reembeds_instead_of_publishing_zero_rows(tmp_path, monkeypatch, damage):
+    monkeypatch.setattr(embeddings, 'CHECKPOINT_BATCHES', 1)
+    conn = db.connect(tmp_path / 'sos.db')
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+    first = []
+    with pytest.raises(RuntimeError, match='simulated interruption'):
+        embeddings.build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed(first, fail_at=2),
+                                         open_zim=lambda p: reader, out=lambda s: None)
+    part = tmp_path / 'wikipedia.f16.bin.part'
+    if damage == 'missing':
+        part.unlink()
+    elif damage == 'truncated':
+        part.write_bytes(b'bad')
+    else:
+        (tmp_path / 'wikipedia.checkpoint.json').write_text('{')
+    second = []
+    result = embeddings.build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed(second),
+                                              open_zim=lambda p: reader, out=lambda s: None)
+    assert second[0] == first[0]
+    assert result['seen'] == 101
+    assert embeddings.WikipediaStore.load(tmp_path).vector_for('Article_000') is not None
+
+
+def test_wikipedia_resumption_preserves_skipped_counts(tmp_path, monkeypatch):
+    monkeypatch.setattr(embeddings, 'CHECKPOINT_BATCHES', 1)
+    conn = db.connect(tmp_path / 'sos.db')
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    reader = FakeWikipediaZim({'AAA_stub': b'<p>stub</p>', **WIKI_ARTICLES})
+    with pytest.raises(RuntimeError, match='simulated interruption'):
+        embeddings.build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed([], fail_at=2),
+                                         open_zim=lambda p: reader, out=lambda s: None)
+    result = embeddings.build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed([]),
+                                              open_zim=lambda p: reader, out=lambda s: None)
+    assert result['seen'] == 102 and result['skipped_no_text'] == 2
+
+
+@pytest.mark.parametrize('collection', ['household', 'wikipedia'])
+def test_unreadable_zim_is_a_noop(tmp_path, monkeypatch, collection):
+    monkeypatch.setattr(embeddings, 'excluded_zims', lambda settings: frozenset())
+    conn = db.connect(tmp_path / 'sos.db')
+    db.init_schema(conn)
+    zim = embeddings.WIKIPEDIA_ZIM if collection == 'wikipedia' else embeddings.HOUSEHOLD_ZIMS[0]
+    conn.execute('INSERT INTO library_items(id, available, local_path) VALUES (?, 1, ?)', (zim, 'bad.zim'))
+    def unreadable(path):
+        raise RuntimeError('invalid ZIM')
+    build = embeddings.build_wikipedia_rerank if collection == 'wikipedia' else embeddings.build_household
+    assert build(conn, embeddings_settings(tmp_path), lambda texts: pytest.fail('must not embed'),
+                 open_zim=unreadable, out=lambda s: None)['count'] == 0
+
+
+def test_publication_interruption_keeps_the_previous_generation(tmp_path, monkeypatch):
+    embeddings.write_index(tmp_path, 'docs', np.stack([unit(1, 0)]), ['old'], {'count': 1})
+    replace = os.replace
+    def interrupted(src, dst):
+        if Path(dst).name == 'docs.current':
+            raise OSError('interrupted publication')
+        return replace(src, dst)
+    monkeypatch.setattr(os, 'replace', interrupted)
+    with pytest.raises(OSError, match='interrupted publication'):
+        embeddings.write_index(tmp_path, 'docs', np.stack([unit(0, 1)]), ['new'], {'count': 1})
+    index = embeddings.Index.load(tmp_path, 'docs')
+    assert index.keys == ['old']
+    assert np.allclose(index.vectors[0], unit(1, 0))
+
+
+def test_search_drops_unknown_or_unavailable_household_sources(env):
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.execute("INSERT INTO library_items(id, available) VALUES ('gutenberg_en_all', 0)")
+    sem = FakeSemantic([], household_hits=[('wiktionary_en_all_nopic:forge', .9),
+                                          ('gutenberg_en_all:2701', .9)])
+    response = _search(conn, env, 'whaling voyage', sem, use_cache=False)
+    assert not [r for r in response['results'] if r.get('via') == 'meaning']
+
+
+def test_wikipedia_measurement_preserves_live_index_and_full_checkpoint(tmp_path):
+    conn = db.connect(tmp_path / 'sos.db')
+    db.init_schema(conn)
+    _insert_wikipedia_zim_row(conn, tmp_path)
+    embeddings.write_index(tmp_path, 'wikipedia', np.stack([unit(1, 0)]), ['Live'], {'count': 1})
+    checkpoint = tmp_path / 'wikipedia.checkpoint.json'
+    checkpoint.write_text('full build checkpoint')
+    (tmp_path / 'wikipedia.f16.bin.part').write_bytes(b'full build work')
+    reader = FakeWikipediaZim(WIKI_ARTICLES)
+    embeddings.build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _tracking_embed([]),
+                                     open_zim=lambda p: reader, out=lambda s: None, limit=10)
+    assert embeddings.WikipediaStore.load(tmp_path).keys == ['Live']
+    assert checkpoint.read_text() == 'full build checkpoint'
+    assert (tmp_path / 'wikipedia.f16.bin.part').read_bytes() == b'full build work'
+    assert len(embeddings.WikipediaStore.load(tmp_path / 'wikipedia-sample')) == 10
+
+
+def test_missing_household_archives_preserve_published_index_and_metadata(tmp_path, monkeypatch):
+    monkeypatch.setattr(embeddings, 'excluded_zims', lambda settings: frozenset())
+    conn = db.connect(tmp_path / 'sos.db')
+    db.init_schema(conn)
+    embeddings.ApproxIndex.build(np.stack([unit(1, 0)]), ['book:1']).save(tmp_path, 'household')
+    meta = tmp_path / 'household.meta.json'
+    meta.write_text('{"count": 1}')
+    embeddings.build_household(conn, embeddings_settings(tmp_path), _tracking_embed([]), out=lambda s: None)
+    assert embeddings.ApproxIndex.load(tmp_path, 'household').keys == ['book:1']
+    assert json.loads(meta.read_text())['count'] == 1
+
+
+@pytest.mark.parametrize("html", [
+    '<p>Opening words. </p>' * 1000,
+    '<p>Page furniture. </p>' * 1000 + '<main><p>Actual text. </p>' * 1000 + '</main>',
+    '<p>Page furniture. </p>' * 1000 + '<div id="maincontent"><p>Actual text. </p>' * 1000 + '</div>',
+    '<script>' + 'ignored; ' * 1000 + '</script><p>' + 'A long paragraph. ' * 1000 + '</p>',
+])
+def test_bounded_html_extraction_preserves_the_full_extraction_prefix(html):
+    from sos.kiwix import extract_text
+    limit = embeddings.HOUSEHOLD_TEXT_CHARS
+    assert ' '.join(extract_text(html, max_chars=limit))[:limit] == ' '.join(extract_text(html))[:limit]
+
+
+def test_household_only_cli_does_not_rebuild_docs(env, monkeypatch):
+    _, run = _build_cli_fixture(env, monkeypatch)
+    monkeypatch.setattr(embeddings, 'build', lambda *a, **k: pytest.fail('docs must stay unchanged'))
+    called = []
+    monkeypatch.setattr(embeddings, 'build_household', lambda *a, **k: called.append(True))
+    assert embeddings.build_cli(env, run=run, out=lambda s: None, collection='household') == 0
+    assert called == [True]

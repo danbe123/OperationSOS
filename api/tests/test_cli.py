@@ -131,3 +131,18 @@ def test_index_command(env, capsys):
     assert "rescan:" in out and "content rows" in out
     conn = db.connect(env.db_path)
     assert conn.execute("SELECT count(*) FROM fts_docs").fetchone()[0] > 0
+
+
+@pytest.mark.parametrize("limit", ["0", "-1"])
+def test_wikipedia_cli_rejects_nonpositive_limit(limit):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args(["build-embeddings-wikipedia", "--limit", limit])
+    assert exc.value.code == 2
+
+
+def test_build_embeddings_selects_only_household(env, monkeypatch):
+    from sos import embeddings
+    calls = []
+    monkeypatch.setattr(embeddings, 'build_cli', lambda settings, **kwargs: calls.append(kwargs) or 0)
+    assert cli.main(['build-embeddings', '--cuda', '--collection', 'household']) == 0
+    assert calls == [{'cuda': True, 'collection': 'household'}]

@@ -18,7 +18,7 @@ import functools
 import re
 import sqlite3
 import time
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import httpx
 
@@ -412,7 +412,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             # real Wikipedia article path is namespaced (e.g. "A/Some_Article"), and WikipediaStore's own
             # keys (_wikipedia_article_keys, sos/embeddings.py) are reader.paths() values verbatim, slashes
             # and all -- an rsplit("/", 1) here would throw away everything before the last slash instead.
-            keys = [r["url"].split("/", 3)[3] for r in wiki_hits]
+            keys = [unquote(r["url"].split("/", 3)[3]) for r in wiki_hits]
             try:
                 wiki_scores = await semantic.rerank_wikipedia(q, keys)
             except Exception:  # the semantic layer is a convenience: its failures never fail the search
@@ -543,6 +543,11 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         household_near = [(key, cos) for key, cos in household_near if cos >= SEMANTIC_MIN]
         for key, cos in household_near:
             zim, _, book_id = key.partition(":")
+            if zim not in ("gutenberg_en_all", SURVIVOR_ZIM) or not book_id:
+                continue
+            available = conn.execute("SELECT available FROM library_items WHERE id=?", (zim,)).fetchone()
+            if available is None or not available["available"]:
+                continue
             if zim == "gutenberg_en_all":
                 url = f"/book/gutenberg/{book_id}"
             else:

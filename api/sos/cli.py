@@ -16,6 +16,13 @@ from sos.content import KIND_BY_DIR, validate_tree
 from sos.manifest import load_manifests
 
 
+def _positive_int(value: str) -> int:
+    result = int(value)
+    if result <= 0:
+        raise argparse.ArgumentTypeError("must be positive")
+    return result
+
+
 def _api(settings: Settings) -> str:
     return f"http://127.0.0.1:{settings.port}/api"
 
@@ -162,7 +169,7 @@ def cmd_build_books(settings: Settings, args) -> int:
 
 def cmd_build_embeddings(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_cli(settings, cuda=args.cuda)
+    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection)
 
 
 def cmd_build_embeddings_wikipedia(settings: Settings, args) -> int:
@@ -211,12 +218,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build-books", help="PC only: convert PDF library items to EPUB with Calibre")
     p.add_argument("--only", help="comma-separated item ids")
     p.set_defaults(func=cmd_build_books)
-    p = sub.add_parser("build-embeddings", help="PC only: embed the box's own library for semantic search (needs llama-server and the bge-small model)")
+    p = sub.add_parser("build-embeddings", help="PC only: embed the docs and household library for semantic search")
+    p.add_argument("--collection", choices=("all", "docs", "household"), default="all",
+                   help="rebuild only one collection, or both (default)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
     p.set_defaults(func=cmd_build_embeddings)
     p = sub.add_parser("build-embeddings-wikipedia", help="PC only: embed English Wikipedia for rerank-only lookup (multi-hour; needs its own explicit run)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
-    p.add_argument("--limit", type=int, default=None, help="cap the number of articles embedded, for a real throughput measurement")
+    p.add_argument("--limit", type=_positive_int, default=None, help="cap the number of articles embedded, for a real throughput measurement")
     p.set_defaults(func=cmd_build_embeddings_wikipedia)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")
