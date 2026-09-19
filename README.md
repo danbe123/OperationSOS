@@ -24,6 +24,8 @@ Operation SOS is an offline, UK-focused knowledge box. It runs on a Raspberry Pi
 | Power | Official 27 W USB-C PSU; optional 20,000 mAh USB-C PD power bank (roughly 8 to 15 hours) |
 | External drive | Optional self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, for Khan Academy, media and your own files |
 
+This table is the reference build: the cheapest set of parts that runs the software, for anyone building their own. The finished Operation SOS unit uses a rugged clamshell case with the screen in the lid and its own power and sensor hardware; the software supports both, and the finished unit's parts list will be documented separately.
+
 Storage layout on the box: `/srv/sos/core/{zim,maps,docs,models}` (NVMe), `/srv/sos/extended/{zim,docs,media,video,books}` (USB), `/srv/sos/state` (database, `library.xml`, playbooks, manifest, config), `/srv/sos/web` (built frontend), `/srv/sos/api` (the `sos` package and its venv).
 
 ## Install on the Pi
@@ -101,4 +103,22 @@ dev/              run-dev.sh, smoke.sh, the smoke self-test and the dev manifest
 tools/            map style build and AI evaluation questions
 docs/             the design spec, research, the implementation plans and the hardware checklist
 ```
+
+## Licence
+
+Operation SOS is open source, and the parts of the repository carry different licences:
+
+| What | Licence | File |
+|---|---|---|
+| Software: everything except `playbooks/` (the `sos` package, the web app, the installer, tools and tests) | GNU Affero General Public License v3.0 | [`LICENSE`](LICENSE) |
+| Authored content: `playbooks/` (scenarios, modules, cards, kits, pages) | Creative Commons Attribution-ShareAlike 4.0 | [`playbooks/LICENSE`](playbooks/LICENSE) |
+| Library content fetched by `sos sync` | Each item's own licence, recorded in the `licence` field of `manifest/*.json` | the manifests |
+
+In plain terms: you can build, use, change and share Operation SOS freely. If you distribute a modified version, or run one that other people use over a network (including over the box's own hotspot), you must make your source available under the same licence. If you reuse the playbooks, credit Operation SOS and share your changes under CC BY-SA 4.0.
+
+The library content is not part of this repository and is not covered by either licence. Some items are licensed for non-commercial use only or are marked as awaiting redistribution permission; check the `licence` field before preloading content onto a box you intend to sell or give away.
+
+"Operation SOS" is the name of this project and of the finished product. The licences above cover the code and content, not the name or logo; please use a different name for your own fork or product.
+
+Copyright (C) 2026 Daniel and the Operation SOS contributors.
 
