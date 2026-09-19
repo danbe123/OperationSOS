@@ -102,17 +102,3 @@ tools/            map style build and AI evaluation questions
 docs/             the design spec, research, the implementation plans and the hardware checklist
 ```
 
-## Plans
-
-The build is an overview plus five sub-plans in `docs/superpowers/plans/`:
-
-| Plan | Delivers |
-|---|---|
-| `2026-09-03-00-overview.md` | locked contracts: paths, environment, JSON shapes, endpoints, CLI |
-| `2026-09-03-01-backend-and-install.md` | the `sos` package, the dev stack, the installer, this README |
-| `2026-09-03-02-frontend.md` | the web app, themes, kiosk mode, map viewer |
-| `2026-09-03-03-content.md` | the twenty playbooks, modules, cards, pages and the manifests |
-| `2026-09-03-04-maps-pipeline.md` | `sos build-maps`: base map, contours, hillshade, overlays, phone packs |
-| `2026-09-03-05-ai.md` | the grounded assistant and its evaluation |
-
-Milestones and their exit criteria are in spec section 15; hardware results are recorded in `docs/hardware-checklist.md`.
