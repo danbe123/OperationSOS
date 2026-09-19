@@ -1751,3 +1751,65 @@ def test_household_only_cli_does_not_rebuild_docs(env, monkeypatch):
     monkeypatch.setattr(embeddings, 'build_household', lambda *a, **k: called.append(True))
     assert embeddings.build_cli(env, run=run, out=lambda s: None, collection='household') == 0
     assert called == [True]
+
+
+# --- the model file is what starts a server, so it is only needed when one must be started ----------------
+#
+# A server may be up already and be nothing to do with settings.embed_model: tools/embed_server_torch.py
+# serves bge-small from Hugging Face in fp16 and has no GGUF on disk at all. Both builds used to refuse
+# before they ever looked at /health, so that server could not be used.
+
+
+def _no_model_fixture(env, monkeypatch, healthy):
+    """An initialised (empty) db, no model file anywhere, and a /health that answers as `healthy` says."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.close()
+    assert not env.embed_model_path.exists()
+
+    def fake_get(url, timeout=1.0):
+        if healthy:
+            return httpx.Response(200)
+        raise httpx.HTTPError("nothing there")
+
+    monkeypatch.setattr(embeddings.httpx, "get", fake_get)
+    monkeypatch.setattr(embeddings.time, "sleep", lambda s: None)
+    _fake_embed_sync(monkeypatch)
+    started = []
+    return started, lambda cmd, **kw: pytest.fail(f"no server may be started: {cmd}") if healthy else started.append(cmd)
+
+
+@pytest.mark.parametrize("build, kwargs", [("build_cli", {"collection": "docs"}),
+                                           ("build_wikipedia_cli", {})])
+def test_a_healthy_server_is_used_even_with_no_model_file_on_disk(env, monkeypatch, build, kwargs):
+    _, run = _no_model_fixture(env, monkeypatch, healthy=True)
+    said = []
+    rc = getattr(embeddings, build)(env, out=said.append, run=run, **kwargs)
+    assert rc == 0
+    assert not any("the embedding model is not at" in line for line in said)
+
+
+@pytest.mark.parametrize("build, kwargs", [("build_cli", {"collection": "docs"}),
+                                           ("build_wikipedia_cli", {})])
+def test_no_server_and_no_model_file_still_fails_the_way_it_always_has(env, monkeypatch, build, kwargs):
+    started, run = _no_model_fixture(env, monkeypatch, healthy=False)
+    said = []
+    rc = getattr(embeddings, build)(env, out=said.append, run=run, **kwargs)
+    assert rc == 1
+    assert said == [f"FAIL the embedding model is not at {env.embed_model_path} (manifest item bge-small-en-v1.5)"]
+    assert started == []
+
+
+def test_the_model_file_is_required_when_any_one_of_several_servers_must_be_started(env, monkeypatch):
+    """`--servers 3` with only the first port answering still has two to start, so the file is needed."""
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.close()
+    monkeypatch.setattr(embeddings.httpx, "get",
+                        lambda url, timeout=1.0: httpx.Response(200) if url.startswith("http://127.0.0.1:8091")
+                        else (_ for _ in ()).throw(httpx.HTTPError("nothing there")))
+    said = []
+    rc = embeddings.build_cli(env, out=said.append, run=lambda cmd, **kw: pytest.fail("must not start"),
+                              collection="docs", servers=3)
+    assert rc == 1
+    assert said == [f"FAIL the embedding model is not at {env.embed_model_path} (manifest item bge-small-en-v1.5)"]

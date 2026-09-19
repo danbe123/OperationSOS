@@ -866,8 +866,9 @@ def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable
     specific build genuinely takes hours against the real ZIM and must never be triggered by a routine
     `sos build-embeddings` run."""
     from sos.db import connect
-    if not settings.embed_model_path.is_file():
-        out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
+    refusal = _missing_model(settings, servers)
+    if refusal:
+        out(refusal)
         return 1
     previous_sigterm = signal.signal(signal.SIGTERM, _interrupt)
     conn = None
@@ -919,6 +920,19 @@ def _server_healthy(url: str) -> bool:
         return httpx.get(f"{url}/health", timeout=1.0).status_code == 200
     except httpx.HTTPError:
         return False
+
+
+def _missing_model(settings: Settings, servers: int) -> Optional[str]:
+    """The refusal build_cli and build_wikipedia_cli share, or None to carry on. The model file is what a
+    server is *started* from, so it is only required when one has to be started: a port already answering
+    /health has always been used as it is (embedding_servers), and that server need not be llama-server
+    over settings.embed_model at all -- tools/embed_server_torch.py serves the same model in fp16 from
+    Hugging Face with no GGUF on disk anywhere. Insisting on the file first made such a server unusable."""
+    if settings.embed_model_path.is_file():
+        return None
+    if all(_server_healthy(url) for url in _server_urls(settings, servers)):
+        return None
+    return f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)"
 
 
 def _even_slices(count: int, parts: int) -> Iterator[tuple[int, int]]:
@@ -1006,8 +1020,9 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     plain CPU binary -- for the large bulk builds (household books, Wikipedia) that need GPU offload to be
     tractable."""
     from sos.db import connect
-    if not settings.embed_model_path.is_file():
-        out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
+    refusal = _missing_model(settings, servers)
+    if refusal:
+        out(refusal)
         return 1
     conn = None
     try:
