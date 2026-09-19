@@ -500,9 +500,33 @@ GUTENBERG_BOOKS = {
         b"no money in my purse, and nothing particular to interest me on shore, I thought I would sail "
         b"about a little and see the watery part of the world. It is a way I have of driving off the "
         b"spleen and regulating the circulation.</p></body></html>",
+    # The real ZIM's own duplicate shapes for a book that already has its article above (measured against
+    # gutenberg_en_all.zim: 60,359 "<slug>_cover.<id>" pages of about 330 characters, and 16,455 ids with a
+    # second, differently-named page -- very often the author's name). Both match `<something>.<id>`, both
+    # are long enough to embed, and both would key on the same book id.
+    "Pride and Prejudice_cover.1": b"<html><body><h1>Pride and Prejudice</h1><p>Read this book online or "
+        b"download it as an EPUB, a Kindle file or a plain text file from Project Gutenberg, the oldest "
+        b"digital library of free electronic books, founded in 1971 by Michael Hart. Cover image courtesy "
+        b"of the Project Gutenberg collection. Language: English. Downloads this month: 31,415.</p></body></html>",
+    "Jane Austen.1": b"<html><body><h1>Jane Austen</h1><p>It is a truth universally acknowledged, that a "
+        b"single man in possession of a good fortune, must be in want of a wife. However little known the "
+        b"feelings or views of such a man may be on his first entering a neighbourhood, this truth is so "
+        b"well fixed in the minds of the surrounding families.</p></body></html>",
+    # a real article-shaped entry for an id the catalogue does not carry at all (3,794 of these on the real
+    # ZIM): never a book the box can open, so never a vector
+    "Unlisted Pamphlet.999": b"<html><body><h1>Unlisted Pamphlet</h1><p>This entry looks exactly like a "
+        b"real book article and is long enough to embed, but no row of the Gutenberg catalogue mentions "
+        b"book 999 at all, so the box has no title, no author and no way to open it for a reader.</p></body></html>",
     "covers/1_cover_image.jpg": b"JPEG",              # not a bare "<slug>.<id>": never mistaken for a book
     "full_by_popularity.js": b"var json_data = [];",  # Gutenberg's catalogue entry: not a book either
 }
+# (id, title, author, html_path) -- what `sos index` (books.index_books) leaves in the `books` table for the
+# ZIM above: the two real books, one of them with no author, and a third the ZIM has no HTML for at all.
+GUTENBERG_CATALOGUE = [
+    (1, "Pride and Prejudice", "Jane Austen", "Pride and Prejudice.1"),
+    (2, "Moby-Dick; Or, The Whale", None, "Moby-Dick.2"),
+    (3, "A Book This ZIM Has No HTML For", "Anon", None),
+]
 SURVIVOR_BOOKS = {
     # a real PDF with real, if short, extractable text -- pdftotext genuinely runs against it in this test
     "www.survivorlibrary.com/library/blacksmithing.pdf": _REAL_PDF_BYTES,
@@ -512,19 +536,12 @@ SURVIVOR_BOOKS = {
 }
 
 
-def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path, monkeypatch):
-    from sos.embeddings import ApproxIndex, build_household
+def fake_household_open_zim(path):
+    return FakeHouseholdZim(GUTENBERG_BOOKS if "gutenberg" in str(path) else SURVIVOR_BOOKS)
 
-    # this test is about the extraction/skip logic, not the exclusion list, so build_household's Task 9
-    # excluded_zims(settings) assertion is stubbed out rather than coupling it to the real manifest.
-    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
 
-    def fake_open_zim(path):
-        return FakeHouseholdZim(GUTENBERG_BOOKS if "gutenberg" in str(path) else SURVIVOR_BOOKS)
-
-    def fake_embed(texts):
-        return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)   # deterministic, distinct per row
-
+def _household_conn(tmp_path, catalogue=GUTENBERG_CATALOGUE):
+    """Both household ZIMs on the box, and whatever `sos index` would have left in `books` for Gutenberg."""
     conn = db.connect(tmp_path / "sos.db")
     db.init_schema(conn)
     conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
@@ -533,7 +550,24 @@ def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path,
     conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, local_path) "
                  "VALUES ('survivorlibrary.com_en_all', 'Survivor Library', 'zim', 'core', 'books', 'zim/s.zim', 100, 1, ?)",
                  (str(tmp_path / "survivorlibrary.com_en_all.zim"),))
+    conn.executemany("INSERT INTO books (zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path) "
+                     "VALUES ('gutenberg_en_all', ?, ?, ?, NULL, 0, NULL, ?, NULL)", catalogue)
     conn.commit()
+    return conn
+
+
+def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path, monkeypatch):
+    from sos.embeddings import ApproxIndex, build_household
+
+    # this test is about the extraction/skip logic, not the exclusion list, so build_household's Task 9
+    # excluded_zims(settings) assertion is stubbed out rather than coupling it to the real manifest.
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    fake_open_zim = fake_household_open_zim
+
+    def fake_embed(texts):
+        return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)   # deterministic, distinct per row
+
+    conn = _household_conn(tmp_path)
 
     lines = []
     result = build_household(conn, embeddings_settings(tmp_path), fake_embed, open_zim=fake_open_zim, out=lines.append)
@@ -546,6 +580,68 @@ def test_build_household_embeds_real_text_and_skips_image_only_entries(tmp_path,
     assert not any("scanned-plate" in k for k in idx.keys)
     assert any("household: gutenberg_en_all done, 2 books" in line for line in lines)
     assert any("household: survivorlibrary.com_en_all done, 1 books" in line for line in lines)
+
+
+def test_build_household_embeds_one_vector_per_catalogue_book_with_its_author(tmp_path, monkeypatch):
+    """The correctness bug this build had: driven by a path scan, the real ZIM's cover pages and
+    author-named alias pages gave several vectors the same `gutenberg_en_all:<id>` key (which search()
+    then lifted once per copy), and ids the catalogue has never heard of were embedded too. Driven by the
+    catalogue there is exactly one vector per book, its text is the catalogue's own title and author, and
+    a book the catalogue has no HTML for is not embedded at all."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    seen: list[str] = []
+
+    def fake_embed(texts):
+        seen.extend(texts)
+        return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)
+
+    conn = _household_conn(tmp_path)
+    result = embeddings.build_household(conn, embeddings_settings(tmp_path), fake_embed,
+                                        open_zim=fake_household_open_zim, out=lambda s: None)
+
+    gutenberg = [t for t in seen if not t.startswith("blacksmithing")]
+    assert len(gutenberg) == 2                      # one per catalogue book, not one per matching entry
+    # the catalogue's title (not the entry name "Moby-Dick") and its author, which the path scan never had
+    assert gutenberg[0].startswith("Pride and Prejudice by Jane Austen. ")
+    assert "It is a truth universally acknowledged" in gutenberg[0]
+    assert gutenberg[1].startswith("Moby-Dick; Or, The Whale. ")   # no author in the catalogue, none embedded
+    assert "Call me Ishmael" in gutenberg[1] and " by " not in gutenberg[1].split(". ")[0]
+    assert not any("Cover image courtesy" in t for t in seen)        # the cover page is not a book
+    assert not any("Unlisted Pamphlet" in t for t in seen)           # nor is an id the catalogue lacks
+    assert not any("A Book This ZIM Has No HTML For" in t for t in seen)
+    keys = embeddings.ApproxIndex.load(tmp_path, "household").keys
+    assert sorted(keys) == ["gutenberg_en_all:1", "gutenberg_en_all:2",
+                            "survivorlibrary.com_en_all:blacksmithing"]
+    assert len(set(keys)) == len(keys) == result["count"]
+
+
+def test_build_household_skips_gutenberg_when_the_catalogue_has_not_been_built(tmp_path, monkeypatch):
+    """No catalogue means no titles, no authors and no way to tell a book's article from its cover page:
+    say so and leave Gutenberg alone rather than falling back to the path scan this build just left."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    conn = _household_conn(tmp_path, catalogue=[])
+    lines: list[str] = []
+    result = embeddings.build_household(conn, embeddings_settings(tmp_path),
+                                        lambda texts: np.eye(len(texts), embeddings.DIMS, dtype=np.float32),
+                                        open_zim=fake_household_open_zim, out=lines.append)
+    assert result["count"] == 1   # the Survivor Library book only
+    assert embeddings.ApproxIndex.load(tmp_path, "household").keys == ["survivorlibrary.com_en_all:blacksmithing"]
+    assert any("sos index" in line for line in lines)
+
+
+def test_build_household_refuses_to_build_an_index_with_duplicate_keys(tmp_path, monkeypatch):
+    """A last line of defence: two vectors under one key silently double-count that book in search(), so
+    a duplicate must never reach ApproxIndex.build however it got into the entry stream."""
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    monkeypatch.setattr(embeddings, "_household_entries",
+                        lambda reader, zim_id, conn=None: iter(
+                            [(f"{zim_id}:7", "Twice Over", "Useful words. " * 40)] * 2))
+    conn = _household_conn(tmp_path)
+    with pytest.raises(ValueError, match="gutenberg_en_all:7"):
+        embeddings.build_household(conn, embeddings_settings(tmp_path),
+                                   lambda texts: np.eye(len(texts), embeddings.DIMS, dtype=np.float32),
+                                   open_zim=fake_household_open_zim, out=lambda s: None)
+    assert embeddings.ApproxIndex.load(tmp_path, "household") is None
 
 
 def embeddings_settings(tmp_path):
@@ -1168,13 +1264,15 @@ def test_passage_text_drops_the_section_heading_and_build_skips_the_link_lists(e
     assert seen == ["Water. 1. Fill it."] and meta["count"] == 1
 
 
-def test_household_entries_extract_lazily():
+def test_household_entries_extract_lazily(tmp_path):
     class Reader(FakeHouseholdZim):
         def read(self, path):
             if path == 'second.2':
                 raise AssertionError('read ahead of the consumer')
             return b'<p>' + b'Useful words. ' * 30 + b'</p>'
-    entries = embeddings._household_entries(Reader({'first.1': b'', 'second.2': b''}), 'gutenberg_en_all')
+    conn = _household_conn(tmp_path, catalogue=[(1, 'First', 'A Writer', 'first.1'),
+                                                (2, 'Second', None, 'second.2')])
+    entries = embeddings._household_entries(Reader({'first.1': b'', 'second.2': b''}), 'gutenberg_en_all', conn)
     assert next(entries)[0] == 'gutenberg_en_all:1'
 
 

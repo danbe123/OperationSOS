@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 import time
 import uuid
-from collections import deque
+from collections import Counter, deque
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
 from contextlib import contextmanager
@@ -425,11 +425,6 @@ def excluded_zims(settings: Settings) -> frozenset[str]:
     return result
 
 
-# Gutenberg's real book article (confirmed against the live ZIM, Task 5): `<title slug>.<id>`, no extension --
-# the epub (`<slug>.<id>.epub`), the covers (`covers/<id>_cover_image.jpg`/`.webp`) and the odd per-book
-# auxiliary file (`30282_glossary.html`) all end in something other than a bare number, so this one pattern
-# picks out exactly the real articles without reading the catalogue a second time.
-_GUTENBERG_ARTICLE = re.compile(r"^([^/]+)\.(\d+)$")
 # Survivor Library is a zimit crawl of the live WordPress site, not a book-scraper ZIM: it has no catalogue
 # entry and no per-book HTML article at all. Its ~11,800 real books are plain PDF entries at this one path
 # shape (Task 5's real finding); everything else in the crawl (theme assets, blog pages, category pages) is not.
@@ -462,36 +457,49 @@ def _pdf_text(pdf_bytes: bytes) -> str:
             return ""
 
 
-def _household_entries(reader, zim_id: str) -> Iterator[tuple[str, str, str]]:
-    """(key, title, plain text) for every real book this ZIM's reader holds, found by walking its
-    entries with `reader.paths()` and matching each collection's own real, confirmed entry-naming
-    convention (Task 5's diagnostic) -- there is no catalogue to read for Survivor Library the way
-    Gutenberg has `full_by_popularity.js`, so both collections are found the same way, by their paths,
-    rather than Gutenberg alone getting a shortcut the other collection cannot have.
+_GUTENBERG_BOOKS_SQL = ("SELECT id, title, author, html_path FROM books WHERE zim=? AND html_path IS NOT NULL "
+                        "ORDER BY id")
 
-    The two collections' entries are different shapes and need different extraction: Gutenberg's article
-    is genuine HTML (kiwix.extract_text), Survivor Library's book is a PDF (pdftotext via a temp file).
-    Extract lazily: at most one batch of full texts is retained, rather than the entire archive."""
+
+def _household_entries(reader, zim_id: str, conn=None) -> Iterator[tuple[str, str, str]]:
+    """(key, heading, plain text) for every real book this ZIM's reader holds. The heading is what the
+    embedded passage opens with: for Gutenberg the catalogue's own title and author, for Survivor Library
+    a title read off the filename.
+
+    Gutenberg is driven by the `books` table `sos index` fills from the ZIM's own catalogue, one row per
+    book, rather than by a scan for path-shaped articles. A scan for `<slug>.<id>` matches 140,765 entries
+    on the real ZIM for 64,153 distinct ids: 60,359 of them are a book's "cover" page (long enough to
+    embed and saying nothing about the book), 16,455 ids have a second, differently-named page as well,
+    and 3,794 ids are not in the catalogue at all -- so most books were embedded two or three times over
+    under one key, which search() then lifted once per copy.
+
+    Survivor Library has no catalogue to read (it is a zimit crawl of a WordPress site, not a
+    book-scraper ZIM), so its books are still found by their one real path shape; `seen` keeps its keys
+    unique whatever the crawl holds. Extract lazily either way: at most one batch of full texts is
+    retained, rather than the entire archive."""
+    if zim_id == "gutenberg_en_all":
+        for row in conn.execute(_GUTENBERG_BOOKS_SQL, (zim_id,)):
+            raw = reader.read(row["html_path"])
+            if not raw:
+                continue
+            author = (row["author"] or "").strip()
+            yield (f"{zim_id}:{row['id']}", f"{row['title']} by {author}" if author else row["title"],
+                   _gutenberg_text(raw))
+        return
+    seen: set[str] = set()
     for path in reader.paths():
-        if zim_id == "gutenberg_en_all":
-            m = _GUTENBERG_ARTICLE.match(path)
-            if not m:
-                continue
-            slug, book_id = m.group(1), m.group(2)
-            raw = reader.read(path)
-            if not raw:
-                continue
-            yield f"{zim_id}:{book_id}", slug, _gutenberg_text(raw)
-        else:
-            m = _SURVIVOR_BOOK.match(path)
-            if not m:
-                continue
-            slug = m.group(1)
-            raw = reader.read(path)
-            if not raw:
-                continue
-            title = re.sub(r"[-_]+", " ", slug).strip()
-            yield f"{zim_id}:{slug}", title, _pdf_text(raw)
+        m = _SURVIVOR_BOOK.match(path)
+        if not m:
+            continue
+        slug = m.group(1)
+        key = f"{zim_id}:{slug}"
+        if key in seen:
+            continue
+        raw = reader.read(path)
+        if not raw:
+            continue
+        seen.add(key)
+        yield key, re.sub(r"[-_]+", " ", slug).strip(), _pdf_text(raw)
 
 
 def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
@@ -519,7 +527,11 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
         except (OSError, RuntimeError, ValueError) as exc:
             out(f"household: {zim_id} unreadable; skipped ({exc})")
             continue
-        entries = iter(_household_entries(reader, zim_id))
+        if zim_id == "gutenberg_en_all" and not conn.execute(
+                "SELECT 1 FROM books WHERE zim=? AND html_path IS NOT NULL LIMIT 1", (zim_id,)).fetchone():
+            out(f"household: {zim_id} has no catalogue rows; run sos index first; skipped")
+            continue
+        entries = iter(_household_entries(reader, zim_id, conn))
         before = len(keys)
         while batch := list(islice(entries, BATCH)):
             texts, batch_keys = [], []
@@ -538,6 +550,10 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
             if len(keys) // BATCH % 25 == 0:
                 out(f"household: {len(keys)} embedded ({time.perf_counter() - t0:.0f}s)")
         out(f"household: {zim_id} done, {len(keys) - before} books ({len(keys)} so far)")
+    duplicates = [key for key, n in Counter(keys).items() if n > 1]
+    if duplicates:
+        raise ValueError(f"household: {len(duplicates)} book keys would each hold several vectors in one index "
+                         f"(e.g. {', '.join(duplicates[:5])}); search would count those books twice over")
     vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
     if keys:
         idx = ApproxIndex.build(vectors, keys)
