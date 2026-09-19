@@ -13,6 +13,29 @@ Operation SOS is an offline, UK-focused knowledge box. It runs on a Raspberry Pi
 - **An optional AI assistant** that only answers from the library and cites its sources; off by default.
 - Plain HTTP on the hotspot at `http://10.42.0.1` (or `http://sos.box`), no accounts, no internet dependency at runtime.
 
+## Screenshots
+
+The touchscreen's own view, rendered at its 1280 by 720 size from the PC dev stack. Phones on the hotspot get the same app, laid out for a narrow screen.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/2026-09-19-readme/home.png" alt="Now: what's the situation? Tap what has failed and the playbooks follow"><br><sub><b>Now.</b> Tap what has failed (power, water, mobile, roads) and the matching playbooks follow.</sub></td>
+<td width="50%"><img src="docs/screenshots/2026-09-19-readme/search.png" alt="Find: one search across the box, with a page found by meaning marked related"><br><sub><b>Find.</b> One search across the box's own guidance and the library. A page found by meaning, not by its words, is marked <i>related</i>.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/scenario.png" alt="A scenario playbook: agricultural collapse and famine"><br><sub><b>Playbooks.</b> What to do right now, in the first 72 hours, the first month and over the years, with a shared checklist.</sub></td>
+<td><img src="docs/screenshots/2026-09-19-readme/card.png" alt="A medical quick card: anaphylaxis"><br><sub><b>Medical cards.</b> Large numbered steps, and the UK numbers up front.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/kits.png" alt="Kits: tiered lists of what to have, scaled to the household"><br><sub><b>Kits.</b> Tiered lists of what to have, scaled to a household of any size and ticked off by everyone on the box.</sub></td>
+<td><img src="docs/screenshots/2026-09-19-readme/map.png" alt="The map: central London with footpaths and a labelled pin"><br><sub><b>Map.</b> UK maps with footpaths, contours and scenario overlays, served from the box.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/books.png" alt="Books: the Project Gutenberg collection with your reading places remembered"><br><sub><b>Books.</b> The Project Gutenberg collection, read offline, with your place in each book remembered.</sub></td>
+<td></td>
+</tr>
+</table>
+
 ## Hardware
 
 | Part | Reference choice |
