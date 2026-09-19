@@ -20,6 +20,7 @@ import multiprocessing
 import os
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import time
@@ -615,6 +616,14 @@ WORKER_WINDOW_CHUNKS = 3  # chunks of keys kept submitted per worker: enough tha
                           # the main process to come back round, small enough that the extracted text held
                           # in flight stays a few thousand passages rather than the whole 8.4-million key
                           # list (which is why this is a hand-rolled window and not Executor.map).
+CHUNK_TIMEOUT_S = 30 * 60  # a worker that stops answering must not hang a multi-hour build in silence.
+                           # Thirty minutes for one chunk of 32 articles is absurdly generous against the
+                           # real ZIM (a chunk is milliseconds), which is the point: only a genuinely
+                           # wedged worker reaches it, never a slow disk or a machine under load.
+MAX_TASKS_PER_CHILD = 2000  # retire and replace a worker after this many chunks. A full build hands one
+                            # worker hundreds of thousands of chunks over many hours, all through libzim's
+                            # C++ mmap and the HTML parser; recycling bounds whatever they hold on to.
+                            # Needs the spawn start method, which this pool already uses.
 
 _WORKER_READER = None     # one archive handle per worker process, opened by _worker_open below
 
@@ -631,6 +640,14 @@ def _worker_texts(keys: list[str]) -> list[str]:
     return [_wikipedia_article_text(_WORKER_READER, key) for key in keys]
 
 
+def _stop_workers(pool: ProcessPoolExecutor) -> None:
+    """Kill a wedged pool's worker processes outright. `shutdown(wait=True)` waits for the very chunk that
+    has hung, and `wait=False` leaves the processes running; `_processes` is private, but 3.12 offers no
+    public way to do this (3.14 added Executor.kill_workers)."""
+    for process in list(getattr(pool, "_processes", {}).values()):
+        process.terminate()
+
+
 @contextmanager
 def _wikipedia_text_chunks(reader, all_keys: list[str], starts, workers: int, zim_path: str):
     """Yield (start, texts) for each BATCH-sized chunk of `starts`, strictly in key order, so the caller's
@@ -643,14 +660,15 @@ def _wikipedia_text_chunks(reader, all_keys: list[str], starts, workers: int, zi
     own caches, which is not safe to inherit and use in a child. A spawned worker starts from a clean
     interpreter and opens its own handle from the path; the extra second of interpreter startup is nothing
     against a multi-hour build. (forkserver would also avoid the inherited handle, but spawn needs no
-    preload list to stay correct.) The parent's `open_zim` override therefore reaches key enumeration
-    only: the workers always read the real file at `local_path` through sos.books.open_zim."""
+    preload list to stay correct.) The workers therefore always read the real file at `local_path`
+    through sos.books.open_zim, which is why build_wikipedia_rerank refuses an `open_zim` override here."""
     if workers <= 1:
         yield ((start, [_wikipedia_article_text(reader, key) for key in all_keys[start:start + BATCH]])
                for start in starts)
         return
     pool = ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
-                               initializer=_worker_open, initargs=(str(zim_path),))
+                               initializer=_worker_open, initargs=(str(zim_path),),
+                               max_tasks_per_child=MAX_TASKS_PER_CHILD)
 
     def chunks():
         pending: deque = deque()
@@ -667,7 +685,17 @@ def _wikipedia_text_chunks(reader, all_keys: list[str], starts, workers: int, zi
         while pending:
             start, future = pending.popleft()
             try:
-                texts = future.result()
+                texts = future.result(timeout=CHUNK_TIMEOUT_S)
+                # refill before the caller embeds, so extraction of later chunks overlaps this one --
+                # inside the try because a pool that broke between this result and the next submit is the
+                # same interrupted build, and says so rather than escaping raw.
+                fill()
+            except TimeoutError as exc:
+                _stop_workers(pool)   # the outer shutdown(wait=True) would wait on the wedged chunk itself
+                raise RuntimeError(
+                    f"wikipedia: an article-extraction worker gave nothing back for row {start} in "
+                    f"{CHUNK_TIMEOUT_S / 60:.0f} minutes; the workers have been stopped and the build can "
+                    f"be resumed from its last checkpoint") from exc
             except BrokenProcessPool as exc:
                 raise RuntimeError(
                     f"wikipedia: an article-extraction worker process died at row {start}; the build has "
@@ -676,7 +704,6 @@ def _wikipedia_text_chunks(reader, all_keys: list[str], starts, workers: int, zi
                 raise RuntimeError(
                     f"wikipedia: an article-extraction worker failed at row {start} ({exc}); the build "
                     f"has stopped and can be resumed from its last checkpoint") from exc
-            fill()   # refill before the caller embeds, so extraction of later chunks overlaps this one
             yield start, texts
 
     try:
@@ -697,6 +724,10 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
     its first N entries: a fast, real, small-scale throughput measurement (`sos build-embeddings-wikipedia
     --limit N`) without doing the full build.
 
+    `open_zim` overrides how the PARENT opens the archive, for a test that has a reader of its own; the
+    workers always open the real file at `local_path` themselves, so the two sides would be reading
+    different archives and every row would silently come back zero. `workers` > 1 therefore refuses it.
+
     `workers` > 1 moves the article reading and HTML-to-text extraction into that many worker processes,
     which run ahead of the embedding the main process is doing -- the serial loop leaves eleven of twelve
     cores idle while the GPU works and the GPU idle while one core parses. The batches are still consumed
@@ -712,6 +743,9 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
         raise ValueError("limit must be positive")
     if workers < 1:
         raise ValueError("workers must be positive")
+    if open_zim is not None and workers > 1:
+        raise ValueError("an open_zim override reaches the parent only, never the worker processes, which "
+                         "always read library_items.local_path: use workers=1 with one")
     from sos.books import open_zim as real_open_zim
     open_zim = open_zim or real_open_zim
     row = conn.execute("SELECT available, local_path FROM library_items WHERE id=?", (WIKIPEDIA_ZIM,)).fetchone()
@@ -813,6 +847,15 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
     return meta
 
 
+def _interrupt(signum, frame) -> None:
+    """What SIGTERM does to this build instead of its default. The default stops the process where it
+    stands: the `finally` that stops the embedding server never runs, nor the one that shuts the
+    extraction pool down, so every worker process is orphaned for good (measured: three of them, and the
+    resource tracker, still alive a minute after the parent was signalled). An interruption is a thing
+    this build already knows how to survive -- it is resumable from its last checkpoint -- so raise one."""
+    raise KeyboardInterrupt("stopped by SIGTERM")
+
+
 def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
                         cuda: bool = False, resume: bool = True, limit: Optional[int] = None,
                         workers: int = 1) -> int:
@@ -825,41 +868,45 @@ def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable
     if not settings.embed_model_path.is_file():
         out(f"FAIL the embedding model is not at {settings.embed_model_path} (manifest item bge-small-en-v1.5)")
         return 1
-    started = None
+    previous_sigterm = signal.signal(signal.SIGTERM, _interrupt)
     try:
-        if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
-            raise httpx.HTTPError("not ready")
-    except httpx.HTTPError:
-        binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
-        cmd = [binary] + server_command(settings, cuda=cuda)[1:]
-        out(f"starting {' '.join(cmd)}")
-        started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        for _ in range(60):
-            time.sleep(0.5)
-            try:
-                if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code == 200:
-                    break
-            except httpx.HTTPError:
-                pass
-        else:
-            out("FAIL the embedding server did not come up")
+        started = None
+        try:
+            if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code != 200:
+                raise httpx.HTTPError("not ready")
+        except httpx.HTTPError:
+            binary = server_command(settings, cuda=True)[0] if cuda else (shutil.which("llama-server") or "/usr/local/bin/llama-server")
+            cmd = [binary] + server_command(settings, cuda=cuda)[1:]
+            out(f"starting {' '.join(cmd)}")
+            started = run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            for _ in range(60):
+                time.sleep(0.5)
+                try:
+                    if httpx.get(f"{settings.embed_url}/health", timeout=1.0).status_code == 200:
+                        break
+                except httpx.HTTPError:
+                    pass
+            else:
+                out("FAIL the embedding server did not come up")
+                if started:
+                    started.terminate()
+                return 1
+        conn = connect(settings.db_path)
+        client = httpx.Client()
+        try:
+            embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site
+            build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit, workers=workers)
+        except EmbedError as exc:
+            out(f"FAIL {exc}")
+            return 1
+        finally:
+            client.close()
+            conn.close()
             if started:
                 started.terminate()
-            return 1
-    conn = connect(settings.db_path)
-    client = httpx.Client()
-    try:
-        embed_fn = lambda texts: embed_sync(settings.embed_url, texts, client=client)  # noqa: E731 -- one call site
-        build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit, workers=workers)
-    except EmbedError as exc:
-        out(f"FAIL {exc}")
-        return 1
+        return 0
     finally:
-        client.close()
-        conn.close()
-        if started:
-            started.terminate()
-    return 0
+        signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 def server_command(settings: Settings, cuda: bool = False) -> list[str]:

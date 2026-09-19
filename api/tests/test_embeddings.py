@@ -1107,30 +1107,242 @@ def test_parallel_extraction_keeps_a_bounded_sliding_window(tmp_path, monkeypatc
     assert seen["ahead"] > WORKER_WINDOW_CHUNKS   # and it really does run ahead: extraction overlaps embedding
 
 
-def test_a_worker_that_cannot_open_the_zim_fails_the_build_clearly_and_leaves_no_children(tmp_path, wikipedia_zim):
+def test_a_worker_that_cannot_open_the_zim_fails_the_build_clearly_and_leaves_no_children(tmp_path, monkeypatch,
+                                                                                          wikipedia_zim):
     """A worker that dies must stop the run with an error that says so, take the pool down with it, and
     leave the last checkpoint intact so the build is still resumable. Provoked here the way it would
-    really happen: the workers cannot open the ZIM at the path the library row gives."""
+    really happen -- the workers cannot open the ZIM at the path the library row gives -- by deleting it
+    once the parent has enumerated its keys: the parent's own archive survives an unlink (it holds the
+    file open), a worker starting afterwards has nothing to open. An `open_zim` override cannot be used
+    for this: the workers never see it, which is exactly why workers > 1 now refuses one."""
     import multiprocessing
+    import shutil as shutil_mod
     from concurrent.futures.process import BrokenProcessPool
 
-    from sos.books import open_zim
     from sos.embeddings import build_wikipedia_rerank
 
     folder = tmp_path / "broken"
     folder.mkdir()
+    doomed = folder / "wikipedia_en_all_maxi.zim"
+    shutil_mod.copy(wikipedia_zim, doomed)
     conn = db.connect(folder / "sos.db")
     db.init_schema(conn)
-    _insert_wikipedia_zim_row(conn, folder)     # local_path points at a ZIM that is not there
-    reader = open_zim(wikipedia_zim)            # ... while the parent enumerates keys from the real one
+    _insert_wikipedia_zim_row(conn, folder, doomed)
+    real_keys = embeddings._wikipedia_article_keys
 
+    def enumerate_then_delete(reader):
+        keys = list(real_keys(reader))
+        doomed.unlink()
+        return iter(keys)
+
+    monkeypatch.setattr(embeddings, "_wikipedia_article_keys", enumerate_then_delete)
     with pytest.raises(RuntimeError) as exc:
         build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(),
-                               open_zim=lambda p: reader, out=lambda s: None, workers=2)
+                               out=lambda s: None, workers=2)
     conn.close()
     assert "worker" in str(exc.value).lower()
     assert isinstance(exc.value.__cause__, BrokenProcessPool)
     assert multiprocessing.active_children() == []   # the pool was shut down, not orphaned
+
+
+def test_an_embedding_failure_mid_build_leaves_no_worker_processes_behind(tmp_path, wikipedia_zim):
+    """The pool lives inside a context manager whose `finally` is the only thing that stops the workers:
+    if the main process gives up on the embedding side -- the part of the build most likely to fail --
+    every extraction worker must go with it. Removing that shutdown makes this test fail (checked against
+    a copy of the module with it taken out); the earlier "no orphaned processes" test did not notice."""
+    import multiprocessing
+
+    from sos.embeddings import build_wikipedia_rerank
+
+    folder = tmp_path / "embed-fails"
+    folder.mkdir()
+    conn = _wikipedia_conn(folder, wikipedia_zim)
+    calls: list = []
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(calls, fail_at=3),
+                               out=lambda s: None, workers=3)
+    conn.close()
+    assert len(calls) == 3
+    assert multiprocessing.active_children() == []
+
+
+def test_a_wedged_worker_times_out_with_a_clear_resumable_error(tmp_path, monkeypatch, wikipedia_zim):
+    """Without a timeout on future.result() a worker that never answers hangs the whole build in silence.
+    The real ceiling is generous (half an hour for one chunk of 32 articles); it is pinned to zero here so
+    a chunk that is merely still in flight trips it."""
+    import multiprocessing
+
+    from sos.embeddings import build_wikipedia_rerank
+
+    assert embeddings.CHUNK_TIMEOUT_S == 30 * 60
+    monkeypatch.setattr(embeddings, "CHUNK_TIMEOUT_S", 0)
+    folder = tmp_path / "wedged"
+    folder.mkdir()
+    conn = _wikipedia_conn(folder, wikipedia_zim)
+    with pytest.raises(RuntimeError) as exc:
+        build_wikipedia_rerank(conn, embeddings_settings(folder), _text_seeded_embed(),
+                               out=lambda s: None, workers=2)
+    conn.close()
+    message = str(exc.value)
+    assert "worker" in message.lower() and "resumed from its last checkpoint" in message
+    assert isinstance(exc.value.__cause__, TimeoutError)
+    assert multiprocessing.active_children() == []
+
+
+def test_long_lived_workers_are_recycled_without_changing_the_store(tmp_path, monkeypatch, wikipedia_zim):
+    """A real build hands one worker a quarter of a million chunks; max_tasks_per_child retires each of
+    them long before any leak in libzim or the parser can matter. Pinned to one task per child here so a
+    300-article ZIM shows the recycling, and the store it produces is still byte-identical to a serial
+    build's."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    from sos.embeddings import build_wikipedia_rerank
+
+    assert embeddings.MAX_TASKS_PER_CHILD == 2000
+    monkeypatch.setattr(embeddings, "MAX_TASKS_PER_CHILD", 1)
+    monkeypatch.setattr(embeddings, "CHECKPOINT_BATCHES", 1)
+    pids: set[int] = set()
+    pools: list = []
+
+    class PidWatchingPool(ProcessPoolExecutor):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            pools.append(self)
+
+        def submit(self, fn, /, *args, **kwargs):
+            future = super().submit(fn, *args, **kwargs)
+            pids.update(p.pid for p in self._processes.values())
+            return future
+
+    monkeypatch.setattr(embeddings, "ProcessPoolExecutor", PidWatchingPool)
+
+    recycled = tmp_path / "recycled"
+    recycled.mkdir()
+    conn = _wikipedia_conn(recycled, wikipedia_zim)
+
+    def out(line):
+        if pools:   # `_processes` is None once the pool has been shut down
+            pids.update(p.pid for p in (pools[0]._processes or {}).values())
+
+    result = build_wikipedia_rerank(conn, embeddings_settings(recycled), _text_seeded_embed(),
+                                    out=out, workers=2)
+    conn.close()
+    assert pools[0]._max_tasks_per_child == 1
+    assert len(pids) > 2          # more processes than workers: they really were retired and replaced
+
+    serial = tmp_path / "serial"
+    serial.mkdir()
+    conn = _wikipedia_conn(serial, wikipedia_zim)
+    plain = build_wikipedia_rerank(conn, embeddings_settings(serial), _text_seeded_embed(),
+                                   out=lambda s: None, workers=1)
+    conn.close()
+    assert result["count"] == plain["count"] == 301
+    assert _store_bytes(recycled) == _store_bytes(serial)
+
+
+def test_build_wikipedia_rerank_refuses_an_open_zim_override_on_several_workers(tmp_path, wikipedia_zim):
+    """The workers always open the real file at library_items.local_path: an override the parent alone
+    honours meant the two sides read different archives, and a store of nothing but zero rows came out of
+    it with no error at all."""
+    from sos.embeddings import build_wikipedia_rerank
+
+    conn = _wikipedia_conn(tmp_path, wikipedia_zim)
+    with pytest.raises(ValueError, match="open_zim"):
+        build_wikipedia_rerank(conn, embeddings_settings(tmp_path), _text_seeded_embed(),
+                               open_zim=lambda p: None, out=lambda s: None, workers=2)
+    conn.close()
+
+
+_SIGTERM_DRIVER = '''
+"""A real `sos build-embeddings-wikipedia --workers 3` run, far enough along to have its workers, which
+then waits in the embedding call until this process is signalled. Everything is under the main guard: a
+spawned worker re-imports this file, and must not repeat the setup."""
+import multiprocessing
+import sys
+import time
+from pathlib import Path
+
+import httpx
+
+from sos import db, embeddings
+
+
+def never_answers(url, texts, **kwargs):
+    print(" ".join(str(p.pid) for p in multiprocessing.active_children()), flush=True)
+    while True:
+        time.sleep(0.05)
+
+
+if __name__ == "__main__":
+    folder, zim = Path(sys.argv[1]), sys.argv[2]
+    conn = db.connect(folder / "sos.db")
+    db.init_schema(conn)
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, "
+                 "local_path) VALUES ('wikipedia_en_all_maxi', 'Wikipedia', 'zim', 'core', 'reference', "
+                 "'zim/w.zim', 50, 1, ?)", (zim,))
+    conn.commit()
+    conn.close()
+    model = folder / "model.gguf"
+    model.write_bytes(b"")
+
+    class FakeSettings:
+        embeddings_dir = folder
+        embed_model = "test"
+        embed_model_path = model
+        embed_url = "http://127.0.0.1:8099"
+        db_path = folder / "sos.db"
+
+    embeddings.httpx.get = lambda url, timeout=1.0: httpx.Response(200)   # a server is up: start none
+    embeddings.embed_sync = never_answers
+    sys.exit(embeddings.build_wikipedia_cli(FakeSettings(), out=lambda s: None, workers=3))
+'''
+
+
+def test_sigterm_to_the_build_stops_its_workers_instead_of_orphaning_them(tmp_path, wikipedia_zim):
+    """Python's default SIGTERM kills the process outright: the `finally` that shuts the extraction pool
+    down never runs, and every worker is left behind for good (measured: three workers still alive a
+    minute after the parent was signalled). A real run, a real SIGTERM, real child processes."""
+    import os
+    import select
+    import signal
+    import subprocess
+    import sys
+
+    driver = tmp_path / "driver.py"
+    driver.write_text(_SIGTERM_DRIVER)
+    env = dict(os.environ, PYTHONPATH=str(REPO / "api"), PYTHONUNBUFFERED="1")
+    proc = subprocess.Popen([sys.executable, str(driver), str(tmp_path), str(wikipedia_zim)],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    try:
+        assert select.select([proc.stdout], [], [], 120)[0], "the build never reached its first embedding call"
+        children = [int(pid) for pid in proc.stdout.readline().split()]
+        assert len(children) == 3
+        for pid in children:
+            os.kill(pid, 0)                      # every worker really is running before the signal
+
+        proc.send_signal(signal.SIGTERM)
+        proc.wait(timeout=120)                   # the parent stops rather than ignoring the signal
+
+        deadline = time.monotonic() + 60
+        alive = children
+        while alive and time.monotonic() < deadline:
+            alive = [pid for pid in alive if _is_alive(pid)]
+            if alive:
+                time.sleep(0.2)
+        assert alive == [], f"workers orphaned by SIGTERM: {alive}"
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+        proc.stdout.close()
+        proc.stderr.close()
+
+
+def _is_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except (ProcessLookupError, PermissionError):
+        return False
+    return True
 
 
 def test_build_wikipedia_rerank_rejects_a_nonpositive_worker_count(tmp_path):
@@ -1144,7 +1356,7 @@ def test_build_wikipedia_rerank_rejects_a_nonpositive_worker_count(tmp_path):
                                out=lambda s: None, workers=0)
 
 
-ROW_SQL ="INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
+ROW_SQL = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)"
 
 
 def _search(conn, env, q, sem, **kw):
