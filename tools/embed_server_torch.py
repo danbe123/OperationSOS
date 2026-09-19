@@ -83,6 +83,20 @@ def embeddings_payload(vectors) -> list[dict]:
     return [{"index": i, "embedding": [float(x) for x in row]} for i, row in enumerate(vectors)]
 
 
+def release_cuda_memory() -> None:
+    """After an out-of-memory the failed batch's blocks stay in torch's caching allocator, so the next
+    batch can fail again on memory this process is holding and not using. torch is reached for through
+    sys.modules and never imported: a machine without it (and the tests) must not pull it in here."""
+    torch = sys.modules.get("torch")
+    if torch is None:
+        return
+    try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:           # tidying up after a failure must never become the failure
+        traceback.print_exc()
+
+
 def make_handler(embed_fn, max_batch: int = MAX_BATCH):
     """The HTTP handler over any `embed_fn(texts) -> rows of floats`. One lock: the GPU takes one batch
     at a time, and a request that raises must release it on the way out or the next one hangs forever."""
@@ -95,13 +109,26 @@ def make_handler(embed_fn, max_batch: int = MAX_BATCH):
         def log_message(self, fmt, *args):
             pass        # a bulk build makes hundreds of thousands of requests; failures print themselves
 
-        def _reply(self, status: int, payload) -> None:
+        def _reply(self, status: int, payload, close: bool = False) -> None:
             body = json.dumps(payload).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(body)))
+            if close:
+                self.send_header("Connection", "close")
+                self.close_connection = True
             self.end_headers()
             self.wfile.write(body)
+
+        def _drain(self, length: int) -> None:
+            """Read a body this request is not going to act on. The builds send every batch down one
+            keep-alive connection, and a reply that leaves the body in the socket makes the next
+            request line be parsed out of the middle of the abandoned JSON."""
+            while length > 0:
+                chunk = self.rfile.read(min(length, 1 << 16))
+                if not chunk:
+                    return
+                length -= len(chunk)
 
         def do_GET(self):
             if self.path.split("?", 1)[0] == "/health":
@@ -110,16 +137,21 @@ def make_handler(embed_fn, max_batch: int = MAX_BATCH):
                 self._reply(404, {"error": f"no such path: {self.path}"})
 
         def do_POST(self):
-            if self.path.split("?", 1)[0] != "/embeddings":
-                self._reply(404, {"error": f"no such path: {self.path}"})
-                return
             try:
                 length = int(self.headers.get("Content-Length") or 0)
+                if length < 0:
+                    raise ValueError(length)
             except ValueError:
-                self._reply(400, {"error": "bad Content-Length"})
+                # Nothing says where this request ends, so the connection ends with it.
+                self._reply(400, {"error": "bad Content-Length"}, close=True)
+                return
+            if self.path.split("?", 1)[0] != "/embeddings":
+                self._drain(length)
+                self._reply(404, {"error": f"no such path: {self.path}"})
                 return
             if length > MAX_BODY:
-                self._reply(413, {"error": f"body of {length} bytes is too large"})
+                # Reading tens of megabytes only to throw them away is not worth it: close instead.
+                self._reply(413, {"error": f"body of {length} bytes is too large"}, close=True)
                 return
             try:
                 texts = texts_from(self.rfile.read(length), max_batch=max_batch)
@@ -132,6 +164,8 @@ def make_handler(embed_fn, max_batch: int = MAX_BATCH):
                 self._reply(200, embeddings_payload(vectors))
             except Exception as exc:
                 traceback.print_exc()
+                if "out of memory" in str(exc).lower():
+                    release_cuda_memory()
                 self._reply(500, {"error": f"{type(exc).__name__}: {exc}"})
 
     return Handler

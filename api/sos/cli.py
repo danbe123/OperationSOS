@@ -189,7 +189,7 @@ def default_workers() -> int:
 def cmd_build_embeddings_wikipedia(settings: Settings, args) -> int:
     from sos import embeddings
     return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit, workers=args.workers,
-                                          servers=args.servers)
+                                          servers=args.servers, resume=args.resume)
 
 
 def cmd_eval(settings: Settings, args) -> int:
@@ -245,6 +245,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--workers", type=_positive_int, default=default_workers(),
                    help="processes reading and cleaning article text while the main process embeds (default: cores minus four, capped at six)")
     p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
+    p.add_argument("--no-resume", dest="resume", action="store_false",
+                   help="start the build afresh instead of carrying on from its last checkpoint")
     p.set_defaults(func=cmd_build_embeddings_wikipedia)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")

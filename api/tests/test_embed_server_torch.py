@@ -6,8 +6,10 @@ than imported. Nothing in these tests touches torch or a GPU: they drive the rea
 real socket with a fake embed function, which is exactly the seam the tool is shaped around."""
 import importlib.util
 import json
+import socket
 import sys
 import threading
+import types
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
@@ -156,6 +158,73 @@ def test_an_unknown_path_is_a_404(serving):
     url = serving(fake_embed)
     assert httpx.get(f"{url}/nope", timeout=5.0).status_code == 404
     assert httpx.post(f"{url}/nope", json={"input": ["a"]}, timeout=5.0).status_code == 404
+
+
+def test_a_404_post_leaves_a_keep_alive_connection_usable(serving):
+    """A reply that does not read the request's body leaves it in the socket, and the next request on
+    that connection is parsed starting from the middle of the abandoned JSON. The builds send every
+    batch down one keep-alive connection, so one mistyped path would break every batch after it."""
+    url = serving(fake_embed)
+    with httpx.Client(timeout=10.0) as client:
+        assert client.post(f"{url}/nope", json={"input": ["x" * 200] * 20}).status_code == 404
+        second = client.post(f"{url}/embeddings", json={"input": ["after the 404"]})
+    assert second.status_code == 200
+    assert embeddings._vectors_from(second.json()).shape == (1, embeddings.DIMS)
+
+
+def _raw_post(url: str, headers: str, body: bytes) -> bytes:
+    host, port = url.removeprefix("http://").split(":")
+    with socket.create_connection((host, int(port)), timeout=10.0) as sock:
+        sock.sendall(f"POST /embeddings HTTP/1.1\r\nHost: {host}\r\n{headers}\r\n\r\n".encode() + body)
+        sock.settimeout(10.0)
+        reply = b""
+        while chunk := sock.recv(65536):
+            reply += chunk
+    return reply
+
+
+@pytest.mark.parametrize("headers, body", [
+    ("Content-Length: not-a-number", b'{"input": ["a"]}'),
+    (f"Content-Length: {tool.MAX_BODY + 1}", b'{"input": ["a"]}'),
+])
+def test_a_request_whose_body_cannot_be_read_ends_the_connection_rather_than_desynchronising(serving, headers, body):
+    """A Content-Length that is not a number leaves nowhere for the body to end, and one past MAX_BODY is
+    not worth reading. Either way the connection cannot be reused, so the server says so and closes it
+    instead of leaving the next request to be parsed out of whatever is left in the socket."""
+    reply = _raw_post(serving(fake_embed), headers, body)
+    assert reply.split(b"\r\n", 1)[0].split()[1] in (b"400", b"413")
+    assert b"close" in reply.lower().split(b"\r\n\r\n", 1)[0]     # Connection: close, and the recv ended
+
+
+def test_a_cuda_out_of_memory_empties_the_allocator_cache_before_answering(serving, monkeypatch):
+    """Whatever the failed batch had allocated stays in torch's caching allocator, so the next batch can
+    run out of memory the process is holding and not using. Nothing here imports torch: the handler must
+    only reach for it when it is already loaded, which on a real server it is."""
+    emptied = []
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(
+        is_available=lambda: True, empty_cache=lambda: emptied.append(True)))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    def out_of_memory(texts):
+        raise RuntimeError("CUDA out of memory. Tried to allocate 2.00 GiB")
+
+    url = serving(out_of_memory)
+    assert httpx.post(f"{url}/embeddings", json={"input": ["boom"]}, timeout=10.0).status_code == 500
+    assert emptied == [True]
+
+
+def test_an_ordinary_failure_does_not_reach_for_the_gpu(serving, monkeypatch):
+    emptied = []
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(
+        is_available=lambda: True, empty_cache=lambda: emptied.append(True)))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    def broken(texts):
+        raise ValueError("the tokeniser did not like that")
+
+    url = serving(broken)
+    assert httpx.post(f"{url}/embeddings", json={"input": ["boom"]}, timeout=10.0).status_code == 500
+    assert emptied == []
 
 
 def test_embeddings_payload_shapes_a_numpy_array_as_plain_floats():

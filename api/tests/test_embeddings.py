@@ -412,6 +412,50 @@ def test_build_wikipedia_cli_starts_the_server_and_passes_resume_limit_and_worke
     assert seen_calls == [{"out": seen_calls[0]["out"], "resume": True, "limit": 5, "workers": 4}]
 
 
+def test_the_household_build_treats_sigterm_as_an_interruption_like_the_wikipedia_build(env, monkeypatch):
+    """The default SIGTERM stops the process where it stands, so the `finally` that stops the embedding
+    servers never runs and a multi-hour household build orphans its llama-servers. The Wikipedia build
+    has raised an interruption instead since the parallel extraction landed; this one did not."""
+    import signal
+
+    seen = []
+    _, fake_run = _build_cli_fixture(env, monkeypatch)
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    monkeypatch.setattr(embeddings, "build", lambda *a, **k: seen.append(signal.getsignal(signal.SIGTERM)))
+    monkeypatch.setattr(embeddings, "build_household", lambda *a, **k: None)
+    before = signal.getsignal(signal.SIGTERM)
+    assert embeddings.build_cli(env, out=lambda s: None, run=fake_run) == 0
+    assert seen == [embeddings._interrupt]
+    assert signal.getsignal(signal.SIGTERM) is before      # and put back exactly as it was found
+
+
+@pytest.mark.parametrize("stopped_by, code", [("stopped by SIGTERM", 143), ("", 130)])
+def test_an_interrupted_wikipedia_build_says_how_to_carry_on_rather_than_raising(env, monkeypatch,
+                                                                                 stopped_by, code):
+    """An interruption is a thing this build survives -- it resumes from its last checkpoint -- so the
+    operator gets a line saying so and the shell's own 128+signal status, not a KeyboardInterrupt
+    traceback out of the middle of a build that in fact lost nothing."""
+    _, fake_run = _build_cli_fixture(env, monkeypatch)
+
+    def interrupted(*args, **kwargs):
+        raise KeyboardInterrupt(stopped_by) if stopped_by else KeyboardInterrupt()
+
+    monkeypatch.setattr(embeddings, "build_wikipedia_rerank", interrupted)
+    lines: list[str] = []
+    assert embeddings.build_wikipedia_cli(env, out=lines.append, run=fake_run) == code
+    said = "\n".join(lines)
+    assert "again" in said and "checkpoint" in said and "--no-resume" in said
+
+
+def test_an_interrupted_household_build_also_stops_quietly(env, monkeypatch):
+    _, fake_run = _build_cli_fixture(env, monkeypatch)
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    monkeypatch.setattr(embeddings, "build", lambda *a, **k: (_ for _ in ()).throw(KeyboardInterrupt()))
+    lines: list[str] = []
+    assert embeddings.build_cli(env, out=lines.append, run=fake_run) == 130
+    assert any("published" in line for line in lines)
+
+
 # --- --servers N: several embedding servers side by side ------------------------------------------------
 #
 # One llama-server's request loop is single-threaded (HTTP, JSON, tokenising, serialising 32x384 floats)
@@ -488,6 +532,22 @@ def test_several_embedding_servers_split_each_batch_in_order_and_run_at_once(env
     # and put back together in the order the caller gave them, not the order the servers answered in
     assert np.allclose(vectors, np.stack([unit(1, i) for i in range(8)]))
     assert all(p.terminated for p in started)
+
+
+def test_successive_single_text_batches_do_not_all_land_on_the_first_server(env, monkeypatch):
+    """A batch the server refuses is re-sent one passage at a time, shortened until it goes in. Every one
+    of those single-text batches is slice 0, so every one of them used to go to the same server: on a
+    stretch of dense, number-heavy text, one server did all the retrying while the others idled."""
+    started, fake_run = _fake_servers(env, monkeypatch)
+    seen: list[tuple[str, list[str]]] = []
+    _fake_embed_sync(monkeypatch, seen=seen)
+
+    with embeddings.embedding_servers(env, out=lambda s: None, run=fake_run, servers=3) as embed:
+        for _ in range(4):
+            embed(["1"])
+
+    assert [url for url, _ in seen] == ["http://127.0.0.1:8091", "http://127.0.0.1:8092",
+                                        "http://127.0.0.1:8093", "http://127.0.0.1:8091"]
 
 
 def test_one_embedding_server_sends_the_whole_batch_to_the_one_url(env, monkeypatch):

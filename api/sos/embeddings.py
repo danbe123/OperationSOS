@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import itertools
 import json
 import logging
 import multiprocessing
@@ -1035,12 +1036,31 @@ def build_wikipedia_rerank(conn, settings: Settings, embed: Callable[[list[str]]
 
 
 def _interrupt(signum, frame) -> None:
-    """What SIGTERM does to this build instead of its default. The default stops the process where it
+    """What SIGTERM does to a build instead of its default. The default stops the process where it
     stands: the `finally` that stops the embedding server never runs, nor the one that shuts the
     extraction pool down, so every worker process is orphaned for good (measured: three of them, and the
     resource tracker, still alive a minute after the parent was signalled). An interruption is a thing
-    this build already knows how to survive -- it is resumable from its last checkpoint -- so raise one."""
+    these builds already know how to survive, so raise one."""
     raise KeyboardInterrupt("stopped by SIGTERM")
+
+
+@contextmanager
+def _interruptible():
+    """Run a build with SIGTERM raising an interruption, and hand the signal back as it was found."""
+    previous = signal.signal(signal.SIGTERM, _interrupt)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
+def _stopped(exc: KeyboardInterrupt, out: Callable, carry_on: str) -> int:
+    """What an interrupted build says and exits with: the shell's own 128 + signal number (130 for
+    Ctrl-C, 143 for SIGTERM), and one line about where that leaves things -- not a traceback out of the
+    middle of a build that in fact lost nothing."""
+    by_sigterm = "SIGTERM" in str(exc)
+    out(f"stopped by {'SIGTERM' if by_sigterm else 'Ctrl-C'}: {carry_on}")
+    return 143 if by_sigterm else 130
 
 
 def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen,
@@ -1056,20 +1076,22 @@ def build_wikipedia_cli(settings: Settings, out: Callable = print, run: Callable
     if refusal:
         out(refusal)
         return 1
-    previous_sigterm = signal.signal(signal.SIGTERM, _interrupt)
     conn = None
     try:
-        with embedding_servers(settings, out=out, run=run, cuda=cuda, servers=servers) as embed_fn:
+        with _interruptible(), embedding_servers(settings, out=out, run=run, cuda=cuda,
+                                                 servers=servers) as embed_fn:
             conn = connect(settings.db_path)
             build_wikipedia_rerank(conn, settings, embed_fn, out=out, resume=resume, limit=limit,
                                    workers=workers)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1
+    except KeyboardInterrupt as exc:
+        return _stopped(exc, out, "run the same command again to carry on from the last checkpoint "
+                                  "(--no-resume to start the build afresh instead)")
     finally:
         if conn is not None:
             conn.close()
-        signal.signal(signal.SIGTERM, previous_sigterm)
     return 0
 
 
@@ -1131,14 +1153,19 @@ def _even_slices(count: int, parts: int) -> Iterator[tuple[int, int]]:
         start = end
 
 
-def _embed_across(urls: list[str], client: httpx.Client, pool, texts: list[str]) -> np.ndarray:
+def _embed_across(urls: list[str], client: httpx.Client, pool, texts: list[str],
+                  first: int = 0) -> np.ndarray:
     """One batch across several servers at once, back together in the order it was given in. Every slice
     is waited for even after one has failed, so no request outlives the client it was made with; the
     first EmbedError is then raised exactly as a single server's would be, which is what embed_batch's
-    shorten-and-retry recovery reads."""
+    shorten-and-retry recovery reads.
+
+    `first` says which server takes the first slice, and the caller moves it on each call: a batch the
+    server refused is re-sent one passage at a time, and every one of those is slice 0, so one server
+    would otherwise do all the shortening and retrying while the others idled."""
     parts = [texts[start:end] for start, end in _even_slices(len(texts), len(urls))]
-    futures = [(pool.submit(embed_sync, url, part, client=client))
-               for url, part in zip(urls, parts) if part]
+    futures = [pool.submit(embed_sync, urls[(i + first) % len(urls)], part, client=client)
+               for i, part in enumerate(parts) if part]
     rows, failure = [], None
     for future in futures:
         try:
@@ -1190,7 +1217,8 @@ def embedding_servers(settings: Settings, out: Callable = print, run: Callable =
         if pool is None:
             yield lambda texts: embed_sync(urls[0], texts, client=client)
         else:
-            yield lambda texts: _embed_across(urls, client, pool, texts)
+            turn = itertools.count()
+            yield lambda texts: _embed_across(urls, client, pool, texts, next(turn))
     finally:
         if pool is not None:
             pool.shutdown(wait=True)
@@ -1212,7 +1240,8 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
         return 1
     conn = None
     try:
-        with embedding_servers(settings, out=out, run=run, cuda=cuda, servers=servers) as embed_fn:
+        with _interruptible(), embedding_servers(settings, out=out, run=run, cuda=cuda,
+                                                 servers=servers) as embed_fn:
             conn = connect(settings.db_path)
             if collection in ("all", "docs"):
                 build(conn, settings, embed_fn, out)
@@ -1221,6 +1250,9 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1
+    except KeyboardInterrupt as exc:
+        return _stopped(exc, out, "nothing was published, and whatever the box already had is untouched; "
+                                  "this build has no checkpoint, so run the same command again to redo it")
     finally:
         if conn is not None:
             conn.close()

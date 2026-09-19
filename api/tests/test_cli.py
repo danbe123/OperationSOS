@@ -75,8 +75,8 @@ def _spy_wikipedia_cli(monkeypatch) -> list:
     from sos import embeddings
     calls = []
     monkeypatch.setattr(embeddings, "build_wikipedia_cli",
-                        lambda settings, cuda=False, limit=None, workers=1, servers=1:
-                        calls.append((cuda, limit, workers, servers)) or 0)
+                        lambda settings, cuda=False, limit=None, workers=1, servers=1, resume=True:
+                        calls.append((cuda, limit, workers, servers, resume)) or 0)
     return calls
 
 
@@ -84,7 +84,15 @@ def test_build_embeddings_wikipedia_dispatches_cuda_limit_workers_and_servers(en
     calls = _spy_wikipedia_cli(monkeypatch)
     assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5", "--workers", "3",
                      "--servers", "2"]) == 0
-    assert calls == [(True, 5, 3, 2)]
+    assert calls == [(True, 5, 3, 2, True)]
+
+
+def test_build_embeddings_wikipedia_can_be_told_to_start_the_build_afresh(env, monkeypatch):
+    """The build resumes from its checkpoint by default, which is what an interrupted multi-hour run
+    wants; --no-resume is how an operator says the work already done is not to be trusted."""
+    calls = _spy_wikipedia_cli(monkeypatch)
+    assert cli.main(["build-embeddings-wikipedia", "--no-resume"]) == 0
+    assert calls[0][4] is False
 
 
 def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit_and_leaves_cores_for_the_gpu_server(env, monkeypatch):
@@ -94,7 +102,7 @@ def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit_and_leaves_cores_f
 
     calls = _spy_wikipedia_cli(monkeypatch)
     assert cli.main(["build-embeddings-wikipedia"]) == 0
-    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)), 1)]
+    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)), 1, True)]
 
 
 @pytest.mark.parametrize("command", ["build-embeddings", "build-embeddings-wikipedia"])
