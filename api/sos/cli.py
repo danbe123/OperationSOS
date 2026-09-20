@@ -1,4 +1,4 @@
-"""`sos` command line: sync, index, storage-event, validate-playbooks, build-maps, build-crawl, build-books, eval, pin, status."""
+"""`sos` command line: sync, index, storage-event, validate-playbooks, build-maps, build-crawl, build-books, eval, eval-search, eval-compare, pin, status."""
 from __future__ import annotations
 
 import argparse
@@ -198,6 +198,18 @@ def cmd_eval(settings: Settings, args) -> int:
     return evalrun.run_from_namespace(args)
 
 
+def cmd_eval_search(settings: Settings, args) -> int:
+    from sos import searcheval
+
+    return searcheval.run_from_namespace(args)
+
+
+def cmd_eval_compare(settings: Settings, args) -> int:
+    from sos import searcheval
+
+    return searcheval.compare_from_namespace(args)
+
+
 def _crawl_ids() -> list[str]:
     from sos import buildcrawl
 
@@ -258,6 +270,21 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out")
     p.set_defaults(func=cmd_eval)
     p.add_argument("--questions", help="evaluation question file")
+    p = sub.add_parser("eval-search", help="search-quality benchmark over the gold sets in tools/eval/search")
+    p.add_argument("sets", nargs="*", help="gold set names (default: all)")
+    p.add_argument("--semantic", choices=("off", "on", "both"), default="both",
+                   help="keyword only, the meaning layer on, or both (default both)")
+    p.add_argument("--limit", type=_positive_int, default=40, help="results asked of search() per query (default 40, the API's)")
+    p.add_argument("--json", help="write the run (metrics and every query's top ten) here")
+    p.add_argument("--compact", action="store_true", help="cut the recorded ranking of a query found at rank 1 to three rows")
+    p.add_argument("--validate", action="store_true", help="check every gold file against the real database and ZIMs; exit 1 on a problem")
+    p.add_argument("--gold-dir", help="gold set folder (default tools/eval/search)")
+    p.add_argument("--db", help="database to search (default $SOS_STATE/sos.db), opened read-only")
+    p.set_defaults(func=cmd_eval_search)
+    p = sub.add_parser("eval-compare", help="delta table between two eval-search --json runs")
+    p.add_argument("a")
+    p.add_argument("b")
+    p.set_defaults(func=cmd_eval_compare)
     p = sub.add_parser("pin", help="admin PIN")
     p.add_argument("action", choices=["reset", "set"])
     p.add_argument("pin", nargs="?")
