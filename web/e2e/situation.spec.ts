@@ -53,8 +53,12 @@ test('the power goes off: the band, the forecast, a job ticked, and everything b
   // end with everything working again
   await setCondition(page, 'power', 'Working');
   // The states stay on the row whatever it is holding: no door in front of the door.
-  await expect(page.locator('#power')).toContainText('working');
-  await expect(page.locator('#power').getByRole('group', { name: 'Mains power' })).toBeVisible();
+  const power = page.locator('#power').getByRole('group', { name: 'Mains power', exact: true });
+  await expect(power).toBeVisible();
+  await expect(power.getByRole('button', { name: 'Working', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(power.getByRole('button', { name: 'Off', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  // a service that is working says nothing about how long it has been off
+  await expect(page.locator('#power')).not.toContainText('for 1 h');
   await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Now' }).click();
   await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Situation now' })).toBeHidden();
