@@ -94,6 +94,18 @@ The plan in the Gutenberg design, section 8, built for the box's own library:
 - **Off** whenever the files, the server or the model are absent, or the server is slow: search is the
   keyword search, and nothing on the screen says otherwise.
 
+### 3.1. Semantic expansion accepted on the PC, 20 September 2026
+
+The full passage window is now `PASSAGE_CHARS=2584`, with reactive shortening for text that still exceeds the 512-token context; 21,368 document passages are published. The household collection uses an approximate index over 70,558 books (60,093 Gutenberg, 10,465 Survivor Library), not the document matrix. It adds or boosts books by meaning; the response uses `source: books`, and meaning-only additions carry `via: meaning`.
+
+Wikipedia is a separate memory-mapped lookup, never an approximate nearest-neighbour search. Its completed build contains 8,425,865 keys: 7,243,109 usable vectors and 1,182,756 zero-vector entries for insufficient text. The vector file is 6,471,064,320 bytes. Measured full-build duration was 14,133.67 seconds, 596.16 candidate rows/s (3 h 55 m 34 s), superseding the need to estimate remaining build time. Household took 11,876.10 seconds, 5.94 embedded books/s. These are PC build measurements.
+
+Only Wikipedia rows already found by Kiwix keywords are rescored, by `0.7 + 0.6 × max(0, cosine)`. Eight real queries preserved all 60 candidate rows through that step; two changed order. Cross-source title deduplication happens afterwards and can change which source supplies a final result. Seven live API queries also confirmed household meaning results and no meaning badges on 73 keyword hits from 17 excluded archives. Exclusions are `wiktionary_en_all_nopic`, `wikipedia_cy_all_maxi`, and all manifest IDs ending in `*.stackexchange.com_en_all`.
+
+Publications keep the current and previous generation, serialize publication/pruning, ignore directory symlinks, and skip pruning if current pointers cannot be resolved. Loaders read vectors and metadata from the same resolved generation. Old flat metadata and dot-prefixed generations remain supported. Same-collection builds must not overlap because their staging filenames are shared. Query embeddings are reused across collections; failed queries are cached briefly. `Semantic.generation` changes only when loaded state changes, not on repeated failed loads.
+
+See `docs/app-completion.md` for full acceptance results and `docs/reviews/2026-09-20-semantic-acceptance.json` for measured rows. Pi memory, latency and physical-device acceptance remain outstanding.
+
 ## 4. The screen (`web/src`)
 
 - Two groups: **From this box**, then **From the library** — everything else in the engine's order, the
@@ -124,6 +136,6 @@ gone.
 
 ## 6. Not done
 
-Semantic search over the Kiwix libraries (Wikipedia's and the NHS's articles are searched by kiwix-serve and
-never pass through the box's index); the assistant's grounding still takes BM25 alone. Both are the next
-step of the same design.
+Semantic retrieval over NHS and other article libraries remains unimplemented. Wikipedia now reranks
+its existing keyword candidates as described in section 3.1, and household books have their own semantic
+index. The assistant's grounding still takes BM25 alone. Physical Pi acceptance is also outstanding.

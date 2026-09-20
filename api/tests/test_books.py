@@ -171,6 +171,18 @@ def test_book_zims_is_the_gutenberg_collection():
     assert BOOK_ZIMS == ("gutenberg_en_all",)
 
 
+def test_libzim_reader_paths_walks_every_real_entry(books_zim):
+    """The real libzim.reader.Archive, not a fake: entry_count and _get_entry_by_id (Correction 1 of
+    the household-embedding task) actually walk the fixture ZIM's real entries."""
+    reader = books.open_zim(books_zim)
+    paths = set(reader.paths())
+    assert "full_by_popularity.js" in paths
+    assert "Pride and Prejudice.1342" in paths            # the bare HTML article
+    assert "Pride and Prejudice.1342.epub" in paths
+    assert "covers/1342_cover_image.jpg" in paths
+    assert "Aesop's Fables - A New Translation.11339.epub" not in paths   # flags say html only: never written
+
+
 # --- the router -------------------------------------------------------------------------------------------------
 
 

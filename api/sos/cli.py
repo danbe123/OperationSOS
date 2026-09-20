@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -14,6 +15,19 @@ from sos import buildmaps, db, library, system
 from sos.config import Settings, get_settings
 from sos.content import KIND_BY_DIR, validate_tree
 from sos.manifest import load_manifests
+
+
+def _positive_int(value: str) -> int:
+    result = int(value)
+    if result <= 0:
+        raise argparse.ArgumentTypeError("must be positive")
+    return result
+
+
+# One llama-server answers a batch on one thread, and that thread -- not the GPU -- is what a bulk build
+# waits on, so several of them side by side, each given a slice of every batch, is the way to use the card.
+SERVERS_HELP = ("embedding servers to run side by side on consecutive ports from the configured one, each "
+                "taking a slice of every batch (default 1)")
 
 
 def _api(settings: Settings) -> str:
@@ -162,7 +176,20 @@ def cmd_build_books(settings: Settings, args) -> int:
 
 def cmd_build_embeddings(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_cli(settings)
+    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection, servers=args.servers)
+
+
+def default_workers() -> int:
+    """Article extraction processes for the Wikipedia embedding build: four cores held back for the GPU
+    embedding server and for the machine itself, and never more than six (past which the GPU, not the
+    parsing, is the limit)."""
+    return min(6, max(1, (os.cpu_count() or 2) - 4))
+
+
+def cmd_build_embeddings_wikipedia(settings: Settings, args) -> int:
+    from sos import embeddings
+    return embeddings.build_wikipedia_cli(settings, cuda=args.cuda, limit=args.limit, workers=args.workers,
+                                          servers=args.servers, resume=args.resume)
 
 
 def cmd_eval(settings: Settings, args) -> int:
@@ -206,8 +233,21 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("build-books", help="PC only: convert PDF library items to EPUB with Calibre")
     p.add_argument("--only", help="comma-separated item ids")
     p.set_defaults(func=cmd_build_books)
-    p = sub.add_parser("build-embeddings", help="PC only: embed the box's own library for semantic search (needs llama-server and the bge-small model)")
+    p = sub.add_parser("build-embeddings", help="PC only: embed the docs and household library for semantic search")
+    p.add_argument("--collection", choices=("all", "docs", "household"), default="all",
+                   help="rebuild only one collection, or both (default)")
+    p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
+    p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
     p.set_defaults(func=cmd_build_embeddings)
+    p = sub.add_parser("build-embeddings-wikipedia", help="PC only: embed English Wikipedia for rerank-only lookup (multi-hour; needs its own explicit run)")
+    p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
+    p.add_argument("--limit", type=_positive_int, default=None, help="cap the number of articles embedded, for a real throughput measurement")
+    p.add_argument("--workers", type=_positive_int, default=default_workers(),
+                   help="processes reading and cleaning article text while the main process embeds (default: cores minus four, capped at six)")
+    p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
+    p.add_argument("--no-resume", dest="resume", action="store_false",
+                   help="start the build afresh instead of carrying on from its last checkpoint")
+    p.set_defaults(func=cmd_build_embeddings_wikipedia)
     p = sub.add_parser("build-nhs", help="PC only: alias for build-crawl nhs_uk")
     p.add_argument("--out")
     p.add_argument("--skip-crawl", action="store_true")

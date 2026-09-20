@@ -45,6 +45,8 @@ describe('Reader', () => {
     const { router } = renderRoute(MAIN);
     const pdfPath = 'files/First%20Aid%20and%20Medicine%20(1).pdf';
     const doc = await loadArticle('Main Page', `<a href="/kiwix/content/${WIKI}/${pdfPath}#page=2">Manual</a>`);
+    // Measure this click separately from any initial iframe navigation during the lazy route mount.
+    replaceMock.mockClear();
     await act(async () => { fireEvent.click(doc.querySelector('a')!); });
     const viewer = screen.getByTitle('Document');
     const src = new URL(viewer.getAttribute('src')!, window.location.origin);

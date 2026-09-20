@@ -13,7 +13,7 @@ import os
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from typing import Protocol
 from urllib.parse import quote
 
@@ -72,6 +72,8 @@ class ZimReader(Protocol):
 
     def has(self, path: str) -> bool: ...
 
+    def paths(self) -> Iterator[str]: ...
+
 
 class LibzimReader:
     """The real thing: libzim's Archive over the file on disk."""
@@ -88,6 +90,16 @@ class LibzimReader:
 
     def has(self, path: str) -> bool:
         return self._archive.has_entry_by_path(path)
+
+    def paths(self) -> Iterator[str]:
+        """Every non-redirect entry's path, walking the archive by id. libzim's python binding has no
+        public iterator over entries -- `_get_entry_by_id` is underscore-prefixed but is the real,
+        working way other openZIM tooling walks a whole archive; there is no second, public method
+        that does the same thing."""
+        for i in range(self._archive.entry_count):
+            entry = self._archive._get_entry_by_id(i)
+            if not entry.is_redirect:
+                yield entry.path
 
 
 def open_zim(path: Path) -> ZimReader:

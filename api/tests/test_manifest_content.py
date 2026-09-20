@@ -74,6 +74,7 @@ CORE_REQUIRED = {
     # ai
     "gemma-4-E2B-it-Q4_K_M", "Qwen3.5-2B-Q4_K_M", "gemma-3-1b-it-Q4_K_M", "piper", "piper-voice-en_GB", "piper-voice-en_GB-alan", "piper-voice-en_GB-cori", "piper-voice-en_GB-jenny_dioco",
     "piper-voice-en_GB-northern_english_male", "piper-voice-en_GB-cori-high", "bge-small-en-v1.5", "embeddings-docs",
+    "embeddings-household", "embeddings-wikipedia",
 }
 
 
@@ -153,9 +154,16 @@ def test_build_items_have_artifact_and_seed_lists():
     for it in items("core.json"):
         src = it["source"]
         if src["type"] == "build":
-            assert src["tool"] in {"zimit", "build-nhs", "build-crawl", "manual", "pdf2epub"}, it["id"]
-            if it["kind"] == "dir":                 # a directory item is unpacked in place: artifact is its dest
-                assert src == {"type": "build", "tool": "manual", "artifact": it["dest"]}, it["id"]
+            assert src["tool"] in {"zimit", "build-nhs", "build-crawl", "manual", "build-embeddings",
+                                   "build-embeddings-wikipedia", "pdf2epub"}, it["id"]
+            if it["kind"] == "dir":                 # a directory item is unpacked in place: artifact is its dest --
+                                                     # except embeddings-household and embeddings-wikipedia, which
+                                                     # share embeddings-docs's directory and name one specific file
+                                                     # of it as dest instead
+                if src["tool"] in ("build-embeddings", "build-embeddings-wikipedia"):
+                    assert src["artifact"] == "embeddings" and it["dest"].startswith("embeddings/"), it["id"]
+                else:
+                    assert src == {"type": "build", "tool": "manual", "artifact": it["dest"]}, it["id"]
                 continue
             assert src["artifact"].endswith((".zim", ".pdf", ".gguf", ".epub")), it["id"]
             if src["tool"] == "zimit":

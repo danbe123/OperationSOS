@@ -71,6 +71,61 @@ def test_eval_dispatches_to_runner(env, monkeypatch):
     assert calls[0].retrieval_only
 
 
+def _spy_wikipedia_cli(monkeypatch) -> list:
+    from sos import embeddings
+    calls = []
+    monkeypatch.setattr(embeddings, "build_wikipedia_cli",
+                        lambda settings, cuda=False, limit=None, workers=1, servers=1, resume=True:
+                        calls.append((cuda, limit, workers, servers, resume)) or 0)
+    return calls
+
+
+def test_build_embeddings_wikipedia_dispatches_cuda_limit_workers_and_servers(env, monkeypatch):
+    calls = _spy_wikipedia_cli(monkeypatch)
+    assert cli.main(["build-embeddings-wikipedia", "--cuda", "--limit", "5", "--workers", "3",
+                     "--servers", "2"]) == 0
+    assert calls == [(True, 5, 3, 2, True)]
+
+
+def test_build_embeddings_wikipedia_can_be_told_to_start_the_build_afresh(env, monkeypatch):
+    """The build resumes from its checkpoint by default, which is what an interrupted multi-hour run
+    wants; --no-resume is how an operator says the work already done is not to be trusted."""
+    calls = _spy_wikipedia_cli(monkeypatch)
+    assert cli.main(["build-embeddings-wikipedia", "--no-resume"]) == 0
+    assert calls[0][4] is False
+
+
+def test_build_embeddings_wikipedia_defaults_no_cuda_no_limit_and_leaves_cores_for_the_gpu_server(env, monkeypatch):
+    """The default worker count leaves four cores to Windows and the embedding server itself, and never
+    goes above six however many cores the machine has; one embedding server is the default."""
+    import os
+
+    calls = _spy_wikipedia_cli(monkeypatch)
+    assert cli.main(["build-embeddings-wikipedia"]) == 0
+    assert calls == [(False, None, min(6, max(1, (os.cpu_count() or 2) - 4)), 1, True)]
+
+
+@pytest.mark.parametrize("command", ["build-embeddings", "build-embeddings-wikipedia"])
+@pytest.mark.parametrize("servers", ["0", "-1"])
+def test_both_embedding_commands_reject_a_nonpositive_server_count(command, servers):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args([command, "--servers", servers])
+    assert exc.value.code == 2
+
+
+@pytest.mark.parametrize("cores, expected", [(1, 1), (2, 1), (5, 1), (8, 4), (12, 6), (64, 6)])
+def test_default_workers_scales_with_the_machine_but_is_capped(monkeypatch, cores, expected):
+    monkeypatch.setattr(cli.os, "cpu_count", lambda: cores)
+    assert cli.default_workers() == expected
+
+
+@pytest.mark.parametrize("workers", ["0", "-1"])
+def test_wikipedia_cli_rejects_a_nonpositive_worker_count(workers):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args(["build-embeddings-wikipedia", "--workers", workers])
+    assert exc.value.code == 2
+
+
 def test_build_maps_exits_2_with_micromamba_hint_when_tools_missing(env, capsys, monkeypatch):
     from sos import buildmaps
 
@@ -115,3 +170,20 @@ def test_index_command(env, capsys):
     assert "rescan:" in out and "content rows" in out
     conn = db.connect(env.db_path)
     assert conn.execute("SELECT count(*) FROM fts_docs").fetchone()[0] > 0
+
+
+@pytest.mark.parametrize("limit", ["0", "-1"])
+def test_wikipedia_cli_rejects_nonpositive_limit(limit):
+    with pytest.raises(SystemExit) as exc:
+        cli.build_parser().parse_args(["build-embeddings-wikipedia", "--limit", limit])
+    assert exc.value.code == 2
+
+
+def test_build_embeddings_selects_only_household(env, monkeypatch):
+    from sos import embeddings
+    calls = []
+    monkeypatch.setattr(embeddings, 'build_cli', lambda settings, **kwargs: calls.append(kwargs) or 0)
+    assert cli.main(['build-embeddings', '--cuda', '--collection', 'household']) == 0
+    assert calls == [{'cuda': True, 'collection': 'household', 'servers': 1}]
+    assert cli.main(['build-embeddings', '--servers', '3']) == 0
+    assert calls[1] == {'cuda': False, 'collection': 'all', 'servers': 3}

@@ -1,0 +1,3905 @@
+{
+  "checked_at": "2026-09-20T10:08:10.019716+00:00",
+  "method": "Read-only production SQLite and published vectors; live Kiwix keyword candidates replayed identically through search.search with reranking off/on; actual query embedding server.",
+  "comparisons": [
+    {
+      "query": "water purification",
+      "keyword_titles": [
+        "Water purification",
+        "Nanotechnology for water purification",
+        "Portable water purification",
+        "Sawyer Water Purification Plant",
+        "Organisms involved in water purification",
+        "Water Ritual 1: An Urban Rite of Purification",
+        "Okubo water purification plant",
+        "Jardine Water Purification Plant"
+      ],
+      "reranked_titles": [
+        "Water purification",
+        "Nanotechnology for water purification",
+        "Portable water purification",
+        "Sawyer Water Purification Plant",
+        "Organisms involved in water purification",
+        "Water Ritual 1: An Urban Rite of Purification",
+        "Okubo water purification plant",
+        "Jardine Water Purification Plant"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 8,
+      "partial": false,
+      "final_keyword_titles": [
+        "Water purification",
+        "Nanotechnology for water purification",
+        "Portable water purification",
+        "Sawyer Water Purification Plant",
+        "Organisms involved in water purification",
+        "Water Ritual 1: An Urban Rite of Purification",
+        "Okubo water purification plant",
+        "Jardine Water Purification Plant"
+      ],
+      "final_reranked_titles": [
+        "Water purification",
+        "Nanotechnology for water purification",
+        "Portable water purification",
+        "Sawyer Water Purification Plant",
+        "Organisms involved in water purification",
+        "Water Ritual 1: An Urban Rite of Purification",
+        "Okubo water purification plant",
+        "Jardine Water Purification Plant"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "Water purification",
+          "url": "/read/wikipedia_en_all_maxi/Water_purification",
+          "score": 0.75339215195179,
+          "cosine": 0.9087938070297241
+        },
+        {
+          "title": "Nanotechnology for water purification",
+          "url": "/read/wikipedia_en_all_maxi/Nanotechnology_for_water_purification",
+          "score": 0.4236001817385356,
+          "cosine": 0.7587887048721313
+        },
+        {
+          "title": "Portable water purification",
+          "url": "/read/wikipedia_en_all_maxi/Portable_water_purification",
+          "score": 0.3700459173747471,
+          "cosine": 0.7956980466842651
+        },
+        {
+          "title": "Sawyer Water Purification Plant",
+          "url": "/read/wikipedia_en_all_maxi/Sawyer_Water_Purification_Plant",
+          "score": 0.2821276675330268,
+          "cosine": 0.7569310665130615
+        },
+        {
+          "title": "Organisms involved in water purification",
+          "url": "/read/wikipedia_en_all_maxi/Organisms_involved_in_water_purification",
+          "score": 0.25709412670135495,
+          "cosine": 0.7810161113739014
+        },
+        {
+          "title": "Water Ritual 1: An Urban Rite of Purification",
+          "url": "/read/wikipedia_en_all_maxi/Water_Ritual_1%3A_An_Urban_Rite_of_Purification",
+          "score": 0.21862011671066284,
+          "cosine": 0.6551676392555237
+        },
+        {
+          "title": "Okubo water purification plant",
+          "url": "/read/wikipedia_en_all_maxi/Okubo_water_purification_plant",
+          "score": 0.2041623129447301,
+          "cosine": 0.6893543601036072
+        },
+        {
+          "title": "Jardine Water Purification Plant",
+          "url": "/read/wikipedia_en_all_maxi/Jardine_Water_Purification_Plant",
+          "score": 0.19393786907196045,
+          "cosine": 0.7433274984359741
+        }
+      ]
+    },
+    {
+      "query": "solar power",
+      "keyword_titles": [
+        "List of solar-powered products",
+        "Komekurayama Solar Power Plant",
+        "Ogishima Solar Power Plant",
+        "Letsatsi Solar Park",
+        "Ukishima Solar Power Plant",
+        "Solar-powered radio",
+        "Lesedi Solar Park",
+        "Index of solar energy articles"
+      ],
+      "reranked_titles": [
+        "List of solar-powered products",
+        "Komekurayama Solar Power Plant",
+        "Ogishima Solar Power Plant",
+        "Ukishima Solar Power Plant",
+        "Letsatsi Solar Park",
+        "Solar-powered radio",
+        "Lesedi Solar Park",
+        "Index of solar energy articles"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 8,
+      "partial": false,
+      "final_keyword_titles": [
+        "List of solar-powered products",
+        "Komekurayama Solar Power Plant",
+        "Ogishima Solar Power Plant",
+        "Letsatsi Solar Park",
+        "Ukishima Solar Power Plant",
+        "Solar-powered radio",
+        "Lesedi Solar Park",
+        "Index of solar energy articles"
+      ],
+      "final_reranked_titles": [
+        "List of solar-powered products",
+        "Komekurayama Solar Power Plant",
+        "Ogishima Solar Power Plant",
+        "Ukishima Solar Power Plant",
+        "Letsatsi Solar Park",
+        "Solar-powered radio",
+        "Lesedi Solar Park",
+        "Index of solar energy articles"
+      ],
+      "order_changed": true,
+      "rows": [
+        {
+          "title": "List of solar-powered products",
+          "url": "/read/wikipedia_en_all_maxi/List_of_solar-powered_products",
+          "score": 0.41632072369257606,
+          "cosine": 0.7257002592086792
+        },
+        {
+          "title": "Komekurayama Solar Power Plant",
+          "url": "/read/wikipedia_en_all_maxi/Komekurayama_Solar_Power_Plant",
+          "score": 0.35143334661211284,
+          "cosine": 0.6969950199127197
+        },
+        {
+          "title": "Ogishima Solar Power Plant",
+          "url": "/read/wikipedia_en_all_maxi/Ogishima_Solar_Power_Plant",
+          "score": 0.2718354927168952,
+          "cosine": 0.6867571473121643
+        },
+        {
+          "title": "Ukishima Solar Power Plant",
+          "url": "/read/wikipedia_en_all_maxi/Ukishima_Solar_Power_Plant",
+          "score": 0.22375247001647947,
+          "cosine": 0.6979372501373291
+        },
+        {
+          "title": "Letsatsi Solar Park",
+          "url": "/read/wikipedia_en_all_maxi/Letsatsi_Solar_Park",
+          "score": 0.22170827627182008,
+          "cosine": 0.6809023022651672
+        },
+        {
+          "title": "Solar-powered radio",
+          "url": "/read/wikipedia_en_all_maxi/Solar-powered_radio",
+          "score": 0.21239013751347857,
+          "cosine": 0.7641527652740479
+        },
+        {
+          "title": "Lesedi Solar Park",
+          "url": "/read/wikipedia_en_all_maxi/Lesedi_Solar_Park",
+          "score": 0.17635621643066407,
+          "cosine": 0.670377254486084
+        },
+        {
+          "title": "Index of solar energy articles",
+          "url": "/read/wikipedia_en_all_maxi/Index_of_solar_energy_articles",
+          "score": 0.14205331362210788,
+          "cosine": 0.7569719552993774
+        }
+      ]
+    },
+    {
+      "query": "blacksmithing",
+      "keyword_titles": [
+        "List of blacksmith shops",
+        "Blacksmith (disambiguation)",
+        "Blacksmith",
+        "Lacombe Blacksmith Shop Museum",
+        "Blacksmiths of western Africa",
+        "Blacksmith token",
+        "Worshipful Company of Blacksmiths"
+      ],
+      "reranked_titles": [
+        "List of blacksmith shops",
+        "Blacksmith (disambiguation)",
+        "Blacksmith",
+        "Lacombe Blacksmith Shop Museum",
+        "Blacksmiths of western Africa",
+        "Blacksmith token",
+        "Worshipful Company of Blacksmiths"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 7,
+      "partial": false,
+      "final_keyword_titles": [
+        "List of blacksmith shops",
+        "Blacksmith (disambiguation)",
+        "Lacombe Blacksmith Shop Museum",
+        "Blacksmiths of western Africa",
+        "Blacksmith token",
+        "Worshipful Company of Blacksmiths"
+      ],
+      "final_reranked_titles": [
+        "List of blacksmith shops",
+        "Blacksmith (disambiguation)",
+        "Blacksmith",
+        "Lacombe Blacksmith Shop Museum",
+        "Blacksmiths of western Africa",
+        "Blacksmith token",
+        "Worshipful Company of Blacksmiths"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "List of blacksmith shops",
+          "url": "/read/wikipedia_en_all_maxi/List_of_blacksmith_shops",
+          "score": 0.41062543670336404,
+          "cosine": 0.6998125910758972
+        },
+        {
+          "title": "Blacksmith (disambiguation)",
+          "url": "/read/wikipedia_en_all_maxi/Blacksmith_(disambiguation)",
+          "score": 0.3667867319924491,
+          "cosine": 0.7784144878387451
+        },
+        {
+          "title": "Blacksmith",
+          "url": "/read/wikipedia_en_all_maxi/Blacksmith",
+          "score": 0.298285043504503,
+          "cosine": 0.8670949935913086
+        },
+        {
+          "title": "Lacombe Blacksmith Shop Museum",
+          "url": "/read/wikipedia_en_all_maxi/Lacombe_Blacksmith_Shop_Museum",
+          "score": 0.23559830141067506,
+          "cosine": 0.6181689500808716
+        },
+        {
+          "title": "Blacksmiths of western Africa",
+          "url": "/read/wikipedia_en_all_maxi/Blacksmiths_of_western_Africa",
+          "score": 0.22799467325210573,
+          "cosine": 0.7332889437675476
+        },
+        {
+          "title": "Blacksmith token",
+          "url": "/read/wikipedia_en_all_maxi/Blacksmith_token",
+          "score": 0.206223083337148,
+          "cosine": 0.7080886363983154
+        },
+        {
+          "title": "Worshipful Company of Blacksmiths",
+          "url": "/read/wikipedia_en_all_maxi/Worshipful_Company_of_Blacksmiths",
+          "score": 0.1846948469602145,
+          "cosine": 0.6522977352142334
+        }
+      ]
+    },
+    {
+      "query": "whaling voyage",
+      "keyword_titles": [
+        "Whale's Voyage",
+        "The Voyage of the Odyssey",
+        "Perseverance (1801 whaling ship)",
+        "Cadmus (1818 ship)",
+        "Rockingham (1767 ship)",
+        "Nantucket shipbuilding",
+        "Venus (1788 ship)",
+        "Chardon (ship)"
+      ],
+      "reranked_titles": [
+        "Whale's Voyage",
+        "The Voyage of the Odyssey",
+        "Perseverance (1801 whaling ship)",
+        "Cadmus (1818 ship)",
+        "Rockingham (1767 ship)",
+        "Nantucket shipbuilding",
+        "Venus (1788 ship)",
+        "Chardon (ship)"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 8,
+      "partial": false,
+      "final_keyword_titles": [
+        "Whale's Voyage",
+        "The Voyage of the Odyssey",
+        "Perseverance (1801 whaling ship)",
+        "Cadmus (1818 ship)",
+        "Rockingham (1767 ship)",
+        "Nantucket shipbuilding",
+        "Venus (1788 ship)",
+        "Chardon (ship)"
+      ],
+      "final_reranked_titles": [
+        "Whale's Voyage",
+        "The Voyage of the Odyssey",
+        "Perseverance (1801 whaling ship)",
+        "Cadmus (1818 ship)",
+        "Rockingham (1767 ship)",
+        "Nantucket shipbuilding",
+        "Venus (1788 ship)",
+        "Chardon (ship)"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "Whale's Voyage",
+          "url": "/read/wikipedia_en_all_maxi/Whale's_Voyage",
+          "score": 0.316696891784668,
+          "cosine": 0.7527084350585938
+        },
+        {
+          "title": "The Voyage of the Odyssey",
+          "url": "/read/wikipedia_en_all_maxi/The_Voyage_of_the_Odyssey",
+          "score": 0.15012569268544512,
+          "cosine": 0.7099044919013977
+        },
+        {
+          "title": "Perseverance (1801 whaling ship)",
+          "url": "/read/wikipedia_en_all_maxi/Perseverance_(1801_whaling_ship)",
+          "score": 0.13725718718308672,
+          "cosine": 0.6920244097709656
+        },
+        {
+          "title": "Cadmus (1818 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Cadmus_(1818_ship)",
+          "score": 0.079820838868618,
+          "cosine": 0.6071297526359558
+        },
+        {
+          "title": "Rockingham (1767 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Rockingham_(1767_ship)",
+          "score": 0.07073494562080927,
+          "cosine": 0.6672022938728333
+        },
+        {
+          "title": "Nantucket shipbuilding",
+          "url": "/read/wikipedia_en_all_maxi/Nantucket_shipbuilding",
+          "score": 0.05559896111488341,
+          "cosine": 0.6866320371627808
+        },
+        {
+          "title": "Venus (1788 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Venus_(1788_ship)",
+          "score": 0.04975394403934478,
+          "cosine": 0.6760720014572144
+        },
+        {
+          "title": "Chardon (ship)",
+          "url": "/read/wikipedia_en_all_maxi/Chardon_(ship)",
+          "score": 0.046201705715873016,
+          "cosine": 0.7156250476837158
+        }
+      ]
+    },
+    {
+      "query": "radio antenna",
+      "keyword_titles": [
+        "Antenna (radio)",
+        "Antenna 5 FM",
+        "Portal:Amateur radio",
+        "Adcock antenna",
+        "Military radio antenna kites",
+        "Whip antenna",
+        "Beverage antenna",
+        "Antenna feed"
+      ],
+      "reranked_titles": [
+        "Antenna (radio)",
+        "Antenna 5 FM",
+        "Portal:Amateur radio",
+        "Adcock antenna",
+        "Military radio antenna kites",
+        "Whip antenna",
+        "Beverage antenna",
+        "Antenna feed"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 8,
+      "partial": false,
+      "final_keyword_titles": [
+        "Antenna (radio)",
+        "Antenna 5 FM",
+        "Portal:Amateur radio",
+        "Adcock antenna",
+        "Military radio antenna kites",
+        "Whip antenna",
+        "Beverage antenna",
+        "Antenna feed"
+      ],
+      "final_reranked_titles": [
+        "Antenna (radio)",
+        "Antenna 5 FM",
+        "Portal:Amateur radio",
+        "Adcock antenna",
+        "Military radio antenna kites",
+        "Whip antenna",
+        "Beverage antenna",
+        "Antenna feed"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "Antenna (radio)",
+          "url": "/read/wikipedia_en_all_maxi/Antenna_(radio)",
+          "score": 0.3796206637791225,
+          "cosine": 0.846473217010498
+        },
+        {
+          "title": "Antenna 5 FM",
+          "url": "/read/wikipedia_en_all_maxi/Antenna_5_FM",
+          "score": 0.2965901438395182,
+          "cosine": 0.6870217323303223
+        },
+        {
+          "title": "Portal:Amateur radio",
+          "url": "/read/wikipedia_en_all_maxi/Portal%3AAmateur_radio",
+          "score": 0.22818846464157103,
+          "cosine": 0.734903872013092
+        },
+        {
+          "title": "Adcock antenna",
+          "url": "/read/wikipedia_en_all_maxi/Adcock_antenna",
+          "score": 0.1998196262783474,
+          "cosine": 0.7066423296928406
+        },
+        {
+          "title": "Military radio antenna kites",
+          "url": "/read/wikipedia_en_all_maxi/Military_radio_antenna_kites",
+          "score": 0.18891943289683416,
+          "cosine": 0.6939035058021545
+        },
+        {
+          "title": "Whip antenna",
+          "url": "/read/wikipedia_en_all_maxi/Whip_antenna",
+          "score": 0.18470616340637208,
+          "cosine": 0.7573558688163757
+        },
+        {
+          "title": "Beverage antenna",
+          "url": "/read/wikipedia_en_all_maxi/Beverage_antenna",
+          "score": 0.16779868212613192,
+          "cosine": 0.756026566028595
+        },
+        {
+          "title": "Antenna feed",
+          "url": "/read/wikipedia_en_all_maxi/Antenna_feed",
+          "score": 0.15510711510976152,
+          "cosine": 0.7721722722053528
+        }
+      ]
+    },
+    {
+      "query": "food preservation",
+      "keyword_titles": [
+        "Food preservation",
+        "Curing (food preservation)",
+        "Preservative",
+        "Journal of Food Processing and Preservation",
+        "List of food additives",
+        "International Numbering System for Food Additives",
+        "Salting (food)"
+      ],
+      "reranked_titles": [
+        "Food preservation",
+        "Curing (food preservation)",
+        "Preservative",
+        "Journal of Food Processing and Preservation",
+        "List of food additives",
+        "Salting (food)",
+        "International Numbering System for Food Additives"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 7,
+      "partial": false,
+      "final_keyword_titles": [
+        "Food preservation",
+        "Curing (food preservation)",
+        "Preservative",
+        "Journal of Food Processing and Preservation",
+        "List of food additives",
+        "International Numbering System for Food Additives",
+        "Salting (food)"
+      ],
+      "final_reranked_titles": [
+        "Food preservation",
+        "Curing (food preservation)",
+        "Preservative",
+        "Journal of Food Processing and Preservation",
+        "List of food additives",
+        "Salting (food)",
+        "International Numbering System for Food Additives"
+      ],
+      "order_changed": true,
+      "rows": [
+        {
+          "title": "Food preservation",
+          "url": "/read/wikipedia_en_all_maxi/Food_preservation",
+          "score": 0.978574116150538,
+          "cosine": 0.8551806807518005
+        },
+        {
+          "title": "Curing (food preservation)",
+          "url": "/read/wikipedia_en_all_maxi/Curing_(food_preservation)",
+          "score": 0.28707533306545685,
+          "cosine": 0.7906651496887207
+        },
+        {
+          "title": "Preservative",
+          "url": "/read/wikipedia_en_all_maxi/Preservative",
+          "score": 0.2757164600917271,
+          "cosine": 0.8437658548355103
+        },
+        {
+          "title": "Journal of Food Processing and Preservation",
+          "url": "/read/wikipedia_en_all_maxi/Journal_of_Food_Processing_and_Preservation",
+          "score": 0.22538496255874638,
+          "cosine": 0.7115413546562195
+        },
+        {
+          "title": "List of food additives",
+          "url": "/read/wikipedia_en_all_maxi/List_of_food_additives",
+          "score": 0.1808292999267578,
+          "cosine": 0.7169718742370605
+        },
+        {
+          "title": "Salting (food)",
+          "url": "/read/wikipedia_en_all_maxi/Salting_(food)",
+          "score": 0.14256185825054463,
+          "cosine": 0.7638584971427917
+        },
+        {
+          "title": "International Numbering System for Food Additives",
+          "url": "/read/wikipedia_en_all_maxi/International_Numbering_System_for_Food_Additives",
+          "score": 0.14093993028004964,
+          "cosine": 0.5950824618339539
+        }
+      ]
+    },
+    {
+      "query": "battery storage",
+      "keyword_titles": [
+        "Battery energy storage system",
+        "Carnot battery",
+        "Baganuur 50 MW Battery Storage Power Station",
+        "Gravity battery",
+        "List of energy storage power plants",
+        "Edison Storage Battery Company",
+        "Stanton Battery Energy Storage",
+        "List of energy storage projects in South Australia"
+      ],
+      "reranked_titles": [
+        "Battery energy storage system",
+        "Carnot battery",
+        "Baganuur 50 MW Battery Storage Power Station",
+        "Gravity battery",
+        "List of energy storage power plants",
+        "Edison Storage Battery Company",
+        "Stanton Battery Energy Storage",
+        "List of energy storage projects in South Australia"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 8,
+      "partial": false,
+      "final_keyword_titles": [
+        "Battery energy storage system",
+        "Carnot battery",
+        "Baganuur 50 MW Battery Storage Power Station",
+        "Gravity battery",
+        "List of energy storage power plants",
+        "Edison Storage Battery Company",
+        "Stanton Battery Energy Storage",
+        "List of energy storage projects in South Australia"
+      ],
+      "final_reranked_titles": [
+        "Battery energy storage system",
+        "Carnot battery",
+        "Baganuur 50 MW Battery Storage Power Station",
+        "Gravity battery",
+        "List of energy storage power plants",
+        "Edison Storage Battery Company",
+        "Stanton Battery Energy Storage",
+        "List of energy storage projects in South Australia"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "Battery energy storage system",
+          "url": "/read/wikipedia_en_all_maxi/Battery_energy_storage_system",
+          "score": 0.4403115741411845,
+          "cosine": 0.8347495794296265
+        },
+        {
+          "title": "Carnot battery",
+          "url": "/read/wikipedia_en_all_maxi/Carnot_battery",
+          "score": 0.299939375094005,
+          "cosine": 0.72484290599823
+        },
+        {
+          "title": "Baganuur 50 MW Battery Storage Power Station",
+          "url": "/read/wikipedia_en_all_maxi/Baganuur_50_MW_Battery_Storage_Power_Station",
+          "score": 0.2682863786003806,
+          "cosine": 0.6550309658050537
+        },
+        {
+          "title": "Gravity battery",
+          "url": "/read/wikipedia_en_all_maxi/Gravity_battery",
+          "score": 0.26636971195538833,
+          "cosine": 0.735974133014679
+        },
+        {
+          "title": "List of energy storage power plants",
+          "url": "/read/wikipedia_en_all_maxi/List_of_energy_storage_power_plants",
+          "score": 0.2561750658601522,
+          "cosine": 0.6796401143074036
+        },
+        {
+          "title": "Edison Storage Battery Company",
+          "url": "/read/wikipedia_en_all_maxi/Edison_Storage_Battery_Company",
+          "score": 0.247104962348938,
+          "cosine": 0.7053406238555908
+        },
+        {
+          "title": "Stanton Battery Energy Storage",
+          "url": "/read/wikipedia_en_all_maxi/Stanton_Battery_Energy_Storage",
+          "score": 0.2254091870288054,
+          "cosine": 0.6734083294868469
+        },
+        {
+          "title": "List of energy storage projects in South Australia",
+          "url": "/read/wikipedia_en_all_maxi/List_of_energy_storage_projects_in_South_Australia",
+          "score": 0.15307983283813184,
+          "cosine": 0.626160204410553
+        }
+      ]
+    },
+    {
+      "query": "hypothermia",
+      "keyword_titles": [
+        "Hypothermia",
+        "Hypothermia cap",
+        "Hypothermia therapy for neonatal encephalopathy",
+        "Hypothermia (film)",
+        "Beyond Hypothermia (album)",
+        "Beyond Hypothermia (film)"
+      ],
+      "reranked_titles": [
+        "Hypothermia",
+        "Hypothermia cap",
+        "Hypothermia therapy for neonatal encephalopathy",
+        "Hypothermia (film)",
+        "Beyond Hypothermia (album)",
+        "Beyond Hypothermia (film)"
+      ],
+      "same_candidate_multiset": true,
+      "scored_candidates": 6,
+      "partial": false,
+      "final_keyword_titles": [
+        "Hypothermia",
+        "Hypothermia cap",
+        "Hypothermia therapy for neonatal encephalopathy",
+        "Hypothermia (film)",
+        "Beyond Hypothermia (album)",
+        "Beyond Hypothermia (film)"
+      ],
+      "final_reranked_titles": [
+        "Hypothermia",
+        "Hypothermia cap",
+        "Hypothermia therapy for neonatal encephalopathy",
+        "Hypothermia (film)",
+        "Beyond Hypothermia (album)",
+        "Beyond Hypothermia (film)"
+      ],
+      "order_changed": false,
+      "rows": [
+        {
+          "title": "Hypothermia",
+          "url": "/read/wikipedia_en_all_maxi/Hypothermia",
+          "score": 0.9773551165262857,
+          "cosine": 0.8526620864868164
+        },
+        {
+          "title": "Hypothermia cap",
+          "url": "/read/wikipedia_en_all_maxi/Hypothermia_cap",
+          "score": 0.28657012330161197,
+          "cosine": 0.7872205376625061
+        },
+        {
+          "title": "Hypothermia therapy for neonatal encephalopathy",
+          "url": "/read/wikipedia_en_all_maxi/Hypothermia_therapy_for_neonatal_encephalopathy",
+          "score": 0.2578181700706482,
+          "cosine": 0.7865012884140015
+        },
+        {
+          "title": "Hypothermia (film)",
+          "url": "/read/wikipedia_en_all_maxi/Hypothermia_(film)",
+          "score": 0.23363384962081907,
+          "cosine": 0.7802820801734924
+        },
+        {
+          "title": "Beyond Hypothermia (album)",
+          "url": "/read/wikipedia_en_all_maxi/Beyond_Hypothermia_(album)",
+          "score": 0.20326592644055683,
+          "cosine": 0.6812053918838501
+        },
+        {
+          "title": "Beyond Hypothermia (film)",
+          "url": "/read/wikipedia_en_all_maxi/Beyond_Hypothermia_(film)",
+          "score": 0.18841390169583835,
+          "cosine": 0.6889247894287109
+        }
+      ]
+    }
+  ],
+  "api_queries": [
+    {
+      "query": "a whaling voyage in the age of sail",
+      "took_ms": 6813,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Knife and firearms law",
+          "url": "/p/knife-firearms-law#crossbows-catapults-and-bows",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Radiation",
+          "url": "/m/radiation#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Modern Whaling & Bear-Hunting",
+          "url": "/book/gutenberg/67446",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "A Voyage to the Arctic in the Whaler Aurora",
+          "url": "/book/gutenberg/51910",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Four years aboard the whaleship",
+          "url": "/book/gutenberg/68958",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Prealgebra 2e",
+          "url": "/doc/openstax-prealgebra-2e#page=601",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Nuclear or impact winter",
+          "url": "/s/impact-winter#long-term",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "A voyage to Spitzbergen",
+          "url": "/book/gutenberg/51131",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=381",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Ganges (Age of Sail merchant ship)",
+          "url": "/read/wikipedia_en_all_maxi/Ganges_(Age_of_Sail_merchant_ship)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=1151",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Rope, knots and tools",
+          "url": "/p/fieldcraft-rope-tools#cordage-from-the-hedgerow",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Ancient and Modern Ships, Part 1: Wooden Sailing Ships",
+          "url": "/book/gutenberg/33098",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Stable iodine prophylaxis: recommendations of the 2nd UK Working Group (NRPB 2001)",
+          "url": "/library#nrpb-stable-iodine",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "The Young Ice Whalers",
+          "url": "/book/gutenberg/67445",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "The first year",
+          "url": "/p/rebuild-first-year#the-register-who-can-do-what",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=239",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Omoo: Adventures in the South Seas",
+          "url": "/book/gutenberg/4045",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "The Book of Woodcraft (Ernest Thompson Seton, 1921)",
+          "url": "/doc/seton-book-of-woodcraft#page=544",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Scurvy",
+          "url": "/read/mdwiki_en_all_maxi/Scurvy",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Nuclear accident or dirty bomb",
+          "url": "/s/nuclear-accident#checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Whale Primer, with Special Attention to the California Gray Whale",
+          "url": "/book/gutenberg/58695",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Montezuma (1822 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Montezuma_(1822_ship)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "COVID-19 pandemic in Montreal",
+          "url": "/read/wikipedia_en_medicine_maxi/COVID-19_pandemic_in_Montreal",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Journal of a cruise of the United States schooner Dolphin, among the islands of the Pacific Ocean; and a visit to the Mulgrave Islands, in pursuit of the mutineers of the whaleship Globe",
+          "url": "/book/gutenberg/71717",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Nantucket shipbuilding",
+          "url": "/read/wikipedia_en_all_maxi/Nantucket_shipbuilding",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=1084",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "The essentials, printed",
+          "url": "/p/rebuild-essentials-printed#lime-and-mortar",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Is there a way to find the direction to land in the middle of an ocean?",
+          "url": "/read/earthscience.stackexchange.com_en_all/questions/2158/is-there-a-way-to-find-the-direction-to-land-in-the-middle-of-an-ocean",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "The Glamour of the Arctic",
+          "url": "/book/gutenberg/67515",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=786",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "HMS Swan (1767)",
+          "url": "/read/wikipedia_en_all_maxi/HMS_Swan_(1767)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "CPR, child and baby",
+          "url": "/medical/card/cpr-child#stop-or-escalate",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The Arctic Whaleman; or, Winter in the Arctic Ocean",
+          "url": "/book/gutenberg/43959",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=461",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "The Golden Harpoon; Or, Lost Among the Floes: A Story of the Whaling Grounds",
+          "url": "/book/gutenberg/64999",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Infant feeding",
+          "url": "/p/infant-feeding#when-the-formula-runs-out",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Harriet (1829 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Harriet_(1829_ship)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "All Afloat: A Chronicle of Craft and Waterways",
+          "url": "/book/gutenberg/24808",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=905",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Nuclear war",
+          "url": "/s/nuclear-war#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The World of Ice",
+          "url": "/book/gutenberg/11602",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=416",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "HMS Spy (1756)",
+          "url": "/read/wikipedia_en_all_maxi/HMS_Spy_(1756)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Lethal pandemic",
+          "url": "/s/pandemic#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The South Sea Whaler",
+          "url": "/book/gutenberg/21479",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Sea yarns : $b The log of a Cape Cod sea captain",
+          "url": "/book/gutenberg/74657",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Mary Ann (1772 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Mary_Ann_(1772_ship)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Livestock",
+          "url": "/m/livestock#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=98",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Peter Trawl; Or, The Adventures of a Whaler",
+          "url": "/book/gutenberg/21475",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Ganges (1798 ship)",
+          "url": "/read/wikipedia_en_all_maxi/Ganges_(1798_ship)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "The northern whale-fishery",
+          "url": "/book/gutenberg/69504",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=174",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Foraging, fishing and hunting law",
+          "url": "/p/foraging-law#fishing",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Twenty Thousand Leagues under the Sea",
+          "url": "/book/gutenberg/164",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=275",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Farming for a decade",
+          "url": "/p/rebuild-farming#fertility-with-nothing-bought",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "A Cruising Voyage Around the World",
+          "url": "/book/gutenberg/55538",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=99",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=95",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Concepts of Biology",
+          "url": "/doc/openstax-concepts-of-biology#page=293",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Biology 2e",
+          "url": "/doc/openstax-biology-2e#page=492",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=208",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=175",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Biology 2e",
+          "url": "/doc/openstax-biology-2e#page=836",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=96",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Concepts of Biology",
+          "url": "/doc/openstax-concepts-of-biology#page=271",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=1120",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=380",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=97",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=518",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=128",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=1325",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=1121",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=413",
+          "source": "docs",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "Moby Dick",
+      "took_ms": 1780,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Moby Dick",
+          "url": "/read/wikipedia_cy_all_maxi/Moby_Dick",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Moby Dick (disambiguation)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_(disambiguation)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Moby Dick\u2014Rehearsed",
+          "url": "/read/wikipedia_cy_all_maxi/Moby_Dick%E2%80%94Rehearsed",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Moby Dick (1978 film)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_(1978_film)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Moby Dick (Hallmark Hall of Fame)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_(Hallmark_Hall_of_Fame)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Moby Dick; Or, The Whale",
+          "url": "/book/gutenberg/2489",
+          "source": "books",
+          "via": null
+        },
+        {
+          "title": "Moby-Dick; or, The Whale",
+          "url": "/book/gutenberg/15",
+          "source": "books",
+          "via": null
+        },
+        {
+          "title": "Moby Dick; Or, The Whale",
+          "url": "/book/gutenberg/2701",
+          "source": "books",
+          "via": null
+        },
+        {
+          "title": "Moby Dick Coin",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_Coin",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax Biology 2e",
+          "url": "/doc/openstax-biology-2e#page=1438",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Moby Dick - Rehearsed (Wednesday Theatre)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_-_Rehearsed_(Wednesday_Theatre)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=283",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Blue whale penis",
+          "url": "/read/mdwiki_en_all_maxi/Blue_whale_penis",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Adaptations of Moby-Dick",
+          "url": "/read/wikipedia_en_all_maxi/Adaptations_of_Moby-Dick",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Cold War tensions and the polio vaccine",
+          "url": "/read/mdwiki_en_all_maxi/Cold_War_tensions_and_the_polio_vaccine",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Moby Dick (whale)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_(whale)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Mixing starches with sugar to make chewy candies",
+          "url": "/read/cooking.stackexchange.com_en_all/questions/86534/mixing-starches-with-sugar-to-make-chewy-candies",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Prosthetics in fiction",
+          "url": "/read/mdwiki_en_all_maxi/Prosthetics_in_fiction",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Moby Dick (2011 miniseries)",
+          "url": "/read/wikipedia_en_all_maxi/Moby_Dick_(2011_miniseries)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Ragged Dick, Or, Street Life in New York with the Boot-Blacks",
+          "url": "/book/gutenberg/5348",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Is it about time to replace the water heater?",
+          "url": "/read/diy.stackexchange.com_en_all/questions/81309/is-it-about-time-to-replace-the-water-heater",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Can a shell script find all groups of consecutive lines matching the same regex and shuffle them?",
+          "url": "/read/unix.stackexchange.com_en_all/questions/627779/can-a-shell-script-find-all-groups-of-consecutive-lines-matching-the-same-rege",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Fame and Fortune; or, The Progress of Richard Hunter",
+          "url": "/book/gutenberg/21632",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Stoicheometry questions: I've been having a bad time not understanding the questions and how the steps are to achieve the answer. please help",
+          "url": "/read/chemistry.stackexchange.com_en_all/questions/99431/stoicheometry-questions-i-ve-been-having-a-bad-time-not-understanding-the-ques",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Albinism in popular culture",
+          "url": "/read/wikipedia_en_medicine_maxi/Albinism_in_popular_culture",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "curl download multiple files with brace syntax",
+          "url": "/read/unix.stackexchange.com_en_all/questions/243134/curl-download-multiple-files-with-brace-syntax",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Moby Dick; Or, The Whale",
+          "url": "/book/gutenberg/28794",
+          "source": "books",
+          "via": null
+        },
+        {
+          "title": "User ControlAltDel",
+          "url": "/read/electronics.stackexchange.com_en_all/users/224726/controlaltdel",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "The Sea Beast",
+          "url": "/read/wikipedia_cy_all_maxi/The_Sea_Beast",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Panacea (medicine)",
+          "url": "/read/mdwiki_en_all_maxi/Panacea_(medicine)",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "User Darkloki",
+          "url": "/read/lifehacks.stackexchange.com_en_all/users/19956/darkloki",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "questions/tagged/candy_page=6",
+          "url": "/read/cooking.stackexchange.com_en_all/questions/tagged/candy_page%3D6",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Mademoiselle De Joncqui\u00e8res",
+          "url": "/read/wikipedia_cy_all_maxi/Mademoiselle_De_Joncqui%C3%A8res",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Highest Voted 'shuf' Questions",
+          "url": "/read/unix.stackexchange.com_en_all/questions/tagged/shuf",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Why are sea dwelling mammals less aggressive than land dwelling mammals?",
+          "url": "/read/biology.stackexchange.com_en_all/questions/82208/why-are-sea-dwelling-mammals-less-aggressive-than-land-dwelling-mammals",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Bartleby yr Ysgrifennwr (llyfr)",
+          "url": "/read/wikipedia_cy_all_maxi/Bartleby_yr_Ysgrifennwr_(llyfr)",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "questions/tagged/stoichiometry_page=46",
+          "url": "/read/chemistry.stackexchange.com_en_all/questions/tagged/stoichiometry_page%3D46",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "questions/tagged/sort_page=56",
+          "url": "/read/unix.stackexchange.com_en_all/questions/tagged/sort_page%3D56",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Caprice",
+          "url": "/read/wikipedia_cy_all_maxi/Caprice",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "questions/tagged/perl_page=65",
+          "url": "/read/unix.stackexchange.com_en_all/questions/tagged/perl_page%3D65",
+          "source": "extended",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "define the word forge",
+      "took_ms": 1737,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Iron and tools",
+          "url": "/p/rebuild-iron-and-tools#the-forge",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Restarting science",
+          "url": "/p/rebuild-restarting-science#temperature",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The library map",
+          "url": "/p/rebuild-library-map#metalwork-and-engineering",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=451",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=455",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=449",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Making things again",
+          "url": "/p/rebuild-making-things#the-order-they-come-back-in",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=292",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Forgecraft 1913",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forgecraft_1913.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "What's more important for weather, location or time?",
+          "url": "/read/earthscience.stackexchange.com_en_all/questions/26948/what-s-more-important-for-weather-location-or-time",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "My parents got divorced and want financial information from me",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/30958/my-parents-got-divorced-and-want-financial-information-from-me",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "The rebuild, year by year",
+          "url": "/m/rebuild#years-three-to-ten-trades-and-power",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Forge work",
+          "url": "/book/gutenberg/53854",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=288",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "National Register of Historic Places listings in Alleghany County, Virginia",
+          "url": "/read/wikipedia_en_all_maxi/National_Register_of_Historic_Places_listings_in_Alleghany_County%2C_Virginia",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Forge Practice Elementary 1908",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forge-practice-elementary_1908.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Ossicles",
+          "url": "/read/wikipedia_en_medicine_maxi/Ossicles",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Total collapse and the long rebuild",
+          "url": "/s/long-rebuild#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The Bible and violence",
+          "url": "/read/mdwiki_en_all_maxi/The_Bible_and_violence",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "questions/tagged/autocomplete_page=56",
+          "url": "/read/unix.stackexchange.com_en_all/questions/tagged/autocomplete_page%3D56",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=459",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Bounce Address Tag Validation",
+          "url": "/read/wikipedia_en_all_maxi/Bounce_Address_Tag_Validation",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Tuyere",
+          "url": "/read/wikipedia_en_all_maxi/Tuyere",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "The essentials, printed",
+          "url": "/p/rebuild-essentials-printed#charcoal",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Find duplicate files based on first few characters of filename",
+          "url": "/read/unix.stackexchange.com_en_all/questions/617065/find-duplicate-files-based-on-first-few-characters-of-filename",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Medical prescription",
+          "url": "/read/mdwiki_en_all_maxi/Medical_prescription",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "What exactly is a piston?",
+          "url": "/read/mechanics.stackexchange.com_en_all/questions/24500/what-exactly-is-a-piston",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=291",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "What does a junction do inside a MOSFET?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/495474/what-does-a-junction-do-inside-a-mosfet",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "What are the main differences between BSD- and linux-based operating systems?",
+          "url": "/read/unix.stackexchange.com_en_all/questions/24755/what-are-the-main-differences-between-bsd-and-linux-based-operating-systems",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Diplomatics",
+          "url": "/read/wikipedia_en_all_maxi/Diplomatics",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=453",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Denialism",
+          "url": "/read/mdwiki_en_all_maxi/Denialism",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Field craft in Britain",
+          "url": "/p/fieldcraft-basics#where-these-pages-come-from",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Protect the Arduino make with Unique Id",
+          "url": "/read/arduino.stackexchange.com_en_all/questions/70130/protect-the-arduino-make-with-unique-id",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=546",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "What is a \"mill-hardened\" material?",
+          "url": "/read/engineering.stackexchange.com_en_all/questions/40651/what-is-a-mill-hardened-material",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Chronic conditions",
+          "url": "/p/chronic-conditions#dialysis-and-oxygen-dependence",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Saugatuck Reservoir",
+          "url": "/read/wikipedia_en_all_maxi/Saugatuck_Reservoir",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "George Washington",
+          "url": "/read/mdwiki_en_all_maxi/George_Washington",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=545",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Bantu Homelands Citizenship Act, 1970",
+          "url": "/read/wikipedia_en_all_maxi/Bantu_Homelands_Citizenship_Act%2C_1970",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Are Damascus steel kitchen knives worth it?",
+          "url": "/read/cooking.stackexchange.com_en_all/questions/30195/are-damascus-steel-kitchen-knives-worth-it",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "How can self-consciousness be taught?",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/10791/how-can-self-consciousness-be-taught",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Mass-casualty terrorism",
+          "url": "/s/terrorism#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=496",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Languages of Art",
+          "url": "/read/wikipedia_en_all_maxi/Languages_of_Art",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Civil unrest and breakdown of order",
+          "url": "/s/civil-unrest#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "What is a CAN bus channel?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/307281/what-is-a-can-bus-channel",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "How should a jobless father advise his son when he refuses to study because of his educated jobless dad?",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/21845/how-should-a-jobless-father-advise-his-son-when-he-refuses-to-study-because-of",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=332",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Law, records and trade",
+          "url": "/p/rebuild-law-and-trade#making-a-rule-stick-without-a-police-force",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Connotation",
+          "url": "/read/wikipedia_en_all_maxi/Connotation",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Highest Voted 'casting' Questions",
+          "url": "/read/engineering.stackexchange.com_en_all/questions/tagged/casting",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "My wife wants a homosexual child",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/30319/my-wife-wants-a-homosexual-child",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=293",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Death and grief",
+          "url": "/p/death-and-grief#grief",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Building an RGB LED module",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/129811/building-an-rgb-led-module",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=218",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Evacuation",
+          "url": "/m/evacuation#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=447",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Cyber attack on infrastructure",
+          "url": "/s/cyber-attack#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=457",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=287",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=497",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=282",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=448",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=280",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=281",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=370",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=289",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=466",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=128",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=251",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=235",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Chemistry 2e",
+          "url": "/doc/openstax-chemistry-2e#page=42",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Woodcraft and Camping (George W. Sears, 'Nessmuk', 1884)",
+          "url": "/doc/nessmuk-woodcraft-and-camping#page=60",
+          "source": "docs",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "meaning of the word tinder",
+      "took_ms": 1612,
+      "partial": false,
+      "rows": [
+        {
+          "title": "The essentials, printed",
+          "url": "/p/rebuild-essentials-printed#fire-three-ways",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Law, records and trade",
+          "url": "/p/rebuild-law-and-trade#making-a-rule-stick-without-a-police-force",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Death and grief",
+          "url": "/p/death-and-grief#grief",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=121",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Cyber attack on infrastructure",
+          "url": "/s/cyber-attack#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Woodcraft (E. H. Kreps, 1919)",
+          "url": "/doc/kreps-woodcraft#page=25",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Woodcraft (E. H. Kreps, 1919)",
+          "url": "/doc/kreps-woodcraft#page=26",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "What It Means When a Man Falls from the Sky",
+          "url": "/read/wikipedia_en_all_maxi/What_It_Means_When_a_Man_Falls_from_the_Sky",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Fire",
+          "url": "/p/fieldcraft-fire#building-it",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=42",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "The Story of a Tinder-box",
+          "url": "/book/gutenberg/29757",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "The Tinder-Box",
+          "url": "/book/gutenberg/14863",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Youth word of the year (Germany)",
+          "url": "/read/wikipedia_en_all_maxi/Youth_word_of_the_year_(Germany)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "List of Sinhala words of Dutch origin",
+          "url": "/read/wikipedia_en_all_maxi/List_of_Sinhala_words_of_Dutch_origin",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=229",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Lint (material)",
+          "url": "/read/mdwiki_en_all_maxi/Lint_(material)",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "OpenStax Prealgebra 2e",
+          "url": "/doc/openstax-prealgebra-2e#page=132",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Seventeen year old daughter wants to take an international trip to meet someone she met online",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/28066/seventeen-year-old-daughter-wants-to-take-an-international-trip-to-meet-someon",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Field craft in Britain",
+          "url": "/p/fieldcraft-basics#where-these-pages-come-from",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Fomite",
+          "url": "/read/mdwiki_en_all_maxi/Fomite",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "How can I teach a teenager to plan better and procrastinate less in his studies?",
+          "url": "/read/parenting.stackexchange.com_en_all/questions/26185/how-can-i-teach-a-teenager-to-plan-better-and-procrastinate-less-in-his-studie",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Chuckmuck",
+          "url": "/read/wikipedia_en_all_maxi/Chuckmuck",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax Prealgebra 2e",
+          "url": "/doc/openstax-prealgebra-2e#page=107",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "How to choose a fire steel and use it most effectively?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/1431/how-to-choose-a-fire-steel-and-use-it-most-effectively",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Chronic conditions",
+          "url": "/p/chronic-conditions#dialysis-and-oxygen-dependence",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Bonfire",
+          "url": "/read/mdwiki_en_all_maxi/Bonfire",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "What is the least environmentally damaging way to start a fire?",
+          "url": "/read/sustainability.stackexchange.com_en_all/questions/836/what-is-the-least-environmentally-damaging-way-to-start-a-fire",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=406",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "The rebuild, year by year",
+          "url": "/m/rebuild#the-first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Lane Moore",
+          "url": "/read/wikipedia_en_all_maxi/Lane_Moore",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Are there any techniques for starting and maintaining a fire in snow?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/14837/are-there-any-techniques-for-starting-and-maintaining-a-fire-in-snow",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Rerank-only vectors for English Wikipedia",
+          "url": "/library#embeddings-wikipedia",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "OpenStax Prealgebra 2e",
+          "url": "/doc/openstax-prealgebra-2e#page=478",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Fungus",
+          "url": "/read/mdwiki_en_all_maxi/Fungus",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Total collapse and the long rebuild",
+          "url": "/s/long-rebuild#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping stove using fuel allowed to transport on airplanes",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/13789/camping-stove-using-fuel-allowed-to-transport-on-airplanes",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Semantic index of the household library (Gutenberg, Survivor Library)",
+          "url": "/library#embeddings-household",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Fire piston",
+          "url": "/read/wikipedia_en_all_maxi/Fire_piston",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Mass-casualty terrorism",
+          "url": "/s/terrorism#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Leave no Trace: Are campfires unethical?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/8019/leave-no-trace-are-campfires-unethical",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=68",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Civil unrest and breakdown of order",
+          "url": "/s/civil-unrest#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Caputia tomentosa",
+          "url": "/read/wikipedia_en_all_maxi/Caputia_tomentosa",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Home electronics break daily and wiring is OK. Any ideas?",
+          "url": "/read/diy.stackexchange.com_en_all/questions/103322/home-electronics-break-daily-and-wiring-is-ok-any-ideas",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "FM 21-76-1 Survival, Evasion and Recovery (US multiservice, 1999)",
+          "url": "/doc/fm-21-76-1-survival-evasion-recovery#page=66",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Severe storms and flooding",
+          "url": "/s/storms-flooding#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Paktor",
+          "url": "/read/wikipedia_en_all_maxi/Paktor",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Prolonged severe winter",
+          "url": "/s/severe-winter#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=67",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Are there any natural materials that can be used as a magnifying lens (or to craft one)?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/20595/are-there-any-natural-materials-that-can-be-used-as-a-magnifying-lens-or-to-cr",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Moving across country",
+          "url": "/p/fieldcraft-moving#bog-moor-and-mountain",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=110",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "What gear should I carry along for winter emergencies?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/21252/what-gear-should-i-carry-along-for-winter-emergencies",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Evacuation",
+          "url": "/m/evacuation#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=127",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Supply chain collapse",
+          "url": "/s/supply-chain#long-term",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=111",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "CPR, adult",
+          "url": "/medical/card/cpr-adult#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=66",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Radiation sickness",
+          "url": "/medical/card/radiation-sickness#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=115",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Asthma attack",
+          "url": "/medical/card/asthma-attack#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=112",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Spinal injury",
+          "url": "/medical/card/spinal-injury#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=70",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Sepsis",
+          "url": "/medical/card/sepsis#stop-or-escalate",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=120",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Shelter and staying warm",
+          "url": "/p/fieldcraft-shelter#choosing-the-spot",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The Book of Camp-Lore and Woodcraft (Daniel Carter Beard, 1920)",
+          "url": "/doc/beard-camp-lore-and-woodcraft#page=9",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "National grid collapse",
+          "url": "/s/grid-collapse#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=108",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Head injury",
+          "url": "/medical/card/head-injury#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=443",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Drowning",
+          "url": "/medical/card/drowning#stop-or-escalate",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=126",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Ticks and adders",
+          "url": "/p/ticks-adders#lyme-disease",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=128",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "UK emergency numbers",
+          "url": "/p/uk-numbers#mental-health",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=124",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Reading the weather and exposure",
+          "url": "/p/fieldcraft-weather#where-our-weather-comes-from",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=119",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Butchery and preserving meat",
+          "url": "/p/butchery#hanging",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=130",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Household emergency plan",
+          "url": "/p/household-plan#warnings-we-do-not-trust-the-share-checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=109",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Medicine without industry",
+          "url": "/p/rebuild-medicine#clean-water-and-the-drink-that-treats-the-diarrhoea-anyway",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The Book of Woodcraft (Ernest Thompson Seton, 1921)",
+          "url": "/doc/seton-book-of-woodcraft#page=136",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Wild food in Britain and Ireland",
+          "url": "/p/fieldcraft-food#the-shore",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Farming for a decade",
+          "url": "/p/rebuild-farming#draught-animals-and-hand-tools",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Volcanic ash and gas",
+          "url": "/s/volcanic#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Fever in a child",
+          "url": "/medical/card/fever-child#stop-or-escalate",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Radiation",
+          "url": "/m/radiation#key-facts",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Food storage",
+          "url": "/p/food-storage#weevils-moths-and-rats",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Living in the field: hygiene",
+          "url": "/p/fieldcraft-hygiene#hands",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Restarting science",
+          "url": "/p/rebuild-restarting-science#the-maths-worth-keeping",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Lethal pandemic",
+          "url": "/s/pandemic#long-term",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "About Operation SOS",
+          "url": "/p/about-sos#where-the-content-comes-from-and-how-it-was-checked",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Economic collapse",
+          "url": "/s/economic-collapse#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Mental health",
+          "url": "/m/mental-health#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Chemical or industrial disaster",
+          "url": "/s/chemical#right-now",
+          "source": "playbooks",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "how do I wire a battery bank",
+      "took_ms": 1693,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Tools and repair",
+          "url": "/m/tools-repair#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Power",
+          "url": "/m/power#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Power from scratch",
+          "url": "/p/rebuild-power#decide-what-the-power-is-for",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Mains electricity",
+          "url": "/p/mains-electricity#generators-and-batteries",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Is it possible to \"wire in\" a rechargeable battery or battery bank to another PCB build?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/598546/is-it-possible-to-wire-in-a-rechargeable-battery-or-battery-bank-to-another-pc",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "battery power for RPI and IR LED bank?",
+          "url": "/read/raspberrypi.stackexchange.com_en_all/questions/10518/battery-power-for-rpi-and-ir-led-bank",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "The library map",
+          "url": "/p/rebuild-library-map#electricity-and-radio",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Low voltage warning powering Raspberry by means of power bank",
+          "url": "/read/raspberrypi.stackexchange.com_en_all/questions/133652/low-voltage-warning-powering-raspberry-by-means-of-power-bank",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=127",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Sizing up a battery bank for max continuous power draw",
+          "url": "/read/diy.stackexchange.com_en_all/questions/174256/sizing-up-a-battery-bank-for-max-continuous-power-draw",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Wire Size for 400AH (2 @ 200ah) battery bank with 4000w inverter?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/614591/wire-size-for-400ah-2-200ah-battery-bank-with-4000w-inverter",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=962",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=927",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "My ESP32 WROOM clone will not register touch sensor when using a 5v power bank with usb cable",
+          "url": "/read/arduino.stackexchange.com_en_all/questions/88840/my-esp32-wroom-clone-will-not-register-touch-sensor-when-using-a-5v-power-bank",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Isolating polarities on a series wired battery bank",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/122100/isolating-polarities-on-a-series-wired-battery-bank",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Battery pack",
+          "url": "/read/wikipedia_en_all_maxi/Battery_pack",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "What still works in an outage",
+          "url": "/p/what-still-works#what-to-do-about-it",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Nuclear War Survival Skills (Kearny, 1987 edition)",
+          "url": "/doc/nwss#page=107",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Measuring Battery level with ADC already in use",
+          "url": "/read/arduino.stackexchange.com_en_all/questions/69587/measuring-battery-level-with-adc-already-in-use",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Household emergency plan",
+          "url": "/p/household-plan#where-things-are",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=68",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Battery bank paralleling",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/279929/battery-bank-paralleling",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Mobile phone",
+          "url": "/read/mdwiki_en_all_maxi/Mobile_phone",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "I would like to add a battery to my Raspberry Pi 4. Can i do this by soldering to tp7, tp12, or tp1 on the underside of the board?",
+          "url": "/read/raspberrypi.stackexchange.com_en_all/questions/107570/i-would-like-to-add-a-battery-to-my-raspberry-pi-4-can-i-do-this-by-soldering-",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Solar panels in a power cut",
+          "url": "/p/solar-islanding#keeping-some-power",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Marinette Aluminum Boat Maintenance/Electrical/Starting Circuits",
+          "url": "/read/wikibooks_en_all_maxi/Marinette_Aluminum_Boat_Maintenance/Electrical/Starting_Circuits",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=942",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Multiple 2kW inverters connected to same 12V battery bank",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/372914/multiple-2kw-inverters-connected-to-same-12v-battery-bank",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Charge controller",
+          "url": "/read/wikipedia_en_all_maxi/Charge_controller",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Human Connectome Project",
+          "url": "/read/mdwiki_en_all_maxi/Human_Connectome_Project",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Keeping the box alive",
+          "url": "/p/rebuild-keeping-the-box#power-how-little-it-needs",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Powering an Arduino Mega with external USB Power Bank?",
+          "url": "/read/arduino.stackexchange.com_en_all/questions/9069/powering-an-arduino-mega-with-external-usb-power-bank",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Bhalswa landfill",
+          "url": "/read/mdwiki_en_all_maxi/Bhalswa_landfill",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Wiring power banks in series for 25V output to power e-bike",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/257976/wiring-power-banks-in-series-for-25v-output-to-power-e-bike",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=112",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Cyber attack on infrastructure",
+          "url": "/s/cyber-attack#checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "How is the fuse amp rating determined for a 12V AGM battery bank?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/422322/how-is-the-fuse-amp-rating-determined-for-a-12v-agm-battery-bank",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "Schilling telegraph",
+          "url": "/read/wikipedia_en_all_maxi/Schilling_telegraph",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "FM 3-05.70 Survival (US Army, 2002)",
+          "url": "/doc/fm-3-05-70-survival#page=315",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Off-the-grid",
+          "url": "/read/mdwiki_en_all_maxi/Off-the-grid",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Solar superstorm",
+          "url": "/s/solar-storm#checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Stand-alone power system",
+          "url": "/read/wikipedia_en_all_maxi/Stand-alone_power_system",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=1029",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Carbon monoxide",
+          "url": "/medical/card/carbon-monoxide#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "List of appropriate technology applications",
+          "url": "/read/mdwiki_en_all_maxi/List_of_appropriate_technology_applications",
+          "source": "medical",
+          "via": null
+        },
+        {
+          "title": "Rpi4B can control either one of two L298N modules, each driving two motors, but not both modules at the same time, why?",
+          "url": "/read/raspberrypi.stackexchange.com_en_all/questions/104365/rpi4b-can-control-either-one-of-two-l298n-modules-each-driving-two-motors-but-",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Nuclear War Survival Skills (Kearny, 1987 edition)",
+          "url": "/doc/nwss#page=32",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Electrical Engineering Q&A (Stack Exchange)",
+          "url": "/library#electronics.stackexchange.com_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "The rebuild, year by year",
+          "url": "/m/rebuild#checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Electric Vehicle Conversion/High power electrical",
+          "url": "/read/wikibooks_en_all_maxi/Electric_Vehicle_Conversion/High_power_electrical",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=198",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "PI Zero HDMI output varies with power source",
+          "url": "/read/raspberrypi.stackexchange.com_en_all/questions/94308/pi-zero-hdmi-output-varies-with-power-source",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Getting help without phones",
+          "url": "/p/no-phones#first-which-kind-of-no-phones",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Hornblower Hybrid",
+          "url": "/read/wikipedia_en_all_maxi/Hornblower_Hybrid",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "FM 5-125 Rigging Techniques, Procedures and Applications (US Army, 1995)",
+          "url": "/library#fm-5-125-rigging",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "FM 31-70 Basic Cold Weather Manual (US Army, 1968)",
+          "url": "/doc/fm-31-70-cold-weather#page=190",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Spark plug wires",
+          "url": "/read/wikipedia_en_all_maxi/Spark_plug_wires",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "National grid collapse",
+          "url": "/s/grid-collapse#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=166",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=112",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "CPR, adult",
+          "url": "/medical/card/cpr-adult#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "CPR, child and baby",
+          "url": "/medical/card/cpr-child#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=940",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Home Improvement Q&A (Stack Exchange)",
+          "url": "/library#diy.stackexchange.com_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=925",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "EMP attack",
+          "url": "/s/emp#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=75",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=602",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Electric shock and lightning",
+          "url": "/medical/card/electric-shock#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=928",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Economic collapse",
+          "url": "/s/economic-collapse#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=1084",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=975",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Farming for a decade",
+          "url": "/p/rebuild-farming#seed-and-the-village-seed-bank",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=929",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Total collapse and the long rebuild",
+          "url": "/s/long-rebuild#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=592",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Fire",
+          "url": "/p/fieldcraft-fire#keeping-it-and-using-it",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Law, records and trade",
+          "url": "/p/rebuild-law-and-trade#money-barter-and-the-guarantee",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=972",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=593",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "PMR446 channels",
+          "url": "/p/pmr446#using-them-in-an-emergency",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=889",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Water outdoors",
+          "url": "/p/fieldcraft-water#ice-on-ponds-lakes-and-canals",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Poisoning and overdose",
+          "url": "/medical/card/poisoning#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=944",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=973",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Vehicles and fuel",
+          "url": "/m/vehicles-fuel#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=937",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Head injury",
+          "url": "/medical/card/head-injury#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "About Operation SOS",
+          "url": "/p/about-sos#keeping-it-current-and-keeping-it-alive",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=943",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Fishing and the shore",
+          "url": "/p/fieldcraft-fishing#set-lines-and-stakeouts",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Communications",
+          "url": "/m/comms#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Making things again",
+          "url": "/p/rebuild-making-things#pottery",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Shelter and staying warm",
+          "url": "/p/fieldcraft-shelter#the-problem-is-wind-and-wet-not-deep-cold",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Heart attack",
+          "url": "/medical/card/heart-attack#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Lethal pandemic",
+          "url": "/s/pandemic#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Asthma attack",
+          "url": "/medical/card/asthma-attack#steps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Supply chain collapse",
+          "url": "/s/supply-chain#first-72-hours",
+          "source": "playbooks",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "hanes Cymru",
+      "took_ms": 1440,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Cylchgrawn Hanes Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Cylchgrawn_Hanes_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "UK emergency numbers",
+          "url": "/p/uk-numbers#utilities",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Hanes Cymru (O. M. Edwards)",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_Cymru_(O._M._Edwards)",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Addysgu hanes Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Addysgu_hanes_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Hanes Methodistiaeth Galfinaidd Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_Methodistiaeth_Galfinaidd_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "hanes",
+          "url": "/read/wiktionary_en_all_nopic/hanes",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=555",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Hanes modern Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_modern_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Hanes cyfansoddiadol Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_cyfansoddiadol_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "William Jones (Welsh radical)",
+          "url": "/read/wikipedia_en_all_maxi/William_Jones_(Welsh_radical)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Brycheiniog (journal)",
+          "url": "/read/wikipedia_en_all_maxi/Brycheiniog_(journal)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Hanes tiriogaethol Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_tiriogaethol_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Si\u00e2n Pari Huws",
+          "url": "/read/wikipedia_en_all_maxi/Si%C3%A2n_Pari_Huws",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Rhestr Llyfrau Cymraeg/Hanes, Hanes Lleol, Arferion Gwlad, Ll\u00ean Gwerin",
+          "url": "/read/wikipedia_cy_all_maxi/Rhestr_Llyfrau_Cymraeg/Hanes%2C_Hanes_Lleol%2C_Arferion_Gwlad%2C_Ll%C3%AAn_Gwerin",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "A History of Wales (book)",
+          "url": "/read/wikipedia_en_all_maxi/A_History_of_Wales_(book)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "John Davies (historian)",
+          "url": "/read/wikipedia_en_all_maxi/John_Davies_(historian)",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Isaac Daniel Hooson",
+          "url": "/read/wikipedia_en_all_maxi/Isaac_Daniel_Hooson",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Simon Brooks",
+          "url": "/read/wikipedia_en_all_maxi/Simon_Brooks",
+          "source": "reference",
+          "via": null
+        }
+      ]
+    },
+    {
+      "query": "how to build a forge and bellows for blacksmithing",
+      "took_ms": 1344,
+      "partial": false,
+      "rows": [
+        {
+          "title": "Iron and tools",
+          "url": "/p/rebuild-iron-and-tools#the-forge",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The library map",
+          "url": "/p/rebuild-library-map#metalwork-and-engineering",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=617",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Total collapse and the long rebuild",
+          "url": "/s/long-rebuild#long-term",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Down'n'dirty Blacksmithing/Constructing a Down'n'dirty Forge",
+          "url": "/read/wikibooks_en_all_maxi/Down'n'dirty_Blacksmithing/Constructing_a_Down'n'dirty_Forge",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=463",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=19",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Green Family Forge",
+          "url": "/read/wikipedia_en_all_maxi/Green_Family_Forge",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "The Complete Guide To Blacksmithing Horseshoeing 1902",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/the_complete_guide_to_blacksmithing_horseshoeing_1902.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Is it feasible to cook via a forge?",
+          "url": "/read/cooking.stackexchange.com_en_all/questions/116535/is-it-feasible-to-cook-via-a-forge",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "The rebuild, year by year",
+          "url": "/m/rebuild#years-three-to-ten-trades-and-power",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Forge Practice And Heat Treatment Of Steel 1919",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forge-practice_and_heat_treatment_of_steel_1919.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Down'n'dirty Blacksmithing/Introduction",
+          "url": "/read/wikibooks_en_all_maxi/Down'n'dirty_Blacksmithing/Introduction",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Forgecraft 1913",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forgecraft_1913.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=505",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "The Blacksmiths Guide 1907",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/the_blacksmiths_guide_1907.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Down'n'dirty Blacksmithing/Tools, Materials, and Supplies",
+          "url": "/read/wikibooks_en_all_maxi/Down'n'dirty_Blacksmithing/Tools%2C_Materials%2C_and_Supplies",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Making things again",
+          "url": "/p/rebuild-making-things#charcoal",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Woodcraft and Camping (George W. Sears, 'Nessmuk', 1884)",
+          "url": "/doc/nessmuk-woodcraft-and-camping#page=60",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Notes For Forge Shop Practice A Course For High Schools 1910",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/notes_for_forge_shop_practice-a_course_for_high_schools_1910.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "The Blacksmith Shop",
+          "url": "/read/wikipedia_en_all_maxi/The_Blacksmith_Shop",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Khan Academy (English, March 2023 build)",
+          "url": "/library#khanacademy_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "The essentials, printed",
+          "url": "/p/rebuild-essentials-printed#charcoal",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "NHS Medicines A to Z (Kiwix build, December 2025)",
+          "url": "/library#nhs_medicines",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Practical Blacksmithing Volume 3 1889",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/practical_blacksmithing_volume_3_1889.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=25",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Quasdorf Blacksmith and Wagon Shop",
+          "url": "/read/wikipedia_en_all_maxi/Quasdorf_Blacksmith_and_Wagon_Shop",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Practical Blacksmithing Volume 4 1889",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/practical_blacksmithing_volume_4_1889.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "OpenStax Biology 2e",
+          "url": "/doc/openstax-biology-2e#page=540",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Blacksmith Shop Practice 1910",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/blacksmith_shop_practice_1910.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Coppabella Blacksmith Shop",
+          "url": "/read/wikipedia_en_all_maxi/Coppabella_Blacksmith_Shop",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "How to process iron in the wilderness?",
+          "url": "/read/outdoors.stackexchange.com_en_all/questions/15186/how-to-process-iron-in-the-wilderness",
+          "source": "practical",
+          "via": null
+        },
+        {
+          "title": "The Book of Camp-Lore and Woodcraft (Daniel Carter Beard, 1920)",
+          "url": "/doc/beard-camp-lore-and-woodcraft#page=92",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Forge work",
+          "url": "/book/gutenberg/53854",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Approved Document A: Structure (2004 edition incorporating 2010 and 2013 amendments)",
+          "url": "/library#ad-a",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "The first year",
+          "url": "/p/rebuild-first-year#the-register-who-can-do-what",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=193",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Restarting science",
+          "url": "/p/rebuild-restarting-science#temperature",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Machinerys Reference Series No 61",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/machinerys_reference_series_no_61.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Rerank-only vectors for English Wikipedia",
+          "url": "/library#embeddings-wikipedia",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=501",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Practical forging and art smithing",
+          "url": "/book/gutenberg/69488",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Shelter and staying warm",
+          "url": "/p/fieldcraft-shelter#building-with-what-is-there",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "CD3WD Project",
+          "url": "/library#cd3wdproject.org_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Wales Resilience Framework 2025",
+          "url": "/doc/wales-resilience-framework-2025#page=22",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "American Blacksmithing Toolsmiths And Steelworkers Manual 1911",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/american_blacksmithing_toolsmiths_and_steelworkers_manual_1911.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "WikiCiv",
+          "url": "/library#wikiciv_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Nuclear war",
+          "url": "/s/nuclear-war#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Forging 1906",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forging_1906.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Metalsmith",
+          "url": "/read/wikipedia_en_all_maxi/Metalsmith",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "The Book of Woodcraft (Ernest Thompson Seton, 1921)",
+          "url": "/doc/seton-book-of-woodcraft#page=99",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Approved Document R volume 1: Electronic communications infrastructure (2022)",
+          "url": "/library#ad-r1",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Fire",
+          "url": "/p/fieldcraft-fire#building-it",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Forge Practice Elementary 1908",
+          "url": "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/forge-practice-elementary_1908.pdf",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Approved Document T: Toilet accommodation (2024, revised June 2025)",
+          "url": "/library#ad-t",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=190",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Cedar chests, how to make them",
+          "url": "/book/gutenberg/75563",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Home Improvement Q&A (Stack Exchange)",
+          "url": "/library#diy.stackexchange.com_en_all",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=141",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Electric shock and lightning",
+          "url": "/medical/card/electric-shock#warnings",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "UK Government Resilience Action Plan (July 2025)",
+          "url": "/library#resilience-action-plan-2025",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Law, records and trade",
+          "url": "/p/rebuild-law-and-trade#records-and-why-paper",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=793",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "bge-small embedding model (semantic search)",
+          "url": "/library#bge-small-en-v1.5",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Tools and repair",
+          "url": "/m/tools-repair#key-facts",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=139",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Semantic index of the household library (Gutenberg, Survivor Library)",
+          "url": "/library#embeddings-household",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=168",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Food",
+          "url": "/m/food#key-facts",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Semantic index of the box's own library",
+          "url": "/library#embeddings-docs",
+          "source": "library",
+          "via": null
+        },
+        {
+          "title": "Power from scratch",
+          "url": "/p/rebuild-power#safety-and-the-law-that-still-applies",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "FM 5-125 Rigging Techniques, Procedures and Applications (US Army, 1995)",
+          "url": "/doc/fm-5-125-rigging#page=86",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Evacuation",
+          "url": "/m/evacuation#key-facts",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=506",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Getting found",
+          "url": "/p/fieldcraft-rescue#when-the-phones-are-down",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=207",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Radiation",
+          "url": "/m/radiation#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=476",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Fishing and the shore",
+          "url": "/p/fieldcraft-fishing#basket-and-tidal-traps",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Boy Scouts Handbook, first edition (Boy Scouts of America, 1911)",
+          "url": "/doc/boy-scouts-handbook-1911#page=192",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Reading the weather and exposure",
+          "url": "/p/fieldcraft-weather#lightning",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Woodcraft (E. H. Kreps, 1919)",
+          "url": "/doc/kreps-woodcraft#page=35",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Field craft in Britain",
+          "url": "/p/fieldcraft-basics#the-law-is-part-of-field-craft-here",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Woodcraft and Camping (George W. Sears, 'Nessmuk', 1884)",
+          "url": "/doc/nessmuk-woodcraft-and-camping#page=6",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Farming for a decade",
+          "url": "/p/rebuild-farming#rotation",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax College Physics 2e",
+          "url": "/doc/openstax-college-physics-2e#page=1242",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Keeping the box alive",
+          "url": "/p/rebuild-keeping-the-box#what-this-box-is-in-hardware",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=466",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Water outdoors",
+          "url": "/p/fieldcraft-water#finding-it",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=115",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Nuclear accident or dirty bomb",
+          "url": "/s/nuclear-accident#checklist",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Camping and Woodcraft (Horace Kephart, 1917)",
+          "url": "/doc/kephart-camping-and-woodcraft#page=118",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Chemical or industrial disaster",
+          "url": "/s/chemical#right-now",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Biology 2e",
+          "url": "/doc/openstax-biology-2e#page=381",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Growing food",
+          "url": "/m/growing-food#go-deeper",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Astronomy 2e",
+          "url": "/doc/openstax-astronomy-2e#page=1063",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Mains electricity",
+          "url": "/p/mains-electricity#what-you-may-and-may-not-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Communications",
+          "url": "/m/comms#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Security and the law",
+          "url": "/m/security-law#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Infant feeding",
+          "url": "/p/infant-feeding#relactation-and-wet-nursing",
+          "source": "playbooks",
+          "via": null
+        }
+      ]
+    }
+  ],
+  "collections": {
+    "docs": {
+      "meta": {
+        "model": "bge-small-en-v1.5-q8_0.gguf",
+        "dims": 384,
+        "count": 21368,
+        "prefix": "Represent this sentence for searching relevant passages: ",
+        "built_at": "2026-09-19T13:00:21Z"
+      },
+      "key_counts": {
+        "rows": 21368
+      },
+      "generation": ".docs-627de8f4557a4cfda3c9265863febb6f"
+    },
+    "household": {
+      "meta": {
+        "model": "bge-small-en-v1.5-q8_0.gguf",
+        "dims": 384,
+        "count": 70558,
+        "seen": 71911,
+        "skipped_no_text": 1353,
+        "built_at": "2026-09-19T19:38:58Z",
+        "elapsed_s": 11876.104976109
+      },
+      "key_counts": {
+        "gutenberg_en_all": 60093,
+        "survivorlibrary.com_en_all": 10465
+      },
+      "generation": ".household-db7047c581954953bf34f36659fa20f6"
+    },
+    "wikipedia": {
+      "meta": {
+        "model": "bge-small-en-v1.5-fp16-torch",
+        "dims": 384,
+        "count": 8425865,
+        "seen": 8425865,
+        "skipped_no_text": 1182756,
+        "built_at": "2026-09-19T20:47:17Z",
+        "elapsed_s": 14133.671049074997,
+        "processed_this_run": 8425865
+      },
+      "key_counts": {
+        "rows": 8425865
+      },
+      "generation": ".wikipedia-221b9b01a50e44cd89aefb51b4f28398"
+    }
+  }
+}

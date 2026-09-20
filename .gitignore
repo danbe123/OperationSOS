@@ -44,3 +44,6 @@ install/answers.env
 
 # subagent-driven-development scratch: ledgers, briefs and review packages
 .superpowers/
+
+# implementation plans stay local: they are working notes, not part of the project
+docs/superpowers/plans/

@@ -18,12 +18,12 @@ import functools
 import re
 import sqlite3
 import time
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import httpx
 
 from sos import places as places_mod
-from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim
+from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim, content_url
 from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
@@ -61,6 +61,29 @@ SEMANTIC_FLOOR = {          # (found by the words too, a converted document's pa
 SEMANTIC_MIN = min(SEMANTIC_FLOOR.values())
 SEMANTIC_CEIL = 0.82
 SEMANTIC_WEIGHT = 0.5
+# The household collection's own ZIM id for Survivor Library (Gutenberg reuses BOOK_ZIMS's own id): its
+# real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
+# through the generic Kiwix content route rather than a bespoke reader.
+SURVIVOR_ZIM = "survivorlibrary.com_en_all"
+# Wikipedia's own ZIM id (also sos.embeddings.WIKIPEDIA_ZIM): named again here, not imported, so search.py
+# gains no new module-level coupling to sos.embeddings (Task 9, Ruling 9) -- the rerank pass below needs
+# only this id string to find Wikipedia's own keyword hits by their url; everything else it needs (the
+# store, the query embedding) arrives through the `semantic` parameter search() already receives.
+WIKIPEDIA_ZIM = "wikipedia_en_all_maxi"
+# Wikipedia's own keyword hits are rescored, never zeroed and never doubled: a real semantic match (cosine
+# near 1.0) lifts a hit to 1.3x, a weak or negative one settles it to 0.7x -- tune against real queries in
+# Task 10's acceptance step, not by theory.
+WIKIPEDIA_RERANK_BASE = 0.7
+WIKIPEDIA_RERANK_SPAN = 0.6
+
+
+def semantic_bonus(cos: float, w: float) -> float:
+    """What one meaning hit is worth: its distance above the floor, capped at the ceiling, times the
+    source's own weight -- the one place this formula is written, shared by the box's own library and
+    the household collection alike."""
+    return SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
+
+
 # A question rarely has every one of its words in the passage that answers it ("generator indoors": the
 # Mains electricity page says "never indoors" of a generator two sentences apart): when the AND finds fewer
 # than this, the OR is asked too, its rows after the AND's and ranked by how many of the words they carry.
@@ -376,6 +399,29 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                 "_cat": "medical" if cls in ("nhs", "medical") else cls,
             })
 
+    # Wikipedia's own keyword hits, rescored by meaning -- never a new row, only a nudge to a row the words
+    # already found (Task 9). Wikipedia's `source`/`_cat` are both the literal string "reference" (classify()
+    # never returns the ZIM id for it: wikipedia_en_all_maxi's manifest category is "reference", and
+    # classify()'s "reference"/"practical"/"survival"/"books" branch returns the category unchanged), so the
+    # only place the ZIM id survives is the url itself -- the filter below matches on that, not on source/_cat.
+    if semantic is not None:
+        wiki_prefix = f"/read/{WIKIPEDIA_ZIM}/"
+        wiki_hits = [r for r in results if r["url"].startswith(wiki_prefix)]
+        if wiki_hits:
+            # everything after the fixed "/read/<zim id>/" prefix, keeping any internal slashes intact: a
+            # real Wikipedia article path is namespaced (e.g. "A/Some_Article"), and WikipediaStore's own
+            # keys (_wikipedia_article_keys, sos/embeddings.py) are reader.paths() values verbatim, slashes
+            # and all -- an rsplit("/", 1) here would throw away everything before the last slash instead.
+            keys = [unquote(r["url"].split("/", 3)[3]) for r in wiki_hits]
+            try:
+                wiki_scores = await semantic.rerank_wikipedia(q, keys)
+            except Exception:  # the semantic layer is a convenience: its failures never fail the search
+                wiki_scores = {}
+            for r, key in zip(wiki_hits, keys):
+                cos = wiki_scores.get(key)
+                if cos is not None:
+                    r["score"] *= WIKIPEDIA_RERANK_BASE + WIKIPEDIA_RERANK_SPAN * max(0.0, cos)
+
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
     fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
                "FROM fts_docs WHERE fts_docs MATCH ? AND kind {op} 'doc' ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT {n}")
@@ -450,15 +496,20 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                 r["score"] *= MEDICAL_BOOST
 
     # The passages nearest the query in meaning, from the box's own library: a row already found by its
-    # words is lifted, one the words missed is added with its opening as its snippet.
+    # words is lifted, one the words missed is added with its opening as its snippet. The household
+    # collection (Gutenberg, Survivor Library -- one vector per book) is asked the same way immediately
+    # after, under this same guard: a household hit joins the "books" group, the same source the
+    # catalogue's own keyword hits use, so a book found by both words and meaning is lifted once rather
+    # than shown twice under two badges, and every household hit is eligible for the BOOKS_KEPT rescue.
     if semantic is not None:
+        by_url = {r["url"]: r for r in results}
+
         try:
             near = await semantic.query(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
         near = [(url, cos) for url, cos in near if cos >= SEMANTIC_MIN]
         if near:
-            by_url = {r["url"]: r for r in results}
             found = {}
             for row in conn.execute(
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
@@ -473,7 +524,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                     continue
                 src = SOURCE_BY_KIND.get(kind, "docs")
                 w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
-                bonus = SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
+                bonus = semantic_bonus(cos, w)
                 if url in by_url:
                     by_url[url]["score"] += bonus
                     continue
@@ -484,6 +535,42 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                     entry["page"] = int(row["page"])
                 results.append(entry)
                 by_url[url] = entry
+
+        try:
+            household_near = await semantic.query_household(q, SEMANTIC_K)
+        except Exception:  # the semantic layer is a convenience: its failures never fail the search
+            household_near = []
+        household_near = [(key, cos) for key, cos in household_near if cos >= SEMANTIC_MIN]
+        for key, cos in household_near:
+            zim, _, book_id = key.partition(":")
+            if zim not in ("gutenberg_en_all", SURVIVOR_ZIM) or not book_id:
+                continue
+            available = conn.execute("SELECT available FROM library_items WHERE id=?", (zim,)).fetchone()
+            if available is None or not available["available"]:
+                continue
+            if zim == "gutenberg_en_all":
+                url = f"/book/gutenberg/{book_id}"
+            else:
+                url = content_url(SURVIVOR_ZIM, f"www.survivorlibrary.com/library/{book_id}.pdf")
+            # a household book is never a "doc page" in the existing sense: its neighbourhood is not the
+            # dense, noisy one a converted document's page has, so False is right for that flag here too.
+            if cos < SEMANTIC_FLOOR[(url in by_url, False)]:
+                continue
+            bonus = semantic_bonus(cos, BOOK_WEIGHT)
+            if url in by_url:
+                by_url[url]["score"] += bonus
+                continue
+            book_row = conn.execute("SELECT title, author FROM books WHERE zim=? AND id=?", (zim, book_id)).fetchone()
+            if book_row is not None:
+                title, author = book_row["title"], book_row["author"] or ""
+            else:
+                # Survivor Library has no catalogue row at all (Task 6's known gap); a Gutenberg id whose
+                # own row went missing is covered the same way: the slug is all there is to show.
+                title, author = re.sub(r"[-_]+", " ", book_id).strip().title(), ""
+            entry = {"source": "books", "badge": "Books", "title": title, "snippet": author, "url": url,
+                     "score": bonus, "kind": "book", "_cat": "books", "via": "meaning"}
+            results.append(entry)
+            by_url[url] = entry
 
     # A place is an exact match by construction and a catalogue hit is ranked on its title and author
     # already: the rescoring is for articles and the box's own passages.

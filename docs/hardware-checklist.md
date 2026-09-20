@@ -34,6 +34,11 @@ Manual checks on the box (spec section 14). Close a row with the date, the commi
 | 26 | A situation export scans between two phones: QR sequence on one, scanned and imported on the other, summary names what changed | | | |
 | 27 | Open a Gutenberg book on the touchscreen, page forward, reopen it from a phone and land on the same page | | | |
 | 28 | Search "Robinson Crusoe": the Books group appears below the guides and opens in the reader | | | |
+| 29 | On the touchscreen, search "a whaling voyage in the age of sail": a household book appears with the related badge despite no exact title match; open it successfully | | | |
+| 30 | Search "define the word forge", "how do I wire a battery bank" and "hanes Cymru": Wiktionary, StackExchange and Welsh Wikipedia keyword hits never carry a related badge | | | |
+| 31 | With the full Wikipedia vectors installed, record cold and warm search latency and API RSS, then repeat with two phones browsing: no OOM or swap; Wikipedia results open correctly | | | |
+
+Semantic-search PC acceptance was completed on 20 September 2026; see `docs/app-completion.md` and `docs/reviews/2026-09-20-semantic-acceptance.json`. These results do not close rows 29–31. Copy the complete embeddings directory with its relative symlinks and generation directories (including the existing dot-prefixed generations), not only the visible aliases. Run only one build per collection at a time: publication is serialized, but same-collection builds still share staging filenames.
 
 ## What the hardware has to provide
 

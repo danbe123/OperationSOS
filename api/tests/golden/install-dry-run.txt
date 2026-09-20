@@ -1,5 +1,5 @@
 install.sh --dry-run: arch aarch64, dev 0, skip-llama 0, with-jellyfin 0, pcie-gen3 0
-step apt: would apt-get install network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv aria2 cmake build-essential poppler-utils git curl rsync
+step apt: would apt-get install network-manager dnsmasq-base avahi-daemon cage wlr-randr chromium python3-venv python3-dev aria2 cmake build-essential poppler-utils git curl rsync
 step downloads: would fetch https://download.kiwix.org/release/kiwix-tools/kiwix-tools_linux-aarch64-3.8.2.tar.gz -> /usr/local/bin/kiwix-serve, /usr/local/bin/kiwix-manage, /usr/local/bin/kiwix-search
 step downloads: would fetch https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_arm64.tar.gz -> /usr/local/bin/caddy
 step llama: would clone https://github.com/ggml-org/llama.cpp at v0.3.0 into /srv/sos/build/llama.cpp, run 'cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CPU_KLEIDIAI=ON -DLLAMA_BUILD_TESTS=OFF && cmake --build build --config Release -j4' then 'cmake --install build --prefix /usr/local' -> /usr/local/bin/llama-server

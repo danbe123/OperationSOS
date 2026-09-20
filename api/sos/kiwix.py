@@ -186,9 +186,20 @@ class _TextExtractor(HTMLParser):
         return self.main_paras if self.has_main else self.all_paras
 
 
-def extract_text(html_text: str) -> list[str]:
+def extract_text(html_text: str, *, max_chars: int | None = None) -> list[str]:
     parser = _TextExtractor()
-    parser.feed(html_text)
+    if max_chars is None:
+        parser.feed(html_text)
+    else:
+        # Meaning search only reads an opening passage. Avoid parsing a whole novel for it.
+        # A main element can occur after long page furniture: wait for it when present.
+        expects_main = bool(re.search(r"<main(?:\s|>)|\bid\s*=\s*['\"]?maincontent(?:['\"]|\s|>)",
+                                      html_text, re.I))
+        for start in range(0, len(html_text), 4096):
+            parser.feed(html_text[start:start + 4096])
+            paragraphs = parser.main_paras if parser.has_main else parser.all_paras
+            if (parser.has_main or not expects_main) and sum(len(p) + 1 for p in paragraphs) > max_chars:
+                return paragraphs
     parser.close()
     return parser.result()
 
