@@ -5,7 +5,8 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
 const QUESTION = 'how do I make water safe to drink';
 const DISCLAIMER = 'AI can be wrong. The library pages linked below are the source of truth.';
 
-test.skip(!process.env.SOS_E2E_AI, 'set SOS_E2E_AI=1 with `make dev` running and a model in $SOS_CORE/models');
+// Cannot run in fixture mode: it needs a real model answering on the dev stack (the screen itself is covered against mocks in ai-screen.spec.ts).
+test.skip(!process.env.SOS_E2E_AI, 'needs a real model on the dev stack: set SOS_E2E_AI=1 with `make dev` running and a model in $SOS_CORE/models');
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(240_000);
 
