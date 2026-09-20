@@ -17,7 +17,17 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 
 
 class KiwixError(RuntimeError):
-    pass
+    """`status` is the HTTP status kiwix-serve answered with; None when there was no such answer to
+    speak of (a reply that would not parse, say)."""
+
+    def __init__(self, message: str = "", status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
+    @property
+    def permanent(self) -> bool:
+        """A refusal that asking again will not change: a 4xx, bar the two that mean "not now"."""
+        return self.status is not None and 400 <= self.status < 500 and self.status not in (408, 429)
 
 
 @dataclass(frozen=True)
@@ -65,7 +75,10 @@ def parse_search_xml(text: str) -> tuple[int, list[KiwixHit]]:
     if channel is None:
         raise KiwixError("no channel in search response")
     total_el = channel.find(f"{OPENSEARCH}totalResults")
-    total = int((total_el.text or "0").replace(",", "")) if total_el is not None else 0
+    try:
+        total = int((total_el.text or "0").replace(",", "")) if total_el is not None else 0
+    except ValueError as exc:
+        raise KiwixError("invalid totalResults in search response") from exc
     hits: list[KiwixHit] = []
     for item in channel.findall("item"):
         link = (item.findtext("link") or "").strip()
@@ -90,7 +103,7 @@ def parse_catalog_xml(text: str) -> list[Book]:
         books.append(Book(
             name=name,
             fts="_ftindex:yes" in tags,
-            language=(entry.findtext(f"{ATOM}language") or "eng").split(",")[0],
+            language=entry.findtext(f"{ATOM}language") or "eng",
             title=entry.findtext(f"{ATOM}title") or name,
         ))
     return books
@@ -98,9 +111,19 @@ def parse_catalog_xml(text: str) -> list[Book]:
 
 def parse_suggest_json(text: str) -> list[dict]:
     out = []
-    for entry in json.loads(text):
+    try:
+        entries = json.loads(text)
+    except ValueError as exc:
+        raise KiwixError("invalid suggestion JSON") from exc
+    if not isinstance(entries, list):
+        raise KiwixError("expected a list of suggestions")
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise KiwixError("invalid suggestion entry")
         if entry.get("kind") != "path" or not entry.get("path"):
             continue
+        if any(not isinstance(entry.get(field, ""), str) for field in ("path", "value", "label")):
+            raise KiwixError("suggestion paths and labels must be strings")
         out.append({"value": entry.get("value", ""), "label": strip_tags(entry.get("label", "")), "path": entry["path"]})
     return out
 
@@ -224,7 +247,7 @@ class KiwixClient:
         params += [("format", "xml"), ("pageLength", str(n))]
         r = await asyncio.wait_for(self._client.get(f"{self.base_url}/search", params=params), timeout)
         if r.status_code != 200:
-            raise KiwixError(f"search: HTTP {r.status_code}: {strip_tags(r.text)[:200]}")
+            raise KiwixError(f"search: HTTP {r.status_code}: {strip_tags(r.text)[:200]}", status=r.status_code)
         _, hits = parse_search_xml(r.text)
         return hits
 

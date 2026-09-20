@@ -14,6 +14,7 @@ bge-small was trained with an instruction on the query side only: every query is
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import fcntl
 import hashlib
 import itertools
@@ -80,23 +81,39 @@ def passage_text(title: str, body: str, url: str = "") -> str:
 SKIP_SECTIONS = ("go-deeper", "source")
 
 
-def _vectors_from(payload) -> np.ndarray:
+def _vectors_from(payload, expected_count: Optional[int] = None) -> np.ndarray:
     """llama-server answers `/embeddings` with a list of {index, embedding} (or, OpenAI-style, {data: [...]})."""
     rows = payload.get("data") if isinstance(payload, dict) else payload
     if not isinstance(rows, list):
         raise EmbedError("no embeddings in the reply")
+    if expected_count is not None and len(rows) != expected_count:
+        raise EmbedError(f"expected {expected_count} embeddings, got {len(rows)}")
+    if any(isinstance(row, dict) and "index" in row for row in rows):
+        indices = [row.get("index") if isinstance(row, dict) else None for row in rows]
+        if any(type(i) is not int for i in indices) or sorted(indices) != list(range(len(rows))):
+            raise EmbedError("embedding indices must name each input exactly once")
+        rows = sorted(rows, key=lambda row: row["index"])
     out = []
     for row in rows:
         vec = row.get("embedding") if isinstance(row, dict) else row
         if isinstance(vec, list) and vec and isinstance(vec[0], list):
+            if len(vec) != 1:
+                raise EmbedError("expected one pooled embedding per input")
             vec = vec[0]
         out.append(vec)
-    arr = np.asarray(out, dtype=np.float32)
+    try:
+        arr = np.asarray(out, dtype=np.float32)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise EmbedError("embedding values must be numeric vectors") from exc
     if arr.ndim != 2 or arr.shape[1] != DIMS:
         raise EmbedError(f"expected {DIMS}-dimensional vectors, got shape {arr.shape}")
-    norms = np.linalg.norm(arr, axis=1, keepdims=True)
-    norms[norms == 0] = 1.0
-    return arr / norms
+    if not np.isfinite(arr).all():
+        raise EmbedError("embedding values must be finite")
+    # float64 prevents a finite float32 vector overflowing while its norm is calculated.
+    norms = np.linalg.norm(arr.astype(np.float64), axis=1, keepdims=True)
+    if np.any(norms == 0):
+        raise EmbedError("embedding vectors must be nonzero")
+    return (arr / norms).astype(np.float32)
 
 
 class EmbedClient:
@@ -121,7 +138,10 @@ class EmbedClient:
             raise EmbedError(f"embedding server unreachable: {exc}") from exc
         if r.status_code != 200:
             raise EmbedError(f"embedding server returned {r.status_code}")
-        return _vectors_from(r.json())
+        try:
+            return _vectors_from(r.json(), expected_count=len(texts))
+        except ValueError as exc:
+            raise EmbedError("embedding server returned invalid JSON") from exc
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -137,7 +157,10 @@ def embed_sync(url: str, texts: list[str], timeout: float = 120.0,
         raise EmbedError(f"embedding server unreachable: {exc}") from exc
     if r.status_code != 200:
         raise EmbedError(f"embedding server returned {r.status_code}")
-    return _vectors_from(r.json())
+    try:
+        return _vectors_from(r.json(), expected_count=len(texts))
+    except ValueError as exc:
+        raise EmbedError("embedding server returned invalid JSON") from exc
 
 
 class Index:
@@ -1279,6 +1302,20 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     return 0
 
 
+class EmbeddingWatch:
+    """What one search learned about its own query vector: `failed` is set when the search needed the vector
+    and the server gave none. A search that never needed one (no index built, no Wikipedia hit to rerank)
+    leaves it False, and its answer is as good as it will ever be."""
+
+    __slots__ = ("failed",)
+
+    def __init__(self) -> None:
+        self.failed = False
+
+
+_watch: contextvars.ContextVar[Optional[EmbeddingWatch]] = contextvars.ContextVar("sos_embedding_watch", default=None)
+
+
 class _Cached:
     """One collection's loaded store, the mtime it was loaded from, and when it was last looked for."""
 
@@ -1286,8 +1323,8 @@ class _Cached:
 
     def __init__(self):
         self.store = None
-        self.stamp: Optional[float] = None
-        self.checked = 0.0
+        self.stamp: Optional[tuple] = None
+        self.checked = float("-inf")
 
 
 class Semantic:
@@ -1305,7 +1342,7 @@ class Semantic:
         self.settings = settings
         self.client = EmbedClient(settings.embed_url)
         self._vectors: dict[str, tuple[Optional[np.ndarray], float]] = {}   # the last few queries embedded
-        self._embedding: dict[str, "asyncio.Future"] = {}                   # and the ones in flight now
+        self._embedding: dict[str, "asyncio.Task"] = {}                     # and the ones in flight now
         # One cache per collection, each with its own throttle clock -- Task 7's own fix round established
         # that sharing one timer between two collections starves whichever one's stat() check runs second
         # (see test_household_index_has_its_own_throttle_clock_not_shared_with_the_docs_index).
@@ -1313,6 +1350,7 @@ class Semantic:
         self._household = _Cached()
         self._wikipedia = _Cached()
         self.generation = 0        # goes up whenever a collection's loaded state changes: search's cache keys on it
+        self.cache_namespace = uuid.uuid4().hex  # persistent result caches cannot outlive this reader's state
 
     def _cached(self, state: "_Cached", collection: str, names: tuple[str, ...], load: Callable,
                 loaded_message: str):
@@ -1330,9 +1368,22 @@ class Semantic:
         state.checked = now
         folder = Path(self.settings.embeddings_dir)
         try:
-            stamp = (folder / f"{collection}.{names[0]}").stat().st_mtime
-        except OSError:
-            _check_collection(folder, collection, names)   # says so, once, if the files are there but unreadable
+            directory = _collection_folder(folder, collection)
+            files = [directory / f"{collection}.{name}" for name in names]
+            meta_path = directory / f"{collection}.meta.json"
+            if not meta_path.exists() and not (folder / meta_path.name).is_symlink():
+                meta_path = folder / meta_path.name
+            stats = [p.stat() for p in files]
+            meta_stat = meta_path.stat() if meta_path.exists() else None
+            stamp = (str(directory), *((s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns) for s in stats),
+                     None if meta_stat is None else (meta_stat.st_ino, meta_stat.st_size,
+                                                    meta_stat.st_mtime_ns, meta_stat.st_ctime_ns))
+        except (OSError, RuntimeError):
+            try:
+                _check_collection(folder, collection, names)
+            except (OSError, RuntimeError) as exc:
+                _say_once(folder, collection, "files", "unresolvable",
+                          f"embeddings: cannot resolve {collection} files; using keyword search ({exc})")
             stamp = None
         if stamp is None:
             state.stamp = None
@@ -1343,7 +1394,11 @@ class Semantic:
         if stamp == state.stamp and state.store is not None:
             return state.store
         state.stamp = stamp
-        store = load()
+        try:
+            store = load()
+        except (OSError, ValueError, RuntimeError) as exc:
+            log.warning("embeddings: cannot load %s; using keyword search (%s)", collection, exc)
+            store = None
         if store is None and state.store is None:
             return None
         state.store = store
@@ -1379,7 +1434,34 @@ class Semantic:
     def available(self) -> bool:
         return self.index() is not None
 
+    def refresh(self) -> None:
+        """Check generations before a result-cache hit can bypass the query methods entirely."""
+        self.index()
+        self.household_index()
+        self.wikipedia_store()
+
+    @contextmanager
+    def watch_embedding(self) -> Iterator[EmbeddingWatch]:
+        """Everything awaited inside the block, by the task that entered it, reports its query-vector
+        failures to the yielded watch: one search's own outcome, not a memo other searches share, so a
+        temporary embedding failure is never kept as a persistent keyword-only result and nothing else
+        is kept out of the cache."""
+        watch = EmbeddingWatch()
+        token = _watch.set(watch)
+        try:
+            yield watch
+        finally:
+            _watch.reset(token)
+
     async def _query_vector(self, q: str) -> Optional[np.ndarray]:
+        vector = await self._obtain_vector(q)
+        if vector is None and q.strip():
+            watch = _watch.get()
+            if watch is not None:
+                watch.failed = True
+        return vector
+
+    async def _obtain_vector(self, q: str) -> Optional[np.ndarray]:
         """The query's embedding, asked of the server once however many collections want it.
 
         One search asks all three: the docs passages, the household books and the Wikipedia rerank.
@@ -1398,10 +1480,14 @@ class Semantic:
             if now - at < (self.QUERY_TTL_S if vector is not None else self.FAILED_QUERY_TTL_S):
                 return vector
         waiting = self._embedding.get(text)
-        if waiting is not None:
-            return await waiting          # another request is already asking for these very words
-        future = asyncio.get_running_loop().create_future()
-        self._embedding[text] = future
+        if waiting is None:
+            waiting = asyncio.create_task(self._embed_query(text))
+            self._embedding[text] = waiting
+        # The request that started the embedding is just another waiter. A disconnected phone must
+        # not cancel work another phone is using; the HTTP client's timeout still bounds that work.
+        return await asyncio.shield(waiting)
+
+    async def _embed_query(self, text: str) -> Optional[np.ndarray]:
         vector = None
         try:
             try:
@@ -1413,8 +1499,6 @@ class Semantic:
                 self._vectors.pop(next(iter(self._vectors)))
         finally:
             self._embedding.pop(text, None)
-            if not future.done():
-                future.set_result(vector)
         return vector
 
     async def query(self, q: str, k: int = 20) -> list[tuple[str, float]]:

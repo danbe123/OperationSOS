@@ -8,7 +8,7 @@ import pytest
 import respx
 
 from sos import db, library, search
-from sos.kiwix import KiwixClient
+from sos.kiwix import KiwixClient, KiwixError
 from sos.manifest import load_manifests
 
 FX = Path(__file__).parent / "fixtures"
@@ -132,6 +132,10 @@ def test_cache_hit_on_repeat_and_miss_after_invalidate(respx_mock, conn, env):
     assert route.call_count == 4
 
 
+def _cache_rows(conn) -> int:
+    return conn.execute("SELECT count(*) FROM search_cache").fetchone()[0]
+
+
 @respx.mock(base_url=BASE)
 def test_partial_responses_are_not_cached(respx_mock, conn, env):
     respx_mock.get("/search").mock(return_value=httpx.Response(404, text="<error>Fulltext search unavailable</error>"))
@@ -145,7 +149,69 @@ def test_partial_responses_are_not_cached(respx_mock, conn, env):
     respx_mock.get("/search").mock(side_effect=slow)
     resp2 = _run(search.search(conn, env, KiwixClient(BASE), "bleeding"))
     assert resp2["partial"] is True
-    assert conn.execute("SELECT count(*) FROM search_cache WHERE q LIKE 'bleeding%'").fetchone()[0] == 0
+    assert conn.execute("SELECT count(*) FROM search_cache WHERE q LIKE '%bleeding%'").fetchone()[0] == 0
+
+
+class RefusingKiwix:
+    def __init__(self, exc):
+        self.exc = exc
+
+    async def search(self, *args):
+        raise self.exc
+
+
+@pytest.mark.parametrize("exc", [asyncio.TimeoutError(), httpx.ConnectError("refused"), OSError("unreachable"),
+                                 KiwixError("search: HTTP 500: broken", status=500)],
+                         ids=["timeout", "connection", "os", "500"])
+def test_a_kiwix_that_cannot_answer_is_partial_and_not_cached(conn, env, exc):
+    resp = _run(search.search(conn, env, RefusingKiwix(exc), "water"))
+    assert resp["partial"] is True and resp["results"][0]["title"] == "Water"   # the box's own rows still come back
+    assert _cache_rows(conn) == 0
+
+
+@pytest.mark.parametrize("status", [408, 429, 500, 502, 503])
+@respx.mock(base_url=BASE)
+def test_a_transient_http_refusal_is_partial_and_not_cached(respx_mock, conn, env, status):
+    respx_mock.get("/search").mock(return_value=httpx.Response(status, text="<error>try later</error>"))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert resp["partial"] is True
+    assert _cache_rows(conn) == 0
+
+
+@pytest.mark.parametrize("body", ["not xml", "<rss/>",
+                                  '<rss xmlns:op="http://a9.com/-/spec/opensearch/1.1/"><channel>'
+                                  "<op:totalResults>many</op:totalResults></channel></rss>"],
+                         ids=["not-xml", "no-channel", "bad-total"])
+@respx.mock(base_url=BASE)
+def test_a_malformed_kiwix_reply_is_partial_and_not_cached(respx_mock, conn, env, body):
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text=body))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert resp["partial"] is True
+    assert _cache_rows(conn) == 0
+
+
+@pytest.mark.parametrize("status", [400, 403, 404])
+@respx.mock(base_url=BASE)
+def test_a_permanent_refusal_is_no_results_for_that_group_and_still_cached(respx_mock, conn, env, status):
+    respx_mock.get("/search").mock(return_value=httpx.Response(status, text="<error>Fulltext search unavailable</error>"))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert resp["partial"] is False and resp["results"][0]["title"] == "Water"
+    assert all(r["kind"] != "article" for r in resp["results"])
+    assert _cache_rows(conn) == 1
+
+
+@respx.mock(base_url=BASE)
+def test_one_group_refused_for_good_leaves_the_others_and_the_cache(respx_mock, conn, env):
+    respx_mock.get(url__regex=r".*books\.name=nhs.*").mock(
+        return_value=httpx.Response(404, text="<error>Fulltext search unavailable</error>"))
+    wiki = respx_mock.get(url__regex=r".*books\.name=wikipedia.*").mock(
+        return_value=httpx.Response(200, text=(FX / "kiwix" / "search.xml").read_text()))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert resp["partial"] is False
+    assert {r["source"] for r in resp["results"] if r["kind"] == "article"} == {"reference"}
+    assert _cache_rows(conn) == 1
+    again = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert wiki.call_count == 1 and again["results"] == resp["results"]
 
 
 @respx.mock(base_url=BASE)
