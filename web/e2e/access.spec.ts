@@ -41,12 +41,19 @@ test('the first tab stop is a way past the furniture, on every screen', async ({
   }
 });
 
-test('the wordmark is not a second Now, and the navigation is read after the content', async ({ page }) => {
+test('the rail has no wordmark to stand in for Now, and the navigation is read after the content', async ({ page }) => {
   await page.setViewportSize({ width: 853, height: 480 });
   await page.goto('/');
-  // The wordmark is decoration over the destination below it: it stays on the screen, out of the
-  // tab order.
-  await expect(page.locator('.rail-brand')).toHaveAttribute('tabindex', '-1');
+  const nav = page.getByRole('navigation', { name: 'Sections' });
+  // The wordmark was taken off the rail on purpose ("remove SOS off the left nav"): it went where Now
+  // already goes. What it stood for stays true: nothing on the rail is a second way to Now, and
+  // nothing in it is decoration a keyboard has to step over.
+  await expect(page.locator('.rail-brand')).toHaveCount(0);
+  await expect(nav.getByRole('link', { name: /SOS/ })).toHaveCount(0);
+  await expect(nav.locator('a[href="/"]')).toHaveCount(1);
+  await expect(nav.getByRole('link', { name: 'Now' })).toHaveAttribute('href', '/');
+  // Every link and button on the rail is a way to somewhere (or the theme): all of them are in the tab order.
+  for (const stop of await nav.locator('a, button').all()) await expect(stop).not.toHaveAttribute('tabindex', '-1');
   // The rail is drawn on the left and comes after the content in the DOM.
   const order = await page.evaluate(() => {
     const nav = document.querySelector('nav.mainnav')!;
@@ -54,13 +61,15 @@ test('the wordmark is not a second Now, and the navigation is read after the con
     return main.compareDocumentPosition(nav) & Node.DOCUMENT_POSITION_FOLLOWING ? 'nav after main' : 'nav before main';
   });
   expect(order).toBe('nav after main');
+  const [railBox, mainBox] = [(await nav.boundingBox())!, (await page.locator('main#main').boundingBox())!];
+  expect(railBox.x + railBox.width).toBeLessThanOrEqual(mainBox.x + 1);
 });
 
 test('every phone screen carries a search, and the theme control is not a destination', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   // Every screen: the field where the screen has room for it, and the way to Find where it has not.
   // Both are in the screen head, both are 48 px, and before this round a phone had neither.
-  for (const route of ['/', '/medical', '/tasks', '/library', '/tools', '/guides', '/medical/card/cpr-adult', '/situation', '/map']) {
+  for (const route of ['/', '/library/medical', '/tasks', '/library', '/tools', '/library/guides', '/medical/card/cpr-adult', '/situation', '/map']) {
     await page.goto(route);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const field = page.getByRole('combobox', { name: 'Search' });

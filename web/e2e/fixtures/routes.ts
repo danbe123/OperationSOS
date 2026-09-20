@@ -3,10 +3,11 @@ import type { BrowserContext, Route } from '@playwright/test';
 import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Note } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
-import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, kitsResponse, kitWater, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, kitsResponse, kitWater, library, mapConfig, mapPlaces, page as pmrPage, pages, places, playbook, playbooks, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
 import { KIWIX_PAGES } from './kiwix';
+import { searchFor } from './search';
 import { PIN, TOKEN, type FixturePlace, type FixtureState } from './state';
 
 const here = (rel: string) => new URL(rel, import.meta.url);
@@ -187,7 +188,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       const item = library.categories.flatMap((c) => c.items).find((i) => i.id === decodeURIComponent(p.slice('/library/'.length)));
       return item ? json(route, item) : detail(route, 404, 'no such item');
     }
-    if (method === 'GET' && p === '/search') return json(route, { ...search, q: url.searchParams.get('q') ?? '', query: url.searchParams.get('q') ?? '' });
+    if (method === 'GET' && p === '/search') return json(route, searchFor(url.searchParams.get('q') ?? '', (url.searchParams.get('sources') ?? '').split(',').filter(Boolean)));
     if (method === 'GET' && p === '/suggest') {
       const q = (url.searchParams.get('q') ?? '').toLowerCase();
       return json(route, suggestions.filter((s) => s.value.toLowerCase().startsWith(q)));
@@ -235,6 +236,8 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (method === 'GET' && p === '/map/config') return json(route, fixtureMapConfig());
     if (method === 'GET' && p === '/map/overlays') return json(route, fixtureMapConfig().overlays);
+    // What to expect at each kind of place: the place card's own guidance, read from the tapped kind.
+    if (method === 'GET' && p === '/map/places') return json(route, mapPlaces);
     if (method === 'GET' && p === '/places') {
       const q = (url.searchParams.get('q') ?? '').toLowerCase();
       return json(route, places.filter((pl) => pl.name.toLowerCase().startsWith(q)));
@@ -370,7 +373,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (!summary) return detail(route, 404, 'Playbook not found');
       const at = new Date(Date.now() - Number(b.hours_ago ?? 0) * 3_600_000).toISOString();
       state.savedConditions = state.conditions;
-      const conditions = freshConditions(at);
+      const conditions = freshConditions(at, 'drill');
       for (const [id, value] of Object.entries((b.conditions ?? {}) as Record<string, ConditionState>)) {
         if (conditions[id as ConditionId]) conditions[id as ConditionId] = { ...conditions[id as ConditionId], state: value, set_by: 'drill' };
       }
