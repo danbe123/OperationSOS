@@ -65,7 +65,10 @@ def parse_search_xml(text: str) -> tuple[int, list[KiwixHit]]:
     if channel is None:
         raise KiwixError("no channel in search response")
     total_el = channel.find(f"{OPENSEARCH}totalResults")
-    total = int((total_el.text or "0").replace(",", "")) if total_el is not None else 0
+    try:
+        total = int((total_el.text or "0").replace(",", "")) if total_el is not None else 0
+    except ValueError as exc:
+        raise KiwixError("invalid totalResults in search response") from exc
     hits: list[KiwixHit] = []
     for item in channel.findall("item"):
         link = (item.findtext("link") or "").strip()
@@ -90,7 +93,7 @@ def parse_catalog_xml(text: str) -> list[Book]:
         books.append(Book(
             name=name,
             fts="_ftindex:yes" in tags,
-            language=(entry.findtext(f"{ATOM}language") or "eng").split(",")[0],
+            language=entry.findtext(f"{ATOM}language") or "eng",
             title=entry.findtext(f"{ATOM}title") or name,
         ))
     return books
@@ -98,9 +101,19 @@ def parse_catalog_xml(text: str) -> list[Book]:
 
 def parse_suggest_json(text: str) -> list[dict]:
     out = []
-    for entry in json.loads(text):
+    try:
+        entries = json.loads(text)
+    except ValueError as exc:
+        raise KiwixError("invalid suggestion JSON") from exc
+    if not isinstance(entries, list):
+        raise KiwixError("expected a list of suggestions")
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise KiwixError("invalid suggestion entry")
         if entry.get("kind") != "path" or not entry.get("path"):
             continue
+        if any(not isinstance(entry.get(field, ""), str) for field in ("path", "value", "label")):
+            raise KiwixError("suggestion paths and labels must be strings")
         out.append({"value": entry.get("value", ""), "label": strip_tags(entry.get("label", "")), "path": entry["path"]})
     return out
 

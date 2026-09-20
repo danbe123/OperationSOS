@@ -136,7 +136,8 @@ def test_cache_hit_on_repeat_and_miss_after_invalidate(respx_mock, conn, env):
 def test_partial_responses_are_not_cached(respx_mock, conn, env):
     respx_mock.get("/search").mock(return_value=httpx.Response(404, text="<error>Fulltext search unavailable</error>"))
     resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
-    assert resp["partial"] is False and all(r["kind"] != "article" for r in resp["results"])
+    assert resp["partial"] is True and all(r["kind"] != "article" for r in resp["results"])
+    assert conn.execute("SELECT count(*) FROM search_cache").fetchone()[0] == 0
 
     async def slow(request):
         await asyncio.sleep(3)
@@ -145,7 +146,7 @@ def test_partial_responses_are_not_cached(respx_mock, conn, env):
     respx_mock.get("/search").mock(side_effect=slow)
     resp2 = _run(search.search(conn, env, KiwixClient(BASE), "bleeding"))
     assert resp2["partial"] is True
-    assert conn.execute("SELECT count(*) FROM search_cache WHERE q LIKE 'bleeding%'").fetchone()[0] == 0
+    assert conn.execute("SELECT count(*) FROM search_cache").fetchone()[0] == 0
 
 
 @respx.mock(base_url=BASE)

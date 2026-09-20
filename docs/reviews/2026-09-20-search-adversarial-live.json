@@ -1,0 +1,265 @@
+{
+  "checked_at": "2026-09-20T10:20:59.742508+00:00",
+  "method": "Current checkout; live Kiwix and embedding server, real published indices read-only, SQLite backup in TemporaryDirectory for all cache writes.",
+  "queries": [
+    {
+      "q": "a whaling voyage in the age of sail",
+      "took_ms": 3500,
+      "repeat_ms": 1333,
+      "partial": true,
+      "count": 76,
+      "meaning_count": 20,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Knife and firearms law",
+          "url": "/p/knife-firearms-law#crossbows-catapults-and-bows",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Radiation",
+          "url": "/m/radiation#uk-specifics",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Modern Whaling & Bear-Hunting",
+          "url": "/book/gutenberg/67446",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "A Voyage to the Arctic in the Whaler Aurora",
+          "url": "/book/gutenberg/51910",
+          "source": "books",
+          "via": "meaning"
+        },
+        {
+          "title": "Four years aboard the whaleship",
+          "url": "/book/gutenberg/68958",
+          "source": "books",
+          "via": "meaning"
+        }
+      ]
+    },
+    {
+      "q": "water purification",
+      "took_ms": 1518,
+      "repeat_ms": 1447,
+      "partial": true,
+      "count": 100,
+      "meaning_count": 25,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Water outdoors",
+          "url": "/p/fieldcraft-water#making-it-safe",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "ATP 3-50.21 Survival (US Army, 2018)",
+          "url": "/doc/atp-3-50-21-survival#page=68",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Survival and Austere Medicine, 3rd edition (2017)",
+          "url": "/doc/survival-austere-medicine-2017#page=534",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "FM 4-25.12 Unit Field Sanitation Team (US Army, 2002)",
+          "url": "/doc/fm-4-25-12-field-sanitation#page=108",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "Water purification",
+          "url": "/read/wikipedia_en_all_maxi/Water_purification",
+          "source": "reference",
+          "via": null
+        }
+      ]
+    },
+    {
+      "q": "food preservation",
+      "took_ms": 1729,
+      "repeat_ms": 1662,
+      "partial": true,
+      "count": 100,
+      "meaning_count": 34,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Supply chain collapse",
+          "url": "/s/supply-chain#first-month",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Food preservation",
+          "url": "/read/wikipedia_en_all_maxi/Food_preservation",
+          "source": "reference",
+          "via": null
+        },
+        {
+          "title": "Making things again",
+          "url": "/p/rebuild-making-things#preserving",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Food storage",
+          "url": "/p/food-storage#how-long-each-keeps",
+          "source": "playbooks",
+          "via": "meaning"
+        },
+        {
+          "title": "FM 21-76 Survival (US Army, 1992)",
+          "url": "/doc/fm-21-76-survival#page=98",
+          "source": "docs",
+          "via": null
+        }
+      ]
+    },
+    {
+      "q": "define the word forge",
+      "took_ms": 1495,
+      "repeat_ms": 1265,
+      "partial": true,
+      "count": 77,
+      "meaning_count": 3,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Iron and tools",
+          "url": "/p/rebuild-iron-and-tools#the-forge",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Restarting science",
+          "url": "/p/rebuild-restarting-science#temperature",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "The library map",
+          "url": "/p/rebuild-library-map#metalwork-and-engineering",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=451",
+          "source": "docs",
+          "via": null
+        },
+        {
+          "title": "OpenStax Introductory Statistics 2e",
+          "url": "/doc/openstax-introductory-statistics-2e#page=455",
+          "source": "docs",
+          "via": null
+        }
+      ]
+    },
+    {
+      "q": "how do I wire a battery bank",
+      "took_ms": 1394,
+      "repeat_ms": 1437,
+      "partial": true,
+      "count": 100,
+      "meaning_count": 0,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Tools and repair",
+          "url": "/m/tools-repair#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Power",
+          "url": "/m/power#what-to-do",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Power from scratch",
+          "url": "/p/rebuild-power#decide-what-the-power-is-for",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Mains electricity",
+          "url": "/p/mains-electricity#generators-and-batteries",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Is it possible to \"wire in\" a rechargeable battery or battery bank to another PCB build?",
+          "url": "/read/electronics.stackexchange.com_en_all/questions/598546/is-it-possible-to-wire-in-a-rechargeable-battery-or-battery-bank-to-another-pc",
+          "source": "practical",
+          "via": null
+        }
+      ]
+    },
+    {
+      "q": "hanes Cymru",
+      "took_ms": 1175,
+      "repeat_ms": 1123,
+      "partial": true,
+      "count": 18,
+      "meaning_count": 0,
+      "keyword_only_has_no_meaning_rows": true,
+      "top_five": [
+        {
+          "title": "Cylchgrawn Hanes Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Cylchgrawn_Hanes_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "UK emergency numbers",
+          "url": "/p/uk-numbers#utilities",
+          "source": "playbooks",
+          "via": null
+        },
+        {
+          "title": "Hanes Cymru (O. M. Edwards)",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_Cymru_(O._M._Edwards)",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Addysgu hanes Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Addysgu_hanes_Cymru",
+          "source": "extended",
+          "via": null
+        },
+        {
+          "title": "Hanes Methodistiaeth Galfinaidd Cymru",
+          "url": "/read/wikipedia_cy_all_maxi/Hanes_Methodistiaeth_Galfinaidd_Cymru",
+          "source": "extended",
+          "via": null
+        }
+      ]
+    }
+  ],
+  "real_embedding_batch_shape": [
+    2,
+    384
+  ],
+  "checks": [
+    "finite scores",
+    "unique URLs",
+    "excluded ZIMs never receive meaning badge",
+    "keyword-only and semantic caches isolated",
+    "repeat results preserved",
+    "household meaning hits",
+    "real two-input embedding response accepted"
+  ]
+}

@@ -310,8 +310,9 @@ def is_medical_intent(tokens: list[str]) -> bool:
 
 class SearchCache:
     @staticmethod
-    def key(q: str, sources: list[str] | None, limit: int) -> str:
-        return f"{' '.join(q.lower().split())}|{','.join(sorted(sources or []))}|{limit}"
+    def key(q: str, sources: list[str] | None, limit: int, semantic_version=None) -> str:
+        # Structured fields prevent delimiters in a query/source name colliding with another query.
+        return json.dumps([2, " ".join(q.lower().split()), sorted(set(sources or [])), limit, semantic_version])
 
     @staticmethod
     def get(conn: sqlite3.Connection, key: str) -> dict | None:
@@ -340,10 +341,7 @@ async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern:
     except asyncio.TimeoutError:
         return cls, None, True
     except (KiwixError, httpx.HTTPError, OSError):
-        return cls, None, False
-
-
-_cache_generation: dict[str, object] = {}
+        return cls, None, True
 
 
 def _empty(q: str) -> dict:
@@ -358,13 +356,14 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
     if not reduced.terms:
         return _empty(q or "")
     limit = max(1, min(int(limit or 40), 100))
-    key = SearchCache.key(q, sources, limit)
     use_cache = use_cache and fts_mode == "and"
-    # A new semantic index changes every answer: the cache of the old ones goes with it.
-    generation = getattr(semantic, "generation", None) if semantic is not None else None
-    if generation is not None and _cache_generation.get("seen") != generation:
-        SearchCache.invalidate(conn)
-        _cache_generation["seen"] = generation
+    # Refresh before looking up results: otherwise a popular cached query never observes a rebuild.
+    # Scope by reader and generation, not a process-global "last seen" shared by unrelated databases.
+    if use_cache and semantic is not None and hasattr(semantic, "refresh"):
+        semantic.refresh()
+    semantic_version = ([getattr(semantic, "cache_namespace", str(id(semantic))),
+                         getattr(semantic, "generation", None)] if semantic is not None else None)
+    key = SearchCache.key(q, sources, limit, semantic_version)
     cached = SearchCache.get(conn, key) if use_cache else None
     if cached is not None:
         cached["q"] = q  # the cache key is normalised; echo back what the caller actually asked for
@@ -373,6 +372,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
 
     results: list[dict] = []
     partial = False
+    semantic_failed = False
 
     languages = json.loads(get_setting(conn, "zim_languages", "{}") or "{}")
     books: dict[tuple[str, str], list[str]] = {}
@@ -417,6 +417,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
                 wiki_scores = await semantic.rerank_wikipedia(q, keys)
             except Exception:  # the semantic layer is a convenience: its failures never fail the search
                 wiki_scores = {}
+                semantic_failed = True
             for r, key in zip(wiki_hits, keys):
                 cos = wiki_scores.get(key)
                 if cos is not None:
@@ -508,6 +509,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             near = await semantic.query(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
+            semantic_failed = True
         near = [(url, cos) for url, cos in near if cos >= SEMANTIC_MIN]
         if near:
             found = {}
@@ -540,6 +542,7 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
             household_near = await semantic.query_household(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             household_near = []
+            semantic_failed = True
         household_near = [(key, cos) for key, cos in household_near if cos >= SEMANTIC_MIN]
         for key, cos in household_near:
             zim, _, book_id = key.partition(":")
@@ -599,7 +602,9 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         r.pop("_carried", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
-    if not partial and use_cache:
+    semantic_cacheable = not semantic_failed and (
+        semantic is None or not hasattr(semantic, "cacheable") or semantic.cacheable(q))
+    if not partial and use_cache and semantic_cacheable:
         SearchCache.put(conn, key, payload)
     return payload
 

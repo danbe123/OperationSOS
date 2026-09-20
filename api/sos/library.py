@@ -121,7 +121,9 @@ def parse_library_xml(path: Path) -> dict[str, dict]:
         tags = book.get("tags") or ""
         info[book_id] = {
             "fts": "_ftindex:yes" in tags.split(";"),
-            "language": (book.get("language") or "eng").split(",")[0],
+            # Kiwix compares the full language set for a multi-book search. Truncating "eng,fra"
+            # to "eng" makes one multilingual archive invalidate the whole English search group.
+            "language": book.get("language") or "eng",
             "title": book.get("title") or book_id,
         }
     return info
