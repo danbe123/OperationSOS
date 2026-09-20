@@ -36,7 +36,7 @@ from typing import Any, Optional
 from urllib.parse import unquote
 
 from sos import evalrun
-from sos.books import content_url
+from sos.books import content_url, reader_url
 from sos.evalrun import Expected, url_matches
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -248,6 +248,17 @@ def resolve_expected(entry: dict, conn: sqlite3.Connection) -> Optional[str]:
     return evalrun.expected_url(Expected(str(entry["item"]), str(entry.get("path", ""))), conn)
 
 
+def resolve_urls(entry: dict, conn: sqlite3.Connection) -> list[str]:
+    """Every URL search() may give for an expected entry. A Survivor Library book is one PDF that the meaning
+    layer links through the Kiwix content route and a keyword hit would link through the reader route."""
+    url = resolve_expected(entry, conn)
+    if url is None:
+        return []
+    if "survivor" in entry:
+        return [url, reader_url(SURVIVOR_ZIM, f"www.survivorlibrary.com/library/{entry['survivor']}.pdf")]
+    return [url]
+
+
 # --- checking the gold against the real data -------------------------------------------------------------------
 
 class ZimChecker:
@@ -432,14 +443,18 @@ def write_json(path: Path, doc: dict) -> None:
     tmp.replace(path)
 
 
-def compact(doc: dict, keep: int = 3) -> dict:
-    """The same document with the ranking of a query that was found at rank 1 cut to its first `keep` rows:
-    what matters when reading a run later is what was returned instead of the answer, and a perfect query
-    has nothing returned instead."""
+def compact(doc: dict, keep_hit: int = 3, keep: int = 5) -> dict:
+    """The same document with each ranking cut short, for a run file that has to stay small: a query found at
+    rank 1 keeps its first `keep_hit` rows, any other its first `keep` rows plus the matching row when it sits
+    lower in the top ten. What matters when reading a run later is what was returned instead of the answer."""
     for recs in doc.get("runs", {}).values():
         for rec in recs.values():
-            if rec.get("rank") == 1:
-                rec["top10"] = rec["top10"][:keep]
+            top, rank = rec["top10"], rec.get("rank")
+            if rank == 1:
+                rec["top10"] = top[:keep_hit]
+            else:
+                rec["top10"] = top[:keep] + ([top[rank - 1]] if rank and keep < rank <= len(top) else [])
+    doc.setdefault("meta", {})["compact"] = {"keep_hit": keep_hit, "keep": keep}
     return doc
 
 
@@ -564,7 +579,7 @@ async def run_real(rows: list[GoldRow], modes: list[str], settings, limit: int, 
     conn = open_readonly(db_path)
     kiwix = KiwixClient(settings.kiwix_url)
     semantic = Semantic(settings) if "on" in modes else None
-    expected = {r.id: [u for u in (resolve_expected(e, conn) for e in r.expected) if u] for r in rows}
+    expected = {r.id: [u for e in r.expected for u in resolve_urls(e, conn)] for r in rows}
 
     async def search_fn(query: str, mode: str) -> dict:
         sem = semantic if mode == "on" else None

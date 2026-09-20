@@ -238,6 +238,10 @@ def test_resolve_expected_forms(conn):
     assert se.resolve_expected({"item": "module:water"}, conn) == "/m/water"
     assert se.resolve_expected({"item": "wikipedia_en_all_maxi", "path": "Iodine"}, conn) == "/read/wikipedia_en_all_maxi/Iodine"
     assert se.resolve_expected({"item": "unknown"}, conn) is None
+    assert se.resolve_urls({"survivor": "bees_1900"}, conn) == [
+        "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/bees_1900.pdf",
+        "/read/survivorlibrary.com_en_all/www.survivorlibrary.com/library/bees_1900.pdf"]
+    assert se.resolve_urls({"gutenberg": 5}, conn) == ["/book/gutenberg/5"] and se.resolve_urls({"item": "unknown"}, conn) == []
 
 
 # --- the runner ----------------------------------------------------------------------------------------------------
@@ -357,13 +361,22 @@ def test_document_has_summary_changes_and_a_readable_report():
 
 
 def test_json_round_trip_is_atomic_and_compact_keeps_misses(tmp_path):
-    doc = se.compact(run_document(), keep=1)
+    doc = se.compact(run_document(), keep_hit=1, keep=1)
     assert len(doc["runs"]["off"]["q3"]["top10"]) == 1            # found at rank 1: cut
-    assert len(doc["runs"]["on"]["q3"]["top10"]) == 2             # found at rank 2: kept whole
+    assert [r["url"] for r in doc["runs"]["on"]["q3"]["top10"]] == ["/z", "/book/gutenberg/2701"]   # rank 2: the answer stays
+    assert doc["meta"]["compact"] == {"keep_hit": 1, "keep": 1}
     path = tmp_path / "out" / "run.json"
     se.write_json(path, doc)
     assert json.loads(path.read_text()) == doc
     assert not list(path.parent.glob("*.tmp"))
+
+
+def test_compact_keeps_the_answer_when_it_is_deep_in_the_ranking():
+    rec = {"rank": 8, "top10": [{"url": f"/r{i}"} for i in range(1, 11)]}
+    doc = se.compact({"runs": {"on": {"q": rec}}}, keep_hit=3, keep=5)
+    assert [r["url"] for r in doc["runs"]["on"]["q"]["top10"]] == ["/r1", "/r2", "/r3", "/r4", "/r5", "/r8"]
+    miss = {"rank": None, "top10": [{"url": "/a"}] * 10}
+    assert len(se.compact({"runs": {"on": {"q": miss}}})["runs"]["on"]["q"]["top10"]) == 5
 
 
 def test_compare_shows_deltas_and_the_queries_that_moved(tmp_path, capsys):
