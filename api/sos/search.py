@@ -343,7 +343,12 @@ async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern:
         return cls, await kiwix.search(names, pattern, PAGE_LENGTH, timeout), False
     except asyncio.TimeoutError:
         return cls, None, True
-    except (KiwixError, httpx.HTTPError, OSError):
+    except KiwixError as exc:
+        # A permanent refusal (an archive with no full-text index answers 404 every time) is a group with
+        # nothing to say, not a search that went wrong: marking it partial would tell every search to
+        # "try again in a moment" and keep it out of the cache for good.
+        return cls, None, not exc.permanent
+    except (httpx.HTTPError, OSError):
         return cls, None, True
 
 
