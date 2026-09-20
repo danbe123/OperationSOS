@@ -52,6 +52,7 @@ RETRY_PAUSE_S = 1.0
 STUCK_AFTER = 3                # this many queries in a row still partial after retries: the partial is the
                                # environment's (a Kiwix class that always errors), and asking again is pointless
 REQUIRED = ("id", "query", "expected", "set")
+SEARCH_UNINDEXED_OK = (SURVIVOR_ZIM, GUTENBERG_ZIM)   # found through the meaning collections, not the keyword search
 EXPECTED_KEYS = ("url", "item", "gutenberg", "survivor")
 
 SearchFn = Callable[[str, str], Awaitable[dict]]     # (query, mode) -> the payload search() returns
@@ -250,7 +251,8 @@ def resolve_expected(entry: dict, conn: sqlite3.Connection) -> Optional[str]:
 # --- checking the gold against the real data -------------------------------------------------------------------
 
 class ZimChecker:
-    """Does a ZIM have this entry, and is it the article itself rather than a redirect to it? One open archive per ZIM."""
+    """Does a ZIM have this entry, is it the article itself rather than a redirect to it, and does search()
+    look in that ZIM at all? One open archive per ZIM."""
 
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn
@@ -270,9 +272,16 @@ class ZimChecker:
         return self._archives[zim]
 
     def check(self, zim: str, path: str) -> Optional[str]:
+        """`path` empty means the ZIM as a whole (any page of it is a hit)."""
         archive = self._archive(zim)
         if archive is None:
             return f"{zim} is not an available ZIM in this library"
+        if zim not in SEARCH_UNINDEXED_OK:
+            row = self.conn.execute("SELECT fts FROM library_items WHERE id=?", (zim,)).fetchone()
+            if row is not None and not row[0]:
+                return f"{zim} has no full-text index (fts=0): search() never looks in it, so it can never be a hit"
+        if not path:
+            return None
         if not archive.has_entry_by_path(path):
             return f"{zim} has no entry {path!r}"
         entry = archive.get_entry_by_path(path)
@@ -316,9 +325,9 @@ def check_expected(entry: dict, conn: sqlite3.Connection, docs: DocUrls, zims: A
     if match:
         return None if conn.execute("SELECT 1 FROM books WHERE zim=? AND id=?", (GUTENBERG_ZIM, int(match.group(1)))).fetchone() \
             else f"Gutenberg id {match.group(1)} is not in the books table"
-    match = re.fullmatch(r"/read/([^/]+)/(.+)", url)
+    match = re.fullmatch(r"/read/([^/]+)(?:/(.+))?", url)
     if match:
-        return zims.check(match.group(1), unquote(match.group(2)))
+        return zims.check(match.group(1), unquote(match.group(2) or ""))
     return f"cannot check {url!r} (unrecognised URL shape)"
 
 

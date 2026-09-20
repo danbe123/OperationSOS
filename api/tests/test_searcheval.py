@@ -4,6 +4,7 @@ fixtures, the runner with a fake search, and the comparison. No services, no rea
 import asyncio
 import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -185,6 +186,25 @@ def test_validation_names_every_missing_page(conn, tmp_path):
                    "d5: wikipedia_en_all_maxi has no entry 'Nope'", "d6: survivorlibrary.com_en_all has no entry", "d7: 'not_a_zim' is not a known item",
                    "d8: cannot check", "d9: no converted document"):
         assert needle in text, needle
+
+
+FIXTURE_ZIM = Path(__file__).parent / "fixtures" / "library" / "wikipedia_en_100_mini_2026-01.zim"
+
+
+def test_zim_checker_finds_articles_and_names_redirects_and_unsearched_zims(conn):
+    conn.execute("UPDATE library_items SET local_path=?, fts=1 WHERE id='wikipedia_en_all_maxi'", (str(FIXTURE_ZIM),))
+    conn.execute("INSERT INTO library_items(id, kind, available, local_path, fts) VALUES ('unindexed','zim',1,?,0)", (str(FIXTURE_ZIM),))
+    zims = se.ZimChecker(conn)
+    assert zims.check("wikipedia_en_all_maxi", "Virus") is None
+    assert zims.check("wikipedia_en_all_maxi", "") is None                        # the ZIM as a whole
+    assert "no entry 'Nope'" in zims.check("wikipedia_en_all_maxi", "Nope")
+    assert "redirect to 'Elvis_Presley'" in zims.check("wikipedia_en_all_maxi", "(Keep_Your)_Hands_Off_(Of_It)")
+    assert "no full-text index" in zims.check("unindexed", "Virus")
+    assert "not an available ZIM" in zims.check("missing", "Virus")
+    docs = se.DocUrls(conn)
+    assert se.check_expected({"url": "/read/wikipedia_en_all_maxi/Virus"}, conn, docs, zims) is None
+    assert se.check_expected({"url": "/read/wikipedia_en_all_maxi"}, conn, docs, zims) is None   # a bare ZIM expectation
+    assert se.check_expected({"item": "wikipedia_en_all_maxi", "path": "Nope"}, conn, docs, zims)
 
 
 def test_validation_flags_a_repeated_query_within_a_set(conn, tmp_path):
