@@ -286,7 +286,7 @@ export function MapScreen() {
       <div className={toolsScroll ? 'map-toolbar map-toolbar-scrolls no-print' : 'map-toolbar no-print'}>
       <div className="map-tools" role="toolbar" aria-label="Map tools" ref={toolbarRef}>
         <button type="button" className={layersOpen ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={layersOpen} aria-expanded={layersOpen} aria-controls="map-layers" onClick={() => setLayersOpen((v) => !v)}>
-          <Icon name="layers" size={18} /><span>Layers{overlaysOn ? ` ${overlaysOn.length + (terrain.contours ? 1 : 0) + (terrain.hillshade ? 1 : 0)}` : ''}</span>
+          <Icon name="layers" size={18} /><span>Layers{overlaysOn ? ` ${overlaysOn.length + (config?.terrain.contours && terrain.contours ? 1 : 0) + (config?.terrain.hillshade && terrain.hillshade ? 1 : 0)}` : ''}</span>
         </button>
         <button type="button" className={panel === 'search' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'search'} onClick={() => setPanel(panel === 'search' ? 'none' : 'search')}><Icon name="search" size={18} /><span>Find place</span></button>
         <button type="button" className={panel === 'pins' ? 'btn btn-small active' : 'btn btn-small'} aria-pressed={panel === 'pins'} onClick={() => setPanel(panel === 'pins' ? 'none' : 'pins')}><Icon name="pin" size={18} /><span>Pins</span></button>

@@ -67,6 +67,16 @@ describe('Map screen', () => {
     expect(map.getLayer('sos-pins-point')).toBeDefined();
   });
 
+  it('counts only the terrain layers this box carries on the Layers tool', async () => {
+    vi.spyOn(api, 'mapConfig').mockResolvedValue({ ...mapConfig, terrain: { contours: null, hillshade: '/maps/hillshade.pmtiles' } });
+    vi.spyOn(api, 'notes').mockResolvedValue([]);
+    vi.spyOn(api, 'places').mockResolvedValue(places);
+    renderRoute('/map');
+    const layers = await screen.findByRole('button', { name: /^Layers/ });
+    // the footpath layer and the hillshade, but not the contours this box was never built with
+    await waitFor(() => expect(layers).toHaveTextContent('Layers 2'));
+  });
+
   it('shows one chip per overlay, in order, and toggles the layer and the URL', async () => {
     mockApis();
     const user = userEvent.setup();
