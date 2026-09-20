@@ -1,4 +1,4 @@
-import type { ChecklistItem, Conditions, Home, Note, Recording, Sensors, Situation, Status } from '../../src/api/types';
+import type { ChecklistItem, Conditions, Home, Note, ReadingEntry, Recording, RecentEntry, Sensors, Situation, Status } from '../../src/api/types';
 import { notes, playbook, status } from '../../tests/fixtures/api';
 import { freshConditions } from './engine';
 
@@ -30,6 +30,10 @@ export type FixtureState = {
   /** Piper installed? When false /speak answers 503 and the read-aloud buttons take themselves away. */
   speaks: boolean;
   recordings: Recording[];
+  /** Where each book was left, by reading key ("gutenberg:2"): what the reader writes and the book screen reads back. */
+  reading: Map<string, ReadingEntry>;
+  /** What was opened lately, newest first: the Library's "Last viewed". */
+  recent: RecentEntry[];
 };
 
 /** One place the fixture box knows about, keyed by the facility id `/nearby` answers under. */
@@ -74,5 +78,7 @@ export function createFixtureState(overrides: Partial<Status> = {}): FixtureStat
     },
     speaks: true,
     recordings: [],
+    reading: new Map(),
+    recent: [],
   };
 }

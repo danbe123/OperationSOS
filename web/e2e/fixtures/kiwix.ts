@@ -15,3 +15,11 @@ export const KIWIX_PAGES: Record<string, string> = {
   '/kiwix/content/nhs_uk/www.nhs.uk/conditions/': page('Health A to Z', `<p>Conditions.</p>`),
   '/kiwix/content/nhs_uk/www.nhs.uk/conditions/dehydration/': page('Dehydration', `<p>Dehydration means your body loses more fluids than you take in.</p>`),
 };
+
+/** The Gutenberg books the fixture box lists, by id. Every one opens the same three-chapter EPUB
+ * (docs/sample.epub, written by docs/make-sample-epub.py): the reader is what is under test, not the text. */
+export const FIXTURE_BOOKS: Record<number, { title: string; author: string }> = {
+  2: { title: 'The Water-Babies', author: 'Charles Kingsley' },
+  3: { title: 'Robinson Crusoe', author: 'Daniel Defoe' },
+};
+export const BOOK_EPUB_PATH = '/kiwix/content/gutenberg_en_all/sample.epub';
