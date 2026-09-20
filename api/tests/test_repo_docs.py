@@ -44,7 +44,8 @@ def test_hardware_checklist_has_every_spec_item_with_date_commit_result():
     text = (REPO / "docs" / "hardware-checklist.md").read_text(encoding="utf-8")
     assert "| # | Item | Date | Commit | Result |" in text
     rows = [line for line in text.splitlines() if re.match(r"^\| \d+ \|", line)]
-    assert len(rows) == 28 and [int(r.split("|")[1]) for r in rows] == list(range(1, 29))
+    # Preserve the original spec checks while allowing later features to add hardware acceptance rows.
+    assert len(rows) >= 28 and [int(r.split("|")[1]) for r in rows] == list(range(1, len(rows) + 1))
     assert all(row.count("|") == 6 for row in rows)
     lowered = text.lower()
     for item in HARDWARE_ITEMS:
