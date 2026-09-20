@@ -1,7 +1,11 @@
 /* Find: the field is the first row; before a search the quick finds sit under it, after one the
    source chips and the count share a row, and the results follow in their groups. */
 .find { gap: 12px; }
-.find > .searchbar { margin-top: 6px; }
+/* The theme button rides beside the field where they both fit, and under it, at the end of its own line, where the
+   field would be squeezed to a few letters (a 390 px phone). */
+.find-top { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: 6px; }
+.find-top > .searchbar { flex: 1 1 280px; min-width: 0; }
+.find-top > .theme-btn { flex: 0 0 auto; margin-left: auto; }
 .find-quick { margin-top: 2px; }
 .find-hint { margin: 0; font-size: var(--t-meta); }
 .find-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
