@@ -8,6 +8,7 @@ import { Icon } from '../icons';
 
 export const SUGGEST_DEBOUNCE_MS = 250;
 export const SUGGEST_MIN_CHARS = 2;
+export const SEARCH_MAX_CHARS = 512;   // the server refuses a longer query with a bare 422
 
 export function SearchBar({
   initial = '',
@@ -97,6 +98,7 @@ export function SearchBar({
         aria-autocomplete="list"
         autoComplete="off"
         enterKeyHint="search"
+        maxLength={SEARCH_MAX_CHARS}
         placeholder={hint}
         value={q}
         autoFocus={autoFocus}

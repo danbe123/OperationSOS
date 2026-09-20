@@ -13,6 +13,7 @@ meaning are fused in (`sos/embeddings.py`)."""
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import functools
 import logging
@@ -369,6 +370,14 @@ def _empty(q: str) -> dict:
 async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
                  sources: list[str] | None = None, limit: int = 40, *, fts_mode: str = "and", use_cache: bool = True,
                  semantic=None) -> dict:
+    watch = getattr(semantic, "watch_embedding", None)
+    with watch() if watch is not None else contextlib.nullcontext() as embedding:
+        return await _search(conn, settings, kiwix, q, sources, limit, fts_mode=fts_mode, use_cache=use_cache,
+                             semantic=semantic, embedding=embedding)
+
+
+async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
+                  sources: list[str] | None, limit: int, *, fts_mode: str, use_cache: bool, semantic, embedding) -> dict:
     t0 = time.perf_counter()
     reduced = query_mod.reduce_query(q or "")
     if not reduced.terms:
@@ -625,9 +634,9 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         r.pop("_carried", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
-    semantic_cacheable = not semantic_failed and (
-        semantic is None or not hasattr(semantic, "cacheable") or semantic.cacheable(q))
-    if not partial and use_cache and semantic_cacheable:
+    if embedding is not None and embedding.failed:
+        semantic_failed = True
+    if not partial and use_cache and not semantic_failed:
         SearchCache.put(conn, key, payload)
     return payload
 
@@ -676,13 +685,14 @@ async def suggest(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     return unique[:SUGGEST_MAX]
 
 
-async def warm(settings: Settings, kiwix: KiwixClient, db_path) -> None:
-    """Three canned queries after boot and rescan so the Wikipedia and NHS indexes are hot."""
+async def warm(settings: Settings, kiwix: KiwixClient, db_path, semantic=None) -> None:
+    """Three canned queries after boot and rescan so the Wikipedia and NHS indexes are hot. The results cache
+    is keyed on the semantic reader, so warming with the one real requests use is what makes them hits."""
     conn = connect(db_path)
     try:
         for q in WARM_QUERIES:
             try:
-                await search(conn, settings, kiwix, q)
+                await search(conn, settings, kiwix, q, semantic=semantic)
             except Exception:  # warming is best-effort: a cold or missing index must not block boot
                 pass
     finally:

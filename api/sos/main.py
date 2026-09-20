@@ -66,7 +66,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         tasks: list[asyncio.Task] = []
         if background:
             tasks.append(asyncio.create_task(app.state.watchdog.run()))
-            tasks.append(asyncio.create_task(search_mod.warm(settings, app.state.kiwix, settings.db_path)))
+            tasks.append(asyncio.create_task(search_mod.warm(settings, app.state.kiwix, settings.db_path, app.state.semantic)))
             if settings.sensors:
                 tasks.append(asyncio.create_task(sensors.run(settings, settings.db_path)))
         try:

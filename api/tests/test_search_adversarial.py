@@ -211,7 +211,9 @@ def test_cancelling_the_first_request_keeps_shared_embedding_alive(env, monkeypa
         release.set()
         result = await second
         assert np.array_equal(result, vector()) and len(calls) == 1
-        assert sem.cacheable("water")
+        with sem.watch_embedding() as watch:
+            assert np.array_equal(await sem._query_vector("water"), vector())
+        assert not watch.failed and len(calls) == 1
         assert sem._embedding == {}
         await sem.client.aclose()
     asyncio.run(scenario())
@@ -393,3 +395,145 @@ def test_a_failing_refresh_is_logged_once_per_distinct_error(conn, env, caplog):
         asyncio.run(scenario())
     assert len(warnings()) == 2
     assert "bad argument" in warnings()[0].getMessage() and "missing" in warnings()[1].getMessage()
+
+
+def publish_wikipedia(env):
+    embeddings.write_index(env.embeddings_dir, "wikipedia", np.stack([vector()]), ["Water_purification"],
+                           {"count": 1})
+
+
+def test_a_search_that_needs_no_embedding_is_cached(conn, env, monkeypatch):
+    publish_wikipedia(env)          # only the rerank store: it embeds only when Wikipedia has a hit
+    sem = embeddings.Semantic(env)
+    asked = []
+
+    async def embed(*args, **kwargs):
+        asked.append(args)
+        return np.stack([vector()])
+
+    monkeypatch.setattr(sem.client, "embed", embed)
+
+    async def scenario():
+        result = await search.search(conn, env, NoKiwix(), "water", semantic=sem)
+        await sem.client.aclose()
+        return result
+
+    assert [r["url"] for r in asyncio.run(scenario())["results"]] == ["/m/water"]
+    assert asked == [] and cached_rows(conn) == 1
+
+
+def test_more_interleaved_queries_than_the_embedding_memo_holds_are_all_cached(conn, env, monkeypatch):
+    publish(env, "/m/food")
+    sem = embeddings.Semantic(env)
+    monkeypatch.setattr(sem.client, "embed", successful_embed)
+    queries = [f"query{i}" for i in range(12)]
+    assert len(queries) > sem.QUERY_MEMO
+
+    async def scenario():
+        await asyncio.gather(*(search.search(conn, env, NoKiwix(), q, semantic=sem) for q in queries))
+        await sem.client.aclose()
+
+    asyncio.run(scenario())
+    assert cached_rows(conn) == 12
+
+
+def test_a_query_the_embedding_server_failed_on_is_not_cached_and_is_once_it_answers(conn, env, monkeypatch):
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(embeddings.time, "monotonic", lambda: clock["now"])
+    publish(env, "/m/food")
+    sem = embeddings.Semantic(env)
+
+    async def failing(*args, **kwargs):
+        raise embeddings.EmbedError("server restarting")
+
+    monkeypatch.setattr(sem.client, "embed", failing)
+
+    async def scenario():
+        for _ in range(2):      # the second is answered from the brief memo of the failure, and is no better
+            await search.search(conn, env, NoKiwix(), "larder", semantic=sem)
+            assert cached_rows(conn) == 0
+        monkeypatch.setattr(sem.client, "embed", successful_embed)
+        clock["now"] += 4
+        await search.search(conn, env, NoKiwix(), "larder", semantic=sem)
+        await sem.client.aclose()
+
+    asyncio.run(scenario())
+    assert cached_rows(conn) == 1
+
+
+def test_boot_warming_fills_the_cache_entries_real_requests_read(conn, env, monkeypatch):
+    publish(env, "/m/water")
+    sem = embeddings.Semantic(env)
+    monkeypatch.setattr(sem.client, "embed", successful_embed)
+
+    async def scenario():
+        await search.warm(env, NoKiwix(), env.db_path, sem)
+        conn.execute("DELETE FROM fts_docs")      # only a cached answer can still find the page
+        conn.commit()
+        result = await search.search(conn, env, NoKiwix(), "water", semantic=sem)
+        await sem.client.aclose()
+        return result
+
+    result = asyncio.run(scenario())
+    assert cached_rows(conn) == len(search.WARM_QUERIES)
+    assert [r["url"] for r in result["results"]] == ["/m/water"]
+
+
+WIKI = "wikipedia_en_all_maxi"
+
+
+class WikipediaKiwix:
+    async def search(self, names, *args):
+        return [KiwixHit("Water", "A/Water", "Water is wet", WIKI)] if WIKI in names else []
+
+
+class FailingSemantic:
+    """A semantic layer with the one part that raises, and nothing to refresh."""
+    generation = 0
+
+    def __init__(self, broken):
+        self.broken = broken
+
+    async def query(self, q, k=20):
+        if self.broken == "query":
+            raise RuntimeError("boom")
+        return []
+
+    async def query_household(self, q, k=20):
+        if self.broken == "query_household":
+            raise RuntimeError("boom")
+        return []
+
+    async def rerank_wikipedia(self, q, keys):
+        if self.broken == "rerank_wikipedia":
+            raise RuntimeError("boom")
+        return {}
+
+
+@pytest.mark.parametrize("broken", ["query", "query_household", "rerank_wikipedia", None])
+def test_results_produced_while_the_semantic_layer_raised_are_not_cached(conn, env, broken):
+    conn.execute("INSERT INTO library_items(id,title,kind,tier,category,dest,available,fts) "
+                 f"VALUES ('{WIKI}','Wikipedia','zim','core','reference','zim/w.zim',1,1)")
+    conn.commit()
+    result = asyncio.run(search.search(conn, env, WikipediaKiwix(), "water", semantic=FailingSemantic(broken)))
+    assert {r["url"] for r in result["results"]} == {"/m/water", f"/read/{WIKI}/A/Water"}
+    assert cached_rows(conn) == (1 if broken is None else 0)
+
+
+def test_two_semantic_readers_sharing_a_database_never_serve_each_others_cached_results(conn, env):
+    publish(env, "/m/food")
+    first, second = embeddings.Semantic(env), embeddings.Semantic(env)
+    assert first.cache_namespace != second.cache_namespace
+
+    async def scenario():
+        for sem in (first, second):
+            sem.client.embed = successful_embed
+        assert (await run_search(conn, env, first))["results"][0]["url"] == "/m/food"
+        publish(env, "/m/water")        # the second reader's first look at the files is the new index
+        assert (await run_search(conn, env, second))["results"][0]["url"] == "/m/water"
+        assert first.generation == second.generation
+        await first.client.aclose()
+        await second.client.aclose()
+
+    asyncio.run(scenario())
+    assert cached_rows(conn) == 2
