@@ -1,5 +1,45 @@
 # App completion work
 
+## 2026-09-20: semantic-search expansion acceptance and follow-up review
+
+Completed the outstanding checks on `semantic-search-expansion`, starting from `68f4596`, with follow-up fixes committed as `2cdceb8`. No merge or deployment was performed. The production embedding generations were inspected read-only; destructive pruning checks used temporary directories only. Detailed measured results are in [the acceptance artifact](reviews/2026-09-20-semantic-acceptance.json); review findings and limits are in [the follow-up review](reviews/2026-09-20-semantic-follow-up.md).
+
+### Published builds
+
+| Collection | Published result | Build evidence |
+|---|---|---|
+| Documents | 21,368 passages, 384 dimensions | Published 19 September at 13:00:21 UTC, `PASSAGE_CHARS=2584`; reactive shortening still handles text that exceeds the model's token window |
+| Household | 70,558 books: 60,093 Gutenberg and 10,465 Survivor Library | 71,911 seen, 1,353 skipped for insufficient text; 11,876.10 seconds (3 h 17 m 56 s), 5.94 embedded books/s; published 19 September at 19:38:58 UTC |
+| Wikipedia | 8,425,865 article keys; 7,243,109 usable vectors and 1,182,756 zero-vector entries | 14,133.67 seconds (3 h 55 m 34 s), 596.16 candidate rows/s; published 19 September at 20:47:17 UTC; 6,471,064,320 vector bytes |
+
+Counts were checked against the published key files and metadata, with build logs at `.dev/logs/household-build-5.log` and `.dev/logs/wikipedia-build-6.log`. Household metadata predates `by_zim`; the per-source counts above were measured from its keys. Documents and household record `bge-small-en-v1.5-q8_0.gguf`; Wikipedia records `bge-small-en-v1.5-fp16-torch`. No costly rebuild was repeated. A retained bounded-sample measurement was not found; the completed full Wikipedia run supplies the actual duration instead of an extrapolation.
+
+Document-vector SHA-256: `1dd5a90ee5099338818388a3a7f2db5b5dd0fcdc1fb936cdb0d75dd055381e89`.
+
+### Live acceptance
+
+- The controlled Wikipedia check used the real production database opened read-only, the full published vector store, the live embedding server and real Kiwix keyword responses. Each response was replayed identically through the current branch's search function with Wikipedia reranking off and on. Other semantic additions were disabled for this comparison.
+- Eight queries passed: water purification, solar power, blacksmithing, whaling voyage, radio antenna, food preservation, battery storage and hypothermia. All 60 Wikipedia candidates had scores; the candidate URL multiset stayed identical and no Wikipedia row acquired `via: meaning`. Solar power and food preservation changed order. None of the comparisons was partial.
+- Candidate membership was measured immediately before cross-source title deduplication, after scoring. Final displayed membership can legitimately change when reranking changes which source wins a duplicate title; comparing only final lists would incorrectly call that an added or deleted candidate. Both final lists are retained in the artifact. These checks establish the rerank-only contract, not a general improvement in relevance.
+- Seven full live API searches returned 511 rows, including 42 marked `via: meaning`; no duplicate URLs or excluded-source meaning hits appeared. The whaling query surfaced *Modern Whaling & Bear-Hunting* and *A Voyage to the Arctic in the Whaler Aurora* by meaning. The interface reports these household books as `source: books`, matching the current implementation rather than the plan's older `source: household` example.
+- The exclusions were exercised by 73 plain keyword results from 17 excluded archives, including Wiktionary, Welsh Wikipedia and StackExchange. None was marked as found by meaning. The exclusion list remains manifest-derived for every `*.stackexchange.com_en_all` ID, plus `wiktionary_en_all_nopic` and `wikipedia_cy_all_maxi`.
+- Full API timings were 6,813 ms for the first whaling search and 1,344–1,780 ms for the other six. These are PC observations, not Pi acceptance. The running API was not restarted; the controlled comparison imported the reviewed branch directly.
+
+### Review fixes and validation
+
+Fixed exact generation-name matching, fail-closed pruning when a current symlink cannot resolve, serialization of generation publication/pruning, and metadata reads pinned to the same resolved generation as the vectors. Seven additional regression cases cover these paths and symlinks pointing outside an old generation.
+
+- Backend: **1,545 passed**, two dependency deprecation warnings. The sandbox run stalled on local HTTP-server tests; the completed run used the host network environment.
+- Frontend: **664 passed** across 80 files.
+- Situation simulator: **10,000 views**, no invariant broken.
+- Authored content: **131 documents validated** across all scenarios; coverage notices remain informational.
+- Map-style Node test and smoke self-test passed; `git diff --check` passed.
+- The final focused publication/pruning/metadata check passed **9 tests**, including the final strengthening of the household metadata-race regression.
+
+Physical Pi checks remain open in [the hardware checklist](hardware-checklist.md), including cold search memory/latency and concurrent browsing. The earlier broader browser result remains **35 passed, 9 skipped, 17 failed** as recorded in the 19 September review; that suite was not rerun or represented as passing here. The branch is ready for a merge decision on this scoped work, with those wider acceptance limits explicit.
+
+## Original completion checklist
+
 Working checklist, started 2026-09-05. Software validation and physical-device acceptance are recorded separately.
 
 - [x] Commit the frontend fixes and UX work.
