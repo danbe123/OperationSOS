@@ -14,6 +14,7 @@ bge-small was trained with an instruction on the query side only: every query is
 from __future__ import annotations
 
 import asyncio
+import fcntl
 import hashlib
 import itertools
 import json
@@ -156,7 +157,7 @@ class Index:
         directory = _check_collection(Path(folder), collection, ("f16.bin", "ids"))
         if directory is None:
             return None
-        meta = _read_meta(Path(folder), collection)
+        meta = _read_meta(Path(folder), collection, directory=directory)
         if _meta_refuses(Path(folder), collection, meta, model):
             return None
         vec_path, key_path = directory / f"{collection}.f16.bin", directory / f"{collection}.ids"
@@ -224,7 +225,7 @@ class ApproxIndex:
         directory = _check_collection(Path(folder), collection, ("hnsw", "ids"))
         if directory is None:
             return None
-        if _meta_refuses(Path(folder), collection, _read_meta(Path(folder), collection), model):
+        if _meta_refuses(Path(folder), collection, _read_meta(Path(folder), collection, directory=directory), model):
             return None
         hnsw_path, ids_path = directory / f"{collection}.hnsw", directory / f"{collection}.ids"
         keys = [line for line in ids_path.read_text(encoding="utf-8").split("\n") if line]
@@ -282,7 +283,7 @@ class WikipediaStore:
         directory = _check_collection(Path(folder), collection, ("f16.bin", "ids"))
         if directory is None:
             return None
-        meta = _read_meta(Path(folder), collection)
+        meta = _read_meta(Path(folder), collection, directory=directory)
         if _meta_refuses(Path(folder), collection, meta, model):
             return None
         vec_path, key_path = directory / f"{collection}.f16.bin", directory / f"{collection}.ids"
@@ -336,7 +337,7 @@ def _generation_dirs(folder: Path, collection: str) -> list[Path]:
         if path.is_symlink() or not path.is_dir():
             continue
         for prefix in prefixes:
-            if path.name.startswith(prefix) and _GENERATION_ID.match(path.name[len(prefix):]):
+            if path.name.startswith(prefix) and _GENERATION_ID.fullmatch(path.name[len(prefix):]):
                 found.append(path)
                 break
     return found
@@ -346,7 +347,12 @@ def _prune_generations(folder: Path, collection: str, keep: set[Path]) -> None:
     """Drop this collection's generations other than the current one and the one before it -- a retained
     Wikipedia generation is 6.47 GB. A reader still holding a deleted generation's files open is unhurt:
     on Linux the inode outlives the name. Nothing any collection's `*.current` resolves to is touched."""
-    live = {link.resolve() for link in folder.glob("*.current") if link.is_symlink()}
+    try:
+        live = {link.resolve() for link in folder.glob("*.current") if link.is_symlink()}
+    except (OSError, RuntimeError) as exc:
+        # An unresolved live pointer makes it unsafe to decide which directories are unused.
+        log.warning("embeddings: skipping generation pruning: cannot resolve current links (%s)", exc)
+        return
     for path in _generation_dirs(folder, collection):
         if path.resolve() in keep or path.resolve() in live:
             continue
@@ -363,6 +369,14 @@ def _publish_collection(folder: Path, collection: str, parts: list[Path]) -> Non
     generation once so a concurrent publication cannot pair old keys with new vectors. The generation
     before this one remains valid for readers holding a memory map; older ones are pruned.
     """
+    # All publishers in this folder share a lock: otherwise a second publication can prune a
+    # generation the first has created but has not yet made current. The lock file stays in place.
+    with (folder / ".publish.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _publish_collection_locked(folder, collection, parts)
+
+
+def _publish_collection_locked(folder: Path, collection: str, parts: list[Path]) -> None:
     current = folder / f"{collection}.current"
     previous = current.resolve() if current.is_symlink() else None
     generation = folder / f"{collection}.gen-{uuid.uuid4().hex}"
@@ -466,14 +480,20 @@ def _key_count(key_path: Path, meta: dict) -> int:
     return total
 
 
-def _read_meta(folder: Path, collection: str) -> dict:
+def _read_meta(folder: Path, collection: str, *, directory: Optional[Path] = None) -> dict:
     """One collection's published meta, or {} when there is none to read. Two places are tried: the
     current generation, and the flat name beside it -- a collection published before the meta joined
     the generation has its index in a generation directory and its meta loose in the folder, and that
     older layout is exactly the one whose meta a rebuild most needs to read."""
     folder = Path(folder)
-    for path in (_collection_folder(folder, collection) / f"{collection}.meta.json",
-                 folder / f"{collection}.meta.json"):
+    directory = directory if directory is not None else _collection_folder(folder, collection)
+    flat = folder / f"{collection}.meta.json"
+    paths = [directory / flat.name]
+    # Only a real flat file is legacy metadata. A flat alias follows *.current and may already
+    # point to a different generation than the vectors this reader resolved above.
+    if directory != folder and not flat.is_symlink():
+        paths.append(flat)
+    for path in paths:
         try:
             meta = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):

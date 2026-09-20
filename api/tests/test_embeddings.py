@@ -2188,6 +2188,106 @@ def test_pruning_never_removes_a_generation_any_collection_points_at(tmp_path):
     assert borrowed.is_dir()
 
 
+def test_pruning_rejects_generation_name_with_trailing_newline(tmp_path):
+    unrelated = tmp_path / ("docs.gen-" + "a" * 32 + "\n")
+    unrelated.mkdir()
+    (unrelated / "notes").write_text("keep me")
+    embeddings._prune_generations(tmp_path, "docs", set())
+    assert (unrelated / "notes").read_text() == "keep me"
+
+
+def test_pruning_fails_closed_when_a_current_link_cannot_be_resolved(tmp_path):
+    old = tmp_path / ("docs.gen-" + "a" * 32)
+    old.mkdir()
+    (tmp_path / "household.current").symlink_to("household.current")
+    embeddings._prune_generations(tmp_path, "docs", set())
+    assert old.is_dir()
+
+
+def test_pruning_does_not_follow_generation_or_nested_symlinks(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "notes").write_text("keep me")
+    folder = tmp_path / "embeddings"
+    folder.mkdir()
+    (folder / ("docs.gen-" + "a" * 32)).symlink_to(outside, target_is_directory=True)
+    old = folder / ("docs.gen-" + "b" * 32)
+    old.mkdir()
+    (old / "nested").symlink_to(outside, target_is_directory=True)
+    embeddings._prune_generations(folder, "docs", set())
+    assert not old.exists()
+    assert (outside / "notes").read_text() == "keep me"
+
+
+def test_publications_cannot_prune_another_publishers_unfinished_generation(tmp_path, monkeypatch):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+    parts = []
+    for n in range(2):
+        staging = tmp_path / f"staging-{n}"
+        staging.mkdir()
+        part = staging / "docs.ids.part"
+        part.write_text(f"key-{n}\n")
+        parts.append(part)
+    paused, resume, second_started = threading.Event(), threading.Event(), threading.Event()
+    replace = os.replace
+
+    def pause_first_part(src, dst):
+        if src == parts[0]:
+            paused.set()
+            assert resume.wait(5)
+        return replace(src, dst)
+
+    def second_publish():
+        second_started.set()
+        embeddings._publish_collection(tmp_path, "docs", [parts[1]])
+
+    monkeypatch.setattr(os, "replace", pause_first_part)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(embeddings._publish_collection, tmp_path, "docs", [parts[0]])
+        try:
+            assert paused.wait(5)
+            second = pool.submit(second_publish)
+            assert second_started.wait(5)
+            with pytest.raises(TimeoutError):
+                second.result(timeout=0.1)
+        finally:
+            resume.set()
+        first.result(timeout=5)
+        second.result(timeout=5)
+    assert (tmp_path / "docs.ids").read_text() == "key-1\n"
+    assert len(embeddings._generation_dirs(tmp_path, "docs")) == 2
+
+
+@pytest.mark.parametrize("collection", ["docs", "wikipedia", "household"])
+def test_loading_keeps_metadata_from_the_resolved_generation(tmp_path, monkeypatch, collection):
+    def publish(n):
+        vectors = np.stack([unit(1, i) for i in range(n)])
+        keys = [f"key-{i}" for i in range(n)]
+        meta = {"count": n, "dims": 768 if collection == "household" and n == 2 else embeddings.DIMS}
+        if collection == "household":
+            embeddings.ApproxIndex.build(vectors, keys).save(tmp_path, collection, meta)
+        else:
+            embeddings.write_index(tmp_path, collection, vectors, keys, meta)
+
+    publish(1)
+    check = embeddings._check_collection
+
+    def change_current_after_resolving(*args):
+        directory = check(*args)
+        publish(2)
+        return directory
+
+    monkeypatch.setattr(embeddings, "_check_collection", change_current_after_resolving)
+    loader = {"docs": embeddings.Index, "wikipedia": embeddings.WikipediaStore,
+              "household": embeddings.ApproxIndex}[collection]
+    store = loader.load(tmp_path, collection)
+    assert store is not None and len(store) == 1
+    if collection == "docs":
+        assert store.meta["count"] == 1
+
+
 def test_a_store_built_with_other_dimensions_refuses_to_load(tmp_path, caplog):
     embeddings.write_index(tmp_path, "docs", np.stack([unit(1, 0)]), ["/m/food"],
                            {"model": "some-other-model", "dims": 768, "count": 1})
