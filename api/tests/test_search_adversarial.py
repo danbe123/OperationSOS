@@ -326,3 +326,70 @@ def test_malformed_search_count_is_a_recoverable_service_error():
 def test_unbounded_search_input_is_rejected_before_backend_work(client, endpoint):
     response = client.get(f"/api/{endpoint}", params={"q": " ".join(f"term{i}" for i in range(1200))})
     assert response.status_code == 422
+
+
+class RefreshFails:
+    """A semantic layer whose refresh() raises: the fault the cache-on path met outside every guard."""
+    generation = 0
+
+    def __init__(self, exc):
+        self.exc = exc
+
+    def refresh(self):
+        raise self.exc
+
+    async def query(self, q, k=20):
+        return []
+
+    async def query_household(self, q, k=20):
+        return []
+
+
+def cached_rows(conn):
+    return conn.execute("SELECT count(*) FROM search_cache").fetchone()[0]
+
+
+FAULTS = [MemoryError("out of memory"), TypeError("bad argument"), KeyError("missing")]
+
+
+@pytest.mark.parametrize("exc", FAULTS, ids=lambda e: type(e).__name__)
+def test_a_semantic_refresh_that_raises_is_keyword_search_and_is_not_cached(conn, env, exc):
+    result = asyncio.run(search.search(conn, env, NoKiwix(), "water", semantic=RefreshFails(exc)))
+    assert [r["url"] for r in result["results"]] == ["/m/water"]
+    assert cached_rows(conn) == 0
+
+
+@pytest.mark.parametrize("exc", FAULTS, ids=lambda e: type(e).__name__)
+def test_an_index_that_fails_to_load_is_keyword_search_and_is_not_cached(conn, env, monkeypatch, exc):
+    publish(env, "/m/food")
+    sem = embeddings.Semantic(env)
+
+    def fail(*args, **kwargs):
+        raise exc
+
+    monkeypatch.setattr(embeddings.Index, "load", staticmethod(fail))
+
+    async def scenario():
+        result = await search.search(conn, env, NoKiwix(), "water", semantic=sem)
+        await sem.client.aclose()
+        return result
+
+    result = asyncio.run(scenario())
+    assert [r["url"] for r in result["results"]] == ["/m/water"]
+    assert cached_rows(conn) == 0
+
+
+def test_a_failing_refresh_is_logged_once_per_distinct_error(conn, env, caplog):
+    search._refresh_fault.clear()
+
+    def warnings():
+        return [r for r in caplog.records if r.levelname == "WARNING" and "refresh" in r.getMessage()]
+
+    async def scenario():
+        for exc in (TypeError("bad argument"),) * 3 + (KeyError("missing"),) * 2:
+            await search.search(conn, env, NoKiwix(), "water", semantic=RefreshFails(exc))
+
+    with caplog.at_level("WARNING", logger="sos.search"):
+        asyncio.run(scenario())
+    assert len(warnings()) == 2
+    assert "bad argument" in warnings()[0].getMessage() and "missing" in warnings()[1].getMessage()

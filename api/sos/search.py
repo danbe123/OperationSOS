@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import functools
+import logging
 import re
 import sqlite3
 import time
@@ -28,6 +29,8 @@ from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
 from sos.kiwix import KiwixClient, KiwixError
+
+log = logging.getLogger(__name__)
 
 K = 5
 CLASS_TIMEOUTS = {"reference": 4.0}
@@ -344,6 +347,16 @@ async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern:
         return cls, None, True
 
 
+_refresh_fault: list[str] = []   # the fault last logged, so a persistent one is one line, not one per request
+
+
+def _say_refresh_fault(exc: Exception) -> None:
+    fault = f"{type(exc).__name__}: {exc}"
+    if _refresh_fault != [fault]:
+        _refresh_fault[:] = [fault]
+        log.warning("search: cannot refresh the semantic index; using keyword search (%s)", fault)
+
+
 def _empty(q: str) -> dict:
     return {"q": q, "query": "", "results": [], "groups": [], "took_ms": 0, "partial": False}
 
@@ -357,10 +370,16 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         return _empty(q or "")
     limit = max(1, min(int(limit or 40), 100))
     use_cache = use_cache and fts_mode == "and"
+    semantic_failed = False
     # Refresh before looking up results: otherwise a popular cached query never observes a rebuild.
     # Scope by reader and generation, not a process-global "last seen" shared by unrelated databases.
     if use_cache and semantic is not None and hasattr(semantic, "refresh"):
-        semantic.refresh()
+        try:
+            semantic.refresh()
+            _refresh_fault.clear()
+        except Exception as exc:  # the semantic layer is a convenience: its failures never fail the search
+            semantic_failed = True
+            _say_refresh_fault(exc)
     semantic_version = ([getattr(semantic, "cache_namespace", str(id(semantic))),
                          getattr(semantic, "generation", None)] if semantic is not None else None)
     key = SearchCache.key(q, sources, limit, semantic_version)
@@ -372,7 +391,6 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
 
     results: list[dict] = []
     partial = False
-    semantic_failed = False
 
     languages = json.loads(get_setting(conn, "zim_languages", "{}") or "{}")
     books: dict[tuple[str, str], list[str]] = {}
