@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { ColdStartContext, forgetPlace, readPlace, type LastPlace } from '../shell/lastPlace';
 import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
@@ -108,6 +109,26 @@ function Situations() {
   );
 }
 
+/** After the kiosk browser or the box restarts, one calm way back to the screen somebody was on: only on a
+ * cold start (never after moving about the app), only when it was under twelve hours ago, dismissible, and
+ * never a redirect. Dismissing forgets the place. */
+function ContinueChip() {
+  const cold = useContext(ColdStartContext);
+  const [offer, setOffer] = useState<LastPlace | null>(() => (cold.current ? readPlace() : null));
+  if (!offer) return null;
+  return (
+    <nav className="chips now-continue" aria-label="Continue">
+      <Link className="chip" to={offer.path}>
+        <Icon name="back" size={18} />
+        <span>Continue where you were{offer.title ? `: ${offer.title}` : ''}</span>
+      </Link>
+      <button type="button" className="chip" aria-label="Dismiss: continue where you were" onClick={() => { forgetPlace(); setOffer(null); }}>
+        <Icon name="close" size={18} />
+      </button>
+    </nav>
+  );
+}
+
 /** Now is the front door, and it is the same door whatever is happening: the question, the
  * situations, and the services. It used to turn into the briefing the moment anything was off, so
  * a household that tapped Power to say the power was off was taken to a screen of forecasts and
@@ -117,6 +138,7 @@ export function Now() {
   return (
     <Screen title="What's the situation?" back={false} search={false} actions={<ServiceRow />}>
       <Body>
+        <ContinueChip />
         {/* With both networks down this is the most important new fact on the front door, and the
             box used to say nothing about it here at all. One component, one sentence. */}
         <Emergency999 onlyWhenHidden />
