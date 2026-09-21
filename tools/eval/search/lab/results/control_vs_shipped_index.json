@@ -1,0 +1,10 @@
+{
+ "shipped_index_rows": 21368,
+ "corpus_rows": 21368,
+ "same_keys_same_order": true,
+ "matched": 21368,
+ "cosine_mean": 0.9886600375175476,
+ "cosine_min": 0.8508754372596741,
+ "cosine_p1": 0.9347944259643555,
+ "below_0.99": 8033
+}

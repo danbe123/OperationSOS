@@ -1,0 +1,18 @@
+{
+ "name": "bge-base-en-v1.5",
+ "tag": "bge-base-en-v1.5",
+ "hf": "BAAI/bge-base-en-v1.5",
+ "pool": "cls",
+ "query_prefix": "Represent this sentence for searching relevant passages: ",
+ "passage_prefix": "",
+ "max_len": 512,
+ "params": 109482240,
+ "dims": 768,
+ "passages": 21368,
+ "passage_tokens": 8550522,
+ "mean_tokens": 400.2,
+ "embed_seconds": 36.51,
+ "passages_per_s": 585.3,
+ "tokens_per_s": 234196,
+ "gpu_peak_gb": 0.73
+}
