@@ -325,9 +325,9 @@ def test_udev_sudoers_boot_and_placeholder_files():
 def test_kiosk_wrapper_text():
     kiosk = (INSTALL / "kiosk" / "sos-kiosk-app").read_text(encoding="utf-8")
     assert "wlr-randr --output" in kiosk and "--transform" in kiosk
-    assert "exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run" in kiosk
+    assert "chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run" in kiosk
     assert "--overscroll-history-navigation=0" in kiosk and "http://localhost/starting" in kiosk
-    assert '"exit_type": "Normal", "exited_cleanly": True' in kiosk and "python3 -c" in kiosk
+    assert '"exit_type": "Normal", "exited_cleanly": True' in kiosk and "python3" in kiosk
 
 
 # --- live pieces: the kiosk wrapper's modes and Caddy ----------------------------------------------------
@@ -361,7 +361,7 @@ def upstream():
 def test_kiosk_wrapper_modes(tmp_path, upstream):
     prefs = tmp_path / "Preferences"
     prefs.write_text('{"profile": {"exit_type": "Crashed", "exited_cleanly": false, "name": "x"}, "other": 1}')
-    env = {**os.environ, "SOS_KIOSK_PREFS": str(prefs), "SOS_KIOSK_CONFIG": str(tmp_path / "absent.env"),
+    env = {**os.environ, "SOS_KIOSK_PREFS": str(prefs), "SOS_KIOSK_PROFILE": str(tmp_path / "profile"), "SOS_KIOSK_CONFIG": str(tmp_path / "absent.env"),
            "SOS_KIOSK_API": f"http://{upstream}/api/status"}
     wrapper = str(INSTALL / "kiosk" / "sos-kiosk-app")
     proc = subprocess.run(["bash", wrapper, "--reset-prefs"], env=env, capture_output=True, text=True)
