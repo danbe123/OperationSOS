@@ -1,0 +1,177 @@
+{
+ "bge-small-en-v1.5": {
+  "top1_cos_p5_p50_p95": [
+   0.641,
+   0.738,
+   0.834
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.587,
+   0.659,
+   0.728
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.588,
+   0.721,
+   0.829
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.36,
+   0.451,
+   0.563
+  ],
+  "share_of_top20_at_or_above_0.60": 0.945,
+  "share_of_top20_at_or_above_0.74": 0.128,
+  "share_of_queries_with_no_top20_above_0.60": 0.006
+ },
+ "e5-base-v2": {
+  "top1_cos_p5_p50_p95": [
+   0.81,
+   0.849,
+   0.895
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.775,
+   0.814,
+   0.843
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.8,
+   0.845,
+   0.895
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.675,
+   0.723,
+   0.772
+  ],
+  "share_of_top20_at_or_above_0.60": 1.0,
+  "share_of_top20_at_or_above_0.74": 1.0,
+  "share_of_queries_with_no_top20_above_0.60": 0.0
+ },
+ "e5-small-v2": {
+  "top1_cos_p5_p50_p95": [
+   0.835,
+   0.867,
+   0.912
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.815,
+   0.844,
+   0.871
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.819,
+   0.863,
+   0.912
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.731,
+   0.775,
+   0.817
+  ],
+  "share_of_top20_at_or_above_0.60": 1.0,
+  "share_of_top20_at_or_above_0.74": 1.0,
+  "share_of_queries_with_no_top20_above_0.60": 0.0
+ },
+ "gte-base": {
+  "top1_cos_p5_p50_p95": [
+   0.842,
+   0.876,
+   0.92
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.806,
+   0.832,
+   0.863
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.825,
+   0.872,
+   0.92
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.684,
+   0.725,
+   0.778
+  ],
+  "share_of_top20_at_or_above_0.60": 1.0,
+  "share_of_top20_at_or_above_0.74": 1.0,
+  "share_of_queries_with_no_top20_above_0.60": 0.0
+ },
+ "granite-embedding-english-r2": {
+  "top1_cos_p5_p50_p95": [
+   0.81,
+   0.866,
+   0.925
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.782,
+   0.815,
+   0.853
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.789,
+   0.863,
+   0.925
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.653,
+   0.697,
+   0.752
+  ],
+  "share_of_top20_at_or_above_0.60": 1.0,
+  "share_of_top20_at_or_above_0.74": 1.0,
+  "share_of_queries_with_no_top20_above_0.60": 0.0
+ },
+ "granite-embedding-small-english-r2": {
+  "top1_cos_p5_p50_p95": [
+   0.823,
+   0.869,
+   0.918
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.799,
+   0.827,
+   0.858
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.8,
+   0.864,
+   0.918
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.677,
+   0.721,
+   0.772
+  ],
+  "share_of_top20_at_or_above_0.60": 1.0,
+  "share_of_top20_at_or_above_0.74": 1.0,
+  "share_of_queries_with_no_top20_above_0.60": 0.0
+ },
+ "bge-base-en-v1.5": {
+  "top1_cos_p5_p50_p95": [
+   0.579,
+   0.683,
+   0.789
+  ],
+  "top20th_cos_p5_p50_p95": [
+   0.524,
+   0.597,
+   0.674
+  ],
+  "best_relevant_cos_p5_p50_p95": [
+   0.55,
+   0.666,
+   0.789
+  ],
+  "random_passage_cos_p5_p50_p95": [
+   0.296,
+   0.383,
+   0.494
+  ],
+  "share_of_top20_at_or_above_0.60": 0.625,
+  "share_of_top20_at_or_above_0.74": 0.026,
+  "share_of_queries_with_no_top20_above_0.60": 0.105
+ }
+}

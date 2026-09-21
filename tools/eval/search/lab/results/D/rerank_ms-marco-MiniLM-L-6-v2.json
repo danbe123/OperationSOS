@@ -1,0 +1,39 @@
+{
+ "name": "ms-marco-MiniLM-L-6-v2",
+ "gguf": "ms-marco-MiniLM-L-6-v2-q8_0.gguf",
+ "gguf_mb": 25.3,
+ "threads": {
+  "4": {
+   "load_s": 0.27,
+   "rerank30_ms": {
+    "median": 1469.5,
+    "p95": 1728.2,
+    "n": 11,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 120.4,
+    "VmRSS": 120.4
+   }
+  },
+  "1": {
+   "load_s": 0.27,
+   "rerank30_ms": {
+    "median": 4015.6,
+    "p95": 4460.8,
+    "n": 12,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 120.6,
+    "VmRSS": 120.6
+   }
+  }
+ },
+ "fidelity": {
+  "queries": 12,
+  "pearson_mean": 0.03248,
+  "pearson_min": -0.53703,
+  "top1_agree": "1/12"
+ }
+}

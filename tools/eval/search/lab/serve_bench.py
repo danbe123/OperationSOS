@@ -110,7 +110,7 @@ def bench_rerank(name, gguf, port, spec):
     from hybrid import systems
     lists = json.loads((SCRATCH / f"top_{tag}.json").read_text())
     pool = {qid: [i for i, _ in l][:30] for qid, l in systems(lists)[sysname].items()}
-    qs = [q for q in queries if q["set"] == "paraphrase"][:12]
+    qs = [q for q in queries if q["set"] == "paraphrase"][:int(os.environ.get("RQ", 12))]
     res = {"name": name, "gguf": os.path.basename(str(gguf)), "gguf_mb": round(os.path.getsize(gguf) / 1e6, 1), "threads": {}}
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer

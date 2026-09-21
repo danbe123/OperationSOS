@@ -1,0 +1,39 @@
+{
+ "name": "gte-reranker-modernbert-base",
+ "gguf": "gte-reranker-modernbert-base-q8_0.gguf",
+ "gguf_mb": 160.8,
+ "threads": {
+  "4": {
+   "load_s": 0.27,
+   "rerank30_ms": {
+    "median": 11365.1,
+    "p95": 12673.1,
+    "n": 11,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 303.3,
+    "VmRSS": 303.3
+   }
+  },
+  "1": {
+   "load_s": 0.28,
+   "rerank30_ms": {
+    "median": 30983.9,
+    "p95": 36029.3,
+    "n": 12,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 303.1,
+    "VmRSS": 303.1
+   }
+  }
+ },
+ "fidelity": {
+  "queries": 12,
+  "pearson_mean": 0.99861,
+  "pearson_min": 0.99722,
+  "top1_agree": "10/12"
+ }
+}
