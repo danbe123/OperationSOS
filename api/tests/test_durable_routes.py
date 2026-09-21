@@ -92,8 +92,6 @@ def test_the_allow_lists_name_routes_that_exist():
     real = {(m, p) for m, p, _, _ in ROUTES}
     for key, reason in {**NORMAL_ON_PURPOSE, **NO_DATABASE, **VIA_SHARED_CONNECTION}.items():
         assert reason.strip(), key
-        if key == ("kiosk", "/kiosk/alive"):
-            continue   # added with the kiosk heartbeat; asserted by its own tests
         assert key in real, f"{key} is in an allow-list but is not a write route any more"
 
 

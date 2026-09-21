@@ -63,6 +63,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         app.state.watchdog = system.ThermalWatchdog(settings, settings.db_path)
         app.state.watchdog.app = app
         app.state.idle = "active"
+        app.state.kiosk_heartbeat = kiosk.Heartbeat()
         app.state.backlight_level = 100
         tasks: list[asyncio.Task] = []
         if background:
