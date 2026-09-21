@@ -639,3 +639,34 @@ def test_a_failed_rsync_stops_the_install_instead_of_reading_as_no_change(tmp_pa
     proc = run_install_steps(tmp_path, "step_venv", expect_ok=False, with_tree=False)
     assert proc.returncode != 0, proc.stdout
     assert "unchanged" not in proc.stdout and "rsync" in proc.stderr
+
+
+def boot_dir(tmp_path: Path) -> Path:
+    boot = tmp_path / "boot"
+    boot.mkdir()
+    (boot / "config.txt").write_text("arm_64bit=1\n")
+    return boot
+
+
+def test_boot_step_writes_the_fragment_beside_and_renames_it_then_includes_it(tmp_path):
+    boot = boot_dir(tmp_path)
+    proc = run_install_steps(tmp_path, f"BOOT_DIR={boot}; mv() {{ echo \"mv $*\" >> \"$LOG\"; command mv \"$@\"; }}; step_boot")
+    assert "step boot: updated" in proc.stdout
+    assert f"mv -f {boot}/sos.txt.new {boot}/sos.txt" in calls(tmp_path), "the fragment must be renamed into place, not written in place"
+    assert (boot / "sos.txt").read_text() == (INSTALL / "boot" / "config.txt.d" / "sos.txt").read_text()
+    assert not (boot / "sos.txt.new").exists()
+    assert "include sos.txt" in (boot / "config.txt").read_text().splitlines()
+    again = run_install_steps(tmp_path, f"BOOT_DIR={boot}; step_boot")
+    assert "step boot: unchanged" in again.stdout
+
+
+def test_boot_step_that_cannot_write_the_fragment_fails_instead_of_reporting_updated(tmp_path):
+    """`cp ... && sync && mv ...; changed=1` ran changed=1 after a failing cp, said "updated", and went on to add the
+    include line for a fragment that was never written."""
+    boot = boot_dir(tmp_path)
+    proc = run_install_steps(tmp_path, f"BOOT_DIR={boot}; cp() {{ case \"$2\" in *sos.txt.new) return 1;; esac; command cp \"$@\"; }}; step_boot",
+                             expect_ok=False)
+    assert proc.returncode != 0
+    assert "updated" not in proc.stdout and "could not write" in proc.stderr
+    assert not (boot / "sos.txt").exists()
+    assert "include sos.txt" not in (boot / "config.txt").read_text()

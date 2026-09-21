@@ -358,7 +358,14 @@ step_boot() {
   fi
   # /boot/firmware is vfat, so plain cp instead of install (no ownership there).
   # Beside and renamed: a power cut mid-copy must not leave a half-written fragment that config.txt includes.
-  if ! cmp -s "$tmp" "$BOOT_DIR/sos.txt"; then cp "$tmp" "$BOOT_DIR/sos.txt.new" && sync && mv -f "$BOOT_DIR/sos.txt.new" "$BOOT_DIR/sos.txt"; changed=1; fi
+  if ! cmp -s "$tmp" "$BOOT_DIR/sos.txt"; then
+    if ! { cp "$tmp" "$BOOT_DIR/sos.txt.new" && sync && mv -f "$BOOT_DIR/sos.txt.new" "$BOOT_DIR/sos.txt"; }; then
+      echo "install.sh: could not write $BOOT_DIR/sos.txt (the boot partition full or read-only?)" >&2
+      rm -f "$tmp" "$BOOT_DIR/sos.txt.new"
+      exit 1
+    fi
+    changed=1
+  fi
   rm -f "$tmp"
   if ! grep -qx 'include sos.txt' "$BOOT_DIR/config.txt"; then printf '\ninclude sos.txt\n' >> "$BOOT_DIR/config.txt"; changed=1; fi
   if [ "$changed" = 1 ]; then CHANGED=1; say boot "updated $BOOT_DIR/sos.txt$gen3"; else say boot unchanged; fi
