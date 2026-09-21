@@ -93,10 +93,15 @@ class Tuning:
     class_ceil: dict = dataclasses.field(default_factory=dict)
     class_zero: dict = dataclasses.field(default_factory=dict)
     protect: str = "off"                     # off | exact | title
+    cards_first: bool = False                # a protected title row never displaces a card standing in the first card_pos
+    protect_by: str = "position"             # position: keep the words' position | meaning: no meaning-only row above
     protect_share: float = 0.99
     protect_slack: int = 0
     protect_kinds: tuple = ("article", "card", "module", "page", "playbook", "doc", "item")
     card_cos: float | None = None
+    card_scope: str = "top"                  # top: the nearest passage overall must be the card | best: the nearest card
+    card_n: int = 1                          # how many of the nearest cards are kept in the first card_pos
+    card_kw: bool = False                    # a card the words put first stays in the first card_pos
     card_pos: int = 3
     wiki: str = "scale"                      # scale | off | rrf | narrow
     wiki_weight: float = 0.5
@@ -444,38 +449,68 @@ def _say_refresh_fault(exc: Exception) -> None:
         log.warning("search: cannot refresh the semantic index; using keyword search (%s)", fault)
 
 
-def _protect(results: list[dict], kw_pos: dict[str, int], terms: list[str], q: str) -> list[dict]:
-    """EXPERIMENT: a keyword row whose title is the query (or nearly) is never pushed below where the words alone
-    put it (plus `protect_slack`) by a row found by meaning."""
+def _constraints(results: list[dict], kw_pos: dict[str, int], terms: list[str], q: str,
+                 card_targets: list[tuple[str, float]]) -> tuple[list[tuple[dict, int]], list[tuple[dict, int]]]:
+    """EXPERIMENT: (title rows, card rows), each (row, the lowest index it may stand at). A keyword row whose
+    title is the query (or nearly) is never pushed below where the words alone put it (plus `protect_slack`) by
+    a row found by meaning; a quick card the words put first, and the quick cards nearest in meaning, stay in
+    the first `card_pos`."""
     t = TUNING
     norm_q = " ".join((q or "").lower().split())
-    protected = []
-    for r in results:
-        if r.get("via") == "meaning" or r["url"] not in kw_pos or r["kind"] not in t.protect_kinds:
-            continue
-        exact = norm_title(r["title"]) == norm_q or (terms and norm_title(r["title"]) == " ".join(terms))
-        if exact or (t.protect == "title" and term_share(terms, r["title"]) >= t.protect_share):
-            protected.append(r)
-    for r in sorted(protected, key=lambda r: kw_pos[r["url"]]):
-        target = kw_pos[r["url"]] + t.protect_slack
-        i = results.index(r)
-        if i > target:
-            results.insert(target, results.pop(i))
+    titled: list[tuple[dict, int]] = []
+    cards: list[tuple[dict, int]] = []
+    if kw_pos:
+        for r in results:
+            if r.get("via") == "meaning" or r["url"] not in kw_pos or r["kind"] not in t.protect_kinds:
+                continue
+            exact = norm_title(r["title"]) == norm_q or (terms and norm_title(r["title"]) == " ".join(terms))
+            if t.protect != "off" and (exact or (t.protect == "title" and term_share(terms, r["title"]) >= t.protect_share)):
+                titled.append((r, kw_pos[r["url"]] + t.protect_slack))
+            elif t.card_kw and r["kind"] == "card" and kw_pos[r["url"]] == 0:
+                cards.append((r, t.card_pos - 1))
+    for url, _cos in card_targets:
+        page = url.split("#", 1)[0]
+        for r in results:
+            if r["kind"] == "card" and r["url"].split("#", 1)[0] == page:
+                cards.append((r, t.card_pos - 1))
+                break
+    return titled, cards
+
+
+def _shield(results: list[dict], titled: list[tuple[dict, int]], exempt: set[int]) -> list[dict]:
+    """EXPERIMENT: a protected title row is lifted above the rows found by meaning alone (all but `protect_slack`
+    of them), or, by position, to where the words put it."""
+    for row, index in sorted(titled, key=lambda c: c[1]):
+        i = results.index(row)
+        if TUNING.protect_by == "meaning":
+            above = [j for j in range(i) if results[j].get("via") == "meaning" and id(results[j]) not in exempt]
+            if len(above) > TUNING.protect_slack:
+                results.insert(above[TUNING.protect_slack], results.pop(i))
+        else:
+            if TUNING.cards_first:
+                cards_in = [j for j in range(min(TUNING.card_pos, len(results))) if results[j]["kind"] == "card" and j != i]
+                index = max(index, cards_in[-1] + 1) if cards_in else index
+            if i > index:
+                results.insert(index, results.pop(i))
     return results
 
 
-def _promote_card(results: list[dict], dense_best: tuple[str, float]) -> list[dict]:
-    """EXPERIMENT: the box's own quick card that is the single nearest passage in meaning, when it is near enough,
-    stays inside the first `card_pos` results."""
-    url, cos = dense_best
-    if cos < TUNING.card_cos:
-        return results
-    page = url.split("#", 1)[0]
-    for i, r in enumerate(results):
-        if r["kind"] == "card" and r["url"].split("#", 1)[0] == page:
-            if i >= TUNING.card_pos:
-                results.insert(TUNING.card_pos - 1, results.pop(i))
-            break
+def _settle(results: list[dict], constraints: list[tuple[dict, int]], also_pinned=()) -> list[dict]:
+    """EXPERIMENT: bring each constrained row up to its index, tightest first, by swapping it with the lowest
+    row inside that index that no constraint names; a row inside its index already stays; if every row inside
+    is constrained, nothing moves."""
+    pinned = {id(row) for row, _ in constraints} | {id(row) for row, _ in also_pinned}
+    for row, index in sorted(constraints, key=lambda c: c[1]):
+        if results.index(row) <= index:
+            continue
+        inside = [j for j in range(min(index + 1, len(results))) if id(results[j]) not in pinned]
+        if not inside:
+            continue
+        displaced = results.pop(inside[-1])
+        results.remove(row)
+        at = min(index, len(results))
+        results.insert(at, row)
+        results.insert(at + 1, displaced)
     return results
 
 
@@ -573,6 +608,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                     continue
                 if TUNING.wiki == "rrf":
                     r["score"] += TUNING.wiki_weight * score(1.0, by_cos.index(key) + 1)
+                elif TUNING.wiki == "additive":
+                    r["score"] += TUNING.wiki_weight * min(1.0, max(0.0, (cos - 0.5) / 0.3))
                 elif TUNING.wiki == "narrow":
                     r["score"] *= 1.0 - TUNING.wiki_span + 2 * TUNING.wiki_span * max(0.0, cos)
                 else:
@@ -657,7 +694,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     # after, under this same guard: a household hit joins the "books" group, the same source the
     # catalogue's own keyword hits use, so a book found by both words and meaning is lifted once rather
     # than shown twice under two badges, and every household hit is eligible for the BOOKS_KEPT rescue.
-    dense_best: tuple[str, float] | None = None
+    card_targets: list[tuple[str, float]] = []
     for r in results:
         r["_kw"] = r["score"]
     if semantic is not None:
@@ -668,7 +705,6 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
             semantic_failed = True
-        dense_best = near[0] if near else None
         near = [(url, cos) for url, cos in near if cos >= _lowest_floor()]
         if near:
             found = {}
@@ -676,13 +712,20 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
                     f"WHERE url IN ({','.join('?' * len(near))})", [u for u, _ in near]).fetchall():
                 found[row["url"]] = row
+            if TUNING.card_cos is not None:
+                seen_pages: set[str] = set()
+                for url, cos in (near if TUNING.card_scope == "best" else near[:1]):
+                    if cos >= TUNING.card_cos and found.get(url) is not None and found[url]["kind"] == "card" \
+                            and url.split("#", 1)[0] not in seen_pages and len(card_targets) < TUNING.card_n:
+                        seen_pages.add(url.split("#", 1)[0])
+                        card_targets.append((url, cos))
             for dense_rank, (url, cos) in enumerate(near, 1):
                 row = found.get(url)
                 if row is None:
                     continue
                 kind = row["kind"]
                 klass = "doc" if kind == "doc" else "own"
-                if cos < _floor(url in by_url, klass):
+                if cos < _floor(url in by_url, klass) and url not in {u for u, _ in card_targets}:
                     continue
                 src = SOURCE_BY_KIND.get(kind, "docs")
                 w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
@@ -743,16 +786,16 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             r["score"] *= rel
             r["_kw"] *= rel
     kw_pos: dict[str, int] = {}
-    if semantic is not None and (TUNING.protect != "off"):
+    if semantic is not None and (TUNING.protect != "off" or TUNING.card_kw):
         keyword_only = [{**r, "score": r["_kw"]} for r in results if r.get("via") != "meaning"]
         kw_pos = {r["url"]: i for i, r in enumerate(diversify(dedupe_titles(dedupe(keyword_only))))}
     results = dedupe(results)
     results = dedupe_titles(results)
     results = diversify(results)
-    if kw_pos:
-        results = _protect(results, kw_pos, reduced.terms, q)
-    if semantic is not None and TUNING.card_cos is not None and dense_best is not None:
-        results = _promote_card(results, dense_best)
+    if kw_pos or card_targets:
+        titled, cards = _constraints(results, kw_pos, reduced.terms, q, card_targets)
+        exempt = {id(r) for r, _ in cards}
+        results = _settle(_shield(results, titled, exempt), cards, titled)
 
     counts: dict[str, int] = {}
     for r in results:

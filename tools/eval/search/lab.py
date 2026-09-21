@@ -32,7 +32,70 @@ from sos.config import get_settings                       # noqa: E402
 # name -> overrides. Keys: `T.field` sets a Tuning field, anything else a module constant of sos.search.
 EXPERIMENTS: dict[str, dict] = {
     "control": {},
+    # (ii) rank fusion for the box's own passages: the dense rank scored like a keyword rank (w / (5 + rank))
+    "rrf-1": {"T.fusion": "rrf", "T.rrf_weight": 1.0},
+    "rrf-2": {"T.fusion": "rrf", "T.rrf_weight": 2.0},
+    "rrf-3": {"T.fusion": "rrf", "T.rrf_weight": 3.0},
+    "norm": {"T.fusion": "norm"},
+    # (iv) protection of exact and near-exact titles
+    "prot-exact": {"T.protect": "exact"},
+    "prot-title-1.0": {"T.protect": "title", "T.protect_share": 0.99},
+    "prot-title-.66": {"T.protect": "title", "T.protect_share": 0.66},
+    "protc-exact": {"T.protect": "exact", "T.cards_first": True},
+    "protc-title-1.0": {"T.protect": "title", "T.protect_share": 0.99, "T.cards_first": True},
+    "protc-title-.66": {"T.protect": "title", "T.protect_share": 0.66, "T.cards_first": True},
+    "protc-title-.5": {"T.protect": "title", "T.protect_share": 0.5, "T.cards_first": True},
+    "protc-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_slack": 1, "T.cards_first": True},
+    "protm-exact": {"T.protect": "exact", "T.protect_by": "meaning"},
+    "protm-title-.66": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_by": "meaning"},
+    "protm-title-.5": {"T.protect": "title", "T.protect_share": 0.5, "T.protect_by": "meaning"},
+    "protm-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_by": "meaning", "T.protect_slack": 1},
+    "prot-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_slack": 1},
+    # (v) emergency promotion of the nearest quick card
+    "card-.70": {"T.card_cos": 0.70},
+    "card-.74": {"T.card_cos": 0.74},
+    "card-.78": {"T.card_cos": 0.78},
+    # (vi) Wikipedia
+    "card-best-.62": {"T.card_cos": 0.62, "T.card_scope": "best"},
+    "card-best-.66": {"T.card_cos": 0.66, "T.card_scope": "best"},
+    "card-best-.70": {"T.card_cos": 0.70, "T.card_scope": "best"},
+    "card-kw": {"T.card_kw": True},
+    "card-kw+best-.66": {"T.card_kw": True, "T.card_cos": 0.66, "T.card_scope": "best"},
+    "card-2best-.62": {"T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2},
+    "card-2best-.64": {"T.card_cos": 0.64, "T.card_scope": "best", "T.card_n": 2},
+    "card-2best-.66": {"T.card_cos": 0.66, "T.card_scope": "best", "T.card_n": 2},
+    "card-kw+2best-.62": {"T.card_kw": True, "T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2},
+    "card-kw+2best-.64": {"T.card_kw": True, "T.card_cos": 0.64, "T.card_scope": "best", "T.card_n": 2},
+    "card-kw+2best-.60": {"T.card_kw": True, "T.card_cos": 0.60, "T.card_scope": "best", "T.card_n": 2},
+    "wiki-off": {"T.wiki": "off"},
+    "wiki-rrf-.3": {"T.wiki": "rrf", "T.wiki_weight": 0.3},
+    "wiki-rrf-1": {"T.wiki": "rrf", "T.wiki_weight": 1.0},
+    "wiki-narrow-.05": {"T.wiki": "narrow", "T.wiki_span": 0.05},
+    "wiki-narrow-.15": {"T.wiki": "narrow", "T.wiki_span": 0.15},
 }
+
+_A = {"T.protect": "title", "T.protect_share": 0.66, "T.cards_first": True,
+      "T.card_kw": True, "T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2}
+EXPERIMENTS.update({
+    "A": dict(_A),
+    "A+wikirrf.5": {**_A, "T.wiki": "rrf", "T.wiki_weight": 0.5},
+    "A+wikirrf1": {**_A, "T.wiki": "rrf", "T.wiki_weight": 1.0},
+    "A+wikirrf1.5": {**_A, "T.wiki": "rrf", "T.wiki_weight": 1.5},
+    "A+rrf1.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 1.5},
+    "A+rrf2": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0},
+    "A+rrf2.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.5},
+    "A+wikiadd.5": {**_A, "T.wiki": "additive", "T.wiki_weight": 0.5},
+    "A+wikiadd.3": {**_A, "T.wiki": "additive", "T.wiki_weight": 0.3},
+    "A+wikirrf.3": {**_A, "T.wiki": "rrf", "T.wiki_weight": 0.3},
+    "A+wikioff": {**_A, "T.wiki": "off"},
+    "Cadd": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}},
+    "Cadd+wikirrf.5": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}, "T.wiki": "rrf", "T.wiki_weight": 0.5},
+    "Cadd+wikiadd.5": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}, "T.wiki": "additive", "T.wiki_weight": 0.5},
+    "T1": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5}},
+    "T1+wikirrf.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
+                     "T.wiki": "rrf", "T.wiki_weight": 0.5},
+    "A+rrf2+wikirrf1": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.wiki": "rrf", "T.wiki_weight": 1.0},
+})
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),
         ("safety/plain", "plain"), ("safety/hard", "hard"), ("wikipedia", "wiki"), ("books", "books"), ("ALL", "ALL"))
@@ -60,10 +123,13 @@ def applied(overrides: dict):
 _state: dict = {}
 
 
+SETS: list[str] = []      # the gold sets replayed (all when empty); set from --sets before the workers fork
+
+
 def _prepare(replay_dir: str):
     if "rows" not in _state:
         settings = get_settings()
-        rows, problems = se.load_gold(se.DEFAULT_GOLD_DIR)
+        rows, problems = se.load_gold(se.DEFAULT_GOLD_DIR, SETS or None)
         assert not problems, problems
         _state.update(settings=settings, rows=rows, replay=searchreplay.Replay(Path(replay_dir)),
                       db=Path(settings.db_path))
@@ -161,7 +227,9 @@ def main(argv=None) -> int:
     ap.add_argument("--diff", nargs=2, metavar=("A", "B"))
     ap.add_argument("--diff-sets", nargs="*")
     ap.add_argument("--guard", action="store_true")
+    ap.add_argument("--sets", nargs="*", help="replay only these gold sets (books are 40 per cent of the cost)")
     args = ap.parse_args(argv)
+    SETS[:] = args.sets or []
     names = args.exp or list(EXPERIMENTS)
     if args.diff:
         names = list(dict.fromkeys([*names, *args.diff])) if args.exp else list(args.diff)
