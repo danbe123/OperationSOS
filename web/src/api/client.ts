@@ -3,11 +3,14 @@ import type {
   ExportChunks, Home, ImportSummary, Kit, KitsHaveResponse, KitsResponse, LibraryItem, LibraryResponse, BookDetail, BookShelf, BooksResponse, ReadingEntry, MapConfig, ModuleSummary, NearbyResponse, Note, Overlay, Page, PeopleSetting, Place, PlaceGuidance, Playbook, PlaybookSummary,
   Recording, SearchResponse, Sensors, Situation, SituationView, Status, Suggestion, Task, TaskPatch, UpdateProgress, VoicesResponse, RecentEntry, RecentKind,
 } from './types';
+import { isConnectionError, reportFailure, reportSuccess } from './connection';
 
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
     public readonly detail: string,
+    /** Caddy's own 502, 503 or 504 while sos-api is down, as opposed to the API answering with one. */
+    public readonly gateway = false,
   ) {
     super(detail);
     this.name = 'ApiError';
@@ -41,15 +44,67 @@ async function readDetail(res: Response): Promise<string> {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(`/api${path}`, {
-    method,
-    headers: headers(body !== undefined),
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal,
-  });
+/** What a write does while the box restarts (systemd brings sos-api back in about three seconds): try again
+ * after each of these pauses, then give up with an error that says nothing was saved. */
+export const WRITE_RETRY_MS = [400, 1000, 2000, 4000];
+
+function isAbort(e: unknown): boolean {
+  return e instanceof DOMException && e.name === 'AbortError';
+}
+
+/** Caddy answers 502 or 503 with no JSON while sos-api is down; the API's own 503 (Piper is not installed)
+ * carries a JSON body and is an answer, not an outage. */
+function isGateway(res: Response): boolean {
+  return (res.status === 502 || res.status === 503 || res.status === 504) && !(res.headers.get('content-type') ?? '').includes('json');
+}
+
+function notAnswering(method: Method): string {
+  return method === 'GET' ? 'The box is not answering' : 'The box is not answering, so nothing was saved';
+}
+
+async function attempt<T>(method: Method, path: string, body: unknown, signal: AbortSignal | undefined): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      method,
+      headers: headers(body !== undefined),
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal,
+    });
+  } catch (e) {
+    if (isAbort(e)) throw e;
+    const err = new ApiError(0, notAnswering(method));
+    reportFailure(err);
+    throw err;
+  }
+  if (isGateway(res)) {
+    const err = new ApiError(res.status, notAnswering(method), true);
+    reportFailure(err);
+    throw err;
+  }
+  reportSuccess();
   if (!res.ok) throw new ApiError(res.status, await readDetail(res));
   return (await res.json()) as T;
+}
+
+function pause(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = window.setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => { window.clearTimeout(timer); resolve(); }, { once: true });
+  });
+}
+
+/** `retry` is for a write that says the same thing however often it is heard (a PUT of a tick, a DELETE) and
+ * for a request that never reached the box; a POST that starts something is sent once. */
+async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal, retry = method === 'PUT' || method === 'DELETE'): Promise<T> {
+  for (let tried = 0; ; tried++) {
+    try {
+      return await attempt<T>(method, path, body, signal);
+    } catch (e) {
+      if (!retry || tried >= WRITE_RETRY_MS.length || !isConnectionError(e) || signal?.aborted) throw e;
+      await pause(WRITE_RETRY_MS[tried], signal);
+    }
+  }
 }
 
 function qs(params: Record<string, string | number | undefined>): string {
@@ -202,7 +257,7 @@ export const api = {
     if (!res.ok) throw new ApiError(res.status, await readDetail(res));
     return await res.blob();
   },
-  createNote: (note: Partial<Note>) => request<Note>('POST', '/notes', note),
+  createNote: (note: Partial<Note>) => request<Note>('POST', '/notes', note, undefined, true),
   updateNote: (id: number, note: Partial<Note>) => request<Note>('PUT', `/notes/${id}`, note),
   deleteNote: (id: number) => request<{ ok: true }>('DELETE', `/notes/${id}`),
   aiStatus: () => request<{ state: AiState; model: string | null; message: string | null }>('GET', '/ai/status'),

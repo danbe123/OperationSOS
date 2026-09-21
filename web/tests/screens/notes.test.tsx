@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderRoute } from '../render';
-import { api } from '../../src/api/client';
+import { api, ApiError } from '../../src/api/client';
 import type { Note } from '../../src/api/types';
 import { notes } from '../fixtures/api';
 
@@ -112,5 +112,58 @@ describe('Notes and pins', () => {
     const list = await screen.findByRole('list', { name: 'Notes and pins' });
     expect(await within(list).findByText(/Nothing written down yet/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a note' })).toBeInTheDocument();
+  });
+});
+
+describe('A note in the middle of being written', () => {
+  it('is kept when the note cannot be saved, says so, and is saved when the box is back', async () => {
+    const { create } = mockNotes();
+    const user = userEvent.setup();
+    renderRoute('/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    const form = screen.getByRole('form', { name: 'Add a note' });
+    await user.type(within(form).getByLabelText('Title'), 'Rendezvous');
+    await user.type(within(form).getByLabelText('Note'), 'Church car park at noon');
+    create.mockRejectedValueOnce(new ApiError(0, 'The box is not answering, so nothing was saved'));
+    await user.click(within(form).getByRole('button', { name: 'Add note' }));
+    expect(await screen.findByText(/Not saved yet/)).toBeInTheDocument();
+    expect(within(form).getByLabelText('Title')).toHaveValue('Rendezvous');
+    expect(within(form).getByLabelText('Note')).toHaveValue('Church car park at noon');
+    await user.click(within(form).getByRole('button', { name: 'Add note' }));
+    expect(await screen.findByText('Rendezvous')).toBeInTheDocument();
+    expect(screen.queryByText(/Not saved yet/)).toBeNull();
+    expect(localStorage.getItem('sos.draft.note')).toBeNull();
+  });
+
+  it('comes back after the screen is reloaded, or the browser restarted, until it is saved or cancelled', async () => {
+    mockNotes();
+    const user = userEvent.setup();
+    const first = renderRoute('/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    await user.type(screen.getByLabelText('Title'), 'Half a thought');
+    await user.type(screen.getByLabelText('Note'), 'Gas bottles: two in the');
+    first.unmount();   // Chromium restarted: everything in memory is gone, the page comes up again
+    renderRoute('/notes');
+    const form = await screen.findByRole('form', { name: 'Add a note' });
+    expect(within(form).getByLabelText('Title')).toHaveValue('Half a thought');
+    expect(within(form).getByLabelText('Note')).toHaveValue('Gas bottles: two in the');
+    expect(screen.getByText(/Restored what you were writing/)).toBeInTheDocument();
+    await user.click(within(form).getByRole('button', { name: 'Cancel' }));
+    expect(localStorage.getItem('sos.draft.note')).toBeNull();
+  });
+
+  it('still works when the browser will not store anything', async () => {
+    mockNotes();
+    const user = userEvent.setup();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied'); });
+    renderRoute('/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    await user.type(screen.getByLabelText('Title'), 'Still here');
+    expect(screen.getByLabelText('Title')).toHaveValue('Still here');
+    vi.restoreAllMocks();
   });
 });

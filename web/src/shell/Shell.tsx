@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link, Outlet, useLocation, useNavigationType } from 'react-router';
 import { Notices } from '../components/Notice';
+import { Reconnecting } from '../components/Reconnecting';
 import { Icon } from '../icons';
 import { IdleOverlay } from '../kiosk/IdleOverlay';
 import { KeyboardMount } from '../kiosk/KeyboardMount';
@@ -96,6 +97,7 @@ export function Shell() {
       <div className="app app-board">
         <main className="content" id="main" tabIndex={-1} aria-label="The board" ref={main}><Outlet /></main>
         <Notices />
+        <Reconnecting />
         <IdleOverlay />
       </div>
     );
@@ -118,6 +120,7 @@ export function Shell() {
         </div>
         <MainNav pathname={pathname} wide={wide} />
         <Notices />
+        <Reconnecting />
         <ForecastReminders />
         <KeyboardMount />
         <IdleOverlay />

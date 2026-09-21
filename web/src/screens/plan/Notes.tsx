@@ -4,6 +4,7 @@ import type { Note } from '../../api/types';
 import { errorMessage, useQuery, type Refetchable } from '../../api/useQuery';
 import { notify } from '../../components/Notice';
 import { relativeTime } from '../../components/Checklist';
+import { clearDraft, loadDraft, saveDraft } from '../../tools/draft';
 import { PinRow } from './Pins';
 
 function NoteRow({ note, onChanged }: { note: Note; onChanged: () => Promise<void> }) {
@@ -89,25 +90,37 @@ export function NotesList({ pins = false, ref }: { pins?: boolean; ref?: Ref<Ref
 /** A title and a few lines, behind a button. Pins are not written here: one is dropped on the map,
  * where the spot being pinned is the thing on the screen. */
 export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => void }) {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
+  const [restored] = useState(() => loadDraft('note'));
+  const [title, setTitle] = useState(restored?.title ?? '');
+  const [body, setBody] = useState(restored?.body ?? '');
+  const [unsaved, setUnsaved] = useState<string | null>(null);
+  const change = (next: { title: string; body: string }) => {
+    setTitle(next.title);
+    setBody(next.body);
+    saveDraft('note', next);
+  };
   const add = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim() && !body.trim()) return;
     try {
       await api.createNote({ kind: 'note', title: title.trim(), body: body.trim() });
+      clearDraft('note');
       onSaved();
     } catch (err) {
+      setUnsaved(errorMessage(err));
       notify(`Could not add the note: ${errorMessage(err)}`);
     }
   };
   return (
     <form className="stack no-print" onSubmit={(e) => void add(e)} aria-label="Add a note">
-      <label className="field"><span>Title</span><input type="text" aria-label="Title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} autoFocus /></label>
-      <label className="field"><span>Note</span><textarea aria-label="Note" rows={3} value={body} onChange={(e) => setBody(e.target.value)} /></label>
+      {restored && <p className="muted">Restored what you were writing.</p>}
+      <label className="field"><span>Title</span><input type="text" aria-label="Title" value={title} onChange={(e) => change({ title: e.target.value, body })} maxLength={120} autoFocus /></label>
+      <label className="field"><span>Note</span><textarea aria-label="Note" rows={3} value={body} onChange={(e) => change({ title, body: e.target.value })} /></label>
+      {/* The transient notice is gone in six seconds; this stays until the note is saved. */}
+      {unsaved && <p className="warning" role="status">Not saved yet: {unsaved}. What you wrote is kept here; tap Add note again when the box answers.</p>}
       <div className="row">
         <button type="submit" className="btn btn-primary">Add note</button>
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn" onClick={() => { clearDraft('note'); onCancel(); }}>Cancel</button>
       </div>
     </form>
   );
@@ -117,7 +130,8 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
  * list to read itself again, so the new note is on the screen that wrote it; remounting the list
  * instead would throw away every note somebody had open for editing beside it. */
 export function Notes({ pins = false }: { pins?: boolean } = {}) {
-  const [adding, setAdding] = useState(false);
+  // A note that was being written when the browser restarted opens again, with its words in it.
+  const [adding, setAdding] = useState(() => loadDraft('note') !== null);
   const list = useRef<Refetchable>(null);
   return (
     <>

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError } from '../api/client';
 import { errorMessage } from '../api/useQuery';
+import { isConnectionError, onReconnect } from '../api/connection';
 import type { SituationView } from '../api/types';
 
 export const SITUATION_POLL_MS = 30_000;
@@ -33,6 +34,8 @@ export function SituationProvider({ children, intervalMs = SITUATION_POLL_MS }: 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const alive = useRef(true);
+  const viewRef = useRef<SituationView | null>(null);
+  viewRef.current = view;
 
   const refresh = useCallback(async () => {
     try {
@@ -43,7 +46,9 @@ export function SituationProvider({ children, intervalMs = SITUATION_POLL_MS }: 
     } catch (e) {
       if (!alive.current) return;
       // A box whose engine is not built yet answers 404: stay quiet rather than shout on every screen.
-      setError(e instanceof ApiError && e.status === 404 ? null : errorMessage(e));
+      // ... and one that has a View already keeps it through an outage: the "Reconnecting" cue says it.
+      const quiet = (e instanceof ApiError && e.status === 404) || (isConnectionError(e) && viewRef.current !== null);
+      setError(quiet ? null : errorMessage(e));
     } finally {
       if (alive.current) setLoading(false);
     }
@@ -64,6 +69,8 @@ export function SituationProvider({ children, intervalMs = SITUATION_POLL_MS }: 
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [refresh, intervalMs]);
+
+  useEffect(() => onReconnect(() => void refresh()), [refresh]);
 
   const apply = useCallback((v: SituationView) => setView(v), []);
   const value = useMemo(() => ({ view, error, loading, refresh, apply }), [view, error, loading, refresh, apply]);

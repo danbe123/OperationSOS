@@ -129,7 +129,7 @@ export function Scenario() {
     return set;
   }, [data]);
 
-  if (error) return <Screen title="Guide" search={false}><div className="screen-body"><p className="warning">Could not load this guide: {error}</p></div></Screen>;
+  if (error && !data) return <Screen title="Guide" search={false}><div className="screen-body"><p className="warning">Could not load this guide: {error}</p></div></Screen>;
   if (loading || !data) return <Screen title="Guide" search={false}><div className="screen-body"><p className="muted">Loading…</p></div></Screen>;
 
   const current = data.sections.find((s) => s.id === tab) ?? data.sections[0];

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from './client';
+import { isConnectionError, onReconnect } from './connection';
 
 export function errorMessage(e: unknown): string {
   if (e instanceof ApiError) return e.detail;
@@ -19,14 +20,18 @@ export type QueryState<T> = {
  * a remount throws away every open editor and scroll position on the way past. */
 export type Refetchable = { refetch: () => Promise<void> };
 
-/** Fetch on mount and whenever `deps` change; optionally poll and refetch when the window regains focus. */
+/** Fetch on mount and whenever `deps` change; optionally poll and refetch when the window regains focus.
+ * Every query reads again when the box comes back after not answering (`connection.ts`), and while it is
+ * away what was already read stays on the screen: `error` then stays null, because the screen's own
+ * "Reconnecting" cue says it once for everybody. With nothing to show, or when the box answered with a real
+ * fault, `error` is set as ever. */
 export function useQuery<T>(
   fn: () => Promise<T>,
   deps: readonly unknown[],
-  opts: { intervalMs?: number; refetchOnFocus?: boolean } = {},
+  opts: { intervalMs?: number; refetchOnFocus?: boolean; refetchOnReconnect?: boolean } = {},
 ): QueryState<T> {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [rawError, setError] = useState<{ message: string; connection: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const fnRef = useRef(fn);
   fnRef.current = fn;
@@ -41,7 +46,7 @@ export function useQuery<T>(
         setError(null);
       }
     } catch (e) {
-      if (mine === seq.current) setError(errorMessage(e));
+      if (mine === seq.current) setError({ message: errorMessage(e), connection: isConnectionError(e) });
     } finally {
       if (mine === seq.current) setLoading(false);
     }
@@ -55,6 +60,11 @@ export function useQuery<T>(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
+
+  useEffect(() => {
+    if (opts.refetchOnReconnect === false) return;
+    return onReconnect(() => void refetch());
+  }, [opts.refetchOnReconnect, refetch]);
 
   useEffect(() => {
     if (!opts.intervalMs) return;
@@ -76,5 +86,6 @@ export function useQuery<T>(
     };
   }, [opts.refetchOnFocus, refetch]);
 
+  const error = rawError && !(rawError.connection && data !== null) ? rawError.message : null;
   return { data, error, loading, refetch, setData };
 }
