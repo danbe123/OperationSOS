@@ -1,8 +1,12 @@
 [Unit]
 Description=Operation SOS kiosk (cage and Chromium on the touchscreen)
 After=systemd-user-sessions.service caddy.service sos-api.service getty@tty1.service
-Wants=caddy.service
+Wants=caddy.service sos-api.service
 Conflicts=getty@tty1.service
+# An unattended box has nobody to `systemctl reset-failed`: never park this unit in `failed` after a burst
+# of restarts (the default is 5 starts in 10 s). Restart=always, because on-failure does not restart
+# after SIGTERM from an out-of-memory daemon or a stray kill, only after a crash.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple

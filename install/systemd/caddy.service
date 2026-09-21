@@ -3,6 +3,10 @@ Description=Operation SOS web server (Caddy)
 Documentation=https://caddyserver.com/docs/
 After=network-online.target kiwix-serve.service sos-api.service
 Wants=network-online.target
+# An unattended box has nobody to `systemctl reset-failed`: never park this unit in `failed` after a burst
+# of restarts (the default is 5 starts in 10 s). Restart=always, because on-failure does not restart
+# after SIGTERM from an out-of-memory daemon or a stray kill, only after a crash.
+StartLimitIntervalSec=0
 
 [Service]
 Type=notify
@@ -19,7 +23,7 @@ CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=full
-Restart=on-failure
+Restart=always
 RestartSec=2
 
 [Install]

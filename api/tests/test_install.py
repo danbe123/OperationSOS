@@ -160,7 +160,7 @@ def test_units_match_spec_section_5():
     kiwix = unit("kiwix-serve.service")
     assert ("ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --monitorLibrary --address all "
             "--port 8090 --urlRootLocation /kiwix --nosearchbar --nolibrarybutton --blockexternal") in kiwix
-    assert "Restart=on-failure" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
+    assert "Restart=always" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
     llama = unit("sos-llama.service")
     assert ("ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 "
             "-c 4096 -t 4 -ngl 0 -fa on -np 1 --no-webui --reasoning off") in llama
@@ -191,6 +191,69 @@ def test_units_match_spec_section_5():
                  "ExecStop=/srv/sos/api/.venv/bin/sos storage-event remove", "BindsTo=srv-sos-extended.mount",
                  "After=srv-sos-extended.mount sos-api.service", "WantedBy=srv-sos-extended.mount"):
         assert line in rescan, line
+
+
+def unit_sections(name: str) -> dict[str, dict[str, list[str]]]:
+    """A unit file as {section: {key: [values]}}: systemd keys may repeat, so nothing is squashed."""
+    sections: dict[str, dict[str, list[str]]] = {}
+    current = None
+    for raw in unit(name).splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", ";")):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current = sections.setdefault(line[1:-1], {})
+        elif current is not None and "=" in line:
+            key, value = line.split("=", 1)
+            current.setdefault(key.strip(), []).append(value.strip())
+    return sections
+
+
+CORE_UNITS = ["caddy.service", "sos-api.service", "kiwix-serve.service", "sos-embed.service", "sos-kiosk.service"]
+
+
+@pytest.mark.parametrize("name", CORE_UNITS)
+def test_core_units_keep_retrying_forever(name):
+    """An unattended box has nobody to `systemctl reset-failed`. Restart=on-failure is not enough: it does not
+    restart after SIGTERM (an out-of-memory daemon, a stray `kill`), measured with a real user unit, and
+    systemd's default start limit (5 starts in 10 s) parks a unit in `failed` for good after a burst of
+    restarts. So: Restart=always and no start limit, in [Unit] where systemd reads StartLimitIntervalSec."""
+    sections = unit_sections(name)
+    assert sections["Service"]["Restart"] == ["always"], name
+    assert sections["Unit"]["StartLimitIntervalSec"] == ["0"], name
+    assert "StartLimitIntervalSec" not in sections["Service"], "systemd only reads it from [Unit]"
+    assert int(sections["Service"]["RestartSec"][0]) <= 5, name
+
+
+def test_sos_llama_stays_off_unless_asked():
+    sections = unit_sections("sos-llama.service")
+    assert sections["Service"]["Restart"] == ["no"]
+    assert "StartLimitIntervalSec" not in sections["Unit"]
+    assert "Install" not in sections
+
+
+def test_service_graph_survives_a_restart_of_any_one_service():
+    """A restarted sos-api must not take Caddy or the kiosk browser with it, and none of them may be left
+    waiting for a service that is not there: Wants= and After= only, never Requires=, BindsTo= or PartOf= among
+    the long-running units (those propagate a stop or restart to the dependent)."""
+    strong = ("Requires", "Requisite", "BindsTo", "PartOf", "Upholds")
+    for name in CORE_UNITS + ["sos-llama.service"]:
+        unit_section = unit_sections(name)["Unit"]
+        for key in strong:
+            assert key not in unit_section, f"{name} has {key}=: a restart would propagate"
+    kiosk = unit_sections("sos-kiosk.service")["Unit"]
+    assert set(" ".join(kiosk["Wants"]).split()) >= {"caddy.service", "sos-api.service"}
+    assert set(" ".join(kiosk["After"]).split()) >= {"caddy.service", "sos-api.service"}
+    assert "sos-api.service" in " ".join(unit_sections("caddy.service")["Unit"]["After"])
+    assert "kiwix-serve.service" in " ".join(unit_sections("sos-api.service")["Unit"]["Wants"])
+
+
+def test_sos_api_is_killed_quickly_when_a_stream_holds_shutdown_open():
+    """uvicorn waits for open connections (an assistant stream) before it exits; without a bound the restart
+    waits out systemd's 90 s stop timeout with the whole box answering nothing."""
+    sections = unit_sections("sos-api.service")["Service"]
+    assert "--timeout-graceful-shutdown" in sections["ExecStart"][0]
+    assert int(sections["TimeoutStopSec"][0].rstrip("s")) <= 15
 
 
 @pytest.mark.skipif(shutil.which("systemd-analyze") is None, reason="systemd-analyze not available")
