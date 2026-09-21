@@ -20,10 +20,10 @@ describe('the route error page', () => {
     expect(screen.queryByText('Unable to open this page')).toBeNull();
   });
 
-  it('shows the page the second time, and for any other error', async () => {
+  it('shows the page instead of reloading again within a minute, and for any other error', async () => {
     const reload = vi.fn();
     Object.defineProperty(window, 'location', { value: { ...window.location, pathname: '/doc/ad-a', reload }, configurable: true });
-    sessionStorage.setItem('sos.reloaded:/doc/ad-a', '1');
+    sessionStorage.setItem('sos.autoReloadAt', String(Date.now()));   // it reloaded a moment ago: not again
     renderFailing('Failed to fetch dynamically imported module: /assets/Doc-abc123.js');
     expect(await screen.findByText('Unable to open this page')).toBeInTheDocument();
     expect(reload).not.toHaveBeenCalled();
