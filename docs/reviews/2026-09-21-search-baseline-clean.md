@@ -10,7 +10,7 @@ and meaning on, both from `sos.search.search()`; nothing in the gold sets change
 - **The `survival` class answered HTTP 400 on every search.** `solar.lowtechmagazine.com_mul_all` is a multilingual ZIM
   (library.xml language `eng,fra,deu,...`) but the dev database's `zim_languages` recorded it as `eng`, so Kiwix was asked for
   it in one request with nine English archives and refused the whole group. `sos index` (7.5 s here; it rescans, rebuilds
-  `fts_docs` to the same 21,368 rows and re-flags the ZIMs) refreshed the setting from library.xml, so the ten survival
+  `fts_docs` to the same 21,681 rows and re-flags the ZIMs) refreshed the setting from library.xml, so the ten survival
   sources are asked in two requests. `search()` also no longer lets one archive hide its class: a multi-archive request refused with a
   client error is retried by halves until the offender stands alone, one log line per distinct refusal, no extra request when
   nothing is refused (`f877099`).
@@ -76,8 +76,9 @@ The two runs differ in the code under test only by the survival class answering;
 | survival rows in the recorded rankings | 0 -> 56 (in 53 queries) | 0 -> 21 (in 20 queries) |
 
 - **Keyword hits from the survival sources now exist, and they rescue nothing.** Not one gold query gets a better rank. They
-  displace: the wikipedia set's hit@10 keyword falls 0.500 -> 0.477 (two targets slide past ten: `para-a24-1` 39 -> absent, and
-  the Wikipedia rows behind them), because a survival-site result now sits in the slots ahead of a target that used to be 7th or 10th.
+  displace: the wikipedia set's keyword hit@10 falls 0.500 -> 0.477 (`wiki-how-does-a-heat-pump-work` 10 -> 12 and
+  `wiki-portable-petrol-generator` 10 -> 11 slide out of the first ten), because a survival-site result now sits in the slots ahead of a target
+  that used to be 7th to 10th; twelve Wikipedia targets sit one or two places lower.
   Every other headline figure is the same to three places: own-library, paraphrase, safety and books are unchanged with meaning on
   or off, wikipedia hit@1 0.186 and 0.128 as before.
 - **The findings of the earlier baseline stand.** Meaning on: paraphrase hit@3 0.349 -> 0.532, safety hit@1 0.559 -> 0.735; own-library
