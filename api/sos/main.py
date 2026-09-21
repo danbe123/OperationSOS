@@ -52,7 +52,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         app.state.semantic = Semantic(settings)
         from sos.ai import LlamaClient
         from sos.ai_runtime import AiRuntime, restore_on_startup, shutdown as ai_shutdown
-        app.state.conn = db.connect(settings.db_path)
+        # Shared by the assistant's routes and its runtime, which store ai_state, ai_message and ai_enabled: durable.
+        app.state.conn = db.connect(settings.db_path, durable=True)
         app.state.ai_runtime = AiRuntime(settings=settings, llama=LlamaClient(settings.llama_url))
         await restore_on_startup(app.state.ai_runtime, app.state.conn)
         app.state.tokens = system.TokenStore()

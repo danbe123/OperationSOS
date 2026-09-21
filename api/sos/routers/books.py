@@ -9,14 +9,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from sos import books
-from sos.routers import get_db
+from sos.routers import get_db_durable
 
 router = APIRouter(tags=["books"])
 
 
 @router.get("/books")
 def list_books(q: str = "", author: str = "", shelf: str = "", sort: str = "popular", limit: int = 40, offset: int = 0,
-               conn=Depends(get_db)):
+               conn=Depends(get_db_durable)):
     zim = books.available_zim(conn)
     if zim is None:
         return {"items": [], "total": 0, "available": False}
@@ -25,13 +25,13 @@ def list_books(q: str = "", author: str = "", shelf: str = "", sort: str = "popu
 
 
 @router.get("/books/shelves")
-def book_shelves(conn=Depends(get_db)):
+def book_shelves(conn=Depends(get_db_durable)):
     zim = books.available_zim(conn)
     return books.shelves(conn, zim) if zim else []
 
 
 @router.get("/books/gutenberg/{book_id}")
-def get_book(book_id: int, conn=Depends(get_db)):
+def get_book(book_id: int, conn=Depends(get_db_durable)):
     zim = books.BOOK_ZIMS[0]
     body = books.get_book(conn, zim, book_id)
     if body is None:
@@ -55,12 +55,12 @@ def _entry(row) -> dict:
 
 
 @router.get("/reading")
-def list_reading(conn=Depends(get_db)):
+def list_reading(conn=Depends(get_db_durable)):
     return [_entry(r) for r in conn.execute("SELECT * FROM reading ORDER BY updated_at DESC, rowid DESC").fetchall()]
 
 
 @router.get("/reading/{key}")
-def get_reading(key: str, conn=Depends(get_db)):
+def get_reading(key: str, conn=Depends(get_db_durable)):
     row = conn.execute("SELECT * FROM reading WHERE key=?", (key,)).fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="Nothing saved for this book")
@@ -68,7 +68,7 @@ def get_reading(key: str, conn=Depends(get_db)):
 
 
 @router.put("/reading/{key}")
-def put_reading(key: str, body: ReadingBody, conn=Depends(get_db)):
+def put_reading(key: str, body: ReadingBody, conn=Depends(get_db_durable)):
     conn.execute(
         "INSERT INTO reading (key, title, author, cover_url, cfi, percent, updated_at) VALUES (?,?,?,?,?,?,?) "
         "ON CONFLICT(key) DO UPDATE SET title=excluded.title, author=excluded.author, cover_url=excluded.cover_url, "
@@ -79,7 +79,7 @@ def put_reading(key: str, body: ReadingBody, conn=Depends(get_db)):
 
 
 @router.delete("/reading/{key}")
-def delete_reading(key: str, conn=Depends(get_db)):
+def delete_reading(key: str, conn=Depends(get_db_durable)):
     conn.execute("DELETE FROM reading WHERE key=?", (key,))
     conn.commit()
     return {"ok": True}
@@ -101,13 +101,13 @@ class RecentBody(BaseModel):
 
 
 @router.get("/recent")
-def list_recent(limit: int = 12, conn=Depends(get_db)):
+def list_recent(limit: int = 12, conn=Depends(get_db_durable)):
     limit = max(1, min(RECENT_KEEP, limit))
     return [dict(r) for r in conn.execute("SELECT * FROM recent ORDER BY viewed_at DESC, rowid DESC LIMIT ?", (limit,)).fetchall()]
 
 
 @router.put("/recent/{key:path}")   # an article's key carries its path, slashes and all
-def put_recent(key: str, body: RecentBody, conn=Depends(get_db)):
+def put_recent(key: str, body: RecentBody, conn=Depends(get_db_durable)):
     conn.execute(
         "INSERT INTO recent (key, kind, title, url, cover_url, viewed_at) VALUES (?,?,?,?,?,?) "
         "ON CONFLICT(key) DO UPDATE SET kind=excluded.kind, title=excluded.title, url=excluded.url, cover_url=excluded.cover_url, "
@@ -119,7 +119,7 @@ def put_recent(key: str, body: RecentBody, conn=Depends(get_db)):
 
 
 @router.delete("/recent/{key:path}")
-def delete_recent(key: str, conn=Depends(get_db)):
+def delete_recent(key: str, conn=Depends(get_db_durable)):
     conn.execute("DELETE FROM recent WHERE key=?", (key,))
     conn.commit()
     return {"ok": True}

@@ -354,7 +354,7 @@ class ThermalWatchdog:
 
     async def run(self) -> None:
         while True:
-            conn = connect(self.db_path)
+            conn = connect(self.db_path, durable=True)   # it writes only to stop the assistant, and that must stick
             try:
                 if self.app is None:
                     self.tick(conn)
