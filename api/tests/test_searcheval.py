@@ -416,3 +416,12 @@ def test_the_committed_gold_files_are_well_formed():
     rows, problems = se.load_gold(se.DEFAULT_GOLD_DIR)
     assert problems == []
     assert len({r.id for r in rows}) == len(rows)
+
+
+def test_a_held_out_set_is_only_run_when_named(tmp_path):
+    write(tmp_path / "demo.jsonl", {"id": "a", "query": "water", "expected": [{"url": "/x"}], "set": "demo"})
+    write(tmp_path / "heldout-2026.jsonl", {"id": "h", "query": "fire", "expected": [{"url": "/y"}], "set": "heldout-2026"})
+    rows, problems = se.load_gold(tmp_path)
+    assert problems == [] and [r.id for r in rows] == ["a"]
+    rows, problems = se.load_gold(tmp_path, ["heldout-2026"])
+    assert problems == [] and [r.id for r in rows] == ["h"]

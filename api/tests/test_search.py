@@ -1,4 +1,5 @@
 import asyncio
+import json
 import shutil
 import time
 from pathlib import Path
@@ -8,7 +9,7 @@ import pytest
 import respx
 
 from sos import db, library, search
-from sos.kiwix import KiwixClient, KiwixError
+from sos.kiwix import KiwixClient, KiwixError, KiwixHit
 from sos.manifest import load_manifests
 
 FX = Path(__file__).parent / "fixtures"
@@ -420,3 +421,103 @@ def test_the_household_s_word_for_a_failure_finds_the_module_and_its_title_puts_
     # "stops" finds "off" (a synonym, half a word) and the module's title is the subject: it leads the
     # playbook that carries the word itself
     assert own[:2] == ["/m/water#what-to-do", "/s/grid-collapse#first-72-hours"]
+
+
+# --- one archive Kiwix refuses must not hide the rest of its class ------------------------------------------
+
+class PickyKiwix:
+    """A Kiwix that refuses (HTTP 400) any request naming an archive in `bad`, and answers one hit per
+    archive otherwise; `calls` is every request it was sent."""
+
+    def __init__(self, bad=(), status=400):
+        self.bad, self.status, self.calls = set(bad), status, []
+
+    async def search(self, names, pattern, n, timeout):
+        self.calls.append(list(names))
+        if self.bad & set(names):
+            raise KiwixError("search: HTTP 400: Two or more books in different languages", status=self.status)
+        return [KiwixHit(f"Water in {name}", f"A/{name}", "Water supply", name) for name in names]
+
+
+@pytest.fixture
+def survival(conn):
+    """Four archives of one class, each with a full-text index, in the one language group."""
+    names = ["surv-a", "surv-b", "surv-c", "surv-d"]
+    for i, name in enumerate(names):
+        conn.execute("INSERT INTO library_items(id,title,kind,tier,category,dest,available,fts,priority) "
+                     "VALUES (?,?,'zim','core','survival',?,1,1,?)", (name, name, f"zim/{name}.zim", 50 + i))
+    languages = json.loads(db.get_setting(conn, "zim_languages", "{}"))
+    db.set_setting(conn, "zim_languages", json.dumps({**languages, **{n: "eng" for n in names}}))
+    conn.commit()
+    search._refused_seen.clear()
+    return names
+
+
+def _survival_urls(resp):
+    return {r["url"] for r in resp["results"] if r["source"] == "survival"}
+
+
+def test_a_healthy_class_costs_one_request_per_group(conn, env, survival):
+    kiwix = PickyKiwix()
+    resp = _run(search.search(conn, env, kiwix, "water"))
+    assert resp["partial"] is False
+    assert sorted(c for c in kiwix.calls if c[0].startswith("surv")) == [survival]   # the four archives, once
+    assert _survival_urls(resp) == {f"/read/{n}/A/{n}" for n in survival}
+
+
+@pytest.mark.parametrize("bad", ["surv-a", "surv-b", "surv-d"])
+def test_one_refused_archive_leaves_the_rest_of_its_class(conn, env, survival, bad):
+    kiwix = PickyKiwix(bad=[bad])
+    resp = _run(search.search(conn, env, kiwix, "water"))
+    assert resp["partial"] is False
+    assert _survival_urls(resp) == {f"/read/{n}/A/{n}" for n in survival if n != bad}
+    assert _cache_rows(conn) == 1          # the refusal is permanent: the answer is complete and is kept
+    # every archive that was asked for singly or in a half was asked for at most once per level
+    assert max(len(c) for c in kiwix.calls) == 4 and [bad] in kiwix.calls
+
+
+def test_several_refused_archives_are_all_left_out(conn, env, survival):
+    kiwix = PickyKiwix(bad=["surv-a", "surv-c"])
+    resp = _run(search.search(conn, env, kiwix, "water"))
+    assert resp["partial"] is False
+    assert _survival_urls(resp) == {"/read/surv-b/A/surv-b", "/read/surv-d/A/surv-d"}
+
+
+def test_every_archive_refused_is_a_class_with_nothing_to_say(conn, env, survival):
+    resp = _run(search.search(conn, env, PickyKiwix(bad=survival), "water"))
+    assert resp["partial"] is False and not _survival_urls(resp)
+
+
+@pytest.mark.parametrize("status", [429, 500, 503])
+def test_a_transient_refusal_is_not_split(conn, env, survival, status):
+    kiwix = PickyKiwix(bad=["surv-a"], status=status)
+    resp = _run(search.search(conn, env, kiwix, "water"))
+    assert resp["partial"] is True and not _survival_urls(resp)
+    assert sorted(c for c in kiwix.calls if c[0].startswith("surv")) == [survival]   # asked once, not halved
+
+
+def test_a_half_that_times_out_is_partial_but_the_other_half_answers(conn, env, survival):
+    class Mixed(PickyKiwix):
+        async def search(self, names, pattern, n, timeout):
+            if names == ["surv-c", "surv-d"]:
+                raise asyncio.TimeoutError()
+            return await super().search(names, pattern, n, timeout)
+
+    resp = _run(search.search(conn, env, Mixed(bad=["surv-b"]), "water"))
+    assert resp["partial"] is True
+    assert _survival_urls(resp) == {"/read/surv-a/A/surv-a"}
+
+
+def test_a_refusal_is_logged_once_however_many_searches_meet_it(conn, env, survival, caplog):
+    kiwix = PickyKiwix(bad=["surv-b"])
+    with caplog.at_level("WARNING", logger="sos.search"):
+        for q in ("water", "fire", "boil water"):
+            _run(search.search(conn, env, kiwix, q, use_cache=False))
+    refusals = [r for r in caplog.records if "Kiwix refused" in r.getMessage()]
+    assert 1 <= len(refusals) <= 3          # the whole group, one half, and the archive itself: once each
+    assert len({r.getMessage() for r in refusals}) == len(refusals)
+
+
+def test_interleave_keeps_each_lists_ranks():
+    assert search._interleave([["a1", "a2", "a3"], ["b1"], []]) == ["a1", "b1", "a2", "a3"]
+    assert search._interleave([]) == []

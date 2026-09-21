@@ -51,12 +51,35 @@ looks in (`fts=1`). It exits non-zero on any problem. Gold is verified against t
 | `books-extra` | 58 | fresh everyday-intent queries ("how to build a chicken coop", "a first aid book for accidents at home", "a book of ghost stories to read on a winter night"), written after the model bake-off from the catalogue's metadata alone, before any embedding was scored: 27 answered by Survivor Library (`group: survivor`), 24 by Gutenberg (`gutenberg`), 7 by both (`both`). `expected` lists every book whose title clearly covers the topic (1 to 32 books), Survivor Library category pages were used to find candidates but not to decide (the site's category is a representation under test). Half are held out by `lab/books/books_eval.py`'s stable hash. Rebuilt by `lab/books/make_extras.py` from `lab/books/extras_spec.py`. |
 | `wikipedia` | 86 | known-item lookups of one English Wikipedia article. Meaning search only reorders Wikipedia's keyword hits, so the figure that matters is the target's rank with the rerank off and on. |
 
+`heldout-2026-09-21.jsonl` (62 rows, `group` is the class: medicine-name, medicine-question, medicine-paraphrase, everyday, safety-plain, safety-hard, wikipedia) was written before
+the tuning was finished and its results were not looked at; it is a held-out check, not a tuning set. It is left out of a default run and of `ALL`: run it by naming it
+(`sos eval-search heldout-2026-09-21`), and do not tune on it.
+
 ## Metrics
 
 Alternatives are interchangeable, so the first matching result is *the* relevant one:
 hit@k (in the top k), MRR@10 (1 / rank, 0 beyond ten) and nDCG@10 (1 / log2(rank + 1), binary relevance), plus median
 and p95 latency. `--semantic both` also lists the queries the meaning layer newly put in the top ten (rescued) or
 newly took out of it (regressed). `sos eval-compare a.json b.json` prints the delta of two runs.
+
+## Record and replay (fast experiments)
+
+A live run takes about 30 minutes because every query is a round of Kiwix searches and an embedding call. Keep what
+the searches consumed once, then run the search code against it with no service at all:
+
+```
+sos eval-search --record .dev/search-recordings/NAME --compact --json run.json     # live, both modes
+sos eval-search --replay .dev/search-recordings/NAME --json replay.json            # no Kiwix, no embedding server
+```
+
+Per distinct query the recording holds every multi-archive Kiwix request's hits (or refusal), the query vector, the
+nearest 100 passages of the box's own library and of the household books, and the Wikipedia rerank cosines
+(`api/sos/searchreplay.py`). A replay opens the same database read-only and is deterministic; its timings are only
+the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`): a
+change that asks Kiwix something new gets a refusal for it, so a non-zero count means that run is not comparable.
+Record again after a database rebuild or an index rebuild. Recordings live under the git-ignored `.dev/`.
+
+`lab.py` runs named parameter sets over a replay in parallel and prints one comparison table (see its docstring).
 
 ## Known limits
 

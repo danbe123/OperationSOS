@@ -281,6 +281,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=_positive_int, default=40, help="results asked of search() per query (default 40, the API's)")
     p.add_argument("--json", help="write the run (metrics and every query's top ten) here")
     p.add_argument("--compact", action="store_true", help="keep only 5 rows of each recorded ranking (3 when the answer is first), plus the answer when it is lower; for a small run file")
+    p.add_argument("--record", metavar="DIR", help="keep every Kiwix and embedding answer the searches use in DIR, for --replay")
+    p.add_argument("--replay", metavar="DIR", help="run against the answers recorded in DIR: no Kiwix, no embedding server, deterministic, seconds")
     p.add_argument("--validate", action="store_true", help="check every gold file against the real database and ZIMs; exit 1 on a problem")
     p.add_argument("--gold-dir", help="gold set folder (default tools/eval/search)")
     p.add_argument("--db", help="database to search (default $SOS_STATE/sos.db), opened read-only")

@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 
 from sos.config import Settings
-from sos.query import fts5_match, tokenise
+from sos.query import fts5_match, is_postcode, tokenise
 
 KIND_RANK = {"city": 0, "town": 1, "village": 2, "suburb": 3, "hamlet": 4, "locality": 5, "named-road": 6, "postcode": 7}
 _KIND_CASE = "CASE kind " + " ".join(f"WHEN '{k}' THEN {v}" for k, v in KIND_RANK.items()) + " ELSE 8 END"
@@ -96,7 +96,11 @@ def exact_place(conn: sqlite3.Connection, name: str) -> dict | None:
         if candidate == norm or candidate.replace(" ", "") == squashed:
             return _row(r)
     # A squashed lookup like "sw1a1aa" tokenises to a single token that never matches the
-    # space-separated tokens the index stores, so fall back to a full scan on the small table.
+    # space-separated tokens the index stores, so a postcode falls back to a scan of the table. Only a postcode:
+    # the table holds 2.7 million places and the scan costs about 0.9 s on the PC (several seconds on a Pi), and
+    # every search asks for its exact place, so a scan for any other query was most of a search's time.
+    if not is_postcode(norm):
+        return None
     rows = conn.execute(
         "SELECT name, kind, lat, lon, region, postcode FROM fts_places WHERE REPLACE(lower(name), ' ', '') = ?",
         (squashed,),

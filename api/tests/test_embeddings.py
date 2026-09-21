@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 import respx
 
+from sos import query as query_mod
 from sos import db, embeddings, search
 from sos.kiwix import KiwixClient
 
@@ -279,15 +280,18 @@ def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env, encoded,
     other_before = [r["url"] for r in baseline["results"] if not r["url"].startswith("/read/wikipedia_en_all_maxi/")]
     assert other_before == ["/read/nhs_uk/conditions/bleeding"]
 
-    cos = 0.9   # chosen so the multiplier (0.7 + 0.6 * cos = 1.24) is genuinely not 1.0 -- a real change
+    cos = 0.77   # inside the lift's ramp (0.72 to 0.82), so the lift is a real, partial one
     sem = RerankSemantic({decoded: cos})
     resp = run(sem)
 
-    # (a) the rescored hit's score genuinely changed by the expected multiplier, computed explicitly here
+    # (a) the lifted hit's score genuinely rose by the expected amount, computed explicitly here
     wiki_after = [r for r in resp["results"] if r["url"].startswith("/read/wikipedia_en_all_maxi/")]
     assert len(wiki_after) == 1
-    expected_score = baseline_score * (search.WIKIPEDIA_RERANK_BASE + search.WIKIPEDIA_RERANK_SPAN * cos)
-    assert wiki_after[0]["score"] == pytest.approx(expected_score)
+    assert search.wikipedia_lift(cos) == pytest.approx(search.WIKIPEDIA_LIFT * 0.5)
+    # the lift joins the score before the title/snippet relevance multiplies the whole of it
+    rel = search.relevance(query_mod.reduce_query("wikipedia article").terms, "Some Article",
+                           "An encyclopaedia article.", "wikipedia article")
+    assert wiki_after[0]["score"] == pytest.approx(baseline_score + search.wikipedia_lift(cos) * rel)
     assert wiki_after[0]["score"] != pytest.approx(baseline_score)                 # it really did change
     assert sem.rerank_calls == [("wikipedia article", [decoded])]          # the real key, slash intact
 
@@ -1678,9 +1682,12 @@ def test_a_document_page_found_by_meaning_alone_needs_a_nearer_match_than_the_bo
     ])
     conn.commit()
     # the building regulation is the nearest stranger at 0.71: not near enough for a document's page on its own
-    sem = FakeSemantic([("/doc/ad-l1#page=69", 0.71), ("/p/mains#generators", 0.68)])
+    sem = FakeSemantic([("/doc/ad-l1#page=69", 0.71), ("/p/mains#generators", 0.70)])
     urls = [r["url"] for r in _search(conn, env, "running a genset in the house", sem, use_cache=False)["results"]]
     assert urls == ["/p/mains#generators"]
+    # and the box's own page needs 0.69 to count when the words did not find it (a stranger at 0.68 does not)
+    sem = FakeSemantic([("/p/mains#generators", 0.68)])
+    assert _search(conn, env, "running a genset in the house", sem, use_cache=False)["results"] == []
     # nearer, it is an answer
     sem = FakeSemantic([("/doc/ad-l1#page=69", 0.76)])
     urls = [r["url"] for r in _search(conn, env, "running a genset in the house", sem, use_cache=False)["results"]]

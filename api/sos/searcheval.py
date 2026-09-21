@@ -54,6 +54,7 @@ STUCK_AFTER = 3                # this many queries in a row still partial after 
 REQUIRED = ("id", "query", "expected", "set")
 SEARCH_UNINDEXED_OK = (SURVIVOR_ZIM, GUTENBERG_ZIM)   # found through the meaning collections, not the keyword search
 EXPECTED_KEYS = ("url", "item", "gutenberg", "survivor")
+HELD_OUT = "heldout"           # gold files with this stem prefix are never part of a default run
 
 SearchFn = Callable[[str, str], Awaitable[dict]]     # (query, mode) -> the payload search() returns
 
@@ -226,6 +227,8 @@ def load_gold(gold_dir: Path, names: Optional[list[str]] = None) -> tuple[list[G
     for f in files:
         if names and f.stem not in names:
             continue
+        if not names and f.stem.startswith(HELD_OUT):
+            continue        # a held-out set is run by naming it, so no tuning run ever includes it by accident
         got, bad = load_gold_file(f)
         problems.extend(bad)
         for row in got:
@@ -370,7 +373,7 @@ def top_rows(payload: dict, depth: int = TOP) -> list[dict]:
 
 async def run_one(row: GoldRow, expected_urls: list[str], mode: str, search_fn: SearchFn,
                   clock: Callable[[], float] = time.perf_counter, pause: float = RETRY_PAUSE_S,
-                  retry_partial: bool = True) -> dict:
+                  retry_partial: bool = True, max_attempts: int = MAX_ATTEMPTS) -> dict:
     """One query in one mode. A search that came back partial (a Kiwix class timed out) or with its meaning
     layer silently dark (the embedding call failed) is a measurement of the machine, not of the search: it is
     asked again, up to MAX_ATTEMPTS times, and the record says how many retries it took and whether it ended
@@ -384,7 +387,7 @@ async def run_one(row: GoldRow, expected_urls: list[str], mode: str, search_fn: 
         partial = bool(payload.get("partial"))
         semantic_ok = payload.get("semantic_ok", True) if mode == "on" else None
         clean = (not partial or not retry_partial) and semantic_ok is not False
-        if clean or attempts >= MAX_ATTEMPTS:
+        if clean or attempts >= max_attempts:
             break
         if pause:
             await asyncio.sleep(pause)
@@ -396,7 +399,8 @@ async def run_one(row: GoldRow, expected_urls: list[str], mode: str, search_fn: 
 
 async def run_rows(rows: list[GoldRow], expected: dict[str, list[str]], modes: list[str], search_fn: SearchFn, *,
                    clock: Callable[[], float] = time.perf_counter, pause: float = RETRY_PAUSE_S,
-                   progress: Optional[Callable[[int, int, GoldRow, dict], None]] = None) -> dict[str, dict[str, dict]]:
+                   progress: Optional[Callable[[int, int, GoldRow, dict], None]] = None,
+                   max_attempts: int = MAX_ATTEMPTS) -> dict[str, dict[str, dict]]:
     """{mode: {id: record}}. With two modes the order alternates query by query, so neither mode is always the
     one that finds Kiwix's caches cold or warm. When STUCK_AFTER queries in a row stay partial after their
     retries, a Kiwix class is failing for good on this machine (the baseline meets one: a multilingual ZIM
@@ -406,7 +410,8 @@ async def run_rows(rows: list[GoldRow], expected: dict[str, list[str]], modes: l
     for i, row in enumerate(rows):
         order = modes if i % 2 == 0 else list(reversed(modes))
         for mode in order:
-            rec = await run_one(row, expected[row.id], mode, search_fn, clock, pause, retry_partial=stuck[mode] < STUCK_AFTER)
+            rec = await run_one(row, expected[row.id], mode, search_fn, clock, pause, retry_partial=stuck[mode] < STUCK_AFTER,
+                                max_attempts=max_attempts)
             stuck[mode] = stuck[mode] + 1 if rec["partial"] else 0
             out[mode][row.id] = rec
             if progress:
@@ -570,43 +575,112 @@ def semantic_sizes(semantic) -> dict:
     return sizes
 
 
-async def run_real(rows: list[GoldRow], modes: list[str], settings, limit: int, db_path: Path, gold_dir: Path,
-                   quiet: bool = False) -> dict:
-    from sos.embeddings import Semantic
-    from sos.kiwix import KiwixClient
-    from sos import search as search_mod
+def _meta(rows: list[GoldRow], modes: list[str], limit: int, db_path: Path, gold_dir: Path, settings,
+          semantic) -> dict:
+    return {"date": date.today().isoformat(), **git_state(), "modes": modes, "limit": limit, "db": str(db_path),
+            "gold_dir": str(gold_dir), "queries": len(rows), "sets": _count_sets(rows),
+            "semantic": semantic_sizes(semantic) if semantic is not None else None,
+            "embed_model": settings.embed_model}
 
-    conn = open_readonly(db_path)
-    kiwix = KiwixClient(settings.kiwix_url)
-    semantic = Semantic(settings) if "on" in modes else None
-    expected = {r.id: [u for e in r.expected for u in resolve_urls(e, conn)] for r in rows}
 
-    async def search_fn(query: str, mode: str) -> dict:
-        sem = semantic if mode == "on" else None
-        payload = await search_mod.search(conn, settings, kiwix, query, None, limit, use_cache=False, semantic=sem)
-        if sem is not None:
-            remembered = sem._vectors.get(query.strip())    # the embedding call answers None when it failed or timed out
-            payload["semantic_ok"] = remembered is not None and remembered[0] is not None
-        return payload
-
+def _progress(quiet: bool):
     def progress(i: int, n: int, row: GoldRow, rec: dict) -> None:
         if not quiet:
             print(f"[{i:3d}/{n}] {rec['mode']:<3} {row.id:<32} rank={rec['rank'] or '-':<3} {rec['latency_ms']:>7.0f} ms"
                   f"{' retries=' + str(rec['retries']) if rec['retries'] else ''}", file=sys.stderr)
+    return progress
+
+
+def _db_stamp(db_path: Path) -> dict:
+    stat = Path(db_path).stat()
+    return {"db": str(db_path), "db_size": stat.st_size, "db_mtime": int(stat.st_mtime)}
+
+
+async def run_real(rows: list[GoldRow], modes: list[str], settings, limit: int, db_path: Path, gold_dir: Path,
+                   quiet: bool = False, record: Optional[Path] = None) -> dict:
+    """The live run. With `record`, every Kiwix answer and every embedding answer the searches consume is
+    kept in that folder (see sos.searchreplay), for `run_replay` to put back later."""
+    from sos.embeddings import Semantic
+    from sos.kiwix import KiwixClient
+    from sos import search as search_mod
+    from sos import searchreplay
+
+    conn = open_readonly(db_path)
+    real_kiwix = KiwixClient(settings.kiwix_url)
+    real_semantic = Semantic(settings) if "on" in modes else None
+    recorder = searchreplay.Recorder(record) if record else None
+    kiwix = searchreplay.RecordingKiwix(real_kiwix, recorder) if recorder else real_kiwix
+    semantic = searchreplay.RecordingSemantic(real_semantic, recorder) if recorder and real_semantic else real_semantic
+    expected = {r.id: [u for e in r.expected for u in resolve_urls(e, conn)] for r in rows}
+
+    async def search_fn(query: str, mode: str) -> dict:
+        sem = semantic if mode == "on" else None
+        if recorder:
+            kiwix.query = query
+        payload = await search_mod.search(conn, settings, kiwix, query, None, limit, use_cache=False, semantic=sem)
+        if sem is not None:
+            remembered = sem._vectors.get(query.strip())    # the embedding call answers None when it failed or timed out
+            payload["semantic_ok"] = remembered is not None and remembered[0] is not None
+        if recorder:
+            recorder.flush(query)
+        return payload
 
     try:
         # Warm-up, untimed and unrecorded: the first query pays for loading the indexes and for Kiwix's cold caches.
         for word in ("water", "bleeding", "power cut", "iodine tablets"):
             for mode in modes:
                 await search_fn(word, mode)
-        meta = {"date": date.today().isoformat(), **git_state(), "modes": modes, "limit": limit, "db": str(db_path),
-                "gold_dir": str(gold_dir), "queries": len(rows), "sets": _count_sets(rows),
-                "semantic": semantic_sizes(semantic) if semantic is not None else None,
-                "embed_model": settings.embed_model}
-        runs = await run_rows(rows, expected, modes, search_fn, progress=progress)
+        if recorder:
+            recorder.queries.clear()       # the warm-up is not part of the recording (its files are never asked for)
+        meta = _meta(rows, modes, limit, db_path, gold_dir, settings, real_semantic)
+        if recorder:
+            meta["record"] = str(record)
+            recorder.write_meta({**meta, **_db_stamp(db_path)})
+        runs = await run_rows(rows, expected, modes, search_fn, progress=_progress(quiet))
     finally:
-        await kiwix.aclose()
+        await real_kiwix.aclose()
         conn.close()
+    return build_document(rows, expected, runs, meta)
+
+
+async def run_replay(rows: list[GoldRow], modes: list[str], settings, limit: int, db_path: Path, gold_dir: Path,
+                     replay, quiet: bool = True) -> dict:
+    """The same run with no service: every Kiwix and embedding answer comes from a recording (a folder, or a
+    `sos.searchreplay.Replay` already open, which a lab reuses across many runs). Timings are only the search's
+    own computation. The run says how many questions the recording could not answer (`meta.replay_misses`); a
+    change that asks Kiwix something new gets a refusal for it, so a non-zero count means the run is not
+    comparable."""
+    from sos import search as search_mod
+    from sos import searchreplay
+
+    if not isinstance(replay, searchreplay.Replay):
+        replay = searchreplay.Replay(Path(replay))
+    conn = open_readonly(db_path)
+    kiwix = searchreplay.ReplayKiwix(replay)
+    semantic = searchreplay.ReplaySemantic(replay) if "on" in modes else None
+    expected = {r.id: [u for e in r.expected for u in resolve_urls(e, conn)] for r in rows}
+    replay.misses.update({k: 0 for k in replay.misses})
+
+    async def search_fn(query: str, mode: str) -> dict:
+        sem = semantic if mode == "on" else None
+        kiwix.query = query
+        payload = await search_mod.search(conn, settings, kiwix, query, None, limit, use_cache=False, semantic=sem)
+        if sem is not None:
+            remembered = sem._vectors.get(query.strip())
+            payload["semantic_ok"] = remembered is not None and remembered[0] is not None
+        return payload
+
+    try:
+        meta = _meta(rows, modes, limit, db_path, gold_dir, settings, None)
+        runs = await run_rows(rows, expected, modes, search_fn, pause=0.0, progress=_progress(quiet), max_attempts=1)   # a replay answers the same every time: asking again is pointless
+    finally:
+        conn.close()
+    meta.update({"replay": str(replay.folder), "replay_misses": dict(replay.misses),
+                 "replay_recorded": {k: replay.meta.get(k) for k in ("date", "commit", "db_size", "db_mtime")}})
+    stamp = _db_stamp(db_path)
+    if replay.meta.get("db_size") not in (None, stamp["db_size"]):
+        print(f"warning: the database is not the one recorded against ({stamp['db_size']} bytes, recorded "
+              f"{replay.meta.get('db_size')}): replayed answers may not match it", file=sys.stderr)
     return build_document(rows, expected, runs, meta)
 
 
@@ -654,7 +728,16 @@ def run_from_namespace(args: argparse.Namespace) -> int:
         print(f"no gold rows in {gold_dir}", file=sys.stderr)
         return 1
     modes = modes_for(getattr(args, "semantic", "both"))
-    doc = asyncio.run(run_real(rows, modes, settings, int(getattr(args, "limit", 40) or 40), db_path, gold_dir))
+    limit = int(getattr(args, "limit", 40) or 40)
+    record, replay = getattr(args, "record", None), getattr(args, "replay", None)
+    if record and replay:
+        print("--record and --replay are two ways to run: pick one", file=sys.stderr)
+        return 1
+    if replay:
+        doc = asyncio.run(run_replay(rows, modes, settings, limit, db_path, gold_dir, Path(replay), quiet=False))
+        print(f"replayed from {replay}; questions the recording could not answer: {doc['meta']['replay_misses']}")
+    else:
+        doc = asyncio.run(run_real(rows, modes, settings, limit, db_path, gold_dir, record=Path(record) if record else None))
     if getattr(args, "compact", False):
         compact(doc)
     print(format_report(doc))
