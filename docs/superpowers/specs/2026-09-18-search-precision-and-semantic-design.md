@@ -79,15 +79,26 @@ The plan in the Gutenberg design, section 8, built for the box's own library:
   with a 0.6 s timeout, and takes the twenty nearest by dot product (all unit vectors).
 - **How near is near.** bge-small's cosines run close together: on this library a passage that answers
   sits at 0.68 to 0.82, the nearest stranger at 0.62 to 0.72 (a building regulation for "generator
-  indoors" at 0.71; the box's own "Mains electricity" answers at 0.68). So the floor depends on what the
-  cosine is evidence for (`search.SEMANTIC_FLOOR`): a lift to a row the words found takes 0.60 (0.66 for a
-  converted document's page); a row the words missed takes 0.66, and 0.74 for a document's page, whose
-  21,000 neighbours are dense with strangers. Above its floor a hit is worth
-  `0.5 × source weight × (cosine − 0.60) / (0.82 − 0.60)`, capped at the ceiling — worth its distance, not
-  its rank in the list.
-- **Fusion.** A near passage the words found is lifted by that; one the words missed is added with it as
-  its score, its opening words (heading stripped) as its snippet, and `via: "meaning"`. The relevance
-  multiplier of section 2 is not applied to a row found by meaning: it has no words to be judged by.
+  indoors" at 0.71). So the cosine only decides whether a passage counts at all, by a floor that depends on
+  what it is evidence for (`search.SEMANTIC_FLOOR`): a lift to a row the words found takes 0.60 (0.66 for a
+  converted document's page); a row the words missed takes 0.69, and 0.74 for a document's page, whose
+  21,000 neighbours are dense with strangers.
+- **Fusion (task 19, 2026-09-21; measured in `docs/reviews/2026-09-21-search-tuning.md`).** The box's own
+  passages are fused by rank, as reciprocal-rank fusion does, not by distance: the nth nearest of the twenty is
+  worth what a keyword hit at rank n is worth, `weight / (5 + n)`, times `DENSE_WEIGHT` (2.0), and half that for a
+  converted document's page (`DENSE_DOC_SHARE`). A near passage the words found is lifted by that; one the
+  words missed is added with it as its score, its opening words (heading stripped) as its snippet, and
+  `via: "meaning"`. The relevance multiplier of section 2 is not applied to a row found by meaning: it has no
+  words to be judged by. The household books keep the distance bonus,
+  `0.5 × 0.6 × (cosine − 0.60) / (0.82 − 0.60)`, capped at the ceiling.
+- **What meaning may not push down.** Two rules stand after the fusion, both of the kind "the words were
+  right, and the ranking of meaning must not undo it". A row found by the words whose title is the query, or
+  carries two thirds of its words (`TITLE_SHARE`: the NHS "Paracetamol" page for "paracetamol"), never ends
+  below the place the words alone gave it, except below a quick card in the first three. A quick card the
+  words ranked first, and the two cards nearest the query in meaning that are at least 0.62 near
+  (`CARD_COS`, `CARDS_KEPT`), stay in the first three (`KEPT_TOP`): a household that words an emergency its own
+  way ("kettle of boiling water went over my kid's hand") is still shown the card, though nothing of it is in
+  the words. Both rules only move rows the fusion already has.
 - **The cache.** `Semantic.generation` counts each load of the index; a search seeing a new generation
   drops the persistent `search_cache` first, so an index rebuilt under a running API does not serve the
   old answers until they expire.
@@ -100,7 +111,7 @@ The full passage window is now `PASSAGE_CHARS=2584`, with reactive shortening fo
 
 Wikipedia is a separate memory-mapped lookup, never an approximate nearest-neighbour search. Its completed build contains 8,425,865 keys: 7,243,109 usable vectors and 1,182,756 zero-vector entries for insufficient text. The vector file is 6,471,064,320 bytes. Measured full-build duration was 14,133.67 seconds, 596.16 candidate rows/s (3 h 55 m 34 s), superseding the need to estimate remaining build time. Household took 11,876.10 seconds, 5.94 embedded books/s. These are PC build measurements.
 
-Only Wikipedia rows already found by Kiwix keywords are rescored, by `0.7 + 0.6 × max(0, cosine)`. Eight real queries preserved all 60 candidate rows through that step; two changed order. Cross-source title deduplication happens afterwards and can change which source supplies a final result. Seven live API queries also confirmed household meaning results and no meaning badges on 73 keyword hits from 17 excluded archives. Exclusions are `wiktionary_en_all_nopic`, `wikipedia_cy_all_maxi`, and all manifest IDs ending in `*.stackexchange.com_en_all`.
+Only Wikipedia rows already found by Kiwix keywords are reranked, never added. The first tuning multiplied their score by `0.7 + 0.6 × max(0, cosine)`; on the gold sets of 2026-09-21 that put the target article down for 27 of 57 queries, and it was replaced by a lift added to the score: `0.6 × clamp((cosine − 0.72) / (0.82 − 0.72))`, so an article that really answers (0.77 to 0.89) rises and the other hits (0.58 to 0.79) barely move, and not applied to a medical query, where the box's own card leads (section 3, fusion). Eight real queries preserved all 60 candidate rows through the original step; two changed order. Cross-source title deduplication happens afterwards and can change which source supplies a final result. Seven live API queries also confirmed household meaning results and no meaning badges on 73 keyword hits from 17 excluded archives. Exclusions are `wiktionary_en_all_nopic`, `wikipedia_cy_all_maxi`, and all manifest IDs ending in `*.stackexchange.com_en_all`.
 
 Publications keep the current and previous generation, serialize publication/pruning, ignore directory symlinks, and skip pruning if current pointers cannot be resolved. Loaders read vectors and metadata from the same resolved generation. Old flat metadata and dot-prefixed generations remain supported. Same-collection builds must not overlap because their staging filenames are shared. Query embeddings are reused across collections; failed queries are cached briefly. `Semantic.generation` changes only when loaded state changes, not on repeated failed loads.
 
