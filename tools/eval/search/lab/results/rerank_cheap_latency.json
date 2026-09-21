@@ -1,0 +1,17 @@
+{
+ "model": "gte-reranker-modernbert-base",
+ "candidates": 10,
+ "chars": 700,
+ "t4": {
+  "median_ms": 2009,
+  "p95_ms": 2264,
+  "n": 9,
+  "rss_mb": 296.5
+ },
+ "t1": {
+  "median_ms": 6127,
+  "p95_ms": 6604,
+  "n": 9,
+  "rss_mb": 296.8
+ }
+}

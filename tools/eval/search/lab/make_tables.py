@@ -32,9 +32,9 @@ def hybrid_table():
             if n.startswith("kw_"): lab = "(keyword only, same for all)"
             print(f"| {lab} | {n} | {f3(s['paraphrase']['hit@1'])} | {f3(s['paraphrase']['hit@5'])} | {f3(s['paraphrase']['mrr@10'])} | {f3(s['safety']['hit@1'])} | {f3(s['safety']['hit@3'])} | {f3(s['safety']['mrr@10'])} | {e['guard']['in_top3']}/34 | {f3(s['own-library']['mrr@10'])} | {f3(s['ALL']['mrr@10'])} |")
 
-def rerank_table(pool):
-    pv = C["pools"][pool]; b = pv["baseline"]; s = b["summary"]
-    print(f"Pool `{pool}` (recall@30 {b['recall@30']:.3f})\n")
+def rerank_table(pool, fname="C_rerank.json"):
+    pv = J(fname)["pools"][pool]; b = pv["baseline"]; s = b["summary"]
+    print(f"Pool `{pool}` ({next(k for k in b if k.startswith('recall'))} {b[next(k for k in b if k.startswith('recall'))]:.3f})\n")
     print("| system | par h@1 | par MRR | safety h@1 | safety h@3 | guard | ALL MRR | queries better / worse / same | safety rows leaving top 3 |")
     print("|---|--:|--:|--:|--:|--:|--:|--:|--|")
     print(f"| pool as is | {f3(s['paraphrase']['hit@1'])} | {f3(s['paraphrase']['mrr@10'])} | {f3(s['safety']['hit@1'])} | {f3(s['safety']['hit@3'])} | {b['guard']['in_top3']}/34 | {f3(s['ALL']['mrr@10'])} | | |")
