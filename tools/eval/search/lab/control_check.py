@@ -15,3 +15,14 @@ res = {"shipped_index_rows": len(ids), "corpus_rows": len(corpus), "same_keys_sa
        "cosine_mean": float(cos.mean()), "cosine_min": float(cos.min()), "cosine_p1": float(np.percentile(cos, 1)),
        "below_0.99": int((cos < 0.99).sum())}
 print(res); dump("control_vs_shipped_index.json", res)
+
+# where does the disagreement live? bucket by token count under bge's tokenizer
+from transformers import AutoTokenizer
+tok = AutoTokenizer.from_pretrained("BAAI/bge-small-en-v1.5")
+lens = np.array([len(x) for x in tok([c["text"] for c in corpus], truncation=False)["input_ids"]])
+b = {}
+for name, m in (("<=510 tokens", lens <= 510), (">510 tokens", lens > 510)):
+    b[name] = {"n": int(m.sum()), "cos_mean": float(cos[m].mean()), "cos_min": float(cos[m].min()), "below_0.99": int((cos[m] < 0.99).sum())}
+print(b)
+res["by_length"] = b
+dump("control_vs_shipped_index.json", res)

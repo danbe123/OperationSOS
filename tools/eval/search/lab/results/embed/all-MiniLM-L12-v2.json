@@ -1,0 +1,18 @@
+{
+ "name": "all-MiniLM-L12-v2",
+ "tag": "all-MiniLM-L12-v2",
+ "hf": "sentence-transformers/all-MiniLM-L12-v2",
+ "pool": "mean",
+ "query_prefix": "",
+ "passage_prefix": "",
+ "max_len": 512,
+ "params": 33360000,
+ "dims": 384,
+ "passages": 21368,
+ "passage_tokens": 8550522,
+ "mean_tokens": 400.2,
+ "embed_seconds": 18.33,
+ "passages_per_s": 1165.5,
+ "tokens_per_s": 466392,
+ "gpu_peak_gb": 0.33
+}

@@ -76,7 +76,7 @@ for name in args.models.split(","):
         for (qid, i), s in zip(owner, sc):
             per.setdefault(qid, []).append((i, float(s)))
         pure = {qid: sorted(v, key=lambda t: -t[1]) for qid, v in per.items()}
-        blend = {qid: rrf([(i, 0) for i, _ in pool[qid]], [(i, 0) for i, _ in pure[qid]]) for qid in per}
+        blend = {qid: rrf([(i, 0) for i in pool[qid]], [(i, 0) for i, _ in pure[qid]]) for qid in per}
         base = res["pools"][spec]["baseline"]["ranks"]
         entry = {"params_M": round(nparams / 1e6, 1), "gpu_pairs_per_s": round(len(pairs) / dt, 1)}
         for var, lists in (("ce", pure), ("blend", blend)):
