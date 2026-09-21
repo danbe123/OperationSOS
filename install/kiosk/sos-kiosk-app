@@ -18,6 +18,13 @@
 # SOS_KIOSK_BACKOFF_MS (first pause after a quick death, doubling, default 1000), SOS_KIOSK_BACKOFF_MAX_MS
 # (default 16000), SOS_KIOSK_RESTART_MS (pause after a long run, default 500), SOS_KIOSK_QUICK_DEATHS
 # (how many in a row before this script gives up to systemd, default 5).
+#
+# A hung page or an "Aw, Snap" renderer does not kill Chromium, so nothing above would restart it. The app's
+# own page posts /api/kiosk/alive every 30 s and the API reports how long ago (GET /api/kiosk/alive-age);
+# this script asks every SOS_KIOSK_ALIVE_POLL_MS (15000) and, when a Chromium whose page HAS spoken since that
+# Chromium started has been quiet for more than SOS_KIOSK_STALL_MS (180000), stops it (SIGTERM, then SIGKILL after
+# SOS_KIOSK_KILL_GRACE_MS, 3000) and the loop below starts a fresh one. It never acts on a page it has not
+# heard from since this Chromium began (a slow boot, the /starting page), nor when the API cannot be asked.
 set -euo pipefail
 
 CONFIG=${SOS_KIOSK_CONFIG:-/srv/sos/state/config/kiosk.env}
@@ -35,6 +42,10 @@ BACKOFF_MS=${SOS_KIOSK_BACKOFF_MS:-1000}
 BACKOFF_MAX_MS=${SOS_KIOSK_BACKOFF_MAX_MS:-16000}
 RESTART_MS=${SOS_KIOSK_RESTART_MS:-500}
 QUICK_DEATHS=${SOS_KIOSK_QUICK_DEATHS:-5}
+ALIVE_URL=${SOS_KIOSK_ALIVE_URL:-http://localhost/api/kiosk/alive-age}
+ALIVE_POLL_MS=${SOS_KIOSK_ALIVE_POLL_MS:-15000}
+STALL_MS=${SOS_KIOSK_STALL_MS:-180000}
+KILL_GRACE_MS=${SOS_KIOSK_KILL_GRACE_MS:-3000}
 child=""
 
 wait_for_api() {
@@ -106,9 +117,59 @@ pause_ms() {
   wait $! || true
 }
 
+# SIGTERM, then SIGKILL if it is still there after the grace period (a wedged Chromium may ignore the first).
+terminate_child() {
+  local waited=0
+  kill "$child" 2>/dev/null || return 0
+  while kill -0 "$child" 2>/dev/null && [ "$waited" -lt "$KILL_GRACE_MS" ]; do
+    sleep 0.05
+    waited=$(( waited + 50 ))
+  done
+  kill -9 "$child" 2>/dev/null || true
+}
+
 stop() {
-  if [ -n "$child" ]; then kill "$child" 2>/dev/null || true; wait "$child" 2>/dev/null || true; fi
+  if [ -n "$child" ]; then terminate_child; wait "$child" 2>/dev/null || true; fi
   exit 0
+}
+
+# "<age in ms, or none> <API uptime in ms>" from the API, or nothing when it cannot be asked.
+alive_age() {
+  local json
+  json=$(curl -fsS --max-time 2 "$ALIVE_URL" 2>/dev/null) || return 1
+  python3 -c 'import json, sys
+d = json.loads(sys.argv[1])
+age = d.get("age_s")
+print("none" if age is None else int(float(age) * 1000), int(float(d.get("api_up_s", 0)) * 1000))' "$json" 2>/dev/null
+}
+
+# Until Chromium exits: ask how long since its page last spoke. $1 is when this Chromium started (ms).
+watch_page() {
+  local seen=0 waited slice reading age up silent
+  while kill -0 "$child" 2>/dev/null; do
+    # In slices, so a Chromium that exits is noticed at once and not after the whole poll interval: fine slices
+    # while it is young (a quick death must be timed accurately), coarse ones after.
+    waited=0
+    while [ "$waited" -lt "$ALIVE_POLL_MS" ] && kill -0 "$child" 2>/dev/null; do
+      slice=500
+      [ $(( $(now_ms) - $1 )) -ge 5000 ] || slice=50
+      pause_ms "$slice"
+      waited=$(( waited + slice ))
+    done
+    kill -0 "$child" 2>/dev/null || return 0
+    reading=$(alive_age) || continue          # the API cannot be asked: no news, no action
+    read -r age up <<<"$reading"
+    [ -n "${up:-}" ] || continue
+    if [ "$age" != none ] && [ "$age" -lt $(( $(now_ms) - $1 )) ]; then seen=1; fi   # it spoke after this Chromium began
+    [ "$seen" = 1 ] || continue               # never heard from since it started: a slow boot, or /starting
+    silent=$age
+    [ "$age" != none ] || silent=$up          # the API restarted and forgot: it has heard nothing since it began
+    if [ "$silent" -gt "$STALL_MS" ]; then
+      echo "sos-kiosk-app: the page has not answered for $(( silent / 1000 )) s while chromium is running; restarting chromium" >&2
+      terminate_child
+      return 0
+    fi
+  done
 }
 
 run_chromium() {
@@ -118,6 +179,7 @@ run_chromium() {
     --overscroll-history-navigation=0 "$URL" &
   child=$!
   local status=0
+  watch_page "$(now_ms)"
   wait "$child" || status=$?
   child=""
   return "$status"

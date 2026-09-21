@@ -26,6 +26,7 @@ cp "$SOS_KIOSK_PROFILE/Default/Preferences" "$d/prefs-$n" 2>/dev/null || true
 case "$STUB_MODE" in
   die) exit 1 ;;
   live) echo $$ > "$d/pid"; exec sleep 60 ;;
+  stubborn) echo $$ > "$d/pid"; trap '' TERM; while true; do sleep 0.1; done ;;
   long_then_stop)
     if [ "$n" -eq 1 ]; then sleep 0.4; exit 0; fi
     kill -TERM "$PPID"; sleep 5 ;;
@@ -139,3 +140,153 @@ def test_sigterm_stops_chromium_and_the_wrapper_promptly(kiosk):
     time.sleep(0.2)
     with pytest.raises(ProcessLookupError):
         os.kill(pid, 0)
+
+
+# --- the hung-page watchdog -------------------------------------------------------------------------------------
+# The page posts a heartbeat; the API reports its age; the wrapper kills a Chromium whose page has gone quiet, but
+# only one whose page has spoken since that Chromium started, and never because the API could not be asked.
+
+import http.server
+import json
+import threading
+
+
+class AliveAge:
+    """A stand-in for GET /api/kiosk/alive-age whose answer the test sets."""
+
+    def __init__(self):
+        self.age_s: float | None = None
+        self.api_up_s: float = 10.0
+        self.hits = 0
+        outer = self
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                outer.hits += 1
+                body = json.dumps({"age_s": outer.age_s, "api_up_s": outer.api_up_s}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.url = f"http://127.0.0.1:{self.server.server_address[1]}/api/kiosk/alive-age"
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def stop(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+@pytest.fixture
+def watched(kiosk):
+    alive = AliveAge()
+    kiosk.env.update({"SOS_KIOSK_ALIVE_URL": alive.url, "SOS_KIOSK_ALIVE_POLL_MS": "100", "SOS_KIOSK_STALL_MS": "1200",
+                      "SOS_KIOSK_KILL_GRACE_MS": "300", "SOS_KIOSK_MIN_UPTIME_MS": "100000"})
+    kiosk.alive = alive
+    procs = []
+
+    def start(mode: str):
+        proc = subprocess.Popen(["bash", str(WRAPPER)], env={**kiosk.env, "STUB_MODE": mode}, stdout=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE, text=True)
+        procs.append(proc)
+        return proc
+
+    def wait_count(n: int, timeout: float = 10.0) -> bool:
+        end = time.monotonic() + timeout
+        while time.monotonic() < end:
+            if (kiosk.stub / "count").exists() and kiosk.count() >= n:
+                return True
+            time.sleep(0.05)
+        return False
+
+    kiosk.start, kiosk.wait_count = start, wait_count
+    yield kiosk
+    for proc in procs:
+        if proc.poll() is None:
+            proc.send_signal(signal.SIGTERM)
+            try:
+                proc.wait(5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+    try:
+        alive.stop()
+    except Exception:
+        pass
+
+
+def test_a_page_that_spoke_and_then_went_quiet_gets_its_chromium_restarted(watched):
+    proc = watched.start("live")
+    assert watched.wait_count(1)
+    time.sleep(0.4)
+    watched.alive.age_s = 0.1          # the page has spoken since this Chromium started
+    time.sleep(0.5)
+    assert watched.count() == 1
+    watched.alive.age_s = 30.0         # ...and now it has been quiet far longer than the limit
+    assert watched.wait_count(2), "a hung page must get its Chromium killed and started again"
+    assert proc.poll() is None, "the wrapper itself carries on"
+    proc.send_signal(signal.SIGTERM)
+    assert "has not answered" in proc.communicate(timeout=5)[1]
+
+
+def test_a_new_chromium_is_not_killed_for_the_quiet_of_the_one_before_it(watched):
+    """After the kill the API still says 30 s: that is the old page. The new Chromium has not been heard from, so it
+    is given all the time a slow boot needs."""
+    watched.start("live")
+    assert watched.wait_count(1)
+    time.sleep(0.4)
+    watched.alive.age_s = 0.1
+    time.sleep(0.4)
+    watched.alive.age_s = 30.0
+    assert watched.wait_count(2)
+    time.sleep(2.5)                    # twice the stall limit
+    assert watched.count() == 2
+
+
+def test_a_page_never_heard_from_is_never_killed_however_slow_the_boot(watched):
+    watched.alive.age_s = None
+    watched.alive.api_up_s = 9999.0    # the API has been up for ages and has never heard the kiosk
+    watched.start("live")
+    assert watched.wait_count(1)
+    time.sleep(3.0)
+    assert watched.count() == 1
+    assert watched.alive.hits >= 5, "it should have been asking"
+
+
+def test_a_stopped_api_never_causes_a_kill(watched):
+    watched.start("live")
+    assert watched.wait_count(1)
+    time.sleep(0.4)
+    watched.alive.age_s = 0.1
+    time.sleep(0.4)
+    watched.alive.stop()               # the API goes away: no answer, so no news
+    time.sleep(3.0)
+    assert watched.count() == 1
+
+
+def test_a_restarted_api_that_has_heard_nothing_for_longer_than_the_limit_counts_as_a_quiet_page(watched):
+    watched.start("live")
+    assert watched.wait_count(1)
+    time.sleep(0.4)
+    watched.alive.age_s = 0.1
+    time.sleep(0.4)
+    watched.alive.age_s = None         # the API restarted and forgot...
+    watched.alive.api_up_s = 0.5       # ...but is younger than the stall limit: nothing to conclude yet
+    time.sleep(2.0)
+    assert watched.count() == 1
+    watched.alive.api_up_s = 60.0      # a minute of API uptime (limit here: 1.2 s) and not a word from a page that had been talking
+    assert watched.wait_count(2)
+
+
+def test_a_chromium_that_ignores_sigterm_is_killed_after_the_grace_period(watched):
+    watched.start("stubborn")
+    assert watched.wait_count(1)
+    time.sleep(0.4)
+    watched.alive.age_s = 0.1
+    time.sleep(0.4)
+    watched.alive.age_s = 30.0
+    assert watched.wait_count(2, timeout=15), "SIGTERM was ignored; the wrapper must escalate to SIGKILL"
