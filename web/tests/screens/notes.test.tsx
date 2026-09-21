@@ -23,7 +23,7 @@ function mockNotes() {
     list.splice(list.findIndex((x) => x.id === id), 1);
     return { ok: true as const };
   });
-  return { create, update, del };
+  return { create, update, del, list };
 }
 
 describe('Notes and pins', () => {
@@ -165,5 +165,49 @@ describe('A note in the middle of being written', () => {
     await user.type(screen.getByLabelText('Title'), 'Still here');
     expect(screen.getByLabelText('Title')).toHaveValue('Still here');
     vi.restoreAllMocks();
+  });
+});
+
+describe('Add note while a save is in flight', () => {
+  it('takes one tap, however many follow, and one Enter, and keeps the draft', async () => {
+    const { create, list } = mockNotes();
+    let finish: (n: Note) => void = () => {};
+    create.mockImplementationOnce(() => new Promise<Note>((resolve) => { finish = resolve; }));
+    const user = userEvent.setup();
+    renderRoute('/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    const form = screen.getByRole('form', { name: 'Add a note' });
+    await user.type(within(form).getByLabelText('Title'), 'Once only');
+    const add = within(form).getByRole('button', { name: 'Add note' });
+    await user.click(add);
+    await user.click(add);
+    await user.click(add);
+    await user.type(within(form).getByLabelText('Title'), '{Enter}');
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(add).toBeDisabled();
+    expect(localStorage.getItem('sos.draft.note')).not.toBeNull();   // the draft is kept until the box has it
+    const saved: Note = { id: 11, kind: 'note', title: 'Once only', body: '', lat: null, lon: null, updated_at: '2026-09-03T12:00:00Z' };
+    list.push(saved);
+    finish(saved);
+    expect(await screen.findByText('Once only')).toBeInTheDocument();
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the person try again when the save failed', async () => {
+    const { create } = mockNotes();
+    create.mockRejectedValueOnce(new ApiError(0, 'The box is not answering, so nothing was saved'));
+    const user = userEvent.setup();
+    renderRoute('/notes');
+    await screen.findByRole('list', { name: 'Notes and pins' });
+    await user.click(screen.getByRole('button', { name: 'Add a note' }));
+    const form = screen.getByRole('form', { name: 'Add a note' });
+    await user.type(within(form).getByLabelText('Note'), 'Try me');
+    await user.click(within(form).getByRole('button', { name: 'Add note' }));
+    await screen.findByText(/Not saved yet/);
+    expect(within(form).getByRole('button', { name: 'Add note' })).toBeEnabled();
+    await user.click(within(form).getByRole('button', { name: 'Add note' }));
+    expect(await screen.findByText('Try me')).toBeInTheDocument();
+    expect(create).toHaveBeenCalledTimes(2);
   });
 });

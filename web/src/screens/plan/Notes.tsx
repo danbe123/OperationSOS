@@ -94,6 +94,10 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
   const [title, setTitle] = useState(restored?.title ?? '');
   const [body, setBody] = useState(restored?.body ?? '');
   const [unsaved, setUnsaved] = useState<string | null>(null);
+  // One save at a time: the request is retried across a restart of the box, and every extra tap would start
+  // a retrying request of its own, all of which land together when the box returns.
+  const [saving, setSaving] = useState(false);
+  const inFlight = useRef(false);
   const change = (next: { title: string; body: string }) => {
     setTitle(next.title);
     setBody(next.body);
@@ -101,7 +105,11 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
   };
   const add = async (e: FormEvent) => {
     e.preventDefault();
+    if (inFlight.current) return;
     if (!title.trim() && !body.trim()) return;
+    inFlight.current = true;
+    setSaving(true);
+    setUnsaved(null);
     try {
       await api.createNote({ kind: 'note', title: title.trim(), body: body.trim() });
       clearDraft('note');
@@ -109,6 +117,9 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
     } catch (err) {
       setUnsaved(errorMessage(err));
       notify(`Could not add the note: ${errorMessage(err)}`);
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
     }
   };
   return (
@@ -119,7 +130,7 @@ export function NotesForm({ onSaved, onCancel }: { onSaved: () => void; onCancel
       {/* The transient notice is gone in six seconds; this stays until the note is saved. */}
       {unsaved && <p className="warning" role="status">Not saved yet: {unsaved}. What you wrote is kept here; tap Add note again when the box answers.</p>}
       <div className="row">
-        <button type="submit" className="btn btn-primary">Add note</button>
+        <button type="submit" className="btn btn-primary" disabled={saving} aria-busy={saving}>Add note</button>
         <button type="button" className="btn" onClick={() => { clearDraft('note'); onCancel(); }}>Cancel</button>
       </div>
     </form>

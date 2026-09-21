@@ -180,3 +180,23 @@ test('the board keeps working through an outage and says Reconnecting', async ({
   await expect(reconnecting(page)).toHaveCount(0, { timeout: 20_000 });
   await expect(working).toBeVisible();
 });
+
+test('several taps on Add note during an outage make exactly one note', async ({ page, state }) => {
+  const box = await boxThatCanGoAway(page);
+  await page.goto('/notes');
+  await page.getByRole('button', { name: 'Add a note' }).click();
+  const form = page.getByRole('form', { name: 'Add a note' });
+  await form.getByLabel('Title').fill('Only once');
+  const before = state.notes.length;
+  box.goAway('bad-gateway');
+  const add = form.getByRole('button', { name: 'Add note' });
+  await add.click();
+  for (let i = 0; i < 4; i++) await add.click({ force: true, timeout: 1000 }).catch(() => {});
+  await form.getByLabel('Title').press('Enter').catch(() => {});
+  await page.waitForTimeout(1500);
+  box.comeBack();
+  await expect(page.getByRole('list', { name: 'Notes and pins' })).toContainText('Only once', { timeout: 15_000 });
+  await page.waitForTimeout(1000);
+  expect(state.notes.length - before).toBe(1);
+  expect(state.notes.filter((n) => n.title === 'Only once')).toHaveLength(1);
+});
