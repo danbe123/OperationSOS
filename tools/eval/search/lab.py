@@ -4,8 +4,7 @@
     PYTHONPATH=api python tools/eval/search/lab.py --replay .dev/search-recordings/clean-2026-09-21 \
         [--exp NAME ...] [--json out.json] [--diff A B] [--jobs 6]
 
-Every experiment is a set of overrides on `sos.search` (module constants, or `T.<field>` for the `Tuning`
-switches) applied around a meaning-on replay of the whole gold set; the keyword-only control is the replay
+Every experiment is a set of overrides on `sos.search` (module constants) applied around a meaning-on replay of the whole gold set; the keyword-only control is the replay
 with `semantic=None`. No service is needed. Read `sos.searchreplay` for what a recording holds.
 
 The table reports, per experiment: own-library (and its health group), paraphrase, safety (plain / hard),
@@ -29,104 +28,21 @@ sys.path.insert(0, str(REPO / "api"))
 from sos import search, searcheval as se, searchreplay   # noqa: E402
 from sos.config import get_settings                       # noqa: E402
 
-# name -> overrides. Keys: `T.field` sets a Tuning field, anything else a module constant of sos.search.
+# name -> overrides: constants of sos.search (DENSE_WEIGHT, CARD_COS, TITLE_SHARE, WIKIPEDIA_LIFT, ...).
+# The task-19 experiments (fusion by rank or normalised score, per-class floors, title and card protection,
+# five ways of reranking Wikipedia) ran on switches that are gone from the code; they are in this file's history
+# at commit c39a441, with the two grids that tuned them, and their table is in docs/reviews/2026-09-21-search-tuning.md.
 EXPERIMENTS: dict[str, dict] = {
-    "control": {},
-    # (ii) rank fusion for the box's own passages: the dense rank scored like a keyword rank (w / (5 + rank))
-    "rrf-1": {"T.fusion": "rrf", "T.rrf_weight": 1.0},
-    "rrf-2": {"T.fusion": "rrf", "T.rrf_weight": 2.0},
-    "rrf-3": {"T.fusion": "rrf", "T.rrf_weight": 3.0},
-    "norm": {"T.fusion": "norm"},
-    # (iv) protection of exact and near-exact titles
-    "prot-exact": {"T.protect": "exact"},
-    "prot-title-1.0": {"T.protect": "title", "T.protect_share": 0.99},
-    "prot-title-.66": {"T.protect": "title", "T.protect_share": 0.66},
-    "protc-exact": {"T.protect": "exact", "T.cards_first": True},
-    "protc-title-1.0": {"T.protect": "title", "T.protect_share": 0.99, "T.cards_first": True},
-    "protc-title-.66": {"T.protect": "title", "T.protect_share": 0.66, "T.cards_first": True},
-    "protc-title-.5": {"T.protect": "title", "T.protect_share": 0.5, "T.cards_first": True},
-    "protc-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_slack": 1, "T.cards_first": True},
-    "protm-exact": {"T.protect": "exact", "T.protect_by": "meaning"},
-    "protm-title-.66": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_by": "meaning"},
-    "protm-title-.5": {"T.protect": "title", "T.protect_share": 0.5, "T.protect_by": "meaning"},
-    "protm-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_by": "meaning", "T.protect_slack": 1},
-    "prot-title-.66+1": {"T.protect": "title", "T.protect_share": 0.66, "T.protect_slack": 1},
-    # (v) emergency promotion of the nearest quick card
-    "card-.70": {"T.card_cos": 0.70},
-    "card-.74": {"T.card_cos": 0.74},
-    "card-.78": {"T.card_cos": 0.78},
-    # (vi) Wikipedia
-    "card-best-.62": {"T.card_cos": 0.62, "T.card_scope": "best"},
-    "card-best-.66": {"T.card_cos": 0.66, "T.card_scope": "best"},
-    "card-best-.70": {"T.card_cos": 0.70, "T.card_scope": "best"},
-    "card-kw": {"T.card_kw": True},
-    "card-kw+best-.66": {"T.card_kw": True, "T.card_cos": 0.66, "T.card_scope": "best"},
-    "card-2best-.62": {"T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2},
-    "card-2best-.64": {"T.card_cos": 0.64, "T.card_scope": "best", "T.card_n": 2},
-    "card-2best-.66": {"T.card_cos": 0.66, "T.card_scope": "best", "T.card_n": 2},
-    "card-kw+2best-.62": {"T.card_kw": True, "T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2},
-    "card-kw+2best-.64": {"T.card_kw": True, "T.card_cos": 0.64, "T.card_scope": "best", "T.card_n": 2},
-    "card-kw+2best-.60": {"T.card_kw": True, "T.card_cos": 0.60, "T.card_scope": "best", "T.card_n": 2},
-    "wiki-off": {"T.wiki": "off"},
-    "wiki-rrf-.3": {"T.wiki": "rrf", "T.wiki_weight": 0.3},
-    "wiki-rrf-1": {"T.wiki": "rrf", "T.wiki_weight": 1.0},
-    "wiki-narrow-.05": {"T.wiki": "narrow", "T.wiki_span": 0.05},
-    "wiki-narrow-.15": {"T.wiki": "narrow", "T.wiki_span": 0.15},
+    "control": {},                                    # the adopted values
+    "dense-weight-1": {"DENSE_WEIGHT": 1.0},
+    "dense-weight-3": {"DENSE_WEIGHT": 3.0},
+    "no-title-share": {"TITLE_SHARE": 2.0},           # only an exact title is protected
+    "no-cards-kept": {"CARD_COS": 2.0},               # the nearest cards are not kept (the words' first card still is)
+    "wikipedia-lift-0": {"WIKIPEDIA_LIFT": 0.0},
+    "floors-own-.66": {"SEMANTIC_FLOOR": {(True, False): 0.63, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},
+    "floors-found-.60": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74}},
+    "floors-old": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},
 }
-
-_A = {"T.protect": "title", "T.protect_share": 0.66, "T.cards_first": True,
-      "T.card_kw": True, "T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2}
-EXPERIMENTS.update({
-    "A": dict(_A),
-    "A+wikirrf.5": {**_A, "T.wiki": "rrf", "T.wiki_weight": 0.5},
-    "A+wikirrf1": {**_A, "T.wiki": "rrf", "T.wiki_weight": 1.0},
-    "A+wikirrf1.5": {**_A, "T.wiki": "rrf", "T.wiki_weight": 1.5},
-    "A+rrf1.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 1.5},
-    "A+rrf2": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0},
-    "A+rrf2.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.5},
-    "A+wikiadd.5": {**_A, "T.wiki": "additive", "T.wiki_weight": 0.5},
-    "A+wikiadd.3": {**_A, "T.wiki": "additive", "T.wiki_weight": 0.3},
-    "A+wikirrf.3": {**_A, "T.wiki": "rrf", "T.wiki_weight": 0.3},
-    "A+wikioff": {**_A, "T.wiki": "off"},
-    "Cadd": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}},
-    "Cadd+wikirrf.5": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}, "T.wiki": "rrf", "T.wiki_weight": 0.5},
-    "Cadd+wikiadd.5": {**_A, "T.class_weight": {"doc": 0.5}, "T.class_ceil": {"own": 0.75}, "T.wiki": "additive", "T.wiki_weight": 0.5},
-    "T1+ramp": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                "T.wiki": "ramp", "T.wiki_weight": 0.3, "T.wiki_floor": 0.72, "T.wiki_ceil": 0.82},
-    "T1+ramp.25": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.25, "T.wiki_floor": 0.72, "T.wiki_ceil": 0.82},
-    "T1+ramp.25+kw1": {**_A, "T.card_kw_pos": 1, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.25, "T.wiki_floor": 0.72, "T.wiki_ceil": 0.82},
-    "T1+kw1": {**_A, "T.card_kw_pos": 1, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5}},
-    "T1+ramp.15": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.15},
-    "T1+ramp.4": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.4},
-    "T1+ramp.4nomed": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.4, "T.wiki_skip_medical": True},
-    "T1+ramp.25nomed": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                   "T.wiki": "ramp", "T.wiki_weight": 0.25, "T.wiki_skip_medical": True},
-    "T1": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5}},
-    "T1+wikirrf.5": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-                     "T.wiki": "rrf", "T.wiki_weight": 0.5},
-    "A+rrf2+wikirrf1": {**_A, "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.wiki": "rrf", "T.wiki_weight": 1.0},
-})
-
-_F = {"T.protect": "title", "T.protect_share": 0.66, "T.cards_first": True,
-      "T.card_kw": True, "T.card_cos": 0.62, "T.card_scope": "best", "T.card_n": 2,
-      "T.fusion": "rrf", "T.rrf_weight": 2.0, "T.class_floor": {"own": 0.03}, "T.class_weight": {"doc": 0.5},
-      "T.wiki": "ramp", "T.wiki_weight": 0.6, "T.wiki_floor": 0.72, "T.wiki_ceil": 0.82, "T.wiki_skip_medical": True}
-EXPERIMENTS.update({
-    "F": dict(_F),
-    "F-noprotect": {**_F, "T.protect": "off", "T.cards_first": False},
-    "F-nocards": {**_F, "T.card_kw": False, "T.card_cos": None},
-    "F-nowiki": {**_F, "T.wiki": "scale"},
-    "F-rrf1": {**_F, "T.rrf_weight": 1.0},
-    "F-additive": {k: v for k, v in _F.items() if k not in ("T.fusion", "T.rrf_weight", "T.class_floor", "T.class_weight")},
-    "F-docw1": {**_F, "T.class_weight": {}},
-    "F-floor0": {**_F, "T.class_floor": {}},
-    "F-nomedskip": {**_F, "T.wiki_skip_medical": False},
-})
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),
         ("safety/plain", "plain"), ("safety/hard", "hard"), ("wikipedia", "wiki"), ("books", "books"), ("ALL", "ALL"))
@@ -135,20 +51,16 @@ HALVES_OF = ("paraphrase", "safety", "own-library")
 
 @contextlib.contextmanager
 def applied(overrides: dict):
-    """Overrides in force for the block: `T.x` on the Tuning object, other keys on the search module."""
+    """Overrides in force for the block: constants of the search module, restored afterwards."""
     saved = []
     try:
-        for key, value in overrides.items():
-            target, name = (search.TUNING, key[2:]) if key.startswith("T.") else (search, key)
-            saved.append((target, name, getattr(target, name)))
-            setattr(target, name, value)
-        if any(k in overrides for k in ("SEMANTIC_FLOOR",)):
-            search.SEMANTIC_MIN = min(search.SEMANTIC_FLOOR.values())
+        for name, value in overrides.items():
+            saved.append((name, getattr(search, name)))
+            setattr(search, name, value)
         yield
     finally:
-        for target, name, value in reversed(saved):
-            setattr(target, name, value)
-        search.SEMANTIC_MIN = min(search.SEMANTIC_FLOOR.values())
+        for name, value in reversed(saved):
+            setattr(search, name, value)
 
 
 _state: dict = {}

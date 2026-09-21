@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import dataclasses
 import json
 import functools
 import logging
@@ -53,19 +52,39 @@ BOILERPLATE = 0.45
 PER_SOURCE = 3      # a source's fourth result and beyond give way a little to the rest
 SOURCE_DECAY = 0.85
 # Semantic: how many nearest passages are asked for, how near counts, and what one is worth beside a keyword
-# hit. bge-small's cosines run close together — a passage that answers sits at 0.68 to 0.82, the nearest
-# stranger at 0.62 to 0.72 — so a hit is worth its distance above the floor, up to the ceiling, times the
-# source's weight. Meaning as a lift to a row the words found is cheap evidence and takes a low floor;
-# meaning as the only evidence takes a higher one, and higher still for a page of one of 21,000 converted
-# document pages, whose neighbourhood is dense with strangers (a building regulation for "generator
-# indoors" at 0.71; the box's own "Mains electricity" answers at 0.68).
+# hit. bge-small's cosines run close together -- a passage that answers sits at 0.68 to 0.82, the nearest
+# stranger at 0.62 to 0.72 -- so how near a passage is only decides whether it counts at all (the floors), and
+# how it ranks among the nearest decides what it is worth. Meaning as a lift to a row the words found is cheap
+# evidence and takes a low floor; meaning as the only evidence takes a higher one, and higher still for a page of
+# one of 21,000 converted document pages, whose neighbourhood is dense with strangers (a building regulation
+# for "generator indoors" at 0.71; the box's own "Mains electricity" answers at 0.68).
 SEMANTIC_K = 20
 SEMANTIC_FLOOR = {          # (found by the words too, a converted document's page) -> the cosine asked for
-    (True, False): 0.60, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74,
+    (True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74,
 }
-SEMANTIC_MIN = min(SEMANTIC_FLOOR.values())
+# The household books (one vector per book) keep the distance-above-the-floor bonus: their neighbourhood is thin
+# and a book's cosine says how much of a match it is.
+HOUSEHOLD_FLOOR = {True: 0.60, False: 0.66}
+SEMANTIC_MIN = min(*SEMANTIC_FLOOR.values(), *HOUSEHOLD_FLOOR.values())
 SEMANTIC_CEIL = 0.82
 SEMANTIC_WEIGHT = 0.5
+# The box's own passages are fused by rank, as reciprocal-rank fusion does: the nth nearest passage is worth what
+# a keyword hit at rank n is worth (`weight / (5 + rank)`), times DENSE_WEIGHT. Rank, not cosine, because the
+# cosines of the nearest passages sit within a few hundredths of each other, so a distance bonus scored a
+# stranger nearly as high as the answer; measured on the gold sets (task 19), rank fusion beats it on paraphrases
+# and on the hard emergency wordings. A converted document's page is worth DENSE_DOC_SHARE of that: 21,000 pages
+# of long books fill the nearest twenty with plausible strangers.
+DENSE_WEIGHT = 2.0
+DENSE_DOC_SHARE = 0.5
+# Keeping the box's own answer where it belongs. A row whose title is the query, or carries this share of its
+# words (the NHS "Paracetamol" page for "paracetamol"), is never put below where the words alone ranked it by
+# a row that meaning found. A quick card the words ranked first, and the (up to) CARDS_KEPT cards nearest in
+# meaning that are at least CARD_COS near, stay in the first KEPT_TOP results: someone in an emergency who
+# words it in their own way ("kettle of boiling water over my kid's hand") is still shown the card.
+TITLE_SHARE = 0.66
+CARD_COS = 0.62
+CARDS_KEPT = 2
+KEPT_TOP = 3
 # The household collection's own ZIM id for Survivor Library (Gutenberg reuses BOOK_ZIMS's own id): its
 # real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
 # through the generic Kiwix content route rather than a bespoke reader.
@@ -75,67 +94,31 @@ SURVIVOR_ZIM = "survivorlibrary.com_en_all"
 # only this id string to find Wikipedia's own keyword hits by their url; everything else it needs (the
 # store, the query embedding) arrives through the `semantic` parameter search() already receives.
 WIKIPEDIA_ZIM = "wikipedia_en_all_maxi"
-# Wikipedia's own keyword hits are rescored, never zeroed and never doubled: a real semantic match (cosine
-# near 1.0) lifts a hit to 1.3x, a weak or negative one settles it to 0.7x -- tune against real queries in
-# Task 10's acceptance step, not by theory.
-WIKIPEDIA_RERANK_BASE = 0.7
-WIKIPEDIA_RERANK_SPAN = 0.6
+# Wikipedia's own keyword hits are lifted by meaning, never added and never lowered: a hit whose article is
+# WIKIPEDIA_LIFT_FROM near the query gains nothing, one WIKIPEDIA_LIFT_TO near gains WIKIPEDIA_LIFT, in between
+# proportionally. The article that answers a query sits at 0.77 to 0.89 and the other hits at 0.58 to 0.79,
+# so only a real match rises. The old 0.7x to 1.3x rescale of a hit's score moved every hit alike and was too
+# small to win back what the box's own pages and documents take; it put the target down for 27 of 57 queries
+# (task 19). Not applied to a medical query: there the box's own quick card leads, and a Wikipedia article
+# must not stand above it.
+WIKIPEDIA_LIFT = 0.6
+WIKIPEDIA_LIFT_FROM = 0.72
+WIKIPEDIA_LIFT_TO = 0.82
 
 
-@dataclasses.dataclass
-class Tuning:
-    """EXPERIMENT SWITCHES (task 19 lab). The defaults are today's behaviour exactly."""
-    fusion: str = "additive"                 # additive | rrf | norm
-    rrf_weight: float = 1.0
-    dense_k: int = SEMANTIC_K
-    class_weight: dict = dataclasses.field(default_factory=dict)   # own | doc | book -> multiplier of the bonus
-    class_floor: dict = dataclasses.field(default_factory=dict)    # own | doc | book -> added to the floor
-    class_ceil: dict = dataclasses.field(default_factory=dict)
-    class_zero: dict = dataclasses.field(default_factory=dict)
-    protect: str = "off"                     # off | exact | title
-    cards_first: bool = False                # a protected title row never displaces a card standing in the first card_pos
-    protect_by: str = "position"             # position: keep the words' position | meaning: no meaning-only row above
-    protect_share: float = 0.99
-    protect_slack: int = 0
-    protect_kinds: tuple = ("article", "card", "module", "page", "playbook", "doc", "item")
-    card_cos: float | None = None
-    card_scope: str = "top"                  # top: the nearest passage overall must be the card | best: the nearest card
-    card_n: int = 1                          # how many of the nearest cards are kept in the first card_pos
-    card_kw: bool = False                    # a card the words put first stays in the first card_pos
-    card_kw_pos: int = 3                     # where a card the words put first stays
-    card_pos: int = 3
-    wiki: str = "scale"                      # scale | off | rrf | narrow
-    wiki_weight: float = 0.5
-    wiki_span: float = 0.15
-    wiki_skip_medical: bool = False
-    wiki_floor: float = 0.72
-    wiki_ceil: float = 0.82
+def semantic_bonus(cos: float, w: float) -> float:
+    """What one household-book meaning hit is worth: its distance above the floor, capped at the ceiling,
+    times the collection's weight."""
+    return SEMANTIC_WEIGHT * w * min(1.0, (cos - SEMANTIC_MIN) / (SEMANTIC_CEIL - SEMANTIC_MIN))
 
 
-TUNING = Tuning()
+def dense_bonus(rank: int, w: float, doc: bool = False) -> float:
+    """What the rank-th nearest passage of the box's own library is worth (see DENSE_WEIGHT)."""
+    return DENSE_WEIGHT * (DENSE_DOC_SHARE if doc else 1.0) * w / (K + rank)
 
 
-def semantic_bonus(cos: float, w: float, klass: str = "own", dense_rank: int = 1, near=None) -> float:
-    """What one meaning hit is worth: its distance above the floor, capped at the ceiling, times the
-    source's own weight -- the one place this formula is written, shared by the box's own library and
-    the household collection alike."""
-    t = TUNING
-    mult = t.class_weight.get(klass, 1.0)
-    if t.fusion == "rrf" and klass != "book":
-        return t.rrf_weight * mult * w / (K + dense_rank)
-    if t.fusion == "norm" and near and klass != "book":
-        top, bottom = near[0][1], near[-1][1]
-        return SEMANTIC_WEIGHT * mult * w * ((cos - bottom) / (top - bottom) if top > bottom else 1.0)
-    zero, ceil = t.class_zero.get(klass, SEMANTIC_MIN), t.class_ceil.get(klass, SEMANTIC_CEIL)
-    return SEMANTIC_WEIGHT * mult * w * min(1.0, max(0.0, (cos - zero) / (ceil - zero)))
-
-
-def _floor(found: bool, klass: str) -> float:
-    return SEMANTIC_FLOOR[(found, klass == "doc")] + TUNING.class_floor.get(klass, 0.0)
-
-
-def _lowest_floor() -> float:
-    return min(min(SEMANTIC_FLOOR.values()) + TUNING.class_floor.get(k, 0.0) for k in ("own", "doc", "book"))
+def wikipedia_lift(cos: float) -> float:
+    return WIKIPEDIA_LIFT * min(1.0, max(0.0, (cos - WIKIPEDIA_LIFT_FROM) / (WIKIPEDIA_LIFT_TO - WIKIPEDIA_LIFT_FROM)))
 
 
 # A question rarely has every one of its words in the passage that answers it ("generator indoors": the
@@ -453,61 +436,58 @@ def _say_refresh_fault(exc: Exception) -> None:
         log.warning("search: cannot refresh the semantic index; using keyword search (%s)", fault)
 
 
-def _constraints(results: list[dict], kw_pos: dict[str, int], terms: list[str], q: str,
-                 card_targets: list[tuple[str, float]]) -> tuple[list[tuple[dict, int]], list[tuple[dict, int]]]:
-    """EXPERIMENT: (title rows, card rows), each (row, the lowest index it may stand at). A keyword row whose
-    title is the query (or nearly) is never pushed below where the words alone put it (plus `protect_slack`) by
-    a row found by meaning; a quick card the words put first, and the quick cards nearest in meaning, stay in
-    the first `card_pos`."""
-    t = TUNING
+def _keyword_positions(results: list[dict]) -> dict[str, int]:
+    """Where each row the words found stands with the meaning layer taken away: the order the same rows would
+    have had if meaning had added nothing."""
+    keyword_only = [{**r, "score": r["_kw"]} for r in results if r.get("via") != "meaning"]
+    return {r["url"]: i for i, r in enumerate(diversify(dedupe_titles(dedupe(keyword_only))))}
+
+
+def _kept_rows(results: list[dict], kw_pos: dict[str, int], terms: list[str], q: str,
+               card_pages: list[str]) -> tuple[list[tuple[dict, int]], list[tuple[dict, int]]]:
+    """The rows the fusion may not push down, each with the lowest index it may stand at: (titles, cards).
+    Titles: rows found by the words whose title is the query or carries TITLE_SHARE of its words, at the
+    position the words gave them. Cards: a quick card the words ranked first, and the cards named in
+    `card_pages`, inside the first KEPT_TOP."""
     norm_q = " ".join((q or "").lower().split())
-    titled: list[tuple[dict, int]] = []
+    titles: list[tuple[dict, int]] = []
     cards: list[tuple[dict, int]] = []
-    if kw_pos:
-        for r in results:
-            if r.get("via") == "meaning" or r["url"] not in kw_pos or r["kind"] not in t.protect_kinds:
-                continue
-            exact = norm_title(r["title"]) == norm_q or (terms and norm_title(r["title"]) == " ".join(terms))
-            if t.protect != "off" and (exact or (t.protect == "title" and term_share(terms, r["title"]) >= t.protect_share)):
-                titled.append((r, kw_pos[r["url"]] + t.protect_slack))
-            elif t.card_kw and r["kind"] == "card" and kw_pos[r["url"]] == 0:
-                cards.append((r, t.card_kw_pos - 1))
-    for url, _cos in card_targets:
-        page = url.split("#", 1)[0]
+    for r in results:
+        if r.get("via") == "meaning" or r["url"] not in kw_pos or r["kind"] in ("place", "book"):
+            continue
+        exact = norm_title(r["title"]) == norm_q or (terms and norm_title(r["title"]) == " ".join(terms))
+        if exact or term_share(terms, r["title"]) >= TITLE_SHARE:
+            titles.append((r, kw_pos[r["url"]]))
+        elif r["kind"] == "card" and kw_pos[r["url"]] == 0:
+            cards.append((r, KEPT_TOP - 1))
+    for page in card_pages:
         for r in results:
             if r["kind"] == "card" and r["url"].split("#", 1)[0] == page:
-                cards.append((r, t.card_pos - 1))
+                cards.append((r, KEPT_TOP - 1))
                 break
-    return titled, cards
+    return titles, cards
 
 
-def _shield(results: list[dict], titled: list[tuple[dict, int]], exempt: set[int]) -> list[dict]:
-    """EXPERIMENT: a protected title row is lifted above the rows found by meaning alone (all but `protect_slack`
-    of them), or, by position, to where the words put it."""
-    for row, index in sorted(titled, key=lambda c: c[1]):
+def _lift_titles(results: list[dict], titles: list[tuple[dict, int]]) -> list[dict]:
+    """Bring each protected title row up to its index, but never above a card standing in the first KEPT_TOP:
+    the card of an emergency comes before an article about it."""
+    for row, index in sorted(titles, key=lambda t: t[1]):
         i = results.index(row)
-        if TUNING.protect_by == "meaning":
-            above = [j for j in range(i) if results[j].get("via") == "meaning" and id(results[j]) not in exempt]
-            if len(above) > TUNING.protect_slack:
-                results.insert(above[TUNING.protect_slack], results.pop(i))
-        else:
-            if TUNING.cards_first:
-                cards_in = [j for j in range(min(TUNING.card_pos, len(results))) if results[j]["kind"] == "card" and j != i]
-                index = max(index, cards_in[-1] + 1) if cards_in else index
-            if i > index:
-                results.insert(index, results.pop(i))
+        cards_in = [j for j in range(min(KEPT_TOP, len(results))) if results[j]["kind"] == "card" and j != i]
+        index = max(index, cards_in[-1] + 1) if cards_in else index
+        if i > index:
+            results.insert(index, results.pop(i))
     return results
 
 
-def _settle(results: list[dict], constraints: list[tuple[dict, int]], also_pinned=()) -> list[dict]:
-    """EXPERIMENT: bring each constrained row up to its index, tightest first, by swapping it with the lowest
-    row inside that index that no constraint names; a row inside its index already stays; if every row inside
-    is constrained, nothing moves."""
-    pinned = {id(row) for row, _ in constraints} | {id(row) for row, _ in also_pinned}
-    for row, index in sorted(constraints, key=lambda c: c[1]):
+def _lift_cards(results: list[dict], cards: list[tuple[dict, int]], titles: list[tuple[dict, int]]) -> list[dict]:
+    """Bring each kept card up to its index by swapping it with the lowest row inside that index that nothing
+    keeps in place; a card already inside stays; when every row inside is kept, nothing moves."""
+    kept = {id(row) for row, _ in cards} | {id(row) for row, _ in titles}
+    for row, index in sorted(cards, key=lambda c: c[1]):
         if results.index(row) <= index:
             continue
-        inside = [j for j in range(min(index + 1, len(results))) if id(results[j]) not in pinned]
+        inside = [j for j in range(min(index + 1, len(results))) if id(results[j]) not in kept]
         if not inside:
             continue
         displaced = results.pop(inside[-1])
@@ -591,7 +571,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     # never returns the ZIM id for it: wikipedia_en_all_maxi's manifest category is "reference", and
     # classify()'s "reference"/"practical"/"survival"/"books" branch returns the category unchanged), so the
     # only place the ZIM id survives is the url itself -- the filter below matches on that, not on source/_cat.
-    if semantic is not None and TUNING.wiki != "off":
+    if semantic is not None and not is_medical_intent(reduced.terms):
         wiki_prefix = f"/read/{WIKIPEDIA_ZIM}/"
         wiki_hits = [r for r in results if r["url"].startswith(wiki_prefix)]
         if wiki_hits:
@@ -605,21 +585,10 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             except Exception:  # the semantic layer is a convenience: its failures never fail the search
                 wiki_scores = {}
                 semantic_failed = True
-            by_cos = sorted((k for k in keys if wiki_scores.get(k) is not None), key=lambda k: -wiki_scores[k])
             for r, key in zip(wiki_hits, keys):
                 cos = wiki_scores.get(key)
-                if cos is None:
-                    continue
-                if TUNING.wiki == "rrf":
-                    r["score"] += TUNING.wiki_weight * score(1.0, by_cos.index(key) + 1)
-                elif TUNING.wiki == "ramp" and not (TUNING.wiki_skip_medical and is_medical_intent(reduced.terms)):
-                    r["score"] += TUNING.wiki_weight * min(1.0, max(0.0, (cos - TUNING.wiki_floor) / (TUNING.wiki_ceil - TUNING.wiki_floor)))
-                elif TUNING.wiki == "additive":
-                    r["score"] += TUNING.wiki_weight * min(1.0, max(0.0, (cos - 0.5) / 0.3))
-                elif TUNING.wiki == "narrow":
-                    r["score"] *= 1.0 - TUNING.wiki_span + 2 * TUNING.wiki_span * max(0.0, cos)
-                else:
-                    r["score"] *= WIKIPEDIA_RERANK_BASE + WIKIPEDIA_RERANK_SPAN * max(0.0, cos)
+                if cos is not None:
+                    r["score"] += wikipedia_lift(cos)
 
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
     fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
@@ -700,42 +669,40 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     # after, under this same guard: a household hit joins the "books" group, the same source the
     # catalogue's own keyword hits use, so a book found by both words and meaning is lifted once rather
     # than shown twice under two badges, and every household hit is eligible for the BOOKS_KEPT rescue.
-    card_targets: list[tuple[str, float]] = []
-    for r in results:
-        r["_kw"] = r["score"]
+    card_pages: list[str] = []      # the quick cards nearest the query in meaning (kept in the first results)
     if semantic is not None:
+        for r in results:
+            r["_kw"] = r["score"]   # what the words alone gave it; the position they gave it is protected below
         by_url = {r["url"]: r for r in results}
 
         try:
-            near = await semantic.query(q, TUNING.dense_k)
+            near = await semantic.query(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
             semantic_failed = True
-        near = [(url, cos) for url, cos in near if cos >= _lowest_floor()]
+        near = [(url, cos) for url, cos in near if cos >= SEMANTIC_MIN]
         if near:
             found = {}
             for row in conn.execute(
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
                     f"WHERE url IN ({','.join('?' * len(near))})", [u for u, _ in near]).fetchall():
                 found[row["url"]] = row
-            if TUNING.card_cos is not None:
-                seen_pages: set[str] = set()
-                for url, cos in (near if TUNING.card_scope == "best" else near[:1]):
-                    if cos >= TUNING.card_cos and found.get(url) is not None and found[url]["kind"] == "card" \
-                            and url.split("#", 1)[0] not in seen_pages and len(card_targets) < TUNING.card_n:
-                        seen_pages.add(url.split("#", 1)[0])
-                        card_targets.append((url, cos))
+            for url, cos in near:
+                page = url.split("#", 1)[0]
+                if (cos >= CARD_COS and found.get(url) is not None and found[url]["kind"] == "card"
+                        and page not in card_pages and len(card_pages) < CARDS_KEPT):
+                    card_pages.append(page)
             for dense_rank, (url, cos) in enumerate(near, 1):
                 row = found.get(url)
                 if row is None:
                     continue
                 kind = row["kind"]
-                klass = "doc" if kind == "doc" else "own"
-                if cos < _floor(url in by_url, klass) and url not in {u for u, _ in card_targets}:
+                # a card near enough to be kept in the first results is added even when it is under its floor
+                if cos < SEMANTIC_FLOOR[(url in by_url, kind == "doc")] and url.split("#", 1)[0] not in card_pages:
                     continue
                 src = SOURCE_BY_KIND.get(kind, "docs")
                 w = PLAYBOOK_WEIGHT if src == "playbooks" else item_weights.get(str(row["doc_id"]).split("#")[0], 1.0) if kind == "doc" else 1.0
-                bonus = semantic_bonus(cos, w, klass, dense_rank, near)
+                bonus = dense_bonus(dense_rank, w, kind == "doc")
                 if url in by_url:
                     by_url[url]["score"] += bonus
                     continue
@@ -748,12 +715,12 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                 by_url[url] = entry
 
         try:
-            household_near = await semantic.query_household(q, TUNING.dense_k)
+            household_near = await semantic.query_household(q, SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             household_near = []
             semantic_failed = True
-        household_near = [(key, cos) for key, cos in household_near if cos >= _lowest_floor()]
-        for dense_rank, (key, cos) in enumerate(household_near, 1):
+        household_near = [(key, cos) for key, cos in household_near if cos >= SEMANTIC_MIN]
+        for key, cos in household_near:
             zim, _, book_id = key.partition(":")
             if zim not in ("gutenberg_en_all", SURVIVOR_ZIM) or not book_id:
                 continue
@@ -764,11 +731,9 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                 url = f"/book/gutenberg/{book_id}"
             else:
                 url = content_url(SURVIVOR_ZIM, f"www.survivorlibrary.com/library/{book_id}.pdf")
-            # a household book is never a "doc page" in the existing sense: its neighbourhood is not the
-            # dense, noisy one a converted document's page has, so False is right for that flag here too.
-            if cos < _floor(url in by_url, "book"):
+            if cos < HOUSEHOLD_FLOOR[url in by_url]:
                 continue
-            bonus = semantic_bonus(cos, BOOK_WEIGHT, "book", dense_rank, household_near)
+            bonus = semantic_bonus(cos, BOOK_WEIGHT)
             if url in by_url:
                 by_url[url]["score"] += bonus
                 continue
@@ -790,18 +755,15 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
             rel = relevance(reduced.terms, r["title"], r["snippet"], q, r.get("_carried", 0.0))
             r["score"] *= rel
-            r["_kw"] *= rel
-    kw_pos: dict[str, int] = {}
-    if semantic is not None and (TUNING.protect != "off" or TUNING.card_kw):
-        keyword_only = [{**r, "score": r["_kw"]} for r in results if r.get("via") != "meaning"]
-        kw_pos = {r["url"]: i for i, r in enumerate(diversify(dedupe_titles(dedupe(keyword_only))))}
+            if "_kw" in r:
+                r["_kw"] *= rel
+    kw_pos = _keyword_positions(results) if semantic is not None else {}
     results = dedupe(results)
     results = dedupe_titles(results)
     results = diversify(results)
-    if kw_pos or card_targets:
-        titled, cards = _constraints(results, kw_pos, reduced.terms, q, card_targets)
-        exempt = {id(r) for r, _ in cards}
-        results = _settle(_shield(results, titled, exempt), cards, titled)
+    if semantic is not None:
+        titles, cards = _kept_rows(results, kw_pos, reduced.terms, q, card_pages)
+        results = _lift_cards(_lift_titles(results, titles), cards, titles)
 
     counts: dict[str, int] = {}
     for r in results:
