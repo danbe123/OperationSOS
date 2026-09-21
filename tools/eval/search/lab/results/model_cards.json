@@ -1,0 +1,1821 @@
+{
+ "bge-small-en-v1.5": {
+  "hf": "BAAI/bge-small-en-v1.5",
+  "files": {
+   "model.safetensors": 133466304,
+   "onnx/model.onnx": 133093490,
+   "pytorch_model.bin": 133508397
+  },
+  "license": "mit",
+  "params_safetensors": 33360512,
+  "config.json": {
+   "_name_or_path": "/root/.cache/torch/sentence_transformers/BAAI_bge-small-en/",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.30.0",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.2.2",
+    "transformers": "4.28.1",
+    "pytorch": "1.13.0+cu117"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": true
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "bge-base-en-v1.5": {
+  "hf": "BAAI/bge-base-en-v1.5",
+  "files": {
+   "model.safetensors": 437955512,
+   "onnx/model.onnx": 435811539,
+   "pytorch_model.bin": 437997357
+  },
+  "license": "mit",
+  "params_safetensors": 109482752,
+  "config.json": {
+   "_name_or_path": "/root/.cache/torch/sentence_transformers/BAAI_bge-base-en/",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.30.0",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.2.2",
+    "transformers": "4.28.1",
+    "pytorch": "1.13.0+cu117"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": true
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "bge-large-en-v1.5": {
+  "hf": "BAAI/bge-large-en-v1.5",
+  "files": {
+   "model.safetensors": 1340616616,
+   "onnx/model.onnx": 1336854281,
+   "pytorch_model.bin": 1340698349
+  },
+  "license": "mit",
+  "params_safetensors": 335142400,
+  "config.json": {
+   "_name_or_path": "/root/.cache/torch/sentence_transformers/BAAI_bge-large-en/",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 1024,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 4096,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 16,
+   "num_hidden_layers": 24,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.30.0",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 1024,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.2.2",
+    "transformers": "4.28.1",
+    "pytorch": "1.13.0+cu117"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": true
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "e5-small-v2": {
+  "hf": "intfloat/e5-small-v2",
+  "files": {
+   "model.onnx": 133093468,
+   "model.safetensors": 133466304,
+   "onnx/model_O4.onnx": 66578744,
+   "onnx/model_qint8_avx512_vnni.onnx": 34118638,
+   "openvino/openvino_model.bin": 132852896,
+   "openvino/openvino_model_qint8_quantized.bin": 33818064,
+   "pytorch_model.bin": 133508397
+  },
+  "license": "mit",
+  "params_safetensors": 33360512,
+  "config.json": {
+   "_name_or_path": "tmp/",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.29.0.dev0",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "e5-base-v2": {
+  "hf": "intfloat/e5-base-v2",
+  "files": {
+   "model.safetensors": 437955512,
+   "onnx/model.onnx": 435811516,
+   "onnx/model_O4.onnx": 217824059,
+   "onnx/model_qint8_avx512_vnni.onnx": 110121976,
+   "openvino/openvino_model.bin": 435570848,
+   "openvino/openvino_model_qint8_quantized.bin": 109974480,
+   "pytorch_model.bin": 437997357
+  },
+  "license": "mit",
+  "params_safetensors": 109482752,
+  "config.json": {
+   "_name_or_path": "tmp/",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.29.0.dev0",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "all-MiniLM-L12-v2": {
+  "hf": "sentence-transformers/all-MiniLM-L12-v2",
+  "files": {
+   "model.safetensors": 133466304,
+   "onnx/model.onnx": 133126567,
+   "onnx/model_O1.onnx": 133037320,
+   "onnx/model_O2.onnx": 132970874,
+   "onnx/model_O3.onnx": 132970729,
+   "onnx/model_O4.onnx": 66578744,
+   "onnx/model_qint8_arm64.onnx": 34118638,
+   "onnx/model_qint8_avx512.onnx": 34118638,
+   "onnx/model_qint8_avx512_vnni.onnx": 34118638,
+   "onnx/model_quint8_avx2.onnx": 34160110,
+   "openvino/openvino_model.bin": 132852880,
+   "openvino/openvino_model_qint8_quantized.bin": 33818048,
+   "pytorch_model.bin": 133506609
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 33360512,
+  "config.json": {
+   "_name_or_path": "microsoft/MiniLM-L12-H384-uncased",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "transformers_version": "4.8.2",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.0.0",
+    "transformers": "4.6.1",
+    "pytorch": "1.8.1"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 128,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "arctic-embed-s": {
+  "hf": "Snowflake/snowflake-arctic-embed-s",
+  "files": {
+   "model.safetensors": 132870584,
+   "onnx/model.onnx": 133093492,
+   "onnx/model_bnb4.onnx": 60113951,
+   "onnx/model_fp16.onnx": 66749214,
+   "onnx/model_int8.onnx": 34015111,
+   "onnx/model_q4.onnx": 61440599,
+   "onnx/model_quantized.onnx": 34015111,
+   "onnx/model_uint8.onnx": 34015108
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 33212160,
+  "config.json": {
+   "_name_or_path": "/data/.model_and_tokenizer_cache/86c70943a1386ead2399854a9324005efb9328b6a9a50b66353fe62386fd6257",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.36.1",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false,
+   "pooling_mode_weightedmean_tokens": false,
+   "pooling_mode_lasttoken": false,
+   "include_prompt": true
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.7.0.dev0",
+    "transformers": "4.39.3",
+    "pytorch": "2.1.0+cu121"
+   },
+   "prompts": {
+    "query": "Represent this sentence for searching relevant passages: "
+   },
+   "default_prompt_name": null
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false,
+   "model_args": {
+    "add_pooling_layer": false
+   }
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "arctic-embed-m": {
+  "hf": "Snowflake/snowflake-arctic-embed-m",
+  "files": {
+   "model.safetensors": 435588776,
+   "onnx/model.onnx": 435811541,
+   "onnx/model_bnb4.onnx": 143859863,
+   "onnx/model_fp16.onnx": 218108238,
+   "onnx/model_int8.onnx": 110084023,
+   "onnx/model_q4.onnx": 149167751,
+   "onnx/model_quantized.onnx": 110084023,
+   "onnx/model_uint8.onnx": 110084023
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 108891648,
+  "config.json": {
+   "_name_or_path": "/data/.model_and_tokenizer_cache/8c1f5b7e8b968d544f7adc2e31c63251e690136cb5f2d99fd1d61e5d43d2ca6c",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.36.1",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false,
+   "pooling_mode_weightedmean_tokens": false,
+   "pooling_mode_lasttoken": false,
+   "include_prompt": true
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.7.0.dev0",
+    "transformers": "4.39.3",
+    "pytorch": "2.1.0+cu121"
+   },
+   "prompts": {
+    "query": "Represent this sentence for searching relevant passages: "
+   },
+   "default_prompt_name": null
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false,
+   "model_args": {
+    "add_pooling_layer": false
+   }
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "arctic-embed-m-v1.5": {
+  "hf": "Snowflake/snowflake-arctic-embed-m-v1.5",
+  "files": {
+   "gguf/snowflake-arctic-embed-m-v1.5-bf16.gguf": 219454752,
+   "gguf/snowflake-arctic-embed-m-v1.5-f16.gguf": 219454752,
+   "gguf/snowflake-arctic-embed-m-v1.5-f32.gguf": 436205856,
+   "gguf/snowflake-arctic-embed-m-v1.5-q8_0.gguf": 117852672,
+   "gguf/snowflake-arctic-embed-m-v1.5-tq1_0.gguf": 67501344,
+   "gguf/snowflake-arctic-embed-m-v1.5-tq2_0.gguf": 71482656,
+   "model.safetensors": 435588776,
+   "onnx/model.onnx": 435939137,
+   "onnx/model_bnb4.onnx": 143987459,
+   "onnx/model_fp16.onnx": 218155826,
+   "onnx/model_int8.onnx": 110145162,
+   "onnx/model_q4.onnx": 149295347,
+   "onnx/model_quantized.onnx": 110145162,
+   "onnx/model_uint8.onnx": 110145162
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 108891648,
+  "config.json": {
+   "_name_or_path": "/data/.model_and_tokenizer_cache/1681473d51a117ebdeba63d81f62d0a94c8ea7f486a704a639e9f991504cd269",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.39.3",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "matryoshka_dimensions": [
+    256
+   ],
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false,
+   "pooling_mode_weightedmean_tokens": false,
+   "pooling_mode_lasttoken": false,
+   "include_prompt": true
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.7.0.dev0",
+    "transformers": "4.39.3",
+    "pytorch": "2.1.0+cu121"
+   },
+   "prompts": {
+    "query": "Represent this sentence for searching relevant passages: "
+   },
+   "default_prompt_name": null
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false,
+   "model_args": {
+    "add_pooling_layer": false
+   }
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "mxbai-embed-large-v1": {
+  "hf": "mixedbread-ai/mxbai-embed-large-v1",
+  "files": {
+   "gguf/mxbai-embed-large-v1-f16.gguf": 669603712,
+   "model.safetensors": 670328392,
+   "onnx/model.onnx": 1336854282,
+   "onnx/model_fp16.onnx": 668828772,
+   "onnx/model_quantized.onnx": 336983163,
+   "openvino/openvino_model.bin": 1336373408,
+   "openvino/openvino_model_qint8_quantized.bin": 336759312
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 335141888,
+  "config.json": {
+   "_name_or_path": "mixedbread-ai/mxbai-embed-large-v1",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 1024,
+   "initializer_range": 0.02,
+   "intermediate_size": 4096,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 16,
+   "num_hidden_layers": 24,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float16",
+   "transformers_version": "4.38.2",
+   "type_vocab_size": 2,
+   "use_cache": false,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 1024,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false,
+   "pooling_mode_weightedmean_tokens": false,
+   "pooling_mode_lasttoken": false,
+   "include_prompt": true
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.5.1",
+    "transformers": "4.37.0",
+    "pytorch": "2.1.0+cu121"
+   },
+   "prompts": {
+    "query": "Represent this sentence for searching relevant passages: ",
+    "passage": ""
+   },
+   "default_prompt_name": null
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "mxbai-embed-xsmall-v1": {
+  "hf": "mixedbread-ai/mxbai-embed-xsmall-v1",
+  "files": {
+   "gguf/mxbai-embed-xsmall-v1-bf16.gguf": 51725344,
+   "gguf/mxbai-embed-xsmall-v1-f16.gguf": 51725344,
+   "gguf/mxbai-embed-xsmall-v1-f32.gguf": 96399904,
+   "gguf/mxbai-embed-xsmall-v1-q8_0.gguf": 30784160,
+   "model.safetensors": 48190272,
+   "onnx/model.onnx": 96025279,
+   "onnx/model_bnb4.onnx": 59535518,
+   "onnx/model_fp16.onnx": 48142045,
+   "onnx/model_int8.onnx": 24448010,
+   "onnx/model_q4.onnx": 60198842,
+   "onnx/model_q4f16.onnx": 32885696,
+   "onnx/model_quantized.onnx": 24448010,
+   "onnx/model_uint8.onnx": 24448007,
+   "openvino/openvino_model.bin": 95799456,
+   "openvino/openvino_model_qint8_quantized.bin": 24352944
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 24089472,
+  "config.json": {
+   "_name_or_path": "mixedbread-ai/mxbai-embed-mini-v1",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 4096,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 6,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float16",
+   "transformers_version": "4.45.1",
+   "type_vocab_size": 2,
+   "use_cache": false,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false,
+   "pooling_mode_weightedmean_tokens": false,
+   "pooling_mode_lasttoken": false,
+   "include_prompt": true
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "3.2.0",
+    "transformers": "4.45.1",
+    "pytorch": "2.4.1"
+   },
+   "prompts": {},
+   "default_prompt_name": null,
+   "similarity_fn_name": null
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "granite-embedding-small-english-r2": {
+  "hf": "ibm-granite/granite-embedding-small-english-r2",
+  "files": {
+   "model.safetensors": 95332048,
+   "pytorch_model.bin": 95334202
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 47662464,
+  "config.json": {
+   "architectures": [
+    "ModernBertModel"
+   ],
+   "attention_bias": false,
+   "attention_dropout": 0.0,
+   "attention_probs_dropout_prob": 0.1,
+   "bos_token_id": 50281,
+   "classifier_activation": "silu",
+   "classifier_bias": false,
+   "classifier_dropout": 0.0,
+   "classifier_pooling": "mean",
+   "cls_token_id": 50281,
+   "decoder_bias": true,
+   "deterministic_flash_attn": false,
+   "embedding_dropout": 0.0,
+   "eos_token_id": 50282,
+   "global_attn_every_n_layers": 3,
+   "global_rope_theta": 80000,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_activation": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_cutoff_factor": 2.0,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-05,
+   "local_attention": 128,
+   "local_rope_theta": 10000.0,
+   "max_position_embeddings": 8192,
+   "mlp_bias": false,
+   "mlp_dropout": 0.0,
+   "model_type": "modernbert",
+   "norm_bias": false,
+   "norm_eps": 1e-05,
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 50283,
+   "position_embedding_type": "relative_key_query",
+   "repad_logits_with_grad": false,
+   "sep_token_id": 50282,
+   "sparse_pred_ignore_index": -100,
+   "sparse_prediction": false,
+   "torch_dtype": "bfloat16",
+   "transformers_version": "4.51.3",
+   "vocab_size": 50368
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 8192,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "ModernBertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "granite-embedding-english-r2": {
+  "hf": "ibm-granite/granite-embedding-english-r2",
+  "files": {
+   "model.safetensors": 298041696,
+   "pytorch_model.bin": 298045244
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 149014272,
+  "config.json": {
+   "architectures": [
+    "ModernBertModel"
+   ],
+   "attention_bias": false,
+   "attention_dropout": 0.0,
+   "attention_probs_dropout_prob": 0.1,
+   "bos_token_id": 50281,
+   "classifier_activation": "silu",
+   "classifier_bias": false,
+   "classifier_dropout": 0.0,
+   "classifier_pooling": "mean",
+   "cls_token_id": 50281,
+   "decoder_bias": true,
+   "deterministic_flash_attn": false,
+   "embedding_dropout": 0.0,
+   "eos_token_id": 50282,
+   "global_attn_every_n_layers": 3,
+   "global_rope_theta": 80000.0,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_activation": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_cutoff_factor": 2.0,
+   "initializer_range": 0.02,
+   "intermediate_size": 1152,
+   "layer_norm_eps": 1e-05,
+   "local_attention": 128,
+   "local_rope_theta": 10000.0,
+   "max_position_embeddings": 8192,
+   "mlp_bias": false,
+   "mlp_dropout": 0.0,
+   "model_type": "modernbert",
+   "norm_bias": false,
+   "norm_eps": 1e-05,
+   "num_attention_heads": 12,
+   "num_hidden_layers": 22,
+   "pad_token_id": 50283,
+   "position_embedding_type": "absolute",
+   "repad_logits_with_grad": false,
+   "sep_token_id": 50282,
+   "sparse_pred_ignore_index": -100,
+   "sparse_prediction": false,
+   "torch_dtype": "bfloat16",
+   "transformers_version": "4.51.3",
+   "vocab_size": 50368
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": true,
+   "pooling_mode_mean_tokens": false,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 8192,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "ModernBertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "gte-small": {
+  "hf": "thenlper/gte-small",
+  "files": {
+   "coreml/feature-extraction/float32_model.mlpackage/Data/com.apple.CoreML/weights/weight.bin": 133056512,
+   "model.safetensors": 66746168,
+   "onnx/model.onnx": 133126567,
+   "onnx/model_O4.onnx": 66575087,
+   "onnx/model_qint8_avx512_vnni.onnx": 34118638,
+   "openvino/openvino_model.bin": 132852896,
+   "openvino/openvino_model_qint8_quantized.bin": 33818064,
+   "pytorch_model.bin": 66751231
+  },
+  "license": "mit",
+  "params_safetensors": 33360512,
+  "config.json": {
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float16",
+   "transformers_version": "4.28.1",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "gte-base": {
+  "hf": "thenlper/gte-base",
+  "files": {
+   "model.safetensors": 218990904,
+   "onnx/model.onnx": 435811516,
+   "onnx/model_O4.onnx": 217824059,
+   "onnx/model_qint8_avx512_vnni.onnx": 110121976,
+   "openvino/openvino_model.bin": 435570848,
+   "openvino/openvino_model_qint8_quantized.bin": 109974480,
+   "pytorch_model.bin": 218995711
+  },
+  "license": "mit",
+  "params_safetensors": 109482752,
+  "config.json": {
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "classifier_dropout": null,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float16",
+   "transformers_version": "4.28.1",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "multi-qa-MiniLM-L6-cos-v1": {
+  "hf": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
+  "files": {
+   "model.safetensors": 90868376,
+   "onnx/model.onnx": 90405214,
+   "onnx/model_O1.onnx": 90360328,
+   "onnx/model_O2.onnx": 90326566,
+   "onnx/model_O3.onnx": 90326497,
+   "onnx/model_O4.onnx": 45212349,
+   "onnx/model_qint8_arm64.onnx": 23026053,
+   "onnx/model_qint8_avx512.onnx": 23026053,
+   "onnx/model_qint8_avx512_vnni.onnx": 23026053,
+   "onnx/model_quint8_avx2.onnx": 23046789,
+   "openvino/openvino_model.bin": 90265744,
+   "openvino/openvino_model_qint8_quantized.bin": 22933664,
+   "pytorch_model.bin": 90888945
+  },
+  "license": null,
+  "params_safetensors": 22713728,
+  "config.json": {
+   "_name_or_path": "nreimers/MiniLM-L6-H384-uncased",
+   "architectures": [
+    "BertModel"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 6,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "transformers_version": "4.8.2",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 384,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.0.0",
+    "transformers": "4.6.1",
+    "pytorch": "1.8.1"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 512,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "BertModel"
+  ],
+  "needs_remote_code": false
+ },
+ "all-mpnet-base-v2": {
+  "hf": "sentence-transformers/all-mpnet-base-v2",
+  "files": {
+   "model.safetensors": 437971872,
+   "onnx/model.onnx": 435826548,
+   "onnx/model_O1.onnx": 435730180,
+   "onnx/model_O2.onnx": 435666661,
+   "onnx/model_O3.onnx": 435666516,
+   "onnx/model_O4.onnx": 217894954,
+   "onnx/model_qint8_arm64.onnx": 110124379,
+   "onnx/model_qint8_avx512.onnx": 110124379,
+   "onnx/model_qint8_avx512_vnni.onnx": 110124379,
+   "onnx/model_quint8_avx2.onnx": 110207323,
+   "openvino/openvino_model.bin": 435583684,
+   "openvino/openvino_model_qint8_quantized.bin": 109974792,
+   "pytorch_model.bin": 438011953
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 109486978,
+  "config.json": {
+   "_name_or_path": "microsoft/mpnet-base",
+   "architectures": [
+    "MPNetForMaskedLM"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "bos_token_id": 0,
+   "eos_token_id": 2,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "layer_norm_eps": 1e-05,
+   "max_position_embeddings": 514,
+   "model_type": "mpnet",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 1,
+   "relative_attention_num_buckets": 32,
+   "transformers_version": "4.8.2",
+   "vocab_size": 30527
+  },
+  "modules.json": [
+   {
+    "idx": 0,
+    "name": "0",
+    "path": "",
+    "type": "sentence_transformers.models.Transformer"
+   },
+   {
+    "idx": 1,
+    "name": "1",
+    "path": "1_Pooling",
+    "type": "sentence_transformers.models.Pooling"
+   },
+   {
+    "idx": 2,
+    "name": "2",
+    "path": "2_Normalize",
+    "type": "sentence_transformers.models.Normalize"
+   }
+  ],
+  "1_Pooling/config.json": {
+   "word_embedding_dimension": 768,
+   "pooling_mode_cls_token": false,
+   "pooling_mode_mean_tokens": true,
+   "pooling_mode_max_tokens": false,
+   "pooling_mode_mean_sqrt_len_tokens": false
+  },
+  "config_sentence_transformers.json": {
+   "__version__": {
+    "sentence_transformers": "2.0.0",
+    "transformers": "4.6.1",
+    "pytorch": "1.8.1"
+   }
+  },
+  "sentence_bert_config.json": {
+   "max_seq_length": 384,
+   "do_lower_case": false
+  },
+  "architectures": [
+   "MPNetForMaskedLM"
+  ],
+  "needs_remote_code": false
+ },
+ "bge-reranker-base": {
+  "hf": "BAAI/bge-reranker-base",
+  "files": {
+   "model.safetensors": 1112206140,
+   "onnx/model.onnx": 1112459588,
+   "pytorch_model.bin": 1112251061
+  },
+  "license": "mit",
+  "params_safetensors": 278044931,
+  "config.json": {
+   "_name_or_path": "xlm-roberta-base",
+   "architectures": [
+    "XLMRobertaForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "bos_token_id": 0,
+   "classifier_dropout": null,
+   "eos_token_id": 2,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-05,
+   "max_position_embeddings": 514,
+   "model_type": "xlm-roberta",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "output_past": true,
+   "pad_token_id": 1,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.30.0",
+   "type_vocab_size": 1,
+   "use_cache": true,
+   "vocab_size": 250002
+  },
+  "architectures": [
+   "XLMRobertaForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "bge-reranker-v2-m3": {
+  "hf": "BAAI/bge-reranker-v2-m3",
+  "files": {
+   "model.safetensors": 2271071852
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 567755777,
+  "config.json": {
+   "_name_or_path": "BAAI/bge-m3",
+   "architectures": [
+    "XLMRobertaForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "bos_token_id": 0,
+   "classifier_dropout": null,
+   "eos_token_id": 2,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 1024,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 4096,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-05,
+   "max_position_embeddings": 8194,
+   "model_type": "xlm-roberta",
+   "num_attention_heads": 16,
+   "num_hidden_layers": 24,
+   "output_past": true,
+   "pad_token_id": 1,
+   "position_embedding_type": "absolute",
+   "torch_dtype": "float32",
+   "transformers_version": "4.38.1",
+   "type_vocab_size": 1,
+   "use_cache": true,
+   "vocab_size": 250002
+  },
+  "architectures": [
+   "XLMRobertaForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "ms-marco-MiniLM-L-6-v2": {
+  "hf": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+  "files": {
+   "model.safetensors": 90870598,
+   "onnx/model.onnx": 91011230,
+   "onnx/model_O1.onnx": 90962586,
+   "onnx/model_O2.onnx": 90877294,
+   "onnx/model_O3.onnx": 90877225,
+   "onnx/model_O4.onnx": 45516616,
+   "onnx/model_qint8_arm64.onnx": 23200716,
+   "onnx/model_qint8_avx512.onnx": 23200716,
+   "onnx/model_qint8_avx512_vnni.onnx": 23200716,
+   "onnx/model_quint8_avx2.onnx": 23200716,
+   "openvino/openvino_model.bin": 90858656,
+   "openvino/openvino_model_qint8_quantized.bin": 23087684,
+   "pytorch_model.bin": 90903017
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 22714113,
+  "config.json": {
+   "_name_or_path": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+   "architectures": [
+    "BertForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 6,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "transformers_version": "4.4.2",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522,
+   "sbert_ce_default_activation_function": "torch.nn.modules.linear.Identity"
+  },
+  "architectures": [
+   "BertForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "ms-marco-MiniLM-L-12-v2": {
+  "hf": "cross-encoder/ms-marco-MiniLM-L-12-v2",
+  "files": {
+   "model.safetensors": 133469020,
+   "onnx/model.onnx": 133743863,
+   "onnx/model_O1.onnx": 133647288,
+   "onnx/model_O2.onnx": 133479607,
+   "onnx/model_O3.onnx": 133479462,
+   "onnx/model_O4.onnx": 66889072,
+   "onnx/model_qint8_arm64.onnx": 34311898,
+   "onnx/model_qint8_avx512.onnx": 34311898,
+   "onnx/model_qint8_avx512_vnni.onnx": 34311898,
+   "onnx/model_quint8_avx2.onnx": 34311898,
+   "openvino/openvino_model.bin": 133445792,
+   "openvino/openvino_model_qint8_quantized.bin": 33972068,
+   "pytorch_model.bin": 133530889
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 33360897,
+  "config.json": {
+   "_name_or_path": "microsoft/MiniLM-L12-H384-uncased",
+   "architectures": [
+    "BertForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "gradient_checkpointing": false,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-12,
+   "max_position_embeddings": 512,
+   "model_type": "bert",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "position_embedding_type": "absolute",
+   "transformers_version": "4.4.2",
+   "type_vocab_size": 2,
+   "use_cache": true,
+   "vocab_size": 30522,
+   "sbert_ce_default_activation_function": "torch.nn.modules.linear.Identity"
+  },
+  "architectures": [
+   "BertForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "mxbai-rerank-xsmall-v1": {
+  "hf": "mixedbread-ai/mxbai-rerank-xsmall-v1",
+  "files": {
+   "model.safetensors": 141685186,
+   "onnx/model.onnx": 284189709,
+   "onnx/model_quantized.onnx": 87245802
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 70830337,
+  "config.json": {
+   "_name_or_path": "mixedbread-ai/mxbai-rerank-xsmall-v1",
+   "architectures": [
+    "DebertaV2ForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 384,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 1536,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-07,
+   "max_position_embeddings": 512,
+   "max_relative_positions": -1,
+   "model_type": "deberta-v2",
+   "norm_rel_ebd": "layer_norm",
+   "num_attention_heads": 6,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "pooler_dropout": 0,
+   "pooler_hidden_act": "gelu",
+   "pooler_hidden_size": 384,
+   "pos_att_type": [
+    "p2c",
+    "c2p"
+   ],
+   "position_biased_input": false,
+   "position_buckets": 256,
+   "relative_attention": true,
+   "share_att_key": true,
+   "torch_dtype": "float16",
+   "transformers_version": "4.38.1",
+   "type_vocab_size": 0,
+   "vocab_size": 128100
+  },
+  "architectures": [
+   "DebertaV2ForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "gte-reranker-modernbert-base": {
+  "hf": "Alibaba-NLP/gte-reranker-modernbert-base",
+  "files": {
+   "model.safetensors": 598436708,
+   "onnx/model.onnx": 598803940,
+   "onnx/model_bnb4.onnx": 217644038,
+   "onnx/model_fp16.onnx": 299592530,
+   "onnx/model_int8.onnx": 150871837,
+   "onnx/model_q4.onnx": 224573803,
+   "onnx/model_q4f16.onnx": 140205875,
+   "onnx/model_quantized.onnx": 150871837,
+   "onnx/model_uint8.onnx": 150871837
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 149605633,
+  "config.json": {
+   "_name_or_path": "gte-reranker-modernbert-base",
+   "architectures": [
+    "ModernBertForSequenceClassification"
+   ],
+   "attention_bias": false,
+   "attention_dropout": 0.0,
+   "bos_token_id": 50281,
+   "classifier_activation": "gelu",
+   "classifier_bias": false,
+   "classifier_dropout": 0.0,
+   "classifier_pooling": "mean",
+   "cls_token_id": 50281,
+   "decoder_bias": true,
+   "deterministic_flash_attn": false,
+   "embedding_dropout": 0.0,
+   "eos_token_id": 50282,
+   "global_attn_every_n_layers": 3,
+   "global_rope_theta": 160000.0,
+   "gradient_checkpointing": false,
+   "hidden_activation": "gelu",
+   "hidden_size": 768,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_cutoff_factor": 2.0,
+   "initializer_range": 0.02,
+   "intermediate_size": 1152,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-05,
+   "local_attention": 128,
+   "local_rope_theta": 10000.0,
+   "max_position_embeddings": 8192,
+   "mlp_bias": false,
+   "mlp_dropout": 0.0,
+   "model_type": "modernbert",
+   "norm_bias": false,
+   "norm_eps": 1e-05,
+   "num_attention_heads": 12,
+   "num_hidden_layers": 22,
+   "pad_token_id": 50283,
+   "position_embedding_type": "absolute",
+   "sep_token_id": 50282,
+   "sparse_pred_ignore_index": -100,
+   "sparse_prediction": false,
+   "torch_dtype": "float32",
+   "transformers_version": "4.48.0.dev0",
+   "vocab_size": 50368
+  },
+  "architectures": [
+   "ModernBertForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ },
+ "mxbai-rerank-base-v1": {
+  "hf": "mixedbread-ai/mxbai-rerank-base-v1",
+  "files": {
+   "model.safetensors": 368870370,
+   "onnx/model.onnx": 738560113,
+   "onnx/model_quantized.onnx": 244290378
+  },
+  "license": "apache-2.0",
+  "params_safetensors": 184422913,
+  "config.json": {
+   "_name_or_path": "mixedbread-ai/mxbai-rerank-base-v1",
+   "architectures": [
+    "DebertaV2ForSequenceClassification"
+   ],
+   "attention_probs_dropout_prob": 0.1,
+   "hidden_act": "gelu",
+   "hidden_dropout_prob": 0.1,
+   "hidden_size": 768,
+   "id2label": {
+    "0": "LABEL_0"
+   },
+   "initializer_range": 0.02,
+   "intermediate_size": 3072,
+   "label2id": {
+    "LABEL_0": 0
+   },
+   "layer_norm_eps": 1e-07,
+   "max_position_embeddings": 512,
+   "max_relative_positions": -1,
+   "model_type": "deberta-v2",
+   "norm_rel_ebd": "layer_norm",
+   "num_attention_heads": 12,
+   "num_hidden_layers": 12,
+   "pad_token_id": 0,
+   "pooler_dropout": 0,
+   "pooler_hidden_act": "gelu",
+   "pooler_hidden_size": 768,
+   "pos_att_type": [
+    "p2c",
+    "c2p"
+   ],
+   "position_biased_input": false,
+   "position_buckets": 256,
+   "relative_attention": true,
+   "share_att_key": true,
+   "torch_dtype": "float16",
+   "transformers_version": "4.38.1",
+   "type_vocab_size": 0,
+   "vocab_size": 128100
+  },
+  "architectures": [
+   "DebertaV2ForSequenceClassification"
+  ],
+  "needs_remote_code": false
+ }
+}
