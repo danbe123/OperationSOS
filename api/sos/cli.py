@@ -176,7 +176,8 @@ def cmd_build_books(settings: Settings, args) -> int:
 
 def cmd_build_embeddings(settings: Settings, args) -> int:
     from sos import embeddings
-    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection, servers=args.servers)
+    return embeddings.build_cli(settings, cuda=args.cuda, collection=args.collection, servers=args.servers,
+                                household_text=args.household_text)
 
 
 def default_workers() -> int:
@@ -250,6 +251,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="rebuild only one collection, or both (default)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")
     p.add_argument("--servers", type=_positive_int, default=1, help=SERVERS_HELP)
+    p.add_argument("--household-text", choices=("legacy", "meta-opening"), default="legacy",
+                   help="what a Gutenberg book is embedded as: legacy (title, author, first 2,584 characters; the default) or "
+                        "meta-opening (title, author, shelf, subject headings, first 1,000 characters); changes every Gutenberg vector")
     p.set_defaults(func=cmd_build_embeddings)
     p = sub.add_parser("build-embeddings-wikipedia", help="PC only: embed English Wikipedia for rerank-only lookup (multi-hour; needs its own explicit run)")
     p.add_argument("--cuda", action="store_true", help="PC only: use the CUDA-built llama-server-cuda binary for GPU-accelerated embedding")

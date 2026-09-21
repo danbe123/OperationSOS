@@ -5,7 +5,7 @@ libzim and pdftotext; resumable, one JSON line per book in scratch books/texts.j
   windows 10 windows of ~1500 characters at 5%, 15% ... 95% of the book's text
   subjects, creator (Gutenberg dc.* metadata of the page head), nchars, and the seconds each step took."""
 from __future__ import annotations
-import argparse, html, json, os, re, subprocess, sys, tempfile, time
+import os, argparse, html, json, os, re, subprocess, sys, tempfile, time
 from multiprocessing import Pool
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -147,7 +147,7 @@ def main() -> None:
     ap.add_argument("--procs", type=int, default=6)
     ap.add_argument("--out", default="texts.jsonl")
     a = ap.parse_args()
-    sub = json.loads((SCRATCH / "books/subset.json").read_text())
+    sub = json.loads((SCRATCH / f"books/{os.environ.get('BOOKS_SUBSET', 'subset')}.json").read_text())
     cat = json.loads((SCRATCH / "books/catalogue.json").read_text())
     GUT_PATHS.update({str(g["id"]): g["html_path"] for g in cat["gutenberg"] if g["html_path"]})
     SL_PATHS.update({s["slug"]: s["path"] for s in cat["survivor"]})

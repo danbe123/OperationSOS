@@ -12,6 +12,18 @@ SL_ZIM = "/home/dan/sos-content/zim/survivorlibrary.com_en_all.zim"
 ROW = re.compile(r'<td>([^<]*)</td><td>([^<]*)</td><td>[^<]*</td><td><a href="\.\./\.\./library/([^"]+?)\.pdf"')
 
 
+def survivor_pdf_paths() -> list[str]:
+    """Every /library/<slug>.pdf entry of the Survivor Library crawl (its books), walking the archive once."""
+    from libzim.reader import Archive
+    a = Archive(SL_ZIM)
+    out = []
+    for i in range(a.entry_count):
+        e = a._get_entry_by_id(i)
+        if not e.is_redirect and re.match(r"www\.survivorlibrary\.com/library/(.+)\.pdf$", e.path, re.I):
+            out.append(e.path)
+    return out
+
+
 def survivor_categories() -> tuple[dict, dict]:
     """({slug: display title}, {slug: [category names]}) from every library-<category> page of the crawl."""
     from libzim.reader import Archive
@@ -45,7 +57,7 @@ def main() -> None:
     ids = {l.strip() for l in open("/home/dan/sos-content/embeddings/household.ids") if l.strip()}
     titles, cats = survivor_categories()
     sl = []
-    for line in Path(SCRATCH / "books/sl_paths.txt").read_text().splitlines():
+    for line in survivor_pdf_paths():
         m = re.match(r"www\.survivorlibrary\.com/library/(.+)\.pdf$", line, re.I)
         if m:
             slug = m.group(1)

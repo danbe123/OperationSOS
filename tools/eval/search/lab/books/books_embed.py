@@ -1,7 +1,7 @@
 """Embed the subset under every representation with one model (fp16 GPU, plain transformers, the model's documented pooling
 and prefixes from lab/models.py, 512-token window) and the gold queries.  Saves scratch books/V_<tag>.npz (fp16 unit vectors)
 and results/books/embed_<tag>.json (timings).   usage: books_embed.py <model> [--tag T]   (torch venv)"""
-import argparse, json, sys, time
+import os, argparse, json, sys, time
 from pathlib import Path
 import numpy as np, torch
 from transformers import AutoModel, AutoTokenizer
@@ -15,20 +15,26 @@ ap = argparse.ArgumentParser(); ap.add_argument("name"); ap.add_argument("--tag"
 args = ap.parse_args()
 cfg = EMBED[args.name]; tag = args.name + args.tag
 B = SCRATCH / "books"
-sub = json.loads((B / "subset.json").read_text())
+sub = json.loads((B / f"{os.environ.get('BOOKS_SUBSET', 'subset')}.json").read_text())
 cat = json.loads((B / "catalogue.json").read_text())
 rows = {g["key"]: g for g in cat["gutenberg"]} | {s["key"]: s for s in cat["survivor"]}
+want = set(sub["keys"])
 recs = {}
-for line in (B / "texts.jsonl").read_text().splitlines():
-    r = json.loads(line); recs[r["key"]] = r
+with open(B / "texts.jsonl", encoding="utf-8") as fh:      # streamed: the file is ~270 MB
+    for line in fh:
+        r = json.loads(line)
+        if r["key"] in want:
+            recs[r["key"]] = r
+rows = {k: rows[k] for k in want}
 sys.path.insert(0, str(REPO / "api"))
 from sos.books import SHELF_NAMES  # noqa: E402
 keys = sub["keys"]
-texts = [rep_texts(rows[k], recs[k], SHELF_NAMES) for k in keys]
 queries = []
 for name in ("books", "books-extra"):
     for line in (REPO / f"tools/eval/search/{name}.jsonl").read_text().splitlines():
         queries.append(json.loads(line))
+SHARD = 4096                                   # texts tokenised and embedded at a time: bounds RAM (an all-at-once run of 134k windows held ~8 GB)
+SHARD_DIR = B / f"shards_{tag}"; SHARD_DIR.mkdir(exist_ok=True)
 
 dev = "cuda"
 tok = AutoTokenizer.from_pretrained(cfg["hf"])
@@ -58,30 +64,57 @@ def encode(strings):
     return out, ntok
 
 
+def book_texts(i):
+    """all representation texts of one book (built on demand so they are never all held at once)."""
+    return rep_texts(rows[keys[i]], recs[keys[i]], SHELF_NAMES)
+
+
 timings = {}
-def run(label, strings):
-    torch.cuda.synchronize(); t0 = time.perf_counter()
-    v, nt = encode([cfg["pp"] + s for s in strings])
-    torch.cuda.synchronize(); dt = time.perf_counter() - t0
-    timings[label] = {"texts": len(strings), "tokens": nt, "seconds": round(dt, 2), "texts_per_s": round(len(strings) / dt, 1), "tokens_per_s": round(nt / dt)}
+def run(label, n_items, make):
+    """embed n_items strings produced by make(lo, hi) -> list[str], shard by shard, each shard a file (resumable); returns [n_items, D] fp16."""
+    parts, ntok_total, secs = [], 0, 0.0
+    for lo in range(0, n_items, SHARD):
+        f = SHARD_DIR / f"{label}_{lo:07d}.npy"
+        meta = SHARD_DIR / f"{label}_{lo:07d}.json"
+        if f.exists() and meta.exists():
+            parts.append(np.load(f)); m = json.loads(meta.read_text()); ntok_total += m["tokens"]; secs += m["seconds"]; continue
+        strings = [cfg["pp"] + x for x in make(lo, min(lo + SHARD, n_items))]
+        torch.cuda.synchronize(); t0 = time.perf_counter()
+        v, nt = encode(strings)
+        torch.cuda.synchronize(); dt = time.perf_counter() - t0
+        np.save(f, v); meta.write_text(json.dumps({"tokens": nt, "seconds": dt}))
+        parts.append(v); ntok_total += nt; secs += dt
+        del strings
+    timings[label] = {"texts": n_items, "tokens": ntok_total, "seconds": round(secs, 2), "texts_per_s": round(n_items / max(secs, 1e-9), 1), "tokens_per_s": round(ntok_total / max(secs, 1e-9))}
     print(label, timings[label], flush=True)
-    return v
+    return np.concatenate(parts)
+
 
 encode([cfg["pp"] + s for s in ["warm up " * 100] * 64])
 out = {}
 for rep in ("a", "b1", "b2", "c0", "c1", "c2"):
-    out[rep] = run(rep, [t[rep] for t in texts])
-NW = max(len(t["dt"]) for t in texts)
+    out[rep] = run(rep, len(keys), lambda lo, hi, rep=rep: [book_texts(i)[rep] for i in range(lo, hi)])
+NW = 10
 for rep in ("dt", "dp"):
-    flat, where = [], []
-    for i, t in enumerate(texts):
-        for j, w in enumerate(t[rep]):
-            flat.append(w); where.append((i, j))
-    v = run(rep, flat)
-    arr = np.zeros((len(keys), NW, v.shape[1]), dtype=np.float16); cnt = np.zeros(len(keys), dtype=np.int16)
-    for (i, j), vec in zip(where, v):
-        arr[i, j] = vec; cnt[i] = max(cnt[i], j + 1)
-    out[rep] = arr; out["n_" + rep] = cnt
+    n_win = np.array([len(book_texts(i)[rep]) for i in range(len(keys))])
+    starts = np.concatenate([[0], np.cumsum(n_win)])
+    flat_book = np.repeat(np.arange(len(keys)), n_win)
+    total = int(starts[-1])
+
+    def make(lo, hi, rep=rep, starts=starts, flat_book=flat_book):
+        res, cache = [], {}
+        for f in range(lo, hi):
+            i = int(flat_book[f]); j = f - int(starts[i])
+            if i not in cache:
+                cache = {i: book_texts(i)[rep]}
+            res.append(cache[i][j])
+        return res
+    v = run(rep, total, make)
+    arr = np.zeros((len(keys), NW, v.shape[1]), dtype=np.float16)
+    for i in range(len(keys)):
+        arr[i, :n_win[i]] = v[starts[i]:starts[i + 1]]
+    out[rep] = arr; out["n_" + rep] = n_win.astype(np.int16)
+    del v
 qv, _ = encode([cfg["qp"] + q["query"] for q in queries])
 out["Q"] = qv
 np.savez(B / f"V_{tag}.npz", **out)

@@ -2,14 +2,14 @@
 paired bootstrap intervals (lab/common.py).  usage: books_eval.py <tag> [<tag> ...]  -> results/books/eval_<tag>.json (+ printed tables)
 Query strata: known (books.jsonl Gutenberg plot descriptions), sl (books.jsonl Survivor topics), extras split by a stable hash into a
 dev half (tuned on, together with the two above) and a held-out half (never looked at until the choice was made)."""
-import hashlib, json, sys
+import os, hashlib, json, sys
 from pathlib import Path
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import SCRATCH, RESULTS, REPO, m_rr, m_hit   # noqa: E402
 
 B = SCRATCH / "books"
-sub = json.loads((B / "subset.json").read_text())
+sub = json.loads((B / f"{os.environ.get('BOOKS_SUBSET', 'subset')}.json").read_text())
 keys = sub["keys"]; kidx = {k: i for i, k in enumerate(keys)}
 N = len(keys)
 is_gut = np.array([k.startswith("gutenberg") for k in keys])
@@ -78,7 +78,35 @@ def systems(V):
     S["b2+dt10-pooledvec"] = Q @ mvec.T
     S["b2+dt10-top2avg"] = 0.5 * (b2 + S["dt-k10-top2"])
     S["c1+dt10-avg(max)"] = 0.5 * (S["c1"] + S["dt-k10-max"])
+    S["c0-gut-only"] = np.where(is_gut[None, :], S["c0"], S["a"])          # what build_household's opt-in style does: Gutenberg re-described, Survivor as today
+    S["pooled-gut-only"] = np.where(is_gut[None, :], S["b2+dt10-pooledvec"], S["a"])
     return S
+
+
+def scaling(S, names, sizes=(1500, 2500, 5000, 8000, 11000, None), seeds=5):
+    """MRR@10 / hit@10 by candidate-pool size: every target kept, non-targets subsampled (seeded, averaged over seeds) to a pool of the
+    given size (None = the whole subset).  Read with the strata 'known', 'everyday' (sl + extras)."""
+    target = np.zeros(N, dtype=bool)
+    for q in ALLQ:
+        target[q["rel"]] = True
+    others = np.flatnonzero(~target)
+    out = {}
+    groups = {"known": ids_of("known"), "everyday": ids_of("everyday dev+heldout excl. plots")}
+    for size in sizes:
+        want = N if size is None else size
+        if want > N:
+            continue
+        acc = {n: {g: [] for g in groups} for n in names}
+        for sd in range(seeds if want < N else 1):
+            rng = np.random.default_rng(100 + sd)
+            keep = target.copy()
+            keep[rng.choice(others, size=min(len(others), max(0, want - int(target.sum()))), replace=False)] = True
+            for n in names:
+                rk = ranks_of(S[n], QS, mask=keep)
+                for g, ids in groups.items():
+                    acc[n][g].append((np.mean([m_rr(rk[i]) for i in ids]), np.mean([m_hit(rk[i], 10) for i in ids])))
+        out[str(want)] = {n: {g: {"mrr@10": float(np.mean([x[0] for x in v])), "hit@10": float(np.mean([x[1] for x in v]))} for g, v in d.items()} for n, d in acc.items()}
+    return out
 
 
 def ranks_of(S, qs, mask=None):
@@ -91,6 +119,22 @@ def ranks_of(S, qs, mask=None):
         best = s[q["rel"]].max()
         out[q["id"]] = int((s > best).sum() + 1)
     return out
+
+
+def extra_metrics(S, qs):
+    """coverage of the acceptable set in the top 10 (fraction of min(10, |relevant|)) and nDCG@10 with every acceptable book relevant."""
+    cov, ndcg = {}, {}
+    for q in qs:
+        s = S[q["qi"]]
+        top = np.argpartition(-s, 9)[:10]
+        top = top[np.argsort(-s[top])]
+        rel = set(q["rel"])
+        gains = [1.0 if t in rel else 0.0 for t in top]
+        cov[q["id"]] = sum(gains) / min(10, len(rel))
+        dcg = sum(g / np.log2(i + 2) for i, g in enumerate(gains))
+        idcg = sum(1 / np.log2(i + 2) for i in range(min(10, len(rel))))
+        ndcg[q["id"]] = float(dcg / idcg)
+    return cov, ndcg
 
 
 def summarise(ranks, ids):
@@ -129,8 +173,15 @@ if __name__ == "__main__":
         RK = {}
         for name, mat in S.items():
             RK[name] = ranks_of(mat, QS)
+            cov, ndcg = extra_metrics(mat, QS)
             res["systems"][name] = {st: summarise(RK[name], ids_of(st)) for st in STRATA}
+            for st in STRATA:
+                res["systems"][name][st]["cov@10"] = float(np.mean([cov[i] for i in ids_of(st)]))
+                res["systems"][name][st]["ndcg@10"] = float(np.mean([ndcg[i] for i in ids_of(st)]))
             res["systems"][name]["ranks"] = RK[name]
+            res["systems"][name]["cov"] = cov
+            res["systems"][name]["ndcg"] = ndcg
+        res["scaling"] = scaling(S, ["a", "b2", "c0", "c1", "dt-k10-pool", "b2+dt10-pooledvec", "c0-gut-only"])
         (RESULTS / "books").mkdir(parents=True, exist_ok=True)
         (RESULTS / "books" / f"eval_{tag}.json").write_text(json.dumps(res))
         print(f"\n== {tag}: queries { {k: len(ids_of(k)) for k in STRATA} }")
