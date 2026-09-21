@@ -589,6 +589,21 @@ def build(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray], ou
 HOUSEHOLD_ZIMS = ("gutenberg_en_all", "survivorlibrary.com_en_all")
 HOUSEHOLD_TEXT_CHARS = PASSAGE_CHARS      # the same real safe window Task 1 measured -- one model, one window
 
+# What one Gutenberg book says to the model. "legacy" (the default, and what the published index was built with) is the
+# catalogue's "<title> by <author>" and the first HOUSEHOLD_TEXT_CHARS of the book, which is often only a contents list.
+# "meta-opening" describes the book the way the catalogue does first -- title, author, Library of Congress shelf name and the
+# subject headings the book's own page carries -- and then only its first HOUSEHOLD_OPENING_CHARS. Measured on a 14,222-book
+# sample of the real library (docs/reviews/2026-09-21-book-representation.md): with bge-small it lifts plot-description
+# queries (hit@10 +0.11, MRR@10 +0.07, both intervals clear of zero) and leaves everyday ones where they were; Survivor Library
+# books are embedded exactly as before under either style. Opt-in, because it changes every Gutenberg vector: rebuild the
+# whole household collection (`sos build-embeddings --collection household --household-text meta-opening`) or not at all.
+HOUSEHOLD_TEXT_STYLES = ("legacy", "meta-opening")
+HOUSEHOLD_TEXT_STYLE = "legacy"
+HOUSEHOLD_OPENING_CHARS = 1000
+HOUSEHOLD_SUBJECTS_CHARS = 400
+_DC_SUBJECT = re.compile(r'<meta\s+content="([^"]*)"\s+name="dc\.subject"', re.I)
+_PAGE_HEAD_BYTES = 60000                  # the dc.* <meta> tags sit in the page head, long before the book's own text
+
 # Cached by str(settings.manifests) rather than @lru_cache on settings itself: this codebase's Settings
 # (pydantic_settings.BaseSettings) is not hashable (confirmed: hash(get_settings()) raises TypeError), so
 # an lru_cache keyed on the settings object itself is not available here. The manifest directory string is
@@ -635,6 +650,30 @@ def _gutenberg_text(html_bytes: bytes) -> str:
     return " ".join(extract_text(html_bytes.decode("utf-8", errors="replace"), max_chars=HOUSEHOLD_TEXT_CHARS))
 
 
+def _gutenberg_subjects(html_bytes: bytes) -> list[str]:
+    """The subject headings ("Whaling -- Fiction", "Sea stories") Project Gutenberg's own page carries in its head as
+    <meta name="dc.subject">, in page order; none when the page has none."""
+    import html
+    head = html_bytes[:_PAGE_HEAD_BYTES].decode("utf-8", errors="replace")
+    return [html.unescape(m).strip() for m in _DC_SUBJECT.findall(head) if m.strip()]
+
+
+def _gutenberg_heading(title: str, author: str, shelf: str, subjects: list[str], style: str) -> str:
+    """What a Gutenberg passage opens with (the build adds ". " and the text). "legacy" is the title and author only;
+    "meta-opening" adds the shelf's name and the subject headings, so a book's subject is in its vector even when its
+    opening pages are a contents list."""
+    head = f"{title} by {author}" if author else title
+    if style != "meta-opening":
+        return head
+    from sos.books import SHELF_NAMES
+    parts = [head]
+    if SHELF_NAMES.get(shelf or ""):
+        parts.append(SHELF_NAMES[shelf])
+    if subjects:
+        parts.append("Subjects: " + "; ".join(subjects)[:HOUSEHOLD_SUBJECTS_CHARS])
+    return ". ".join(parts)
+
+
 def _pdf_text(pdf_bytes: bytes) -> str:
     """A Survivor Library entry's raw PDF bytes to plain text, via the box's own pdftotext wrapper
     (api/sos/reflow.py's run_pdftotext) -- reader.read() hands back bytes, not a file on disk, so they
@@ -655,11 +694,11 @@ def _pdf_text(pdf_bytes: bytes) -> str:
             return ""
 
 
-_GUTENBERG_BOOKS_SQL = ("SELECT id, title, author, html_path FROM books WHERE zim=? AND html_path IS NOT NULL "
+_GUTENBERG_BOOKS_SQL = ("SELECT id, title, author, shelf, html_path FROM books WHERE zim=? AND html_path IS NOT NULL "
                         "ORDER BY id")
 
 
-def _household_entries(reader, zim_id: str, conn=None) -> Iterator[tuple[str, str, str]]:
+def _household_entries(reader, zim_id: str, conn=None, style: str = HOUSEHOLD_TEXT_STYLE) -> Iterator[tuple[str, str, str]]:
     """(key, heading, plain text) for every real book this ZIM's reader holds. The heading is what the
     embedded passage opens with: for Gutenberg the catalogue's own title and author, for Survivor Library
     a title read off the filename.
@@ -674,15 +713,21 @@ def _household_entries(reader, zim_id: str, conn=None) -> Iterator[tuple[str, st
     Survivor Library has no catalogue to read (it is a zimit crawl of a WordPress site, not a
     book-scraper ZIM), so its books are still found by their one real path shape; `seen` keeps its keys
     unique whatever the crawl holds. Extract lazily either way: at most one batch of full texts is
-    retained, rather than the entire archive."""
+    retained, rather than the entire archive.
+
+    `style` ("legacy" or "meta-opening", see HOUSEHOLD_TEXT_STYLES) only changes Gutenberg."""
     if zim_id == "gutenberg_en_all":
         for row in conn.execute(_GUTENBERG_BOOKS_SQL, (zim_id,)):
             raw = reader.read(row["html_path"])
             if not raw:
                 continue
             author = (row["author"] or "").strip()
-            yield (f"{zim_id}:{row['id']}", f"{row['title']} by {author}" if author else row["title"],
-                   _gutenberg_text(raw))
+            text = _gutenberg_text(raw)
+            if style == "meta-opening":
+                text = text[:HOUSEHOLD_OPENING_CHARS]
+            yield (f"{zim_id}:{row['id']}",
+                   _gutenberg_heading(row["title"], author, row["shelf"], _gutenberg_subjects(raw) if style == "meta-opening" else [], style),
+                   text)
         return
     seen: set[str] = set()
     for path in reader.paths():
@@ -701,7 +746,7 @@ def _household_entries(reader, zim_id: str, conn=None) -> Iterator[tuple[str, st
 
 
 def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.ndarray],
-                    open_zim=None, out: Callable = print) -> dict:
+                    open_zim=None, out: Callable = print, text_style: str = HOUSEHOLD_TEXT_STYLE) -> dict:
     """Embed one vector per real book across the household collections (Project Gutenberg, Survivor
     Library) and write the "household" ApproxIndex -- a second, parallel build to `build()`'s, because
     none of this text is in `fts_docs`: a Gutenberg book is a row of the `books` table `sos index` fills,
@@ -710,6 +755,8 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
     this machine) is a no-op for that collection, exactly as `index_books` already treats a missing
     Gutenberg ZIM -- the household build carries on with whatever collections it can reach."""
     from sos.books import open_zim as real_open_zim
+    if text_style not in HOUSEHOLD_TEXT_STYLES:
+        raise ValueError(f"household text style {text_style!r} is not one of {', '.join(HOUSEHOLD_TEXT_STYLES)}")
     open_zim = open_zim or real_open_zim
     keys: list[str] = []
     chunks: list[np.ndarray] = []
@@ -733,7 +780,7 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
                 "SELECT 1 FROM books WHERE zim=? AND html_path IS NOT NULL LIMIT 1", (zim_id,)).fetchone():
             out(f"household: {zim_id} has no catalogue rows; run sos index first; skipped")
             continue
-        entries = iter(_household_entries(reader, zim_id, conn))
+        entries = iter(_household_entries(reader, zim_id, conn, text_style))
         before = len(keys)
         while batch := list(islice(entries, BATCH)):
             texts, batch_keys = [], []
@@ -759,7 +806,7 @@ def build_household(conn, settings: Settings, embed: Callable[[list[str]], np.nd
                          f"(e.g. {', '.join(duplicates[:5])}); search would count those books twice over")
     vectors = np.concatenate(chunks) if chunks else np.zeros((0, DIMS), dtype=np.float32)
     meta = {"model": settings.embed_model, "dims": DIMS, "count": len(keys), "by_zim": by_zim,
-            "seen": total_seen, "skipped_no_text": total_skipped,
+            "seen": total_seen, "skipped_no_text": total_skipped, "text_style": text_style,
             "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     meta["elapsed_s"] = time.perf_counter() - t0
     vanished = _household_zims_that_vanished(settings.embeddings_dir, by_zim)
@@ -1271,7 +1318,7 @@ def embedding_servers(settings: Settings, out: Callable = print, run: Callable =
 
 
 def build_cli(settings: Settings, out: Callable = print, run: Callable = subprocess.Popen, cuda: bool = False,
-              collection: str = "all", servers: int = 1) -> int:
+              collection: str = "all", servers: int = 1, household_text: str = HOUSEHOLD_TEXT_STYLE) -> int:
     """PC only: start the embedding servers if they are not up, embed the library, stop what was started.
     `cuda=True` (`sos build-embeddings --cuda`) starts the CUDA-built llama-server-cuda instead of the
     plain CPU binary -- for the large bulk builds (household books, Wikipedia) that need GPU offload to be
@@ -1289,7 +1336,7 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
             if collection in ("all", "docs"):
                 build(conn, settings, embed_fn, out)
             if collection in ("all", "household"):
-                build_household(conn, settings, embed_fn, out=out)
+                build_household(conn, settings, embed_fn, out=out, text_style=household_text)
     except EmbedError as exc:
         out(f"FAIL {exc}")
         return 1

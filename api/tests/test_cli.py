@@ -184,6 +184,10 @@ def test_build_embeddings_selects_only_household(env, monkeypatch):
     calls = []
     monkeypatch.setattr(embeddings, 'build_cli', lambda settings, **kwargs: calls.append(kwargs) or 0)
     assert cli.main(['build-embeddings', '--cuda', '--collection', 'household']) == 0
-    assert calls == [{'cuda': True, 'collection': 'household', 'servers': 1}]
+    assert calls == [{'cuda': True, 'collection': 'household', 'servers': 1, 'household_text': 'legacy'}]
     assert cli.main(['build-embeddings', '--servers', '3']) == 0
-    assert calls[1] == {'cuda': False, 'collection': 'all', 'servers': 3}
+    assert calls[1] == {'cuda': False, 'collection': 'all', 'servers': 3, 'household_text': 'legacy'}
+    assert cli.main(['build-embeddings', '--collection', 'household', '--household-text', 'meta-opening']) == 0
+    assert calls[2]['household_text'] == 'meta-opening'
+    with pytest.raises(SystemExit):
+        cli.main(['build-embeddings', '--household-text', 'everything'])

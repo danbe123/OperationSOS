@@ -1,0 +1,68 @@
+{
+ "model": "e5-base-v2",
+ "hf": "intfloat/e5-base-v2",
+ "pool": "mean",
+ "query_prefix": "query: ",
+ "passage_prefix": "passage: ",
+ "params": 109482240,
+ "books": 5222,
+ "queries": 272,
+ "timings": {
+  "a": {
+   "texts": 5222,
+   "tokens": 2519269,
+   "seconds": 10.51,
+   "texts_per_s": 497.0,
+   "tokens_per_s": 239793
+  },
+  "b1": {
+   "texts": 5222,
+   "tokens": 104687,
+   "seconds": 0.55,
+   "texts_per_s": 9564.8,
+   "tokens_per_s": 191748
+  },
+  "b2": {
+   "texts": 5222,
+   "tokens": 184658,
+   "seconds": 0.85,
+   "texts_per_s": 6139.9,
+   "tokens_per_s": 217117
+  },
+  "c0": {
+   "texts": 5222,
+   "tokens": 1387675,
+   "seconds": 5.91,
+   "texts_per_s": 883.7,
+   "tokens_per_s": 234838
+  },
+  "c1": {
+   "texts": 5222,
+   "tokens": 1765123,
+   "seconds": 7.52,
+   "texts_per_s": 694.5,
+   "tokens_per_s": 234743
+  },
+  "c2": {
+   "texts": 5222,
+   "tokens": 1685289,
+   "seconds": 7.27,
+   "texts_per_s": 718.4,
+   "tokens_per_s": 231858
+  },
+  "dt": {
+   "texts": 49520,
+   "tokens": 18092168,
+   "seconds": 76.65,
+   "texts_per_s": 646.1,
+   "tokens_per_s": 236041
+  },
+  "dp": {
+   "texts": 49520,
+   "tokens": 17624287,
+   "seconds": 74.86,
+   "texts_per_s": 661.5,
+   "tokens_per_s": 235418
+  }
+ }
+}

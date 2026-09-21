@@ -1,0 +1,68 @@
+{
+ "model": "bge-small-en-v1.5",
+ "hf": "BAAI/bge-small-en-v1.5",
+ "pool": "cls",
+ "query_prefix": "Represent this sentence for searching relevant passages: ",
+ "passage_prefix": "",
+ "params": 33360000,
+ "books": 14222,
+ "queries": 272,
+ "timings": {
+  "a": {
+   "texts": 14222,
+   "tokens": 6840850,
+   "seconds": 12.74,
+   "texts_per_s": 1116.8,
+   "tokens_per_s": 537163
+  },
+  "b1": {
+   "texts": 14222,
+   "tokens": 258042,
+   "seconds": 0.87,
+   "texts_per_s": 16367.8,
+   "tokens_per_s": 296975
+  },
+  "b2": {
+   "texts": 14222,
+   "tokens": 474536,
+   "seconds": 1.21,
+   "texts_per_s": 11793.1,
+   "tokens_per_s": 393493
+  },
+  "c0": {
+   "texts": 14222,
+   "tokens": 3738730,
+   "seconds": 7.2,
+   "texts_per_s": 1975.2,
+   "tokens_per_s": 519236
+  },
+  "c1": {
+   "texts": 14222,
+   "tokens": 4790799,
+   "seconds": 9.73,
+   "texts_per_s": 1462.4,
+   "tokens_per_s": 492618
+  },
+  "c2": {
+   "texts": 14222,
+   "tokens": 4574707,
+   "seconds": 8.93,
+   "texts_per_s": 1592.2,
+   "tokens_per_s": 512161
+  },
+  "dt": {
+   "texts": 134561,
+   "tokens": 49020894,
+   "seconds": 157.35,
+   "texts_per_s": 855.2,
+   "tokens_per_s": 311539
+  },
+  "dp": {
+   "texts": 134561,
+   "tokens": 47742566,
+   "seconds": 251.65,
+   "texts_per_s": 534.7,
+   "tokens_per_s": 189717
+  }
+ }
+}

@@ -836,7 +836,7 @@ def test_build_household_refuses_to_build_an_index_with_duplicate_keys(tmp_path,
     a duplicate must never reach ApproxIndex.build however it got into the entry stream."""
     monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
     monkeypatch.setattr(embeddings, "_household_entries",
-                        lambda reader, zim_id, conn=None: iter(
+                        lambda reader, zim_id, conn=None, style="legacy": iter(
                             [(f"{zim_id}:7", "Twice Over", "Useful words. " * 40)] * 2))
     conn = _household_conn(tmp_path)
     with pytest.raises(ValueError, match="gutenberg_en_all:7"):
@@ -2374,3 +2374,77 @@ def test_the_model_file_is_required_when_any_one_of_several_servers_must_be_star
                               collection="docs", servers=3)
     assert rc == 1
     assert said == [f"FAIL the embedding model is not at {env.embed_model_path} (manifest item bge-small-en-v1.5)"]
+
+
+# --- the household text style: what a Gutenberg book is embedded as ----------------------------------------------
+
+_SUBJECT_PAGE = (b'<html><head><meta content="Pride and Prejudice" name="dc.title"/>'
+                 b'<meta content="Sisters -- Fiction" name="dc.subject"/><meta content="Courtship &amp; marriage -- Fiction" name="dc.subject"/>'
+                 b'<meta content="Love stories" name="dc.subject"/></head><body><h1>Pride and Prejudice</h1>'
+                 b'<p>' + b"It is a truth universally acknowledged, that a single man in possession of a good fortune. " * 30 + b'</p></body></html>')
+
+
+def _subject_open_zim(path):
+    books = dict(GUTENBERG_BOOKS)
+    books["Pride and Prejudice.1"] = _SUBJECT_PAGE
+    return FakeHouseholdZim(books if "gutenberg" in str(path) else SURVIVOR_BOOKS)
+
+
+def _build_household_texts(tmp_path, monkeypatch, **kwargs):
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    seen: list[str] = []
+
+    def fake_embed(texts):
+        seen.extend(texts)
+        return np.eye(len(texts), embeddings.DIMS, dtype=np.float32)
+
+    conn = _household_conn(tmp_path)
+    conn.execute("UPDATE books SET shelf='PR' WHERE id=1")            # English literature; book 2 has no shelf
+    conn.commit()
+    meta = embeddings.build_household(conn, embeddings_settings(tmp_path), fake_embed, open_zim=_subject_open_zim,
+                                      out=lambda s: None, **kwargs)
+    return seen, meta
+
+
+def test_gutenberg_subjects_are_read_from_the_page_head():
+    assert embeddings._gutenberg_subjects(_SUBJECT_PAGE) == ["Sisters -- Fiction", "Courtship & marriage -- Fiction", "Love stories"]
+    assert embeddings._gutenberg_subjects(GUTENBERG_BOOKS["Moby-Dick.2"]) == []
+    # a page whose <meta> tags come after the head window is not searched for them: the body's own text is never mistaken for metadata
+    late = b"<html><head></head><body>" + b"x" * embeddings._PAGE_HEAD_BYTES + b'<meta content="Late" name="dc.subject"/></body></html>'
+    assert embeddings._gutenberg_subjects(late) == []
+
+
+def test_the_default_household_text_is_still_the_legacy_one(tmp_path, monkeypatch):
+    seen, meta = _build_household_texts(tmp_path, monkeypatch)
+    assert embeddings.HOUSEHOLD_TEXT_STYLE == "legacy" and meta["text_style"] == "legacy"
+    pride = next(t for t in seen if t.startswith("Pride and Prejudice"))
+    assert pride.startswith("Pride and Prejudice by Jane Austen. Pride and Prejudice It is a truth")   # no shelf, no subjects
+    assert "Subjects:" not in pride and "English literature" not in pride
+    assert len(pride) == embeddings.HOUSEHOLD_TEXT_CHARS                                                # the long page fills the whole window
+
+
+def test_meta_opening_describes_a_gutenberg_book_by_shelf_and_subjects_then_its_first_thousand_characters(tmp_path, monkeypatch):
+    seen, meta = _build_household_texts(tmp_path, monkeypatch, text_style="meta-opening")
+    assert meta["text_style"] == "meta-opening"
+    pride = next(t for t in seen if t.startswith("Pride and Prejudice"))
+    head = ("Pride and Prejudice by Jane Austen. English literature. "
+            "Subjects: Sisters -- Fiction; Courtship & marriage -- Fiction; Love stories. ")
+    assert pride.startswith(head)
+    assert len(pride) == len(head) + embeddings.HOUSEHOLD_OPENING_CHARS
+    moby = next(t for t in seen if t.startswith("Moby-Dick"))
+    assert moby.startswith("Moby-Dick; Or, The Whale. Moby-Dick Call me Ishmael") and "Subjects:" not in moby   # no author, shelf or subjects: nothing invented
+
+
+def test_meta_opening_leaves_survivor_library_books_exactly_as_they_were(tmp_path, monkeypatch):
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    legacy, _ = _build_household_texts(tmp_path / "a", monkeypatch)
+    styled, _ = _build_household_texts(tmp_path / "b", monkeypatch, text_style="meta-opening")
+    assert [t for t in legacy if t.startswith("blacksmithing")] == [t for t in styled if t.startswith("blacksmithing")] != []
+
+
+def test_an_unknown_household_text_style_is_refused_before_anything_is_read(tmp_path, monkeypatch):
+    monkeypatch.setattr(embeddings, "excluded_zims", lambda settings: frozenset())
+    with pytest.raises(ValueError, match="household text style"):
+        embeddings.build_household(_household_conn(tmp_path), embeddings_settings(tmp_path), _household_embed,
+                                   open_zim=fake_household_open_zim, out=lambda s: None, text_style="everything")
