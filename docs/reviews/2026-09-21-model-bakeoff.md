@@ -35,7 +35,7 @@ Reranker verdict: **none of the seven cross-encoders is acceptable.** Used on th
 110 of the 172 queries get a worse rank; up to 20 safety rows leave the top 3). Blended with the pool by RRF they no
 longer hurt much, but the best small native one (gte-reranker-modernbert-base) adds only +0.02 to +0.03 MRR (interval
 touching zero), and costs 2.0 s per query for 10 candidates on this PC at `-t 4` (11.4 s for 30), 300 MB more memory, and
-would be several times slower on the Pi. Details in section 5.
+would be slower still on the Pi. Details in section 5.
 
 ## 2. Setup and honest caveats
 
