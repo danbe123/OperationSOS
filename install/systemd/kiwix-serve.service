@@ -18,6 +18,11 @@ ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --moni
 # A yanked USB drive can SIGBUS kiwix-serve (spec section 5).
 Restart=always
 RestartSec=2
+# A crash loop backs off (2 s, then longer, up to 20 s) instead of restarting every 3 s for ever. systemd never resets the
+# step count after a healthy run (measured: 30 s runs still grew 2.7 to 11 s), so the ceiling is also the worst
+# wait after an isolated crash weeks from now; it is kept low for that reason. StartLimitIntervalSec=0 stays.
+RestartSteps=4
+RestartMaxDelaySec=20
 LimitNOFILE=65536
 NoNewPrivileges=yes
 PrivateTmp=yes

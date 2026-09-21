@@ -225,6 +225,20 @@ def test_core_units_keep_retrying_forever(name):
     assert int(sections["Service"]["RestartSec"][0]) <= 5, name
 
 
+@pytest.mark.parametrize("name", CORE_UNITS)
+def test_core_units_back_off_in_a_crash_loop_but_stay_quick_for_one_crash(name):
+    """A flat RestartSec=2 meant a broken sos-api restarted every three seconds for ever, about a third of a
+    core. RestartSec is now only the first delay: RestartSteps grows it exponentially to RestartMaxDelaySec (systemd
+    254 and later; Trixie has 257), so a loop settles at 20 to 30 s (about 4 per cent of a core). The steps are never
+    reset by a healthy run (measured with a real unit), so the ceiling stays low.
+    StartLimitIntervalSec=0 stays, so it never gives up."""
+    service = unit_sections(name)["Service"]
+    assert int(service["RestartSec"][0]) <= 5, name
+    assert 3 <= int(service["RestartSteps"][0]) <= 10, name
+    assert 15 <= int(service["RestartMaxDelaySec"][0].rstrip("s")) <= 60, name   # systemd never resets the steps after a healthy run, so this is also the wait after a lone crash
+    assert unit_sections(name)["Unit"]["StartLimitIntervalSec"] == ["0"], name
+
+
 def test_sos_llama_stays_off_unless_asked():
     sections = unit_sections("sos-llama.service")
     assert sections["Service"]["Restart"] == ["no"]

@@ -24,6 +24,11 @@ Environment=SOS_PORT=8000
 ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-graceful-shutdown 5
 Restart=always
 RestartSec=2
+# A crash loop backs off (2 s, then longer, up to 20 s) instead of restarting every 3 s for ever. systemd never resets the
+# step count after a healthy run (measured: 30 s runs still grew 2.7 to 11 s), so the ceiling is also the worst
+# wait after an isolated crash weeks from now; it is kept low for that reason. StartLimitIntervalSec=0 stays.
+RestartSteps=4
+RestartMaxDelaySec=20
 # uvicorn waits for open connections (an assistant stream) before it exits; bound it so a restart is quick.
 TimeoutStopSec=10
 PrivateTmp=yes
