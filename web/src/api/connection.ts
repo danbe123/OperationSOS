@@ -12,6 +12,9 @@ import { useSyncExternalStore } from 'react';
 /** Pauses between probes while the box is not answering; the last one repeats. */
 export const PROBE_DELAYS_MS = [1000, 2000, 4000, 8000, 15_000];
 const JITTER = 0.2;
+/** A probe that gets no answer at all (the upstream accepts the connection and never replies) is given up on
+ * after this long, or the pill would stick and no further probe would ever be scheduled. */
+export const PROBE_TIMEOUT_MS = 5000;
 
 /** A network failure (status 0) or a gateway error from Caddy: the box did not answer. The API saying no
  * (a 404, a 409, a 500, or its own JSON 503) is an answer. */
@@ -49,16 +52,25 @@ function schedule(): void {
   probeTimer = window.setTimeout(() => void probe(), delay);
 }
 
+let probing = false;
+
 async function probe(): Promise<void> {
-  if (!down) return;
+  if (!down || probing) return;
+  probing = true;
+  const ctl = new AbortController();
+  const giveUp = window.setTimeout(() => ctl.abort(), PROBE_TIMEOUT_MS);
   try {
-    const res = await fetch('/api/status', { cache: 'no-store', headers: { Accept: 'application/json' } });
+    const res = await fetch('/api/status', { cache: 'no-store', headers: { Accept: 'application/json' }, signal: ctl.signal });
     if (res.ok) {
+      probing = false;
       reportSuccess();
       return;
     }
   } catch {
-    // still not answering
+    // still not answering, or no answer within the time allowed
+  } finally {
+    window.clearTimeout(giveUp);
+    probing = false;
   }
   if (down) schedule();
 }
@@ -118,6 +130,7 @@ export function useBoxDown(): boolean {
 export function resetConnectionForTests(): void {
   window.clearTimeout(probeTimer);
   probeTimer = undefined;
+  probing = false;
   down = false;
   downSince = 0;
   probeCount = 0;

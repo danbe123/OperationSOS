@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
-  PROBE_DELAYS_MS, isConnectionError, isDown, onReconnect, reportFailure, reportSuccess, resetConnectionForTests,
+  PROBE_DELAYS_MS, PROBE_TIMEOUT_MS, isConnectionError, isDown, onReconnect, reportFailure, reportSuccess, resetConnectionForTests,
 } from '../../src/api/connection';
 import { ApiError, api } from '../../src/api/client';
 
@@ -81,6 +81,21 @@ describe('getting back', () => {
     const after = fetchMock.mock.calls.length;
     await vi.advanceTimersByTimeAsync(minute);
     expect(fetchMock.mock.calls.length).toBe(after);   // it stops asking once the box has answered
+  });
+
+  it('a probe that is never answered is given up on and the next one is scheduled', async () => {
+    fetchMock.mockImplementation((_url: string, init?: RequestInit) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    }));
+    reportFailure(new ApiError(0, 'x'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    // Without a timeout the first probe would still be waiting and there would be exactly one.
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(PROBE_TIMEOUT_MS).toBeLessThanOrEqual(6000);
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue(ok({}));
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(isDown()).toBe(false);
   });
 
   it('asks again at once when the window comes back to the front', async () => {
