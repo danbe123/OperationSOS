@@ -6,9 +6,11 @@ import { Icon } from '../icons';
  * seconds and most outages end before anybody would want to read a notice about them. */
 export const RECONNECTING_AFTER_MS = 2000;
 
-/** The one cue for "the box is not answering": a small pill in the corner, not a dialog, not in the way of
- * a tap, and gone by itself the moment the box answers. The screens keep what they have and say nothing
- * more; `api/connection.ts` looks for the box and tells every query to read again. */
+/** The one cue for "the box is not answering": a thin strip in the top row of the shell, above the screen and
+ * not over it (it took its own row so it can never sit on a button; a pill in a corner covered the last row of
+ * scenario tiles), not a dialog, no taps. It is gone by itself the moment the box answers. The screens keep
+ * what they have and say nothing more; `api/connection.ts` looks for the box and tells every query to read
+ * again. */
 export function Reconnecting() {
   const down = useBoxDown();
   const [shown, setShown] = useState(false);

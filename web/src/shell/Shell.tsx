@@ -110,9 +110,9 @@ export function Shell() {
   if (pathname === '/board') {
     return (
       <div className="app app-board">
+        <Reconnecting />
         <main className="content" id="main" tabIndex={-1} aria-label="The board" ref={main}><Outlet /></main>
         <Notices />
-        <Reconnecting />
         <IdleOverlay />
       </div>
     );
@@ -124,7 +124,7 @@ export function Shell() {
         {/* The first focusable thing in the box, on every screen: seventeen tab stops stood between
             a keyboard and the first job, and there was nothing to step over them with. */}
         <a className="skip-link no-print" href="#main">Skip to what to do</a>
-        <div className="app-drill"><DrillBanner /></div>
+        <div className="app-drill"><Reconnecting /><DrillBanner /></div>
         {/* The band is drawn above the content and read after it: three links about what is broken
             should not stand between a keyboard and the job the screen is for. `order` puts it back
             on top for everybody who is looking rather than tabbing. */}
@@ -136,7 +136,6 @@ export function Shell() {
         </div>
         <MainNav pathname={pathname} wide={wide} />
         <Notices />
-        <Reconnecting />
         <ForecastReminders />
         <KeyboardMount />
         <IdleOverlay />

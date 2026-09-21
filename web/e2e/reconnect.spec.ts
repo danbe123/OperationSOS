@@ -200,3 +200,29 @@ test('several taps on Add note during an outage make exactly one note', async ({
   expect(state.notes.length - before).toBe(1);
   expect(state.notes.filter((n) => n.title === 'Only once')).toHaveLength(1);
 });
+
+/** The Reconnecting pill must never sit on top of something a finger might need. */
+for (const size of [{ width: 853, height: 480 }, { width: 390, height: 844 }]) {
+  test(`the Reconnecting pill covers no control on any screen at ${size.width}x${size.height}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    const box = await boxThatCanGoAway(page);
+    for (const path of ['/', '/notes', '/s/grid-collapse', '/search?q=bleeding', '/board', '/kit', '/system']) {
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      if (path === '/notes') await page.getByRole('button', { name: 'Add a note' }).click();
+      box.goAway();
+      await nudge(page);
+      await expect(reconnecting(page)).toBeVisible({ timeout: 10_000 });
+      const pill = (await reconnecting(page).boundingBox())!;
+      const controls = await page.locator('a[href], button, input, textarea, select, [role="tab"], [role="button"]').evaluateAll((els) =>
+        els.filter((el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && !el.closest('.reconnecting'); })
+          .map((el) => { const r = el.getBoundingClientRect(); return { name: (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30), x: r.x, y: r.y, w: r.width, h: r.height }; }));
+      const overlapping = controls.filter((c) => c.x < pill.x + pill.width && c.x + c.w > pill.x && c.y < pill.y + pill.height && c.y + c.h > pill.y);
+      expect(overlapping, `${path}: the pill at ${JSON.stringify(pill)} covers ${JSON.stringify(overlapping)}`).toEqual([]);
+      const status = await reconnecting(page).evaluate((el) => ({ pe: getComputedStyle(el).pointerEvents, role: el.getAttribute('role'), live: el.getAttribute('aria-live') }));
+      expect(status).toEqual({ pe: 'none', role: 'status', live: 'polite' });
+      box.comeBack();
+      await expect(reconnecting(page)).toHaveCount(0, { timeout: 20_000 });
+    }
+  });
+}
