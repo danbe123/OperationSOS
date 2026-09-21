@@ -23,7 +23,7 @@ Meaning layer on, clean baseline -> after tuning (keyword-only in the last colum
 | wikipedia | 86 | 0.128 -> **0.395** | 0.314 -> 0.570 | 0.231 -> 0.481 | 0.186 / 0.326 / 0.273 |
 | wikipedia/question | 18 | 0.000 -> 0.444 | 0.222 -> 0.667 | 0.110 -> 0.537 | 0.111 / 0.278 / 0.203 |
 | books | 214 | 0.000 -> 0.000 | 0.009 -> 0.005 | 0.017 -> 0.019 | 0 / 0 / 0 |
-| books/survivor | 63 | 0.000 -> 0.000 | 0.016 -> 0.016 | 0.040 -> 0.048 | hit@10 0.000 -> 0.349 (was 0.286) |
+| books/survivor | 63 | 0.000 -> 0.000 | 0.016 -> 0.016 | 0.040 -> 0.048 | 0 / 0 / 0 (hit@10 with meaning 0.286 -> 0.349) |
 | ALL | 523 | 0.226 -> 0.289 | 0.323 -> 0.400 | 0.289 -> 0.351 | 0.203 / 0.281 / 0.250 |
 
 Latency, dev PC, warm Kiwix, one query at a time: keyword p50 1,630 ms -> 244 ms, meaning p50 1,658 ms -> 278 ms (p95 2,305 -> 486).
@@ -60,16 +60,16 @@ Every change below is in `api/sos/search.py` with the reason next to its constan
    twenty is worth `weight / (5 + n)` times 2, replacing `0.5 x weight x (cosine - 0.60) / 0.22`. bge-small's cosines for the nearest
    twenty sit within a few hundredths of each other, so distance scored a stranger nearly as high as the answer. Household books keep the distance bonus.
    Rank fusion with weight 2 against the same configuration with the old bonus: paraphrase MRR 0.481 vs 0.453, safety MRR 0.887 vs 0.843
-   (rows `F` and `F-additive` below), and 0.70-0.72 vs 0.73 on own-library MRR; weights 1 and 3 are worse on safety or on own-library
+   (rows `F` and `F-additive` below), against own-library MRR 0.716 vs 0.729; weights 1 and 3 are worse on safety or on own-library
    (`F-rrf1`, `dense-weight-3`).
-3. **Own-page floor 0.69** (was 0.66) for a page the words missed. One measured effect: `safety-heat-stroke-hard`-type wordings stop pulling a
-   stranger in above the card; safety hit@1 0.794 -> 0.824, hard 0.588 -> 0.647 (`F-floor0`). This rests on one hard row and the test that documented "0.68 answers"
-   now says 0.69.
+3. **Own-page floor 0.69** (was 0.66) for a page the words missed. The whole measured effect (`F-floor0` -> `F`) is `safety-carbon-monoxide-hard` 3 -> 1
+   (safety hit@1 0.794 -> 0.824, hard hit@1 0.588 -> 0.647) and `para-a25-2` 20 -> 12, `wiki-foil-emergency-blanket` 3 -> 2, `wiki-pmr446-walkie-talkies` 12 -> 11:
+   evidence from one emergency row, adopted because emergency accuracy comes first. The test that documented "the box's own page answers at 0.68" now says 0.69.
 4. **Quick cards kept in the first three**: the card the words ranked first, and the two cards nearest in meaning at cosine >= 0.62. This is the
    emergency promotion rule. Without it (`no-cards-kept`, `F-nocards`): safety hit@3 0.853, hard 12 of 17; with it 0.971 and 16 of 17.
    **False-promotion rate on the other sets** (books excluded, 275 queries): a card newly enters the first three for 60 of them (22%: own-library 18 of 63,
-   paraphrase 26 of 126, wikipedia 16 of 86); for 4 it is a listed answer (`para-a32-1`, `para-a33-2`, `para-h10-2`, `para-a30-2`); it pushes a listed
-   answer out of the first three for **none**, and moves 6 rows down a place or two (`own-a05` and `own-h01` among them, see below).
+   paraphrase 26 of 126, wikipedia 16 of 86); for 4 the promoted card is itself a listed answer; it pushes a listed answer out of the first three for **none**
+   (the only row it makes worse across a bucket is `wiki-low-blood-sugar` 10 -> 11).
 5. **Wikipedia lifted by a ramp on its cosine, not rescaled** (`WIKIPEDIA_LIFT` 0.6 between cosine 0.72 and 0.82; not applied to medical queries). See the recommendation.
 
 **Measured and not adopted**: normalised-score fusion (worse on safety and paraphrase than rank fusion: `norm`); per-class floors, ceilings and
@@ -136,7 +136,7 @@ figures (0.395 / 0.570 / 0.481) differ from `F`'s (0.430 / 0.581 / 0.516), and i
 ### Tuned on half, checked on the other half
 
 Fixed alternating split within each set (rows sorted by id, even positions tune, odd positions check; `lab.py --halves`). The rank-fusion parameters (weight,
-own floor, document share) were chosen on the tune half of paraphrase and safety (`grid.py`, 3 x 3 x 3 x 3 = 108 combinations for rank fusion and 216 for the
+own floor, document share) were chosen on the tune half of paraphrase and safety (`grid.py`, 4 x 3 x 3 x 3 = 108 combinations for rank fusion and 3 x 3 x 3 x 2 x 2 = 108 for the
 additive form; at `c39a441`); the two halves and own-library, which no tuning looked at, then read:
 
 | config (adopted, final code) | own-library h1 / h3 / MRR | paraphrase h1 / h3 / MRR | safety h1 / h3 / MRR | plain / hard in top 3 |
@@ -145,17 +145,18 @@ additive form; at `c39a441`); the two halves and own-library, which no tuning lo
 | adopted, **tune** half | 0.688 / 0.812 / 0.752 | 0.365 / 0.540 / 0.465 | 0.647 / 0.941 / 0.775 | - |
 | keyword-only, check half | 0.613 / 0.774 / 0.689 | 0.222 / 0.317 / 0.295 | 0.824 / 0.941 / 0.882 | - |
 | adopted, **check** half | **0.581** / 0.806 / 0.683 | 0.413 / 0.651 / 0.530 | 1.000 / 1.000 / 1.000 | - |
-| Wikipedia, keyword-only tune / check hit@1 | 0.140 / 0.233 | | | |
-| Wikipedia, adopted tune / check hit@1, hit@3 | 0.395 / 0.628 | 0.395 / 0.512 | | |
+| wikipedia (86 rows), keyword-only, tune / check | hit@1 0.140 / 0.233 | hit@3 0.302 / 0.349 | MRR 0.247 / 0.298 | - |
+| wikipedia, adopted, tune / check | hit@1 0.395 / 0.395 | hit@3 0.628 / 0.512 | MRR 0.506 / 0.456 | - |
 
-Read the check half honestly: paraphrase and safety improve as much or more on the half nothing was tuned on (paraphrase MRR 0.295 -> 0.530 on check against 0.356 -> 0.465 on tune; the
-safety set is 17 emergencies in two wordings, so the halves are 17 rows of each kind and the numbers move 0.06 a row), and **own-library hit@1 on the check half is 0.581, under
+Read the check half honestly. Paraphrase improves as much on the half nothing was tuned on (MRR 0.295 -> 0.530 on check, 0.356 -> 0.465 on tune). **For safety the split is degenerate**: the ids sort
+each emergency's `-hard` before its `-plain`, so every hard wording is in the tune half and every plain wording in the check half; the check half's 1.000 is the plain set, which was already
+easy, and says nothing about the hard rows, which were both tuned on and reported (17 rows: 0.06 a row). **Own-library hit@1 on the check half is 0.581, under
 keyword's 0.613**, while it is 0.688 against 0.625 on the tune half. The own-library figure that passes the guardrail (0.635 against 0.619) is one row of 63 and is not a comfortable margin.
 
 The grids' best rows agree with the choice within noise (tune half paraphrase MRR + safety MRR; check half in the last columns), from `tools/eval/search/grid.py` at `c39a441`:
 rank fusion weight 2.0 with own floor +.03 and document share 0.5 gave paraphrase MRR 0.467 / safety MRR 0.775 (tune), 0.538 / 1.000 (check), own-library 0.651 / 0.810 / 0.720;
 weight 3.0 with document share 1.0 gave 0.436 / 0.814 tune, 0.518 / 1.000 check and lower own-library hit@1 (0.635); the additive form's best was 0.467 / 0.745 (tune), 0.524 / 0.971 (check).
-The Wikipedia ramp grid (24 combinations of floor, ceiling and weight, `gridwiki.py`) had the same shape: hit@1 0.395-0.465 on the tune half and 0.419 on the check half across the plateau of weights 0.4 to 0.8.
+The Wikipedia ramp grid (24 combinations of floor, ceiling and weight, `gridwiki.py`) had one shape: tune-half hit@1 rose from 0.30 to 0.47 as the weight went from 0.25 to 0.8 while the check half stayed at 0.42, and a floor of 0.68 to 0.72 beat 0.76 or more.
 
 ## Rescued and regressed
 
@@ -186,8 +187,8 @@ Per adopted change, the rows that change first-three / miss status when it is ab
 - **Safety**: `safety-seizures-hard` (absent). Nothing else in the 34 is outside the top three.
 - **own-library, 12 of 63 outside the top three**: `own-a02` boil water (absent), `own-a05` paracetamol dose (5), `own-a06` ibuprofen with paracetamol (absent), `own-a11` HIV (17), `own-a12` alcohol withdrawal (absent),
   `own-a13` insects (absent), `own-a14` bats and rabies (13), `own-a15` urban foxes (absent), `own-a17` how rain forms (absent), `own-a18` what a virus is (absent), `own-h01` paracetamol (6), `own-h02` ibuprofen (5).
-  The five general-knowledge rows (insects, foxes, rain, viruses, alcohol) are found by neither keyword nor meaning: the box holds nothing that answers them but Wikipedia, which the gold does not accept for these rows.
-- **Medicine names**: health hit@3 is 0.833, against 1.000 keyword-only: `paracetamol` and `ibuprofen` (and the dose question `own-a05`) have the NHS page third or fifth behind the two kept cards and the rank-fused passages. This is the price of the emergency rule and of weight 2; weight 1 gets health hit@3 back to 0.833-0.917 at the cost of safety (hit@1 0.676, hard hit@1 0.529: `dense-weight-1`).
+  `own-a02`, `-a06`, `-a12`, `-a13`, `-a15`, `-a17` and `-a18` are found by neither keyword nor meaning (the earlier report found their answers to be general-knowledge pages the passages do not cover well).
+- **Medicine names**: health hit@3 is 0.833, against 1.000 keyword-only: `paracetamol` and `ibuprofen` (and the dose question `own-a05`) have the NHS page third or fifth behind the two kept cards and the rank-fused passages. This is the price of the emergency rule and of weight 2; weight 1 does not bring health hit@3 back (0.833 as well; health hit@1 0.667 and MRR 0.756 are better) and costs safety (hit@1 0.676, hard hit@1 0.529: `dense-weight-1`).
 - **paraphrase**: 51 of 126 outside the top three, 43 outside the top ten; 46 own-library and paraphrase queries are found by neither mode. The NHS medicine pages are still not found from a paraphrase.
 - **wikipedia**: 37 of 86 outside the top three, 34 outside the top ten. Medical targets get no lift (`wiki-ibuprofen`, `wiki-what-causes-a-stroke`, `wiki-dehydration-symptoms` ...).
 - **books**: unchanged in kind: Gutenberg descriptions 6 of 151 in the top ten (as before), Survivor Library 22 of 63 (was 18): a Survivor topic reaches the top ten more often, none reaches the first place.
