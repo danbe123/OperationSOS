@@ -50,6 +50,10 @@ looks in (`fts=1`). It exits non-zero on any problem. Gold is verified against t
 | `books` | 214 | 151 known-item descriptions of Project Gutenberg books (`group: gutenberg`; title and author never in the query; every edition of the work is acceptable) and 63 practical topics answered by Survivor Library books (`group: survivor`; every book whose title clearly covers the topic). |
 | `wikipedia` | 86 | known-item lookups of one English Wikipedia article. Meaning search only reorders Wikipedia's keyword hits, so the figure that matters is the target's rank with the rerank off and on. |
 
+`heldout-2026-09-21.jsonl` (62 rows, `group` is the class: medicine-name, medicine-question, medicine-paraphrase, everyday, safety-plain, safety-hard, wikipedia) was written before
+the tuning was finished and its results were not looked at; it is a held-out check, not a tuning set. It is left out of a default run and of `ALL`: run it by naming it
+(`sos eval-search heldout-2026-09-21`), and do not tune on it.
+
 ## Metrics
 
 Alternatives are interchangeable, so the first matching result is *the* relevant one:

@@ -54,6 +54,7 @@ STUCK_AFTER = 3                # this many queries in a row still partial after 
 REQUIRED = ("id", "query", "expected", "set")
 SEARCH_UNINDEXED_OK = (SURVIVOR_ZIM, GUTENBERG_ZIM)   # found through the meaning collections, not the keyword search
 EXPECTED_KEYS = ("url", "item", "gutenberg", "survivor")
+HELD_OUT = "heldout"           # gold files with this stem prefix are never part of a default run
 
 SearchFn = Callable[[str, str], Awaitable[dict]]     # (query, mode) -> the payload search() returns
 
@@ -226,6 +227,8 @@ def load_gold(gold_dir: Path, names: Optional[list[str]] = None) -> tuple[list[G
     for f in files:
         if names and f.stem not in names:
             continue
+        if not names and f.stem.startswith(HELD_OUT):
+            continue        # a held-out set is run by naming it, so no tuning run ever includes it by accident
         got, bad = load_gold_file(f)
         problems.extend(bad)
         for row in got:
