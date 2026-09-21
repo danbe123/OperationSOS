@@ -91,10 +91,16 @@ install_file() {
 # sync_tree <src-dir> <dest-dir>: rsync owned by sos; returns 0 when anything changed, 1 when identical.
 # --omit-dir-times: the venv is made inside the copied api/ tree, which moves that directory's mtime; without
 # this the next run saw "changed" and pip-installed again, so a second run was not the no-op it promises.
-RSYNC_TREE=(rsync -ai --omit-dir-times --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache)
+# --exclude '*.egg-info' and build: `pip install -e` writes sos.egg-info (and setuptools a build/ tree) inside the
+# api/ directory it installs from; --delete would remove them, the next run would call that a change and
+# run pip again, which needs the network.
+RSYNC_TREE=(rsync -ai --omit-dir-times --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache
+  --exclude '*.egg-info' --exclude /build --exclude .ruff_cache --exclude .mypy_cache)
 sync_tree() {
   local out
-  out=$("${RSYNC_TREE[@]}" --chown="$SOS_USER:$SOS_USER" "$1/" "$2/")
+  # Callers use this as an `if` condition, where set -e is off: a failed rsync must stop the install here,
+  # not read as "nothing changed".
+  out=$("${RSYNC_TREE[@]}" --chown="$SOS_USER:$SOS_USER" "$1/" "$2/") || { echo "install.sh: rsync of $1 to $2 failed" >&2; exit 1; }
   [ -n "$out" ]
 }
 

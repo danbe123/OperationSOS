@@ -497,8 +497,10 @@ def test_caddy_proxies_keep_paths_and_fix_forwarded_headers(caddy):
 # things that need root, the network or a build, then plays a first run that dies and a second that must
 # finish the job.
 
-def run_install_steps(tmp_path: Path, body: str, *, expect_ok: bool = True) -> subprocess.CompletedProcess:
+def run_install_steps(tmp_path: Path, body: str, *, expect_ok: bool = True, with_tree: bool = True) -> subprocess.CompletedProcess:
     log = tmp_path / "calls.log"
+    if with_tree:
+        (tmp_path / "srv" / "api").mkdir(parents=True, exist_ok=True)   # step_tree makes it in a real run
     script = f"""
 set -euo pipefail
 source {INSTALL / 'install.sh'}
@@ -506,7 +508,8 @@ PREFIX={tmp_path}/srv; BUILD_DIR=$PREFIX/build; UNIT_DIR={tmp_path}/units; SCRIP
 SOS_USER=$(id -un); LOG={log}
 say() {{ printf 'step %s: %s\\n' "$1" "$2"; }}
 systemctl() {{ echo "systemctl $*" >> "$LOG"; }}
-sync_tree() {{ local out; mkdir -p "$2"; out=$("${{RSYNC_TREE[@]}}" "$1/" "$2/"); [ -n "$out" ]; }}
+# the real sync_tree (its rsync options are what is under test); only its --chown needs a group named like the user
+getent group "$SOS_USER" >/dev/null || sync_tree() {{ local out; out=$("${{RSYNC_TREE[@]}}" "$1/" "$2/") || {{ echo "install.sh: rsync of $1 to $2 failed" >&2; exit 1; }}; [ -n "$out" ]; }}
 ldconfig() {{ :; }}
 cmake() {{ echo "cmake $*" >> "$LOG"; }}
 git() {{
@@ -520,7 +523,8 @@ git() {{
 as_sos() {{
   case "$1" in
     */pip) echo "pip $*" >> "$LOG"; [ -z "${{STUB_PIP_FAIL:-}}" ] || return 1
-           [ "$2" != install ] || {{ touch "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; chmod +x "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; }} ;;
+           [ "$2" != install ] || {{ touch "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; chmod +x "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"
+             mkdir -p "$PREFIX/api/sos.egg-info" "$PREFIX/api/build/lib"; echo "Name: sos" > "$PREFIX/api/sos.egg-info/PKG-INFO"; }} ;;
     */sos) echo "sos $*" >> "$LOG"; [ -z "${{STUB_INDEX_FAIL:-}}" ] || return 1 ;;
     python3) mkdir -p "$4/bin"; touch "$4/bin/python" "$4/bin/pip"; chmod +x "$4/bin/python" "$4/bin/pip" ;;
     *) "$@" ;;
@@ -626,3 +630,12 @@ def test_content_step_reruns_an_index_that_was_killed(tmp_path):
     killed = run_install_steps(tmp_path, "sync_tree() { return 1; }; STUB_INDEX_FAIL=1; touch $PREFIX/state/config/index.running; step_content",
                                expect_ok=False)
     assert killed.returncode != 0 and (state / "config" / "index.running").exists()
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_a_failed_rsync_stops_the_install_instead_of_reading_as_no_change(tmp_path):
+    """sync_tree is called as an `if` condition, where set -e is off: a failed rsync (disk full, the destination
+    gone) returned non-zero and the step took that for "nothing changed" and carried on."""
+    proc = run_install_steps(tmp_path, "step_venv", expect_ok=False, with_tree=False)
+    assert proc.returncode != 0, proc.stdout
+    assert "unchanged" not in proc.stdout and "rsync" in proc.stderr
