@@ -97,11 +97,15 @@ function Situations() {
           <button type="button" className="btn btn-small" onClick={() => void playbooks.refetch()}><Icon name="refresh" size={18} /><span>Try again</span></button>
         </p>
       )}
-      {scenarios.length > 0 && (
+      {/* First aid ends the grid, and is there as soon as the guides have been asked for, whether or not they
+          could be read: the quick medical cards are the one thing here that must not wait on anything. It is
+          what keeps a quick card at two taps from Now, now that Medical lives in the Library. */}
+      {(scenarios.length > 0 || !playbooks.loading) && (
         <nav className="tiles" aria-label="Scenarios">
           {scenarios.map((p) => (
             <Tile key={p.slug} to={`/s/${p.slug}`} icon={p.icon} title={p.title} subtitle={tileLine(p.title, p.summary)} />
           ))}
+          <Tile to="/library/medical" icon="medical" title="First aid" subtitle="Quick cards" />
         </nav>
       )}
       <WhatToDo />
