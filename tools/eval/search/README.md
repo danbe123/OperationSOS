@@ -57,6 +57,25 @@ hit@k (in the top k), MRR@10 (1 / rank, 0 beyond ten) and nDCG@10 (1 / log2(rank
 and p95 latency. `--semantic both` also lists the queries the meaning layer newly put in the top ten (rescued) or
 newly took out of it (regressed). `sos eval-compare a.json b.json` prints the delta of two runs.
 
+## Record and replay (fast experiments)
+
+A live run takes about 30 minutes because every query is a round of Kiwix searches and an embedding call. Keep what
+the searches consumed once, then run the search code against it with no service at all:
+
+```
+sos eval-search --record .dev/search-recordings/NAME --compact --json run.json     # live, both modes
+sos eval-search --replay .dev/search-recordings/NAME --json replay.json            # no Kiwix, no embedding server
+```
+
+Per distinct query the recording holds every multi-archive Kiwix request's hits (or refusal), the query vector, the
+nearest 100 passages of the box's own library and of the household books, and the Wikipedia rerank cosines
+(`api/sos/searchreplay.py`). A replay opens the same database read-only and is deterministic; its timings are only
+the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`): a
+change that asks Kiwix something new gets a refusal for it, so a non-zero count means that run is not comparable.
+Record again after a database rebuild or an index rebuild. Recordings live under the git-ignored `.dev/`.
+
+`lab.py` runs named parameter sets over a replay in parallel and prints one comparison table (see its docstring).
+
 ## Known limits
 
 - `own-library` and `paraphrase` inherit the AI-retrieval expectations of `questions.jsonl`; a page that answers the
