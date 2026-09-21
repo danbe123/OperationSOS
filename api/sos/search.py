@@ -339,18 +339,58 @@ class SearchCache:
         conn.commit()
 
 
-async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern: str, timeout: float):
+_refused_seen: set[tuple] = set()   # refusals already logged, so a persistent one is one line, not one per search
+
+
+def _say_refused(cls: str, names: list[str], exc: KiwixError) -> None:
+    key = (cls, tuple(names), exc.status)
+    if key not in _refused_seen:
+        _refused_seen.add(key)
+        what = f"the archive {names[0]}" if len(names) == 1 else f"{len(names)} archives"
+        log.warning("search: Kiwix refused %s of the %s class (%s); %s", what, cls, exc,
+                    "leaving it out of search" if len(names) == 1 else "asking for them separately")
+
+
+def _interleave(lists: list[list]) -> list:
+    """Round-robin by rank: every list's first hit, then every list's second, so the halves of a split group
+    keep the relative standing their ranks gave them (their scores are `weight / (5 + rank)`)."""
+    out = []
+    for rank in range(max((len(hits) for hits in lists), default=0)):
+        out.extend(hits[rank] for hits in lists if rank < len(hits))
+    return out
+
+
+async def _search_names(kiwix: KiwixClient, cls: str, names: list[str], pattern: str, timeout: float):
+    """(hits, partial) for these archives of one class: `hits` is None when nothing came back."""
     try:
-        return cls, await kiwix.search(names, pattern, PAGE_LENGTH, timeout), False
+        return await kiwix.search(names, pattern, PAGE_LENGTH, timeout), False
     except asyncio.TimeoutError:
-        return cls, None, True
+        return None, True
     except KiwixError as exc:
-        # A permanent refusal (an archive with no full-text index answers 404 every time) is a group with
-        # nothing to say, not a search that went wrong: marking it partial would tell every search to
-        # "try again in a moment" and keep it out of the cache for good.
-        return cls, None, not exc.permanent
+        if not exc.permanent:
+            return None, True
+        _say_refused(cls, names, exc)
+        if len(names) == 1:
+            # A permanent refusal (an archive with no full-text index answers 404 every time) is an archive
+            # with nothing to say, not a search that went wrong: marking it partial would tell every search
+            # to "try again in a moment" and keep it out of the cache for good.
+            return None, False
+        # Kiwix refuses a whole multi-archive request when any one archive is unfit for it (mixed
+        # languages, no index): halve the group until the offender stands alone, so one misfiled archive
+        # cannot hide the rest of its class. Only this failure path pays for the extra requests.
+        mid = len(names) // 2
+        (first, first_partial), (second, second_partial) = await asyncio.gather(
+            _search_names(kiwix, cls, names[:mid], pattern, timeout),
+            _search_names(kiwix, cls, names[mid:], pattern, timeout))
+        found = [hits for hits in (first, second) if hits is not None]
+        return (_interleave(found)[:PAGE_LENGTH] if found else None), first_partial or second_partial
     except (httpx.HTTPError, OSError):
-        return cls, None, True
+        return None, True
+
+
+async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern: str, timeout: float):
+    hits, partial = await _search_names(kiwix, cls, names, pattern, timeout)
+    return cls, hits, partial
 
 
 _refresh_fault: list[str] = []   # the fault last logged, so a persistent one is one line, not one per request
@@ -421,8 +461,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     tasks = [_search_class(kiwix, cls, names, pattern, CLASS_TIMEOUTS.get(cls, DEFAULT_TIMEOUT))
              for (cls, _lang), names in books.items()]
     for cls, hits, timed_out in await asyncio.gather(*tasks):
+        partial = partial or timed_out
         if hits is None:
-            partial = partial or timed_out
             continue
         for rank, hit in enumerate(hits, 1):
             results.append({
