@@ -11,12 +11,12 @@ for (const viewport of [{ width: 853, height: 480 }, { width: 390, height: 844 }
     await aid.scrollIntoViewIfNeeded();
     await expect(aid).toBeVisible();
     await expect(aid).toContainText('Quick cards');
-    // the same tile as its neighbours: same size, same touch target, last in the grid
-    const last = grid.getByRole('link').last();
-    await expect(last).toContainText('First aid');
+    // the same tile as its neighbours: same size, same touch target, first in the grid: a quick card must not sit below twenty scenarios
+    const first = grid.getByRole('link').first();
+    await expect(first).toContainText('First aid');
     const neighbour = grid.getByRole('link', { name: /National grid collapse/ });
     const [a, n] = [(await aid.boundingBox())!, (await neighbour.boundingBox())!];
-    expect(a.height).toBeGreaterThanOrEqual(44);   // a touch target; it may be shorter than the neighbours: it is alone on the last row
+    expect(a.height).toBeGreaterThanOrEqual(44);   // a touch target
     expect(Math.abs(a.width - n.width)).toBeLessThanOrEqual(1);
     expect(await aid.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(await neighbour.evaluate((el) => getComputedStyle(el).backgroundColor));
     await page.screenshot({ path: `/tmp/recovery-shot-firstaid-${viewport.width}.png` });
