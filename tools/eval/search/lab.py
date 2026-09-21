@@ -38,6 +38,12 @@ EXPERIMENTS: dict[str, dict] = {
     "dense-weight-3": {"DENSE_WEIGHT": 3.0},
     "no-cards-kept": {"CARD_COS": 2.0},               # the nearest cards are not kept (the words' first card still is)
     "wikipedia-lift-0": {"WIKIPEDIA_LIFT": 0.0},
+    "medicine-top-5": {"MEDICINE_TOP": 5},            # promote an NHS page the words ranked fourth or fifth too
+    "no-medicine-rule": {"MEDICINE_TOP": 0},           # the fusion as it stood before the medicine rule
+    "no-cards-kept": {"CARD_COS": 2.0},               # the nearest cards are not kept (the words' first card still is)
+    "wikipedia-lift-0": {"WIKIPEDIA_LIFT": 0.0},
+    "medicine-top-5": {"MEDICINE_TOP": 5},            # promote an NHS page the words ranked fourth or fifth too
+    "no-medicine-rule": {"MEDICINE_TOP": 0},           # the fusion as it stood before the medicine rule
     "cards-kept-1": {"CARDS_KEPT": 1},
     "card-cos-.66": {"CARD_COS": 0.66},
     "kept-top-2": {"KEPT_TOP": 2},

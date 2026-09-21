@@ -96,8 +96,12 @@ The plan in the Gutenberg design, section 8, built for the box's own library:
   (`KEPT_TOP`): a household that words an emergency its own way ("kettle of boiling water went over my
   kid's hand") is still shown the card, though nothing of it is in the words. A card outside the first three
   takes the place of the lowest row inside them that is not a kept card, and that row moves to fourth. The
-  rule moves only rows the fusion already has. (A rule keeping a title the query names where the words put it
-  was measured and not adopted: it restored none of the medicine pages it was for and clashed with this one.)
+  rule moves only rows the fusion already has.
+- **A medicine typed by name.** The NHS medicine page the words ranked in the first three, whose title carries
+  two thirds of the query's words ("paracetamol" and "Common questions about paracetamol for adults"), stays in
+  the first three (`MEDICINE_SOURCE`, `MEDICINE_SHARE`, `MEDICINE_TOP`), and the nearest cards are not kept
+  beside it: a medicine name is a lookup, not an emergency described. Without it the rank fusion and the kept
+  cards put the NHS pages of "paracetamol", "ibuprofen" and the dose question 5th to 6th.
 - **The cache.** `Semantic.generation` counts each load of the index; a search seeing a new generation
   drops the persistent `search_cache` first, so an index rebuilt under a running API does not serve the
   old answers until they expire.

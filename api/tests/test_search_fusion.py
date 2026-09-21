@@ -84,7 +84,7 @@ def test_a_card_found_only_by_meaning_is_not_the_card_the_words_ranked_first():
 def test_a_kept_card_replaces_the_lowest_row_in_the_first_three_and_that_row_moves_just_below():
     rows = [row(f"/p/{i}", f"P{i}") for i in range(6)]
     card = row("/medical/card/x", "Card", kind="card")
-    out = search._keep_cards(rows[:5] + [card] + rows[5:], [card])
+    out = search._keep_rows(rows[:5] + [card] + rows[5:], [card])
     assert urls(out)[:4] == ["/p/0", "/p/1", "/medical/card/x", "/p/2"]                 # /p/2 stood third
     assert sorted(urls(out)) == sorted(urls(rows + [card]))                                # nothing lost
 
@@ -92,19 +92,40 @@ def test_a_kept_card_replaces_the_lowest_row_in_the_first_three_and_that_row_mov
 def test_a_card_already_in_the_first_three_does_not_move():
     card = row("/medical/card/x", "Card", kind="card")
     a, b = row("/a", "A"), row("/b", "B")
-    assert urls(search._keep_cards([card, a, b], [card])) == ["/medical/card/x", "/a", "/b"]
-    assert urls(search._keep_cards([a, b, card], [card])) == ["/a", "/b", "/medical/card/x"]
+    assert urls(search._keep_rows([card, a, b], [card])) == ["/medical/card/x", "/a", "/b"]
+    assert urls(search._keep_rows([a, b, card], [card])) == ["/a", "/b", "/medical/card/x"]
 
 
 def test_two_kept_cards_do_not_displace_each_other_and_a_full_house_of_cards_blocks_a_lift():
     c1, c2, c3, c4 = (row(f"/medical/card/{i}", f"C{i}", kind="card") for i in range(4))
     a, b, c = row("/a", "A"), row("/b", "B"), row("/c", "C")
-    out = search._keep_cards([a, b, c, c1, c2], [c1, c2])
+    out = search._keep_rows([a, b, c, c1, c2], [c1, c2])
     assert set(urls(out)[:3]) >= {"/medical/card/0", "/medical/card/1"} and len(out) == 5
-    out = search._keep_cards([c1, c2, c3, c4], [c1, c2, c3, c4])          # the first three are all kept cards already
+    out = search._keep_rows([c1, c2, c3, c4], [c1, c2, c3, c4])          # the first three are all kept cards already
     assert urls(out) == [f"/medical/card/{i}" for i in range(4)]
-    out = search._keep_cards([c1, c2, c3, a], [c1, c2, c3])
+    out = search._keep_rows([c1, c2, c3, a], [c1, c2, c3])
     assert urls(out) == ["/medical/card/0", "/medical/card/1", "/medical/card/2", "/a"]
+
+
+# --- a medicine typed by name -----------------------------------------------------------------------------------------------
+
+def test_the_kept_medicines_are_nhs_rows_the_words_ranked_high_whose_title_has_the_query():
+    terms = query_mod.reduce_query("paracetamol").terms
+    wiki = row("/w", "Paracetamol", kind="article", kw=1.0, source="medical")
+    nhs_top = row("/nhs1", "Common questions about paracetamol for adults - NHS", kind="article", kw=0.8, source="nhs")
+    nhs_other = row("/nhs2", "Ibuprofen for adults - NHS", kind="article", kw=0.7, source="nhs")
+    nhs_low = row("/nhs3", "Paracetamol for children - NHS", kind="article", kw=0.1, source="nhs")
+    meaning = row("/m", "Paracetamol", kind="article", score=5.0, via="meaning", source="nhs")
+    results = [wiki, nhs_top, nhs_other, meaning, nhs_low]
+    kw_pos = search._keyword_positions(results)
+    assert urls(search._kept_medicines(results, kw_pos, terms)) == ["/nhs1"]     # not Wikipedia, not another medicine, not below the third, not found by meaning
+
+
+def test_a_medicine_is_lifted_into_the_first_three_and_the_nearest_cards_are_not_kept_beside_it():
+    a, b, c = row("/a", "A"), row("/b", "B"), row("/c", "C")
+    nhs = row("/nhs", "Paracetamol - NHS", kind="article", source="nhs")
+    out = search._keep_rows([a, b, c, nhs], [nhs])
+    assert urls(out) == ["/a", "/b", "/nhs", "/c"]
 
 
 # --- through search() -----------------------------------------------------------------------------------------------------------
@@ -173,6 +194,39 @@ def test_without_the_card_rule_the_documents_do_outrank_the_card(conn, env, monk
             ("/p/cook#kettle", 0.71), ("/medical/card/burns#steps", 0.66)]
     out = run(conn, env, "spilled the kettle on my daughters arm", FakeSemantic(near))
     assert "/medical/card/burns#steps" not in urls(out)[:3]
+
+
+def test_a_medicine_named_in_the_query_keeps_its_nhs_page_in_the_first_three(conn, env):
+    conn.executemany(ROW_SQL, [
+        ("Lethal pandemic", "Paracetamol and fever in a pandemic.", "playbook:pandemic", "playbook", "playbooks", "", None, "/s/pandemic#first-72-hours"),
+        ("Survival medicine", "Paracetamol, aspirin and ibuprofen.", "page:rebuild-medicine", "page", "playbooks", "", None, "/p/rebuild-medicine#drugs"),
+        ("Medical", "Paracetamol and other medicine.", "module:medical", "module", "playbooks", "", None, "/m/medical#what-to-do")])
+    conn.execute("INSERT INTO library_items (id, title, kind, tier, category, dest, priority, available, fts) VALUES "
+                 "('nhs_medicines', 'NHS medicines', 'zim', 'core', 'medical', 'zim/n.zim', 10, 1, 1)")
+    conn.commit()
+
+    def reply(request):
+        if "nhs_medicines" in request.url.params.get_list("books.name"):
+            return httpx.Response(200, text="<rss><channel><item><title>Common questions about paracetamol for adults - NHS</title>"
+                                  "<link>/kiwix/content/nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/common-questions/</link>"
+                                  "<description>x</description></item></channel></rss>")
+        return httpx.Response(200, text="<rss><channel></channel></rss>")
+
+    near = [("/s/pandemic#first-72-hours", 0.78), ("/p/rebuild-medicine#drugs", 0.77), ("/m/medical#what-to-do", 0.76),
+            ("/medical/card/poisoning#steps", 0.75)]
+    with respx.mock(base_url=BASE, assert_all_called=False) as m:
+        m.get("/search").mock(side_effect=reply)
+        out = asyncio.run(search.search(conn, env, KiwixClient(BASE), "paracetamol", use_cache=False, semantic=FakeSemantic(near)))["results"]
+        with_rule = urls(out)
+        monkey = pytest.MonkeyPatch()
+        monkey.setattr(search, "MEDICINE_TOP", 0)
+        try:
+            without = urls(asyncio.run(search.search(conn, env, KiwixClient(BASE), "paracetamol", use_cache=False, semantic=FakeSemantic(near)))["results"])
+        finally:
+            monkey.undo()
+    nhs = "/read/nhs_medicines/www.nhs.uk/medicines/paracetamol-for-adults/common-questions/"
+    assert nhs in with_rule[:search.KEPT_TOP]
+    assert nhs not in without[:search.KEPT_TOP]                                    # the control: the rule is what puts it there
 
 
 def test_a_card_less_near_than_the_card_cosine_is_not_promoted(conn, env):

@@ -83,6 +83,15 @@ DENSE_DOC_SHARE = 0.5
 CARD_COS = 0.62
 CARDS_KEPT = 2
 KEPT_TOP = 3
+# A medicine typed by name is a lookup, not an emergency described: the NHS medicine page the words ranked in the
+# first MEDICINE_TOP, and whose title carries MEDICINE_SHARE of the query's words ("paracetamol" and the page
+# "Common questions about paracetamol for adults"), stays in the first KEPT_TOP, and the quick cards nearest in
+# meaning ("Poisoning and overdose" for a medicine name) are not kept beside it. Measured at task 19: rank fusion and the
+# kept cards had put "paracetamol", "ibuprofen" and the dose question's NHS pages 6th, 5th and 5th
+# (health hit@3 0.833 against 1.000 for the words alone); with this rule 1.000, and nothing else in the 523 moves.
+MEDICINE_SOURCE = "nhs"
+MEDICINE_SHARE = 0.66
+MEDICINE_TOP = 3
 # The household collection's own ZIM id for Survivor Library (Gutenberg reuses BOOK_ZIMS's own id): its
 # real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
 # through the generic Kiwix content route rather than a bespoke reader.
@@ -113,6 +122,7 @@ def semantic_bonus(cos: float, w: float) -> float:
 def dense_bonus(rank: int, w: float, doc: bool = False) -> float:
     """What the rank-th nearest passage of the box's own library is worth (see DENSE_WEIGHT)."""
     return DENSE_WEIGHT * (DENSE_DOC_SHARE if doc else 1.0) * w / (K + rank)
+
 
 
 def wikipedia_lift(cos: float) -> float:
@@ -454,14 +464,21 @@ def _kept_cards(results: list[dict], kw_pos: dict[str, int], card_pages: list[st
     return kept
 
 
-def _keep_cards(results: list[dict], cards: list[dict]) -> list[dict]:
-    """Bring each kept card into the first KEPT_TOP, in place of the lowest row there that is not a kept card
-    (that row moves down just below them); a card already inside stays; when every row inside is a kept card,
-    nothing moves."""
-    for card in cards:
+def _kept_medicines(results: list[dict], kw_pos: dict[str, int], terms: list[str]) -> list[dict]:
+    """The NHS medicine pages the query names: rows of the NHS class, found by the words, ranked by them in the
+    first MEDICINE_TOP, whose title carries MEDICINE_SHARE of the query's words."""
+    return [r for r in results if r.get("via") != "meaning" and r["source"] == MEDICINE_SOURCE
+            and kw_pos.get(r["url"], MEDICINE_TOP) < MEDICINE_TOP and term_share(terms, r["title"]) >= MEDICINE_SHARE]
+
+
+def _keep_rows(results: list[dict], kept: list[dict]) -> list[dict]:
+    """Bring each kept row (a card, an NHS medicine page) into the first KEPT_TOP, in place of the lowest row there
+    that is not kept (that row moves down just below them); one already inside stays; when every row inside is
+    kept, nothing moves."""
+    for card in kept:
         if results.index(card) < KEPT_TOP:
             continue
-        inside = [j for j in range(min(KEPT_TOP, len(results))) if not any(results[j] is c for c in cards)]
+        inside = [j for j in range(min(KEPT_TOP, len(results))) if not any(results[j] is c for c in kept)]
         if not inside:
             continue
         displaced = results.pop(inside[-1])
@@ -735,7 +752,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     results = dedupe_titles(results)
     results = diversify(results)
     if semantic is not None:
-        results = _keep_cards(results, _kept_cards(results, kw_pos, card_pages))
+        medicines = _kept_medicines(results, kw_pos, reduced.terms)
+        results = _keep_rows(results, _kept_cards(results, kw_pos, [] if medicines else card_pages) + medicines)
 
     counts: dict[str, int] = {}
     for r in results:
