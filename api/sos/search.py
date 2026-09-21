@@ -102,10 +102,14 @@ class Tuning:
     card_scope: str = "top"                  # top: the nearest passage overall must be the card | best: the nearest card
     card_n: int = 1                          # how many of the nearest cards are kept in the first card_pos
     card_kw: bool = False                    # a card the words put first stays in the first card_pos
+    card_kw_pos: int = 3                     # where a card the words put first stays
     card_pos: int = 3
     wiki: str = "scale"                      # scale | off | rrf | narrow
     wiki_weight: float = 0.5
     wiki_span: float = 0.15
+    wiki_skip_medical: bool = False
+    wiki_floor: float = 0.72
+    wiki_ceil: float = 0.82
 
 
 TUNING = Tuning()
@@ -467,7 +471,7 @@ def _constraints(results: list[dict], kw_pos: dict[str, int], terms: list[str], 
             if t.protect != "off" and (exact or (t.protect == "title" and term_share(terms, r["title"]) >= t.protect_share)):
                 titled.append((r, kw_pos[r["url"]] + t.protect_slack))
             elif t.card_kw and r["kind"] == "card" and kw_pos[r["url"]] == 0:
-                cards.append((r, t.card_pos - 1))
+                cards.append((r, t.card_kw_pos - 1))
     for url, _cos in card_targets:
         page = url.split("#", 1)[0]
         for r in results:
@@ -608,6 +612,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                     continue
                 if TUNING.wiki == "rrf":
                     r["score"] += TUNING.wiki_weight * score(1.0, by_cos.index(key) + 1)
+                elif TUNING.wiki == "ramp" and not (TUNING.wiki_skip_medical and is_medical_intent(reduced.terms)):
+                    r["score"] += TUNING.wiki_weight * min(1.0, max(0.0, (cos - TUNING.wiki_floor) / (TUNING.wiki_ceil - TUNING.wiki_floor)))
                 elif TUNING.wiki == "additive":
                     r["score"] += TUNING.wiki_weight * min(1.0, max(0.0, (cos - 0.5) / 0.3))
                 elif TUNING.wiki == "narrow":
