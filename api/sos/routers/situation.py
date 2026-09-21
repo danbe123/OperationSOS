@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from sos import conditions as cond
 from sos import engine, nearby, rules as rules_mod, sensors, situation, transfer
 from sos.db import get_setting, now_iso, set_setting
-from sos.routers import LOCALHOSTS, get_db
+from sos.routers import LOCALHOSTS, get_db_durable
 
 router = APIRouter(tags=["situation"])
 
@@ -184,7 +184,7 @@ def _clock(value: Optional[str]) -> str:
 # --- the clock ------------------------------------------------------------------------------------------------
 
 @router.get("/situation")
-def get_situation(request: Request, conn=Depends(get_db)):
+def get_situation(request: Request, conn=Depends(get_db_durable)):
     snap = situation.snapshot(conn)
     if snap["slug"]:
         snap["title"] = _title(request.app.state.content, "scenario", snap["slug"]) or snap["slug"]
@@ -192,7 +192,7 @@ def get_situation(request: Request, conn=Depends(get_db)):
 
 
 @router.post("/situation")
-def start_situation(body: StartBody, request: Request, conn=Depends(get_db)):
+def start_situation(body: StartBody, request: Request, conn=Depends(get_db_durable)):
     if request.app.state.content.document("scenario", body.slug) is None:
         raise HTTPException(status_code=404, detail="Playbook not found")
     situation.start(conn, body.slug)
@@ -201,7 +201,7 @@ def start_situation(body: StartBody, request: Request, conn=Depends(get_db)):
 
 
 @router.delete("/situation")
-def end_situation(request: Request, conn=Depends(get_db)):
+def end_situation(request: Request, conn=Depends(get_db_durable)):
     snap = situation.snapshot(conn)
     if snap["slug"]:
         event(conn, f"Situation ended: {_title(request.app.state.content, 'scenario', snap['slug'])} ({actor(request, conn)})")
@@ -212,12 +212,12 @@ def end_situation(request: Request, conn=Depends(get_db)):
 # --- the View ---------------------------------------------------------------------------------------------
 
 @router.get("/situation/view")
-def get_view(request: Request, conn=Depends(get_db)):
+def get_view(request: Request, conn=Depends(get_db_durable)):
     return view_for(request, conn)
 
 
 @router.get("/situation/report", response_class=PlainTextResponse)
-def get_report(request: Request, conn=Depends(get_db)):
+def get_report(request: Request, conn=Depends(get_db_durable)):
     view = view_for(request, conn)
     since = (view.get("scenario") or {}).get("started_at")
     if since:
@@ -231,19 +231,19 @@ def get_report(request: Request, conn=Depends(get_db)):
 # --- export and import (spec section 8) -------------------------------------------------------------------------
 
 @router.get("/situation/export")
-def get_export(conn=Depends(get_db)):
+def get_export(conn=Depends(get_db_durable)):
     """The whole situation as one JSON document, with a version and a checksum."""
     return transfer.export(conn)
 
 
 @router.get("/situation/export/qr")
-def get_export_qr(conn=Depends(get_db)):
+def get_export_qr(conn=Depends(get_db_durable)):
     """The same document as a sequence of QR-sized chunks, to be shown one after another on a phone."""
     return {"chunks": transfer.chunks(transfer.export(conn))}
 
 
 @router.post("/situation/import")
-async def post_import(request: Request, conn=Depends(get_db)):
+async def post_import(request: Request, conn=Depends(get_db_durable)):
     """Merge another box's export: the newer of each condition, the notes and events appended."""
     try:
         body = await request.json()
@@ -261,12 +261,12 @@ async def post_import(request: Request, conn=Depends(get_db)):
 # --- conditions -----------------------------------------------------------------------------------------------
 
 @router.get("/conditions")
-def get_conditions(request: Request, conn=Depends(get_db)):
+def get_conditions(request: Request, conn=Depends(get_db_durable)):
     return view_for(request, conn)["conditions"]
 
 
 @router.put("/conditions/{cid}")
-def put_condition(cid: str, body: ConditionBody, request: Request, conn=Depends(get_db)):
+def put_condition(cid: str, body: ConditionBody, request: Request, conn=Depends(get_db_durable)):
     if cid not in cond.IDS:
         raise HTTPException(status_code=404, detail="Unknown condition")
     who = actor(request, conn)
@@ -285,7 +285,7 @@ def put_condition(cid: str, body: ConditionBody, request: Request, conn=Depends(
 
 
 @router.post("/conditions/{cid}/confirm")
-def confirm_condition(cid: str, request: Request, conn=Depends(get_db)):
+def confirm_condition(cid: str, request: Request, conn=Depends(get_db_durable)):
     if cid not in cond.IDS:
         raise HTTPException(status_code=404, detail="Unknown condition")
     cond.confirm(conn, cid)
@@ -295,7 +295,7 @@ def confirm_condition(cid: str, request: Request, conn=Depends(get_db)):
 
 
 @router.post("/conditions/{cid}/accept")
-def accept_condition(cid: str, body: AcceptBody, request: Request, conn=Depends(get_db)):
+def accept_condition(cid: str, body: AcceptBody, request: Request, conn=Depends(get_db_durable)):
     if cid not in cond.IDS:
         raise HTTPException(status_code=404, detail="Unknown condition")
     view = view_for(request, conn)
@@ -316,12 +316,12 @@ def accept_condition(cid: str, body: AcceptBody, request: Request, conn=Depends(
 # --- tasks ----------------------------------------------------------------------------------------------------
 
 @router.get("/tasks")
-def get_tasks(request: Request, conn=Depends(get_db)):
+def get_tasks(request: Request, conn=Depends(get_db_durable)):
     return view_for(request, conn)["tasks"]
 
 
 @router.put("/tasks/{task_id:path}")
-def put_task(task_id: str, body: TaskBody, request: Request, conn=Depends(get_db)):
+def put_task(task_id: str, body: TaskBody, request: Request, conn=Depends(get_db_durable)):
     view = view_for(request, conn)
     task = next((t for t in view["tasks"] if t["id"] == task_id), None)
     if task is None:
@@ -352,12 +352,12 @@ def put_task(task_id: str, body: TaskBody, request: Request, conn=Depends(get_db
 # --- home ------------------------------------------------------------------------------------------------------
 
 @router.get("/home")
-def get_home(conn=Depends(get_db)):
+def get_home(conn=Depends(get_db_durable)):
     return _home(conn)
 
 
 @router.put("/home")
-def put_home(body: HomeBody, request: Request, conn=Depends(get_db)):
+def put_home(body: HomeBody, request: Request, conn=Depends(get_db_durable)):
     set_setting(conn, "home_lat", f"{body.lat:.6f}")
     set_setting(conn, "home_lon", f"{body.lon:.6f}")
     set_setting(conn, "home_label", body.label or "Home")
@@ -369,7 +369,7 @@ def put_home(body: HomeBody, request: Request, conn=Depends(get_db)):
 
 
 @router.get("/nearby")
-def get_nearby(request: Request, lat: float | None = None, lon: float | None = None, conn=Depends(get_db)):
+def get_nearby(request: Request, lat: float | None = None, lon: float | None = None, conn=Depends(get_db_durable)):
     """The nearest emergency department, pharmacy, GP, fuel station, water works, fire station and rest centre.
 
     Defaults to the home when no point is given; 404 when neither is set, because a bearing from nowhere is
@@ -388,7 +388,7 @@ def get_nearby(request: Request, lat: float | None = None, lon: float | None = N
 # --- drills ------------------------------------------------------------------------------------------------------
 
 @router.post("/drill")
-def start_drill(body: DrillBody, request: Request, conn=Depends(get_db)):
+def start_drill(body: DrillBody, request: Request, conn=Depends(get_db_durable)):
     if request.app.state.content.document("scenario", body.scenario) is None:
         raise HTTPException(status_code=404, detail="Playbook not found")
     for cid in body.conditions:
@@ -401,7 +401,7 @@ def start_drill(body: DrillBody, request: Request, conn=Depends(get_db)):
 
 
 @router.delete("/drill")
-def end_drill(request: Request, conn=Depends(get_db)):
+def end_drill(request: Request, conn=Depends(get_db_durable)):
     if not situation.is_drill(conn):
         raise HTTPException(status_code=404, detail="No drill is running")
     who = actor(request, conn)

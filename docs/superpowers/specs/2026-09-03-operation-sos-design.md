@@ -161,6 +161,8 @@ Python 3.12 or newer (Trixie ships 3.13), FastAPI, uvicorn, httpx, pydantic and 
 
 ### Database (`/srv/sos/state/sos.db`)
 
+WAL mode. Connections are `synchronous=NORMAL` (never corrupt on a power cut, but the last commits can be lost) except the routes that take what people enter (checklist ticks, notes and pins, conditions, tasks, settings, the PIN), which use `db.connect(..., durable=True)`, that is `synchronous=FULL`: a commit is on the disk before the response says it is saved, at about 3 ms a commit. The search cache and the index rebuild stay on NORMAL. `api/tests/test_crash_safety.py` proves both with a writer killed at random moments and with a disk that discards unsynced writes.
+
 - `library_items`: manifest fields plus `available`, `local_path`, `fts` (ZIM has a full-text index), `resolved_name`, `resolved_size`, `resolved_as_at` (from the Kiwix catalogue at sync time), `search_weight`, `suggest`.
 - `fts_docs` (FTS5): `title, body, doc_id UNINDEXED, kind UNINDEXED, category UNINDEXED, scenarios UNINDEXED, page UNINDEXED, url UNINDEXED`, `tokenize='porter unicode61 remove_diacritics 2'`, ranked with `bm25(fts_docs, 5.0, 1.0)`. Rows: playbooks, modules, cards, pages (one row per section), library item titles, and one row per PDF page (`doc_id = <item>#p<N>`, body capped at 600 words).
 - `fts_places` (FTS5): `name, kind UNINDEXED, lat UNINDEXED, lon UNINDEXED, region UNINDEXED, postcode UNINDEXED`, `tokenize='unicode61 remove_diacritics 2'`, `prefix='2 3 4'`. Loaded from `/srv/sos/core/maps/places.csv.gz` (about 2.5 million rows, 400 to 600MB) only when that file changes.

@@ -47,11 +47,18 @@ CREATE TABLE IF NOT EXISTS recent (key TEXT PRIMARY KEY, kind TEXT NOT NULL, tit
 """
 
 
-def connect(path: Path | str) -> sqlite3.Connection:
+def connect(path: Path | str, *, durable: bool = False) -> sqlite3.Connection:
+    """A connection to the box's database, in WAL mode.
+
+    `durable=False` is `synchronous=NORMAL`: the WAL is synced only when it is checkpointed, so a power cut
+    can lose the last few commits (never corrupt the file). That is right for the search cache and the index
+    rebuild, which are fast bulk writes of things that can be made again. `durable=True` is
+    `synchronous=FULL`: the WAL is synced before a commit returns, so what the household was told is saved
+    survives a power cut. Use it for what people enter: ticks, notes, pins, conditions, settings."""
     conn = sqlite3.connect(str(path), check_same_thread=False, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute(f"PRAGMA synchronous={'FULL' if durable else 'NORMAL'}")
     return conn
 
 

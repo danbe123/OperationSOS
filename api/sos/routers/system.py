@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from sos import library, system
-from sos.routers import get_db, require_localhost, require_pin
+from sos.routers import get_db, get_db_durable, require_localhost, require_pin
 from sos.routers.kiosk import BacklightBody, apply_backlight
 
 router = APIRouter(tags=["system"])
@@ -61,7 +61,7 @@ def system_backlight(body: BacklightBody, request: Request):
 
 
 @router.post("/system/power-mode", dependencies=[Depends(require_pin)])
-async def power_mode(body: PowerBody, request: Request, conn=Depends(get_db)):
+async def power_mode(body: PowerBody, request: Request, conn=Depends(get_db_durable)):
     if body.mode == "low":
         await system.stop_ai_for(request.app, "power")
     system.set_power_mode(conn, request.app.state.settings, body.mode)
@@ -69,19 +69,19 @@ async def power_mode(body: PowerBody, request: Request, conn=Depends(get_db)):
 
 
 @router.post("/system/eth-mode", dependencies=[Depends(require_pin)])
-def eth_mode(body: EthBody, request: Request, conn=Depends(get_db)):
+def eth_mode(body: EthBody, request: Request, conn=Depends(get_db_durable)):
     system.set_eth_mode(conn, request.app.state.settings, body.mode)
     return _status(request, conn)
 
 
 @router.post("/system/hotspot", dependencies=[Depends(require_pin)])
-def hotspot(body: HotspotBody, request: Request, conn=Depends(get_db)):
+def hotspot(body: HotspotBody, request: Request, conn=Depends(get_db_durable)):
     system.set_hotspot(conn, request.app.state.settings, body.ssid, body.passphrase)
     return _status(request, conn)
 
 
 @router.post("/system/settings")
-def settings_update(body: SettingsBody, request: Request, conn=Depends(get_db)):
+def settings_update(body: SettingsBody, request: Request, conn=Depends(get_db_durable)):
     system.apply_settings(conn, body.model_dump(exclude_none=True))
     return _status(request, conn)
 
@@ -93,7 +93,7 @@ def get_people(conn=Depends(get_db)):
 
 
 @router.put("/settings/people")
-def put_people(body: PeopleBody, conn=Depends(get_db)):
+def put_people(body: PeopleBody, conn=Depends(get_db_durable)):
     system.apply_settings(conn, {"people": body.people})
     return {"people": system.people_count(conn)}
 
@@ -132,7 +132,7 @@ def update_progress(request: Request):
 
 
 @router.post("/system/pin")
-def pin_login(body: PinBody, request: Request, conn=Depends(get_db)):
+def pin_login(body: PinBody, request: Request, conn=Depends(get_db_durable)):
     # Checked before the rate limiter: a call made while no PIN is set yet must not burn an attempt.
     if not system.pin_required(conn):
         raise HTTPException(status_code=401, detail="No PIN is set")
@@ -145,7 +145,7 @@ def pin_login(body: PinBody, request: Request, conn=Depends(get_db)):
 
 
 @router.post("/system/pin/change", dependencies=[Depends(require_pin)])
-def pin_change(body: PinBody, request: Request, conn=Depends(get_db)):
+def pin_change(body: PinBody, request: Request, conn=Depends(get_db_durable)):
     if not system.pin_required(conn):
         # No PIN claimed yet: require_pin no-ops in this state, so the first claim must be restricted to
         # the box itself -- the hotspot ships open, and anyone in range could otherwise claim the PIN first.

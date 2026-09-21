@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from sos.db import now_iso
-from sos.routers import get_db
+from sos.routers import get_db_durable
 from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["playbooks"])
@@ -50,7 +50,7 @@ def list_modules(request: Request):
 
 
 @router.get("/playbooks/{slug}")
-def get_playbook(slug: str, request: Request, conn=Depends(get_db)):
+def get_playbook(slug: str, request: Request, conn=Depends(get_db_durable)):
     r = _rendered(request, slug, conn)
     return {"slug": r.slug, "title": r.title, "icon": r.icon, "summary": r.summary, "order": r.order,
             "sections": r.sections, "checklist": _checklist(conn, slug, r), "modules": r.modules,
@@ -58,7 +58,7 @@ def get_playbook(slug: str, request: Request, conn=Depends(get_db)):
 
 
 @router.put("/playbooks/{slug}/checklist/{item_id:path}")
-def set_checklist_item(slug: str, item_id: str, body: ChecklistBody, request: Request, conn=Depends(get_db)):
+def set_checklist_item(slug: str, item_id: str, body: ChecklistBody, request: Request, conn=Depends(get_db_durable)):
     r = _rendered(request, slug, conn)
     if item_id not in {c["id"] for c in r.checklist}:
         raise HTTPException(status_code=404, detail="Checklist item not found")
@@ -72,7 +72,7 @@ def set_checklist_item(slug: str, item_id: str, body: ChecklistBody, request: Re
 
 
 @router.delete("/playbooks/{slug}/checklist")
-def reset_checklist(slug: str, request: Request, conn=Depends(get_db)):
+def reset_checklist(slug: str, request: Request, conn=Depends(get_db_durable)):
     r = _rendered(request, slug, conn)
     conn.execute("DELETE FROM checklist_state WHERE playbook=?", (slug,))
     conn.commit()
@@ -80,7 +80,7 @@ def reset_checklist(slug: str, request: Request, conn=Depends(get_db)):
 
 
 @router.get("/modules/{slug}")
-def get_module(slug: str, request: Request, conn=Depends(get_db)):
+def get_module(slug: str, request: Request, conn=Depends(get_db_durable)):
     doc = request.app.state.content.rendered("module", slug, current_flags(request, conn))
     if doc is None:
         raise HTTPException(status_code=404, detail="Module not found")
