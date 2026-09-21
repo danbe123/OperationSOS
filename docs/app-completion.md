@@ -50,7 +50,7 @@ Working checklist, started 2026-09-05. Software validation and physical-device a
 - [x] Switch the development stack to the unified checkout, preserving its database and notes.
 - [~] Audit full-library sizes, sources and citation availability; download what fits (core downloads done; seven core items still need building).
 - [x] Implement AI retrieval, inference, lifecycle, citations and evaluation (all eval gates pass on the PC; see below).
-- [x] Add app crash recovery (2026-09-21, branch `crash-recovery`: services retry forever, install.sh finishes an interrupted run, the kiosk browser restarts itself with a clean profile, ticks and notes survive power loss, the app keeps its screen while the box restarts, render errors show 999/111/105, Now offers "Continue where you were"; hardware kill test on the Pi still to do).
+- [~] Add app crash recovery (2026-09-21, branch `crash-recovery`). Done and tested on the PC: services retry forever with back-off, install.sh finishes an interrupted run, ticks and notes survive power loss, the app keeps its screen while the box restarts, render errors show 999/111/105, Now offers "Continue where you were". NOT verified on hardware: the kiosk wrapper's Chromium flags and lock clean-up have never run against the Pi's real Chromium, and no kill test (Chromium, sos-api, power cut) has been run on the Pi itself.
 - [ ] Finish cross-screen UX checks.
 - [ ] Run full browser and backend checks against the integrated app.
 - [ ] Record hardware acceptance on the Pi (requires the physical device).

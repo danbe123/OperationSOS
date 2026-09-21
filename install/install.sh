@@ -155,7 +155,25 @@ step_llama() {
   if [ -x /usr/local/bin/llama-server ] && [ -f "$marker" ]; then say llama unchanged; return; fi
   # Cloned beside and renamed into place, so a `.git` here always belongs to a whole clone: a run killed
   # mid-clone used to leave one with no commit in it, which made every later run fail on rev-parse.
-  if ! git -C "$src" rev-parse -q --verify HEAD >/dev/null 2>&1; then
+  # An existing clone is removed only when git itself says it is broken (not a repository, no HEAD, or the pinned
+  # commit is not in it): any other complaint ("dubious ownership", a permission error) stops the install with
+  # git's own words rather than deleting what somebody may have there.
+  local clone=ok err=""
+  if [ -e "$src" ]; then
+    if ! err=$(git -C "$src" rev-parse --git-dir 2>&1); then
+      case "$err" in
+        *"not a git repository"*) clone=broken ;;
+        *) echo "install.sh: cannot read the llama.cpp clone at $src, so not touching it: $err" >&2; exit 1 ;;
+      esac
+    elif ! git -C "$src" rev-parse -q --verify HEAD >/dev/null 2>&1; then
+      clone=broken
+    elif ! git -C "$src" cat-file -e "$LLAMA_CPP_COMMIT^{commit}" 2>/dev/null; then
+      clone=stale
+    fi
+  else
+    clone=missing
+  fi
+  if [ "$clone" != ok ]; then
     rm -rf "$src" "$src.partial"
     git clone --depth 1 --branch "$LLAMA_CPP_TAG" "$LLAMA_CPP_REPO" "$src.partial"
     mv "$src.partial" "$src"

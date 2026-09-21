@@ -530,6 +530,8 @@ git() {{
   case "$*" in
     *clone*) [ -z "${{STUB_CLONE_FAIL:-}}" ] || return 1
              target=${{@: -1}}; mkdir -p "$target/.git"; touch "$target/.git/HEAD"; echo "clone -> $target" >> "$LOG" ;;
+    *"rev-parse --git-dir"*) [ -d "$2/.git" ] && echo .git || {{ echo "fatal: not a git repository" >&2; return 128; }} ;;
+    *"cat-file -e"*) return 0 ;;
     *rev-parse*) [ -e "${{2:-}}/.git/HEAD" ] && echo "$LLAMA_CPP_COMMIT" || return 1 ;;
     *) return 1 ;;
   esac
@@ -684,3 +686,60 @@ def test_boot_step_that_cannot_write_the_fragment_fails_instead_of_reporting_upd
     assert "updated" not in proc.stdout and "could not write" in proc.stderr
     assert not (boot / "sos.txt").exists()
     assert "include sos.txt" not in (boot / "config.txt").read_text()
+
+
+# step_llama used to `rm -rf` the clone whenever `git rev-parse HEAD` failed for ANY reason. The clone is only
+# removed when git says the repository itself is broken; every other failure stops the install with git's message.
+LLAMA_GIT = r'''
+git() {{
+  # $1 is -C, $2 the clone, the rest the command; STUB_GIT picks how the clone at $2 answers
+  local cmd="${{*:3}}"
+  case "$cmd" in
+    "rev-parse --git-dir")
+      case "$STUB_GIT" in
+        dubious) echo "fatal: detected dubious ownership in repository at '$2'" >&2; return 128 ;;
+        notrepo) echo "fatal: not a git repository (or any of the parent directories): .git" >&2; return 128 ;;
+        *) echo .git ;;
+      esac ;;
+    "rev-parse -q --verify HEAD") [ "$STUB_GIT" = nohead ] && return 1; echo "$LLAMA_CPP_COMMIT" ;;
+    "rev-parse HEAD") echo "$LLAMA_CPP_COMMIT" ;;
+    "cat-file -e "*) [ "$STUB_GIT" = stale ] && return 1; return 0 ;;
+    clone*|"-C"*) return 1 ;;
+  esac
+  case "$*" in
+    *clone*) target=${{@: -1}}; mkdir -p "$target/.git"; touch "$target/.git/HEAD"; echo "clone -> $target" >> "$LOG" ;;
+  esac
+}}
+'''
+
+
+def llama_case(tmp_path: Path, mode: str) -> tuple[subprocess.CompletedProcess, Path]:
+    src = tmp_path / "srv" / "build" / "llama.cpp"
+    src.mkdir(parents=True)
+    (src / "precious-local-change.txt").write_text("keep me")
+    body = LLAMA_GIT.format() + f"\nSTUB_GIT={mode}; step_llama"
+    return run_install_steps(tmp_path, body, expect_ok=False), src
+
+
+def test_llama_step_never_deletes_a_clone_git_merely_refuses_to_read(tmp_path):
+    proc, src = llama_case(tmp_path, "dubious")
+    assert proc.returncode != 0
+    assert (src / "precious-local-change.txt").exists(), "a 'dubious ownership' clone must not be removed"
+    assert "dubious ownership" in proc.stderr
+    assert not any(line.startswith("clone ->") for line in calls(tmp_path))
+
+
+@pytest.mark.parametrize("mode", ["notrepo", "nohead", "stale"])
+def test_llama_step_reclones_only_a_genuinely_broken_or_stale_clone(tmp_path, mode):
+    proc, src = llama_case(tmp_path, mode)
+    assert proc.returncode == 0, proc.stderr
+    assert any(line.startswith("clone -> ") for line in calls(tmp_path)), mode
+    assert not (src / "precious-local-change.txt").exists()
+
+
+def test_llama_step_keeps_a_healthy_clone(tmp_path):
+    proc, src = llama_case(tmp_path, "healthy")
+    assert proc.returncode == 0, proc.stderr
+    assert not any(line.startswith("clone ->") for line in calls(tmp_path))
+    assert (src / "precious-local-change.txt").exists()
+    assert any(line.startswith("cmake ") for line in calls(tmp_path))
