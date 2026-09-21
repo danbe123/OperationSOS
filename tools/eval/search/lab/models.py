@@ -14,7 +14,7 @@ EMBED = {
     "arctic-embed-m":      dict(hf="Snowflake/snowflake-arctic-embed-m", pool="cls", qp=QP, pp=""),
     "arctic-embed-m-v1.5": dict(hf="Snowflake/snowflake-arctic-embed-m-v1.5", pool="cls", qp=QP, pp=""),
     "mxbai-embed-large-v1": dict(hf="mixedbread-ai/mxbai-embed-large-v1", pool="cls", qp=QP, pp="", upper=True),
-    "mxbai-embed-xsmall-v1": dict(hf="mixedbread-ai/mxbai-embed-xsmall-v1", pool="cls", qp=QP, pp=""),
+    "mxbai-embed-xsmall-v1": dict(hf="mixedbread-ai/mxbai-embed-xsmall-v1", pool="mean", qp="", pp=""),
     "granite-embedding-small-english-r2": dict(hf="ibm-granite/granite-embedding-small-english-r2", pool="cls", qp="", pp=""),
     "granite-embedding-english-r2": dict(hf="ibm-granite/granite-embedding-english-r2", pool="cls", qp="", pp=""),
     "gte-small":           dict(hf="thenlper/gte-small", pool="mean", qp="", pp=""),

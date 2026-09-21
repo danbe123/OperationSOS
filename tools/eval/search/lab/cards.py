@@ -32,3 +32,13 @@ for name, cfg in {**EMBED, **RERANK}.items():
           rec.get("1_Pooling/config.json", {}) and {k: v for k, v in rec["1_Pooling/config.json"].items() if v is True or k=="pooling_mode_cls_token"},
           (rec.get("config_sentence_transformers.json") or {}).get("prompts"), flush=True)
 dump("model_cards.json", out)
+
+# registry check: pooling in models.py must equal the repo's own sentence-transformers pooling config
+bad = []
+for name, cfg in EMBED.items():
+    p = out[name].get("1_Pooling/config.json")
+    if p:
+        mode = "cls" if p.get("pooling_mode_cls_token") else "mean" if p.get("pooling_mode_mean_tokens") else "other"
+        if mode != cfg["pool"]:
+            bad.append((name, cfg["pool"], mode))
+assert not bad, bad

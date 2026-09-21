@@ -1,0 +1,48 @@
+{
+ "name": "e5-small-v2",
+ "gguf": "e5-small-v2-q8_0.gguf",
+ "gguf_mb": 36.7,
+ "threads": {
+  "4": {
+   "load_s": 0.28,
+   "query_ms": {
+    "median": 27.8,
+    "p95": 68.4,
+    "mean": 35.7,
+    "n": 60
+   },
+   "mean_query_tokens": 15.0,
+   "fidelity": {
+    "passages_n": 200,
+    "passage_cos_mean": 0.99986,
+    "passage_cos_min": 0.99978,
+    "queries_n": 172,
+    "query_cos_mean": 0.99986,
+    "query_cos_min": 0.99979,
+    "top10_overlap_query_only": 0.9709
+   },
+   "rss_mb_after_workload": {
+    "VmHWM": 148.4,
+    "VmRSS": 148.4
+   },
+   "rss_mb_final": {
+    "VmHWM": 148.4,
+    "VmRSS": 148.4
+   }
+  },
+  "1": {
+   "load_s": 0.27,
+   "query_ms": {
+    "median": 35.9,
+    "p95": 47.2,
+    "mean": 37.1,
+    "n": 60
+   },
+   "mean_query_tokens": 15.0,
+   "rss_mb_final": {
+    "VmHWM": 66.1,
+    "VmRSS": 66.1
+   }
+  }
+ }
+}

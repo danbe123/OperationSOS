@@ -1,0 +1,18 @@
+{
+ "name": "all-mpnet-base-v2",
+ "tag": "all-mpnet-base-v2",
+ "hf": "sentence-transformers/all-mpnet-base-v2",
+ "pool": "mean",
+ "query_prefix": "",
+ "passage_prefix": "",
+ "max_len": 512,
+ "params": 109486464,
+ "dims": 768,
+ "passages": 21368,
+ "passage_tokens": 8550522,
+ "mean_tokens": 400.2,
+ "embed_seconds": 64.2,
+ "passages_per_s": 332.8,
+ "tokens_per_s": 133187,
+ "gpu_peak_gb": 1.48
+}

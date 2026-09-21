@@ -1,0 +1,48 @@
+{
+ "name": "granite-embedding-small-english-r2",
+ "gguf": "granite-embedding-small-english-r2-q8_0.gguf",
+ "gguf_mb": 52.4,
+ "threads": {
+  "4": {
+   "load_s": 0.28,
+   "query_ms": {
+    "median": 28.1,
+    "p95": 42.8,
+    "mean": 29.9,
+    "n": 60
+   },
+   "mean_query_tokens": 12.9,
+   "fidelity": {
+    "passages_n": 200,
+    "passage_cos_mean": 0.99993,
+    "passage_cos_min": 0.99974,
+    "queries_n": 172,
+    "query_cos_mean": 0.99991,
+    "query_cos_min": 0.99966,
+    "top10_overlap_query_only": 0.9884
+   },
+   "rss_mb_after_workload": {
+    "VmHWM": 221.4,
+    "VmRSS": 221.4
+   },
+   "rss_mb_final": {
+    "VmHWM": 221.4,
+    "VmRSS": 221.4
+   }
+  },
+  "1": {
+   "load_s": 0.28,
+   "query_ms": {
+    "median": 37.3,
+    "p95": 57.3,
+    "mean": 39.8,
+    "n": 60
+   },
+   "mean_query_tokens": 12.9,
+   "rss_mb_final": {
+    "VmHWM": 91.2,
+    "VmRSS": 91.2
+   }
+  }
+ }
+}

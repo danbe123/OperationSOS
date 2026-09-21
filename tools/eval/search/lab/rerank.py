@@ -14,6 +14,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("pools", nargs="+")
 ap.add_argument("--models", default=",".join(RERANK))
 ap.add_argument("--depth", type=int, default=30)
+ap.add_argument("--maxlen", type=int, default=512)
 ap.add_argument("--out", default="C_rerank.json")
 args = ap.parse_args()
 corpus = json.loads((SCRATCH / "corpus.json").read_text())
@@ -30,7 +31,7 @@ for spec in args.pools:
 
 @torch.no_grad()
 def score_pairs(tok, model, pairs, budget=16000):
-    enc = tok([p[0] for p in pairs], [p[1] for p in pairs], truncation="only_second", max_length=512, padding=False)["input_ids"]
+    enc = tok([p[0] for p in pairs], [p[1] for p in pairs], truncation="only_second", max_length=args.maxlen, padding=False)["input_ids"]
     order = np.argsort([-len(e) for e in enc], kind="stable")
     out = np.zeros(len(pairs), dtype=np.float32)
     i = 0

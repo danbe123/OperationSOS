@@ -2,8 +2,8 @@
  "name": "mxbai-embed-xsmall-v1",
  "tag": "mxbai-embed-xsmall-v1",
  "hf": "mixedbread-ai/mxbai-embed-xsmall-v1",
- "pool": "cls",
- "query_prefix": "Represent this sentence for searching relevant passages: ",
+ "pool": "mean",
+ "query_prefix": "",
  "passage_prefix": "",
  "max_len": 512,
  "params": 24089472,
@@ -11,8 +11,8 @@
  "passages": 21368,
  "passage_tokens": 8550522,
  "mean_tokens": 400.2,
- "embed_seconds": 17.11,
- "passages_per_s": 1248.5,
- "tokens_per_s": 499602,
+ "embed_seconds": 16.12,
+ "passages_per_s": 1325.8,
+ "tokens_per_s": 530518,
  "gpu_peak_gb": 0.31
 }
