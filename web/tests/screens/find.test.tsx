@@ -44,6 +44,15 @@ describe('Find', () => {
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
   });
 
+  it('carries the theme button beside the field where there is no rail to hold it, on a screen with no head', async () => {
+    renderRoute('/find');
+    const field = await screen.findByRole('combobox', { name: 'Search' });
+    // the test environment is not wide: the rail's footer is not drawn, so the button is here, once, next to the field
+    const theme = screen.getAllByRole('button', { name: /^Change the theme/ });
+    expect(theme).toHaveLength(1);
+    expect(field.closest('.find-top')).toBe(theme[0].closest('.find-top'));
+  });
+
   it('offers the assistant under the results, only when it is ready', async () => {
     vi.spyOn(api, 'search').mockResolvedValue(search);
     vi.spyOn(api, 'status').mockResolvedValue({ ...status, ai: { state: 'ready', model: 'qwen', message: null } });

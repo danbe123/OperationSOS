@@ -1,9 +1,10 @@
 import { test, expect } from './test';
 
-test('Guides -> scenario -> tick a job; a second phone sees the tick', async ({ page, browser, withFixtures }) => {
+test('Now -> scenario -> tick a job; a second phone sees the tick', async ({ page, browser, withFixtures }) => {
+  // The situations are the front door's answers now, one tap from Now; the Library's Guides shelf no
+  // longer carries them.
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Library' }).click();
-  await expect(page.getByRole('heading', { name: 'Situations' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: "What's the situation?" })).toBeVisible();
   await page.getByRole('navigation', { name: 'Scenarios' }).getByRole('link', { name: /National grid collapse/ }).click();
   await expect(page).toHaveURL(/\/s\/grid-collapse$/);
   await expect(page.getByRole('tab', { name: 'Right now', selected: true })).toBeVisible();

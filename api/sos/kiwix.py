@@ -17,7 +17,17 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 
 
 class KiwixError(RuntimeError):
-    pass
+    """`status` is the HTTP status kiwix-serve answered with; None when there was no such answer to
+    speak of (a reply that would not parse, say)."""
+
+    def __init__(self, message: str = "", status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
+    @property
+    def permanent(self) -> bool:
+        """A refusal that asking again will not change: a 4xx, bar the two that mean "not now"."""
+        return self.status is not None and 400 <= self.status < 500 and self.status not in (408, 429)
 
 
 @dataclass(frozen=True)
@@ -237,7 +247,7 @@ class KiwixClient:
         params += [("format", "xml"), ("pageLength", str(n))]
         r = await asyncio.wait_for(self._client.get(f"{self.base_url}/search", params=params), timeout)
         if r.status_code != 200:
-            raise KiwixError(f"search: HTTP {r.status_code}: {strip_tags(r.text)[:200]}")
+            raise KiwixError(f"search: HTTP {r.status_code}: {strip_tags(r.text)[:200]}", status=r.status_code)
         _, hits = parse_search_xml(r.text)
         return hits
 

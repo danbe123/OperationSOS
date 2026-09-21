@@ -94,8 +94,17 @@ def test_client_search_issues_one_multi_book_request(respx_mock):
 def test_client_search_404_no_index_raises(respx_mock):
     respx_mock.get("/search").mock(return_value=httpx.Response(404, text="<error>Fulltext search unavailable</error>"))
     client = kiwix.KiwixClient(BASE)
-    with pytest.raises(kiwix.KiwixError):
+    with pytest.raises(kiwix.KiwixError) as excinfo:
         _run(client.search(["sos-test-noindex"], "water"))
+    assert excinfo.value.status == 404
+
+
+@respx.mock(base_url=BASE)
+def test_a_malformed_search_reply_carries_no_status(respx_mock):
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text="not xml"))
+    with pytest.raises(kiwix.KiwixError) as excinfo:
+        _run(kiwix.KiwixClient(BASE).search(["wiki"], "water"))
+    assert excinfo.value.status is None
 
 
 @respx.mock(base_url=BASE, assert_all_called=False)

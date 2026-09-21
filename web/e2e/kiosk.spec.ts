@@ -2,7 +2,8 @@ import { test, expect } from './test';
 import { PIN } from './fixtures/state';
 
 test('kiosk keyboard appears on focus, types, and picks a suggestion', async ({ page }) => {
-  await page.goto('/?kiosk=1');
+  // Now has no search field of its own any more; the Library carries the one in the screen head.
+  await page.goto('/library?kiosk=1');
   await page.getByRole('combobox', { name: 'Search' }).click();
   const keyboard = page.getByTestId('keyboard');
   await expect(keyboard).toBeVisible();

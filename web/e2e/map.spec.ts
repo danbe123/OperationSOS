@@ -22,12 +22,28 @@ test('renders from PMTiles over range requests and toggles an overlay from the c
   await waitForMap(page);
   await expect(page.getByTestId('map-readout')).toContainText('Centre: SU');
 
+  // The layers wait behind one tool, which says how many are on so the row can stay shut.
+  const layers = page.getByRole('toolbar', { name: 'Map tools' }).getByRole('button', { name: /^Layers/ });
+  await expect(layers).toHaveAccessibleName('Layers 0');
+  await expect(page.getByRole('group', { name: 'Map layers' })).toHaveCount(0);
+  await layers.click();
   const chips = page.getByRole('group', { name: 'Map layers' });
+  await expect(chips).toBeVisible();
   await chips.getByRole('button', { name: 'Health' }).click();
   await expect(page).toHaveURL(/overlay=health/);
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(true);
+  await expect(layers).toHaveAccessibleName('Layers 1');
+  // Shut again, the layer is still on and the tool still says so.
+  await layers.click();
+  await expect(chips).toHaveCount(0);
+  await expect(layers).toHaveAccessibleName('Layers 1');
+  expect(await layerVisible(page, 'sos-overlay-health-point')).toBe(true);
+  await layers.click();
   await chips.getByRole('button', { name: 'Health' }).click();
   await expect.poll(() => layerVisible(page, 'sos-overlay-health-point')).toBe(false);
+  await expect(layers).toHaveAccessibleName('Layers 0');
+  // A layer this box does not carry is disabled, not hidden, and says so.
+  await expect(chips.getByRole('button', { name: 'Footpaths' })).toBeDisabled();
 });
 
 test('place search, pin persistence and grid reference for a known point', async ({ page, request }) => {

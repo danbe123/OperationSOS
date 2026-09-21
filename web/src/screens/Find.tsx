@@ -10,6 +10,8 @@ import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
 import { ShelfTiles } from '../components/ShelfTiles';
 import { Screen, Body } from '../shell/Screen';
+import { useWide } from '../shell/useWide';
+import { ThemeButton } from '../theme/ThemeButton';
 import './find.css';
 
 /** How many source chips stand on the screen before the rest go behind "More sources". */
@@ -67,6 +69,8 @@ export function Find() {
     setParams(p);
   };
 
+  // No head, so no theme button in it: on a phone, where the rail's footer is not drawn, it rides beside the field.
+  const wide = useWide();
   const ai = status?.ai.state ?? 'off';
   const searching = Boolean(q.trim());
 
@@ -75,7 +79,10 @@ export function Find() {
       <Body className="find">
         {/* Arriving with a query is arriving to read: on the kiosk an autofocused field brings the
             keyboard up over the forty results somebody came for. */}
-        <SearchBar initial={q} autoFocus={!searching} placeholder="Search the box" />
+        <div className="find-top">
+          <SearchBar initial={q} autoFocus={!searching} placeholder="Search the box" />
+          {!wide && <ThemeButton />}
+        </div>
         {!searching && (
           <>
             <nav className="chips find-quick" aria-label="Quick finds">

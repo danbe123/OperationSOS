@@ -5,7 +5,7 @@ import { useLocation } from 'react-router';
 import { renderRoute } from '../render';
 import { api } from '../../src/api/client';
 import { Shell as Layout } from '../../src/shell/Shell';
-import { SearchBar, SUGGEST_DEBOUNCE_MS } from '../../src/components/SearchBar';
+import { SearchBar, SEARCH_MAX_CHARS, SUGGEST_DEBOUNCE_MS } from '../../src/components/SearchBar';
 import { suggestions } from '../fixtures/api';
 
 function Where() {
@@ -51,6 +51,16 @@ describe('SearchBar', () => {
     const { user } = setup();
     await user.type(screen.getByRole('combobox', { name: 'Search' }), "st john's{Enter}");
     expect(screen.getByTestId('where')).toHaveTextContent("/search?q=st%20john's");
+  });
+
+  it('stops at the length the server accepts rather than sending a query it will refuse', async () => {
+    const { user } = setup();
+    const box = screen.getByRole('combobox', { name: 'Search' });
+    expect(SEARCH_MAX_CHARS).toBe(512);
+    expect(box).toHaveAttribute('maxlength', '512');
+    await user.click(box);
+    await user.paste('a'.repeat(SEARCH_MAX_CHARS + 88));
+    expect(box).toHaveValue('a'.repeat(SEARCH_MAX_CHARS));
   });
 
   it('does not query for a single character', async () => {

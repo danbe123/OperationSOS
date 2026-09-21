@@ -13,8 +13,10 @@ meaning are fused in (`sos/embeddings.py`)."""
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import functools
+import logging
 import re
 import sqlite3
 import time
@@ -28,6 +30,8 @@ from sos import query as query_mod
 from sos.config import Settings
 from sos.db import connect, get_setting, now_iso
 from sos.kiwix import KiwixClient, KiwixError
+
+log = logging.getLogger(__name__)
 
 K = 5
 CLASS_TIMEOUTS = {"reference": 4.0}
@@ -340,8 +344,23 @@ async def _search_class(kiwix: KiwixClient, cls: str, names: list[str], pattern:
         return cls, await kiwix.search(names, pattern, PAGE_LENGTH, timeout), False
     except asyncio.TimeoutError:
         return cls, None, True
-    except (KiwixError, httpx.HTTPError, OSError):
+    except KiwixError as exc:
+        # A permanent refusal (an archive with no full-text index answers 404 every time) is a group with
+        # nothing to say, not a search that went wrong: marking it partial would tell every search to
+        # "try again in a moment" and keep it out of the cache for good.
+        return cls, None, not exc.permanent
+    except (httpx.HTTPError, OSError):
         return cls, None, True
+
+
+_refresh_fault: list[str] = []   # the fault last logged, so a persistent one is one line, not one per request
+
+
+def _say_refresh_fault(exc: Exception) -> None:
+    fault = f"{type(exc).__name__}: {exc}"
+    if _refresh_fault != [fault]:
+        _refresh_fault[:] = [fault]
+        log.warning("search: cannot refresh the semantic index; using keyword search (%s)", fault)
 
 
 def _empty(q: str) -> dict:
@@ -351,16 +370,30 @@ def _empty(q: str) -> dict:
 async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
                  sources: list[str] | None = None, limit: int = 40, *, fts_mode: str = "and", use_cache: bool = True,
                  semantic=None) -> dict:
+    watch = getattr(semantic, "watch_embedding", None)
+    with watch() if watch is not None else contextlib.nullcontext() as embedding:
+        return await _search(conn, settings, kiwix, q, sources, limit, fts_mode=fts_mode, use_cache=use_cache,
+                             semantic=semantic, embedding=embedding)
+
+
+async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClient, q: str,
+                  sources: list[str] | None, limit: int, *, fts_mode: str, use_cache: bool, semantic, embedding) -> dict:
     t0 = time.perf_counter()
     reduced = query_mod.reduce_query(q or "")
     if not reduced.terms:
         return _empty(q or "")
     limit = max(1, min(int(limit or 40), 100))
     use_cache = use_cache and fts_mode == "and"
+    semantic_failed = False
     # Refresh before looking up results: otherwise a popular cached query never observes a rebuild.
     # Scope by reader and generation, not a process-global "last seen" shared by unrelated databases.
     if use_cache and semantic is not None and hasattr(semantic, "refresh"):
-        semantic.refresh()
+        try:
+            semantic.refresh()
+            _refresh_fault.clear()
+        except Exception as exc:  # the semantic layer is a convenience: its failures never fail the search
+            semantic_failed = True
+            _say_refresh_fault(exc)
     semantic_version = ([getattr(semantic, "cache_namespace", str(id(semantic))),
                          getattr(semantic, "generation", None)] if semantic is not None else None)
     key = SearchCache.key(q, sources, limit, semantic_version)
@@ -372,7 +405,6 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
 
     results: list[dict] = []
     partial = False
-    semantic_failed = False
 
     languages = json.loads(get_setting(conn, "zim_languages", "{}") or "{}")
     books: dict[tuple[str, str], list[str]] = {}
@@ -602,9 +634,9 @@ async def search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClien
         r.pop("_carried", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
-    semantic_cacheable = not semantic_failed and (
-        semantic is None or not hasattr(semantic, "cacheable") or semantic.cacheable(q))
-    if not partial and use_cache and semantic_cacheable:
+    if embedding is not None and embedding.failed:
+        semantic_failed = True
+    if not partial and use_cache and not semantic_failed:
         SearchCache.put(conn, key, payload)
     return payload
 
@@ -653,13 +685,14 @@ async def suggest(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     return unique[:SUGGEST_MAX]
 
 
-async def warm(settings: Settings, kiwix: KiwixClient, db_path) -> None:
-    """Three canned queries after boot and rescan so the Wikipedia and NHS indexes are hot."""
+async def warm(settings: Settings, kiwix: KiwixClient, db_path, semantic=None) -> None:
+    """Three canned queries after boot and rescan so the Wikipedia and NHS indexes are hot. The results cache
+    is keyed on the semantic reader, so warming with the one real requests use is what makes them hits."""
     conn = connect(db_path)
     try:
         for q in WARM_QUERIES:
             try:
-                await search(conn, settings, kiwix, q)
+                await search(conn, settings, kiwix, q, semantic=semantic)
             except Exception:  # warming is best-effort: a cold or missing index must not block boot
                 pass
     finally:

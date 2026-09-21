@@ -3,7 +3,7 @@ import { test, expect, MODE } from './test';
 const probes = ['/generate_204', '/gen_204', '/hotspot-detect.html', '/library/test/success.html', '/connecttest.txt', '/ncsi.txt', '/canonical.html', '/success.txt'];
 
 test('captive-portal probe paths redirect to the welcome page (dev stack)', async ({ request }) => {
-  test.skip(MODE !== 'dev', 'needs Caddy');
+  test.skip(MODE !== 'dev', 'the probe redirects are Caddy\'s, and fixture mode is `vite preview`, which has no Caddy');
   for (const p of probes) {
     const res = await request.get(p, { maxRedirects: 0 });
     expect(res.status(), p).toBe(302);

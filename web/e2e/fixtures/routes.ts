@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs';
 import type { BrowserContext, Route } from '@playwright/test';
-import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Note } from '../../src/api/types';
+import type { AiEvent, ChecklistItem, ConditionId, ConditionState, NearbyFacility, Note, RecentKind } from '../../src/api/types';
 import { CONDITION_IDS } from '../../src/api/types';
 import { phaseFor } from '../../src/tools/situation';
-import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, kitsResponse, kitWater, library, mapConfig, page as pmrPage, pages, places, playbook, playbooks, search, sseBody, suggestions } from '../../tests/fixtures/api';
+import { aiEvents, cards, cardsNoPhones, fieldcraftPage, householdPlan, kitsResponse, kitWater, library, mapConfig, mapPlaces, page as pmrPage, pages, places, playbook, playbooks, sseBody, suggestions } from '../../tests/fixtures/api';
 import { bearingDeg, distanceKm, naismithMinutes } from '../../src/map/measure';
 import { computeView, freshConditions, report } from './engine';
-import { KIWIX_PAGES } from './kiwix';
+import { BOOK_EPUB_PATH, FIXTURE_BOOKS, KIWIX_PAGES } from './kiwix';
+import { searchFor } from './search';
 import { PIN, TOKEN, type FixturePlace, type FixtureState } from './state';
 
 const here = (rel: string) => new URL(rel, import.meta.url);
@@ -17,6 +18,7 @@ const pmtiles = readFileSync(here('./maps/test.pmtiles'));
    the screen has, and until this round nothing had ever exercised either. */
 const samplePdf = readFileSync(here('./docs/sample.pdf'));
 const healthGeojson = readFileSync(here('./maps/health.geojson'), 'utf8');
+const sampleEpub = readFileSync(here('./docs/sample.epub'));
 
 const json = (route: Route, body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 const detail = (route: Route, status: number, message: string) => json(route, { detail: message }, status);
@@ -151,6 +153,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
 
   await context.route('**/kiwix/**', async (route) => {
     const url = new URL(route.request().url());
+    if (url.pathname === BOOK_EPUB_PATH) return route.fulfill({ status: 200, contentType: 'application/epub+zip', body: sampleEpub });
     const html = KIWIX_PAGES[url.pathname];
     if (html) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html });
     if (url.pathname === '/kiwix/search') return route.fulfill({ status: 200, contentType: 'text/html', body: `<h1>Results for ${url.searchParams.get('pattern') ?? ''}</h1>` });
@@ -187,10 +190,44 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       const item = library.categories.flatMap((c) => c.items).find((i) => i.id === decodeURIComponent(p.slice('/library/'.length)));
       return item ? json(route, item) : detail(route, 404, 'no such item');
     }
-    if (method === 'GET' && p === '/search') return json(route, { ...search, q: url.searchParams.get('q') ?? '', query: url.searchParams.get('q') ?? '' });
+    if (method === 'GET' && p === '/search') return json(route, searchFor(url.searchParams.get('q') ?? '', (url.searchParams.get('sources') ?? '').split(',').filter(Boolean)));
     if (method === 'GET' && p === '/suggest') {
       const q = (url.searchParams.get('q') ?? '').toLowerCase();
       return json(route, suggestions.filter((s) => s.value.toLowerCase().startsWith(q)));
+    }
+    /* The Gutenberg books: one detail per book, and where each was left (`/reading`), which is what the
+       reader writes and the book screen reads back. */
+    const book = /^\/books\/gutenberg\/(\d+)$/.exec(p);
+    if (method === 'GET' && book) {
+      const id = Number(book[1]);
+      const known = FIXTURE_BOOKS[id];
+      if (!known) return detail(route, 404, 'Book not found');
+      const saved = state.reading.get(`gutenberg:${id}`);
+      return json(route, {
+        id, title: known.title, author: known.author, shelf: 'PR', shelf_name: 'English literature', popularity: 100,
+        cover_url: null, epub_url: BOOK_EPUB_PATH, html_url: null, available: true,
+        position: saved ? { cfi: saved.cfi, percent: saved.percent } : null,
+      });
+    }
+    const reading = /^\/reading\/(.+)$/.exec(p);
+    if (method === 'GET' && p === '/reading') return json(route, [...state.reading.values()]);
+    if (reading) {
+      const key = decodeURIComponent(reading[1]);
+      if (method === 'GET') return state.reading.has(key) ? json(route, state.reading.get(key)) : detail(route, 404, 'Nothing read yet');
+      if (method === 'PUT') {
+        const b = body();
+        state.reading.set(key, { key, title: String(b.title ?? ''), author: (b.author as string | null) ?? null, cover_url: (b.cover_url as string | null) ?? null, url: null, cfi: String(b.cfi ?? ''), percent: Number(b.percent ?? 0), updated_at: new Date().toISOString() });
+        return json(route, { ok: true });
+      }
+      if (method === 'DELETE') { state.reading.delete(key); return json(route, { ok: true }); }
+    }
+    const recent = /^\/recent\/(.+)$/.exec(p);
+    if (method === 'GET' && p === '/recent') return json(route, state.recent.slice(0, Number(url.searchParams.get('limit') ?? 12)));
+    if (recent && method === 'PUT') {
+      const key = decodeURIComponent(recent[1]);
+      const b = body();
+      state.recent = [{ key, kind: b.kind as RecentKind, title: String(b.title ?? ''), url: String(b.url ?? ''), cover_url: (b.cover_url as string | null) ?? null, viewed_at: new Date().toISOString() }, ...state.recent.filter((r) => r.key !== key)];
+      return json(route, { ok: true });
     }
     if (method === 'GET' && p === '/playbooks') return json(route, playbooks);
     const pb = /^\/playbooks\/([\w-]+)(?:\/checklist(?:\/([\w-]+))?)?$/.exec(p);
@@ -235,6 +272,8 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (method === 'GET' && p === '/map/config') return json(route, fixtureMapConfig());
     if (method === 'GET' && p === '/map/overlays') return json(route, fixtureMapConfig().overlays);
+    // What to expect at each kind of place: the place card's own guidance, read from the tapped kind.
+    if (method === 'GET' && p === '/map/places') return json(route, mapPlaces);
     if (method === 'GET' && p === '/places') {
       const q = (url.searchParams.get('q') ?? '').toLowerCase();
       return json(route, places.filter((pl) => pl.name.toLowerCase().startsWith(q)));
@@ -370,7 +409,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
       if (!summary) return detail(route, 404, 'Playbook not found');
       const at = new Date(Date.now() - Number(b.hours_ago ?? 0) * 3_600_000).toISOString();
       state.savedConditions = state.conditions;
-      const conditions = freshConditions(at);
+      const conditions = freshConditions(at, 'drill');
       for (const [id, value] of Object.entries((b.conditions ?? {}) as Record<string, ConditionState>)) {
         if (conditions[id as ConditionId]) conditions[id as ConditionId] = { ...conditions[id as ConditionId], state: value, set_by: 'drill' };
       }

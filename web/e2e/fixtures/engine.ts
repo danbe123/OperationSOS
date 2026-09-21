@@ -11,10 +11,12 @@ const TITLES: Record<ConditionId, string> = {
   gas: 'Gas', heating: 'Heating', roads: 'Roads and transport', shops: 'Shops and cash', sewage: 'Sewage and drains',
 };
 
-export function freshConditions(at = new Date().toISOString()): Conditions {
+/** Ten conditions nobody has touched. The real box answers an untouched one with no `set_by` (the
+ * screen says "Nobody has set this yet."), so the fixture must too; a drill passes 'drill'. */
+export function freshConditions(at = new Date().toISOString(), setBy = ''): Conditions {
   return Object.fromEntries(CONDITION_IDS.map((id) => [id, {
     id, title: TITLES[id], state: 'working' as ConditionState, since: at, for_s: 0, source: 'manual' as const,
-    confidence: 1, note: '', set_by: 'phone', updated_at: at, confirmed_at: at, stale: false,
+    confidence: 1, note: '', set_by: setBy, updated_at: at, confirmed_at: at, stale: false,
   }])) as Conditions;
 }
 

@@ -1,6 +1,8 @@
 import { test, expect, MODE } from './test';
 
-test.skip(MODE !== 'dev', 'requires the installed library and development stack');
+// Cannot run in fixture mode: these open the real installed library (real map overlays, a real medicine PDF, the live API), which `vite preview` and the mocks do not have.
+// Their fixture-mode counterparts are map.spec.ts (overlays), doc.spec.ts (a PDF and Back) and home-scenario-checklist.spec.ts (a tick seen by a second phone).
+test.skip(MODE !== 'dev', 'needs the installed library and the dev stack (real overlays, real PDF, live API)');
 
 test('flood, access land, footpaths and hospitals draw real features', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });

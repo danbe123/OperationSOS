@@ -14,6 +14,7 @@ bge-small was trained with an instruction on the query side only: every query is
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import fcntl
 import hashlib
 import itertools
@@ -1301,6 +1302,20 @@ def build_cli(settings: Settings, out: Callable = print, run: Callable = subproc
     return 0
 
 
+class EmbeddingWatch:
+    """What one search learned about its own query vector: `failed` is set when the search needed the vector
+    and the server gave none. A search that never needed one (no index built, no Wikipedia hit to rerank)
+    leaves it False, and its answer is as good as it will ever be."""
+
+    __slots__ = ("failed",)
+
+    def __init__(self) -> None:
+        self.failed = False
+
+
+_watch: contextvars.ContextVar[Optional[EmbeddingWatch]] = contextvars.ContextVar("sos_embedding_watch", default=None)
+
+
 class _Cached:
     """One collection's loaded store, the mtime it was loaded from, and when it was last looked for."""
 
@@ -1425,14 +1440,28 @@ class Semantic:
         self.household_index()
         self.wikipedia_store()
 
-    def cacheable(self, q: str) -> bool:
-        """A temporary embedding failure must not become a persistent keyword-only result."""
-        remembered = self._vectors.get(q.strip())
-        if remembered is not None:
-            return remembered[0] is not None
-        return not any(state.store is not None for state in (self._docs, self._household, self._wikipedia))
+    @contextmanager
+    def watch_embedding(self) -> Iterator[EmbeddingWatch]:
+        """Everything awaited inside the block, by the task that entered it, reports its query-vector
+        failures to the yielded watch: one search's own outcome, not a memo other searches share, so a
+        temporary embedding failure is never kept as a persistent keyword-only result and nothing else
+        is kept out of the cache."""
+        watch = EmbeddingWatch()
+        token = _watch.set(watch)
+        try:
+            yield watch
+        finally:
+            _watch.reset(token)
 
     async def _query_vector(self, q: str) -> Optional[np.ndarray]:
+        vector = await self._obtain_vector(q)
+        if vector is None and q.strip():
+            watch = _watch.get()
+            if watch is not None:
+                watch.failed = True
+        return vector
+
+    async def _obtain_vector(self, q: str) -> Optional[np.ndarray]:
         """The query's embedding, asked of the server once however many collections want it.
 
         One search asks all three: the docs passages, the household books and the Wikipedia rerank.

@@ -2,7 +2,6 @@
 
 Operation SOS is an offline, UK-focused knowledge box. It runs on a Raspberry Pi 5 with a 7" touchscreen and an NVMe drive, broadcasts its own WiFi hotspot so phones and laptops can use it with no internet, no grid and no mobile network, and shows the same interface on its own screen so it still works when every phone is dead.
 
-The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs/superpowers/specs/2026-09-03-operation-sos-design.md); this file is the practical guide.
 
 ## What it is
 
@@ -14,6 +13,29 @@ The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs
 - **An optional AI assistant** that only answers from the library and cites its sources; off by default.
 - Plain HTTP on the hotspot at `http://10.42.0.1` (or `http://sos.box`), no accounts, no internet dependency at runtime.
 
+## Screenshots
+
+The touchscreen's own view, rendered at its 1280 by 720 size from the PC dev stack. Phones on the hotspot get the same app, laid out for a narrow screen.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/2026-09-19-readme/home.png" alt="Now: what's the situation? Tap what has failed and the playbooks follow"><br><sub><b>Now.</b> Tap what has failed (power, water, mobile, roads) and the matching playbooks follow.</sub></td>
+<td width="50%"><img src="docs/screenshots/2026-09-19-readme/search.png" alt="Find: one search across the box, with a page found by meaning marked related"><br><sub><b>Find.</b> One search across the box's own guidance and the library. A page found by meaning, not by its words, is marked <i>related</i>.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/scenario.png" alt="A scenario playbook: agricultural collapse and famine"><br><sub><b>Playbooks.</b> What to do right now, in the first 72 hours, the first month and over the years, with a shared checklist.</sub></td>
+<td><img src="docs/screenshots/2026-09-19-readme/card.png" alt="A medical quick card: anaphylaxis"><br><sub><b>Medical cards.</b> Large numbered steps, and the UK numbers up front.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/kits.png" alt="Kits: tiered lists of what to have, scaled to the household"><br><sub><b>Kits.</b> Tiered lists of what to have, scaled to a household of any size and ticked off by everyone on the box.</sub></td>
+<td><img src="docs/screenshots/2026-09-19-readme/map.png" alt="The map: central London with footpaths and a labelled pin"><br><sub><b>Map.</b> UK maps with footpaths, contours and scenario overlays, served from the box.</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/2026-09-19-readme/books.png" alt="Books: the Project Gutenberg collection with your reading places remembered"><br><sub><b>Books.</b> The Project Gutenberg collection, read offline, with your place in each book remembered.</sub></td>
+<td></td>
+</tr>
+</table>
+
 ## Hardware
 
 | Part | Reference choice |
@@ -24,6 +46,8 @@ The design is [`docs/superpowers/specs/2026-09-03-operation-sos-design.md`](docs
 | Cooling | Official Active Cooler; the printed case needs an intake and an exhaust path |
 | Power | Official 27 W USB-C PSU; optional 20,000 mAh USB-C PD power bank (roughly 8 to 15 hours) |
 | External drive | Optional self-powered USB 3 HDD or SSD, ext4, filesystem label `SOS-EXT`, for Khan Academy, media and your own files |
+
+This table is the reference build: the cheapest set of parts that runs the software, for anyone building their own. The finished Operation SOS unit uses a rugged clamshell case with the screen in the lid and its own power and sensor hardware; the software supports both, and the finished unit's parts list will be documented separately.
 
 Storage layout on the box: `/srv/sos/core/{zim,maps,docs,models}` (NVMe), `/srv/sos/extended/{zim,docs,media,video,books}` (USB), `/srv/sos/state` (database, `library.xml`, playbooks, manifest, config), `/srv/sos/web` (built frontend), `/srv/sos/api` (the `sos` package and its venv).
 
@@ -103,17 +127,21 @@ tools/            map style build and AI evaluation questions
 docs/             the design spec, research, the implementation plans and the hardware checklist
 ```
 
-## Plans
+## Licence
 
-The build is an overview plus five sub-plans in `docs/superpowers/plans/`:
+Operation SOS is open source, and the parts of the repository carry different licences:
 
-| Plan | Delivers |
-|---|---|
-| `2026-09-03-00-overview.md` | locked contracts: paths, environment, JSON shapes, endpoints, CLI |
-| `2026-09-03-01-backend-and-install.md` | the `sos` package, the dev stack, the installer, this README |
-| `2026-09-03-02-frontend.md` | the web app, themes, kiosk mode, map viewer |
-| `2026-09-03-03-content.md` | the twenty playbooks, modules, cards, pages and the manifests |
-| `2026-09-03-04-maps-pipeline.md` | `sos build-maps`: base map, contours, hillshade, overlays, phone packs |
-| `2026-09-03-05-ai.md` | the grounded assistant and its evaluation |
+| What | Licence | File |
+|---|---|---|
+| Software: everything except `playbooks/` (the `sos` package, the web app, the installer, tools and tests) | GNU Affero General Public License v3.0 | [`LICENSE`](LICENSE) |
+| Authored content: `playbooks/` (scenarios, modules, cards, kits, pages) | Creative Commons Attribution-ShareAlike 4.0 | [`playbooks/LICENSE`](playbooks/LICENSE) |
+| Library content fetched by `sos sync` | Each item's own licence, recorded in the `licence` field of `manifest/*.json` | the manifests |
 
-Milestones and their exit criteria are in spec section 15; hardware results are recorded in `docs/hardware-checklist.md`.
+In plain terms: you can build, use, change and share Operation SOS freely. If you distribute a modified version, or run one that other people use over a network (including over the box's own hotspot), you must make your source available under the same licence. If you reuse the playbooks, credit Operation SOS and share your changes under CC BY-SA 4.0.
+
+The library content is not part of this repository and is not covered by either licence. Some items are licensed for non-commercial use only or are marked as awaiting redistribution permission; check the `licence` field before preloading content onto a box you intend to sell or give away.
+
+"Operation SOS" is the name of this project and of the finished product. The licences above cover the code and content, not the name or logo; please use a different name for your own fork or product.
+
+Copyright (C) 2026 Daniel and the Operation SOS contributors.
+

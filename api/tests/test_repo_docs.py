@@ -27,7 +27,7 @@ HARDWARE_NOTES = ["rtl-sdr dongle", "ups hat", "speaker for read aloud", "rtl_po
 def test_readme_covers_the_workflow():
     text = (REPO / "README.md").read_text(encoding="utf-8")
     for heading in ("## What it is", "## Hardware", "## Install on the Pi", "## Develop on the PC", "## Content sync",
-                    "## Repository structure", "## Plans"):
+                    "## Repository structure"):
         assert heading in text, heading
     assert "LD_LIBRARY_PATH=$HOME/.local/chromium-deps/usr/lib/x86_64-linux-gnu" in text
     for command in ("make venv", "make test", "make dev", "dev/smoke.sh", "make build", "make e2e",
@@ -36,8 +36,7 @@ def test_readme_covers_the_workflow():
         assert command in text, command
     assert "http://10.42.0.1" in text and "http://sos.box" in text and "http://sos.local" in text
     assert "NOMAD" not in text
-    for plan in ("00-overview", "01-backend-and-install", "02-frontend", "03-content", "04-maps-pipeline", "05-ai"):
-        assert f"2026-09-03-{plan}.md" in text, plan
+    assert "docs/superpowers/plans" not in text  # plans are working notes and stay out of the README
 
 
 def test_hardware_checklist_has_every_spec_item_with_date_commit_result():
