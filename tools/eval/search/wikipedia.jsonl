@@ -1,0 +1,86 @@
+{"id": "wiki-iodine-tablets-nuclear", "query": "iodine tablets nuclear", "expected": [{"url": "/read/wikipedia_en_all_maxi/Potassium_iodide"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-how-does-a-water-filter-work", "query": "how does a water filter work", "expected": [{"url": "/read/wikipedia_en_all_maxi/Water_filter"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-what-is-hypothermia", "query": "what is hypothermia", "expected": [{"url": "/read/wikipedia_en_all_maxi/Hypothermia"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-signs-of-sepsis", "query": "signs of sepsis", "expected": [{"url": "/read/wikipedia_en_all_maxi/Sepsis"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-how-does-a-heat-pump-work", "query": "how does a heat pump work", "expected": [{"url": "/read/wikipedia_en_all_maxi/Heat_pump"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-carbon-monoxide-poisoning-symptoms", "query": "carbon monoxide poisoning symptoms", "expected": [{"url": "/read/wikipedia_en_all_maxi/Carbon_monoxide_poisoning"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-portable-petrol-generator", "query": "portable petrol generator", "expected": [{"url": "/read/wikipedia_en_all_maxi/Engine–generator"}], "set": "wikipedia", "group": "term", "tags": [], "notes": "the obvious title is a redirect; the target is the article it points to"}
+{"id": "wiki-how-do-solar-panels-work", "query": "how do solar panels work", "expected": [{"url": "/read/wikipedia_en_all_maxi/Solar_panel"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-how-to-tie-a-bowline", "query": "how to tie a bowline", "expected": [{"url": "/read/wikipedia_en_all_maxi/Bowline"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-using-a-compass-to-find-north", "query": "using a compass to find north", "expected": [{"url": "/read/wikipedia_en_all_maxi/Compass"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-what-is-the-recovery-position", "query": "what is the recovery position", "expected": [{"url": "/read/wikipedia_en_all_maxi/Recovery_position"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-heimlich-manoeuvre-for-choking", "query": "heimlich manoeuvre for choking", "expected": [{"url": "/read/wikipedia_en_all_maxi/Abdominal_thrusts"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-how-to-do-cpr", "query": "how to do CPR", "expected": [{"url": "/read/wikipedia_en_all_maxi/Cardiopulmonary_resuscitation"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-what-causes-a-stroke", "query": "what causes a stroke", "expected": [{"url": "/read/wikipedia_en_all_maxi/Stroke"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-anaphylaxis-allergic-reaction", "query": "anaphylaxis allergic reaction", "expected": [{"url": "/read/wikipedia_en_all_maxi/Anaphylaxis"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-adrenaline-auto-injector", "query": "adrenaline auto-injector", "expected": [{"url": "/read/wikipedia_en_all_maxi/Epinephrine_autoinjector"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-tetanus-jab", "query": "tetanus jab", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tetanus"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-rabies-vaccine-after-a-bite", "query": "rabies vaccine after a bite", "expected": [{"url": "/read/wikipedia_en_all_maxi/Rabies_vaccine"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-lyme-disease-from-ticks", "query": "lyme disease from ticks", "expected": [{"url": "/read/wikipedia_en_all_maxi/Lyme_disease"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-frostbite", "query": "what is frostbite", "expected": [{"url": "/read/wikipedia_en_all_maxi/Frostbite"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-heat-stroke-in-hot-weather", "query": "heat stroke in hot weather", "expected": [{"url": "/read/wikipedia_en_all_maxi/Heat_stroke"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-dehydration-symptoms", "query": "dehydration symptoms", "expected": [{"url": "/read/wikipedia_en_all_maxi/Dehydration"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-oral-rehydration-salts", "query": "oral rehydration salts", "expected": [{"url": "/read/wikipedia_en_all_maxi/Oral_rehydration_therapy"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-cholera", "query": "what is cholera", "expected": [{"url": "/read/wikipedia_en_all_maxi/Cholera"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-typhoid-fever", "query": "typhoid fever", "expected": [{"url": "/read/wikipedia_en_all_maxi/Typhoid_fever"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-dysentery", "query": "dysentery", "expected": [{"url": "/read/wikipedia_en_all_maxi/Dysentery"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-food-poisoning", "query": "food poisoning", "expected": [{"url": "/read/wikipedia_en_all_maxi/Foodborne_illness"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-botulism-in-canned-food", "query": "botulism in canned food", "expected": [{"url": "/read/wikipedia_en_all_maxi/Botulism"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-salmonella", "query": "salmonella", "expected": [{"url": "/read/wikipedia_en_all_maxi/Salmonella"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-e-coli", "query": "what is e coli", "expected": [{"url": "/read/wikipedia_en_all_maxi/Escherichia_coli"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-chlorination-of-drinking-water", "query": "chlorination of drinking water", "expected": [{"url": "/read/wikipedia_en_all_maxi/Water_chlorination"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-solar-water-disinfection-in-bottles", "query": "solar water disinfection in bottles", "expected": [{"url": "/read/wikipedia_en_all_maxi/Solar_water_disinfection"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-foil-emergency-blanket", "query": "foil emergency blanket", "expected": [{"url": "/read/wikipedia_en_all_maxi/Space_blanket"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-starting-a-fire-with-a-bow-drill", "query": "starting a fire with a bow drill", "expected": [{"url": "/read/wikipedia_en_all_maxi/Bow_drill"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-fallout-shelter", "query": "fallout shelter", "expected": [{"url": "/read/wikipedia_en_all_maxi/Fallout_shelter"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-nuclear-fallout", "query": "what is nuclear fallout", "expected": [{"url": "/read/wikipedia_en_all_maxi/Nuclear_fallout"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-radiation-sickness", "query": "radiation sickness", "expected": [{"url": "/read/wikipedia_en_all_maxi/Acute_radiation_syndrome"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-geiger-counter", "query": "geiger counter", "expected": [{"url": "/read/wikipedia_en_all_maxi/Geiger_counter"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-electromagnetic-pulse", "query": "electromagnetic pulse", "expected": [{"url": "/read/wikipedia_en_all_maxi/Electromagnetic_pulse"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-solar-storm-and-the-power-grid", "query": "solar storm and the power grid", "expected": [{"url": "/read/wikipedia_en_all_maxi/Geomagnetic_storm"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-flash-flood", "query": "flash flood", "expected": [{"url": "/read/wikipedia_en_all_maxi/Flash_flood"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-tornado", "query": "tornado", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tornado"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-a-hurricane", "query": "what is a hurricane", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tropical_cyclone"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-storm-surge", "query": "storm surge", "expected": [{"url": "/read/wikipedia_en_all_maxi/Storm_surge"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-heat-wave", "query": "heat wave", "expected": [{"url": "/read/wikipedia_en_all_maxi/Heat_wave"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-wildfire", "query": "wildfire", "expected": [{"url": "/read/wikipedia_en_all_maxi/Wildfire"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-earthquake", "query": "earthquake", "expected": [{"url": "/read/wikipedia_en_all_maxi/Earthquake"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-tsunami", "query": "tsunami", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tsunami"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-power-outage", "query": "power outage", "expected": [{"url": "/read/wikipedia_en_all_maxi/Power_outage"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-black-start-after-a-blackout", "query": "black start after a blackout", "expected": [{"url": "/read/wikipedia_en_all_maxi/Black_start"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-uninterruptible-power-supply", "query": "uninterruptible power supply", "expected": [{"url": "/read/wikipedia_en_all_maxi/Uninterruptible_power_supply"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-lithium-ion-battery", "query": "lithium-ion battery", "expected": [{"url": "/read/wikipedia_en_all_maxi/Lithium-ion_battery"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-lead-acid-car-battery", "query": "lead acid car battery", "expected": [{"url": "/read/wikipedia_en_all_maxi/Lead–acid_battery"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-amateur-radio", "query": "amateur radio", "expected": [{"url": "/read/wikipedia_en_all_maxi/Amateur_radio"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-citizens-band-radio", "query": "citizens band radio", "expected": [{"url": "/read/wikipedia_en_all_maxi/Citizens_band_radio"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-pmr446-walkie-talkies", "query": "PMR446 walkie talkies", "expected": [{"url": "/read/wikipedia_en_all_maxi/PMR446"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-crystal-radio", "query": "crystal radio", "expected": [{"url": "/read/wikipedia_en_all_maxi/Crystal_radio"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-shortwave-radio", "query": "shortwave radio", "expected": [{"url": "/read/wikipedia_en_all_maxi/Shortwave_radio"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-morse-code", "query": "morse code", "expected": [{"url": "/read/wikipedia_en_all_maxi/Morse_code"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-home-canning-of-food", "query": "home canning of food", "expected": [{"url": "/read/wikipedia_en_all_maxi/Canning"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-food-preservation-methods", "query": "food preservation methods", "expected": [{"url": "/read/wikipedia_en_all_maxi/Food_preservation"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-pemmican", "query": "pemmican", "expected": [{"url": "/read/wikipedia_en_all_maxi/Pemmican"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-hardtack", "query": "hardtack", "expected": [{"url": "/read/wikipedia_en_all_maxi/Hardtack"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-sourdough-starter", "query": "sourdough starter", "expected": [{"url": "/read/wikipedia_en_all_maxi/Sourdough"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-root-cellar", "query": "root cellar", "expected": [{"url": "/read/wikipedia_en_all_maxi/Root_cellar"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-composting-toilet", "query": "composting toilet", "expected": [{"url": "/read/wikipedia_en_all_maxi/Composting_toilet"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-septic-tank", "query": "septic tank", "expected": [{"url": "/read/wikipedia_en_all_maxi/Septic_tank"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-rainwater-harvesting", "query": "rainwater harvesting", "expected": [{"url": "/read/wikipedia_en_all_maxi/Rainwater_harvesting"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-hand-pump-for-a-well", "query": "hand pump for a well", "expected": [{"url": "/read/wikipedia_en_all_maxi/Hand_pump"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-what-is-charcoal", "query": "what is charcoal", "expected": [{"url": "/read/wikipedia_en_all_maxi/Charcoal"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}
+{"id": "wiki-rocket-stove", "query": "rocket stove", "expected": [{"url": "/read/wikipedia_en_all_maxi/Rocket_stove"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-oil-lamp", "query": "oil lamp", "expected": [{"url": "/read/wikipedia_en_all_maxi/Oil_lamp"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-tourniquet", "query": "tourniquet", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tourniquet"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-concussion", "query": "concussion", "expected": [{"url": "/read/wikipedia_en_all_maxi/Concussion"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-sprained-ankle", "query": "sprained ankle", "expected": [{"url": "/read/wikipedia_en_all_maxi/Sprain"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-low-blood-sugar", "query": "low blood sugar", "expected": [{"url": "/read/wikipedia_en_all_maxi/Hypoglycemia"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-asthma", "query": "asthma", "expected": [{"url": "/read/wikipedia_en_all_maxi/Asthma"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-epileptic-seizure-first-aid", "query": "epileptic seizure first aid", "expected": [{"url": "/read/wikipedia_en_all_maxi/Seizure"}], "set": "wikipedia", "group": "term", "tags": [], "notes": "the obvious title is a redirect; the target is the article it points to"}
+{"id": "wiki-drowning", "query": "drowning", "expected": [{"url": "/read/wikipedia_en_all_maxi/Drowning"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-electric-shock-injury", "query": "electric shock injury", "expected": [{"url": "/read/wikipedia_en_all_maxi/Electrical_injury"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-activated-charcoal-for-poisoning", "query": "activated charcoal for poisoning", "expected": [{"url": "/read/wikipedia_en_all_maxi/Activated_carbon"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-paracetamol-overdose", "query": "paracetamol overdose", "expected": [{"url": "/read/wikipedia_en_all_maxi/Paracetamol_poisoning"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-ibuprofen", "query": "ibuprofen", "expected": [{"url": "/read/wikipedia_en_all_maxi/Ibuprofen"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-amoxicillin", "query": "amoxicillin", "expected": [{"url": "/read/wikipedia_en_all_maxi/Amoxicillin"}], "set": "wikipedia", "group": "term", "tags": [], "notes": ""}
+{"id": "wiki-adder-snake-bite", "query": "adder snake bite", "expected": [{"url": "/read/wikipedia_en_all_maxi/Adder"}], "set": "wikipedia", "group": "term", "tags": [], "notes": "the obvious title is a redirect; the target is the article it points to"}
+{"id": "wiki-what-is-a-tick", "query": "what is a tick", "expected": [{"url": "/read/wikipedia_en_all_maxi/Tick"}], "set": "wikipedia", "group": "question", "tags": [], "notes": ""}

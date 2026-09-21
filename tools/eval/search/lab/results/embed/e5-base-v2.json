@@ -1,0 +1,18 @@
+{
+ "name": "e5-base-v2",
+ "tag": "e5-base-v2",
+ "hf": "intfloat/e5-base-v2",
+ "pool": "mean",
+ "query_prefix": "query: ",
+ "passage_prefix": "passage: ",
+ "max_len": 512,
+ "params": 109482240,
+ "dims": 768,
+ "passages": 21368,
+ "passage_tokens": 8576211,
+ "mean_tokens": 401.4,
+ "embed_seconds": 37.91,
+ "passages_per_s": 563.7,
+ "tokens_per_s": 226226,
+ "gpu_peak_gb": 0.73
+}

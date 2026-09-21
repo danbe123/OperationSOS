@@ -1,0 +1,18 @@
+{
+ "name": "granite-embedding-english-r2",
+ "tag": "granite-embedding-english-r2",
+ "hf": "ibm-granite/granite-embedding-english-r2",
+ "pool": "cls",
+ "query_prefix": "",
+ "passage_prefix": "",
+ "max_len": 512,
+ "params": 149014272,
+ "dims": 768,
+ "passages": 21368,
+ "passage_tokens": 8540168,
+ "mean_tokens": 399.7,
+ "embed_seconds": 89.31,
+ "passages_per_s": 239.3,
+ "tokens_per_s": 95627,
+ "gpu_peak_gb": 0.97
+}

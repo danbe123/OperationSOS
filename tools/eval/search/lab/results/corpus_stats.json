@@ -1,0 +1,98 @@
+{
+ "passages": 21368,
+ "unique_urls": 21368,
+ "kinds": {
+  "playbook": 120,
+  "module": 57,
+  "card": 148,
+  "page": 309,
+  "doc": 20734
+ },
+ "mean_chars": 1872.2740546611756,
+ "at_cap_2584": 7572,
+ "queries": {
+  "own-library": 63,
+  "paraphrase": 126,
+  "safety": 34
+ },
+ "kept": {
+  "own-library": 46,
+  "paraphrase": 92,
+  "safety": 34
+ },
+ "dropped": {
+  "own-library": 17,
+  "paraphrase": 34,
+  "safety": 0
+ },
+ "dropped_ids": {
+  "own-library": [
+   "own-a05",
+   "own-a06",
+   "own-a07",
+   "own-a10",
+   "own-a11",
+   "own-a12",
+   "own-a13",
+   "own-a14",
+   "own-a15",
+   "own-a17",
+   "own-a18",
+   "own-a19",
+   "own-h01",
+   "own-h02",
+   "own-h07",
+   "own-h08",
+   "own-h11"
+  ],
+  "paraphrase": [
+   "para-a05-1",
+   "para-a05-2",
+   "para-a06-1",
+   "para-a06-2",
+   "para-a07-1",
+   "para-a07-2",
+   "para-a10-1",
+   "para-a10-2",
+   "para-a11-1",
+   "para-a11-2",
+   "para-a12-1",
+   "para-a12-2",
+   "para-a13-1",
+   "para-a13-2",
+   "para-a14-1",
+   "para-a14-2",
+   "para-a15-1",
+   "para-a15-2",
+   "para-a17-1",
+   "para-a17-2",
+   "para-a18-1",
+   "para-a18-2",
+   "para-a19-1",
+   "para-a19-2",
+   "para-h01-1",
+   "para-h01-2",
+   "para-h02-1",
+   "para-h02-2",
+   "para-h07-1",
+   "para-h07-2",
+   "para-h08-1",
+   "para-h08-2",
+   "para-h11-1",
+   "para-h11-2"
+  ],
+  "safety": []
+ },
+ "groups": {
+  "own-library/answer": 39,
+  "own-library/health": 7,
+  "paraphrase/answer": 78,
+  "paraphrase/health": 14,
+  "safety/plain": 17,
+  "safety/hard": 17
+ },
+ "rel_sizes": {
+  "mean": 21.476744186046513,
+  "max": 312
+ }
+}

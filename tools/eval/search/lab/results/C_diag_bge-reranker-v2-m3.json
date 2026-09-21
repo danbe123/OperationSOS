@@ -1,0 +1,89 @@
+[
+ {
+  "id": "safety-severe-bleeding-hard",
+  "query": "blood wont stop pouring from his arm he cut it on broken glass",
+  "gold_rank_before": 1,
+  "gold_rank_after": 4,
+  "ce_top3": [
+   [
+    "card",
+    "Closing a wound",
+    "/medical/card/wound-closure#stop-or-escalate"
+   ],
+   [
+    "doc",
+    "Where There Is No Doctor (Hesperian, 1992 revised edition)",
+    "/doc/where-there-is-no-doctor#page=131"
+   ],
+   [
+    "doc",
+    "Camping and Woodcraft (Horace Kephart, 1917)",
+    "/doc/kephart-camping-and-woodcraft#page=859"
+   ]
+  ],
+  "gold": [
+   [
+    "Severe bleeding",
+    120
+   ]
+  ]
+ },
+ {
+  "id": "safety-hypothermia-plain",
+  "query": "hypothermia",
+  "gold_rank_before": 1,
+  "gold_rank_after": 6,
+  "ce_top3": [
+   [
+    "doc",
+    "FM 4-25.11 First Aid (US Army, 2002)",
+    "/doc/fm-4-25-11-first-aid#page=125"
+   ],
+   [
+    "doc",
+    "Survival and Austere Medicine, 3rd edition (2017)",
+    "/doc/survival-austere-medicine-2017#page=191"
+   ],
+   [
+    "doc",
+    "FM 31-70 Basic Cold Weather Manual (US Army, 1968)",
+    "/doc/fm-31-70-cold-weather#page=177"
+   ]
+  ],
+  "gold": [
+   [
+    "Hypothermia",
+    1310
+   ]
+  ]
+ },
+ {
+  "id": "safety-carbon-monoxide-plain",
+  "query": "carbon monoxide poisoning",
+  "gold_rank_before": 1,
+  "gold_rank_after": 8,
+  "ce_top3": [
+   [
+    "doc",
+    "FM 21-10 Field Hygiene and Sanitation (US Army, 1970)",
+    "/doc/fm-21-10-field-hygiene#page=87"
+   ],
+   [
+    "doc",
+    "FM 21-76 Survival (US Army, 1992)",
+    "/doc/fm-21-76-survival#page=153"
+   ],
+   [
+    "doc",
+    "OpenStax Biology 2e",
+    "/doc/openstax-biology-2e#page=1193"
+   ]
+  ],
+  "gold": [
+   [
+    "Carbon monoxide",
+    1694
+   ]
+  ]
+ }
+]

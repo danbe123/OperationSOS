@@ -1,0 +1,130 @@
+{
+ "nomic-ai/nomic-embed-text-v1.5": {
+  "auto_map": {
+   "AutoConfig": "nomic-ai/nomic-bert-2048--configuration_hf_nomic_bert.NomicBertConfig",
+   "AutoModel": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertModel",
+   "AutoModelForMaskedLM": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForPreTraining",
+   "AutoModelForSequenceClassification": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForSequenceClassification",
+   "AutoModelForMultipleChoice": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForMultipleChoice",
+   "AutoModelForQuestionAnswering": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForQuestionAnswering",
+   "AutoModelForTokenClassification": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForTokenClassification"
+  },
+  "architectures": [
+   "NomicBertModel"
+  ],
+  "needs_remote_code": true
+ },
+ "nomic-ai/nomic-embed-text-v1": {
+  "auto_map": {
+   "AutoConfig": "nomic-ai/nomic-bert-2048--configuration_hf_nomic_bert.NomicBertConfig",
+   "AutoModel": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertModel",
+   "AutoModelForMaskedLM": "nomic-ai/nomic-bert-2048--modeling_hf_nomic_bert.NomicBertForPreTraining"
+  },
+  "architectures": [
+   "NomicBertModel"
+  ],
+  "needs_remote_code": true
+ },
+ "Alibaba-NLP/gte-base-en-v1.5": {
+  "auto_map": {
+   "AutoConfig": "Alibaba-NLP/new-impl--configuration.NewConfig",
+   "AutoModel": "Alibaba-NLP/new-impl--modeling.NewModel",
+   "AutoModelForMaskedLM": "Alibaba-NLP/new-impl--modeling.NewForMaskedLM",
+   "AutoModelForMultipleChoice": "Alibaba-NLP/new-impl--modeling.NewForMultipleChoice",
+   "AutoModelForQuestionAnswering": "Alibaba-NLP/new-impl--modeling.NewForQuestionAnswering",
+   "AutoModelForSequenceClassification": "Alibaba-NLP/new-impl--modeling.NewForSequenceClassification",
+   "AutoModelForTokenClassification": "Alibaba-NLP/new-impl--modeling.NewForTokenClassification"
+  },
+  "architectures": [
+   "NewModel"
+  ],
+  "needs_remote_code": true
+ },
+ "jinaai/jina-embeddings-v2-base-en": {
+  "auto_map": {
+   "AutoConfig": "jinaai/jina-bert-implementation--configuration_bert.JinaBertConfig",
+   "AutoModelForMaskedLM": "jinaai/jina-bert-implementation--modeling_bert.JinaBertForMaskedLM",
+   "AutoModel": "jinaai/jina-bert-implementation--modeling_bert.JinaBertModel",
+   "AutoModelForSequenceClassification": "jinaai/jina-bert-implementation--modeling_bert.JinaBertForSequenceClassification"
+  },
+  "architectures": [
+   "JinaBertForMaskedLM"
+  ],
+  "needs_remote_code": true
+ },
+ "jinaai/jina-embeddings-v2-small-en": {
+  "auto_map": {
+   "AutoConfig": "jinaai/jina-bert-implementation--configuration_bert.JinaBertConfig",
+   "AutoModelForMaskedLM": "jinaai/jina-bert-implementation--modeling_bert.JinaBertForMaskedLM",
+   "AutoModel": "jinaai/jina-bert-implementation--modeling_bert.JinaBertModel",
+   "AutoModelForSequenceClassification": "jinaai/jina-bert-implementation--modeling_bert.JinaBertForSequenceClassification"
+  },
+  "architectures": [
+   "JinaBertForMaskedLM"
+  ],
+  "needs_remote_code": true
+ },
+ "Snowflake/snowflake-arctic-embed-m-v2.0": {
+  "auto_map": {
+   "AutoConfig": "configuration_hf_alibaba_nlp_gte.GteConfig",
+   "AutoModel": "modeling_hf_alibaba_nlp_gte.GteModel"
+  },
+  "architectures": [
+   "GteModel"
+  ],
+  "needs_remote_code": true
+ },
+ "Snowflake/snowflake-arctic-embed-m-long": {
+  "auto_map": {
+   "AutoConfig": "configuration_hf_nomic_bert.NomicBertConfig",
+   "AutoModel": "modeling_hf_nomic_bert.NomicBertModel"
+  },
+  "architectures": [
+   "NomicBertModel"
+  ],
+  "needs_remote_code": true
+ },
+ "Alibaba-NLP/gte-large-en-v1.5": {
+  "auto_map": {
+   "AutoConfig": "Alibaba-NLP/new-impl--configuration.NewConfig",
+   "AutoModel": "Alibaba-NLP/new-impl--modeling.NewModel",
+   "AutoModelForMaskedLM": "Alibaba-NLP/new-impl--modeling.NewForMaskedLM",
+   "AutoModelForMultipleChoice": "Alibaba-NLP/new-impl--modeling.NewForMultipleChoice",
+   "AutoModelForQuestionAnswering": "Alibaba-NLP/new-impl--modeling.NewForQuestionAnswering",
+   "AutoModelForSequenceClassification": "Alibaba-NLP/new-impl--modeling.NewForSequenceClassification",
+   "AutoModelForTokenClassification": "Alibaba-NLP/new-impl--modeling.NewForTokenClassification"
+  },
+  "architectures": [
+   "NewModel"
+  ],
+  "needs_remote_code": true
+ },
+ "jinaai/jina-reranker-v1-tiny-en": {
+  "auto_map": {
+   "AutoConfig": "configuration_bert.JinaBertConfig",
+   "AutoModel": "modeling_bert.JinaBertModel",
+   "AutoModelForMaskedLM": "modeling_bert.JinaBertForMaskedLM",
+   "AutoModelForQuestionAnswering": "modeling_bert.JinaBertForQuestionAnswering",
+   "AutoModelForSequenceClassification": "modeling_bert.JinaBertForSequenceClassification",
+   "AutoModelForTokenClassification": "modeling_bert.JinaBertForTokenClassification"
+  },
+  "architectures": [
+   "JinaBertModel"
+  ],
+  "needs_remote_code": true
+ },
+ "jinaai/jina-reranker-v1-turbo-en": {
+  "auto_map": {
+   "AutoConfig": "configuration_bert.JinaBertConfig",
+   "AutoModel": "modeling_bert.JinaBertModel",
+   "AutoModelForMaskedLM": "modeling_bert.JinaBertForMaskedLM",
+   "AutoModelForQuestionAnswering": "modeling_bert.JinaBertForQuestionAnswering",
+   "AutoModelForSequenceClassification": "modeling_bert.JinaBertForSequenceClassification",
+   "AutoModelForTokenClassification": "modeling_bert.JinaBertForTokenClassification"
+  },
+  "architectures": [
+   "JinaBertModel"
+  ],
+  "needs_remote_code": true
+ }
+}

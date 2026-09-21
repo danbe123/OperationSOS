@@ -1,0 +1,39 @@
+{
+ "name": "bge-reranker-v2-m3",
+ "gguf": "bge-reranker-v2-m3-q8_0.gguf",
+ "gguf_mb": 635.7,
+ "threads": {
+  "4": {
+   "load_s": 1.37,
+   "rerank30_ms": {
+    "median": 29922.6,
+    "p95": 32780.4,
+    "n": 3,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 1244.7,
+    "VmRSS": 1244.7
+   }
+  },
+  "1": {
+   "load_s": 1.38,
+   "rerank30_ms": {
+    "median": 85532.7,
+    "p95": 96495.7,
+    "n": 4,
+    "failed_requests": 0
+   },
+   "rss_mb_final": {
+    "VmHWM": 1245.2,
+    "VmRSS": 1245.2
+   }
+  }
+ },
+ "fidelity": {
+  "queries": 4,
+  "pearson_mean": 0.99947,
+  "pearson_min": 0.99921,
+  "top1_agree": "3/4"
+ }
+}

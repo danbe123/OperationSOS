@@ -1,0 +1,48 @@
+{
+ "name": "gte-base",
+ "gguf": "gte-base-q8_0.gguf",
+ "gguf_mb": 117.9,
+ "threads": {
+  "4": {
+   "load_s": 0.27,
+   "query_ms": {
+    "median": 38.9,
+    "p95": 46.9,
+    "mean": 38.8,
+    "n": 60
+   },
+   "mean_query_tokens": 13.0,
+   "fidelity": {
+    "passages_n": 200,
+    "passage_cos_mean": 0.99991,
+    "passage_cos_min": 0.99966,
+    "queries_n": 172,
+    "query_cos_mean": 0.99989,
+    "query_cos_min": 0.99884,
+    "top10_overlap_query_only": 0.9866
+   },
+   "rss_mb_after_workload": {
+    "VmHWM": 238.2,
+    "VmRSS": 238.2
+   },
+   "rss_mb_final": {
+    "VmHWM": 238.2,
+    "VmRSS": 238.2
+   }
+  },
+  "1": {
+   "load_s": 0.32,
+   "query_ms": {
+    "median": 57.0,
+    "p95": 112.0,
+    "mean": 65.3,
+    "n": 60
+   },
+   "mean_query_tokens": 13.0,
+   "rss_mb_final": {
+    "VmHWM": 144.3,
+    "VmRSS": 144.3
+   }
+  }
+ }
+}

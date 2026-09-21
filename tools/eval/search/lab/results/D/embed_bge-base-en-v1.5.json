@@ -1,0 +1,48 @@
+{
+ "name": "bge-base-en-v1.5",
+ "gguf": "bge-base-en-v1.5-q8_0.gguf",
+ "gguf_mb": 117.9,
+ "threads": {
+  "4": {
+   "load_s": 0.27,
+   "query_ms": {
+    "median": 44.1,
+    "p95": 99.4,
+    "mean": 49.9,
+    "n": 60
+   },
+   "mean_query_tokens": 21.0,
+   "fidelity": {
+    "passages_n": 200,
+    "passage_cos_mean": 0.99982,
+    "passage_cos_min": 0.9996,
+    "queries_n": 172,
+    "query_cos_mean": 0.99979,
+    "query_cos_min": 0.99962,
+    "top10_overlap_query_only": 0.9814
+   },
+   "rss_mb_after_workload": {
+    "VmHWM": 252.3,
+    "VmRSS": 252.3
+   },
+   "rss_mb_final": {
+    "VmHWM": 252.3,
+    "VmRSS": 252.3
+   }
+  },
+  "1": {
+   "load_s": 0.28,
+   "query_ms": {
+    "median": 81.7,
+    "p95": 125.3,
+    "mean": 92.3,
+    "n": 60
+   },
+   "mean_query_tokens": 21.0,
+   "rss_mb_final": {
+    "VmHWM": 145.7,
+    "VmRSS": 145.7
+   }
+  }
+ }
+}

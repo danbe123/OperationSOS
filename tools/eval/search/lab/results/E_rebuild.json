@@ -1,0 +1,345 @@
+{
+ "observed_builds": {
+  "docs": {
+   "count": 21368,
+   "elapsed_s": null,
+   "rate_per_s": null
+  },
+  "household": {
+   "count": 70558,
+   "elapsed_s": 11876.104976109,
+   "rate_per_s": 5.9
+  },
+  "wikipedia": {
+   "count": 8425865,
+   "elapsed_s": 14133.671049074997,
+   "rate_per_s": 596.2
+  }
+ },
+ "models": {
+  "bge-small-en-v1.5": {
+   "params_M": 33.4,
+   "dims": 384,
+   "gpu_passages_per_s": 1200.2,
+   "gpu_tokens_per_s": 480264,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0049,
+     "gpu_worst_case_512tok_h": 0.0063,
+     "wall_h": 0.0049,
+     "index_fp16_gb": 0.016
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0163,
+     "gpu_worst_case_512tok_h": 0.0209,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.054
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0347,
+     "gpu_worst_case_512tok_h": 0.0444,
+     "wall_h": 0.0699,
+     "index_fp16_gb": 0.115
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 1.9503,
+     "gpu_worst_case_512tok_h": 2.4952,
+     "wall_h": 3.926,
+     "index_fp16_gb": 6.471
+    }
+   }
+  },
+  "e5-small-v2": {
+   "params_M": 33.4,
+   "dims": 384,
+   "gpu_passages_per_s": 1167.8,
+   "gpu_tokens_per_s": 468688,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0051,
+     "gpu_worst_case_512tok_h": 0.0065,
+     "wall_h": 0.0051,
+     "index_fp16_gb": 0.016
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0168,
+     "gpu_worst_case_512tok_h": 0.0214,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.054
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0357,
+     "gpu_worst_case_512tok_h": 0.0455,
+     "wall_h": 0.0699,
+     "index_fp16_gb": 0.115
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 2.0045,
+     "gpu_worst_case_512tok_h": 2.5568,
+     "wall_h": 3.926,
+     "index_fp16_gb": 6.471
+    }
+   }
+  },
+  "granite-embedding-small-english-r2": {
+   "params_M": 47.7,
+   "dims": 384,
+   "gpu_passages_per_s": 627.4,
+   "gpu_tokens_per_s": 250736,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0095,
+     "gpu_worst_case_512tok_h": 0.0121,
+     "wall_h": 0.0095,
+     "index_fp16_gb": 0.016
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0312,
+     "gpu_worst_case_512tok_h": 0.04,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.054
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0664,
+     "gpu_worst_case_512tok_h": 0.0851,
+     "wall_h": 0.0699,
+     "index_fp16_gb": 0.115
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 3.731,
+     "gpu_worst_case_512tok_h": 4.7793,
+     "wall_h": 3.926,
+     "index_fp16_gb": 6.471
+    }
+   }
+  },
+  "e5-base-v2": {
+   "params_M": 109.5,
+   "dims": 768,
+   "gpu_passages_per_s": 563.7,
+   "gpu_tokens_per_s": 226226,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0105,
+     "gpu_worst_case_512tok_h": 0.0134,
+     "wall_h": 0.0105,
+     "index_fp16_gb": 0.033
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0348,
+     "gpu_worst_case_512tok_h": 0.0444,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.108
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0739,
+     "gpu_worst_case_512tok_h": 0.0943,
+     "wall_h": 0.0739,
+     "index_fp16_gb": 0.23
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 4.1529,
+     "gpu_worst_case_512tok_h": 5.2971,
+     "wall_h": 4.1529,
+     "index_fp16_gb": 12.942
+    }
+   }
+  },
+  "gte-base": {
+   "params_M": 109.5,
+   "dims": 768,
+   "gpu_passages_per_s": 564.2,
+   "gpu_tokens_per_s": 225762,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0105,
+     "gpu_worst_case_512tok_h": 0.0135,
+     "wall_h": 0.0105,
+     "index_fp16_gb": 0.033
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0347,
+     "gpu_worst_case_512tok_h": 0.0444,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.108
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0739,
+     "gpu_worst_case_512tok_h": 0.0945,
+     "wall_h": 0.0739,
+     "index_fp16_gb": 0.23
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 4.149,
+     "gpu_worst_case_512tok_h": 5.308,
+     "wall_h": 4.149,
+     "index_fp16_gb": 12.942
+    }
+   }
+  },
+  "bge-base-en-v1.5": {
+   "params_M": 109.5,
+   "dims": 768,
+   "gpu_passages_per_s": 585.3,
+   "gpu_tokens_per_s": 234196,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0101,
+     "gpu_worst_case_512tok_h": 0.013,
+     "wall_h": 0.0101,
+     "index_fp16_gb": 0.033
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0335,
+     "gpu_worst_case_512tok_h": 0.0428,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.108
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.0712,
+     "gpu_worst_case_512tok_h": 0.0911,
+     "wall_h": 0.0712,
+     "index_fp16_gb": 0.23
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 3.9995,
+     "gpu_worst_case_512tok_h": 5.1168,
+     "wall_h": 3.9995,
+     "index_fp16_gb": 12.942
+    }
+   }
+  },
+  "granite-embedding-english-r2": {
+   "params_M": 149.0,
+   "dims": 768,
+   "gpu_passages_per_s": 239.3,
+   "gpu_tokens_per_s": 95627,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0248,
+     "gpu_worst_case_512tok_h": 0.0318,
+     "wall_h": 0.0248,
+     "index_fp16_gb": 0.033
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0819,
+     "gpu_worst_case_512tok_h": 0.1049,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.108
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.1742,
+     "gpu_worst_case_512tok_h": 0.2231,
+     "wall_h": 0.1742,
+     "index_fp16_gb": 0.23
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 9.7829,
+     "gpu_worst_case_512tok_h": 12.5315,
+     "wall_h": 9.7829,
+     "index_fp16_gb": 12.942
+    }
+   }
+  },
+  "bge-large-en-v1.5": {
+   "params_M": 335.1,
+   "dims": 1024,
+   "gpu_passages_per_s": 205.7,
+   "gpu_tokens_per_s": 82297,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0289,
+     "gpu_worst_case_512tok_h": 0.0369,
+     "wall_h": 0.0289,
+     "index_fp16_gb": 0.044
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.0953,
+     "gpu_worst_case_512tok_h": 0.1219,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.145
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.2026,
+     "gpu_worst_case_512tok_h": 0.2592,
+     "wall_h": 0.2026,
+     "index_fp16_gb": 0.307
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 11.3816,
+     "gpu_worst_case_512tok_h": 14.5612,
+     "wall_h": 11.3816,
+     "index_fp16_gb": 17.256
+    }
+   }
+  },
+  "mxbai-embed-large-v1": {
+   "params_M": 335.1,
+   "dims": 1024,
+   "gpu_passages_per_s": 195.4,
+   "gpu_tokens_per_s": 78188,
+   "collections": {
+    "docs (this corpus)": {
+     "n": 21368,
+     "gpu_only_h": 0.0304,
+     "gpu_worst_case_512tok_h": 0.0389,
+     "wall_h": 0.0304,
+     "index_fp16_gb": 0.044
+    },
+    "household (Gutenberg + Survivor Library books)": {
+     "n": 70558,
+     "gpu_only_h": 0.1003,
+     "gpu_worst_case_512tok_h": 0.1283,
+     "wall_h": 3.2989,
+     "index_fp16_gb": 0.145
+    },
+    "small-library articles (new, assumed)": {
+     "n": 150000,
+     "gpu_only_h": 0.2133,
+     "gpu_worst_case_512tok_h": 0.2728,
+     "wall_h": 0.2133,
+     "index_fp16_gb": 0.307
+    },
+    "Wikipedia (article leads)": {
+     "n": 8425865,
+     "gpu_only_h": 11.9798,
+     "gpu_worst_case_512tok_h": 15.3265,
+     "wall_h": 11.9798,
+     "index_fp16_gb": 17.256
+    }
+   }
+  }
+ }
+}

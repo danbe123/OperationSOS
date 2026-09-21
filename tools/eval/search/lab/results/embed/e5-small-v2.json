@@ -1,0 +1,18 @@
+{
+ "name": "e5-small-v2",
+ "tag": "e5-small-v2",
+ "hf": "intfloat/e5-small-v2",
+ "pool": "mean",
+ "query_prefix": "query: ",
+ "passage_prefix": "passage: ",
+ "max_len": 512,
+ "params": 33360000,
+ "dims": 384,
+ "passages": 21368,
+ "passage_tokens": 8576211,
+ "mean_tokens": 401.4,
+ "embed_seconds": 18.3,
+ "passages_per_s": 1167.8,
+ "tokens_per_s": 468688,
+ "gpu_peak_gb": 0.33
+}

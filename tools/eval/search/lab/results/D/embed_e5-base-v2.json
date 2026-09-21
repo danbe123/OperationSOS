@@ -1,0 +1,48 @@
+{
+ "name": "e5-base-v2",
+ "gguf": "e5-base-v2-q8_0.gguf",
+ "gguf_mb": 117.9,
+ "threads": {
+  "4": {
+   "load_s": 0.27,
+   "query_ms": {
+    "median": 35.0,
+    "p95": 47.6,
+    "mean": 37.1,
+    "n": 60
+   },
+   "mean_query_tokens": 15.0,
+   "fidelity": {
+    "passages_n": 200,
+    "passage_cos_mean": 0.99984,
+    "passage_cos_min": 0.99976,
+    "queries_n": 172,
+    "query_cos_mean": 0.9999,
+    "query_cos_min": 0.99984,
+    "top10_overlap_query_only": 0.9814
+   },
+   "rss_mb_after_workload": {
+    "VmHWM": 246.2,
+    "VmRSS": 245.3
+   },
+   "rss_mb_final": {
+    "VmHWM": 246.2,
+    "VmRSS": 245.3
+   }
+  },
+  "1": {
+   "load_s": 0.27,
+   "query_ms": {
+    "median": 68.5,
+    "p95": 107.5,
+    "mean": 72.4,
+    "n": 60
+   },
+   "mean_query_tokens": 15.0,
+   "rss_mb_final": {
+    "VmHWM": 144.6,
+    "VmRSS": 144.6
+   }
+  }
+ }
+}
