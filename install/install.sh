@@ -65,11 +65,6 @@ esac
 KIWIX_URL="$KIWIX_TOOLS_BASE/kiwix-tools_linux-${KIWIX_ARCH}-${KIWIX_TOOLS}.tar.gz"
 CADDY_URL="$CADDY_BASE/v${CADDY}/caddy_${CADDY}_linux_${CADDY_ARCH}.tar.gz"
 
-if [ "$DRY_RUN" = 0 ] && [ "$(id -u)" != 0 ]; then
-  echo "install.sh: run as root (or use --dry-run)" >&2
-  exit 1
-fi
-
 # --- helpers ---------------------------------------------------------------------------------------
 
 say()    { printf 'step %s: %s\n' "$1" "$2"; }
@@ -94,10 +89,12 @@ install_file() {
 }
 
 # sync_tree <src-dir> <dest-dir>: rsync owned by sos; returns 0 when anything changed, 1 when identical.
+# --omit-dir-times: the venv is made inside the copied api/ tree, which moves that directory's mtime; without
+# this the next run saw "changed" and pip-installed again, so a second run was not the no-op it promises.
+RSYNC_TREE=(rsync -ai --omit-dir-times --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache)
 sync_tree() {
   local out
-  out=$(rsync -ai --delete --exclude .venv --exclude __pycache__ --exclude .pytest_cache \
-    --chown="$SOS_USER:$SOS_USER" "$1/" "$2/")
+  out=$("${RSYNC_TREE[@]}" --chown="$SOS_USER:$SOS_USER" "$1/" "$2/")
   [ -n "$out" ]
 }
 
@@ -150,8 +147,12 @@ step_llama() {
     return
   fi
   if [ -x /usr/local/bin/llama-server ] && [ -f "$marker" ]; then say llama unchanged; return; fi
-  if [ ! -d "$src/.git" ]; then
-    git clone --depth 1 --branch "$LLAMA_CPP_TAG" "$LLAMA_CPP_REPO" "$src"
+  # Cloned beside and renamed into place, so a `.git` here always belongs to a whole clone: a run killed
+  # mid-clone used to leave one with no commit in it, which made every later run fail on rev-parse.
+  if ! git -C "$src" rev-parse -q --verify HEAD >/dev/null 2>&1; then
+    rm -rf "$src" "$src.partial"
+    git clone --depth 1 --branch "$LLAMA_CPP_TAG" "$LLAMA_CPP_REPO" "$src.partial"
+    mv "$src.partial" "$src"
   fi
   head=$(git -C "$src" rev-parse HEAD)
   if [ "$head" != "$LLAMA_CPP_COMMIT" ]; then
@@ -227,18 +228,26 @@ step_tree() {
 }
 
 step_venv() {
-  local changed=0
+  local changed=0 venv=$PREFIX/api/.venv installing=$PREFIX/api/.venv/.sos-installing
   if [ "$DRY_RUN" = 1 ]; then would venv "copy api/ -> $PREFIX/api and pip install the sos package into $PREFIX/api/.venv"; return; fi
   if sync_tree "$REPO/api" "$PREFIX/api"; then changed=1; fi
-  if [ ! -x "$PREFIX/api/.venv/bin/python" ]; then
-    as_sos python3 -m venv "$PREFIX/api/.venv"
+  # A run killed while `python3 -m venv` was still working leaves bin/python without bin/pip.
+  if [ ! -x "$venv/bin/python" ] || [ ! -x "$venv/bin/pip" ]; then
+    rm -rf "$venv"
+    as_sos python3 -m venv "$venv"
     changed=1
   fi
+  # ... and one killed inside `pip install` finds the files copied and the venv there, so "nothing changed"
+  # would leave the box without uvicorn: the marker says a pip run began and never ended, and the console
+  # scripts say the same for a box interrupted before the marker existed.
+  if [ -e "$installing" ] || [ ! -x "$venv/bin/sos" ] || [ ! -x "$venv/bin/uvicorn" ]; then changed=1; fi
   if [ "$changed" = 0 ]; then say venv unchanged; return; fi
-  as_sos "$PREFIX/api/.venv/bin/pip" install -q --upgrade pip
-  as_sos "$PREFIX/api/.venv/bin/pip" install -q -e "$PREFIX/api"
+  as_sos touch "$installing"
+  as_sos "$venv/bin/pip" install -q --upgrade pip
+  as_sos "$venv/bin/pip" install -q -e "$PREFIX/api"
+  rm -f "$installing"
   CHANGED=1
-  say venv "installed the sos package into $PREFIX/api/.venv"
+  say venv "installed the sos package into $venv"
 }
 
 step_web() {
@@ -255,7 +264,10 @@ step_units() {
     if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
   done
   if [ "$DRY_RUN" = 1 ]; then return; fi
-  if [ "$changed" = 1 ]; then systemctl daemon-reload; say units updated; else say units unchanged; fi
+  # Reloaded whether or not a file changed: a run killed between the copy and the reload finds the files
+  # identical, and systemd would keep the old definitions (or not know a new unit) until the next boot.
+  systemctl daemon-reload
+  if [ "$changed" = 1 ]; then say units updated; else say units unchanged; fi
 }
 
 step_caddy() {
@@ -288,7 +300,8 @@ step_mount() {
     if install_file "$SCRIPT_DIR/systemd/$unit" "$UNIT_DIR/$unit" 644; then changed=1; fi
   done
   if [ "$DRY_RUN" = 1 ]; then return; fi
-  if [ "$changed" = 1 ]; then systemctl daemon-reload; say mount updated; else say mount unchanged; fi
+  systemctl daemon-reload
+  if [ "$changed" = 1 ]; then say mount updated; else say mount unchanged; fi
 }
 
 step_backlight() {
@@ -338,19 +351,24 @@ step_boot() {
     cp "$SCRIPT_DIR/boot/config.txt.d/sos.txt" "$tmp"
   fi
   # /boot/firmware is vfat, so plain cp instead of install (no ownership there).
-  if ! cmp -s "$tmp" "$BOOT_DIR/sos.txt"; then cp "$tmp" "$BOOT_DIR/sos.txt"; changed=1; fi
+  # Beside and renamed: a power cut mid-copy must not leave a half-written fragment that config.txt includes.
+  if ! cmp -s "$tmp" "$BOOT_DIR/sos.txt"; then cp "$tmp" "$BOOT_DIR/sos.txt.new" && sync && mv -f "$BOOT_DIR/sos.txt.new" "$BOOT_DIR/sos.txt"; changed=1; fi
   rm -f "$tmp"
   if ! grep -qx 'include sos.txt' "$BOOT_DIR/config.txt"; then printf '\ninclude sos.txt\n' >> "$BOOT_DIR/config.txt"; changed=1; fi
   if [ "$changed" = 1 ]; then CHANGED=1; say boot "updated $BOOT_DIR/sos.txt$gen3"; else say boot unchanged; fi
 }
 
 step_content() {
-  local changed=0
+  local changed=0 running=$PREFIX/state/config/index.running
   if [ "$DRY_RUN" = 1 ]; then would content "copy playbooks/ and manifest/ -> $PREFIX/state/ and run 'sos index' as $SOS_USER"; return; fi
   if sync_tree "$REPO/playbooks" "$PREFIX/state/playbooks"; then changed=1; fi
   if sync_tree "$REPO/manifest" "$PREFIX/state/manifest"; then changed=1; fi
-  if [ "$changed" = 1 ] || [ ! -f "$PREFIX/state/sos.db" ]; then
+  # sos.db exists from the moment `sos index` starts, so its presence says nothing about the index being
+  # whole; the marker is there from the start of a run until its end.
+  if [ "$changed" = 1 ] || [ ! -f "$PREFIX/state/sos.db" ] || [ -e "$running" ]; then
+    touch "$running"
     as_sos "$PREFIX/api/.venv/bin/sos" index
+    rm -f "$running"
     CHANGED=1
     say content "copied playbooks and manifest, ran sos index"
   else
@@ -410,6 +428,10 @@ step_enable() {
 
 main() {
   local mode=""
+  if [ "$DRY_RUN" = 0 ] && [ "$(id -u)" != 0 ]; then
+    echo "install.sh: run as root (or use --dry-run)" >&2
+    exit 1
+  fi
   if [ "$DRY_RUN" = 1 ]; then mode=" --dry-run"; fi
   printf 'install.sh%s: arch %s, dev %s, skip-llama %s, with-jellyfin %s, pcie-gen3 %s\n' \
     "$mode" "$ARCH" "$DEV" "$SKIP_LLAMA" "$WITH_JELLYFIN" "$PCIE_GEN3"
@@ -436,4 +458,5 @@ main() {
   if [ "$CHANGED" = 1 ]; then echo "install complete: changes were made; a reboot is recommended"; else echo "install complete: no changes"; fi
 }
 
-main
+# Sourced (by the tests) it defines the steps and stops; run, it installs.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main; fi

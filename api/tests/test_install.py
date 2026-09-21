@@ -489,3 +489,140 @@ def test_caddy_proxies_keep_paths_and_fix_forwarded_headers(caddy):
     assert api_hit["xff"] == "127.0.0.1"  # a spoofed header is replaced, so require_localhost stays honest
     kiwix_hit = next(h for h in _Upstream.seen if h["path"].startswith("/kiwix/"))
     assert kiwix_hit["host"] == "sos.box"  # Host passes through, so kiwix-serve redirects to the typed address
+
+
+# --- install.sh after an interrupted run ------------------------------------------------------------------
+# "A second run reports unchanged" must not mean "a second run trusts what a first run left half done". Each
+# test sources install.sh (its steps only run from main), points PREFIX at a scratch tree and stubs the
+# things that need root, the network or a build, then plays a first run that dies and a second that must
+# finish the job.
+
+def run_install_steps(tmp_path: Path, body: str, *, expect_ok: bool = True) -> subprocess.CompletedProcess:
+    log = tmp_path / "calls.log"
+    script = f"""
+set -euo pipefail
+source {INSTALL / 'install.sh'}
+PREFIX={tmp_path}/srv; BUILD_DIR=$PREFIX/build; UNIT_DIR={tmp_path}/units; SCRIPT_DIR={INSTALL}
+SOS_USER=$(id -un); LOG={log}
+say() {{ printf 'step %s: %s\\n' "$1" "$2"; }}
+systemctl() {{ echo "systemctl $*" >> "$LOG"; }}
+sync_tree() {{ local out; mkdir -p "$2"; out=$("${{RSYNC_TREE[@]}}" "$1/" "$2/"); [ -n "$out" ]; }}
+ldconfig() {{ :; }}
+cmake() {{ echo "cmake $*" >> "$LOG"; }}
+git() {{
+  case "$*" in
+    *clone*) [ -z "${{STUB_CLONE_FAIL:-}}" ] || return 1
+             target=${{@: -1}}; mkdir -p "$target/.git"; touch "$target/.git/HEAD"; echo "clone -> $target" >> "$LOG" ;;
+    *rev-parse*) [ -e "${{2:-}}/.git/HEAD" ] && echo "$LLAMA_CPP_COMMIT" || return 1 ;;
+    *) return 1 ;;
+  esac
+}}
+as_sos() {{
+  case "$1" in
+    */pip) echo "pip $*" >> "$LOG"; [ -z "${{STUB_PIP_FAIL:-}}" ] || return 1
+           [ "$2" != install ] || {{ touch "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; chmod +x "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; }} ;;
+    */sos) echo "sos $*" >> "$LOG"; [ -z "${{STUB_INDEX_FAIL:-}}" ] || return 1 ;;
+    python3) mkdir -p "$4/bin"; touch "$4/bin/python" "$4/bin/pip"; chmod +x "$4/bin/python" "$4/bin/pip" ;;
+    *) "$@" ;;
+  esac
+}}
+{body}
+"""
+    proc = subprocess.run(["bash", "-c", script], capture_output=True, text=True, env={**os.environ, **GOLDEN_ENV})
+    if expect_ok:
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+    return proc
+
+
+def calls(tmp_path: Path) -> list[str]:
+    log = tmp_path / "calls.log"
+    return log.read_text().splitlines() if log.exists() else []
+
+
+def test_install_sh_can_be_sourced_without_running():
+    proc = subprocess.run(["bash", "-c", f"source {INSTALL / 'install.sh'}; type step_venv >/dev/null && echo sourced"],
+                          capture_output=True, text=True, env={**os.environ, **GOLDEN_ENV})
+    assert proc.returncode == 0 and proc.stdout.strip() == "sourced", proc.stderr
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_is_a_no_op_on_the_second_run(tmp_path):
+    """Making the venv inside the copied api/ tree moves that directory's mtime; rsync then reported a change
+    on the next run and pip-installed again, so 'a second run reports unchanged' was not true."""
+    run_install_steps(tmp_path, "step_venv")
+    (tmp_path / "calls.log").write_text("")
+    second = run_install_steps(tmp_path, "step_venv")
+    assert "step venv: unchanged" in second.stdout and calls(tmp_path) == []
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_finishes_a_pip_install_that_was_interrupted(tmp_path):
+    """The package files were copied and the venv exists, then the network dropped mid `pip install`. The
+    next run must not see 'nothing changed' and leave the box without uvicorn."""
+    interrupted = run_install_steps(tmp_path, "STUB_PIP_FAIL=1; step_venv", expect_ok=False)
+    assert interrupted.returncode != 0
+    os.utime(tmp_path / "srv" / "api", (REPO.stat().st_atime, (REPO / "api").stat().st_mtime))  # rsync sees a settled tree
+    (tmp_path / "calls.log").write_text("")
+    second = run_install_steps(tmp_path, "step_venv")
+    assert "installed the sos package" in second.stdout and "unchanged" not in second.stdout, second.stdout
+    assert any(line.startswith("pip ") and " -e " in line for line in calls(tmp_path))
+    (tmp_path / "calls.log").write_text("")
+    third = run_install_steps(tmp_path, "step_venv")
+    assert "step venv: unchanged" in third.stdout and calls(tmp_path) == []
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_rebuilds_a_venv_that_died_before_pip_existed(tmp_path):
+    (tmp_path / "srv" / "api" / ".venv" / "bin").mkdir(parents=True)
+    python = tmp_path / "srv" / "api" / ".venv" / "bin" / "python"
+    python.write_text("#!/bin/sh\n")
+    python.chmod(0o755)
+    run_install_steps(tmp_path, "step_venv")
+    assert (tmp_path / "srv" / "api" / ".venv" / "bin" / "pip").exists()
+    assert any(line.startswith("pip ") and " -e " in line for line in calls(tmp_path))
+
+
+def test_llama_step_recovers_from_a_clone_that_never_finished(tmp_path):
+    """A killed `git clone` leaves a .git with no commit in it; the old step trusted the directory, then
+    failed on rev-parse under `set -e`, on every run, until somebody deleted it by hand."""
+    (tmp_path / "srv" / "build" / "llama.cpp" / ".git").mkdir(parents=True)
+    run_install_steps(tmp_path, "step_llama")
+    log = calls(tmp_path)
+    assert any(line.startswith("clone -> ") and line.endswith(".partial") for line in log), log
+    assert any(line.startswith("cmake ") for line in log)
+    assert (tmp_path / "srv" / "build" / "llama.cpp").is_dir()
+
+
+def test_llama_clone_is_renamed_into_place_only_when_whole(tmp_path):
+    proc = run_install_steps(tmp_path, "STUB_CLONE_FAIL=1; step_llama", expect_ok=False)
+    assert proc.returncode != 0
+    assert not (tmp_path / "srv" / "build" / "llama.cpp").exists(), "a failed clone must not leave a directory step_llama trusts"
+
+
+def test_unit_steps_reload_systemd_even_when_the_files_already_match(tmp_path):
+    """Interrupted between copying a unit and `daemon-reload`, the next run finds the files identical and
+    used to skip the reload, leaving systemd running the old definition until the next boot."""
+    units = tmp_path / "units"
+    units.mkdir()
+    for name in ("caddy.service", "kiwix-serve.service", "sos-api.service", "sos-llama.service", "sos-embed.service",
+                 "sos-kiosk.service", "srv-sos-extended.mount", "sos-extended-rescan.service"):
+        shutil.copy(INSTALL / "systemd" / name, units / name)
+    run_install_steps(tmp_path, "step_units; step_mount")
+    assert calls(tmp_path).count("systemctl daemon-reload") == 2
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_content_step_reruns_an_index_that_was_killed(tmp_path):
+    state = tmp_path / "srv" / "state"
+    (state / "config").mkdir(parents=True)
+    (state / "sos.db").write_text("")
+    (state / "config" / "index.running").write_text("")   # left by an index that never finished
+    proc = run_install_steps(tmp_path, "sync_tree() { return 1; }; step_content")
+    assert "ran sos index" in proc.stdout
+    assert not (state / "config" / "index.running").exists()
+    (tmp_path / "calls.log").write_text("")
+    again = run_install_steps(tmp_path, "sync_tree() { return 1; }; step_content")
+    assert "step content: unchanged" in again.stdout and calls(tmp_path) == []
+    killed = run_install_steps(tmp_path, "sync_tree() { return 1; }; STUB_INDEX_FAIL=1; touch $PREFIX/state/config/index.running; step_content",
+                               expect_ok=False)
+    assert killed.returncode != 0 and (state / "config" / "index.running").exists()
