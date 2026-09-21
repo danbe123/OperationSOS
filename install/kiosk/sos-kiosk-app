@@ -1,14 +1,30 @@
 #!/usr/bin/env bash
 # Operation SOS kiosk session (spec section 5). sos-kiosk.service runs `cage -- sos-kiosk-app` on tty1 as
 # user sos after `sos-kiosk-app --wait-for-api` has waited for sos-api behind Caddy. Inside cage this
-# script rotates the panel, clears Chromium's crash-restore state so no "restore pages" bubble appears
-# after a power cut, and starts Chromium in kiosk mode on the static /starting page, which polls
-# /api/status and then loads the app with ?kiosk=1.
+# script rotates the panel, then keeps Chromium running in kiosk mode on the static /starting page (which
+# polls /api/status and loads the app with ?kiosk=1): before every start it clears whatever a crash or a
+# power cut left in the profile, so no "restore pages" bubble, "profile in use" refusal or damaged
+# Preferences file ever stands between a person and the box; when Chromium dies it starts it again, at
+# once the first time and after a growing pause if it keeps dying at once, and after five quick deaths in a
+# row it exits so systemd restarts the whole session (cage included).
 #
 # /srv/sos/state/config/kiosk.env (written by install.sh) may set:
 #   SOS_KIOSK_TRANSFORM  90 (default) or 270: the wlr-randr transform for the case orientation
 #   SOS_KIOSK_URL        the first page, default http://localhost/starting
 #   SOS_KIOSK_API        the readiness URL, default http://localhost/api/status
+#   SOS_KIOSK_PROFILE    Chromium's profile directory, default ~/.config/sos-kiosk (a dedicated one, kept
+#                        across reboots: what the app stores in the browser lives here)
+# Tuning, for the tests: SOS_KIOSK_MIN_UPTIME_MS (a run shorter than this is a quick death, default 20000),
+# SOS_KIOSK_BACKOFF_MS (first pause after a quick death, doubling, default 1000), SOS_KIOSK_BACKOFF_MAX_MS
+# (default 16000), SOS_KIOSK_RESTART_MS (pause after a long run, default 500), SOS_KIOSK_QUICK_DEATHS
+# (how many in a row before this script gives up to systemd, default 5).
+#
+# A hung page or an "Aw, Snap" renderer does not kill Chromium, so nothing above would restart it. The app's
+# own page posts /api/kiosk/alive every 30 s and the API reports how long ago (GET /api/kiosk/alive-age);
+# this script asks every SOS_KIOSK_ALIVE_POLL_MS (15000) and, when a Chromium whose page HAS spoken since that
+# Chromium started has been quiet for more than SOS_KIOSK_STALL_MS (180000), stops it (SIGTERM, then SIGKILL after
+# SOS_KIOSK_KILL_GRACE_MS, 3000) and the loop below starts a fresh one. It never acts on a page it has not
+# heard from since this Chromium began (a slow boot, the /starting page), nor when the API cannot be asked.
 set -euo pipefail
 
 CONFIG=${SOS_KIOSK_CONFIG:-/srv/sos/state/config/kiosk.env}
@@ -19,7 +35,18 @@ fi
 TRANSFORM=${SOS_KIOSK_TRANSFORM:-90}
 URL=${SOS_KIOSK_URL:-http://localhost/starting}
 API=${SOS_KIOSK_API:-http://localhost/api/status}
-PREFS=${SOS_KIOSK_PREFS:-$HOME/.config/chromium/Default/Preferences}
+PROFILE=${SOS_KIOSK_PROFILE:-$HOME/.config/sos-kiosk}
+PREFS=${SOS_KIOSK_PREFS:-$PROFILE/Default/Preferences}
+MIN_UPTIME_MS=${SOS_KIOSK_MIN_UPTIME_MS:-20000}
+BACKOFF_MS=${SOS_KIOSK_BACKOFF_MS:-1000}
+BACKOFF_MAX_MS=${SOS_KIOSK_BACKOFF_MAX_MS:-16000}
+RESTART_MS=${SOS_KIOSK_RESTART_MS:-500}
+QUICK_DEATHS=${SOS_KIOSK_QUICK_DEATHS:-5}
+ALIVE_URL=${SOS_KIOSK_ALIVE_URL:-http://localhost/api/kiosk/alive-age}
+ALIVE_POLL_MS=${SOS_KIOSK_ALIVE_POLL_MS:-15000}
+STALL_MS=${SOS_KIOSK_STALL_MS:-180000}
+KILL_GRACE_MS=${SOS_KIOSK_KILL_GRACE_MS:-3000}
+child=""
 
 wait_for_api() {
   local i
@@ -44,20 +71,152 @@ rotate_panel() {
   wlr-randr --output "$output" --transform "$TRANSFORM" || echo "sos-kiosk-app: wlr-randr failed on $output" >&2
 }
 
-reset_chromium_prefs() {
+# What a crash or a power cut leaves in the profile, put right before every start.
+reset_chromium_profile() {
+  mkdir -p "$PROFILE"
+  # A lock from a dead Chromium names its old pid; after a reboot some other process may hold that pid,
+  # and Chromium then believes the profile is open elsewhere and exits at once ("Opening in existing
+  # browser session"), on every start, until somebody deletes the lock.
+  rm -f "$PROFILE/SingletonLock" "$PROFILE/SingletonSocket" "$PROFILE/SingletonCookie"
   [ -f "$PREFS" ] || return 0
-  python3 -c 'import json, sys; p = sys.argv[1]; d = json.load(open(p, encoding="utf-8")); d.setdefault("profile", {}).update({"exit_type": "Normal", "exited_cleanly": True}); json.dump(d, open(p, "w", encoding="utf-8"))' "$PREFS" \
-    || echo "sos-kiosk-app: could not reset $PREFS" >&2
+  python3 - "$PREFS" <<'PY' || echo "sos-kiosk-app: could not reset $PREFS" >&2
+import json, os, sys
+
+path = sys.argv[1]
+try:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+except ValueError:
+    # Truncated by a power cut mid-write: Chromium would show a "profile error" page over the app. Move it
+    # aside and let it write a fresh one.
+    os.replace(path, path + ".corrupt")
+    print("sos-kiosk-app: Preferences was damaged; moved aside to " + path + ".corrupt", file=sys.stderr)
+    sys.exit(0)
+data.setdefault("profile", {}).update({"exit_type": "Normal", "exited_cleanly": True})
+tmp = path + ".sos-tmp"
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(data, f)
+    f.flush()
+    os.fsync(f.fileno())
+os.replace(tmp, path)
+PY
+}
+
+# Until 2026-09 the kiosk used Chromium's default profile; carry its settings over once.
+adopt_old_profile() {
+  local old=$HOME/.config/chromium
+  if [ ! -e "$PROFILE" ] && [ -d "$old" ]; then cp -a "$old" "$PROFILE" || true; fi
+}
+
+now_ms() { local t=${EPOCHREALTIME/,/.}; echo $(( ${t%.*} * 1000 + 10#${t#*.} / 1000 )); }
+
+# A `sleep` that a SIGTERM can interrupt: bash runs its trap only between commands, not during one.
+pause_ms() {
+  [ "$1" -gt 0 ] || return 0
+  sleep "$(printf '%d.%03d' $(( $1 / 1000 )) $(( $1 % 1000 )))" &
+  wait $! || true
+}
+
+# SIGTERM, then SIGKILL if it is still there after the grace period (a wedged Chromium may ignore the first).
+terminate_child() {
+  local waited=0
+  kill "$child" 2>/dev/null || return 0
+  while kill -0 "$child" 2>/dev/null && [ "$waited" -lt "$KILL_GRACE_MS" ]; do
+    sleep 0.05
+    waited=$(( waited + 50 ))
+  done
+  kill -9 "$child" 2>/dev/null || true
+}
+
+stop() {
+  if [ -n "$child" ]; then terminate_child; wait "$child" 2>/dev/null || true; fi
+  exit 0
+}
+
+# "<age in ms, or none> <API uptime in ms>" from the API, or nothing when it cannot be asked.
+alive_age() {
+  local json
+  json=$(curl -fsS --max-time 2 "$ALIVE_URL" 2>/dev/null) || return 1
+  python3 -c 'import json, sys
+d = json.loads(sys.argv[1])
+age = d.get("age_s")
+print("none" if age is None else int(float(age) * 1000), int(float(d.get("api_up_s", 0)) * 1000))' "$json" 2>/dev/null
+}
+
+# Until Chromium exits: ask how long since its page last spoke. $1 is when this Chromium started (ms).
+watch_page() {
+  local seen=0 waited slice reading age up silent
+  while kill -0 "$child" 2>/dev/null; do
+    # In slices, so a Chromium that exits is noticed at once and not after the whole poll interval: fine slices
+    # while it is young (a quick death must be timed accurately), coarse ones after.
+    waited=0
+    while [ "$waited" -lt "$ALIVE_POLL_MS" ] && kill -0 "$child" 2>/dev/null; do
+      slice=500
+      [ $(( $(now_ms) - $1 )) -ge 5000 ] || slice=50
+      pause_ms "$slice"
+      waited=$(( waited + slice ))
+    done
+    kill -0 "$child" 2>/dev/null || return 0
+    reading=$(alive_age) || continue          # the API cannot be asked: no news, no action
+    read -r age up <<<"$reading"
+    [ -n "${up:-}" ] || continue
+    if [ "$age" != none ] && [ "$age" -lt $(( $(now_ms) - $1 )) ]; then seen=1; fi   # it spoke after this Chromium began
+    [ "$seen" = 1 ] || continue               # never heard from since it started: a slow boot, or /starting
+    silent=$age
+    [ "$age" != none ] || silent=$up          # the API restarted and forgot: it has heard nothing since it began
+    if [ "$silent" -gt "$STALL_MS" ]; then
+      echo "sos-kiosk-app: the page has not answered for $(( silent / 1000 )) s while chromium is running; restarting chromium" >&2
+      terminate_child
+      return 0
+    fi
+  done
+}
+
+run_chromium() {
+  chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run \
+    --disable-session-crashed-bubble --hide-crash-restore-bubble --disable-infobars --no-default-browser-check \
+    --disable-features=Translate --password-store=basic --user-data-dir="$PROFILE" \
+    --overscroll-history-navigation=0 "$URL" &
+  child=$!
+  local status=0
+  watch_page "$(now_ms)"
+  wait "$child" || status=$?
+  child=""
+  return "$status"
 }
 
 case "${1:-}" in
   --wait-for-api) wait_for_api; exit 0 ;;
-  --reset-prefs) reset_chromium_prefs; exit 0 ;;
+  --reset-prefs) reset_chromium_profile; exit 0 ;;
   "") ;;
   *) echo "usage: sos-kiosk-app [--wait-for-api | --reset-prefs]" >&2; exit 2 ;;
 esac
 
+trap stop TERM INT HUP
 rotate_panel
-reset_chromium_prefs
-exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run \
-  --overscroll-history-navigation=0 "$URL"
+adopt_old_profile
+
+quick=0
+backoff=$BACKOFF_MS
+while true; do
+  reset_chromium_profile
+  started=$(now_ms)
+  status=0
+  run_chromium || status=$?
+  ran=$(( $(now_ms) - started ))
+  if [ "$ran" -lt "$MIN_UPTIME_MS" ]; then
+    quick=$(( quick + 1 ))
+    if [ "$quick" -ge "$QUICK_DEATHS" ]; then
+      echo "sos-kiosk-app: chromium died $quick times in a row within $(( MIN_UPTIME_MS / 1000 )) s (last status $status); leaving it to systemd" >&2
+      exit 1
+    fi
+    echo "sos-kiosk-app: chromium exited with $status after ${ran} ms; starting it again in ${backoff} ms" >&2
+    pause_ms "$backoff"
+    backoff=$(( backoff * 2 > BACKOFF_MAX_MS ? BACKOFF_MAX_MS : backoff * 2 ))
+  else
+    quick=0
+    backoff=$BACKOFF_MS
+    echo "sos-kiosk-app: chromium exited with $status after $(( ran / 1000 )) s; starting it again" >&2
+    pause_ms "$RESTART_MS"
+  fi
+done

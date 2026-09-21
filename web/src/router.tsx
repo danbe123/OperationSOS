@@ -1,5 +1,8 @@
-import { lazy, Suspense, type ReactNode } from 'react';
-import { Navigate, useRouteError, type RouteObject } from 'react-router';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { Navigate, useLocation, useNavigate, useRouteError, type RouteObject } from 'react-router';
+import { EmergencyNumbers } from './components/EmergencyNumbers';
+import { reloadOnce } from './shell/reload';
+import { STALE_CHUNK } from './shell/AppErrorBoundary';
 import { Board } from './screens/Board';
 import { Card } from './screens/Card';
 import { Now } from './screens/Now';
@@ -65,30 +68,29 @@ export function NotFound() {
   );
 }
 
-/** A tab left open across an update asks for chunks that no longer exist: the failure is the app's, not
- * the household's, so the page reloads itself once before it says anything. Anything else is shown. */
-const STALE_CHUNK = /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i;
-
+/** A screen or the shell threw. A tab left open across an update asks for chunks that no longer exist: the
+ * failure is the app's, not the household's, so the page reloads itself once (never more than once a
+ * minute) before it says anything. Anything else is shown, with Try again (the route is opened afresh
+ * without reloading the page), the way back to Now and the emergency numbers in plain text. */
 export function RouteError() {
   const error = useRouteError();
+  const navigate = useNavigate();
+  const location = useLocation();
   const message = error instanceof Error ? error.message : String(error ?? '');
-  if (STALE_CHUNK.test(message) && typeof window !== 'undefined') {
-    const key = `sos.reloaded:${window.location.pathname}`;
-    let done = false;
-    try { done = sessionStorage.getItem(key) === '1'; if (!done) sessionStorage.setItem(key, '1'); } catch { done = false; }
-    if (!done) {
-      window.location.reload();
-      return null;
-    }
-  }
+  useEffect(() => {
+    console.error('[sos] a screen failed to render', { message, page: location.pathname, stack: error instanceof Error ? error.stack : undefined });
+  }, [error, message, location.pathname]);
+  if (STALE_CHUNK.test(message) && typeof window !== 'undefined' && reloadOnce()) return null;
   return (
     <Screen title="Unable to open this page" back={false} search={false}>
       <Body>
-        <p>Try loading this page again, or go back to Now and open something else.</p>
+        <p>Something went wrong showing this page. Try again, or go back to Now and open something else.</p>
         <div className="row">
-          <button className="btn btn-primary" type="button" onClick={() => window.location.reload()}>Reload the page</button>
+          <button className="btn btn-primary" type="button" onClick={() => navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true })}>Try again</button>
           <a className="btn" href="/">Go to Now</a>
+          <button className="btn" type="button" onClick={() => window.location.reload()}>Reload the page</button>
         </div>
+        <EmergencyNumbers />
       </Body>
     </Screen>
   );
@@ -99,7 +101,11 @@ export const routes: RouteObject[] = [
     path: '/',
     element: <Shell />,
     errorElement: <RouteError />,
-    children: [
+    children: [{
+      // A screen that throws is caught here, inside the shell's outlet, so the rail and the band stay; the
+      // shell's own errors fall through to the errorElement above.
+      errorElement: <RouteError />,
+      children: [
       { index: true, element: <Now /> },
       { path: 'now', element: <Now /> },
       { path: 'guides', element: <Navigate to="/library/guides" replace /> },   // the guides are a shelf of the Library now
@@ -139,6 +145,7 @@ export const routes: RouteObject[] = [
       { path: 'system', element: <System /> },
       { path: 'ai', element: <Later title="Assistant"><Ai /></Later> },
       { path: '*', element: <NotFound /> },
-    ],
+      ],
+    }],
   },
 ];

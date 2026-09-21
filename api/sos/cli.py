@@ -123,7 +123,7 @@ def cmd_validate(settings: Settings, args) -> int:
 
 def cmd_pin(settings: Settings, args) -> int:
     settings.state.mkdir(parents=True, exist_ok=True)
-    conn = db.connect(settings.db_path)
+    conn = db.connect(settings.db_path, durable=True)
     try:
         db.init_schema(conn)
         if args.action == "reset":

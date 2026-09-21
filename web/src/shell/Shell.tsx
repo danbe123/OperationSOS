@@ -1,6 +1,7 @@
-import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link, Outlet, useLocation, useNavigationType } from 'react-router';
 import { Notices } from '../components/Notice';
+import { Reconnecting } from '../components/Reconnecting';
 import { Icon } from '../icons';
 import { IdleOverlay } from '../kiosk/IdleOverlay';
 import { KeyboardMount } from '../kiosk/KeyboardMount';
@@ -10,6 +11,7 @@ import { ThemeButton } from '../theme/ThemeButton';
 import { DESTINATIONS } from './destinations';
 import { ScreenTitleContext } from './screenTitle';
 import { SituationBand } from './SituationBand';
+import { ColdStartContext, rememberPlace } from './lastPlace';
 import { useWide } from './useWide';
 
 /** Start each new screen at the top: the app scrolls inside .content, so the browser never resets it
@@ -89,11 +91,26 @@ export function Shell() {
   const report = useCallback((t: string) => setTitle(t), []);
   useScrollToTop(main);
   const more = useScrollCue(main);
+  // Cold start: this page load has not been moved off its first location yet. Set while rendering, so a
+  // Now that mounts because somebody navigated to it already sees that they did.
+  const location = useLocation();
+  const firstKey = useRef(location.key);
+  const cold = useRef(true);
+  if (location.key !== firstKey.current) cold.current = false;
+  // Where somebody is working, for "Continue where you were" after the browser or the box restarts; the
+  // timer keeps "how long ago" honest for somebody who reads one screen for an hour.
+  const here = `${location.pathname}${location.search}`;
+  useEffect(() => {
+    rememberPlace(here);
+    const timer = window.setInterval(() => rememberPlace(here), 5 * 60_000);
+    return () => window.clearInterval(timer);
+  }, [here]);
   // The board is the whole screen: it says what the band and the rail say, in type twice the size,
   // and a tap anywhere on it comes back. Furniture would only cost it lines.
   if (pathname === '/board') {
     return (
       <div className="app app-board">
+        <Reconnecting />
         <main className="content" id="main" tabIndex={-1} aria-label="The board" ref={main}><Outlet /></main>
         <Notices />
         <IdleOverlay />
@@ -101,12 +118,13 @@ export function Shell() {
     );
   }
   return (
+    <ColdStartContext.Provider value={cold}>
     <ScreenTitleContext.Provider value={report}>
       <div className="app">
         {/* The first focusable thing in the box, on every screen: seventeen tab stops stood between
             a keyboard and the first job, and there was nothing to step over them with. */}
         <a className="skip-link no-print" href="#main">Skip to what to do</a>
-        <div className="app-drill"><DrillBanner /></div>
+        <div className="app-drill"><Reconnecting /><DrillBanner /></div>
         {/* The band is drawn above the content and read after it: three links about what is broken
             should not stand between a keyboard and the job the screen is for. `order` puts it back
             on top for everybody who is looking rather than tabbing. */}
@@ -123,5 +141,6 @@ export function Shell() {
         <IdleOverlay />
       </div>
     </ScreenTitleContext.Provider>
+    </ColdStartContext.Provider>
   );
 }

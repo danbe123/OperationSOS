@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { ColdStartContext, forgetPlace, readPlace, type LastPlace } from '../shell/lastPlace';
 import { api } from '../api/client';
 import { errorMessage } from '../api/useQuery';
 import { notify } from '../components/Notice';
@@ -96,8 +97,12 @@ function Situations() {
           <button type="button" className="btn btn-small" onClick={() => void playbooks.refetch()}><Icon name="refresh" size={18} /><span>Try again</span></button>
         </p>
       )}
-      {scenarios.length > 0 && (
+      {/* First aid opens the grid, and is there as soon as the guides have been asked for, whether or not they
+          could be read: the quick medical cards are the one thing here that must not wait on anything. It is
+          what keeps a quick card at two taps from Now, now that Medical lives in the Library. */}
+      {(scenarios.length > 0 || !playbooks.loading) && (
         <nav className="tiles" aria-label="Scenarios">
+          <Tile to="/library/medical" icon="medical" title="First aid" subtitle="Quick cards" />
           {scenarios.map((p) => (
             <Tile key={p.slug} to={`/s/${p.slug}`} icon={p.icon} title={p.title} subtitle={tileLine(p.title, p.summary)} />
           ))}
@@ -105,6 +110,26 @@ function Situations() {
       )}
       <WhatToDo />
     </>
+  );
+}
+
+/** After the kiosk browser or the box restarts, one calm way back to the screen somebody was on: only on a
+ * cold start (never after moving about the app), only when it was under twelve hours ago, dismissible, and
+ * never a redirect. Dismissing forgets the place. */
+function ContinueChip() {
+  const cold = useContext(ColdStartContext);
+  const [offer, setOffer] = useState<LastPlace | null>(() => (cold.current ? readPlace() : null));
+  if (!offer) return null;
+  return (
+    <nav className="chips now-continue" aria-label="Continue">
+      <Link className="chip" to={offer.path}>
+        <Icon name="back" size={18} />
+        <span>Continue where you were{offer.title ? `: ${offer.title}` : ''}</span>
+      </Link>
+      <button type="button" className="chip" aria-label="Dismiss: continue where you were" onClick={() => { forgetPlace(); setOffer(null); }}>
+        <Icon name="close" size={18} />
+      </button>
+    </nav>
   );
 }
 
@@ -117,6 +142,7 @@ export function Now() {
   return (
     <Screen title="What's the situation?" back={false} search={false} actions={<ServiceRow />}>
       <Body>
+        <ContinueChip />
         {/* With both networks down this is the most important new fact on the front door, and the
             box used to say nothing about it here at all. One component, one sentence. */}
         <Emergency999 onlyWhenHidden />

@@ -2,6 +2,10 @@
 Description=Operation SOS ZIM server (kiwix-serve)
 Documentation=https://kiwix-tools.readthedocs.io/en/latest/kiwix-serve.html
 After=network.target
+# An unattended box has nobody to `systemctl reset-failed`: never park this unit in `failed` after a burst
+# of restarts (the default is 5 starts in 10 s). Restart=always, because on-failure does not restart
+# after SIGTERM from an out-of-memory daemon or a stray kill, only after a crash.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -12,8 +16,13 @@ Group=sos
 ExecStartPre=/usr/bin/python3 -c "import os; p = '/srv/sos/state/library.xml'; os.path.exists(p) or open(p, 'w').write('<library version=' + chr(34) + '20110515' + chr(34) + '></library>')"
 ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --monitorLibrary --address all --port 8090 --urlRootLocation /kiwix --nosearchbar --nolibrarybutton --blockexternal
 # A yanked USB drive can SIGBUS kiwix-serve (spec section 5).
-Restart=on-failure
+Restart=always
 RestartSec=2
+# A crash loop backs off (2 s, then longer, up to 20 s) instead of restarting every 3 s for ever. systemd never resets the
+# step count after a healthy run (measured: 30 s runs still grew 2.7 to 11 s), so the ceiling is also the worst
+# wait after an isolated crash weeks from now; it is kept low for that reason. StartLimitIntervalSec=0 stays.
+RestartSteps=4
+RestartMaxDelaySec=20
 LimitNOFILE=65536
 NoNewPrivileges=yes
 PrivateTmp=yes

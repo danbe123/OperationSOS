@@ -160,7 +160,7 @@ def test_units_match_spec_section_5():
     kiwix = unit("kiwix-serve.service")
     assert ("ExecStart=/usr/local/bin/kiwix-serve --library /srv/sos/state/library.xml --monitorLibrary --address all "
             "--port 8090 --urlRootLocation /kiwix --nosearchbar --nolibrarybutton --blockexternal") in kiwix
-    assert "Restart=on-failure" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
+    assert "Restart=always" in kiwix and "RestartSec=2" in kiwix and "User=sos" in kiwix
     llama = unit("sos-llama.service")
     assert ("ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/${SOS_MODEL} --host 127.0.0.1 --port 8081 "
             "-c 4096 -t 4 -ngl 0 -fa on -np 1 --no-webui --reasoning off") in llama
@@ -191,6 +191,83 @@ def test_units_match_spec_section_5():
                  "ExecStop=/srv/sos/api/.venv/bin/sos storage-event remove", "BindsTo=srv-sos-extended.mount",
                  "After=srv-sos-extended.mount sos-api.service", "WantedBy=srv-sos-extended.mount"):
         assert line in rescan, line
+
+
+def unit_sections(name: str) -> dict[str, dict[str, list[str]]]:
+    """A unit file as {section: {key: [values]}}: systemd keys may repeat, so nothing is squashed."""
+    sections: dict[str, dict[str, list[str]]] = {}
+    current = None
+    for raw in unit(name).splitlines():
+        line = raw.strip()
+        if not line or line.startswith(("#", ";")):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current = sections.setdefault(line[1:-1], {})
+        elif current is not None and "=" in line:
+            key, value = line.split("=", 1)
+            current.setdefault(key.strip(), []).append(value.strip())
+    return sections
+
+
+CORE_UNITS = ["caddy.service", "sos-api.service", "kiwix-serve.service", "sos-embed.service", "sos-kiosk.service"]
+
+
+@pytest.mark.parametrize("name", CORE_UNITS)
+def test_core_units_keep_retrying_forever(name):
+    """An unattended box has nobody to `systemctl reset-failed`. Restart=on-failure is not enough: it does not
+    restart after SIGTERM (an out-of-memory daemon, a stray `kill`), measured with a real user unit, and
+    systemd's default start limit (5 starts in 10 s) parks a unit in `failed` for good after a burst of
+    restarts. So: Restart=always and no start limit, in [Unit] where systemd reads StartLimitIntervalSec."""
+    sections = unit_sections(name)
+    assert sections["Service"]["Restart"] == ["always"], name
+    assert sections["Unit"]["StartLimitIntervalSec"] == ["0"], name
+    assert "StartLimitIntervalSec" not in sections["Service"], "systemd only reads it from [Unit]"
+    assert int(sections["Service"]["RestartSec"][0]) <= 5, name
+
+
+@pytest.mark.parametrize("name", CORE_UNITS)
+def test_core_units_back_off_in_a_crash_loop_but_stay_quick_for_one_crash(name):
+    """A flat RestartSec=2 meant a broken sos-api restarted every three seconds for ever, about a third of a
+    core. RestartSec is now only the first delay: RestartSteps grows it exponentially to RestartMaxDelaySec (systemd
+    254 and later; Trixie has 257), so a loop settles at 20 to 30 s (about 4 per cent of a core). The steps are never
+    reset by a healthy run (measured with a real unit), so the ceiling stays low.
+    StartLimitIntervalSec=0 stays, so it never gives up."""
+    service = unit_sections(name)["Service"]
+    assert int(service["RestartSec"][0]) <= 5, name
+    assert 3 <= int(service["RestartSteps"][0]) <= 10, name
+    assert 15 <= int(service["RestartMaxDelaySec"][0].rstrip("s")) <= 60, name   # systemd never resets the steps after a healthy run, so this is also the wait after a lone crash
+    assert unit_sections(name)["Unit"]["StartLimitIntervalSec"] == ["0"], name
+
+
+def test_sos_llama_stays_off_unless_asked():
+    sections = unit_sections("sos-llama.service")
+    assert sections["Service"]["Restart"] == ["no"]
+    assert "StartLimitIntervalSec" not in sections["Unit"]
+    assert "Install" not in sections
+
+
+def test_service_graph_survives_a_restart_of_any_one_service():
+    """A restarted sos-api must not take Caddy or the kiosk browser with it, and none of them may be left
+    waiting for a service that is not there: Wants= and After= only, never Requires=, BindsTo= or PartOf= among
+    the long-running units (those propagate a stop or restart to the dependent)."""
+    strong = ("Requires", "Requisite", "BindsTo", "PartOf", "Upholds")
+    for name in CORE_UNITS + ["sos-llama.service"]:
+        unit_section = unit_sections(name)["Unit"]
+        for key in strong:
+            assert key not in unit_section, f"{name} has {key}=: a restart would propagate"
+    kiosk = unit_sections("sos-kiosk.service")["Unit"]
+    assert set(" ".join(kiosk["Wants"]).split()) >= {"caddy.service", "sos-api.service"}
+    assert set(" ".join(kiosk["After"]).split()) >= {"caddy.service", "sos-api.service"}
+    assert "sos-api.service" in " ".join(unit_sections("caddy.service")["Unit"]["After"])
+    assert "kiwix-serve.service" in " ".join(unit_sections("sos-api.service")["Unit"]["Wants"])
+
+
+def test_sos_api_is_killed_quickly_when_a_stream_holds_shutdown_open():
+    """uvicorn waits for open connections (an assistant stream) before it exits; without a bound the restart
+    waits out systemd's 90 s stop timeout with the whole box answering nothing."""
+    sections = unit_sections("sos-api.service")["Service"]
+    assert "--timeout-graceful-shutdown" in sections["ExecStart"][0]
+    assert int(sections["TimeoutStopSec"][0].rstrip("s")) <= 15
 
 
 @pytest.mark.skipif(shutil.which("systemd-analyze") is None, reason="systemd-analyze not available")
@@ -262,9 +339,9 @@ def test_udev_sudoers_boot_and_placeholder_files():
 def test_kiosk_wrapper_text():
     kiosk = (INSTALL / "kiosk" / "sos-kiosk-app").read_text(encoding="utf-8")
     assert "wlr-randr --output" in kiosk and "--transform" in kiosk
-    assert "exec chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run" in kiosk
+    assert "chromium --kiosk --ozone-platform=wayland --force-device-scale-factor=1.5 --noerrdialogs --no-first-run" in kiosk
     assert "--overscroll-history-navigation=0" in kiosk and "http://localhost/starting" in kiosk
-    assert '"exit_type": "Normal", "exited_cleanly": True' in kiosk and "python3 -c" in kiosk
+    assert '"exit_type": "Normal", "exited_cleanly": True' in kiosk and "python3" in kiosk
 
 
 # --- live pieces: the kiosk wrapper's modes and Caddy ----------------------------------------------------
@@ -298,7 +375,7 @@ def upstream():
 def test_kiosk_wrapper_modes(tmp_path, upstream):
     prefs = tmp_path / "Preferences"
     prefs.write_text('{"profile": {"exit_type": "Crashed", "exited_cleanly": false, "name": "x"}, "other": 1}')
-    env = {**os.environ, "SOS_KIOSK_PREFS": str(prefs), "SOS_KIOSK_CONFIG": str(tmp_path / "absent.env"),
+    env = {**os.environ, "SOS_KIOSK_PREFS": str(prefs), "SOS_KIOSK_PROFILE": str(tmp_path / "profile"), "SOS_KIOSK_CONFIG": str(tmp_path / "absent.env"),
            "SOS_KIOSK_API": f"http://{upstream}/api/status"}
     wrapper = str(INSTALL / "kiosk" / "sos-kiosk-app")
     proc = subprocess.run(["bash", wrapper, "--reset-prefs"], env=env, capture_output=True, text=True)
@@ -426,3 +503,243 @@ def test_caddy_proxies_keep_paths_and_fix_forwarded_headers(caddy):
     assert api_hit["xff"] == "127.0.0.1"  # a spoofed header is replaced, so require_localhost stays honest
     kiwix_hit = next(h for h in _Upstream.seen if h["path"].startswith("/kiwix/"))
     assert kiwix_hit["host"] == "sos.box"  # Host passes through, so kiwix-serve redirects to the typed address
+
+
+# --- install.sh after an interrupted run ------------------------------------------------------------------
+# "A second run reports unchanged" must not mean "a second run trusts what a first run left half done". Each
+# test sources install.sh (its steps only run from main), points PREFIX at a scratch tree and stubs the
+# things that need root, the network or a build, then plays a first run that dies and a second that must
+# finish the job.
+
+def run_install_steps(tmp_path: Path, body: str, *, expect_ok: bool = True, with_tree: bool = True) -> subprocess.CompletedProcess:
+    log = tmp_path / "calls.log"
+    if with_tree:
+        (tmp_path / "srv" / "api").mkdir(parents=True, exist_ok=True)   # step_tree makes it in a real run
+    script = f"""
+set -euo pipefail
+source {INSTALL / 'install.sh'}
+PREFIX={tmp_path}/srv; BUILD_DIR=$PREFIX/build; UNIT_DIR={tmp_path}/units; SCRIPT_DIR={INSTALL}
+SOS_USER=$(id -un); LOG={log}
+say() {{ printf 'step %s: %s\\n' "$1" "$2"; }}
+systemctl() {{ echo "systemctl $*" >> "$LOG"; }}
+# the real sync_tree (its rsync options are what is under test); only its --chown needs a group named like the user
+getent group "$SOS_USER" >/dev/null || sync_tree() {{ local out; out=$("${{RSYNC_TREE[@]}}" "$1/" "$2/") || {{ echo "install.sh: rsync of $1 to $2 failed" >&2; exit 1; }}; [ -n "$out" ]; }}
+ldconfig() {{ :; }}
+cmake() {{ echo "cmake $*" >> "$LOG"; }}
+git() {{
+  case "$*" in
+    *clone*) [ -z "${{STUB_CLONE_FAIL:-}}" ] || return 1
+             target=${{@: -1}}; mkdir -p "$target/.git"; touch "$target/.git/HEAD"; echo "clone -> $target" >> "$LOG" ;;
+    *"rev-parse --git-dir"*) [ -d "$2/.git" ] && echo .git || {{ echo "fatal: not a git repository" >&2; return 128; }} ;;
+    *"cat-file -e"*) return 0 ;;
+    *rev-parse*) [ -e "${{2:-}}/.git/HEAD" ] && echo "$LLAMA_CPP_COMMIT" || return 1 ;;
+    *) return 1 ;;
+  esac
+}}
+as_sos() {{
+  case "$1" in
+    */pip) echo "pip $*" >> "$LOG"; [ -z "${{STUB_PIP_FAIL:-}}" ] || return 1
+           [ "$2" != install ] || {{ touch "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"; chmod +x "$PREFIX/api/.venv/bin/sos" "$PREFIX/api/.venv/bin/uvicorn"
+             mkdir -p "$PREFIX/api/sos.egg-info" "$PREFIX/api/build/lib"; echo "Name: sos" > "$PREFIX/api/sos.egg-info/PKG-INFO"; }} ;;
+    */sos) echo "sos $*" >> "$LOG"; [ -z "${{STUB_INDEX_FAIL:-}}" ] || return 1 ;;
+    python3) mkdir -p "$4/bin"; touch "$4/bin/python" "$4/bin/pip"; chmod +x "$4/bin/python" "$4/bin/pip" ;;
+    *) "$@" ;;
+  esac
+}}
+{body}
+"""
+    proc = subprocess.run(["bash", "-c", script], capture_output=True, text=True, env={**os.environ, **GOLDEN_ENV})
+    if expect_ok:
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+    return proc
+
+
+def calls(tmp_path: Path) -> list[str]:
+    log = tmp_path / "calls.log"
+    return log.read_text().splitlines() if log.exists() else []
+
+
+def test_install_sh_can_be_sourced_without_running():
+    proc = subprocess.run(["bash", "-c", f"source {INSTALL / 'install.sh'}; type step_venv >/dev/null && echo sourced"],
+                          capture_output=True, text=True, env={**os.environ, **GOLDEN_ENV})
+    assert proc.returncode == 0 and proc.stdout.strip() == "sourced", proc.stderr
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_is_a_no_op_on_the_second_run(tmp_path):
+    """Making the venv inside the copied api/ tree moves that directory's mtime; rsync then reported a change
+    on the next run and pip-installed again, so 'a second run reports unchanged' was not true."""
+    run_install_steps(tmp_path, "step_venv")
+    (tmp_path / "calls.log").write_text("")
+    second = run_install_steps(tmp_path, "step_venv")
+    assert "step venv: unchanged" in second.stdout and calls(tmp_path) == []
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_finishes_a_pip_install_that_was_interrupted(tmp_path):
+    """The package files were copied and the venv exists, then the network dropped mid `pip install`. The
+    next run must not see 'nothing changed' and leave the box without uvicorn."""
+    interrupted = run_install_steps(tmp_path, "STUB_PIP_FAIL=1; step_venv", expect_ok=False)
+    assert interrupted.returncode != 0
+    os.utime(tmp_path / "srv" / "api", (REPO.stat().st_atime, (REPO / "api").stat().st_mtime))  # rsync sees a settled tree
+    (tmp_path / "calls.log").write_text("")
+    second = run_install_steps(tmp_path, "step_venv")
+    assert "installed the sos package" in second.stdout and "unchanged" not in second.stdout, second.stdout
+    assert any(line.startswith("pip ") and " -e " in line for line in calls(tmp_path))
+    (tmp_path / "calls.log").write_text("")
+    third = run_install_steps(tmp_path, "step_venv")
+    assert "step venv: unchanged" in third.stdout and calls(tmp_path) == []
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_venv_step_rebuilds_a_venv_that_died_before_pip_existed(tmp_path):
+    (tmp_path / "srv" / "api" / ".venv" / "bin").mkdir(parents=True)
+    python = tmp_path / "srv" / "api" / ".venv" / "bin" / "python"
+    python.write_text("#!/bin/sh\n")
+    python.chmod(0o755)
+    run_install_steps(tmp_path, "step_venv")
+    assert (tmp_path / "srv" / "api" / ".venv" / "bin" / "pip").exists()
+    assert any(line.startswith("pip ") and " -e " in line for line in calls(tmp_path))
+
+
+def test_llama_step_recovers_from_a_clone_that_never_finished(tmp_path):
+    """A killed `git clone` leaves a .git with no commit in it; the old step trusted the directory, then
+    failed on rev-parse under `set -e`, on every run, until somebody deleted it by hand."""
+    (tmp_path / "srv" / "build" / "llama.cpp" / ".git").mkdir(parents=True)
+    run_install_steps(tmp_path, "step_llama")
+    log = calls(tmp_path)
+    assert any(line.startswith("clone -> ") and line.endswith(".partial") for line in log), log
+    assert any(line.startswith("cmake ") for line in log)
+    assert (tmp_path / "srv" / "build" / "llama.cpp").is_dir()
+
+
+def test_llama_clone_is_renamed_into_place_only_when_whole(tmp_path):
+    proc = run_install_steps(tmp_path, "STUB_CLONE_FAIL=1; step_llama", expect_ok=False)
+    assert proc.returncode != 0
+    assert not (tmp_path / "srv" / "build" / "llama.cpp").exists(), "a failed clone must not leave a directory step_llama trusts"
+
+
+def test_unit_steps_reload_systemd_even_when_the_files_already_match(tmp_path):
+    """Interrupted between copying a unit and `daemon-reload`, the next run finds the files identical and
+    used to skip the reload, leaving systemd running the old definition until the next boot."""
+    units = tmp_path / "units"
+    units.mkdir()
+    for name in ("caddy.service", "kiwix-serve.service", "sos-api.service", "sos-llama.service", "sos-embed.service",
+                 "sos-kiosk.service", "srv-sos-extended.mount", "sos-extended-rescan.service"):
+        shutil.copy(INSTALL / "systemd" / name, units / name)
+    run_install_steps(tmp_path, "step_units; step_mount")
+    assert calls(tmp_path).count("systemctl daemon-reload") == 2
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_content_step_reruns_an_index_that_was_killed(tmp_path):
+    state = tmp_path / "srv" / "state"
+    (state / "config").mkdir(parents=True)
+    (state / "sos.db").write_text("")
+    (state / "config" / "index.running").write_text("")   # left by an index that never finished
+    proc = run_install_steps(tmp_path, "sync_tree() { return 1; }; step_content")
+    assert "ran sos index" in proc.stdout
+    assert not (state / "config" / "index.running").exists()
+    (tmp_path / "calls.log").write_text("")
+    again = run_install_steps(tmp_path, "sync_tree() { return 1; }; step_content")
+    assert "step content: unchanged" in again.stdout and calls(tmp_path) == []
+    killed = run_install_steps(tmp_path, "sync_tree() { return 1; }; STUB_INDEX_FAIL=1; touch $PREFIX/state/config/index.running; step_content",
+                               expect_ok=False)
+    assert killed.returncode != 0 and (state / "config" / "index.running").exists()
+
+
+@pytest.mark.skipif(shutil.which("rsync") is None, reason="rsync not installed")
+def test_a_failed_rsync_stops_the_install_instead_of_reading_as_no_change(tmp_path):
+    """sync_tree is called as an `if` condition, where set -e is off: a failed rsync (disk full, the destination
+    gone) returned non-zero and the step took that for "nothing changed" and carried on."""
+    proc = run_install_steps(tmp_path, "step_venv", expect_ok=False, with_tree=False)
+    assert proc.returncode != 0, proc.stdout
+    assert "unchanged" not in proc.stdout and "rsync" in proc.stderr
+
+
+def boot_dir(tmp_path: Path) -> Path:
+    boot = tmp_path / "boot"
+    boot.mkdir()
+    (boot / "config.txt").write_text("arm_64bit=1\n")
+    return boot
+
+
+def test_boot_step_writes_the_fragment_beside_and_renames_it_then_includes_it(tmp_path):
+    boot = boot_dir(tmp_path)
+    proc = run_install_steps(tmp_path, f"BOOT_DIR={boot}; mv() {{ echo \"mv $*\" >> \"$LOG\"; command mv \"$@\"; }}; step_boot")
+    assert "step boot: updated" in proc.stdout
+    assert f"mv -f {boot}/sos.txt.new {boot}/sos.txt" in calls(tmp_path), "the fragment must be renamed into place, not written in place"
+    assert (boot / "sos.txt").read_text() == (INSTALL / "boot" / "config.txt.d" / "sos.txt").read_text()
+    assert not (boot / "sos.txt.new").exists()
+    assert "include sos.txt" in (boot / "config.txt").read_text().splitlines()
+    again = run_install_steps(tmp_path, f"BOOT_DIR={boot}; step_boot")
+    assert "step boot: unchanged" in again.stdout
+
+
+def test_boot_step_that_cannot_write_the_fragment_fails_instead_of_reporting_updated(tmp_path):
+    """`cp ... && sync && mv ...; changed=1` ran changed=1 after a failing cp, said "updated", and went on to add the
+    include line for a fragment that was never written."""
+    boot = boot_dir(tmp_path)
+    proc = run_install_steps(tmp_path, f"BOOT_DIR={boot}; cp() {{ case \"$2\" in *sos.txt.new) return 1;; esac; command cp \"$@\"; }}; step_boot",
+                             expect_ok=False)
+    assert proc.returncode != 0
+    assert "updated" not in proc.stdout and "could not write" in proc.stderr
+    assert not (boot / "sos.txt").exists()
+    assert "include sos.txt" not in (boot / "config.txt").read_text()
+
+
+# step_llama used to `rm -rf` the clone whenever `git rev-parse HEAD` failed for ANY reason. The clone is only
+# removed when git says the repository itself is broken; every other failure stops the install with git's message.
+LLAMA_GIT = r'''
+git() {{
+  # $1 is -C, $2 the clone, the rest the command; STUB_GIT picks how the clone at $2 answers
+  local cmd="${{*:3}}"
+  case "$cmd" in
+    "rev-parse --git-dir")
+      case "$STUB_GIT" in
+        dubious) echo "fatal: detected dubious ownership in repository at '$2'" >&2; return 128 ;;
+        notrepo) echo "fatal: not a git repository (or any of the parent directories): .git" >&2; return 128 ;;
+        *) echo .git ;;
+      esac ;;
+    "rev-parse -q --verify HEAD") [ "$STUB_GIT" = nohead ] && return 1; echo "$LLAMA_CPP_COMMIT" ;;
+    "rev-parse HEAD") echo "$LLAMA_CPP_COMMIT" ;;
+    "cat-file -e "*) [ "$STUB_GIT" = stale ] && return 1; return 0 ;;
+    clone*|"-C"*) return 1 ;;
+  esac
+  case "$*" in
+    *clone*) target=${{@: -1}}; mkdir -p "$target/.git"; touch "$target/.git/HEAD"; echo "clone -> $target" >> "$LOG" ;;
+  esac
+}}
+'''
+
+
+def llama_case(tmp_path: Path, mode: str) -> tuple[subprocess.CompletedProcess, Path]:
+    src = tmp_path / "srv" / "build" / "llama.cpp"
+    src.mkdir(parents=True)
+    (src / "precious-local-change.txt").write_text("keep me")
+    body = LLAMA_GIT.format() + f"\nSTUB_GIT={mode}; step_llama"
+    return run_install_steps(tmp_path, body, expect_ok=False), src
+
+
+def test_llama_step_never_deletes_a_clone_git_merely_refuses_to_read(tmp_path):
+    proc, src = llama_case(tmp_path, "dubious")
+    assert proc.returncode != 0
+    assert (src / "precious-local-change.txt").exists(), "a 'dubious ownership' clone must not be removed"
+    assert "dubious ownership" in proc.stderr
+    assert not any(line.startswith("clone ->") for line in calls(tmp_path))
+
+
+@pytest.mark.parametrize("mode", ["notrepo", "nohead", "stale"])
+def test_llama_step_reclones_only_a_genuinely_broken_or_stale_clone(tmp_path, mode):
+    proc, src = llama_case(tmp_path, mode)
+    assert proc.returncode == 0, proc.stderr
+    assert any(line.startswith("clone -> ") for line in calls(tmp_path)), mode
+    assert not (src / "precious-local-change.txt").exists()
+
+
+def test_llama_step_keeps_a_healthy_clone(tmp_path):
+    proc, src = llama_case(tmp_path, "healthy")
+    assert proc.returncode == 0, proc.stderr
+    assert not any(line.startswith("clone ->") for line in calls(tmp_path))
+    assert (src / "precious-local-change.txt").exists()
+    assert any(line.startswith("cmake ") for line in calls(tmp_path))

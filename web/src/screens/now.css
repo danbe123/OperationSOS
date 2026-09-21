@@ -22,3 +22,6 @@
 /* One line under the services when something is off: the count, and the way to what the box makes
    of it. The briefing itself is on the sheet, not on the front door. */
 .now-what-to-do { margin: 10px 0 0; }
+
+/* One row above the tiles, only on a cold start: the chip's own look is the box's chip. */
+.now-continue { margin: 0 0 10px; }

@@ -4,6 +4,7 @@ import { Icon } from '../icons';
 import { SearchBar } from '../components/SearchBar';
 import { ThemeButton } from '../theme/ThemeButton';
 import { printedOn } from '../tools/printing';
+import { noteScreenTitle } from './lastPlace';
 import { useReportScreenTitle } from './screenTitle';
 import { useWide } from './useWide';
 
@@ -35,7 +36,8 @@ export function Screen({
   useEffect(() => {
     document.title = title === 'Operation SOS' ? title : `${title} · SOS`;
     reportTitle(title);
-  }, [title, reportTitle]);
+    noteScreenTitle(`${location.pathname}${location.search}`, title);
+  }, [title, reportTitle, location.pathname, location.search]);
   const goBack = () => {
     if (backTo) navigate(backTo);
     // 'default' is the key of the first entry in this history; there is nothing to go back to.

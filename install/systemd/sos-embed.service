@@ -6,14 +6,23 @@ After=network.target
 # so search can ask it what a question means. sos/embeddings.py; the model is the bge-small-en-v1.5
 # manifest item. If the model is absent the unit fails quietly and search is the keyword search alone.
 ConditionPathExists=/srv/sos/core/models/embed/bge-small-en-v1.5-q8_0.gguf
+# An unattended box has nobody to `systemctl reset-failed`: never park this unit in `failed` after a burst
+# of restarts (the default is 5 starts in 10 s). Restart=always, because on-failure does not restart
+# after SIGTERM from an out-of-memory daemon or a stray kill, only after a crash.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 User=sos
 Group=sos
 ExecStart=/usr/local/bin/llama-server -m /srv/sos/core/models/embed/bge-small-en-v1.5-q8_0.gguf --embedding --pooling cls -c 512 -ub 512 -b 512 --host 127.0.0.1 --port 8091 -t 2 --no-webui
-Restart=on-failure
+Restart=always
 RestartSec=5
+# A crash loop backs off (5 s, then longer, up to 30 s) instead of restarting every 6 s for ever. systemd never resets the
+# step count after a healthy run (measured: 30 s runs still grew 2.7 to 11 s), so the ceiling is also the worst
+# wait after an isolated crash weeks from now; it is kept low for that reason. StartLimitIntervalSec=0 stays.
+RestartSteps=4
+RestartMaxDelaySec=30
 Nice=5
 MemoryMax=600M
 OOMScoreAdjust=300

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { KioskHeartbeat } from './Heartbeat';
 
 export const KIOSK_KEY = 'sos.kiosk';
 
@@ -22,7 +23,12 @@ export function KioskProvider({ children, force }: { children: ReactNode; force?
   useEffect(() => {
     document.documentElement.classList.toggle('kiosk', kiosk);
   }, [kiosk]);
-  return <KioskContext.Provider value={kiosk}>{children}</KioskContext.Provider>;
+  return (
+    <KioskContext.Provider value={kiosk}>
+      {kiosk && <KioskHeartbeat />}
+      {children}
+    </KioskContext.Provider>
+  );
 }
 
 export function useKiosk(): boolean {

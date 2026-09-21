@@ -2,6 +2,10 @@
 Description=Operation SOS API (sos-api)
 After=network.target
 Wants=kiwix-serve.service
+# An unattended box has nobody to `systemctl reset-failed`: never park this unit in `failed` after a burst
+# of restarts (the default is 5 starts in 10 s). Restart=always, because on-failure does not restart
+# after SIGTERM from an out-of-memory daemon or a stray kill, only after a crash.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -17,9 +21,16 @@ Environment=SOS_LLAMA_URL=http://127.0.0.1:8081
 Environment=SOS_PORT=8000
 # Caddy is the only client; it rewrites X-Forwarded-For to the real address, so the localhost-only
 # endpoints (kiosk backlight, idle, rescan) see the phone's IP rather than 127.0.0.1.
-ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
-Restart=on-failure
+ExecStart=/srv/sos/api/.venv/bin/uvicorn sos.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-graceful-shutdown 5
+Restart=always
 RestartSec=2
+# A crash loop backs off (2 s, then longer, up to 20 s) instead of restarting every 3 s for ever. systemd never resets the
+# step count after a healthy run (measured: 30 s runs still grew 2.7 to 11 s), so the ceiling is also the worst
+# wait after an isolated crash weeks from now; it is kept low for that reason. StartLimitIntervalSec=0 stays.
+RestartSteps=4
+RestartMaxDelaySec=20
+# uvicorn waits for open connections (an assistant stream) before it exits; bound it so a restart is quick.
+TimeoutStopSec=10
 PrivateTmp=yes
 
 [Install]

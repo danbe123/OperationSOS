@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from './client';
 import { errorMessage } from './useQuery';
+import { onReconnect } from './connection';
 import type { Status } from './types';
 
 export const STATUS_POLL_MS = 10_000;
@@ -53,6 +54,8 @@ export function StatusProvider({ children, intervalMs = STATUS_POLL_MS }: { chil
       window.clearInterval(id);
     };
   }, [refresh, intervalMs]);
+
+  useEffect(() => onReconnect(() => void refresh()), [refresh]);
 
   // A Status that came back from a POST (the theme was just changed on System, say) is as good an
   // answer as a poll's, and the next boot should paint what it says.

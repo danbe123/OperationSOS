@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from sos.db import now_iso
-from sos.routers import get_db
+from sos.routers import get_db_durable
 
 router = APIRouter(tags=["notes"])
 
@@ -43,7 +43,7 @@ def _check_pin(kind: str, lat, lon) -> None:
 
 
 @router.get("/notes")
-def list_notes(kind: str | None = None, conn=Depends(get_db)):
+def list_notes(kind: str | None = None, conn=Depends(get_db_durable)):
     if kind == "event":                      # the log reads newest first
         rows = conn.execute("SELECT * FROM notes WHERE kind='event' ORDER BY updated_at DESC, id DESC")
     elif kind:
@@ -54,7 +54,7 @@ def list_notes(kind: str | None = None, conn=Depends(get_db)):
 
 
 @router.post("/notes")
-def create_note(body: NoteIn, conn=Depends(get_db)):
+def create_note(body: NoteIn, conn=Depends(get_db_durable)):
     _check_pin(body.kind, body.lat, body.lon)
     cur = conn.execute("INSERT INTO notes(kind, title, body, lat, lon, updated_at) VALUES (?,?,?,?,?,?)",
                        (body.kind, body.title, body.body, body.lat, body.lon, now_iso()))
@@ -63,7 +63,7 @@ def create_note(body: NoteIn, conn=Depends(get_db)):
 
 
 @router.put("/notes/{note_id}")
-def update_note(note_id: int, body: NotePatch, conn=Depends(get_db)):
+def update_note(note_id: int, body: NotePatch, conn=Depends(get_db_durable)):
     current = _get(conn, note_id)
     merged = {k: (getattr(body, k) if getattr(body, k) is not None else current[k]) for k in ("kind", "title", "body", "lat", "lon")}
     _check_pin(merged["kind"], merged["lat"], merged["lon"])
@@ -76,7 +76,7 @@ def update_note(note_id: int, body: NotePatch, conn=Depends(get_db)):
 
 
 @router.delete("/notes/{note_id}")
-def delete_note(note_id: int, conn=Depends(get_db)):
+def delete_note(note_id: int, conn=Depends(get_db_durable)):
     _get(conn, note_id)
     conn.execute("DELETE FROM notes WHERE id=?", (note_id,))
     conn.commit()

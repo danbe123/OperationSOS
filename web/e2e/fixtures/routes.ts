@@ -465,6 +465,7 @@ export async function installFixtureRoutes(context: BrowserContext, state: Fixtu
     }
     if (method === 'POST' && p === '/kiosk/backlight') return json(route, { level: body().level });
     if (method === 'POST' && p === '/kiosk/idle') return json(route, { ok: true });
+    if (method === 'POST' && p === '/kiosk/alive') return json(route, { ok: true });
     if (method === 'POST' && p === '/system/backlight') return json(route, { level: body().level });
     if (method === 'POST' && p === '/system/pin') {
       if (body().pin === PIN) return json(route, { token: TOKEN, expires_in: 600 });

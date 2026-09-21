@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 from sos import content as content_mod, directives, kits as kits_mod, system
 from sos.db import now_iso
-from sos.routers import get_db
+from sos.routers import get_db_durable
 from sos.routers.situation import current_flags
 
 router = APIRouter(tags=["kits"])
@@ -85,7 +85,7 @@ def kit_view(kit, conn, request: Request) -> dict:
 
 
 @router.get("/kits")
-def list_kits(request: Request, conn=Depends(get_db)):
+def list_kits(request: Request, conn=Depends(get_db_durable)):
     out = []
     for kit in request.app.state.content.kits():
         out.append({"slug": kit.id, "title": kit.title, "icon": kit.icon, "order": kit.order, "summary": kit.summary,
@@ -94,7 +94,7 @@ def list_kits(request: Request, conn=Depends(get_db)):
 
 
 @router.get("/kits/have")
-def kits_have(request: Request, conn=Depends(get_db)):
+def kits_have(request: Request, conn=Depends(get_db_durable)):
     """Everything ticked, across every kit: the "what you have" list, kits in their order and items in
     the kit's own (basic, then serious, then full). A kit with nothing ticked is left out rather than
     printed as an empty heading. Declared before `/kits/{slug}` so `have` is never read as a slug."""
@@ -120,12 +120,12 @@ def kits_have(request: Request, conn=Depends(get_db)):
 
 
 @router.get("/kits/{slug}")
-def get_kit(slug: str, request: Request, conn=Depends(get_db)):
+def get_kit(slug: str, request: Request, conn=Depends(get_db_durable)):
     return kit_view(_get_kit(request, slug), conn, request)
 
 
 @router.put("/kits/{slug}/items/{item_id}")
-def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Depends(get_db)):
+def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Depends(get_db_durable)):
     kit = _get_kit(request, slug)
     item = next((i for i in kit.items if i.id == item_id), None)
     if item is None:
@@ -138,7 +138,7 @@ def set_item(slug: str, item_id: str, body: ItemBody, request: Request, conn=Dep
 
 
 @router.delete("/kits/{slug}/ticks")
-def reset_ticks(slug: str, request: Request, conn=Depends(get_db)):
+def reset_ticks(slug: str, request: Request, conn=Depends(get_db_durable)):
     kit = _get_kit(request, slug)
     conn.execute("DELETE FROM checklist_state WHERE playbook=?", (_key(kit.id),))
     conn.commit()
