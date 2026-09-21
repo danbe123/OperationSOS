@@ -1,6 +1,6 @@
 """How the meaning layer is fused with the words (task 19, 2026-09-21): rank fusion for the box's own passages,
-the rows meaning may not push down (a title the query names, a quick card near the query), and Wikipedia's lift.
-Each rule on hand-made rows first, then through search() with a fake meaning layer."""
+the quick cards meaning may not push out of the first three, and Wikipedia's lift. Each rule on hand-made rows
+first, then through search() with a fake meaning layer."""
 import asyncio
 
 import httpx
@@ -59,71 +59,52 @@ def test_keyword_positions_are_the_order_the_words_gave_with_meaning_taken_away(
     assert search._keyword_positions(results) == {"/p/first": 0, "/p/second": 1}
 
 
-# --- a title the query names ------------------------------------------------------------------------------------------
-
-def test_a_row_titled_as_the_query_or_nearly_is_kept_where_the_words_put_it():
-    terms = query_mod.reduce_query("paracetamol adult dose").terms
-    results = [row("/a", "Something else", kw=0.9), row("/nhs", "Paracetamol dose", kind="article", kw=0.5),
-               row("/b", "Unrelated", kw=0.4), row("/exact", "Paracetamol adult dose", kw=0.3),
-               row("/m", "Paracetamol", via="meaning")]
-    kw_pos = search._keyword_positions(results)
-    titles, cards = search._kept_rows(results, kw_pos, terms, "paracetamol adult dose", [])
-    assert {r["url"]: i for r, i in titles} == {"/nhs": 1, "/exact": 3}     # two of three words, and the whole title
-    assert cards == []                                                        # nor the meaning-only row
-
-
-def test_a_title_sharing_less_than_the_share_of_the_words_is_not_kept():
-    terms = query_mod.reduce_query("paracetamol adult dose overdose").terms
-    results = [row("/nhs", "Paracetamol dose", kw=0.5)]
-    titles, _ = search._kept_rows(results, search._keyword_positions(results), terms, "paracetamol adult dose overdose", [])
-    assert titles == []                                                       # a half
-
-
-def test_places_and_catalogue_books_are_never_kept_by_title():
-    results = [row("/map?x", "Oxford", kind="place", source="places", kw=1.0), row("/book/gutenberg/1", "Oxford", kind="book", source="books", kw=0.9)]
-    titles, cards = search._kept_rows(results, search._keyword_positions(results), ["oxford"], "oxford", [])
-    assert titles == [] and cards == []
-
-
-def test_a_kept_title_is_lifted_to_its_place_but_not_above_a_card_in_the_first_three():
-    a, b, c, d = row("/a", "A"), row("/b", "B"), row("/c", "C"), row("/kept", "Kept")
-    assert urls(search._lift_titles([a, b, c, d], [(d, 0)])) == ["/kept", "/a", "/b", "/c"]
-    assert urls(search._lift_titles([a, b, c, d], [(d, 1)])) == ["/a", "/kept", "/b", "/c"]
-    assert urls(search._lift_titles([a, b, c, d], [(a, 3)])) == ["/a", "/b", "/c", "/kept"]      # already above: stays
-    card = row("/medical/card/x", "Card", kind="card")
-    assert urls(search._lift_titles([card, a, b, d], [(d, 0)])) == ["/medical/card/x", "/kept", "/a", "/b"]
-    assert urls(search._lift_titles([a, b, card, d], [(d, 0)])) == ["/a", "/b", "/medical/card/x", "/kept"]
-
-
 # --- a quick card ---------------------------------------------------------------------------------------------------------
 
-def test_a_card_the_words_ranked_first_and_the_nearest_cards_are_kept_in_the_first_three():
+def test_the_kept_cards_are_the_one_the_words_ranked_first_and_the_ones_nearest_in_meaning():
     words_card = row("/medical/card/first", "Choking", kind="card", kw=1.0)
     near_card = row("/medical/card/near", "Burns", kind="card", kw=0.1)
     other = row("/p/other", "Other", kw=0.5)
     results = [other, words_card, near_card]
     kw_pos = search._keyword_positions(results)
     assert kw_pos["/medical/card/first"] == 0
-    titles, cards = search._kept_rows(results, kw_pos, ["boiling", "water"], "boiling water", ["/medical/card/near"])
-    assert {r["url"] for r, _ in cards} == {"/medical/card/first", "/medical/card/near"}
-    assert all(index == search.KEPT_TOP - 1 for _, index in cards) and titles == []
+    kept = search._kept_cards(results, kw_pos, ["/medical/card/near"])
+    assert urls(kept) == ["/medical/card/first", "/medical/card/near"]
+    assert urls(search._kept_cards(results, kw_pos, [])) == ["/medical/card/first"]       # the second one only by meaning
+    assert search._kept_cards([other], {"/p/other": 0}, []) == []                          # a page is not a card
 
 
-def test_a_kept_card_replaces_the_lowest_row_in_the_first_three_that_nothing_keeps():
+def test_a_card_found_only_by_meaning_is_not_the_card_the_words_ranked_first():
+    meaning_card = row("/medical/card/m", "Burns", kind="card", score=9.0, via="meaning")
+    words = row("/p/words", "Words", kw=1.0)
+    results = [meaning_card, words]
+    assert search._kept_cards(results, search._keyword_positions(results), []) == []
+
+
+def test_a_kept_card_replaces_the_lowest_row_in_the_first_three_and_that_row_moves_just_below():
     rows = [row(f"/p/{i}", f"P{i}") for i in range(6)]
     card = row("/medical/card/x", "Card", kind="card")
-    out = search._lift_cards(rows[:5] + [card] + rows[5:], [(card, 2)], [])
-    assert urls(out)[:3] == ["/p/0", "/p/1", "/medical/card/x"] and urls(out)[3] == "/p/2"      # /p/2 stood third
-    assert sorted(urls(out)) == sorted(urls(rows + [card]))                                        # nothing lost
+    out = search._keep_cards(rows[:5] + [card] + rows[5:], [card])
+    assert urls(out)[:4] == ["/p/0", "/p/1", "/medical/card/x", "/p/2"]                 # /p/2 stood third
+    assert sorted(urls(out)) == sorted(urls(rows + [card]))                                # nothing lost
 
 
-def test_a_card_already_in_the_first_three_does_not_move_and_a_full_house_of_kept_rows_blocks_a_lift():
+def test_a_card_already_in_the_first_three_does_not_move():
     card = row("/medical/card/x", "Card", kind="card")
     a, b = row("/a", "A"), row("/b", "B")
-    assert urls(search._lift_cards([card, a, b], [(card, 2)], [])) == ["/medical/card/x", "/a", "/b"]
-    kept_a, kept_b, kept_c = row("/ka", "A"), row("/kb", "B"), row("/kc", "C")
-    out = search._lift_cards([kept_a, kept_b, kept_c, card], [(card, 2)], [(kept_a, 0), (kept_b, 1), (kept_c, 2)])
-    assert urls(out) == ["/ka", "/kb", "/kc", "/medical/card/x"]
+    assert urls(search._keep_cards([card, a, b], [card])) == ["/medical/card/x", "/a", "/b"]
+    assert urls(search._keep_cards([a, b, card], [card])) == ["/a", "/b", "/medical/card/x"]
+
+
+def test_two_kept_cards_do_not_displace_each_other_and_a_full_house_of_cards_blocks_a_lift():
+    c1, c2, c3, c4 = (row(f"/medical/card/{i}", f"C{i}", kind="card") for i in range(4))
+    a, b, c = row("/a", "A"), row("/b", "B"), row("/c", "C")
+    out = search._keep_cards([a, b, c, c1, c2], [c1, c2])
+    assert set(urls(out)[:3]) >= {"/medical/card/0", "/medical/card/1"} and len(out) == 5
+    out = search._keep_cards([c1, c2, c3, c4], [c1, c2, c3, c4])          # the first three are all kept cards already
+    assert urls(out) == [f"/medical/card/{i}" for i in range(4)]
+    out = search._keep_cards([c1, c2, c3, a], [c1, c2, c3])
+    assert urls(out) == ["/medical/card/0", "/medical/card/1", "/medical/card/2", "/a"]
 
 
 # --- through search() -----------------------------------------------------------------------------------------------------------

@@ -28,7 +28,7 @@ sys.path.insert(0, str(REPO / "api"))
 from sos import search, searcheval as se, searchreplay   # noqa: E402
 from sos.config import get_settings                       # noqa: E402
 
-# name -> overrides: constants of sos.search (DENSE_WEIGHT, CARD_COS, TITLE_SHARE, WIKIPEDIA_LIFT, ...).
+# name -> overrides: constants of sos.search (DENSE_WEIGHT, CARD_COS, CARDS_KEPT, WIKIPEDIA_LIFT, ...).
 # The task-19 experiments (fusion by rank or normalised score, per-class floors, title and card protection,
 # five ways of reranking Wikipedia) ran on switches that are gone from the code; they are in this file's history
 # at commit c39a441, with the two grids that tuned them, and their table is in docs/reviews/2026-09-21-search-tuning.md.
@@ -36,9 +36,11 @@ EXPERIMENTS: dict[str, dict] = {
     "control": {},                                    # the adopted values
     "dense-weight-1": {"DENSE_WEIGHT": 1.0},
     "dense-weight-3": {"DENSE_WEIGHT": 3.0},
-    "no-title-share": {"TITLE_SHARE": 2.0},           # only an exact title is protected
     "no-cards-kept": {"CARD_COS": 2.0},               # the nearest cards are not kept (the words' first card still is)
     "wikipedia-lift-0": {"WIKIPEDIA_LIFT": 0.0},
+    "cards-kept-1": {"CARDS_KEPT": 1},
+    "card-cos-.66": {"CARD_COS": 0.66},
+    "kept-top-2": {"KEPT_TOP": 2},
     "floors-own-.66": {"SEMANTIC_FLOOR": {(True, False): 0.63, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},
     "floors-found-.60": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74}},
     "floors-old": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},

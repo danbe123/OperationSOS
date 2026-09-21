@@ -76,12 +76,10 @@ SEMANTIC_WEIGHT = 0.5
 # of long books fill the nearest twenty with plausible strangers.
 DENSE_WEIGHT = 2.0
 DENSE_DOC_SHARE = 0.5
-# Keeping the box's own answer where it belongs. A row whose title is the query, or carries this share of its
-# words (the NHS "Paracetamol" page for "paracetamol"), is never put below where the words alone ranked it by
-# a row that meaning found. A quick card the words ranked first, and the (up to) CARDS_KEPT cards nearest in
-# meaning that are at least CARD_COS near, stay in the first KEPT_TOP results: someone in an emergency who
-# words it in their own way ("kettle of boiling water over my kid's hand") is still shown the card.
-TITLE_SHARE = 0.66
+# Keeping the box's own emergency answer where it belongs. A quick card the words ranked first, and the (up to)
+# CARDS_KEPT cards nearest the query in meaning that are at least CARD_COS near, stay in the first KEPT_TOP
+# results: a household that words an emergency its own way ("kettle of boiling water went over my kid's hand")
+# is still shown the card, though nothing of it is in the words. The rule only moves rows the fusion already has.
 CARD_COS = 0.62
 CARDS_KEPT = 2
 KEPT_TOP = 3
@@ -443,58 +441,33 @@ def _keyword_positions(results: list[dict]) -> dict[str, int]:
     return {r["url"]: i for i, r in enumerate(diversify(dedupe_titles(dedupe(keyword_only))))}
 
 
-def _kept_rows(results: list[dict], kw_pos: dict[str, int], terms: list[str], q: str,
-               card_pages: list[str]) -> tuple[list[tuple[dict, int]], list[tuple[dict, int]]]:
-    """The rows the fusion may not push down, each with the lowest index it may stand at: (titles, cards).
-    Titles: rows found by the words whose title is the query or carries TITLE_SHARE of its words, at the
-    position the words gave them. Cards: a quick card the words ranked first, and the cards named in
-    `card_pages`, inside the first KEPT_TOP."""
-    norm_q = " ".join((q or "").lower().split())
-    titles: list[tuple[dict, int]] = []
-    cards: list[tuple[dict, int]] = []
-    for r in results:
-        if r.get("via") == "meaning" or r["url"] not in kw_pos or r["kind"] in ("place", "book"):
-            continue
-        exact = norm_title(r["title"]) == norm_q or (terms and norm_title(r["title"]) == " ".join(terms))
-        if exact or term_share(terms, r["title"]) >= TITLE_SHARE:
-            titles.append((r, kw_pos[r["url"]]))
-        elif r["kind"] == "card" and kw_pos[r["url"]] == 0:
-            cards.append((r, KEPT_TOP - 1))
+def _kept_cards(results: list[dict], kw_pos: dict[str, int], card_pages: list[str]) -> list[dict]:
+    """The quick cards the ranking must not push out of the first KEPT_TOP: the one the words ranked first, and
+    the cards on `card_pages` (the nearest to the query in meaning)."""
+    kept = [r for r in results if r["kind"] == "card" and r.get("via") != "meaning" and kw_pos.get(r["url"]) == 0]
     for page in card_pages:
         for r in results:
             if r["kind"] == "card" and r["url"].split("#", 1)[0] == page:
-                cards.append((r, KEPT_TOP - 1))
+                if r not in kept:
+                    kept.append(r)
                 break
-    return titles, cards
+    return kept
 
 
-def _lift_titles(results: list[dict], titles: list[tuple[dict, int]]) -> list[dict]:
-    """Bring each protected title row up to its index, but never above a card standing in the first KEPT_TOP:
-    the card of an emergency comes before an article about it."""
-    for row, index in sorted(titles, key=lambda t: t[1]):
-        i = results.index(row)
-        cards_in = [j for j in range(min(KEPT_TOP, len(results))) if results[j]["kind"] == "card" and j != i]
-        index = max(index, cards_in[-1] + 1) if cards_in else index
-        if i > index:
-            results.insert(index, results.pop(i))
-    return results
-
-
-def _lift_cards(results: list[dict], cards: list[tuple[dict, int]], titles: list[tuple[dict, int]]) -> list[dict]:
-    """Bring each kept card up to its index by swapping it with the lowest row inside that index that nothing
-    keeps in place; a card already inside stays; when every row inside is kept, nothing moves."""
-    kept = {id(row) for row, _ in cards} | {id(row) for row, _ in titles}
-    for row, index in sorted(cards, key=lambda c: c[1]):
-        if results.index(row) <= index:
+def _keep_cards(results: list[dict], cards: list[dict]) -> list[dict]:
+    """Bring each kept card into the first KEPT_TOP, in place of the lowest row there that is not a kept card
+    (that row moves down just below them); a card already inside stays; when every row inside is a kept card,
+    nothing moves."""
+    for card in cards:
+        if results.index(card) < KEPT_TOP:
             continue
-        inside = [j for j in range(min(index + 1, len(results))) if id(results[j]) not in kept]
+        inside = [j for j in range(min(KEPT_TOP, len(results))) if not any(results[j] is c for c in cards)]
         if not inside:
             continue
         displaced = results.pop(inside[-1])
-        results.remove(row)
-        at = min(index, len(results))
-        results.insert(at, row)
-        results.insert(at + 1, displaced)
+        results.remove(card)
+        results.insert(min(KEPT_TOP - 1, len(results)), card)
+        results.insert(min(KEPT_TOP, len(results)), displaced)
     return results
 
 
@@ -762,8 +735,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     results = dedupe_titles(results)
     results = diversify(results)
     if semantic is not None:
-        titles, cards = _kept_rows(results, kw_pos, reduced.terms, q, card_pages)
-        results = _lift_cards(_lift_titles(results, titles), cards, titles)
+        results = _keep_cards(results, _kept_cards(results, kw_pos, card_pages))
 
     counts: dict[str, int] = {}
     for r in results:

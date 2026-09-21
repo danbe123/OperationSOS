@@ -91,14 +91,13 @@ The plan in the Gutenberg design, section 8, built for the box's own library:
   `via: "meaning"`. The relevance multiplier of section 2 is not applied to a row found by meaning: it has no
   words to be judged by. The household books keep the distance bonus,
   `0.5 × 0.6 × (cosine − 0.60) / (0.82 − 0.60)`, capped at the ceiling.
-- **What meaning may not push down.** Two rules stand after the fusion, both of the kind "the words were
-  right, and the ranking of meaning must not undo it". A row found by the words whose title is the query, or
-  carries two thirds of its words (`TITLE_SHARE`: the NHS "Paracetamol" page for "paracetamol"), never ends
-  below the place the words alone gave it, except below a quick card in the first three. A quick card the
-  words ranked first, and the two cards nearest the query in meaning that are at least 0.62 near
-  (`CARD_COS`, `CARDS_KEPT`), stay in the first three (`KEPT_TOP`): a household that words an emergency its own
-  way ("kettle of boiling water went over my kid's hand") is still shown the card, though nothing of it is in
-  the words. Both rules only move rows the fusion already has.
+- **The quick cards meaning may not push out.** A card the words ranked first, and the two cards nearest the
+  query in meaning that are at least 0.62 near (`CARD_COS`, `CARDS_KEPT`), stay in the first three
+  (`KEPT_TOP`): a household that words an emergency its own way ("kettle of boiling water went over my
+  kid's hand") is still shown the card, though nothing of it is in the words. A card outside the first three
+  takes the place of the lowest row inside them that is not a kept card, and that row moves to fourth. The
+  rule moves only rows the fusion already has. (A rule keeping a title the query names where the words put it
+  was measured and not adopted: it restored none of the medicine pages it was for and clashed with this one.)
 - **The cache.** `Semantic.generation` counts each load of the index; a search seeing a new generation
   drops the persistent `search_cache` first, so an index rebuilt under a running API does not serve the
   old answers until they expire.
