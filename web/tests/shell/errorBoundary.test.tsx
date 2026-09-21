@@ -143,14 +143,14 @@ describe('errors that no boundary can catch', () => {
     expect(screen.getByRole('button', { name: 'Do it' })).toBeInTheDocument();
   });
 
-  it('a rejected promise nobody handled is logged, handled, and does not touch the screen', () => {
+  it('a rejected promise nobody handled is logged, left visible to the browser, and does not touch the screen', () => {
     remove = installGlobalErrorHandlers();
     render(<p>still here</p>);
     const event = new Event('unhandledrejection', { cancelable: true }) as Event & { reason: unknown };
     Object.defineProperty(event, 'reason', { value: new Error('nobody caught me') });
     act(() => { window.dispatchEvent(event); });
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining('[sos] unhandled rejection'), expect.objectContaining({ message: 'nobody caught me' }));
-    expect(event.defaultPrevented).toBe(true);
+    expect(event.defaultPrevented).toBe(false);   // still visible to the browser, and to Playwright's pageerror
     expect(screen.getByText('still here')).toBeInTheDocument();
   });
 
