@@ -66,3 +66,17 @@ def test_exact_place_and_postcode():
     assert places.exact_place(conn, "SW1A 1AA")["postcode"] == "SW1A 1AA"
     assert places.exact_place(conn, "sw1a1aa")["name"] == "SW1A 1AA"
     assert places.exact_place(conn, "") is None
+
+
+def test_only_a_postcode_pays_for_the_table_scan():
+    """Every search asks for its exact place; the fallback that scans the whole 2.7-million-row table for a
+    squashed name is for postcodes ("sw1a1aa") alone, so an ordinary query costs one indexed lookup."""
+    conn = _conn()
+    places.import_places(conn, FIXTURES / "places.csv")
+    statements: list[str] = []
+    conn.set_trace_callback(statements.append)
+    assert places.exact_place(conn, "how do I make water safe to drink") is None
+    assert places.exact_place(conn, "water") is None
+    assert not [s for s in statements if "REPLACE(" in s]
+    assert places.exact_place(conn, "sw1a1aa")["name"] == "SW1A 1AA"
+    assert [s for s in statements if "REPLACE(" in s]
