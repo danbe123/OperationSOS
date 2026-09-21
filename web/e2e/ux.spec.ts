@@ -1,6 +1,6 @@
 import { test, expect } from './test';
 
-test('the shell, the two-tap rule and the guides work on the kiosk and on a phone', async ({ page }) => {
+test('the shell, the way to a card, a scenario and a timer, and the clock work on the kiosk and on a phone', async ({ page }) => {
   for (const viewport of [{ width: 853, height: 480 }, { width: 390, height: 844 }]) {
     await page.setViewportSize(viewport);
     const kiosk = viewport.width >= 700;
