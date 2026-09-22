@@ -28,7 +28,7 @@ from sos import places as places_mod
 from sos.books import BOOK_ZIMS, SHELF_NAMES, available_zim, content_url
 from sos import query as query_mod
 from sos.config import Settings
-from sos.db import connect, get_setting, now_iso
+from sos.db import FTS_DOCS_BM25, connect, get_setting, now_iso
 from sos.kiwix import KiwixClient, KiwixError
 
 log = logging.getLogger(__name__)
@@ -165,6 +165,36 @@ WIKIPEDIA_ZIM = "wikipedia_en_all_maxi"
 WIKIPEDIA_LIFT = 0.6
 WIKIPEDIA_LIFT_FROM = 0.72
 WIKIPEDIA_LIFT_TO = 0.82
+# The injury policy (task 25, 2026-09-22). "gash on arm" is an open wound on the arm (`query.analyse_injury`); the
+# keyword search ANDed "arm" into the question, so the wound cards (which never say "arm") were not candidates and
+# Broken bones (which says it five times) led, with a surname and a rifle maker below it. For a query read as an injury
+# described -- confirmed care intent, never a name, a household phrase or a book request -- five pieces, each a switch
+# here so a lab replay can take it out alone (tools/eval/search/lab.py):
+#   INJURY_RETRIEVAL   the condition's words are asked for with the place on the body left out, beside the full query
+#                      (the box's own passages, the document pages, and every quick card that mentions the condition)
+#   INJURY_WEIGHTING   a row is scored on how much of the injury it carries, the condition CONDITION_WEIGHT times the
+#                      place: a row with only "arm" in it is not a third of the way to "gash on arm"
+#   INJURY_SUBJECTS    a card's own curated `conditions:`/`aliases:` (table card_subjects) say what it is about, not
+#                      every word of its warnings: Broken bones mentions a wound, and is not a wound card
+#   INJURY_PROMOTION   the best card for the condition leads, a second relevant one within KEPT_TOP, whether or not the
+#                      meaning layer is up; a card that is not about the condition is never promoted
+#   MEDICAL_UNSUPPORTED_FACTOR  a row with no evidence of the condition itself -- only the body word, or an ambiguous
+#                      spelling with nothing medical beside it ("Sam Gash", "Olympic Arms", bleeding bicycle brakes)
+#                      -- is multiplied down, not out. 1.0 is off. Evidence, not a blacklist.
+# INJURY_INTENT off is the search as it shipped before task 25, piece for piece.
+INJURY_INTENT = True
+INJURY_RETRIEVAL = True
+INJURY_WEIGHTING = True
+INJURY_SUBJECTS = True
+INJURY_PROMOTION = True
+INJURY_CARDS_KEPT = 2
+MEDICAL_UNSUPPORTED_FACTOR = 0.25
+CONDITION_WEIGHT = 4.0
+LOCATION_WEIGHT = 1.0
+MODIFIER_WEIGHT = 0.5
+# bm25's weight for a card's aliases column (db.FTS_DOCS_BM25's last figure); ALIAS_INDEX off leaves the column out of
+# the keyword question altogether, as if the aliases had never been indexed.
+ALIAS_INDEX = True
 
 
 def semantic_bonus(cos: float, w: float) -> float:
@@ -326,6 +356,148 @@ def relevance(terms: list[str], title: str, snippet: str, q: str, in_body: float
     return factor
 
 
+# --- the injury policy's evidence (task 25) ---------------------------------------------------------------------------
+# The words that say a text is about each condition: (unambiguous, ambiguous). An ambiguous word counts only with
+# something medical beside it in the same text, or in a medical source: a biography repeating the surname "Gash", a
+# rifle maker's "arms", a bicycle forum's "bleeding" the brakes are not a wound. The box's own "power cut" is taken
+# out as a phrase before any word is read (query.free_tokens).
+CONDITION_TEXT: dict[str, tuple[frozenset, frozenset]] = {c: (frozenset(a.split()), frozenset(b.split())) for c, (a, b) in {
+    "open_wound": ("wound wounds wounded laceration lacerations lacerated graze grazes grazed incision",
+                   "cut cuts gash gashes gashed stab stabbed puncture slash slashed"),
+    "bleeding": ("haemorrhage hemorrhage haemorrhaging hemorrhaging tourniquet", "bleeding bleed bleeds bled blood"),
+    "burn": ("scald scalds scalded scalding", "burn burns burned burnt"),
+    "fracture": ("fracture fractures fractured splint", "broken break bone bones"),
+    "sprain": ("sprain sprains sprained", "strain strains strained twisted ligament"),
+    "head_injury": ("concussion concussed", "head skull"),
+    "eye_injury": ("", "eye eyes eyeball"),
+    "nosebleed": ("nosebleed nosebleeds", "nose"),
+    "bite_sting": ("bitten stung", "bite bites sting stings"),
+    "spinal_injury": ("spinal spine vertebrae", "neck"),
+}.items()}
+MEDICAL_CONTEXT = frozenset("""wound wounds injury injuries injured bleeding blood aid treat treatment treated treating
+dressing dressings bandage skin pain hospital doctor emergency fracture laceration patient patients medical surgery
+surgical infection heal healing clinical symptoms tissue trauma scar stitches sutures antiseptic nurse ambulance casualty
+casualties pressure first venom venomous poison poisonous symptoms swelling allergic allergy""".split())
+
+
+def condition_evidence(injury, tokens: set[str], medical_source: bool = False) -> set[str]:
+    """The conditions of `injury` a text is evidence of, from its free words (`query.free_tokens`)."""
+    out = set()
+    context = medical_source or bool(tokens & MEDICAL_CONTEXT)
+    for cond in injury.conditions:
+        strong, weak = CONDITION_TEXT[cond]
+        if tokens & strong or (context and tokens & weak):
+            out.add(cond)
+    return out
+
+
+def other_terms(injury, terms: list[str]) -> tuple[str, ...]:
+    """The query's words that are not the injury, a place or a qualifier ("adder", "stove"): ideas of their own."""
+    return tuple(t for t in terms if t not in query_mod.INJURY_VOCAB)
+
+
+def injury_coverage(injury, tokens: set[str], conditions: set[str], others: tuple[str, ...] = ()) -> float:
+    """How much of the injury a text carries, each idea once: a condition it is evidence of (`conditions`) counts
+    CONDITION_WEIGHT, a place on the body LOCATION_WEIGHT, a qualifier ("deep") MODIFIER_WEIGHT, and each other word
+    of the query (`others`) LOCATION_WEIGHT, a synonym of it SYNONYM_CREDIT of that."""
+    places = {query_mod.BODY_PARTS[t] for t in tokens if t in query_mod.BODY_PARTS}
+    total = (CONDITION_WEIGHT * len(injury.conditions) + LOCATION_WEIGHT * len(injury.locations)
+             + MODIFIER_WEIGHT * len(injury.modifiers) + LOCATION_WEIGHT * len(others))
+    got = (CONDITION_WEIGHT * len(conditions & set(injury.conditions)) + LOCATION_WEIGHT * len(places & set(injury.locations))
+           + MODIFIER_WEIGHT * len(tokens & set(injury.modifiers)))
+    if others:
+        stems = {stem(t) for t in tokens}
+        for term in others:
+            if _has([], stems, term):
+                got += LOCATION_WEIGHT
+            elif any(_has([], stems, a) for a in query_mod.SYNONYMS.get(term, ())):
+                got += LOCATION_WEIGHT * SYNONYM_CREDIT
+    return got / total if total else 0.0
+
+
+def card_subjects(conn: sqlite3.Connection) -> dict[str, dict]:
+    """{card page: {"conditions": [...], "aliases": [word tuples]}} from the cards' front matter (`sos index`). Empty
+    for a database indexed before task 25."""
+    try:
+        rows = conn.execute("SELECT page, conditions, aliases FROM card_subjects").fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {r["page"]: {"conditions": json.loads(r["conditions"] or "[]"),
+                        "aliases": [tuple(query_mod.free_tokens(a)) for a in json.loads(r["aliases"] or "[]")]}
+            for r in rows}
+
+
+def _page(url: str) -> str:
+    return url.split("#", 1)[0]
+
+
+def row_conditions(injury, row: dict, subjects: dict[str, dict], text: str | None = None) -> set[str]:
+    """The conditions a result is evidence of. A card's come from its curated subjects (INJURY_SUBJECTS) -- what it
+    is about, not what its warnings mention; without subjects (or with the switch off) it is read like any text."""
+    if row.get("kind") == "card" and INJURY_SUBJECTS and subjects.get(_page(row["url"])):
+        return set(subjects[_page(row["url"])]["conditions"]) & set(injury.conditions)
+    # Any other row, a card with no injury subject among them (Anaphylaxis, Shock): its own words. The box's own
+    # authored pages and the medical library are medical by what they are, so an ambiguous word there needs no
+    # medical word beside it -- "power cut" having been taken out as a phrase already.
+    words = set(query_mod.free_tokens(text if text is not None else f"{row.get('title', '')} {_TAGS.sub(' ', row.get('snippet') or '')}"))
+    return condition_evidence(injury, words, medical_source=row.get("_cat") in ("medical", "playbooks"))
+
+
+def injury_relevance(injury, terms: list[str], title: str, snippet: str, q: str, in_body: float, conds: set[str],
+                     *, semantic_ok: bool = False) -> float:
+    others = other_terms(injury, terms)
+    """`relevance` for an injury described: the same multiplier, with the injury's weighted coverage as the share
+    of the query in the title and the snippet (INJURY_WEIGHTING). The exact-title and zero-evidence tests are the
+    ordinary ones."""
+    title_words = set(query_mod.free_tokens(title))
+    snip_words = set(query_mod.free_tokens(_TAGS.sub(" ", snippet or "")))
+    in_title = injury_coverage(injury, title_words, conds & condition_evidence(injury, title_words) if conds else set(), others)
+    in_snippet = max(injury_coverage(injury, snip_words, conds, others), in_body)
+    _, _, exact, zero = evidence(terms, title, snippet, q)
+    factor = 1.0 + TITLE_WEIGHT * in_title + SNIPPET_WEIGHT * in_snippet
+    if exact:
+        factor *= EXACT_TITLE
+    elif zero:
+        factor *= BOILERPLATE
+    elif not semantic_ok and in_snippet == 0 and in_title <= WEAK_EVIDENCE and len(query_mod.expand_terms(terms)) >= 2:
+        factor *= WEAK_PENALTY
+    return factor
+
+
+def _card_order(injury, qtokens: tuple[str, ...], subjects: dict[str, dict], row: dict) -> tuple:
+    """How strongly a card is the answer to an injury, for promotion: which of the query's conditions it is about
+    (the query's first condition over its second; the card's main subject over a secondary one), then the longest
+    of its own aliases the query uses ("deep cut" over "cut"), then how much of the injury it carries, then its score."""
+    subject = subjects.get(_page(row["url"])) if INJURY_SUBJECTS else None
+    if subject:
+        conds, aliases = subject["conditions"], subject["aliases"]
+    else:   # no curated subjects: what its title says
+        conds = sorted(condition_evidence(injury, set(query_mod.free_tokens(row["title"])), medical_source=True),
+                       key=injury.conditions.index)
+        aliases = []
+    n = len(injury.conditions)
+    primary = max(((n - injury.conditions.index(c)) * 2 + (1 if conds and conds[0] == c else 0)
+                   for c in conds if c in injury.conditions), default=0)
+    alias = max((len(a) for a in aliases if a and any(qtokens[i:i + len(a)] == a for i in range(len(qtokens)))), default=0)
+    return (primary, alias, row.get("_coverage", 0.0), row["score"])
+
+
+def _promote_injury_cards(results: list[dict], injury, subjects: dict[str, dict], q: str) -> tuple[list[dict], list[dict]]:
+    """The strongest card for the injury first, the next (up to INJURY_CARDS_KEPT) inside the first KEPT_TOP; the rest
+    of the ordering untouched. Only a card about the condition is eligible -- never one that merely shares the body
+    word or mentions the condition in passing. (results, the promoted rows)."""
+    qtokens = tuple(query_mod.free_tokens(q))
+    eligible = [r for r in results if r["kind"] == "card" and _card_order(injury, qtokens, subjects, r)[0] > 0]
+    eligible.sort(key=lambda r: _card_order(injury, qtokens, subjects, r), reverse=True)
+    chosen = eligible[:INJURY_CARDS_KEPT]
+    for place, row in enumerate(chosen):
+        at = results.index(row)
+        target = place if place == 0 else min(max(at, place), KEPT_TOP - 1)
+        if at != target:
+            results.insert(target, results.pop(at))
+    return results, chosen
+
+
 def dedupe_titles(results: list[dict]) -> list[dict]:
     """One row per article title within a source: "Bleeding" from WikEM and "Bleeding" from MDWiki, both
     medical, are the same answer twice on the screen, and "Potassium iodide" likewise. The best-scoring
@@ -428,15 +600,18 @@ def classify(row) -> str:
     return "reference"
 
 
-def is_medical_intent(tokens: list[str]) -> bool:
-    return any(t in MEDICAL_TERMS for t in tokens)
+def is_medical_intent(tokens: list[str], injury: "query_mod.InjuryIntent | None" = None) -> bool:
+    """A medical question: one of the medical words, or (task 25) an injury described ("gash on arm": neither word
+    is on the list, and "arm" must not be)."""
+    return any(t in MEDICAL_TERMS for t in tokens) or bool(injury is not None and injury.confirmed)
 
 
 class SearchCache:
     @staticmethod
     def key(q: str, sources: list[str] | None, limit: int, semantic_version=None) -> str:
         # Structured fields prevent delimiters in a query/source name colliding with another query.
-        return json.dumps([2, " ".join(q.lower().split()), sorted(set(sources or [])), limit, semantic_version])
+        # 3: task 25 (the injury policy, card aliases) -- a result cached before it is not served after it
+        return json.dumps([3, " ".join(q.lower().split()), sorted(set(sources or [])), limit, semantic_version])
 
     @staticmethod
     def get(conn: sqlite3.Connection, key: str) -> dict | None:
@@ -604,6 +779,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     reduced = query_mod.reduce_query(q or "")
     if not reduced.terms:
         return _empty(q or "")
+    injury = reduced.injury if INJURY_INTENT and reduced.injury.confirmed else None   # the injury policy's gate
     limit = max(1, min(int(limit or 40), 100))
     use_cache = use_cache and fts_mode == "and"
     semantic_failed = False
@@ -658,7 +834,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     # never returns the ZIM id for it: wikipedia_en_all_maxi's manifest category is "reference", and
     # classify()'s "reference"/"practical"/"survival"/"books" branch returns the category unchanged), so the
     # only place the ZIM id survives is the url itself -- the filter below matches on that, not on source/_cat.
-    if semantic is not None and not is_medical_intent(reduced.terms):
+    if semantic is not None and not is_medical_intent(reduced.terms, injury):
         wiki_prefix = f"/read/{WIKIPEDIA_ZIM}/"
         wiki_hits = [r for r in results if r["url"].startswith(wiki_prefix)]
         if wiki_hits:
@@ -681,29 +857,66 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                         r["_semantic_ok"] = True   # corroborated by meaning already: exempt from WEAK_PENALTY below
 
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
-    fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
-               "FROM fts_docs WHERE fts_docs MATCH ? AND kind {op} 'doc' ORDER BY bm25(fts_docs, 5.0, 1.0) LIMIT {n}")
+    fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, aliases, "
+               "snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
+               f"FROM fts_docs WHERE fts_docs MATCH ? AND kind {{op}} 'doc' ORDER BY {FTS_DOCS_BM25} LIMIT {{n}}")
+    subjects = card_subjects(conn) if injury is not None else {}
 
-    def fts_rows(docs: bool) -> tuple[list, dict]:
+    def match(expr: str) -> str:
+        """The keyword question, over the aliases column too unless ALIAS_INDEX is off (a lab ablation)."""
+        return expr if ALIAS_INDEX or not expr else "{title body} : (" + expr + ")"
+
+    def fts_rows(docs: bool) -> tuple[list, dict, dict]:
         """The keyword rows of one half of the index — the box's own passages, or the document pages — with
         the share of the query each carries. bm25 favours a short passage that repeats one word over a long
         one that carries them all: the rows rank by the share of the query's ideas the passage carries plus
         the share its title carries (the page that is about the query — "Water" for "the water stops",
-        "Water disinfection" for "boil water" — above one that mentions it), bm25 deciding among equals."""
+        "Water disinfection" for "boil water" — above one that mentions it), bm25 deciding among equals.
+        For an injury described (task 25) the condition's own words are asked for too, the place on the body
+        left out, and every quick card that mentions it; and the share is the injury's weighted coverage."""
         n = FTS_ROWS_DOC if docs else FTS_ROWS_OWN
         sql = fts_sql.format(op="=" if docs else "!=", n=n)
-        rows = conn.execute(sql, (query_mod.fts_match_expanded(reduced.terms, fts_mode),)).fetchall()
+        rows = conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, fts_mode)),)).fetchall()
         if fts_mode == "and" and len(reduced.terms) >= 2 and len(rows) < FTS_OR_BELOW:
             have = {r["url"] for r in rows}
-            rows = list(rows) + [r for r in conn.execute(sql, (query_mod.fts_match_expanded(reduced.terms, "or"),)).fetchall()
+            rows = list(rows) + [r for r in conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, "or")),)).fetchall()
                                  if r["url"] not in have][: n - len(rows)]
-        carried = {row["url"]: term_share(reduced.terms, f"{row['title']} {row['body']}") for row in rows}
-        titled = {row["url"]: term_share(reduced.terms, row["title"]) for row in rows}
-        return sorted(rows, key=lambda row: -(carried[row["url"]] + titled[row["url"]])), carried
+        if injury is not None and INJURY_RETRIEVAL:
+            have = {r["url"] for r in rows}
+            wanted = match(query_mod.fts_match_conditions(injury))
+            extra = list(conn.execute(sql, (wanted,)).fetchall())
+            if not docs:   # every card that mentions the condition, however low bm25 puts it among the passages
+                extra += conn.execute(sql.replace(f"LIMIT {n}", "").replace("kind != 'doc'", "kind = 'card'"), (wanted,)).fetchall()
+            for r in extra:
+                if r["url"] not in have:
+                    have.add(r["url"])
+                    rows = list(rows) + [r]
+        conds: dict[str, set] = {}
+        if injury is not None and INJURY_WEIGHTING:
+            carried, titled = {}, {}
+            others = other_terms(injury, reduced.terms)
+            for row in rows:
+                entry = {"kind": row["kind"], "url": row["url"], "title": row["title"], "_cat": row["category"]}
+                words = set(query_mod.free_tokens(f"{row['title']} {row['body']} {row['aliases'] or ''}"))
+                conds[row["url"]] = row_conditions(injury, entry, subjects, f"{row['title']} {row['body']}")
+                carried[row["url"]] = injury_coverage(injury, words, conds[row["url"]], others)
+                title_words = set(query_mod.free_tokens(row["title"]))
+                titled[row["url"]] = injury_coverage(injury, title_words,
+                                                     conds[row["url"]] & condition_evidence(injury, title_words, True), others)
+        else:
+            carried = {row["url"]: term_share(reduced.terms, f"{row['title']} {row['body']}") for row in rows}
+            titled = {row["url"]: term_share(reduced.terms, row["title"]) for row in rows}
+            if injury is not None:
+                conds = {row["url"]: row_conditions(injury, {"kind": row["kind"], "url": row["url"], "title": row["title"],
+                                                              "_cat": row["category"]}, subjects, f"{row['title']} {row['body']}")
+                         for row in rows}
+        return sorted(rows, key=lambda row: -(carried[row["url"]] + titled[row["url"]])), carried, conds
 
     ranked: list[tuple[int, sqlite3.Row, float]] = []
+    row_conds: dict[str, set] = {}
     for docs in (False, True):
-        rows, carried = fts_rows(docs)
+        rows, carried, conds = fts_rows(docs)
+        row_conds.update(conds)
         ranked.extend((rank, row, carried[row["url"]]) for rank, row in enumerate(rows, 1))
     for rank, row, carry in ranked:
         kind = row["kind"]
@@ -716,6 +929,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             w = 1.0
         entry = {"source": src, "badge": KIND_BADGES.get(kind, "Document"), "title": row["title"], "snippet": row["snip"] or "",
                  "url": row["url"], "score": score(w, rank), "kind": kind, "_cat": row["category"], "_carried": carry}
+        if row["url"] in row_conds:
+            entry["_cond"] = row_conds[row["url"]]
         if src == "playbooks" and row["url"].split("#", 1)[-1] in FURNITURE_SECTIONS:
             entry["score"] *= FURNITURE_FACTOR
         if row["page"]:
@@ -746,7 +961,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             })
             break
 
-    if is_medical_intent(reduced.terms):
+    if is_medical_intent(reduced.terms, injury):
         for r in results:
             # the box's own quick cards are medical guidance too: without the boost an NHS medicine page
             # about warfarin outranked the Severe bleeding card for "bleeding"
@@ -868,20 +1083,39 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     for r in results:
         if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
             carried = r.get("_carried", 0.0)
-            rel = relevance(reduced.terms, r["title"], r["snippet"], q, carried, semantic_ok=r.get("_semantic_ok", False))
+            if injury is not None and "_cond" not in r:
+                r["_cond"] = row_conditions(injury, r, subjects)       # a library article: its title and snippet
+            if injury is not None and INJURY_WEIGHTING:
+                rel = injury_relevance(injury, reduced.terms, r["title"], r["snippet"], q, carried, r["_cond"],
+                                       semantic_ok=r.get("_semantic_ok", False))
+                r["_coverage"] = carried
+            else:
+                rel = relevance(reduced.terms, r["title"], r["snippet"], q, carried, semantic_ok=r.get("_semantic_ok", False))
             r["score"] *= rel
             if "_kw" in r:
                 r["_kw"] *= rel
             _, _, exact, zero = evidence(reduced.terms, r["title"], r["snippet"], q, carried)
             r["_zero_evidence"] = zero and not exact
+            # An injury described, and nothing in this row is evidence of the injury itself: only the place on the
+            # body, or an ambiguous spelling with nothing medical beside it (MEDICAL_UNSUPPORTED_FACTOR). A row with
+            # no overlap at all is BOILERPLATE's already; a row the meaning layer added has passed its own floor.
+            if injury is not None and not r["_cond"] and not r["_zero_evidence"]:
+                r["score"] *= MEDICAL_UNSUPPORTED_FACTOR
+                if "_kw" in r:
+                    r["_kw"] *= MEDICAL_UNSUPPORTED_FACTOR
     kw_pos = _keyword_positions(results) if semantic is not None else {}
     results = dedupe(results)
     results = dedupe_titles(results)
     results = diversify(results)
     protected_ids: set[int] = set()
+    injury_cards: list[dict] = []
+    if injury is not None and INJURY_PROMOTION:
+        # With or without the meaning layer: the cards about the injury lead, and no other card is kept for it.
+        results, injury_cards = _promote_injury_cards(results, injury, subjects, q)
+        protected_ids = {id(r) for r in injury_cards}
     if semantic is not None:
         medicines = _kept_medicines(results, kw_pos, reduced.terms)
-        cards = _kept_cards(results, kw_pos, [] if medicines else card_pages)
+        cards = injury_cards or _kept_cards(results, kw_pos, [] if medicines else card_pages)
         results = _keep_rows(results, cards + medicines)
         books = _kept_books(results)
         results = _keep_rows(results, books, top=BOOKS_TOP, protect=KEPT_TOP)
@@ -917,6 +1151,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         r.pop("_cos", None)
         r.pop("_zero_evidence", None)
         r.pop("_semantic_ok", None)
+        r.pop("_cond", None)
+        r.pop("_coverage", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
     if embedding is not None and embedding.failed:
