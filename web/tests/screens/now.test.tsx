@@ -88,29 +88,29 @@ describe('Now', () => {
     renderRoute('/');
     const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
     const tiles = within(grid).getAllByRole('link');
-    expect(tiles).toHaveLength(21);   // the twenty situations, then First aid
-    expect(tiles[0]).toHaveTextContent('Nuclear war');
-    expect(tiles[0]).toHaveTextContent('A nuclear strike on the UK.');
-    expect(tiles[0]).toHaveAttribute('href', '/s/nuclear-war');
-    expect(tiles[0].querySelector('svg.icon')).not.toBeNull();
-    expect(tiles[3]).toHaveAttribute('href', '/s/grid-collapse');
-    expect(tiles[19]).toHaveTextContent('The long rebuild');
-    expect(tiles[19]).toHaveAttribute('href', '/s/long-rebuild');
+    expect(tiles).toHaveLength(21);   // First aid, then the twenty situations
+    expect(tiles[1]).toHaveTextContent('Nuclear war');
+    expect(tiles[1]).toHaveTextContent('A nuclear strike on the UK.');
+    expect(tiles[1]).toHaveAttribute('href', '/s/nuclear-war');
+    expect(tiles[1].querySelector('svg.icon')).not.toBeNull();
+    expect(tiles[4]).toHaveAttribute('href', '/s/grid-collapse');
+    expect(tiles[20]).toHaveTextContent('The long rebuild');
+    expect(tiles[20]).toHaveAttribute('href', '/s/long-rebuild');
   });
 
-  it('ends the grid with First aid: the medical quick cards, two taps from Now, in the same tile as the rest', async () => {
+  it('opens the grid with First aid: the medical quick cards, two taps from Now, in the same tile as the rest', async () => {
     vi.spyOn(api, 'playbooks').mockResolvedValue(playbooks);
     vi.spyOn(api, 'situationView').mockResolvedValue(view);
     renderRoute('/');
     const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
     const tiles = within(grid).getAllByRole('link');
-    const aid = tiles[tiles.length - 1];
+    const aid = tiles[0];
     expect(aid).toHaveTextContent('First aid');
     expect(aid).toHaveTextContent('Quick cards');
     expect(aid).toHaveAttribute('href', '/library/medical');
     expect(aid).toHaveClass('tile');
     expect(aid.querySelector('svg.icon')).not.toBeNull();
-    expect(tiles.slice(0, -1).every((t) => (t.getAttribute('href') ?? '').startsWith('/s/'))).toBe(true);
+    expect(tiles.slice(1).every((t) => (t.getAttribute('href') ?? '').startsWith('/s/'))).toBe(true);
   });
 
   it('is there even when the guides cannot be read: first aid must not wait on anything', async () => {
@@ -149,7 +149,7 @@ describe('Now', () => {
     playbooksQ.mockResolvedValue(playbooks);
     await user.click(screen.getByRole('button', { name: /Try again/ }));
     const grid = await screen.findByRole('navigation', { name: 'Scenarios' });
-    expect(within(grid).getAllByRole('link')).toHaveLength(21);   // twenty situations and First aid
+    expect(within(grid).getAllByRole('link')).toHaveLength(21);   // First aid and the twenty situations
   });
 
   it('stays the front door once something is off, and points at the sheet for the rest', async () => {
@@ -160,7 +160,7 @@ describe('Now', () => {
     // Power to say the power was off was taken to a briefing it had not asked for, and the button
     // it had just pressed was gone off the screen.
     expect(await screen.findByRole('heading', { level: 1, name: "What's the situation?" })).toBeInTheDocument();
-    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(21);   // twenty situations and First aid
+    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(21);   // First aid and the twenty situations
     const row = screen.getByRole('navigation', { name: 'Services' });
     const power = within(row).getByRole('button', { name: /Mains power: off/ });
     expect(power).toHaveAttribute('aria-pressed', 'true');
@@ -183,6 +183,6 @@ describe('Now', () => {
     expect(screen.getByRole('button', { name: /Try again/ })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Sections' })).toBeInTheDocument();
     // The guides do not need the engine, so the front door still answers the question.
-    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(21);   // twenty situations and First aid
+    expect(within(await screen.findByRole('navigation', { name: 'Scenarios' })).getAllByRole('link')).toHaveLength(21);   // First aid and the twenty situations
   });
 });
