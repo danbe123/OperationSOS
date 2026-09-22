@@ -274,6 +274,16 @@
    screen, and a fixed panel cannot be scrolled to reach it. Every key is the touch target and no
    more. */
 .kb-panel .sos-kb.hg-layout-numeric .hg-button { width: auto; flex: 1 1 0; min-width: 64px; flex-grow: 1; height: var(--touch); }
+/* Below the kiosk's own width, "delete", "enter" and "shift" have less than a sixth of the row each,
+   and the 18 px kiosk type cut them to "dele", "ente" and "shi" with no ellipsis to say so — even the
+   icon in front of the word was gone. The touch target (the whole key) does not shrink; only the type
+   does, enough that the vendor's own overflow: hidden stops truncating the word it sits next to. */
+@media (max-width: 699px) {
+  .kb-panel .sos-kb .hg-button { font-size: 11px; padding: 0 1px; letter-spacing: -0.3px; }
+  /* "⌫ delete" is the longest label sharing the shortest row (11 keys, one of them double width),
+     so it is the one key still short of room after every other key already fits. */
+  .kb-panel .sos-kb .hg-button[data-skbtn="{bksp}"] { padding: 0; font-size: 9px; letter-spacing: -0.5px; }
+}
 
 .idle-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: var(--t-title); font-weight: 700; cursor: pointer; }
 .idle-overlay-dark { background: rgba(0, 0, 0, 0.9); }

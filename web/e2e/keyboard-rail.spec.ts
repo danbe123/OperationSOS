@@ -55,3 +55,20 @@ test('a landscape phone gets the bottom bar, so no destination is off the bottom
   // the theme button moves to the screen head when there is no rail footer to hold it
   await expect(page.getByRole('button', { name: /^Change the theme/ })).toHaveCount(1);
 });
+
+test('every key on the keyboard is readable on a portrait phone, not just the kiosk', async ({ page }) => {
+  // UX audit finding: {bksp}/{enter}/{shift} read "⌫ delete", "↵ enter", "⇧ shift" on the kiosk, but
+  // at 390px wide the row has no room for the word and `overflow: hidden` cut it silently to "dele",
+  // "ente" and "shi" with no ellipsis — even the icon glyph in front of the word was gone.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/search?kiosk=1');
+  await page.getByRole('combobox', { name: 'Search' }).first().click();
+  const keyboard = page.getByTestId('keyboard');
+  await expect(keyboard).toBeVisible();
+  const keys = await keyboard.locator('.hg-button').all();
+  expect(keys.length).toBeGreaterThan(20);
+  for (const key of keys) {
+    const label = (await key.textContent()) ?? '';
+    expect(await key.evaluate((el) => el.scrollWidth <= el.clientWidth + 1), label).toBe(true);
+  }
+});
