@@ -307,32 +307,16 @@ def _raw_tokens(raw: str) -> list[str]:
     return _TOKEN_RE.findall(re.sub(r"['’]", "", (raw or "").lower()))
 
 
-_PHRASES_BY_FIRST: dict[str, list[tuple[str, ...]]] = {}
-for _phrase in sorted(NONMEDICAL_PHRASES, key=len, reverse=True):
-    _PHRASES_BY_FIRST.setdefault(_phrase[0], []).append(_phrase)
-
-
-def _consume_phrases(tokens: list[str]) -> list[bool]:
-    """Which tokens are free: a nonmedical phrase's words are taken, the longest phrase at each place first. One
-    pass, so it is cheap enough for a passage's whole body as well as a query."""
-    free = [True] * len(tokens)
-    i = 0
-    while i < len(tokens):
-        for phrase in _PHRASES_BY_FIRST.get(tokens[i], ()):
-            if tuple(tokens[i:i + len(phrase)]) == phrase:
-                for j in range(i, i + len(phrase)):
-                    free[j] = False
-                i += len(phrase) - 1
-                break
-        i += 1
-    return free
+# Every nonmedical phrase as one pattern, longest first, its words apart by anything that is not a word: taken out of
+# a text before its words are read. One C-speed pass, cheap enough for a passage's whole body as well as a query.
+_NONMEDICAL_RE = re.compile(r"(?<![^\W_])(?:" + "|".join(
+    r"[\W_]+".join(map(re.escape, p)) for p in sorted(NONMEDICAL_PHRASES, key=len, reverse=True)) + r")(?![^\W_])")
 
 
 def free_tokens(text: str) -> list[str]:
-    """The lower-case words of a text in order, with every nonmedical phrase ("power cut", "brake bleeding") left out:
-    the words search reads as evidence of an injury (task 25)."""
-    tokens = _raw_tokens(text)
-    return [t for t, f in zip(tokens, _consume_phrases(tokens)) if f]
+    """The lower-case words of a text in order, apostrophes closed up, with every nonmedical phrase ("power cut",
+    "brake bleeding") left out: the words search reads as evidence of an injury (task 25)."""
+    return _TOKEN_RE.findall(_NONMEDICAL_RE.sub(" ", re.sub(r"['\u2019]", "", (text or "").lower())))
 
 
 def analyse_injury(raw: str) -> InjuryIntent:
@@ -340,8 +324,7 @@ def analyse_injury(raw: str) -> InjuryIntent:
     tokens = _raw_tokens(raw)
     if not tokens:
         return NO_INJURY
-    free = _consume_phrases(tokens)
-    words = [t for t, f in zip(tokens, free) if f]
+    words = free_tokens(raw)
     have = set(words)
     content = [t for t in tokens if t not in STOPWORDS]
     locations = tuple(dict.fromkeys(BODY_PARTS[t] for t in words if t in BODY_PARTS))

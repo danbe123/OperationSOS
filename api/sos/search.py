@@ -431,7 +431,8 @@ def _page(url: str) -> str:
     return url.split("#", 1)[0]
 
 
-def row_conditions(injury, row: dict, subjects: dict[str, dict], text: str | None = None) -> set[str]:
+def row_conditions(injury, row: dict, subjects: dict[str, dict], text: str | None = None,
+                   words: set[str] | None = None) -> set[str]:
     """The conditions a result is evidence of. A card's come from its curated subjects (INJURY_SUBJECTS) -- what it
     is about, not what its warnings mention; without subjects (or with the switch off) it is read like any text."""
     if row.get("kind") == "card" and INJURY_SUBJECTS and subjects.get(_page(row["url"])):
@@ -439,12 +440,13 @@ def row_conditions(injury, row: dict, subjects: dict[str, dict], text: str | Non
     # Any other row, a card with no injury subject among them (Anaphylaxis, Shock): its own words. The box's own
     # authored pages and the medical library are medical by what they are, so an ambiguous word there needs no
     # medical word beside it -- "power cut" having been taken out as a phrase already.
-    words = set(query_mod.free_tokens(text if text is not None else f"{row.get('title', '')} {_TAGS.sub(' ', row.get('snippet') or '')}"))
+    if words is None:
+        words = set(query_mod.free_tokens(text if text is not None else f"{row.get('title', '')} {_TAGS.sub(' ', row.get('snippet') or '')}"))
     return condition_evidence(injury, words, medical_source=row.get("_cat") in ("medical", "playbooks"))
 
 
 def injury_relevance(injury, terms: list[str], title: str, snippet: str, q: str, in_body: float, conds: set[str],
-                     *, semantic_ok: bool = False) -> float:
+                     *, semantic_ok: bool = False, exact_zero: tuple[bool, bool] | None = None) -> float:
     others = other_terms(injury, terms)
     """`relevance` for an injury described: the same multiplier, with the injury's weighted coverage as the share
     of the query in the title and the snippet (INJURY_WEIGHTING). The exact-title and zero-evidence tests are the
@@ -453,7 +455,7 @@ def injury_relevance(injury, terms: list[str], title: str, snippet: str, q: str,
     snip_words = set(query_mod.free_tokens(_TAGS.sub(" ", snippet or "")))
     in_title = injury_coverage(injury, title_words, conds & condition_evidence(injury, title_words) if conds else set(), others)
     in_snippet = max(injury_coverage(injury, snip_words, conds, others), in_body)
-    _, _, exact, zero = evidence(terms, title, snippet, q)
+    exact, zero = exact_zero if exact_zero is not None else evidence(terms, title, snippet, q)[2:]
     factor = 1.0 + TITLE_WEIGHT * in_title + SNIPPET_WEIGHT * in_snippet
     if exact:
         factor *= EXACT_TITLE
@@ -885,7 +887,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             have = {r["url"] for r in rows}
             wanted = match(query_mod.fts_match_conditions(injury))
             extra = list(conn.execute(sql, (wanted,)).fetchall())
-            if not docs:   # every card that mentions the condition, however low bm25 puts it among the passages
+            if not docs and len(extra) >= n:   # every card that mentions it, however low bm25 put it among the passages
                 extra += conn.execute(sql.replace(f"LIMIT {n}", "").replace("kind != 'doc'", "kind = 'card'"), (wanted,)).fetchall()
             for r in extra:
                 if r["url"] not in have:
@@ -898,7 +900,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             for row in rows:
                 entry = {"kind": row["kind"], "url": row["url"], "title": row["title"], "_cat": row["category"]}
                 words = set(query_mod.free_tokens(f"{row['title']} {row['body']} {row['aliases'] or ''}"))
-                conds[row["url"]] = row_conditions(injury, entry, subjects, f"{row['title']} {row['body']}")
+                conds[row["url"]] = row_conditions(injury, entry, subjects, words=words)
                 carried[row["url"]] = injury_coverage(injury, words, conds[row["url"]], others)
                 title_words = set(query_mod.free_tokens(row["title"]))
                 titled[row["url"]] = injury_coverage(injury, title_words,
@@ -1083,18 +1085,18 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     for r in results:
         if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
             carried = r.get("_carried", 0.0)
+            _, _, exact, zero = evidence(reduced.terms, r["title"], r["snippet"], q, carried)
             if injury is not None and "_cond" not in r:
                 r["_cond"] = row_conditions(injury, r, subjects)       # a library article: its title and snippet
             if injury is not None and INJURY_WEIGHTING:
                 rel = injury_relevance(injury, reduced.terms, r["title"], r["snippet"], q, carried, r["_cond"],
-                                       semantic_ok=r.get("_semantic_ok", False))
+                                       semantic_ok=r.get("_semantic_ok", False), exact_zero=(exact, zero))
                 r["_coverage"] = carried
             else:
                 rel = relevance(reduced.terms, r["title"], r["snippet"], q, carried, semantic_ok=r.get("_semantic_ok", False))
             r["score"] *= rel
             if "_kw" in r:
                 r["_kw"] *= rel
-            _, _, exact, zero = evidence(reduced.terms, r["title"], r["snippet"], q, carried)
             r["_zero_evidence"] = zero and not exact
             # An injury described, and nothing in this row is evidence of the injury itself: only the place on the
             # body, or an ambiguous spelling with nothing medical beside it (MEDICAL_UNSUPPORTED_FACTOR). A row with
