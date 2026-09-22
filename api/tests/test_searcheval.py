@@ -425,3 +425,16 @@ def test_a_held_out_set_is_only_run_when_named(tmp_path):
     assert problems == [] and [r.id for r in rows] == ["a"]
     rows, problems = se.load_gold(tmp_path, ["heldout-2026"])
     assert problems == [] and [r.id for r in rows] == ["h"]
+
+
+def test_a_named_topic_held_out_set_is_held_out_too(tmp_path):
+    """`injury-heldout-2026-09-22` (task 25): a held-out set may carry its topic before the word, and is still
+    never part of a default (tuning) run."""
+    write(tmp_path / "demo.jsonl", {"id": "a", "query": "water", "expected": [{"url": "/x"}], "set": "demo"})
+    write(tmp_path / "injury-heldout-2026.jsonl", {"id": "h", "query": "gash", "expected": [{"url": "/y"}],
+                                                   "set": "injury-heldout-2026"})
+    write(tmp_path / "withheldout.jsonl", {"id": "w", "query": "fire", "expected": [{"url": "/z"}], "set": "withheldout"})
+    rows, problems = se.load_gold(tmp_path)
+    assert problems == [] and sorted(r.id for r in rows) == ["a", "w"]
+    rows, problems = se.load_gold(tmp_path, ["injury-heldout-2026"])
+    assert problems == [] and [r.id for r in rows] == ["h"]

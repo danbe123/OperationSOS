@@ -55,6 +55,13 @@ looks in (`fts=1`). It exits non-zero on any problem. Gold is verified against t
 the tuning was finished and its results were not looked at; it is a held-out check, not a tuning set. It is left out of a default run and of `ALL`: run it by naming it
 (`sos eval-search heldout-2026-09-21`), and do not tune on it.
 
+`injury-heldout-2026-09-22.jsonl` (46 rows, task 25) is the same kind of check for injury descriptions: 33 unseen
+injury/location phrasings (`group: injury`; bleeding, wounds, burns and scalds, sprains, fractures, eye, head, nosebleed,
+bites) whose box quick card should lead, and 13 contrasts (`group: contrast`, tagged `contrast`) that share an injury or
+body word but are not an injury described -- names ("Sam Gash", "Robert Burns poems"), phrases ("power cut", "bike brake
+bleeding", "burn a CD", "arm wrestling rules") and book requests -- which must not be read as one. It was committed before
+any search ran against it and is run once, by naming it. Any gold file with `heldout` as a word of its name is held out.
+
 ## Metrics
 
 Alternatives are interchangeable, so the first matching result is *the* relevant one:
