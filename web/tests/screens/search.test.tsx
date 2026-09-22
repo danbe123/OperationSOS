@@ -17,23 +17,22 @@ describe('Search screen', () => {
     // A mirrored page's survey prompt and footer are not a snippet: the row prints without one.
     expect(screen.queryByText(/Help us improve our website/)).toBeNull();
     expect(spy).toHaveBeenCalledWith('water', { sources: undefined });
-    // Every result is in the group of the source it came from, the box's own first, and the three
-    // matches inside one authored page are one row.
+    // One list in the engine's order, and the three matches inside one authored page are one row.
     const items = screen.getAllByRole('listitem').filter((li) => li.closest('.results'));
     expect(items).toHaveLength(7);
     // "Playbook" is the box's word; a household reads "Guide" — a word before the title, not a pill above it.
     expect(within(items[0]).getByText('Guide')).toHaveClass('result-source');
     // the query's word is marked in a title
     expect(within(items[0]).getByRole('link').querySelector('.result-title mark')).toHaveTextContent('Water');
-    // everything that is not the box's own is one list in the engine's order, the source a word before each title
-    const library = screen.getByRole('region', { name: 'From the library' });
-    expect(within(library).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+    // the box's own and the library's are one list in the engine's order, the source a word before each title
+    const library = screen.getByRole('region', { name: 'Results' });
+    expect(within(library).getAllByRole('link').map((a) => a.getAttribute('href')).slice(2)).toEqual([
       '/read/wikipedia_en_100_mini_2026-01/A/Water', '/read/nhs_uk/www.nhs.uk/conditions/dehydration/', '/read/nhs_uk/www.nhs.uk/conditions/anticoagulants/side-effects/',
       '/map?lat=50.88&lon=-1.03&z=13&label=Waterlooville', '/doc/nrr-2025#page=12',
     ]);
     expect(within(library).getByRole('link', { name: /National Risk Register 2025, page 12/ })).toHaveTextContent('UK official');
     expect(screen.queryByRole('region', { name: 'UK official' })).toBeNull();
-    const wiki = within(library).getAllByRole('link')[0];
+    const wiki = within(library).getAllByRole('link')[2];
     await act(async () => { wiki.click(); });
     expect(router.state.location.pathname).toBe('/read/wikipedia_en_100_mini_2026-01/A/Water');
   });
@@ -43,7 +42,7 @@ describe('Search screen', () => {
     const user = userEvent.setup();
     const { router } = renderRoute('/search?q=water');
     const chips = await screen.findByRole('group', { name: 'Filter by source' });
-    // The chips count the very rows underneath them, the box's own group leads, and past one row
+    // The chips count the very rows underneath them, in the engine's order, and past one row
     // of them the rest wait behind one control rather than pushing the first result off the screen.
     expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'Wikipedia 1', 'NHS 2', 'Place 1', 'More (1)']);
     await user.click(within(chips).getByRole('button', { name: 'More (1)' }));

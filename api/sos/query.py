@@ -61,6 +61,10 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "broke": ("broken", "fails", "failure"), "gone": ("off", "fails", "failure"),
 }
 
+# The machine sense of a word: "the boiler broke", "the water stops". An injury described ("broke my toe", "cannot stop
+# the bleeding") does not have it, so expansion leaves these out once analyse_injury has confirmed one.
+MACHINE_SENSES: frozenset[str] = frozenset({"fails", "failure", "off"})
+
 
 # Two words that are one idea: "power cut" is a phrase, not electricity AND a wound. Keyed by the adjacent
 # terms as typed; the phrase itself first, then what else it is called.
@@ -80,9 +84,10 @@ PHRASES: dict[tuple[str, str], tuple[str, ...]] = {
 }
 
 
-def expand_terms(terms: list[str]) -> list[list[str]]:
+def expand_terms(terms: list[str], injury: bool = False) -> list[list[str]]:
     """Each term with its synonyms beside it, the term first, and two adjacent terms that are one idea as
-    one group of phrases: the groups an FTS query ORs within and ANDs across."""
+    one group of phrases: the groups an FTS query ORs within and ANDs across. For an injury described,
+    without the synonyms that only a machine has (MACHINE_SENSES)."""
     out: list[list[str]] = []
     i = 0
     while i < len(terms):
@@ -92,18 +97,18 @@ def expand_terms(terms: list[str]) -> list[list[str]]:
             i += 2
             continue
         t = terms[i]
-        out.append([t] + [a for a in SYNONYMS.get(t.lower(), ()) if a != t])
+        out.append([t] + [a for a in SYNONYMS.get(t.lower(), ()) if a != t and not (injury and a in MACHINE_SENSES)])
         i += 1
     return out
 
 
-def fts_match_expanded(terms: list[str], mode: str = "and") -> str:
+def fts_match_expanded(terms: list[str], mode: str = "and", injury: bool = False) -> str:
     """`("tinned" OR "canned" OR "tins") "food"`: the keyword query for the box's own library, widened by
     the synonyms. A term without synonyms is itself."""
     if mode not in ("and", "or"):
         raise ValueError("mode must be 'and' or 'or'")
     groups = []
-    for alts in expand_terms(terms):
+    for alts in expand_terms(terms, injury):
         quoted = ['"' + a.replace('"', '""') + '"' for a in alts]
         groups.append(quoted[0] if len(quoted) == 1 else "(" + " OR ".join(quoted) + ")")
     return (" OR " if mode == "or" else " AND ").join(groups)

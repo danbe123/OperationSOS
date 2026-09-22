@@ -6,7 +6,7 @@ import { library, search, status } from '../fixtures/api';
 import { QUICK_FINDS } from '../../src/screens/Find';
 
 describe('Find', () => {
-  it('searches: the field first, the sources and the count on one row, the box\'s own guidance first', async () => {
+  it('searches: the field first, the sources and the count on one row, then one list of results', async () => {
     vi.spyOn(api, 'search').mockResolvedValue(search);
     vi.spyOn(api, 'library').mockResolvedValue(library);
     renderRoute('/search?q=water');
@@ -14,12 +14,12 @@ describe('Find', () => {
     expect(await screen.findByRole('combobox', { name: 'Search' })).toHaveValue('water');
     expect(screen.queryByRole('heading', { level: 1 })).toBeNull();
     await waitFor(() => expect(document.title).toBe('Find · SOS'));
-    // The box's own guidance comes first, under its own heading, and every other source follows in
-    // a group of its own: one ranked list put a mirror of somebody's website above the guides.
+    // One list, the box's own and the library's together, with no group headings.
     // Three matches inside one authored page are one row: the anchors are not different answers.
-    const own = await screen.findByRole('region', { name: 'From this box' });
-    expect(within(own).getAllByRole('listitem')).toHaveLength(2);
-    expect(screen.getAllByRole('listitem').filter((li) => li.closest('.results'))).toHaveLength(7);
+    const own = await screen.findByRole('region', { name: 'Results' });
+    expect(within(own).getAllByRole('listitem')).toHaveLength(7);
+    expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'From this box' })).toBeNull();
     // the source is a word before the title, on the same line, not a pill above it
     const first = within(own).getAllByRole('link')[0];
     expect(first.querySelector('.result-line .result-source')).not.toBeNull();
@@ -29,6 +29,23 @@ describe('Find', () => {
     // nothing that belongs to the Library is repeated here
     expect(screen.queryByRole('region', { name: 'Browse the library' })).toBeNull();
     expect(screen.queryByRole('navigation', { name: 'Quick finds' })).toBeNull();
+  });
+
+  it('keeps the engine\'s order: a library answer that outranks the box\'s own rows is above them', async () => {
+    // "broke my toe": the fracture pages were under twelve of the box's weak rows while the box had a group
+    // of its own above the library.
+    const fracture = { source: 'medlineplus', badge: 'MedlinePlus', title: 'Fracture', snippet: 'a broken bone', url: '/read/medlineplus/fracture', score: 0.49, kind: 'article' as const };
+    const weak = { source: 'playbooks', badge: 'Playbook', title: 'Economic collapse', snippet: 'the bank is failing', url: '/s/economic-collapse', score: 0.2, kind: 'playbook' as const };
+    const card = { source: 'playbooks', badge: 'Quick card', title: 'Broken bones', snippet: 'a limb bent the wrong way', url: '/medical/card/broken-bones', score: 1.1, kind: 'card' as const };
+    vi.spyOn(api, 'search').mockResolvedValue({ ...search, q: 'broke my toe', query: 'broke toe', results: [card, fracture, weak] });
+    vi.spyOn(api, 'library').mockResolvedValue(library);
+    renderRoute('/search?q=broke%20my%20toe');
+    const list = await screen.findByRole('region', { name: 'Results' });
+    expect(within(list).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+      '/medical/card/broken-bones', '/read/medlineplus/fracture', '/s/economic-collapse',
+    ]);
+    const chips = screen.getByRole('group', { name: 'Filter by source' });
+    expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['From this box 2', 'MedlinePlus 1']);
   });
 
   it('before a search: the field, one-tap quick finds, one line of what it searches, and the Library\'s shelves', async () => {

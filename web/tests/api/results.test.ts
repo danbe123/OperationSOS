@@ -15,9 +15,9 @@ describe('cleanBadge', () => {
 });
 
 describe('chipsFor', () => {
-  it('leads with the box\'s own chip whatever the engine ranked first, then the sources in their order', () => {
+  it('puts the chips in the order the engine first ranks each source, the box\'s own one chip among them', () => {
     const chips = chipsFor([row('reference', 'Wikipedia'), row('playbooks', 'Page'), row('nhs', 'NHS'), row('playbooks', 'Guide'), row('nhs', 'NHS', 'y')]);
-    expect(chips.map((c) => [c.title, c.count])).toEqual([['From this box', 2], ['Wikipedia', 1], ['NHS', 2]]);
+    expect(chips.map((c) => [c.title, c.count])).toEqual([['Wikipedia', 1], ['From this box', 2], ['NHS', 2]]);
   });
 });
 
