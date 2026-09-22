@@ -277,8 +277,12 @@ def test_search_wikipedia_hits_are_rescored_by_meaning_never_added(env, encoded,
     wiki_before = [r for r in baseline["results"] if r["url"].startswith("/read/wikipedia_en_all_maxi/")]
     assert [r["url"] for r in wiki_before] == [f"/read/wikipedia_en_all_maxi/{encoded}"]
     baseline_score = wiki_before[0]["score"]
+    # The NHS "Bleeding" row shares no word of "wikipedia article" in its title or snippet -- genuine zero
+    # evidence, not a row this test is about -- so task 24's honest-results admission gate now leaves it out
+    # rather than padding `limit` with it (it used to be display, downweighted to BOILERPLATE, which is what
+    # this assertion checked before that gate existed).
     other_before = [r["url"] for r in baseline["results"] if not r["url"].startswith("/read/wikipedia_en_all_maxi/")]
-    assert other_before == ["/read/nhs_uk/conditions/bleeding"]
+    assert other_before == []
 
     cos = 0.77   # inside the lift's ramp (0.72 to 0.82), so the lift is a real, partial one
     sem = RerankSemantic({decoded: cos})

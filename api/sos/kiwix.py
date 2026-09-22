@@ -56,6 +56,23 @@ def strip_tags(text: str) -> str:
     return _WS_RE.sub(" ", _TAG_RE.sub("", html.unescape(text or ""))).strip()
 
 
+def _element_text(el: "ET.Element | None") -> str:
+    """Every bit of text an element carries, tags and all -- unlike `Element.findtext`, which returns only
+    the text immediately after the opening tag and silently drops anything inside or after a child element.
+    Kiwix's search `<description>` marks its matched words with an inline `<b>…</b>` (real XML, not escaped
+    text), so `findtext("description")` was truncating every snippet with a highlight to whatever text came
+    before the *first* match -- losing the matched word and everything after it (task 24, 2026-09-22: this
+    silently starved `relevance()`'s snippet-evidence check of the very evidence a keyword hit's highlight is
+    supposed to be)."""
+    if el is None:
+        return ""
+    parts = [el.text or ""]
+    for child in el:
+        parts.append(ET.tostring(child, encoding="unicode"))
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
 def _split_content_link(link: str) -> tuple[str, str]:
     marker = "/content/"
     idx = link.find(marker)
@@ -83,7 +100,7 @@ def parse_search_xml(text: str) -> tuple[int, list[KiwixHit]]:
     for item in channel.findall("item"):
         link = (item.findtext("link") or "").strip()
         book, path = _split_content_link(link)
-        snippet = strip_tags(item.findtext("description") or "")
+        snippet = strip_tags(_element_text(item.find("description")))
         snippet = snippet.strip(". ").strip()
         hits.append(KiwixHit(title=(item.findtext("title") or "").strip(), path=path, snippet=snippet, book=book))
     return total, hits

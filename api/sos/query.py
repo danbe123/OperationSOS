@@ -36,6 +36,8 @@ SYNONYMS: dict[str, tuple[str, ...]] = {
     "bleed": ("bleeding", "blood"), "bleeding": ("bleed", "blood", "haemorrhage"), "blood": ("bleeding",),
     "burn": ("burns", "scald"), "burns": ("burn", "scald"), "scald": ("burn", "burns"),
     "broken": ("fracture", "break"), "fracture": ("broken", "break"), "wound": ("cut", "laceration", "bleeding"), "cut": ("wound", "laceration"),
+    # "gash" has no keyword-index synonym today (task 24): a plain-English "gash on arm" shares no content
+    "gash": ("wound", "cut", "laceration", "bleeding"),
     "wee": ("urine",), "poo": ("stool", "faeces", "diarrhoea"), "diarrhoea": ("diarrhea", "stool"), "diarrhea": ("diarrhoea",),
     "petrol": ("fuel", "diesel"), "diesel": ("fuel", "petrol"), "fuel": ("petrol", "diesel"),
     "torch": ("light", "lamp"), "torches": ("torch", "light"), "lamp": ("light", "torch"),

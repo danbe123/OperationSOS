@@ -49,6 +49,21 @@ TITLE_WEIGHT = 1.2
 SNIPPET_WEIGHT = 0.5
 EXACT_TITLE = 2.2
 BOILERPLATE = 0.45
+# Task 24 (2026-09-22): a row with at most half of a multi-idea query's ideas in its title and nothing at all
+# in its snippet or body -- one idea out of two, or fewer than half of three or more, not corroborated
+# anywhere else -- is real overlap (it is not the BOILERPLATE, zero-overlap case) but is weak evidence on its
+# own: a surname that happens to share one word with "gash on arm" (Sam Gash), a firearm model that shares
+# "arm(s)" the same way (Olympic Arms). Multiplied down, not out, the same as BOILERPLATE -- a row that is
+# also strong on some other signal (rank, source weight) can still surface, but it no longer gets the same
+# credit as a real match. Not applied to a single-idea query (a one-word medicine lookup's only group is
+# either found or it is not, never "at most half") or to a row already corroborated by Wikipedia's own
+# semantic lift (`semantic_ok`), which is better evidence than this heuristic and must not be double-penalised.
+WEAK_EVIDENCE = 0.5
+WEAK_PENALTY = 0.6
+# `limit` is a maximum, not a target: a row with no evidence anywhere that it is about the query (title and
+# snippet both empty of it) is dropped rather than padding a short results list out. A module constant, not
+# inlined at the filter, so a lab.py replay can ablate this one step in isolation.
+DROP_ZERO_EVIDENCE = True
 PER_SOURCE = 3      # a source's fourth result and beyond give way a little to the rest
 SOURCE_DECAY = 0.85
 # Semantic: how many nearest passages are asked for, how near counts, and what one is worth beside a keyword
@@ -59,6 +74,12 @@ SOURCE_DECAY = 0.85
 # one of 21,000 converted document pages, whose neighbourhood is dense with strangers (a building regulation
 # for "generator indoors" at 0.71; the box's own "Mains electricity" answers at 0.68).
 SEMANTIC_K = 20
+# A card's own retrieval budget (task 24, 2026-09-22): the ordinary dense-passage fusion below still reads
+# only the nearest SEMANTIC_K, but the quick cards' promotion loop (CARD_COS, CARDS_KEPT) scans this much
+# deeper, so a card is not starved out of consideration by the ~21,000 converted document pages and other
+# passages competing for the same shallow top 20 before card protection ever runs. The score against every
+# passage is already computed regardless of k (`vectors @ query`, api/sos/embeddings.py), so this is free.
+CARD_SEMANTIC_K = 500
 SEMANTIC_FLOOR = {          # (found by the words too, a converted document's page) -> the cosine asked for
     (True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74,
 }
@@ -165,7 +186,15 @@ def wikipedia_lift(cos: float) -> float:
 # A question rarely has every one of its words in the passage that answers it ("generator indoors": the
 # Mains electricity page says "never indoors" of a generator two sentences apart): when the AND finds fewer
 # than this, the OR is asked too, its rows after the AND's and ranked by how many of the words they carry.
-FTS_OR_BELOW = 5
+# Raised from 5 to 10 (task 24, 2026-09-22): "gash on arm" widens "gash" to wound/cut/laceration/bleeding
+# (query.SYNONYMS) but still ANDs the literal "arm", which "armed" (self-defence, terrorism pages) stems to
+# and satisfies -- nine incidental AND rows, past the old bar of 5, so the OR that would have surfaced the
+# Severe bleeding and Wound cleaning cards never ran at all. Re-ranking (`fts_rows`'s term_share sort) already
+# sorts the OR's real matches above the AND's incidental ones once both are candidates; the bar only decided
+# whether the OR got asked. Measured (`lab.py --exp or-below-10 or-below-15`): 10 raises own-library hit@3
+# 0.857 -> 0.873 with no other guardrail lower; 15 loses a Wikipedia row (0.570 -> 0.558 hit@3) for no further
+# own-library gain, so 10 was kept.
+FTS_OR_BELOW = 10
 # How many rows the keyword index hands over to be re-ranked, for the box's own 750 passages and for the
 # 21,000 converted document pages separately: one bm25 limit of twenty across both let "water" AND ("stops"
 # OR "off" OR "fails") fill up before the Water module's long "What to do" was reached — 173 of the box's
@@ -264,19 +293,36 @@ def norm_title(title: str) -> str:
     return " ".join(_NHS_TAIL.sub("", title or "").lower().split())
 
 
-def relevance(terms: list[str], title: str, snippet: str, q: str, in_body: float = 0.0) -> float:
+def evidence(terms: list[str], title: str, snippet: str, q: str, in_body: float = 0.0) -> tuple[float, float, bool, bool]:
+    """(share of the query in the title, share in the snippet, whether the title is an exact match, whether
+    this is a boilerplate match with no evidence anywhere) -- the measurements `relevance` scores and the
+    final admission pass (`_search`'s "honest results" step) re-reads to decide what may pad `limit` out."""
+    in_title = term_share(terms, title)
+    in_snippet = max(term_share(terms, snippet), in_body)
+    exact = bool(norm_title(title) == " ".join((q or "").lower().split()) or (terms and norm_title(title) == " ".join(terms)))
+    zero = in_title == 0 and in_snippet == 0 and "<b>" not in (snippet or "")
+    return in_title, in_snippet, exact, zero
+
+
+def relevance(terms: list[str], title: str, snippet: str, q: str, in_body: float = 0.0, *, semantic_ok: bool = False) -> float:
     """What a result's own words say about the query, as a multiplier on its class score: the whole query in
     the title counts most, in the snippet less; the title being the query leads its source; a hit with the
     query in neither the title nor the snippet is a boilerplate match (a crawled site's footer, a page that
     mentions the word once in a list) and is put down rather than out. For the box's own passages the share
-    of the words carried by the whole passage is known and stands in for the engine's fourteen-word snippet."""
-    in_title = term_share(terms, title)
-    in_snippet = max(term_share(terms, snippet), in_body)
+    of the words carried by the whole passage is known and stands in for the engine's fourteen-word snippet.
+    A hit with only a fragment of a multi-idea query in the title and nothing at all in the snippet is put
+    down too, a lesser amount (`WEAK_PENALTY`): real overlap, but on its own no more than a proper noun or an
+    unrelated model name sharing one of the query's several words ("Sam Gash", "Olympic Arms" for "gash on
+    arm") -- unless a `semantic_ok` caller (Wikipedia's own rerank cosine) has already corroborated the row
+    by other evidence, which must not be double-penalised by this heuristic."""
+    in_title, in_snippet, exact, zero = evidence(terms, title, snippet, q, in_body)
     factor = 1.0 + TITLE_WEIGHT * in_title + SNIPPET_WEIGHT * in_snippet
-    if norm_title(title) == " ".join((q or "").lower().split()) or (terms and norm_title(title) == " ".join(terms)):
+    if exact:
         factor *= EXACT_TITLE
-    elif in_title == 0 and in_snippet == 0 and "<b>" not in (snippet or ""):
+    elif zero:
         factor *= BOILERPLATE
+    elif not semantic_ok and in_snippet == 0 and in_title <= WEAK_EVIDENCE and len(query_mod.expand_terms(terms)) >= 2:
+        factor *= WEAK_PENALTY
     return factor
 
 
@@ -629,7 +675,10 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             for r, key in zip(wiki_hits, keys):
                 cos = wiki_scores.get(key)
                 if cos is not None:
-                    r["score"] += wikipedia_lift(cos)
+                    lift = wikipedia_lift(cos)
+                    r["score"] += lift
+                    if lift > 0:
+                        r["_semantic_ok"] = True   # corroborated by meaning already: exempt from WEAK_PENALTY below
 
     item_weights = {r["id"]: float(r["search_weight"] or 1.0) for r in conn.execute("SELECT id, search_weight FROM library_items")}
     fts_sql = ("SELECT title, doc_id, kind, category, page, url, body, snippet(fts_docs, 1, '<b>', '</b>', '…', 14) AS snip "
@@ -717,7 +766,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         by_url = {r["url"]: r for r in results}
 
         try:
-            near = await semantic.query(q, SEMANTIC_K)
+            near = await semantic.query(q, CARD_SEMANTIC_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             near = []
             semantic_failed = True
@@ -728,12 +777,35 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                     f"SELECT title, doc_id, kind, category, page, url, substr(body, 1, 400) AS body FROM fts_docs "
                     f"WHERE url IN ({','.join('?' * len(near))})", [u for u, _ in near]).fetchall():
                 found[row["url"]] = row
-            for url, cos in near:
+            # A card's own budget: scanned the full CARD_SEMANTIC_K depth for promotion eligibility, not just
+            # the shallower SEMANTIC_K the ordinary dense-passage fusion below reads -- a card can sit well
+            # past rank 20 (task 24: "spilled boiling water on my leg", the Burns card at rank 31, cosine
+            # 0.63) while the nearest twenty are converted-document pages on an unrelated topic. Cheap: the
+            # dot product against every passage is computed regardless of how deep `near` is asked for.
+            #
+            # The deep two thirds of that budget (past SEMANTIC_K) is a rescue for a query with no
+            # shallow-qualifying card at all, not a wider hunt for a second one: measured live, "what should
+            # I do when a flood warning is issued" already had its one good card (Electric shock and
+            # lightning) inside SEMANTIC_K, and reading deeper for a *second* CARDS_KEPT slot pulled in
+            # "Recovery position" at rank 72 (cosine 0.65 -- a real card, generically emergency-adjacent, not
+            # what was asked) which, once both were protected, displaced the actual answer (Severe storms and
+            # flooding, previously second) out of the top three. So: once any card at all has qualified --
+            # shallow or the one deep rescue -- a further deep candidate is not considered; a second shallow
+            # card (rank <= SEMANTIC_K) still can be, exactly as before this budget existed.
+            for rank, (url, cos) in enumerate(near, 1):
+                if rank > SEMANTIC_K and card_pages:
+                    continue
                 page = url.split("#", 1)[0]
                 if (cos >= CARD_COS and found.get(url) is not None and found[url]["kind"] == "card"
                         and page not in card_pages and len(card_pages) < CARDS_KEPT):
                     card_pages.append(page)
             for dense_rank, (url, cos) in enumerate(near, 1):
+                # Only the ordinary SEMANTIC_K-deep neighbourhood feeds the dense-passage fusion below, exactly
+                # as before CARD_SEMANTIC_K existed -- except a card the loop above just promoted, which needs
+                # a row to protect even when its natural rank is deeper than SEMANTIC_K (it gets one here, with
+                # a correspondingly small dense_bonus; `_keep_rows` moves it by protection, not by that score).
+                if dense_rank > SEMANTIC_K and url.split("#", 1)[0] not in card_pages:
+                    continue
                 row = found.get(url)
                 if row is None:
                     continue
@@ -795,18 +867,35 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     # already: the rescoring is for articles and the box's own passages.
     for r in results:
         if r.get("via") != "meaning" and r["kind"] not in ("place", "book"):
-            rel = relevance(reduced.terms, r["title"], r["snippet"], q, r.get("_carried", 0.0))
+            carried = r.get("_carried", 0.0)
+            rel = relevance(reduced.terms, r["title"], r["snippet"], q, carried, semantic_ok=r.get("_semantic_ok", False))
             r["score"] *= rel
             if "_kw" in r:
                 r["_kw"] *= rel
+            _, _, exact, zero = evidence(reduced.terms, r["title"], r["snippet"], q, carried)
+            r["_zero_evidence"] = zero and not exact
     kw_pos = _keyword_positions(results) if semantic is not None else {}
     results = dedupe(results)
     results = dedupe_titles(results)
     results = diversify(results)
+    protected_ids: set[int] = set()
     if semantic is not None:
         medicines = _kept_medicines(results, kw_pos, reduced.terms)
-        results = _keep_rows(results, _kept_cards(results, kw_pos, [] if medicines else card_pages) + medicines)
-        results = _keep_rows(results, _kept_books(results), top=BOOKS_TOP, protect=KEPT_TOP)
+        cards = _kept_cards(results, kw_pos, [] if medicines else card_pages)
+        results = _keep_rows(results, cards + medicines)
+        books = _kept_books(results)
+        results = _keep_rows(results, books, top=BOOKS_TOP, protect=KEPT_TOP)
+        protected_ids = {id(r) for r in cards + medicines + books}
+
+    # Honest results (task 24, 2026-09-22): `limit` is a maximum, not a target to fill. A row with no
+    # evidence anywhere that it is about the query -- BOILERPLATE tier, the words in neither its title nor
+    # its snippet -- is not display-worthy padding just because a slot remains; ten results with noise at
+    # the bottom is worse than seven that are all real. A protected row (a kept card, medicine or promoted
+    # book) and a row meaning itself added (its own floor already is the evidence gate) are never dropped.
+    # `DROP_ZERO_EVIDENCE` is a module constant, not inlined, so a lab.py replay can ablate this step alone.
+    if DROP_ZERO_EVIDENCE:
+        results = [r for r in results if id(r) in protected_ids or r.get("via") == "meaning"
+                   or r["kind"] in ("place", "book") or not r.get("_zero_evidence")]
 
     counts: dict[str, int] = {}
     for r in results:
@@ -826,6 +915,8 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         r.pop("_carried", None)
         r.pop("_kw", None)
         r.pop("_cos", None)
+        r.pop("_zero_evidence", None)
+        r.pop("_semantic_ok", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
     if embedding is not None and embedding.failed:

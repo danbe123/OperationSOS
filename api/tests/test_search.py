@@ -40,6 +40,36 @@ def test_classify(row, cls):
     assert search.classify(row) == cls
 
 
+def test_weak_evidence_penalty_falls_on_a_single_fragment_of_a_multi_idea_query():
+    """Task 24 ("gash on arm"): a title matching only one of a multi-idea query's ideas, with nothing at all
+    in the snippet, is real overlap but weak on its own -- a surname sharing a word with the query, a model
+    name sharing another -- and is put down, though less than a true BOILERPLATE (zero-overlap) match."""
+    terms = ["gash", "arm"]
+    rel = search.relevance(terms, "Sam Gash", "An American football fullback, born 1969 in North Carolina.", "gash on arm")
+    full = search.relevance(terms, "Gash on the arm", "How to treat a gash on the arm at home.", "gash on arm")
+    boilerplate = search.relevance(terms, "Unrelated", "Nothing about this page matches at all.", "gash on arm")
+    assert boilerplate < rel < full
+    assert rel == pytest.approx((1.0 + search.TITLE_WEIGHT * 0.5) * search.WEAK_PENALTY)
+
+
+def test_weak_evidence_penalty_does_not_apply_to_a_single_idea_query():
+    """A one-word medicine lookup's only idea is either found or it is not -- there is no second idea for a
+    lone fragment to be weak relative to, so the ordinary (unpenalised) multiplier applies."""
+    terms = ["paracetamol"]
+    rel = search.relevance(terms, "Common questions about paracetamol for adults - NHS", "", "paracetamol")
+    assert rel == pytest.approx(1.0 + search.TITLE_WEIGHT * 1.0)
+
+
+def test_weak_evidence_penalty_does_not_apply_when_semantic_already_corroborated_the_row():
+    """A Wikipedia row already lifted by its own rerank cosine (search.py's `semantic_ok`) has better evidence
+    than this lexical heuristic and must not be double-penalised by it."""
+    terms = ["gash", "arm"]
+    unlifted = search.relevance(terms, "Sam Gash", "A short biography.", "gash on arm")
+    lifted = search.relevance(terms, "Sam Gash", "A short biography.", "gash on arm", semantic_ok=True)
+    assert lifted > unlifted
+    assert lifted == pytest.approx(1.0 + search.TITLE_WEIGHT * 0.5)
+
+
 def test_medical_intent():
     assert search.is_medical_intent(["severe", "bleeding"]) is True
     assert search.is_medical_intent(["power", "cut"]) is False
@@ -93,6 +123,41 @@ def test_search_merges_kiwix_and_fts_and_groups(respx_mock, conn, env):
     doc = next(r for r in resp["results"] if r["kind"] == "doc")
     assert doc["page"] == 1
     assert resp["took_ms"] >= 0
+
+
+@respx.mock(base_url=BASE)
+def test_a_row_with_no_evidence_anywhere_does_not_pad_out_the_limit(respx_mock, conn, env):
+    """Task 24: `limit` is a maximum, not a target to fill. A Kiwix hit that shares no word of the query in
+    its title or snippet, and carries no `<b>` highlight either, is BOILERPLATE-tier -- real once (put down,
+    not out), but now left off the page entirely rather than padding a short list."""
+    xml = ("<rss><channel>"
+           "<item><title>Precipitation</title><link>/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation</link>"
+           "<description>How <b>water</b> falls from clouds as rain and snow.</description></item>"
+           "<item><title>Unrelated topic</title><link>/kiwix/content/wikipedia_en_100_mini_2026-01/Unrelated</link>"
+           "<description>Nothing here shares a single word with the query.</description></item>"
+           "</channel></rss>")
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text=xml))
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    urls_ = [r["url"] for r in resp["results"]]
+    assert any(u.endswith("/Precipitation") for u in urls_)
+    assert not any(u.endswith("/Unrelated") for u in urls_)
+
+
+@respx.mock(base_url=BASE)
+def test_drop_zero_evidence_can_be_ablated_for_measurement(respx_mock, conn, env, monkeypatch):
+    """`DROP_ZERO_EVIDENCE` is a module constant precisely so a lab.py replay can turn this one step off in
+    isolation, the same pattern `KEPT_TOP`, `CARD_COS` and the rest already use: with it off, the old
+    padding-to-limit behaviour returns."""
+    xml = ("<rss><channel>"
+           "<item><title>Precipitation</title><link>/kiwix/content/wikipedia_en_100_mini_2026-01/Precipitation</link>"
+           "<description>How <b>water</b> falls from clouds as rain and snow.</description></item>"
+           "<item><title>Unrelated topic</title><link>/kiwix/content/wikipedia_en_100_mini_2026-01/Unrelated</link>"
+           "<description>Nothing here shares a single word with the query.</description></item>"
+           "</channel></rss>")
+    respx_mock.get("/search").mock(return_value=httpx.Response(200, text=xml))
+    monkeypatch.setattr(search, "DROP_ZERO_EVIDENCE", False)
+    resp = _run(search.search(conn, env, KiwixClient(BASE), "water"))
+    assert any(r["url"].endswith("/Unrelated") for r in resp["results"])
 
 
 @respx.mock(base_url=BASE)

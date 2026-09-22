@@ -1,0 +1,22 @@
+{"id": "inj-01", "query": "gash on arm", "expected": [{"item": "card:severe-bleeding"}, {"item": "card:wound-cleaning"}], "set": "injury-fresh", "tags": ["guard"], "notes": "the reported bug query; a gash is a deep cut, this is what the box's own bleeding/wound-cleaning cards are for"}
+{"id": "inj-02", "query": "blood won't stop", "expected": [{"item": "card:severe-bleeding"}], "set": "injury-fresh", "notes": "plain household wording for uncontrolled bleeding"}
+{"id": "inj-03", "query": "can't stop the bleeding", "expected": [{"item": "card:severe-bleeding"}], "set": "injury-fresh", "notes": "near-paraphrase of inj-02, shares only 'bleeding'"}
+{"id": "inj-04", "query": "deep cut leg", "expected": [{"item": "card:severe-bleeding"}, {"item": "card:wound-cleaning"}], "set": "injury-fresh", "notes": "same family as gash on arm, different limb"}
+{"id": "inj-05", "query": "burned my hand on the stove", "expected": [{"item": "card:burns"}], "set": "injury-fresh", "notes": "burns.md: 'skin is burned by heat, steam, hot liquid...'"}
+{"id": "inj-06", "query": "spilled boiling water on my leg", "expected": [{"item": "card:burns"}], "set": "injury-fresh", "notes": "a scald, still the burns card"}
+{"id": "inj-07", "query": "child swallowed something", "expected": [{"item": "card:poisoning"}], "set": "injury-fresh", "notes": "poisoning.md: 'someone has swallowed or taken something harmful'"}
+{"id": "inj-08", "query": "kid ate pills from the cabinet", "expected": [{"item": "card:poisoning"}], "set": "injury-fresh", "notes": "poisoning, household phrasing"}
+{"id": "inj-09", "query": "twisted my ankle badly", "expected": [{"item": "card:sprains-strains"}], "set": "injury-fresh", "notes": "sprains-strains.md: 'a twisted or overstretched joint'"}
+{"id": "inj-10", "query": "something stuck in his throat and he can't breathe", "expected": [{"item": "card:choking"}], "set": "injury-fresh", "notes": "choking.md: 'cannot breathe, cough or speak'"}
+{"id": "inj-11", "query": "he's turning blue and can't cough anything up", "expected": [{"item": "card:choking"}], "set": "injury-fresh", "notes": "choking paraphrase, no word 'choking' or 'choke' at all"}
+{"id": "inj-12", "query": "nose won't stop bleeding", "expected": [{"item": "card:nosebleed"}], "set": "injury-fresh", "notes": "nosebleed.md"}
+{"id": "inj-13", "query": "fingers gone numb and white from the cold", "expected": [{"item": "card:frostbite"}], "set": "injury-fresh", "notes": "frostbite.md: 'skin numb, waxy white, grey or hard after cold'"}
+{"id": "inj-14", "query": "dizzy, dark wee, haven't drunk anything all day", "expected": [{"item": "card:dehydration"}], "set": "injury-fresh", "notes": "dehydration.md: 'dark urine, dry mouth, dizziness'"}
+{"id": "inj-15", "query": "hit his head and he's confused", "expected": [{"item": "card:head-injury"}], "set": "injury-fresh", "notes": "head-injury.md: 'a blow or fall on the head: dazed... confused'"}
+{"id": "inj-16", "query": "something stuck in my eye", "expected": [{"item": "card:eye-injury"}], "set": "injury-fresh", "notes": "eye-injury.md: 'something in the eye'"}
+{"id": "inj-17", "query": "shivering uncontrollably and slurring his words", "expected": [{"item": "card:hypothermia"}], "set": "injury-fresh", "notes": "hypothermia.md: 'shivering, cold pale skin, slurred speech'"}
+{"id": "inj-18", "query": "collapsed in the heat, skin really hot and dry", "expected": [{"item": "card:heat-stroke"}], "set": "injury-fresh", "notes": "heat-stroke.md: 'hot skin, confusion... temperature over 40C'"}
+{"id": "inj-19", "query": "he's shaking on the ground and foaming at the mouth", "expected": [{"item": "card:seizures"}], "set": "injury-fresh", "notes": "seizures.md; deliberately close to the still-missing safety-seizures-hard gold row"}
+{"id": "inj-20", "query": "diabetic and gone shaky and sweaty", "expected": [{"item": "card:low-blood-sugar"}], "set": "injury-fresh", "notes": "low-blood-sugar.md: 'shaky, sweaty, pale, confused or drowsy'"}
+{"id": "inj-21", "query": "pale and clammy after the accident", "expected": [{"item": "card:shock"}], "set": "injury-fresh", "notes": "shock.md: 'pale clammy skin, fast weak pulse'"}
+{"id": "inj-22", "query": "arm bent the wrong way after the fall", "expected": [{"item": "card:broken-bones"}], "set": "injury-fresh", "notes": "broken-bones.md: 'a limb bent the wrong way'"}
