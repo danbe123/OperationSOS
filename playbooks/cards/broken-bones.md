@@ -4,6 +4,22 @@ title: Broken bones
 icon: bone
 order: 8
 summary: Supporting a suspected fracture and knowing which need an ambulance.
+conditions: [fracture]
+aliases:
+  - fracture
+  - broken bone
+  - broken arm
+  - broken leg
+  - broken wrist
+  - broken ankle
+  - broken collarbone
+  - broken hip
+  - bone sticking out
+  - bent the wrong way
+  - snapped bone
+  - cracked bone
+  - splint
+  - sling
 ---
 
 ## When to use

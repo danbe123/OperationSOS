@@ -4,6 +4,14 @@ title: Spinal injury
 icon: bone
 order: 25
 summary: Keeping the neck and back still after a fall, dive or crash so that a damaged spine does no further harm.
+conditions: [spinal_injury]
+aliases:
+  - neck injury
+  - back injury
+  - broken neck
+  - broken back
+  - spine injury
+  - spinal cord
 ---
 
 ## When to use

@@ -4,6 +4,13 @@ title: Nosebleed
 icon: blood
 order: 37
 summary: Stopping a nosebleed with the right pinch for the right time, and when it needs more than that.
+conditions: [nosebleed]
+aliases:
+  - nose bleed
+  - bleeding nose
+  - bloody nose
+  - blood from the nose
+  - "nose won't stop bleeding"
 ---
 
 ## When to use

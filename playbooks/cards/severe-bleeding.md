@@ -4,6 +4,25 @@ title: Severe bleeding
 icon: blood
 order: 3
 summary: Stopping heavy bleeding with pressure, packing and a tourniquet.
+conditions: [bleeding, open_wound]
+aliases:
+  - heavy bleeding
+  - bleeding heavily
+  - bleeding badly
+  - "won't stop bleeding"
+  - "blood won't stop"
+  - "can't stop the bleeding"
+  - spurting blood
+  - blood pouring out
+  - gushing blood
+  - losing a lot of blood
+  - blood everywhere
+  - haemorrhage
+  - hemorrhage
+  - arterial bleed
+  - tourniquet
+  - stab wound
+  - deep wound
 ---
 
 ## When to use

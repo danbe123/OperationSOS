@@ -5,15 +5,19 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
+FTS_DOCS_DDL = """fts5(
+  title, body, doc_id UNINDEXED, kind UNINDEXED, category UNINDEXED, scenarios UNINDEXED, page UNINDEXED, url UNINDEXED,
+  aliases, tokenize='porter unicode61 remove_diacritics 2')"""
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS library_items (
   id TEXT PRIMARY KEY, title, kind, tier, category, scenarios_json, dest, pdf_dest, size_bytes INTEGER, as_at, licence,
   priority INTEGER, reader_home, description, search_weight REAL NOT NULL DEFAULT 1.0, suggest INTEGER NOT NULL DEFAULT 0,
   overlay_json, available INTEGER NOT NULL DEFAULT 0, local_path, fts INTEGER NOT NULL DEFAULT 0,
   resolved_name, resolved_size INTEGER, resolved_as_at, pdf_available INTEGER NOT NULL DEFAULT 0, source_type, source_tool);
-CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(
-  title, body, doc_id UNINDEXED, kind UNINDEXED, category UNINDEXED, scenarios UNINDEXED, page UNINDEXED, url UNINDEXED,
-  tokenize='porter unicode61 remove_diacritics 2');
+CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING {fts_docs};
+CREATE TABLE IF NOT EXISTS card_subjects (page TEXT PRIMARY KEY, title TEXT NOT NULL, conditions TEXT NOT NULL DEFAULT '[]',
+  aliases TEXT NOT NULL DEFAULT '[]');
 CREATE VIRTUAL TABLE IF NOT EXISTS fts_places USING fts5(
   name, kind UNINDEXED, lat UNINDEXED, lon UNINDEXED, region UNINDEXED, postcode UNINDEXED,
   tokenize='unicode61 remove_diacritics 2', prefix='2 3 4');
@@ -44,7 +48,14 @@ CREATE TABLE IF NOT EXISTS reading (key TEXT PRIMARY KEY, title TEXT NOT NULL, a
   percent REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS recent (key TEXT PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, cover_url TEXT,
   viewed_at TEXT NOT NULL);
-"""
+""".replace("{fts_docs}", FTS_DOCS_DDL)
+
+
+# The keyword index's columns, and bm25's weight for each: a title counts five times a body word, a card's aliases
+# (task 25: other ways a household words the card's subject, `playbooks/cards/*.md` front matter) as much as its
+# title, the unindexed bookkeeping columns nothing. `aliases` is appended so the body stays column 1 for snippet().
+FTS_DOCS_COLUMNS = ("title", "body", "doc_id", "kind", "category", "scenarios", "page", "url", "aliases")
+FTS_DOCS_BM25 = "bm25(fts_docs, 5.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0)"
 
 
 def connect(path: Path | str, *, durable: bool = False) -> sqlite3.Connection:
@@ -69,7 +80,23 @@ def _ensure_column(conn: sqlite3.Connection, table: str, column: str, decl: str)
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
 
 
+def _migrate_fts_docs(conn: sqlite3.Connection) -> None:
+    """An index made before the `aliases` column (task 25) is rebuilt with it, its rows carried over: an FTS5 table
+    cannot gain a column. Once, on the first start after the upgrade; `sos index` fills the aliases."""
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(fts_docs)")]
+    if not cols or "aliases" in cols:
+        return
+    old = ", ".join(c for c in FTS_DOCS_COLUMNS if c != "aliases")
+    conn.execute("DROP TABLE IF EXISTS fts_docs_upgrade")
+    conn.execute(f"CREATE VIRTUAL TABLE fts_docs_upgrade USING {FTS_DOCS_DDL}")
+    conn.execute(f"INSERT INTO fts_docs_upgrade({old}) SELECT {old} FROM fts_docs ORDER BY rowid")
+    conn.execute("DROP TABLE fts_docs")
+    conn.execute("ALTER TABLE fts_docs_upgrade RENAME TO fts_docs")
+    conn.commit()
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
+    _migrate_fts_docs(conn)
     conn.executescript(SCHEMA)
     _ensure_column(conn, "stock", "kit_item", "TEXT")
     _ensure_column(conn, "library_items", "pdf_dest", "TEXT")

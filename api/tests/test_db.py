@@ -111,3 +111,41 @@ def test_init_schema_adds_kit_item_to_an_old_stock_table(tmp_path):
     assert "kit_item" in cols
     db.init_schema(conn)          # idempotent
     assert [r[1] for r in conn.execute("PRAGMA table_info(stock)")].count("kit_item") == 1
+
+
+# --- card subjects (task 25) -----------------------------------------------------------------------------------------
+
+OLD_FTS_DOCS = ("CREATE VIRTUAL TABLE fts_docs USING fts5(title, body, doc_id UNINDEXED, kind UNINDEXED, category UNINDEXED, "
+                "scenarios UNINDEXED, page UNINDEXED, url UNINDEXED, tokenize='porter unicode61 remove_diacritics 2')")
+
+
+def test_the_schema_has_an_aliases_column_and_the_card_subjects_table(tmp_path):
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(fts_docs)")]
+    assert cols[:2] == ["title", "body"] and cols[-1] == "aliases"      # body stays column 1 for snippet()
+    assert "card_subjects" in _tables(conn)
+
+
+def test_an_old_keyword_index_is_rebuilt_with_the_aliases_column_keeping_its_rows(tmp_path):
+    conn = db.connect(tmp_path / "sos.db")
+    conn.execute(OLD_FTS_DOCS)
+    conn.execute("INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES "
+                 "('Severe bleeding', 'Press hard on the wound.', 'card:severe-bleeding', 'card', 'playbooks', '', NULL, "
+                 "'/medical/card/severe-bleeding#steps')")
+    conn.commit()
+    db.init_schema(conn)
+    db.init_schema(conn)                                                       # and only once
+    assert [r[1] for r in conn.execute("PRAGMA table_info(fts_docs)")][-1] == "aliases"
+    row = conn.execute("SELECT title, url, aliases FROM fts_docs WHERE fts_docs MATCH '\"wound\"'").fetchone()
+    assert row["title"] == "Severe bleeding" and row["url"] == "/medical/card/severe-bleeding#steps" and row["aliases"] is None
+
+
+def test_an_alias_is_searchable_and_weighted_like_a_title(tmp_path):
+    conn = db.connect(tmp_path / "sos.db")
+    db.init_schema(conn)
+    sql = "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url, aliases) VALUES (?,?,?,?,?,?,?,?,?)"
+    conn.execute(sql, ("Wound cleaning", "Rinse it.", "card:wound-cleaning", "card", "playbooks", "", None, "/c/w", "gash ; graze"))
+    conn.execute(sql, ("Tools", "A gash in the timber, a gash in the door, a gash.", "module:tools", "module", "playbooks", "", None, "/m/t", None))
+    order = [r["url"] for r in conn.execute(f"SELECT url FROM fts_docs WHERE fts_docs MATCH '\"gash\"' ORDER BY {db.FTS_DOCS_BM25}")]
+    assert order == ["/c/w", "/m/t"]

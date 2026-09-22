@@ -4,6 +4,23 @@ title: Wound cleaning
 icon: bandage
 order: 13
 summary: Cleaning and dressing a wound so it does not become infected, and recognising infection and sepsis.
+conditions: [open_wound]
+aliases:
+  - cut
+  - cuts
+  - gash
+  - graze
+  - grazed knee
+  - scrape
+  - laceration
+  - puncture wound
+  - open wound
+  - dirty wound
+  - infected cut
+  - infected wound
+  - cleaning a cut
+  - dressing a wound
+  - cut finger
 ---
 
 ## When to use

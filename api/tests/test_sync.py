@@ -368,3 +368,29 @@ def test_sync_fetches_a_voice_with_the_json_beside_it(respx_mock, env, tmp_path,
     with httpx.Client() as client:
         rc = sync.sync(env, "core", out=lines.append, client=client, use_aria2=False)
     assert rc == 1 and any(line.startswith("FAIL piper-voice-en_GB-alan") for line in lines)
+
+
+def test_index_content_puts_a_cards_aliases_beside_its_when_to_use_and_keeps_its_subjects(env, tmp_path):
+    """Task 25: a card's `conditions` and `aliases` front matter are indexed -- the aliases once, on the "When to use"
+    row rather than on every section, and the subjects keyed by the card's page for search's injury policy."""
+    pb = tmp_path / "pb"
+    (pb / "cards").mkdir(parents=True)
+    (pb / "cards" / "wound-cleaning.md").write_text(
+        "---\nid: wound-cleaning\ntitle: Wound cleaning\nicon: blood\norder: 1\nsummary: Clean it.\n"
+        "conditions: [open_wound]\naliases:\n  - gash\n  - graze\n---\n\n## When to use\n\nAny open wound.\n\n"
+        "## Steps\n\n1. Rinse it.\n", encoding="utf-8")
+    (pb / "cards" / "choking.md").write_text(
+        "---\nid: choking\ntitle: Choking\nicon: lungs\norder: 2\nsummary: Back blows.\n---\n\n## Steps\n\n1. Back blows.\n",
+        encoding="utf-8")
+    conn = db.connect(env.db_path)
+    db.init_schema(conn)
+    conn.execute("INSERT INTO card_subjects(page, title) VALUES ('/medical/card/gone', 'A card since deleted')")
+    sync.index_content(conn, pb)
+    with_aliases = conn.execute("SELECT url, aliases FROM fts_docs WHERE aliases IS NOT NULL AND aliases != ''").fetchall()
+    assert [(r["url"], r["aliases"]) for r in with_aliases] == [("/medical/card/wound-cleaning#when-to-use", "gash ; graze")]
+    assert conn.execute("SELECT url FROM fts_docs WHERE fts_docs MATCH '\"gash\"'").fetchone()["url"].endswith("#when-to-use")
+    subjects = {r["page"]: (r["title"], json.loads(r["conditions"]), json.loads(r["aliases"]))
+                for r in conn.execute("SELECT * FROM card_subjects")}
+    assert subjects == {"/medical/card/wound-cleaning": ("Wound cleaning", ["open_wound"], ["gash", "graze"])}
+    body = conn.execute("SELECT body FROM fts_docs WHERE url = '/medical/card/wound-cleaning#when-to-use'").fetchone()["body"]
+    assert "gash" not in body                                        # what is shown is unchanged

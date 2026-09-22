@@ -70,6 +70,10 @@ def test_playbooks_readme_matches_the_content_rules():
         assert f"| {kind} |" in text, kind
     for value in schema["$defs"]["page"]["properties"]["category"]["enum"]:
         assert f"`{value}`" in text, value
+    for field in schema["$defs"]["card"]["properties"]:           # sources, conditions, aliases (task 25)
+        assert f"`{field}`" in text, field
+    for value in schema["$defs"]["card"]["properties"]["conditions"]["items"]["enum"]:
+        assert f"`{value}`" in text, value
     assert "999" in text and "111" in text and "105" in text and "0345 988 1188" in text
 
 

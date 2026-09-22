@@ -4,6 +4,15 @@ title: Head injury
 icon: brain
 order: 24
 summary: Checking someone after a blow to the head, spotting a brain injury and knowing when it is an emergency.
+conditions: [head_injury]
+aliases:
+  - concussion
+  - bumped head
+  - banged head
+  - hit head
+  - knocked out
+  - blow to the head
+  - knock on the head
 ---
 
 ## When to use

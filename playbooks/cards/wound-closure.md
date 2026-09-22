@@ -4,6 +4,18 @@ title: Closing a wound
 icon: bandage
 order: 34
 summary: Deciding whether a cut should be closed, using adhesive strips, and which wounds must be left open.
+conditions: [open_wound]
+aliases:
+  - gaping cut
+  - gaping wound
+  - deep cut
+  - stitches
+  - steri-strips
+  - butterfly stitches
+  - needs stitches
+  - closing a cut
+  - split skin
+  - wound edges apart
 ---
 
 ## When to use

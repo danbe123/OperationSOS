@@ -291,6 +291,7 @@ def index_content(conn: sqlite3.Connection, playbooks_dir: Path) -> int:
         return 0
     count = 0
     overlay_scenarios: dict[str, list[str]] = {}
+    conn.execute("DELETE FROM card_subjects")
     for dirname, kind in KIND_BY_DIR.items():
         for path in sorted((playbooks_dir / dirname).glob("*.md")):
             try:
@@ -300,14 +301,24 @@ def index_content(conn: sqlite3.Connection, playbooks_dir: Path) -> int:
             base_url = URL_BY_KIND[kind] + doc.id
             scenarios = doc.id if kind == "scenario" else ""
             sections = [(sid, title, md) for sid, title, md in doc.sections if md.strip()] or [("", "", doc.summary)]
+            # A card's search-only subjects (task 25): its aliases go on one row, "When to use" (or the first), not
+            # on every section, so a warning or a source list is never lifted by them; the display text is unchanged.
+            aliases = [str(a) for a in (doc.meta.get("aliases") or [])] if kind == "card" else []
+            conditions = [str(c) for c in (doc.meta.get("conditions") or [])] if kind == "card" else []
+            alias_sid = next((sid for sid, _, _ in sections if sid == "when-to-use"), sections[0][0])
             for sid, title, md in sections:
                 body = strip_markdown((title + "\n" if title else "") + md)
                 url = f"{base_url}#{sid}" if sid else base_url
                 conn.execute(
-                    "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url) VALUES (?,?,?,?,?,?,?,?)",
-                    (doc.title, body, f"{kind}:{doc.id}", FTS_KIND[kind], "playbooks", scenarios, None, url),
+                    "INSERT INTO fts_docs(title, body, doc_id, kind, category, scenarios, page, url, aliases) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    (doc.title, body, f"{kind}:{doc.id}", FTS_KIND[kind], "playbooks", scenarios, None, url,
+                     " ; ".join(aliases) if aliases and sid == alias_sid else None),
                 )
                 count += 1
+            if aliases or conditions:
+                conn.execute("INSERT OR REPLACE INTO card_subjects(page, title, conditions, aliases) VALUES (?,?,?,?)",
+                             (base_url, doc.title, json.dumps(conditions), json.dumps(aliases)))
             if kind == "scenario":
                 for ov in doc.overlays:
                     overlay_scenarios.setdefault(ov, []).append(doc.id)
