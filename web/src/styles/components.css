@@ -179,7 +179,6 @@ a.chip { text-decoration: none; }
 .result-via::after { content: '·'; margin-left: 8px; color: var(--ink-muted); font-style: normal; }
 .result-snippet { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--ink-muted); font-size: var(--t-meta); line-height: 1.35; }
 .results-group { display: flex; flex-direction: column; gap: 0; }
-.results-group h2 { margin: 6px 0 0; font-size: var(--t-meta); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* --- the one task row: engine tasks, playbook checklists and drill jobs all look like this --- */
 

@@ -7,13 +7,12 @@ import { sourceWord } from './words';
  * December 2025) How and when to take memantine - NHS". None of that is the ranking's fault alone:
  * the screen was rendering whatever arrived, in the order it arrived, with the library's own
  * cataloguing glued to the front of every title. This is where that is put right, on the way to the
- * screen: one entry per target, the box's own guidance first, and a source named in a word. */
+ * screen: one entry per target, in the engine's order, and a source named in a word. */
 
 /** The sources the box wrote itself, in the order a frightened household wants them. */
 const OWN = ['playbooks'];
 
 export const OWN_GROUP = 'From this box';
-export const LIBRARY_GROUP = 'From the library';
 
 /** The library's cataloguing, off the front of a title: a ZIM book's badge is its full library
  * title, build stamp and all. */
@@ -136,27 +135,10 @@ export function highlightParts(snippet: string): SnippetPart[] {
   return out.filter((p) => p.text !== '');
 }
 
-export type ResultGroup = { key: string; title: string; results: SearchResult[] };
-
-/** Two groups: the box's own guides, cards, modules and pages first, then everything else in the
- * engine's own order. It used to be a group per source, each with a heading, in a fixed order of
- * sources — which put a source's weakest hit above a stronger source's best, and read as a directory
- * rather than an answer. The engine ranks across sources now (title relevance, boilerplate put down,
- * meaning fused in), so the rest is one list, and the word before each title says where it is from. */
-export function groupResults(results: SearchResult[]): ResultGroup[] {
-  const own: SearchResult[] = [];
-  const rest: SearchResult[] = [];
-  for (const r of results) (OWN.includes(r.source) ? own : rest).push(r);
-  const groups: ResultGroup[] = [];
-  if (own.length) groups.push({ key: 'own', title: OWN_GROUP, results: own });
-  if (rest.length) groups.push({ key: 'library', title: LIBRARY_GROUP, results: rest });
-  return groups;
-}
-
 /** The sources a filter chip can turn on, with the counts of the very results underneath them: the
  * chips used to sum to 61 above a line reading "40 results", because the engine counts before it
- * truncates and the screen counted after. The box's own sources are one chip; the rest, one each, in
- * the order the engine first ranks them. */
+ * truncates and the screen counted after. The box's own sources are one chip; the rest, one each; all in
+ * the order the engine first ranks them, as the list under them is. */
 export function chipsFor(results: SearchResult[]): { key: string; title: string; sources: string[]; count: number }[] {
   const chips = new Map<string, { key: string; title: string; sources: string[]; count: number }>();
   for (const r of results) {
@@ -166,8 +148,7 @@ export function chipsFor(results: SearchResult[]): { key: string; title: string;
     chip.count += 1;
     chips.set(key, chip);
   }
-  // the box's own chip leads whatever the engine ranked first: it is the group at the top of the screen
-  return [...chips.values()].sort((a, b) => (a.key === 'own' ? -1 : b.key === 'own' ? 1 : 0));
+  return [...chips.values()];
 }
 
 /** Enough of a stem to match "bleeding" to "bleed" and "tins" to "tinned": the engine's own rule

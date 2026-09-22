@@ -880,10 +880,10 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         left out, and every quick card that mentions it; and the share is the injury's weighted coverage."""
         n = FTS_ROWS_DOC if docs else FTS_ROWS_OWN
         sql = fts_sql.format(op="=" if docs else "!=", n=n)
-        rows = conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, fts_mode)),)).fetchall()
+        rows = conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, fts_mode, injury is not None)),)).fetchall()
         if fts_mode == "and" and len(reduced.terms) >= 2 and len(rows) < FTS_OR_BELOW:
             have = {r["url"] for r in rows}
-            rows = list(rows) + [r for r in conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, "or")),)).fetchall()
+            rows = list(rows) + [r for r in conn.execute(sql, (match(query_mod.fts_match_expanded(reduced.terms, "or", injury is not None)),)).fetchall()
                                  if r["url"] not in have][: n - len(rows)]
         if injury is not None and INJURY_RETRIEVAL:
             have = {r["url"] for r in rows}

@@ -72,7 +72,7 @@ const SHOTS: Shot[] = [
   { name: 'map-home', go: async (p) => { await p.goto('/map'); await p.getByRole('button', { name: 'Home' }).click(); await expect(p.getByRole('dialog', { name: 'Home' })).toBeVisible(); await p.waitForTimeout(800); } },
   { name: 'map-share', go: async (p) => { await p.goto('/map'); await p.getByRole('button', { name: 'Share' }).click(); await expect(p.getByRole('dialog', { name: 'Share' })).toBeVisible(); await p.waitForTimeout(800); } },
   { name: 'find-empty', go: async (p) => { await p.goto('/search'); await expect(p.getByRole('heading', { level: 1, name: 'Find' })).toBeVisible(); } },
-  { name: 'find-results', go: async (p) => { await p.goto('/search?q=water'); await expect(p.getByRole('region', { name: 'From this box' })).toBeVisible(); } },
+  { name: 'find-results', go: async (p) => { await p.goto('/search?q=water'); await expect(p.getByRole('region', { name: 'Results' })).toBeVisible(); } },
   { name: 'library', go: async (p) => { await p.goto('/library'); await expect(p.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible(); } },
   { name: 'reader', go: async (p) => { await p.goto(`/read/${WIKI}/A/Water`); await expect(p.getByTitle('Article')).toBeVisible(); await p.waitForTimeout(600); } },
   { name: 'document-missing', go: async (p) => { await p.goto('/doc/nrr-2025'); await expect(p.getByRole('heading', { level: 1 })).toBeVisible(); } },

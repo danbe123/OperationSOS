@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { useStatus } from '../api/status';
 import type { SearchResponse } from '../api/types';
 import { useQuery } from '../api/useQuery';
-import { chipsFor, dedupe, groupResults } from '../api/results';
+import { chipsFor, dedupe } from '../api/results';
 import { Icon } from '../icons';
 import { ResultList } from '../components/ResultList';
 import { SearchBar } from '../components/SearchBar';
@@ -21,9 +21,9 @@ export const CHIP_ROW = 4;
 export const QUICK_FINDS = ['CPR', 'Bleeding', 'Burns', 'Water', 'Power cut', 'Hypothermia', 'Radio', 'Iodine'];
 
 /** Find: the field first, and nothing above it. Before a search, the handful of things people look
- * for most as one-tap chips; after one, the source chips with the count, then the box's own guidance
- * and every other source in a group of its own. No heading, no paragraph: the rail says Find, and
- * the row they took was a row of results on the kiosk. */
+ * for most as one-tap chips; after one, the source chips with the count, then one list of results in
+ * the engine's order, the box's own and the library's together. No heading, no paragraph: the rail says
+ * Find, and the row they took was a row of results on the kiosk. */
 export function Find() {
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
@@ -34,9 +34,8 @@ export function Find() {
     () => (q.trim() ? api.search(q, { sources: sources.length ? sources : undefined }) : Promise.resolve(null)),
     [q, sourcesParam],
   );
-  // One row per target, the box's own first, and the chips counted from the very rows below them.
+  // One row per target, in the engine's order, and the chips counted from the very rows below them.
   const shown = useMemo(() => (data ? dedupe(data.results) : []), [data]);
-  const grouped = useMemo(() => groupResults(shown), [shown]);
   // Keep the unfiltered chips so they stay visible, and stay countable, while a filter is on.
   const [unfiltered, setUnfiltered] = useState<{ q: string; chips: ReturnType<typeof chipsFor> } | null>(null);
   useEffect(() => {
@@ -128,15 +127,16 @@ export function Find() {
         {data && !loading && shown.length === 0 && (
           <p>Nothing found for “{data.q}”. Try fewer words, or a place name or postcode for the map.</p>
         )}
-        {/* The box's own guides, quick cards, modules and pages first, under their own heading: they
-            are what this box was built to answer with, and the engine's one ranked list put them
-            below a mirror of the NHS medicines A to Z. */}
-        {grouped.map((g) => (
-          <section key={g.key} className="results-group" aria-label={g.title}>
-            <h2>{g.title}</h2>
-            <ResultList results={g.results} label={g.title} query={data?.query || q} />
+        {/* One list, by relevance. The box's own rows used to stand in a group of their own above the
+            library's, from when the engine ranked the box's Severe bleeding card below a mirror of the NHS
+            medicines A to Z; the engine keeps the cards and the medicine a query names in its first three
+            itself now, and the group put twelve of the box's weak rows ("broke my toe": Economic collapse,
+            Tools and repair) above the library's fracture pages. */}
+        {shown.length > 0 && (
+          <section className="results-group" aria-label="Results">
+            <ResultList results={shown} label="Results" query={data?.query || q} />
           </section>
-        ))}
+        )}
         {searching && data && !loading && (ai === 'ready' || ai === 'busy') && (
           <p className="find-ask" role="region" aria-label="Ask the assistant">
             <span className="muted">Not what you were after?</span>

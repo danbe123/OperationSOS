@@ -86,3 +86,15 @@ def test_gash_expands_to_the_boxs_own_wound_words():
     groups = expand_terms(["gash", "arm"])
     assert groups[0][0] == "gash"
     assert {"wound", "cut", "laceration", "bleeding"} <= set(groups[0])
+
+
+def test_an_injury_described_does_not_widen_to_things_failing():
+    """"The boiler broke" is the failure pages ("fails", "failure"); "broke my toe" is not. With the injury read
+    (task 25), the machine sense of a word is left out, so "broke my toe" stopped listing Economic collapse,
+    Tools and repair and Solar superstorm above the fracture pages."""
+    from sos.query import expand_terms, fts_match_expanded
+    assert {"fails", "failure"} <= set(expand_terms(["broke"])[0])                   # the boiler broke
+    assert expand_terms(["broke", "toe"], injury=True)[0] == ["broke", "broken"]
+    assert expand_terms(["stop", "bleeding"], injury=True)[0] == ["stop", "stops"]  # "can't stop the bleeding"
+    assert "fails" not in fts_match_expanded(["broke", "toe"], injury=True)
+    assert "fails" in fts_match_expanded(["broke", "toe"])
