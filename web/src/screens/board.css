@@ -35,7 +35,10 @@ button.board-cond:focus-visible { outline: 3px solid var(--ink); outline-offset:
 .board-conditions-all .board-cond { padding: 6px 8px; }
 .board-conditions-all .board-cond-name { font-size: var(--t-body); gap: 4px; }
 .board-conditions-all .board-cond-name svg { width: 22px; height: 22px; }
-.board-live .board-cols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr) minmax(0, 0.8fr); }
+/* The idle overlay is a glance across the room and stays fixed to the screen; /board is worked with a
+   finger, and a real incident's ten conditions plus a scenario's tasks can run past 480px tall, so its
+   columns scroll instead of clipping the last condition or job out of reach. */
+.board-live .board-cols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.1fr) minmax(0, 0.8fr); overflow: auto; }
 .board-tasks h2, .board-facts h2 { margin: 0 0 6px; font-size: var(--t-lead); }
 .board-task-list { margin: 0; padding-left: 1.2em; }
 .board-task-list li { margin-bottom: 6px; }

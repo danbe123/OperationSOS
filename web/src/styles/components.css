@@ -72,6 +72,8 @@ input[type="checkbox"]:disabled { opacity: 0.55; cursor: not-allowed; }
 .check-block { border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* A pin row's only tap target, otherwise sized to its icon and word alone. */
+.pin-link { display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch); }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 
 /* --- the panel: the only container ---------------------------------------------------------- */
