@@ -187,7 +187,9 @@ INJURY_RETRIEVAL = True
 INJURY_WEIGHTING = True
 INJURY_SUBJECTS = True
 INJURY_PROMOTION = True
-INJURY_CARDS_KEPT = 2
+# Three, not two: for "gash on arm" the third is Severe bleeding, and a gash that is bleeding heavily is the case
+# that kills; keeping three was measured neutral on every gold set (docs/reviews/2026-09-22-injury-intent.md).
+INJURY_CARDS_KEPT = 3
 MEDICAL_UNSUPPORTED_FACTOR = 0.25
 CONDITION_WEIGHT = 4.0
 LOCATION_WEIGHT = 1.0

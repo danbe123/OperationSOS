@@ -91,7 +91,7 @@ EXPERIMENTS: dict[str, dict] = {
     "unsupported-.5": {"MEDICAL_UNSUPPORTED_FACTOR": 0.5},
     "unsupported-.1": {"MEDICAL_UNSUPPORTED_FACTOR": 0.1},
     "injury-cards-kept-1": {"INJURY_CARDS_KEPT": 1},
-    "injury-cards-kept-3": {"INJURY_CARDS_KEPT": 3},
+    "injury-cards-kept-2": {"INJURY_CARDS_KEPT": 2},
 }
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),
