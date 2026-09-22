@@ -80,9 +80,9 @@ sos eval-search --replay .dev/search-recordings/NAME --json replay.json         
 ```
 
 Per distinct query the recording holds every multi-archive Kiwix request's hits (or refusal), the query vector, the
-nearest 100 passages of the box's own library and of the household books, and the Wikipedia rerank cosines
+nearest 500 passages of the box's own library and of the household books (and how deep each was asked), and the Wikipedia rerank cosines
 (`api/sos/searchreplay.py`). A replay opens the same database read-only and is deterministic; its timings are only
-the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`): a
+the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`, including `semantic_depth`, a nearest list asked deeper than it was recorded): a
 change that asks Kiwix something new gets a refusal for it, so a non-zero count means that run is not comparable.
 Record again after a database rebuild or an index rebuild. Recordings live under the git-ignored `.dev/`.
 

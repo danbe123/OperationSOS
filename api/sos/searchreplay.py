@@ -12,7 +12,7 @@ What is kept, per distinct query text, in `DIR/<sha1 of the query>.json`:
   kiwix     every multi-archive request search() made, keyed by its archives and pattern: the hits (title, path,
             snippet, archive), or the refusal (timeout, HTTP status, network fault) it got
   semantic  the query's embedding, the nearest passages of the box's own library and the household books (the
-            top RECORD_K of each, deeper than search() asks for so a lab can ask for more), and the cosine of
+            top RECORD_K of each, at least as deep as search() asks, and the depth asked beside each list), and the cosine of
             every Wikipedia article the rerank was asked about
 
 What is not kept: the database (fts_docs, the library items; replay opens the same file read-only) and the vector
@@ -35,7 +35,11 @@ import numpy as np
 
 from sos.kiwix import KiwixError, KiwixHit
 
-RECORD_K = 100          # how deep the nearest-passage lists are kept, past the SEMANTIC_K search() asks for
+# How deep the nearest-passage lists are kept: at least search()'s deepest question (CARD_SEMANTIC_K, 500 since
+# task 24), so a replay answers it. The depth asked for is kept beside each list (`docs_k`, `household_k`); a
+# replay asked deeper than a list was recorded counts a `semantic_depth` miss instead of silently slicing it
+# (task 25: a 100-deep recording could not validate a 500-deep card rescue, and said nothing).
+RECORD_K = 500
 FORMAT = 1
 
 
@@ -139,15 +143,17 @@ class RecordingSemantic:
         self.recorder.semantic(q, vector=_encode_vector(remembered[0]) if remembered is not None and remembered[0] is not None else None)
 
     async def query(self, q: str, k: int = 20):
-        near = await self.inner.query(q, max(k, RECORD_K))
+        depth = max(k, RECORD_K)
+        near = await self.inner.query(q, depth)
         self._note_vector(q)
-        self.recorder.semantic(q, docs=[[u, c] for u, c in near])
+        self.recorder.semantic(q, docs=[[u, c] for u, c in near], docs_k=depth)
         return near[:k]
 
     async def query_household(self, q: str, k: int = 20):
-        near = await self.inner.query_household(q, max(k, RECORD_K))
+        depth = max(k, RECORD_K)
+        near = await self.inner.query_household(q, depth)
         self._note_vector(q)
-        self.recorder.semantic(q, household=[[u, c] for u, c in near])
+        self.recorder.semantic(q, household=[[u, c] for u, c in near], household_k=depth)
         return near[:k]
 
     async def rerank_wikipedia(self, q: str, keys: list[str]) -> dict[str, float]:
@@ -175,7 +181,7 @@ class Replay:
         with contextlib.suppress(OSError, ValueError):
             self.meta = json.loads((self.folder / "meta.json").read_text(encoding="utf-8"))
         self._cache: dict[str, dict] = {}
-        self.misses: dict[str, int] = {"kiwix": 0, "wikipedia": 0}
+        self.misses: dict[str, int] = {"kiwix": 0, "wikipedia": 0, "semantic_depth": 0}
 
     def get(self, query: str) -> dict:
         key = query_key(query)
@@ -243,13 +249,24 @@ class ReplaySemantic:
     def _remember(self, q: str) -> None:
         self._vectors[q.strip()] = (self.vector(q), 0.0)
 
+    def _nearest(self, q: str, name: str, k: int):
+        """The recorded list, cut to `k`. Asked deeper than it was recorded, and the list is not simply all the
+        index had (it filled the depth asked for), the answer is incomplete: counted, not hidden. A recording
+        from before the depth was kept (no `<name>_k`) is taken to have been asked exactly as deep as it is."""
+        semantic = self._semantic(q)
+        near = semantic.get(name, [])
+        depth = semantic.get(f"{name}_k", len(near))
+        if k > depth and len(near) >= depth:
+            self.replay.misses["semantic_depth"] += 1
+        return [(u, float(c)) for u, c in near][:k]
+
     async def query(self, q: str, k: int = 20):
         self._remember(q)
-        return [(u, float(c)) for u, c in self._semantic(q).get("docs", [])][:k]
+        return self._nearest(q, "docs", k)
 
     async def query_household(self, q: str, k: int = 20):
         self._remember(q)
-        return [(u, float(c)) for u, c in self._semantic(q).get("household", [])][:k]
+        return self._nearest(q, "household", k)
 
     async def rerank_wikipedia(self, q: str, keys: list[str]) -> dict[str, float]:
         self._remember(q)
