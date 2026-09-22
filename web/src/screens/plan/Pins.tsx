@@ -11,7 +11,7 @@ import { mapQueryString } from '../../map/query';
 export function PinRow({ pin }: { pin: Note }) {
   return (
     <li className="row">
-      <Link to={`/map${mapQueryString({ lat: pin.lat as number, lon: pin.lon as number, z: 15, overlays: [], label: pin.title })}`}>
+      <Link className="pin-link" to={`/map${mapQueryString({ lat: pin.lat as number, lon: pin.lon as number, z: 15, overlays: [], label: pin.title })}`}>
         <Icon name="pin" /> {pin.title}
       </Link>
       <span className="muted">{gridRef(pin.lat as number, pin.lon as number, 6).text}</span>
