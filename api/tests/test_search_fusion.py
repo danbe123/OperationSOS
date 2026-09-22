@@ -128,17 +128,135 @@ def test_a_medicine_is_lifted_into_the_first_three_and_the_nearest_cards_are_not
     assert urls(out) == ["/a", "/b", "/nhs", "/c"]
 
 
+# --- a book (task 22: the household's good matches were "outscored", ranked below the tenth place by BOOK_WEIGHT
+# against the page's own rows, for the single largest share of 272 book gold queries traced against the shipped
+# index) -----------------------------------------------------------------------------------------------------------
+
+def book_row(url, title, score):
+    return {"url": url, "title": title, "kind": "book", "source": "books", "badge": "Books", "snippet": "",
+            "score": score, "_cat": "books"}
+
+
+def test_the_kept_books_are_the_best_scoring_book_rows():
+    a = row("/a", "A", score=5.0)
+    books = [book_row(f"/book/gutenberg/{i}", f"B{i}", score=0.30 - i * 0.03) for i in range(8)]
+    kept = search._kept_books([a] + books)
+    assert urls(kept) == urls(books[: search.BOOKS_GUARANTEE])   # the best BOOKS_GUARANTEE, not the first BOOKS_GUARANTEE
+    assert search._kept_books([a]) == []                          # nothing to keep when there is no book row
+
+
+def test_a_kept_book_is_brought_into_the_first_books_top_below_where_cards_and_medicines_are_protected():
+    pages = [row(f"/p/{i}", f"P{i}") for i in range(14)]
+    book = book_row("/book/gutenberg/9", "Book", score=0.02)   # scores below every page: it needs the rule, not the score
+    ordered = pages[:12] + [book] + pages[12:]
+    out = search._keep_rows(ordered, search._kept_books(ordered), top=search.BOOKS_TOP, protect=search.KEPT_TOP)
+    assert urls(out)[: search.KEPT_TOP] == [f"/p/{i}" for i in range(search.KEPT_TOP)]   # the protected rows never move
+    assert out[search.BOOKS_TOP - 1] is book                                              # kept at the foot of the window
+    assert sorted(urls(out)) == sorted(urls(pages + [book]))                              # nothing lost, one displaced by one place
+
+
+def test_a_book_already_inside_books_top_is_left_alone():
+    pages = [row(f"/p/{i}", f"P{i}") for i in range(9)]
+    book = book_row("/book/gutenberg/9", "Book", score=0.02)
+    ordered = pages[:5] + [book] + pages[5:]
+    out = search._keep_rows(ordered, search._kept_books(ordered), top=search.BOOKS_TOP, protect=search.KEPT_TOP)
+    assert out == ordered
+
+
+def test_the_household_floor_no_longer_asks_more_of_a_book_the_words_missed():
+    """Task 19's 0.66 "not found by words" floor was tuned on the box's own dense passages, whose neighbourhood
+    is far denser with plausible strangers than 70,558 one-vector-per-book entries; task 22 found 19 of 272 book
+    gold queries with an acceptable book at 0.607-0.657, never a row because of it."""
+    assert search.HOUSEHOLD_FLOOR[True] == search.HOUSEHOLD_FLOOR[False] == search.SEMANTIC_MIN
+
+
+def test_household_is_asked_deeper_than_the_boxs_own_passages(conn, env):
+    """A book's neighbourhood is thin: task 22 found the acceptable book beyond vector rank 20 for 27 of 272
+    book gold queries. HOUSEHOLD_K governs only the household lookup, so the box's own dense passages (and
+    every guardrail that depends on them) are unaffected."""
+    sem = FakeSemantic()
+    run(conn, env, "canning meat", sem)
+    assert sem.household_k_calls == [search.HOUSEHOLD_K]
+    assert search.HOUSEHOLD_K > search.SEMANTIC_K
+
+
+def test_a_book_the_words_never_found_is_still_shown_in_the_first_books_top(conn, env):
+    """A Survivor Library book the words never found, confidently near in meaning (past BOOKS_PROMOTE_COS) and
+    ranked well below the tenth place by the fusion alike, is still guaranteed a place in the first BOOKS_TOP
+    results: the books group's own promise, not a competition against the page's rank fusion row for row
+    (task 22). The control (BOOKS_GUARANTEE 0, the rule off) shows the same book left out, so the test fails
+    for the right reason if it ever does."""
+    conn.execute("INSERT INTO library_items (id, available) VALUES ('survivorlibrary.com_en_all', 1)")
+    conn.executemany(ROW_SQL, [
+        (f"Extra page {i}", f"Extra page {i} about kettles and water storage.", f"page:extra{i}", "page",
+         "playbooks", "", None, f"/p/extra{i}#kettle") for i in range(12)
+    ])
+    conn.commit()
+    near = [(f"/p/extra{i}#kettle", 0.80 - i * 0.01) for i in range(12)]
+    household = [("survivorlibrary.com_en_all:canning-meat", search.BOOKS_PROMOTE_COS + 0.01)]  # confident, but
+    # still scored below the twelve competing pages on its own -- the "without" control below must show it
+    # staying out naturally, or the test would not tell the rule's doing from a coincidence of scores.
+    book_url = "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/canning-meat.pdf"
+
+    out = run(conn, env, "kettle water storage", FakeSemantic(near, household=household))
+    assert book_url in urls(out)[: search.BOOKS_TOP]
+
+    monkey = pytest.MonkeyPatch()
+    monkey.setattr(search, "BOOKS_GUARANTEE", 0)
+    try:
+        without = run(conn, env, "kettle water storage", FakeSemantic(near, household=household))
+    finally:
+        monkey.undo()
+    assert book_url not in urls(without)[: search.BOOKS_TOP]
+
+
+def test_a_household_match_that_only_just_cleared_the_floor_is_a_row_but_is_not_promoted(conn, env):
+    """The gate a live regression found (task 22): "who do I phone if the water supply stops" pulled in five
+    Survivor Library waterworks books at cosine 0.601-0.611 -- past HOUSEHOLD_FLOOR but barely -- and their
+    promotion pushed the real answer, found by the words and unrelated to meaning, from the 7th place to the
+    12th. A book meaning barely put over the floor is still a row (the group is not hidden) but is not owed a
+    place in the first BOOKS_TOP over pages the words ranked ahead of it."""
+    conn.execute("INSERT INTO library_items (id, available) VALUES ('survivorlibrary.com_en_all', 1)")
+    conn.executemany(ROW_SQL, [
+        (f"Extra page {i}", f"Extra page {i} about kettles and water storage.", f"page:extra{i}", "page",
+         "playbooks", "", None, f"/p/extra{i}#kettle") for i in range(12)
+    ])
+    conn.commit()
+    near = [(f"/p/extra{i}#kettle", 0.80 - i * 0.01) for i in range(12)]
+    weak = [("survivorlibrary.com_en_all:canning-meat", search.BOOKS_PROMOTE_COS - 0.02)]   # a row, not a confident one
+    book_url = "/kiwix/content/survivorlibrary.com_en_all/www.survivorlibrary.com/library/canning-meat.pdf"
+
+    out = run(conn, env, "kettle water storage", FakeSemantic(near, household=weak))
+    assert book_url in urls(out)                          # still shown: the group is not hidden
+    assert book_url not in urls(out)[: search.BOOKS_TOP]  # but not promoted over the pages the words ranked ahead of it
+
+
+def test_a_book_the_words_found_too_is_only_lifted_once_not_promoted_a_second_time(conn, env):
+    """A Gutenberg book both the catalogue search and the household vectors found is one row (task 5's rule);
+    the books rule must not add a second entry for it when it brings the group into the window."""
+    conn.execute("INSERT INTO library_items (id, available) VALUES ('gutenberg_en_all', 1)")
+    conn.execute("INSERT INTO books (zim, id, title, author, shelf, popularity, epub_path, html_path, cover_path) "
+                 "VALUES ('gutenberg_en_all', 2701, 'Whaling Voyage', 'Herman Melville', 'PS', 3, NULL, NULL, NULL)")
+    conn.execute("INSERT INTO fts_books(fts_books) VALUES('rebuild')")
+    conn.commit()
+    household = [("gutenberg_en_all:2701", 0.65)]
+    out = run(conn, env, "whaling voyage", FakeSemantic(household=household))
+    assert urls(out).count("/book/gutenberg/2701") == 1
+
+
 # --- through search() -----------------------------------------------------------------------------------------------------------
 
 class FakeSemantic:
-    def __init__(self, near=(), wiki=None):
+    def __init__(self, near=(), wiki=None, household=()):
         self.near, self.wiki, self.rerank_calls = list(near), wiki or {}, []
+        self.household, self.household_k_calls = list(household), []
 
     async def query(self, q, k=20):
         return self.near[:k]
 
     async def query_household(self, q, k=20):
-        return []
+        self.household_k_calls.append(k)
+        return self.household[:k]
 
     async def rerank_wikipedia(self, q, keys):
         self.rerank_calls.append(list(keys))

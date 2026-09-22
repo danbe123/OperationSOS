@@ -50,6 +50,23 @@ EXPERIMENTS: dict[str, dict] = {
     "floors-own-.66": {"SEMANTIC_FLOOR": {(True, False): 0.63, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},
     "floors-found-.60": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74}},
     "floors-old": {"SEMANTIC_FLOOR": {(True, False): 0.60, (True, True): 0.66, (False, False): 0.66, (False, True): 0.74}},
+    # Task 22 (book fusion, 2026-09-22): the household books were a row on the page for 132 of 272 book gold
+    # queries but shown in the first ten for only 51 -- "outscored" below BOOK_WEIGHT's low score, or never a
+    # row at all past the 0.66 household floor or the SEMANTIC_K=20 lookup depth. "control" above is now this
+    # (HOUSEHOLD_K 60, HOUSEHOLD_FLOOR 0.60/0.60, up to BOOKS_GUARANTEE=3 books kept in the first BOOKS_TOP=10);
+    # "no-book-fusion" undoes all three, back to what shipped before task 22.
+    "no-book-fusion": {"HOUSEHOLD_K": 20, "HOUSEHOLD_FLOOR": {True: 0.60, False: 0.66}, "BOOKS_GUARANTEE": 0},
+    "no-book-promote": {"BOOKS_GUARANTEE": 0},                       # keep the K and floor changes, not the window
+    "no-household-floor": {"HOUSEHOLD_FLOOR": {True: 0.60, False: 0.66}},
+    "no-household-k": {"HOUSEHOLD_K": 20},
+    "books-guarantee-1": {"BOOKS_GUARANTEE": 1},
+    "books-guarantee-2": {"BOOKS_GUARANTEE": 2},
+    "books-guarantee-5": {"BOOKS_GUARANTEE": 5},
+    "books-top-5": {"BOOKS_TOP": 5},
+    "household-k-100": {"HOUSEHOLD_K": 100},
+    "books-promote-cos-.60": {"BOOKS_PROMOTE_COS": 0.60},
+    "books-promote-cos-.70": {"BOOKS_PROMOTE_COS": 0.70},
+    "books-promote-cos-.72": {"BOOKS_PROMOTE_COS": 0.72},
 }
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),

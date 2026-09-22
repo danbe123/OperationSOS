@@ -63,10 +63,18 @@ SEMANTIC_FLOOR = {          # (found by the words too, a converted document's pa
     (True, False): 0.60, (True, True): 0.66, (False, False): 0.69, (False, True): 0.74,
 }
 # The household books (one vector per book) keep the distance-above-the-floor bonus: their neighbourhood is thin
-# and a book's cosine says how much of a match it is.
-HOUSEHOLD_FLOOR = {True: 0.60, False: 0.66}
+# and a book's cosine says how much of a match it is. The "not found by words" floor was 0.66 (task 19, chosen
+# for the box's own dense passages, whose neighbourhood is far denser with plausible strangers than 70,558
+# one-vector-per-book entries); task 22 found 19 of 272 book gold queries with an acceptable book sitting at
+# 0.607-0.657, never a row at all because of it, so the household floor now matches the "found by words" one --
+# a book two people wrote for the same shelf is not the same risk as a converted document's page.
+HOUSEHOLD_FLOOR = {True: 0.60, False: 0.60}
 SEMANTIC_MIN = min(*SEMANTIC_FLOOR.values(), *HOUSEHOLD_FLOOR.values())
 SEMANTIC_CEIL = 0.82
+# How many of the household's nearest books are asked for: deeper than SEMANTIC_K (the box's own passages,
+# unaffected by this) because a book's neighbourhood is thin and the right one is often not among the nearest
+# 20 (task 22: 27 of 272 book gold queries had their acceptable book between vector rank 21 and 100).
+HOUSEHOLD_K = 60
 SEMANTIC_WEIGHT = 0.5
 # The box's own passages are fused by rank, as reciprocal-rank fusion does: the nth nearest passage is worth what
 # a keyword hit at rank n is worth (`weight / (5 + rank)`), times DENSE_WEIGHT. Rank, not cosine, because the
@@ -92,6 +100,31 @@ KEPT_TOP = 3
 MEDICINE_SOURCE = "nhs"
 MEDICINE_SHARE = 0.66
 MEDICINE_TOP = 3
+# A book answers a different kind of question than a page does ("a book that covers this", not "the fact
+# itself"), so it should not have to out-score a page row for row to be seen at all. Task 22 traced 272 book
+# gold queries against the shipped household index: the right book was a row on the page for 132 of them but
+# ranked below the tenth place for 81 -- "outscored", the single largest loss, median rank 17, median cosine
+# 0.71 (a real match, just worth less than BOOK_WEIGHT lets a page-row beat). The BOOKS_GUARANTEE best-scoring
+# book rows are kept inside the first BOOKS_TOP results, below the emergency cards' and medicines' first
+# KEPT_TOP so this never competes with them; a query with no book row is unaffected. 3, 5, 8 and 10 were tried
+# on a replay of the whole book gold set (tune half books hit@10 0.299/0.355/0.364/0.364, check half
+# 0.308/0.364/0.383/0.383 -- flat from 8 on, the ceiling of what is already a row): 5 was chosen, past the
+# first jump and clear of the flat top, and it moves nothing on own-library, paraphrase, safety or Wikipedia
+# (replayed against all four, tune and check halves alike, to the third decimal).
+# The guarantee is for a confident match, not any row that cleared the household floor. Two regressions,
+# found by replaying the whole gold set with the guarantee on (task 22): live, "who do I phone if the water
+# supply stops" pulled in five Survivor Library waterworks books at cosine 0.601-0.611 and their promotion
+# pushed the real answer, found by the words, from the 7th place to the 12th; on the gold set, "picked some
+# toadstools" and "planting spuds ... how deep" pulled in books at cosine up to 0.68 (real foraging and
+# gardening books, genuinely close in meaning to the query, just not what was asked for) and lost paraphrase
+# MRR below the floor kept from task 19 (0.495 against 0.497 required). 0.65 stopped the first regression but
+# not the second two; 0.70 stops all three with no query in the 523-row gold set moved at all (checked by
+# replay, `no-book-fusion` against this value: zero rows differ outside the books sets). A book found only by
+# meaning needs a cosine past this line to be promoted; one the words themselves found (a title or author
+# match) is a different kind of evidence and is exempt from it.
+BOOKS_PROMOTE_COS = 0.70
+BOOKS_TOP = 10
+BOOKS_GUARANTEE = 5
 # The household collection's own ZIM id for Survivor Library (Gutenberg reuses BOOK_ZIMS's own id): its
 # real books are plain PDF entries at this one path shape (Task 5's confirmed finding), read straight
 # through the generic Kiwix content route rather than a bespoke reader.
@@ -471,21 +504,39 @@ def _kept_medicines(results: list[dict], kw_pos: dict[str, int], terms: list[str
             and kw_pos.get(r["url"], MEDICINE_TOP) < MEDICINE_TOP and term_share(terms, r["title"]) >= MEDICINE_SHARE]
 
 
-def _keep_rows(results: list[dict], kept: list[dict]) -> list[dict]:
-    """Bring each kept row (a card, an NHS medicine page) into the first KEPT_TOP, in place of the lowest row there
-    that is not kept (that row moves down just below them); one already inside stays; when every row inside is
-    kept, nothing moves."""
-    for card in kept:
-        if results.index(card) < KEPT_TOP:
+def _keep_rows(results: list[dict], kept: list[dict], *, top: int | None = None, protect: int = 0) -> list[dict]:
+    """Bring each kept row (a card, an NHS medicine page, a book) into the first `top`, in place of the lowest
+    unprotected row there that is not itself kept (that row moves down just below the window); one already
+    inside stays; when every row inside is kept, nothing moves. `protect` excludes the first rows of the list
+    from being displaced (the cards' and medicines' own KEPT_TOP, when a wider window is kept below them).
+    `top` reads KEPT_TOP fresh when not given, not as a bound default, so a test's `monkeypatch.setattr(search,
+    "KEPT_TOP", ...)` still reaches the original (card-and-medicine) call, which never passes it."""
+    top = KEPT_TOP if top is None else top
+    for row in kept:
+        if results.index(row) < top:
             continue
-        inside = [j for j in range(min(KEPT_TOP, len(results))) if not any(results[j] is c for c in kept)]
+        inside = [j for j in range(protect, min(top, len(results))) if not any(results[j] is c for c in kept)]
         if not inside:
             continue
         displaced = results.pop(inside[-1])
-        results.remove(card)
-        results.insert(min(KEPT_TOP - 1, len(results)), card)
-        results.insert(min(KEPT_TOP, len(results)), displaced)
+        results.remove(row)
+        results.insert(min(top - 1, len(results)), row)
+        results.insert(min(top, len(results)), displaced)
     return results
+
+
+def _kept_books(results: list[dict]) -> list[dict]:
+    """The best BOOKS_GUARANTEE book rows: whichever the fusion scored highest, meaning-found or keyword-found
+    alike, among the ones that are a confident match -- a book the words themselves found (no `_cos`, a title
+    or author match) or one meaning found at BOOKS_PROMOTE_COS or nearer. A book meaning barely put over
+    HOUSEHOLD_FLOOR is a row, so it is still seen with the rest of its group, but is not owed a place in the
+    first BOOKS_TOP over a page the words ranked there (task 22's found regression). Rows already inside the
+    first BOOKS_TOP need nothing done for them -- `_keep_rows` skips those -- so a query with fewer than
+    BOOKS_GUARANTEE confident books, or none, costs nothing extra. BOOKS_GUARANTEE and BOOKS_TOP are read here
+    and at the call site, not as bound defaults, so a replay experiment's `search.BOOKS_GUARANTEE = ...` reaches
+    this."""
+    confident = (r for r in results if r["source"] == "books" and (r.get("_cos") is None or r["_cos"] >= BOOKS_PROMOTE_COS))
+    return sorted(confident, key=lambda r: -r["score"])[:BOOKS_GUARANTEE]
 
 
 def _empty(q: str) -> dict:
@@ -705,7 +756,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                 by_url[url] = entry
 
         try:
-            household_near = await semantic.query_household(q, SEMANTIC_K)
+            household_near = await semantic.query_household(q, HOUSEHOLD_K)
         except Exception:  # the semantic layer is a convenience: its failures never fail the search
             household_near = []
             semantic_failed = True
@@ -726,6 +777,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
             bonus = semantic_bonus(cos, BOOK_WEIGHT)
             if url in by_url:
                 by_url[url]["score"] += bonus
+                by_url[url]["_cos"] = max(by_url[url].get("_cos") or 0.0, cos)
                 continue
             book_row = conn.execute("SELECT title, author FROM books WHERE zim=? AND id=?", (zim, book_id)).fetchone()
             if book_row is not None:
@@ -735,7 +787,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
                 # own row went missing is covered the same way: the slug is all there is to show.
                 title, author = re.sub(r"[-_]+", " ", book_id).strip().title(), ""
             entry = {"source": "books", "badge": "Books", "title": title, "snippet": author, "url": url,
-                     "score": bonus, "kind": "book", "_cat": "books", "via": "meaning"}
+                     "score": bonus, "kind": "book", "_cat": "books", "via": "meaning", "_cos": cos}
             results.append(entry)
             by_url[url] = entry
 
@@ -754,6 +806,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
     if semantic is not None:
         medicines = _kept_medicines(results, kw_pos, reduced.terms)
         results = _keep_rows(results, _kept_cards(results, kw_pos, [] if medicines else card_pages) + medicines)
+        results = _keep_rows(results, _kept_books(results), top=BOOKS_TOP, protect=KEPT_TOP)
 
     counts: dict[str, int] = {}
     for r in results:
@@ -772,6 +825,7 @@ async def _search(conn: sqlite3.Connection, settings: Settings, kiwix: KiwixClie
         r.pop("_cat", None)
         r.pop("_carried", None)
         r.pop("_kw", None)
+        r.pop("_cos", None)
     payload = {"q": q, "query": reduced.kiwix, "results": results, "groups": groups,
                "took_ms": int((time.perf_counter() - t0) * 1000), "partial": partial}
     if embedding is not None and embedding.failed:
