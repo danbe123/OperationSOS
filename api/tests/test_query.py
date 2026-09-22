@@ -76,3 +76,13 @@ def test_expand_terms_takes_two_words_that_are_one_idea_as_a_phrase_group():
     assert "wound" not in groups[1]                                     # "cut" on its own would have been one
     assert fts_match_expanded(["power", "cut"]) == '("power cut" OR "power cuts" OR "blackout" OR "outage" OR "power failure")'
     assert expand_terms(["cut", "finger"])[0][:2] == ["cut", "wound"]   # not adjacent to power: a wound
+
+
+def test_gash_expands_to_the_boxs_own_wound_words():
+    """Task 24: "gash on arm" (a plain-English injury description) shared no content word at all with the
+    Severe bleeding or Wound cleaning cards -- "gash" had no entry in the household's own synonym map, unlike
+    "wound" and "cut", which already did."""
+    from sos.query import expand_terms
+    groups = expand_terms(["gash", "arm"])
+    assert groups[0][0] == "gash"
+    assert {"wound", "cut", "laceration", "bleeding"} <= set(groups[0])

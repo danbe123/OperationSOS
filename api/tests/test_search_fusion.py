@@ -365,6 +365,79 @@ def test_a_card_is_kept_only_for_the_nearest_two(conn, env):
     assert len(kept) == search.CARDS_KEPT
 
 
+def test_a_card_starved_of_the_shallow_budget_is_still_rescued_deeper(conn, env):
+    """Task 24 ("gash on arm" lives past rank 2,490 in the real index; this is the mechanism, isolated): a
+    card whose nearest passage sits past SEMANTIC_K is still found and promoted, as long as no other card
+    already qualified within the shallow window -- CARD_SEMANTIC_K reads deep enough to reach it."""
+    filler = [(f"/doc/fm#page={i}", 0.70 - i * 0.0001) for i in range(25)]   # 25 unrelated passages, all above SEMANTIC_MIN
+    near = filler + [("/medical/card/burns#steps", 0.65)]                     # the real card, rank 26: past SEMANTIC_K (20)
+    out = run(conn, env, "something quite unrelated", FakeSemantic(near))
+    assert "/medical/card/burns#steps" in urls(out)[:3]
+
+
+def test_without_the_card_budget_the_same_starved_card_is_not_rescued(conn, env, monkeypatch):
+    """The control for the test above: with CARD_SEMANTIC_K brought back down to SEMANTIC_K, the card at
+    rank 26 is never even looked at for promotion, exactly as before task 24."""
+    monkeypatch.setattr(search, "CARD_SEMANTIC_K", search.SEMANTIC_K)
+    filler = [(f"/doc/fm#page={i}", 0.70 - i * 0.0001) for i in range(25)]
+    near = filler + [("/medical/card/burns#steps", 0.65)]
+    out = run(conn, env, "something quite unrelated", FakeSemantic(near))
+    assert "/medical/card/burns#steps" not in urls(out)[:3]
+
+
+def test_the_deep_rescue_is_for_a_query_with_no_shallow_qualifying_card_at_all(conn, env):
+    """Regression, live-traced (task 24): "what should I do when a flood warning is issued" already had one
+    good card within SEMANTIC_K (Electric shock and lightning); reading deeper for a *second* CARDS_KEPT slot
+    pulled in an unrelated card (Recovery position, rank 72) that, once both were protected, displaced the
+    real answer out of the top three. So: a second, deep-only card is never considered once any card -- from
+    the shallow window or an earlier deep rescue -- has already qualified."""
+    near = ([("/medical/card/choking#steps", 0.70)] + [(f"/doc/fm#page={i}", 0.69 - i * 0.0001) for i in range(19)]
+            + [("/medical/card/burns#steps", 0.65)])   # choking: rank 1 (shallow); burns: rank 21 (first deep entry)
+    out = run(conn, env, "something quite unrelated", FakeSemantic(near))
+    kept = [u for u in urls(out)[:3] if "/medical/card/" in u]
+    assert kept == ["/medical/card/choking#steps"]
+
+
+def test_gash_on_arm_finds_the_bleeding_card_by_the_vocabulary_fix(conn, env):
+    """Task 24, the reported bug: "gash" had no entry in query.SYNONYMS, so the keyword search shared not one
+    word with the Severe bleeding card and never retrieved it at all (`kw_pos` was `None`, live-traced).
+    With the fix, it is at least a real candidate -- this asserts that honestly, not that it wins the top
+    three: live against the real library it does not yet (see docs/reviews/2026-09-22-search-relevance.md),
+    because a Wikipedia biography that happens to share the surname "Gash" out-scores it on this synthetic
+    fixture's ranking machinery too when nothing else competes; the fixture here has no such collision, so
+    it is not a fair top-three test either way. The two tests below are fresh phrasings that do reach the
+    top three, live and here."""
+    conn.executemany(ROW_SQL, [
+        ("Severe bleeding", "Press hard on the wound with a clean pad until the bleeding stops.",
+         "card:severe-bleeding", "card", "playbooks", "", None, "/medical/card/severe-bleeding#steps"),
+    ])
+    conn.commit()
+    out = run(conn, env, "gash on arm", FakeSemantic())
+    assert "/medical/card/severe-bleeding#steps" in urls(out)     # a candidate now, where before it was absent
+
+
+def test_burned_my_hand_on_the_stove_finds_the_burns_card_in_the_first_three(conn, env):
+    """One of task 24's fresh injury phrasings (tools/eval/search/injury-fresh.jsonl, inj-05), verified live
+    against the real library and reproduced here as a synthetic regression so it runs in the unit suite.
+    Neither "burned" nor "stove" is the card's own title word ("Burns and scalds"); "burn" already had a
+    query.SYNONYMS entry before this task."""
+    out = run(conn, env, "burned my hand on the stove", FakeSemantic())
+    assert "/medical/card/burns#steps" in urls(out)[:3]
+
+
+def test_something_stuck_in_the_throat_finds_the_choking_card_in_the_first_three(conn, env):
+    """injury-fresh inj-10: no word of the query is the card's own title word ("Choking"). The shared fixture
+    card is too thin (one steps sentence) to carry this query's words at all, so its real "when to use" text
+    is added here, the way the real card's is longer than the fixture's."""
+    conn.executemany(ROW_SQL, [
+        ("Choking", "Someone cannot breathe, cough or speak, is clutching their throat, or is turning blue.",
+         "card:choking", "card", "playbooks", "", None, "/medical/card/choking#when-to-use"),
+    ])
+    conn.commit()
+    out = run(conn, env, "something stuck in his throat and he cant breathe", FakeSemantic())
+    assert "/medical/card/choking" in [u.split("#", 1)[0] for u in urls(out)[:3]]
+
+
 def test_a_search_with_no_meaning_layer_at_all_is_the_keyword_search(conn, env):
     keyword = urls(run(conn, env, "water fire", None))
     assert keyword and urls(run(conn, env, "water fire", FakeSemantic())) == keyword          # a layer with nothing to say

@@ -67,6 +67,14 @@ EXPERIMENTS: dict[str, dict] = {
     "books-promote-cos-.60": {"BOOKS_PROMOTE_COS": 0.60},
     "books-promote-cos-.70": {"BOOKS_PROMOTE_COS": 0.70},
     "books-promote-cos-.72": {"BOOKS_PROMOTE_COS": 0.72},
+    # Task 24 (2026-09-22, "gash on arm"): incidental keyword overlap getting a free pass, cards starved of
+    # retrieval budget, and `limit` padded with zero-evidence rows rather than left honestly short.
+    "no-weak-penalty": {"WEAK_PENALTY": 1.0},                 # the fragment-of-a-multi-idea-query downweight, off
+    "no-card-budget": {"CARD_SEMANTIC_K": 20},                # cards share SEMANTIC_K with everything else again
+    "no-honest-limit": {"DROP_ZERO_EVIDENCE": False},         # zero-evidence rows may pad `limit` again
+    "task24-off": {"WEAK_PENALTY": 1.0, "CARD_SEMANTIC_K": 20, "DROP_ZERO_EVIDENCE": False},   # all three, off
+    "or-below-10": {"FTS_OR_BELOW": 10},
+    "or-below-15": {"FTS_OR_BELOW": 15},
 }
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),
