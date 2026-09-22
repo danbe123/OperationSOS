@@ -166,6 +166,278 @@ def place_candidates(q: str) -> list[str]:
     return out
 
 
+
+# --- Injury intent (task 25, 2026-09-22) -----------------------------------------------------------------------------
+# "gash on arm" is an injury (an open wound) and a place on the body (the arm). The keyword query ANDs every idea, so
+# a card about wounds that never says "arm" was not a candidate, and the one card that says "arm" five times (Broken
+# bones) led. The analysis below reads the raw words, in order and with their stopwords (negation, "my", "himself"
+# are what tell a body from a thing), and says which condition is described, where, and how badly -- or that it is
+# not an injury at all: a surname ("Sam Gash"), a household phrase ("power cut", "bleeding the brakes"), a book
+# request. It is the gate for search's injury policy (`search.py`: condition retrieval, card promotion, the
+# unsupported-row penalty), so an ambiguous word ("cut", "burn", "broken", "bleeding") counts only when the rest of
+# the sentence makes it bodily. `terms`, `fts` and `kiwix` are untouched by it.
+
+# The canonical conditions: the same ids a quick card's `conditions:` front matter uses (playbooks/schema.json).
+CONDITION_IDS: tuple[str, ...] = ("bleeding", "open_wound", "burn", "fracture", "sprain", "head_injury", "eye_injury",
+                                  "nosebleed", "bite_sting", "spinal_injury")
+# What the keyword index is asked for a condition, with the place on the body left out -- except where the place is
+# the condition (a nosebleed, an eye injury, a head injury keep their anatomy). No bare "cut": in this library it is
+# the power cut far more often than a wound, so it is asked for only as the phrases a wound is written in.
+CONDITION_TERMS: dict[str, tuple[str, ...]] = {
+    "bleeding": ("bleeding", "bleed", "haemorrhage", "tourniquet"),
+    "open_wound": ("wound", "laceration", "gash", "graze", "cuts and grazes", "a cut", "the cut", "deep cut"),
+    "burn": ("burn", "burns", "scald"),
+    "fracture": ("fracture", "broken bone", "broken bones", "splint"),
+    "sprain": ("sprain", "strain", "twisted ankle"),
+    "head_injury": ("head injury", "concussion", "blow to the head"),
+    "eye_injury": ("eye injury", "eye", "eyes"),
+    "nosebleed": ("nosebleed", "nosebleeds", "nose bleed"),
+    "bite_sting": ("bite", "bites", "bitten", "sting", "stings", "stung"),
+    "spinal_injury": ("spinal", "spine", "neck injury"),
+}
+# The order a card for each condition is wanted in when a query names several: the specific place first (a nosebleed
+# is not severe bleeding), then what kills first (uncontrolled bleeding), then the rest.
+CONDITION_PRIORITY: tuple[str, ...] = ("nosebleed", "eye_injury", "head_injury", "spinal_injury", "bleeding", "burn",
+                                       "fracture", "bite_sting", "sprain", "open_wound")
+
+BODY_PARTS: dict[str, str] = {w: canon for canon, words in {
+    "arm": "arm arms forearm forearms", "leg": "leg legs", "thigh": "thigh thighs", "shin": "shin shins",
+    "calf": "calf calves", "hand": "hand hands palm palms", "finger": "finger fingers fingertip fingertips knuckle knuckles",
+    "thumb": "thumb thumbs", "foot": "foot feet sole soles", "heel": "heel heels", "toe": "toe toes",
+    "knee": "knee knees kneecap", "ankle": "ankle ankles", "wrist": "wrist wrists", "elbow": "elbow elbows",
+    "shoulder": "shoulder shoulders collarbone", "neck": "neck", "head": "head scalp skull", "forehead": "forehead",
+    "face": "face cheek cheeks chin jaw", "lip": "lip lips mouth tongue", "ear": "ear ears", "eye": "eye eyes eyeball eyelid",
+    "nose": "nose nostril nostrils", "chest": "chest ribs rib", "belly": "belly stomach tummy abdomen", "hip": "hip hips",
+    "groin": "groin", "armpit": "armpit armpits", "skin": "skin", "bone": "bone bones", "muscle": "muscle muscles",
+    "ligament": "ligament ligaments tendon tendons",
+}.items() for w in words.split()}
+REFLEXIVE = frozenset("myself himself herself themselves yourself ourselves themself".split())
+# Phrases whose ambiguous word is not an injury: consumed before any word is read. A tuple of words in order.
+NONMEDICAL_PHRASES: tuple[tuple[str, ...], ...] = tuple(tuple(p.split()) for p in (
+    "power cut", "power cuts", "budget cut", "budget cuts", "price cut", "tax cut", "pay cut", "short cut", "hair cut",
+    "cut the grass", "cut the power", "cut off the power", "cut corners", "cut and paste", "cut down", "cut a mango",
+    "broken link", "broken links", "broken glass", "broken window", "broken bottle", "broken heart", "broken english",
+    "broken arrow", "broken down", "break a leg", "break down", "breaking news", "brake bleeding", "bleeding brakes",
+    "bleed brakes", "bleed the brakes", "bleeding the brakes", "bleed a radiator", "bleed the radiator",
+    "bleed the radiators", "bleeding the radiator", "bleeding the radiators", "bleeding radiators", "bleed radiators",
+    "burn a cd", "burn cd", "burn a dvd", "burn dvd", "burn a disc", "burn disc", "burn notice", "burn ban",
+    "burn rubbish", "burn wood", "burn calories", "burn fat", "slow burn", "heart burn", "razor burn", "freezer burn",
+    "blood pressure", "blood sugar", "blood test", "blood type", "blood group", "blood donor", "wound up",
+    "bite to eat", "sound bite", "bite size", "bite sized", "frost bite", "sting operation", "arm wrestling",
+    "coat of arms", "arms race", "fire arms", "olympic arms",
+))
+_WOUND = frozenset("wound wounds wounded laceration lacerations lacerated graze grazes grazed".split())
+_WOUND_AMBIGUOUS = frozenset("cut cuts gash gashed gashes slash slashed sliced slit scrape scraped puncture punctured "
+                             "stab stabbed stabbing split".split())
+_BLEED = frozenset("bleeding bleed bleeds bled blood bloody".split())
+_BLEED_ALWAYS = frozenset("haemorrhage hemorrhage haemorrhaging hemorrhaging".split())
+_BLEED_SEVERE = frozenset("spurting pouring gushing squirting pumping heavy heavily lots loads alot badly everywhere "
+                          "soaking soaked profusely pool puddle losing lost severe serious".split())
+_NEGATING = frozenset("wont cant not doesnt wouldnt isnt couldnt never".split())
+_BLEED_ELSEWHERE = frozenset("pregnant pregnancy period periods gum gums vaginal miscarriage womb stool poo urine wee "
+                             "cough coughing coughed vomit vomiting rectal piles".split())
+_BURN_ALWAYS = frozenset("scald scalds scalded scalding".split())
+_BURN = frozenset("burn burns burned burnt".split())
+_BURN_CUES = frozenset("blister blisters blistering blistered stove hob oven iron kettle boiling hot fire flame flames "
+                       "steam oil fat cooker pan saucepan chemical acid bonfire candle barbecue bbq".split())
+_HOT = frozenset("boiling hot scalding".split())
+_LIQUID = frozenset("water tea coffee oil fat soup liquid milk kettle pan saucepan steam".split())
+_SPILL = frozenset("spilled spilt spill spills splashed splash splashes poured knocked pulled tipped went onto".split())
+_FRACTURE_ALWAYS = frozenset("fracture fractures fractured".split())
+_FRACTURE = frozenset("broken broke break breaks snapped cracked".split())
+_SPRAIN_ALWAYS = frozenset("sprain sprains sprained".split())
+_SPRAIN = frozenset("twisted twist twisting rolled strain strains strained pulled".split())
+_JOINTS = frozenset("ankle wrist knee elbow shoulder finger thumb toe muscle ligament calf hip neck foot".split())
+_HEAD_CUES = frozenset("hit hits banged bang bumped bump knocked knock blow fell fall fallen smacked whacked struck "
+                       "injury injured hurt cracked dent concussion".split())
+_EYE_CUES = frozenset("something stuck grit dust sand splash splashed chemical bleach poked poke scratched scratch hit "
+                      "punched punch black injury injured hurt glass metal splinter blow".split())
+_BITE = frozenset("bite bites bitten stung sting stings".split())
+_ANIMALS = frozenset("dog dogs cat cats snake snakes adder adders spider spiders tick ticks bat bats bee bees wasp wasps "
+                     "hornet hornets insect insects horse fox rat rats jellyfish human person midge midges mosquito "
+                     "mosquitoes".split())
+# Adder bites and ticks are the "Ticks and adders" page's, not the Bites and stings card's (the card says so itself):
+# no card leads for them, and the search stays the one that shipped.
+_BITE_ELSEWHERE = frozenset("adder adders snake snakes snakebite viper vipers tick ticks".split())
+_CARE_CUES = frozenset("treat treating treated treatment dress dressing bandage heal healing infected infection clean "
+                       "cleaning cool cooling stitches stitch sore hurts painful swollen swelling blister first aid".split())
+_MODIFIERS = frozenset("deep deeper shallow bad badly nasty big large huge small minor tiny gaping open infected dirty "
+                       "severe serious heavy heavily".split())
+# A single word that is an injury on its own ("gash" typed alone is a wound, "cut" alone is not).
+_STANDALONE = frozenset("gash gashes wound wounds laceration graze grazes bleeding bleed burn burns scald scalds "
+                        "fracture sprain nosebleed concussion".split())
+# A sign of another, graver emergency beside the injury ("throat swelling up after a wasp sting ... epipen" is
+# anaphylaxis, not a sting to clean): the injury policy stands aside and the search is the one that shipped.
+_OTHER_EMERGENCY = frozenset("anaphylaxis anaphylactic epipen adrenaline allergic allergy hives cpr unconscious "
+                             "unresponsive seizure seizures fitting convulsing choking breathless".split())
+_BOOK = frozenset("book books novel novels textbook poem poems poetry author".split())
+_LOOKUP = frozenset("film movie album song tv series episode biography meaning definition etymology wikipedia history".split())
+
+
+# Every word the analysis reads as the injury itself, a place or a qualifier: what is left of a query's terms ("adder",
+# "stove", "kettle") is still a word to find, and search's weighted coverage counts it as one idea of its own.
+INJURY_VOCAB = frozenset(set(BODY_PARTS) | _WOUND | _WOUND_AMBIGUOUS | _BLEED | _BLEED_ALWAYS | _BLEED_SEVERE | _NEGATING
+                         | {"stop", "stopping", "burning", "bit", "nosebleed", "nosebleeds", "concussion", "concussed",
+                            "spinal", "spine"} | _BURN | _BURN_ALWAYS | _FRACTURE | _FRACTURE_ALWAYS | _SPRAIN
+                         | _SPRAIN_ALWAYS | _BITE | _MODIFIERS)
+
+
+@dataclass(frozen=True)
+class InjuryIntent:
+    """What `analyse_injury` read: the conditions in `CONDITION_PRIORITY` order, the canonical body parts, the
+    qualifiers, how sure (`none`, `possible` -- an injury word with nothing bodily about it -- or `confirmed`), and
+    what for (`care`, `book`, `lookup`). `confirmed` is care intent confirmed: what search's injury policy needs."""
+    conditions: tuple[str, ...] = ()
+    locations: tuple[str, ...] = ()
+    modifiers: tuple[str, ...] = ()
+    confidence: str = "none"
+    purpose: str = "care"
+    matched_rules: tuple[str, ...] = ()
+
+    @property
+    def confirmed(self) -> bool:
+        return self.confidence == "confirmed" and self.purpose == "care" and bool(self.conditions)
+
+
+NO_INJURY = InjuryIntent()
+
+
+def _raw_tokens(raw: str) -> list[str]:
+    """The words in order, repeats and stopwords kept, apostrophes closed up ("won't" is "wont", "kid's" "kids")."""
+    return _TOKEN_RE.findall(re.sub(r"['’]", "", (raw or "").lower()))
+
+
+# Every nonmedical phrase as one pattern, longest first, its words apart by anything that is not a word: taken out of
+# a text before its words are read. One C-speed pass, cheap enough for a passage's whole body as well as a query.
+_NONMEDICAL_RE = re.compile(r"(?<![^\W_])(?:" + "|".join(
+    r"[\W_]+".join(map(re.escape, p)) for p in sorted(NONMEDICAL_PHRASES, key=len, reverse=True)) + r")(?![^\W_])")
+
+
+def free_tokens(text: str) -> list[str]:
+    """The lower-case words of a text in order, apostrophes closed up, with every nonmedical phrase ("power cut",
+    "brake bleeding") left out: the words search reads as evidence of an injury (task 25)."""
+    return _TOKEN_RE.findall(_NONMEDICAL_RE.sub(" ", re.sub(r"['\u2019]", "", (text or "").lower())))
+
+
+def analyse_injury(raw: str) -> InjuryIntent:
+    """Read `raw` as an injury described, or not. See the block comment above."""
+    tokens = _raw_tokens(raw)
+    if not tokens:
+        return NO_INJURY
+    words = free_tokens(raw)
+    have = set(words)
+    content = [t for t in tokens if t not in STOPWORDS]
+    locations = tuple(dict.fromkeys(BODY_PARTS[t] for t in words if t in BODY_PARTS))
+    places = set(locations) - {"bone", "muscle", "ligament"}
+    bodily = bool(places) or bool(have & REFLEXIVE)
+    single = len(content) == 1
+    conditions: set[str] = set()
+    rules: list[str] = []
+    ambiguous_seen = False
+
+    def found(cond: str, rule: str) -> None:
+        conditions.add(cond)
+        rules.append(rule)
+
+    def near_negated_stop() -> bool:
+        return any(w == "stop" or w == "stopping" for w in words) and bool(have & _NEGATING)
+
+    phrase = " ".join(words)
+    # the places that are the condition
+    if have & {"nosebleed", "nosebleeds"} or "nose bleed" in phrase or ("nose" in places and have & (_BLEED | _BLEED_ALWAYS)):
+        found("nosebleed", "nose+bleed")
+    if "eye" in places and (have & _EYE_CUES or have & (_WOUND | _WOUND_AMBIGUOUS | _BURN)):
+        found("eye_injury", "eye+cue")
+    if have & {"concussion", "concussed"} or "knocked out" in phrase or ("head" in places and have & _HEAD_CUES):
+        found("head_injury", "head+impact")
+    if have & {"spinal", "spine", "vertebra", "vertebrae", "paralysed", "paralyzed"} or (
+            ("neck" in places or "back" in have) and have & (_FRACTURE | {"injury", "injured"})):
+        found("spinal_injury", "spine")
+    # bleeding: a nosebleed has taken it; a bleed in pregnancy, from the gums, in urine is not this card's
+    bleed_words = have & _BLEED
+    if "nosebleed" not in conditions and not have & _BLEED_ELSEWHERE:
+        if have & _BLEED_ALWAYS:
+            found("bleeding", "haemorrhage")
+        elif bleed_words and (have & _BLEED_SEVERE or near_negated_stop()):
+            found("bleeding", "bleed+severity")
+        elif bleed_words and single and have & {"bleeding", "bleed"}:
+            found("bleeding", "standalone")
+        elif bleed_words - {"blood", "bloody"} and bodily:
+            found("bleeding", "bleed+body")
+        elif bleed_words:
+            ambiguous_seen = True
+    # burns: scald always; burn when bodily, with a burn's cause, cared for, or alone; hot liquid over a person
+    if have & _BURN_ALWAYS:
+        found("burn", "scald")
+    elif have & _BURN:
+        if (bodily and "chest" not in places) or have & _BURN_CUES or have & _CARE_CUES or single:
+            found("burn", "burn+support")
+        else:
+            ambiguous_seen = True
+    elif "burning" in have and have & _BURN_CUES:
+        found("burn", "burning+cause")
+    if "burn" not in conditions and have & _HOT and have & _LIQUID and (have & _SPILL or bodily):
+        found("burn", "hot-liquid")
+    # fractures
+    if have & _FRACTURE_ALWAYS or "wrong way" in phrase or "sticking out" in phrase and "bone" in locations:
+        found("fracture", "fracture")
+    elif have & _FRACTURE:
+        if places - {"eye", "neck"} or "bone" in locations:   # a broken neck is the spine card's
+            found("fracture", "broken+body")
+        else:
+            ambiguous_seen = True
+    # sprains
+    if have & _SPRAIN_ALWAYS:
+        found("sprain", "sprain")
+    elif have & _SPRAIN and (set(locations) & _JOINTS or have & _JOINTS) and "fracture" not in conditions:
+        found("sprain", "twist+joint")
+    # bites and stings
+    if have & _BITE or ("bit" in have and have & _ANIMALS):
+        if have & _BITE_ELSEWHERE:
+            ambiguous_seen = True
+        elif have & _ANIMALS or bodily or "bitten" in have or "stung" in have:
+            found("bite_sting", "bite")
+        else:
+            ambiguous_seen = True
+    # open wounds: unambiguous words, or a cut/gash that is bodily, qualified, cared for, or typed alone
+    if have & _WOUND:
+        found("open_wound", "wound")
+    elif have & _WOUND_AMBIGUOUS:
+        if bodily or have & _CARE_CUES or (have & _MODIFIERS and have & {"cut", "gash", "cuts", "gashes"}) or (
+                single and have & _STANDALONE):
+            found("open_wound", "cut+support")
+        else:
+            ambiguous_seen = True
+    if "bleeding" in conditions and bleed_words and bodily and "open_wound" not in conditions:
+        found("open_wound", "bleed+body")
+    if single and not conditions and have & _STANDALONE:
+        for cond, terms in (("open_wound", _WOUND | {"gash", "gashes"}), ("burn", _BURN), ("fracture", {"fracture"}),
+                            ("sprain", {"sprain"}), ("head_injury", {"concussion"})):
+            if have & terms:
+                found(cond, "standalone")
+
+    if conditions & {"eye_injury"} and "open_wound" in conditions and not have & _WOUND:
+        conditions.discard("open_wound")   # a cut or scratch to the eye is the eye card's
+    ordered = tuple(c for c in CONDITION_PRIORITY if c in conditions)
+    purpose = "book" if have & _BOOK else "lookup" if (have & _LOOKUP or tokens[:2] in (["who", "is"], ["who", "was"])) else "care"
+    confidence = "confirmed" if ordered else "possible" if ambiguous_seen else "none"
+    if ordered and (have & _OTHER_EMERGENCY or "not breathing" in phrase or "cant breathe" in phrase):
+        confidence, rules = "possible", rules + ["other-emergency"]
+    modifiers = tuple(dict.fromkeys(t for t in words if t in _MODIFIERS))
+    return InjuryIntent(conditions=ordered, locations=locations, modifiers=modifiers, confidence=confidence,
+                        purpose=purpose, matched_rules=tuple(rules))
+
+
+def fts_match_conditions(intent: InjuryIntent) -> str:
+    """`"wound" OR "laceration" OR "gash" ...`: the keyword query for an injury's conditions alone, every condition's
+    words ORed (a passage about one of two injuries is still a candidate), the place on the body left out. Empty
+    when there is no confirmed injury."""
+    if not intent.confirmed:
+        return ""
+    words = list(dict.fromkeys(w for c in intent.conditions for w in CONDITION_TERMS[c]))
+    return " OR ".join('"' + w.replace('"', '""') + '"' for w in words)
+
+
 @dataclass(frozen=True)
 class Query:
     raw: str
@@ -173,9 +445,11 @@ class Query:
     terms: list[str]
     fts: str
     kiwix: str
+    injury: InjuryIntent = NO_INJURY    # what analyse_injury read in the raw words (task 25)
 
 
 def reduce_query(q: str) -> Query:
     tokens = tokenise(q)
     terms = content_terms(q) if tokens else []
-    return Query(raw=q, tokens=tokens, terms=terms, fts=fts5_match(terms), kiwix=kiwix_pattern(terms))
+    return Query(raw=q, tokens=tokens, terms=terms, fts=fts5_match(terms), kiwix=kiwix_pattern(terms),
+                 injury=analyse_injury(q) if tokens else NO_INJURY)

@@ -129,7 +129,8 @@ STEP = re.compile(r"^\d+\. (.*)$")
 @pytest.mark.parametrize("slug", CARDS)
 def test_card_front_matter(slug):
     post = load("cards", slug)
-    assert set(post.keys()) == {"id", "title", "icon", "order", "summary"}
+    assert {"id", "title", "icon", "order", "summary"} <= set(post.keys()) <= \
+        {"id", "title", "icon", "order", "summary", "conditions", "aliases"}
     assert post["id"] == slug
     assert post["order"] == CARDS.index(slug) + 1
     assert len(post["title"]) <= 40
@@ -388,3 +389,59 @@ def test_kit_relevance_clauses():
 def test_kit_tree_validates():
     items = load_manifests(MANIFEST_DIR)
     assert real_tree_errors(validate_tree(PB, items, overlay_ids())) == []
+
+
+# --- injury subjects (task 25): what a card is about, for search, not for display ------------------------------------
+
+INJURY_CARDS = {
+    "severe-bleeding": ["bleeding", "open_wound"], "wound-cleaning": ["open_wound"], "wound-closure": ["open_wound"],
+    "burns": ["burn"], "broken-bones": ["fracture"], "sprains-strains": ["sprain"], "head-injury": ["head_injury"],
+    "eye-injury": ["eye_injury"], "nosebleed": ["nosebleed"], "bites-stings": ["bite_sting"],
+    "spinal-injury": ["spinal_injury"],
+}
+
+
+def test_the_injury_cards_carry_their_conditions_and_every_condition_has_a_card():
+    from sos import query
+    for slug in CARDS:
+        assert load("cards", slug).get("conditions") == INJURY_CARDS.get(slug), slug
+    assert {c for conds in INJURY_CARDS.values() for c in conds} == set(query.CONDITION_IDS)
+
+
+def test_the_schema_condition_ids_are_the_search_vocabulary():
+    from sos import query
+    schema = json.loads((PB / "schema.json").read_text(encoding="utf-8"))
+    assert schema["$defs"]["card"]["properties"]["conditions"]["items"]["enum"] == list(query.CONDITION_IDS)
+
+
+def test_the_schema_accepts_conditions_and_aliases_and_rejects_an_unknown_condition():
+    import jsonschema
+    schema = json.loads((PB / "schema.json").read_text(encoding="utf-8"))
+    v = jsonschema.Draft202012Validator({"$ref": "#/$defs/card", "$defs": schema["$defs"]})
+    base = {"id": "x", "title": "X", "icon": "a", "order": 1, "summary": "s"}
+    assert not list(v.iter_errors({**base, "conditions": ["open_wound"], "aliases": ["gash", "deep cut"]}))
+    assert list(v.iter_errors({**base, "conditions": ["gash"]}))
+    assert list(v.iter_errors({**base, "aliases": "gash"}))
+    assert list(v.iter_errors({**base, "aliases": ["Gash!"]}))
+    page = jsonschema.Draft202012Validator({"$ref": "#/$defs/page", "$defs": schema["$defs"]})
+    assert list(page.iter_errors({**base, "category": "reference", "aliases": ["gash"]}))   # cards only
+
+
+@pytest.mark.parametrize("slug", sorted(INJURY_CARDS))
+def test_an_alias_never_describes_an_injury_its_card_is_not_about(slug):
+    """An alias is a way a household words this card's own subject. Read as a query, it may name no condition at all
+    ("stitches"), but never one the card does not treat: Broken bones gets no wound words for the bleeding its
+    warnings mention, and Severe bleeding no "gash" (a gash is a wound first; not every gash is a haemorrhage)."""
+    from sos import query
+    post = load("cards", slug)
+    aliases = post.get("aliases") or []
+    assert aliases, slug
+    for alias in aliases:
+        read = query.analyse_injury(alias)
+        assert set(read.conditions) <= set(post["conditions"]), (slug, alias, read.conditions)
+
+
+def test_broken_bones_has_no_wound_aliases():
+    aliases = " ".join(load("cards", "broken-bones")["aliases"])
+    for word in ("wound", "cut", "gash", "bleed", "blood", "laceration", "graze"):
+        assert word not in aliases

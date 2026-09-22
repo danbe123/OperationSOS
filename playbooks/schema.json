@@ -50,7 +50,19 @@
     "card": {
       "allOf": [{ "$ref": "#/$defs/base" }],
       "description": "playbooks/cards/<slug>.md: a one-screen medical quick card.",
-      "properties": { "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the card was written from." } },
+      "properties": {
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" }, "description": "The sources the card was written from." },
+        "conditions": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "enum": ["bleeding", "open_wound", "burn", "fracture", "sprain", "head_injury", "eye_injury", "nosebleed", "bite_sting", "spinal_injury"] },
+          "description": "The injuries this card is the answer for, main subject first (search only, never shown): a query described as one of them leads with this card. The ids are sos.query.CONDITION_IDS."
+        },
+        "aliases": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 2, "maxLength": 60, "pattern": "^[a-z0-9]+([ '-][a-z0-9]+)*$" },
+          "description": "Other ways a household words this card's own subject, lower case (search only, never shown): indexed beside the card and the strongest evidence that a query is about it."
+        }
+      },
       "unevaluatedProperties": false
     },
     "page": {

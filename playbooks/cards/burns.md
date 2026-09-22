@@ -4,6 +4,21 @@ title: Burns and scalds
 icon: fire
 order: 5
 summary: Cool, cover, and know which burns need hospital.
+conditions: [burn]
+aliases:
+  - scald
+  - scalded
+  - scalding
+  - burnt skin
+  - burned skin
+  - burned hand
+  - burnt fingers
+  - kettle scald
+  - hot liquid spill
+  - hot oil splash
+  - steam burn
+  - blistered skin
+  - chemical burn
 ---
 
 ## When to use

@@ -4,6 +4,18 @@ title: Sprains and strains
 icon: bone
 order: 30
 summary: Rest, ice, compression and elevation for a twisted joint or pulled muscle, and when to treat it as a break.
+conditions: [sprain]
+aliases:
+  - sprain
+  - sprained ankle
+  - twisted ankle
+  - rolled ankle
+  - twisted knee
+  - sprained wrist
+  - pulled muscle
+  - strained muscle
+  - pulled hamstring
+  - went over on my ankle
 ---
 
 ## When to use

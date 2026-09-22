@@ -75,6 +75,23 @@ EXPERIMENTS: dict[str, dict] = {
     "task24-off": {"WEAK_PENALTY": 1.0, "CARD_SEMANTIC_K": 20, "DROP_ZERO_EVIDENCE": False},   # all three, off
     "or-below-10": {"FTS_OR_BELOW": 10},
     "or-below-15": {"FTS_OR_BELOW": 15},
+    # Task 25 (2026-09-22, the injury policy: "gash on arm" led by Broken bones). "control" is all of it on; each
+    # "no-..." takes one piece out; "injury-off" is the search as it shipped before task 25 ("before" also leaves
+    # the cards' aliases out of the keyword question, for a database already indexed with them).
+    "injury-off": {"INJURY_INTENT": False},
+    "before": {"INJURY_INTENT": False, "ALIAS_INDEX": False},
+    "no-injury-retrieval": {"INJURY_RETRIEVAL": False},
+    "no-injury-weighting": {"INJURY_WEIGHTING": False},
+    "no-card-subjects": {"INJURY_SUBJECTS": False},
+    "no-injury-promotion": {"INJURY_PROMOTION": False},
+    "no-unsupported-penalty": {"MEDICAL_UNSUPPORTED_FACTOR": 1.0},
+    "no-alias-index": {"ALIAS_INDEX": False},
+    "retrieval-only": {"INJURY_WEIGHTING": False, "INJURY_PROMOTION": False, "MEDICAL_UNSUPPORTED_FACTOR": 1.0},
+    "retrieval+promotion": {"INJURY_WEIGHTING": False, "MEDICAL_UNSUPPORTED_FACTOR": 1.0},
+    "unsupported-.5": {"MEDICAL_UNSUPPORTED_FACTOR": 0.5},
+    "unsupported-.1": {"MEDICAL_UNSUPPORTED_FACTOR": 0.1},
+    "injury-cards-kept-1": {"INJURY_CARDS_KEPT": 1},
+    "injury-cards-kept-2": {"INJURY_CARDS_KEPT": 2},
 }
 
 SHOW = (("own-library", "own"), ("own-library/health", "health"), ("paraphrase", "para"), ("safety", "safety"),
@@ -180,6 +197,43 @@ def safety_guard(result: dict) -> dict:
     return out
 
 
+# The guardrails every change is held to (docs/reviews/2026-09-22-search-relevance.md): (label, summary key, metric,
+# floor). safety/plain and safety/hard are counted in the top three (`safety_guard`), the rest are rates.
+GUARDRAILS = (
+    ("own h@3", "own-library", "hit@3", 0.873), ("health h@3", "own-library/health", "hit@3", 1.0),
+    ("wiki h@1", "wikipedia", "hit@1", 0.395), ("para mrr", "paraphrase", "mrr@10", 0.500),
+    ("held0921 mrr", "heldout-2026-09-21", "mrr@10", 0.681), ("survivor h@10", "books/survivor", "hit@10", 0.714),
+    ("bx h@10", "books-extra", "hit@10", 0.776), ("injury h@1", "injury-fresh", "hit@1", None),
+    ("injury h@3", "injury-fresh", "hit@3", None),
+)
+
+
+def guard_table(results: list[dict]) -> str:
+    """One line per experiment: the safety counts and every guardrail metric, a `!` beside one under its floor."""
+    head = ["experiment", "plain", "hard"] + [label for label, *_ in GUARDRAILS] + ["p50ms"]
+    rows = [head]
+    for r in results:
+        g, summary = safety_guard(r), summarise(r)
+        cells = [r["name"], f"{g['plain_top3']}/{g['plain_n']}" + ("!" if g["plain_top3"] < g["plain_n"] else ""),
+                 f"{g['hard_top3']}/{g['hard_n']}" + ("!" if g["hard_n"] and g["hard_top3"] < g["hard_n"] - 1 else "")]
+        for _label, key, metric, floor in GUARDRAILS:
+            m = summary.get(key)
+            value = None if m is None else m.get(metric)
+            cells.append("-" if value is None else f"{value:.3f}" + ("!" if floor is not None and value < floor - 1e-9 else ""))
+        cells.append(f"{summary['ALL']['lat_median_ms']:.0f}")
+        rows.append(cells)
+    widths = [max(len(row[i]) for row in rows) for i in range(len(head))]
+    lines = ["  ".join(c.ljust(widths[i]) if i == 0 else c.rjust(widths[i]) for i, c in enumerate(row)) for row in rows]
+    return "\n".join([lines[0], "  ".join("-" * w for w in widths)] + lines[1:])
+
+
+def ranks_of(result: dict, set_name: str) -> str:
+    """Every query of one set with its rank: the per-query view of a small set (injury-fresh)."""
+    q = result["queries"]
+    return "\n".join(f"  {qid:<12} {result['records'][qid]['rank'] or '-':>3}  {q[qid]['query']}"
+                     for qid in sorted(result["records"]) if q[qid]["set"] == set_name)
+
+
 def diff(a: dict, b: dict, sets: tuple[str, ...] | None = None) -> str:
     """Queries whose outcome bucket moved between two experiments (b relative to a)."""
     lines = []
@@ -204,12 +258,17 @@ def main(argv=None) -> int:
     ap.add_argument("--diff-sets", nargs="*")
     ap.add_argument("--guard", action="store_true")
     ap.add_argument("--sets", nargs="*", help="replay only these gold sets (books are 40 per cent of the cost)")
+    ap.add_argument("--keyword-each", action="store_true",
+                    help="run every experiment with the meaning layer off too (name/kw), not only the one keyword control")
+    ap.add_argument("--ranks", nargs="*", help="print each query's rank in these sets, per experiment")
     args = ap.parse_args(argv)
     SETS[:] = args.sets or []
     names = args.exp or list(EXPERIMENTS)
     if args.diff:
         names = list(dict.fromkeys([*names, *args.diff])) if args.exp else list(args.diff)
     jobs = [("keyword", {}, args.replay, "off")] + [(n, EXPERIMENTS[n], args.replay, "on") for n in names]
+    if args.keyword_each:
+        jobs += [(f"{n}/kw", EXPERIMENTS[n], args.replay, "off") for n in names]
     with ProcessPoolExecutor(max_workers=max(1, args.jobs)) as pool:
         results = list(pool.map(run_experiment, jobs))
     by_name = {r["name"]: r for r in results}
@@ -227,6 +286,11 @@ def main(argv=None) -> int:
         for r in results:
             g = safety_guard(r)
             print(f"{r['name']:<28} plain {g['plain_top3']}/{g['plain_n']}  hard {g['hard_top3']}/{g['hard_n']}  missing: {', '.join(g['hard_missing'])}")
+    if args.guard:
+        print("\n" + guard_table(results))
+    for set_name in args.ranks or []:
+        for r in results:
+            print(f"\n{r['name']} -- {set_name}:\n{ranks_of(r, set_name)}")
     if args.diff:
         a, b = by_name[args.diff[0]], by_name[args.diff[1]]
         print(f"\nqueries whose ranking moved, {args.diff[0]} -> {args.diff[1]}:")

@@ -4,6 +4,16 @@ title: Eye injury
 icon: face
 order: 35
 summary: Grit in the eye, chemical splashes, a blow to the eye, and an object stuck in the eyeball, which must never be pulled out.
+conditions: [eye_injury]
+aliases:
+  - something in the eye
+  - grit in the eye
+  - black eye
+  - poked in the eye
+  - scratched eye
+  - chemical in the eye
+  - eye splash
+  - object in the eye
 ---
 
 ## When to use

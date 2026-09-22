@@ -27,6 +27,8 @@ The file name is the slug: lower-case letters, digits and hyphens. It must equal
 
 Scenarios add `modules` (slugs of the modules the body includes), `overlays` (map overlay ids from `manifest/overlays.json` that switch on when the map opens from the playbook), `reviewed` (the owner's sign-off date `YYYY-MM-DD`, or `null` until reviewed) and `sources`. Modules, cards and pages may carry `sources`; pages must carry `category`: `comms`, `reference`, `plan`, `about`, `fieldcraft` or `rebuild`, which picks the list the page appears in (`rebuild` pages are the Rebuilding section, the long recovery after a scenario; `fieldcraft` pages are the UK field-craft set on the Field craft screen).
 
+Cards may also carry two fields that only search reads, never shown: `conditions`, the injuries the card is the answer for, main subject first, from `bleeding`, `open_wound`, `burn`, `fracture`, `sprain`, `head_injury`, `eye_injury`, `nosebleed`, `bite_sting` and `spinal_injury` (the ids of `sos.query.CONDITION_IDS`); and `aliases`, other ways a household words the card's own subject, in lower case (`gash`, `deep cut`, `scalded`, `rolled ankle`). A search the box reads as an injury described ("gash on arm") leads with the cards whose `conditions` name it, the one whose alias the query uses first; `sos index` puts the aliases beside the card's "When to use" in the keyword index. Keep an alias inside the card's scope: Broken bones mentions bleeding in its warnings but gets no wound aliases, and the content tests check that no alias, read as a query, names a condition its card is not about.
+
 ```yaml
 ---
 id: nuclear-war

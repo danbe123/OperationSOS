@@ -55,6 +55,13 @@ looks in (`fts=1`). It exits non-zero on any problem. Gold is verified against t
 the tuning was finished and its results were not looked at; it is a held-out check, not a tuning set. It is left out of a default run and of `ALL`: run it by naming it
 (`sos eval-search heldout-2026-09-21`), and do not tune on it.
 
+`injury-heldout-2026-09-22.jsonl` (46 rows, task 25) is the same kind of check for injury descriptions: 33 unseen
+injury/location phrasings (`group: injury`; bleeding, wounds, burns and scalds, sprains, fractures, eye, head, nosebleed,
+bites) whose box quick card should lead, and 13 contrasts (`group: contrast`, tagged `contrast`) that share an injury or
+body word but are not an injury described -- names ("Sam Gash", "Robert Burns poems"), phrases ("power cut", "bike brake
+bleeding", "burn a CD", "arm wrestling rules") and book requests -- which must not be read as one. It was committed before
+any search ran against it and is run once, by naming it. Any gold file with `heldout` as a word of its name is held out.
+
 ## Metrics
 
 Alternatives are interchangeable, so the first matching result is *the* relevant one:
@@ -73,9 +80,9 @@ sos eval-search --replay .dev/search-recordings/NAME --json replay.json         
 ```
 
 Per distinct query the recording holds every multi-archive Kiwix request's hits (or refusal), the query vector, the
-nearest 100 passages of the box's own library and of the household books, and the Wikipedia rerank cosines
+nearest 500 passages of the box's own library and of the household books (and how deep each was asked), and the Wikipedia rerank cosines
 (`api/sos/searchreplay.py`). A replay opens the same database read-only and is deterministic; its timings are only
-the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`): a
+the search's own computation, and it reports the questions its recording could not answer (`meta.replay_misses`, including `semantic_depth`, a nearest list asked deeper than it was recorded): a
 change that asks Kiwix something new gets a refusal for it, so a non-zero count means that run is not comparable.
 Record again after a database rebuild or an index rebuild. Recordings live under the git-ignored `.dev/`.
 

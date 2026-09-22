@@ -112,7 +112,7 @@ def test_a_replay_ranks_every_query_as_the_live_run_did(box, env, tmp_path):
             assert doc["runs"][mode][row.id]["rank"] == recorded[mode][row.id]["rank"], (mode, row.id)
             assert [r["url"] for r in doc["runs"][mode][row.id]["top10"]] == \
                 [r["url"] for r in recorded[mode][row.id]["top10"]]
-    assert doc["meta"]["replay_misses"] == {"kiwix": 0, "wikipedia": 0}
+    assert doc["meta"]["replay_misses"] == {"kiwix": 0, "wikipedia": 0, "semantic_depth": 0}
     assert doc["runs"]["on"]["q-choke"]["rank"] == 1            # the meaning layer's card is in the replay too
     assert doc["runs"]["on"]["q-choke"]["semantic_ok"] is True
 
@@ -177,3 +177,50 @@ def test_record_and_replay_are_exclusive(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr(se, "load_gold", lambda *a, **k: ([GoldRow("a", "a", [{"url": "/x"}], "demo")], []))
     assert cli.main(["eval-search", "--record", str(tmp_path / "a"), "--replay", str(tmp_path / "b")]) == 1
     assert "pick one" in capsys.readouterr().err
+
+
+# --- recorded depth (task 25): a replay must not silently answer a deeper question than was recorded -----------
+
+def _one_query(tmp_path, semantic):
+    folder = tmp_path / "rec"
+    folder.mkdir()
+    (folder / f"{sr.query_key('gash')}.json").write_text(json.dumps({"format": 1, "query": "gash", "kiwix": {},
+                                                                     "semantic": semantic}))
+    return sr.Replay(folder)
+
+
+def test_a_replay_asked_deeper_than_the_recording_counts_a_miss(tmp_path):
+    """An old recording kept the nearest 100; search() asks CARD_SEMANTIC_K (500). Slicing the 100 and calling
+    it an answer would hide that ranks 101-500 were never seen."""
+    replay = _one_query(tmp_path, {"docs": [[f"/p/x#{i}", 0.9 - i / 1000] for i in range(100)]})
+    near = asyncio.run(sr.ReplaySemantic(replay).query("gash", 500))
+    assert len(near) == 100 and replay.misses["semantic_depth"] == 1
+
+
+def test_a_replay_within_the_recorded_depth_or_of_an_exhausted_list_is_no_miss(tmp_path):
+    replay = _one_query(tmp_path, {"docs": [[f"/p/x#{i}", 0.9] for i in range(100)], "docs_k": 500,
+                                   "household": [["gutenberg_en_all:1", 0.7]], "household_k": 500})
+    sem = sr.ReplaySemantic(replay)
+    assert len(asyncio.run(sem.query("gash", 500))) == 100          # asked 500, the index had only 100
+    assert len(asyncio.run(sem.query("gash", 20))) == 20
+    assert len(asyncio.run(sem.query_household("gash", 60))) == 1
+    assert replay.misses["semantic_depth"] == 0
+
+
+def test_the_recorder_keeps_the_depth_it_asked_for(tmp_path):
+    class Inner:
+        _vectors = {}
+
+        async def query(self, q, k=20):
+            return [("/p/a", 0.8)] * min(k, 3)
+
+        async def query_household(self, q, k=20):
+            return []
+
+    rec = sr.Recorder(tmp_path / "rec")
+    sem = sr.RecordingSemantic(Inner(), rec)
+    asyncio.run(sem.query("gash", 500))
+    asyncio.run(sem.query_household("gash", 60))
+    slot = rec.queries[sr.query_key("gash")]["semantic"]
+    assert slot["docs_k"] == max(500, sr.RECORD_K) and slot["household_k"] == max(60, sr.RECORD_K)
+    assert sr.RECORD_K >= search.CARD_SEMANTIC_K      # a fresh recording answers search()'s deepest question

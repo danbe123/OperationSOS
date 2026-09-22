@@ -4,6 +4,18 @@ title: Bites and stings
 icon: alert
 order: 32
 summary: Cleaning dog, cat, human and bat bites and wasp and bee stings, when antibiotics are needed and when it is an emergency.
+conditions: [bite_sting]
+aliases:
+  - dog bite
+  - cat bite
+  - human bite
+  - animal bite
+  - bat bite
+  - bitten
+  - bee sting
+  - wasp sting
+  - hornet sting
+  - insect bite
 ---
 
 ## When to use
